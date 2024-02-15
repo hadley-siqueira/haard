@@ -34,12 +34,25 @@ void Module::add_function(Function* function) {
     declarations.push_back(function);
 }
 
+void Module::add_class(Class* klass) {
+    classes.push_back(klass);
+    declarations.push_back(klass);
+}
+
 int Module::functions_count() {
     return functions.size();
 }
 
+int Module::classes_count() {
+    return classes.size();
+}
+
 Function* Module::get_function(int idx) {
-    return functions[idx];
+    if (idx < functions_count()) {
+        return functions[idx];
+    }
+
+    return nullptr;
 }
 
 int Module::declarations_count() {

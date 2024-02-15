@@ -7,6 +7,7 @@ namespace haard {
     typedef enum AstKind {
         AST_MODULE,
         AST_FUNCTION,
+        AST_CLASS,
         AST_IMPORT,
         AST_ID,
 

@@ -6,6 +6,7 @@
 #include "ast/declaration.h"
 #include "ast/import.h"
 #include "ast/function.h"
+#include "ast/class.h"
 
 namespace haard {
     class Module : public AstNode {
@@ -19,7 +20,11 @@ namespace haard {
         Import* get_import(int idx);
 
         void add_function(Function* function);
+        void add_class(Class* klass);
+
         int functions_count();
+        int classes_count();
+
         Function* get_function(int idx);
 
         int declarations_count();
@@ -29,6 +34,7 @@ namespace haard {
         std::vector<Import*> imports;
         std::vector<Function*> functions;
         std::vector<Declaration*> declarations;
+        std::vector<Class*> classes;
     };
 }
 

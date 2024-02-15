@@ -28,6 +28,8 @@ Module* Parser::parse_module() {
             module->add_import(parse_import());
         } else if (lookahead(TK_DEF)) {
             module->add_function(parse_function());
+        } else if (lookahead(TK_CLASS)) {
+            module->add_class(parse_class());
         } else {
             break;
         }
@@ -55,6 +57,38 @@ Import* Parser::parse_import() {
     }
 
     return import;
+}
+
+Class* Parser::parse_class() {
+    Class* klass = new Class();
+
+    expect(TK_CLASS);
+    expect(TK_ID);
+    klass->set_name(matched);
+    klass->set_generics(parse_generics());
+
+    if (match(TK_LEFT_PARENTHESIS)) {
+        klass->set_super_type(parse_type());
+        expect(TK_RIGHT_PARENTHESIS);
+    }
+
+    expect(TK_COLON);
+    indent();
+
+    while (is_indented()) {
+        if (lookahead(TK_DEF)) {
+            klass->add_function(parse_function());
+        } else if (lookahead(TK_ID)) {
+            klass->add_variable(nullptr);
+        } else if (match(TK_PASS)) {
+            break;
+        } else {
+            break;
+        }
+    }
+
+    dedent();
+    return klass;
 }
 
 Function* Parser::parse_function() {

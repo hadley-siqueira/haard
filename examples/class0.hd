@@ -1,0 +1,3 @@
+class Pair:
+    x : int
+    y : int

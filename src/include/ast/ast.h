@@ -4,6 +4,7 @@
 #include "ast/module.h"
 #include "ast/import.h"
 #include "ast/function.h"
+#include "ast/class.h"
 
 #include "ast/statement.h"
 #include "ast/compound_statement.h"

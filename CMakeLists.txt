@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(hdc)
 
 include_directories(src/include)
@@ -121,6 +121,8 @@ set(AST_SRC
     src/ast/module.cc
     src/ast/import.cc
     src/ast/function.cc
+    src/ast/named_type_descriptor.cc
+    src/ast/class.cc
     src/ast/variable.cc
     src/ast/type.cc
     src/ast/function_type.cc

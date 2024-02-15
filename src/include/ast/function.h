@@ -24,7 +24,7 @@ namespace haard {
         TypeList* get_generics() const;
         void set_generics(TypeList* newGenerics);
 
-        CompoundStatement *get_statements() const;
+        CompoundStatement* get_statements() const;
         void set_statements(CompoundStatement *newStatements);
 
     private:
@@ -34,4 +34,5 @@ namespace haard {
         std::vector<Variable*> parameters;
     };
 }
+
 #endif
