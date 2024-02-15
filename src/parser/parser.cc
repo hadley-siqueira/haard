@@ -79,7 +79,7 @@ Class* Parser::parse_class() {
         if (lookahead(TK_DEF)) {
             klass->add_function(parse_function());
         } else if (lookahead(TK_ID)) {
-            klass->add_variable(nullptr);
+            klass->add_variable(parse_variable());
         } else if (match(TK_PASS)) {
             break;
         } else {
@@ -89,6 +89,18 @@ Class* Parser::parse_class() {
 
     dedent();
     return klass;
+}
+
+Variable* Parser::parse_variable() {
+    Variable* var = new Variable();
+
+    expect(TK_ID);
+    var->set_name(matched);
+
+    expect(TK_COLON);
+    var->set_type(parse_type());
+
+    return var;
 }
 
 Function* Parser::parse_function() {

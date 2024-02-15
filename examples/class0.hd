@@ -1,3 +1,21 @@
 class Pair:
     x : int
     y : int
+
+class Node<T>:
+    value : T
+    next  : T*
+    prev  : T*
+
+
+class Coordinate(Pair):
+    z : int
+
+    def to_str : str
+        "($x, $y, $z)"
+
+
+    def init : void
+        x = 0
+        y = 0
+        z = 0

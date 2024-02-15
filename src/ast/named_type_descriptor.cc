@@ -4,11 +4,10 @@ using namespace haard;
 
 NamedTypeDescriptor::NamedTypeDescriptor() {
     set_generics(nullptr);
+    set_super_type(nullptr);
 }
 
 NamedTypeDescriptor::~NamedTypeDescriptor() {
-    delete generics;
-
     for (auto v : variables) {
         delete v;
     }

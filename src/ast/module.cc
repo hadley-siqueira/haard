@@ -11,8 +11,8 @@ Module::~Module() {
         delete i;
     }
 
-    for (auto f : functions) {
-        delete f;
+    for (auto d : declarations) {
+        delete d;
     }
 }
 
