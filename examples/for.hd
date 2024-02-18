@@ -1,0 +1,20 @@
+import std.io
+
+def main : int
+    @args : str[]
+
+    for (i, j) in range(0, 10):
+        print(i)
+
+    for i = 0; i < 10; ++i:
+        print(i)
+
+    for ; i < 10; ++i:
+        print(i)
+
+    for ;;:
+        print('endless')
+
+    for i = 0; i < 10; :
+        print(i)
+        i = i + 1

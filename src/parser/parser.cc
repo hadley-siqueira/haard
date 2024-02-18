@@ -216,6 +216,8 @@ Statement* Parser::parse_statement() {
 
     if (lookahead(TK_WHILE)) {
         stmt = parse_while_statement();
+    } else if (lookahead(TK_FOR)) {
+        stmt = parse_for_statement();
     } else {
         stmt = new ExpressionStatement(parse_expression());
     }
@@ -236,6 +238,57 @@ WhileStatement* Parser::parse_while_statement() {
     }
 
     stmt->set_condition(condition);
+    expect(TK_COLON);
+    indent();
+    stmt->set_statements(parse_compound_statement());
+    dedent();
+
+    return stmt;
+}
+
+ForStatement* Parser::parse_for_statement() {
+    ForStatement* stmt = new ForStatement();
+    Expression* expr = nullptr;
+    Expression* init = nullptr;
+    Expression* test = nullptr;
+    Expression* update = nullptr;
+    Expression* range = nullptr;
+
+    expect(TK_FOR);
+
+    if (!lookahead(TK_SEMICOLON)) {
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            assert(false && "expected for expression");
+        }
+
+        if (expr->get_kind() == EXPR_IN) {
+            range = expr;
+        } else {
+            init = expr;
+        }
+    }
+
+    if (match(TK_SEMICOLON)) {
+        if (!lookahead(TK_SEMICOLON)) {
+            test = parse_expression();
+
+            if (test == nullptr) {
+                assert(false && "expected for expression");
+            }
+        }
+
+        expect(TK_SEMICOLON);
+
+
+    }
+
+    stmt->set_init(init);
+    stmt->set_test(test);
+    stmt->set_update(update);
+    stmt->set_range(range);
+
     expect(TK_COLON);
     indent();
     stmt->set_statements(parse_compound_statement());

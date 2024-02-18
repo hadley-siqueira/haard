@@ -113,6 +113,7 @@ set(AST_LITERALS
 
 set(AST_STMTS
     src/ast/statements/while_statement.cc
+    src/ast/statements/for_statement.cc
 )
 
 set(AST_SRC

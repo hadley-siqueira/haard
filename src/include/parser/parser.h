@@ -28,6 +28,7 @@ namespace haard {
 
         Statement* parse_statement();
         WhileStatement* parse_while_statement();
+        ForStatement* parse_for_statement();
         CompoundStatement* parse_compound_statement();
 
         Type* parse_type();
