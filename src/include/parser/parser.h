@@ -32,6 +32,7 @@ namespace haard {
         void parse_for_init_or_range(ForStatement* stmt);
         void parse_for_test(ForStatement* stmt);
         void parse_for_update(ForStatement* stmt);
+        Statement* parse_return_statement();
         CompoundStatement* parse_compound_statement();
 
         Type* parse_type();

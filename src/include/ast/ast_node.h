@@ -19,6 +19,7 @@ namespace haard {
         AST_EXPRESSION_STATEMENT,
         STMT_WHILE,
         STMT_FOR,
+        STMT_RETURN,
 
         AST_EXPRESSION_UNKNOWN,
 

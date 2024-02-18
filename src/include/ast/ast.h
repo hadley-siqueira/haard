@@ -12,6 +12,7 @@
 #include "ast/expression_statement.h"
 #include "ast/statements/while_statement.h"
 #include "ast/statements/for_statement.h"
+#include "ast/statements/return_statement.h"
 
 #include "ast/type.h"
 #include "ast/subtyped_type.h"

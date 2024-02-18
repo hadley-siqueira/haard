@@ -191,6 +191,7 @@ void Parser::parse_parameters(Function* function) {
 
 Statement* Parser::parse_statement() {
     Statement* stmt = nullptr;
+    Expression* expr = nullptr;
 
     /*if (lookahead(TK_WHILE)) {
         stmt = parse_while_statement();
@@ -218,7 +219,15 @@ Statement* Parser::parse_statement() {
         stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
         stmt = parse_for_statement();
+    } else if (lookahead(TK_RETURN)) {
+        stmt = parse_return_statement();
     } else {
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            assert(false && "expected an expression statement");
+        }
+
         stmt = new ExpressionStatement(parse_expression());
     }
 
@@ -346,6 +355,25 @@ void Parser::parse_for_update(ForStatement* stmt) {
     }
 
     stmt->set_update(update);
+}
+
+Statement* Parser::parse_return_statement() {
+    ReturnStatement* stmt = new ReturnStatement();
+    Expression* expr = nullptr;
+
+    expect(TK_RETURN);
+
+    if (next_token_on_same_line()) {
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            assert(false && "expected an expression on return statement");
+        }
+
+        stmt->set_expression(expr);
+    }
+
+    return stmt;
 }
 
 CompoundStatement* Parser::parse_compound_statement() {

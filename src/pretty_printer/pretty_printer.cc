@@ -179,6 +179,10 @@ void PrettyPrinter::print_statement(Statement* stmt) {
         print_for_statement((ForStatement*) stmt);
         break;
 
+    case STMT_RETURN:
+        print_return_statement((ReturnStatement*) stmt);
+        break;
+
     default:
         assert(false && "invalid statement");
         break;
@@ -215,6 +219,16 @@ void PrettyPrinter::print_for_statement(ForStatement* stmt) {
     print_compound_statement(stmt->get_statements());
     dedent();
     out << '\n';
+}
+
+void PrettyPrinter::print_return_statement(ReturnStatement* stmt) {
+    print_indentation();
+    out << "return";
+
+    if (stmt->get_expression()) {
+        out << ' ';
+        print_expression(stmt->get_expression());
+    }
 }
 
 void PrettyPrinter::print_compound_statement(CompoundStatement* stmt) {
