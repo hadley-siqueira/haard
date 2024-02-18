@@ -22,6 +22,7 @@ namespace haard {
 
         void print_statement(Statement* stmt);
         void print_while_statement(WhileStatement* stmt);
+        void print_for_statement(ForStatement* stmt);
         void print_compound_statement(CompoundStatement* stmt);
         void print_expression_statement(ExpressionStatement* stmt);
 

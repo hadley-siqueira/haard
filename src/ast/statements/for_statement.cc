@@ -26,19 +26,19 @@ void ForStatement::set_test(Expression* newTest) {
     test = newTest;
 }
 
-Expression* ForStatement::get_init() const {
+ExpressionList* ForStatement::get_init() const {
     return init;
 }
 
-void ForStatement::set_init(Expression* newInit) {
+void ForStatement::set_init(ExpressionList *newInit) {
     init = newInit;
 }
 
-Expression* ForStatement::get_update() const {
+ExpressionList* ForStatement::get_update() const {
     return update;
 }
 
-void ForStatement::set_update(Expression* newUpdate) {
+void ForStatement::set_update(ExpressionList *newUpdate) {
     update = newUpdate;
 }
 
@@ -56,5 +56,9 @@ CompoundStatement* ForStatement::get_statements() const {
 
 void ForStatement::set_statements(CompoundStatement* newStatements) {
     statements = newStatements;
+}
+
+bool ForStatement::is_foreach() {
+    return range != nullptr;
 }
 

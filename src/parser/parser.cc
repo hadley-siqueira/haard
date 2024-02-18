@@ -248,46 +248,20 @@ WhileStatement* Parser::parse_while_statement() {
 
 ForStatement* Parser::parse_for_statement() {
     ForStatement* stmt = new ForStatement();
-    Expression* expr = nullptr;
-    Expression* init = nullptr;
+
     Expression* test = nullptr;
-    Expression* update = nullptr;
+    ExpressionList* update = nullptr;
     Expression* range = nullptr;
 
     expect(TK_FOR);
+    parse_for_init_or_range(stmt);
 
-    if (!lookahead(TK_SEMICOLON)) {
-        expr = parse_expression();
-
-        if (expr == nullptr) {
-            assert(false && "expected for expression");
-        }
-
-        if (expr->get_kind() == EXPR_IN) {
-            range = expr;
-        } else {
-            init = expr;
-        }
-    }
-
-    if (match(TK_SEMICOLON)) {
-        if (!lookahead(TK_SEMICOLON)) {
-            test = parse_expression();
-
-            if (test == nullptr) {
-                assert(false && "expected for expression");
-            }
-        }
-
+    if (!stmt->is_foreach()) {
         expect(TK_SEMICOLON);
-
-
+        parse_for_test(stmt);
+        expect(TK_SEMICOLON);
+        parse_for_update(stmt);
     }
-
-    stmt->set_init(init);
-    stmt->set_test(test);
-    stmt->set_update(update);
-    stmt->set_range(range);
 
     expect(TK_COLON);
     indent();
@@ -295,6 +269,83 @@ ForStatement* Parser::parse_for_statement() {
     dedent();
 
     return stmt;
+}
+
+void Parser::parse_for_init_or_range(ForStatement* stmt) {
+    Expression* expr = nullptr;
+    ExpressionList* init = nullptr;
+
+    if (lookahead(TK_SEMICOLON)) {
+        return;
+    }
+
+    expr = parse_expression();
+
+    if (expr == nullptr) {
+        assert(false && "expected for expression");
+    }
+
+    if (expr->get_kind() == EXPR_IN) {
+        stmt->set_range(expr);
+    } else {
+        init = new ExpressionList();
+        init->add_expression(expr);
+
+        while (match(TK_COMMA)) {
+            expr = parse_expression();
+
+            if (expr == nullptr) {
+                assert(false && "missing expression on for initialization");
+            }
+
+            init->add_expression(expr);
+        }
+
+        stmt->set_init(init);
+    }
+}
+
+void Parser::parse_for_test(ForStatement* stmt) {
+    Expression* test = nullptr;
+
+    if (lookahead(TK_SEMICOLON)) {
+        return;
+    }
+
+    test = parse_expression();
+
+    if (test == nullptr) {
+        assert(false && "expected for test expression");
+    }
+
+    stmt->set_test(test);
+}
+
+void Parser::parse_for_update(ForStatement* stmt) {
+    if (lookahead(TK_COLON)) {
+        return;
+    }
+
+    ExpressionList* update = new ExpressionList();
+    Expression* expr = parse_expression();
+
+    if (expr == nullptr) {
+        assert(false && "missing update expression in for loop");
+    }
+
+    update->add_expression(expr);
+
+    while (match(TK_COMMA)) {
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            assert(false && "missing expression on for loop");
+        }
+
+        update->add_expression(expr);
+    }
+
+    stmt->set_update(update);
 }
 
 CompoundStatement* Parser::parse_compound_statement() {

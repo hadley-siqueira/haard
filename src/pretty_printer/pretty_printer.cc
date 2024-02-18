@@ -175,6 +175,10 @@ void PrettyPrinter::print_statement(Statement* stmt) {
         print_while_statement((WhileStatement*) stmt);
         break;
 
+    case STMT_FOR:
+        print_for_statement((ForStatement*) stmt);
+        break;
+
     default:
         assert(false && "invalid statement");
         break;
@@ -185,6 +189,27 @@ void PrettyPrinter::print_while_statement(WhileStatement* stmt) {
     print_indentation();
     out << "while ";
     print_expression(stmt->get_condition());
+    out << ":\n";
+    indent();
+    print_compound_statement(stmt->get_statements());
+    dedent();
+    out << '\n';
+}
+
+void PrettyPrinter::print_for_statement(ForStatement* stmt) {
+    print_indentation();
+    out << "for ";
+
+    if (stmt->is_foreach()) {
+        print_expression(stmt->get_range());
+    } else {
+        print_expression_list(stmt->get_init(), "", "");
+        out << "; ";
+        print_expression(stmt->get_test());
+        out << "; ";
+        print_expression_list(stmt->get_update(), "", "");
+    }
+
     out << ":\n";
     indent();
     print_compound_statement(stmt->get_statements());

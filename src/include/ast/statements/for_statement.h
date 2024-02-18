@@ -4,6 +4,7 @@
 #include "ast/statement.h"
 #include "ast/compound_statement.h"
 #include "ast/expression.h"
+#include "ast/expression_list.h"
 
 namespace haard {
     class ForStatement : public Statement {
@@ -15,11 +16,11 @@ namespace haard {
         Expression* get_test() const;
         void set_test(Expression* newTest);
 
-        Expression* get_init() const;
-        void set_init(Expression* newInit);
+        ExpressionList* get_init() const;
+        void set_init(ExpressionList* newInit);
 
-        Expression* get_update() const;
-        void set_update(Expression* newUpdate);
+        ExpressionList* get_update() const;
+        void set_update(ExpressionList* newUpdate);
 
         Expression* get_range() const;
         void set_range(Expression* newRange);
@@ -27,10 +28,12 @@ namespace haard {
         CompoundStatement *get_statements() const;
         void set_statements(CompoundStatement *newStatements);
 
+        bool is_foreach();
+
     private:
         Expression* test;
-        Expression* init;
-        Expression* update;
+        ExpressionList* init;
+        ExpressionList* update;
         Expression* range;
         CompoundStatement* statements;
     };

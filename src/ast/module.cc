@@ -7,10 +7,6 @@ Module::Module() {
 }
 
 Module::~Module() {
-    for (auto i : imports) {
-        delete i;
-    }
-
     for (auto d : declarations) {
         delete d;
     }
