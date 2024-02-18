@@ -123,6 +123,7 @@ set(AST_SRC
     src/ast/function.cc
     src/ast/named_type_descriptor.cc
     src/ast/class.cc
+    src/ast/struct.cc
     src/ast/variable.cc
     src/ast/type.cc
     src/ast/function_type.cc

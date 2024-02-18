@@ -1,0 +1,10 @@
+struct Pair:
+    x : int
+    y : int
+
+struct Pair2<T, A>:
+    x : T
+    y : A
+
+struct Coordinate(Pair):
+    z : int

@@ -8,6 +8,9 @@ namespace haard {
         AST_MODULE,
         AST_FUNCTION,
         AST_CLASS,
+        AST_STRUCT,
+        AST_ENUM,
+        AST_UNION,
         AST_IMPORT,
         AST_ID,
 

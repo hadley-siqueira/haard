@@ -20,6 +20,7 @@ namespace haard {
         Import* parse_import();
 
         Class* parse_class();
+        Struct* parse_struct();
         Variable* parse_variable();
 
         Function* parse_function();

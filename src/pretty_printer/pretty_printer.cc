@@ -37,6 +37,10 @@ void PrettyPrinter::print_declaration(Declaration* decl) {
     case AST_CLASS:
         print_class((Class*) decl);
         break;
+
+    case AST_STRUCT:
+        print_struct((Struct*) decl);
+        break;
     }
 
     out << '\n';
@@ -87,6 +91,41 @@ void PrettyPrinter::print_class(Class* klass) {
     for (int i = 0; i < klass->functions_count(); ++i) {
         print_indentation();
         print_function(klass->get_function(i));
+        out << '\n';
+    }
+
+    dedent();
+}
+
+void PrettyPrinter::print_struct(Struct* st) {
+    out << "struct ";
+    out << st->get_name().get_value();
+
+    if (st->get_generics()) {
+        print_generics(st->get_generics());
+    }
+
+    if (st->get_super_type()) {
+        out << "(";
+        print_type(st->get_super_type());
+        out << ")";
+    }
+
+    out << ":\n";
+    indent();
+
+    for (int i = 0; i < st->variables_count(); ++i) {
+        Variable* var = st->get_variable(i);
+
+        print_indentation();
+        out << var->get_name().get_value() << " : ";
+        print_type(var->get_type());
+        out << '\n';
+    }
+
+    for (int i = 0; i < st->functions_count(); ++i) {
+        print_indentation();
+        print_function(st->get_function(i));
         out << '\n';
     }
 

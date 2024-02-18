@@ -16,6 +16,7 @@ namespace haard {
         void print_declaration(Declaration* decl);
         void print_import(Import* import);
         void print_class(Class* klass);
+        void print_struct(Struct* st);
         void print_function(Function* function);
         void print_function_parameters(Function* function);
 

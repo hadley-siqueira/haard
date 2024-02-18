@@ -1,6 +1,7 @@
 class Pair:
     x : int
     y : int
+    k : int[3]
 
 class Node<T>:
     value : T
@@ -19,3 +20,9 @@ class Coordinate(Pair):
         x = 0
         y = 0
         z = 0
+
+
+class SuperNode<T>(Node<T>):
+    def init : void
+        next = 0
+        prev = 0

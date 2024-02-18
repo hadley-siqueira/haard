@@ -30,6 +30,8 @@ Module* Parser::parse_module() {
             module->add_function(parse_function());
         } else if (lookahead(TK_CLASS)) {
             module->add_class(parse_class());
+        } else if (lookahead(TK_STRUCT)) {
+            module->add_struct(parse_struct());
         } else {
             break;
         }
@@ -89,6 +91,38 @@ Class* Parser::parse_class() {
 
     dedent();
     return klass;
+}
+
+Struct* Parser::parse_struct() {
+    Struct* st = new Struct();
+
+    expect(TK_STRUCT);
+    expect(TK_ID);
+    st->set_name(matched);
+    st->set_generics(parse_generics());
+
+    if (match(TK_LEFT_PARENTHESIS)) {
+        st->set_super_type(parse_type());
+        expect(TK_RIGHT_PARENTHESIS);
+    }
+
+    expect(TK_COLON);
+    indent();
+
+    while (is_indented()) {
+        if (lookahead(TK_DEF)) {
+            st->add_function(parse_function());
+        } else if (lookahead(TK_ID)) {
+            st->add_variable(parse_variable());
+        } else if (match(TK_PASS)) {
+            break;
+        } else {
+            break;
+        }
+    }
+
+    dedent();
+    return st;
 }
 
 Variable* Parser::parse_variable() {

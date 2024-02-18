@@ -39,12 +39,21 @@ void Module::add_class(Class* klass) {
     declarations.push_back(klass);
 }
 
+void Module::add_struct(Struct* s) {
+    structs.push_back(s);
+    declarations.push_back(s);
+}
+
 int Module::functions_count() {
     return functions.size();
 }
 
 int Module::classes_count() {
     return classes.size();
+}
+
+int Module::structs_count() {
+    return structs.size();
 }
 
 Function* Module::get_function(int idx) {
