@@ -40,6 +40,11 @@ void Module::add_struct(Struct* s) {
     declarations.push_back(s);
 }
 
+void Module::add_union(Union* u) {
+    unions.push_back(u);
+    declarations.push_back(u);
+}
+
 int Module::functions_count() {
     return functions.size();
 }
@@ -50,6 +55,10 @@ int Module::classes_count() {
 
 int Module::structs_count() {
     return structs.size();
+}
+
+int Module::unions_count() {
+    return unions.size();
 }
 
 Function* Module::get_function(int idx) {

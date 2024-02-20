@@ -41,6 +41,10 @@ void PrettyPrinter::print_declaration(Declaration* decl) {
     case AST_STRUCT:
         print_struct((Struct*) decl);
         break;
+
+    case AST_UNION:
+        print_union((Union*) decl);
+        break;
     }
 
     out << '\n';
@@ -126,6 +130,41 @@ void PrettyPrinter::print_struct(Struct* st) {
     for (int i = 0; i < st->functions_count(); ++i) {
         print_indentation();
         print_function(st->get_function(i));
+        out << '\n';
+    }
+
+    dedent();
+}
+
+void PrettyPrinter::print_union(Union* u) {
+    out << "union ";
+    out << u->get_name().get_value();
+
+    if (u->get_generics()) {
+        print_generics(u->get_generics());
+    }
+
+    if (u->get_super_type()) {
+        out << "(";
+        print_type(u->get_super_type());
+        out << ")";
+    }
+
+    out << ":\n";
+    indent();
+
+    for (int i = 0; i < u->variables_count(); ++i) {
+        Variable* var = u->get_variable(i);
+
+        print_indentation();
+        out << var->get_name().get_value() << " : ";
+        print_type(var->get_type());
+        out << '\n';
+    }
+
+    for (int i = 0; i < u->functions_count(); ++i) {
+        print_indentation();
+        print_function(u->get_function(i));
         out << '\n';
     }
 

@@ -8,6 +8,7 @@
 #include "ast/function.h"
 #include "ast/class.h"
 #include "ast/struct.h"
+#include "ast/union.h"
 
 namespace haard {
     class Module : public AstNode {
@@ -23,10 +24,12 @@ namespace haard {
         void add_function(Function* function);
         void add_class(Class* klass);
         void add_struct(Struct* s);
+        void add_union(Union* u);
 
         int functions_count();
         int classes_count();
         int structs_count();
+        int unions_count();
 
         Function* get_function(int idx);
 
@@ -39,6 +42,7 @@ namespace haard {
         std::vector<Declaration*> declarations;
         std::vector<Class*> classes;
         std::vector<Struct*> structs;
+        std::vector<Union*> unions;
     };
 }
 

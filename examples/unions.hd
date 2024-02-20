@@ -1,0 +1,6 @@
+union Foo:
+    x : int
+    y : int
+
+    def to_str : str
+        return ""
