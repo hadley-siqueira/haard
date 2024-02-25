@@ -262,7 +262,7 @@ Statement* Parser::parse_statement() {
             assert(false && "expected an expression statement");
         }
 
-        stmt = new ExpressionStatement(parse_expression());
+        stmt = new ExpressionStatement(expr);
     }
 
     return stmt;

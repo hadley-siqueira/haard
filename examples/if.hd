@@ -1,0 +1,5 @@
+import std.io
+
+def main : void
+    if a > 0:
+        println('here')
