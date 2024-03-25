@@ -4,6 +4,7 @@
 #include "parser/parser.h"
 #include "string_pool/string_pool.h"
 #include "pretty_printer/pretty_printer.h"
+#include "driver/driver.h"
 
 using namespace haard;
 
@@ -33,6 +34,12 @@ void test_pretty_printer(int argc, char** argv) {
     std::cout << printer.get_output() << '\n';
 
     delete module;
+}
+
+void test_driver(int argc, char** argv) {
+    Driver driver;
+
+
 }
 
 int main(int argc, char** argv) {

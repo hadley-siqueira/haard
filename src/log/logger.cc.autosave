@@ -1,0 +1,3 @@
+#include "log/logger.h"
+
+using namespace haard;

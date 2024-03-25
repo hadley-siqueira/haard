@@ -121,6 +121,7 @@ set(AST_STMTS
 set(AST_SRC
     src/ast/ast_node.cc
     src/ast/declaration.cc
+    src/ast/modules.cc
     src/ast/module.cc
     src/ast/import.cc
     src/ast/function.cc
@@ -162,8 +163,17 @@ set(PARSER_SRC
     src/parser/parser.cc
 )
 
+set(DRIVER_SRC
+    src/driver/driver.cc
+)
+
 set(PRETTY_PRINTER_SRC
     src/pretty_printer/pretty_printer.cc
+)
+
+set(LOG_SRC
+    src/log/log.cc
+    src/log/logger.cc
 )
 
 set(SOURCES
@@ -173,6 +183,7 @@ set(SOURCES
     ${AST_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}
     src/main.cc
 )
