@@ -39,12 +39,14 @@ void test_pretty_printer(int argc, char** argv) {
 void test_driver(int argc, char** argv) {
     Driver driver;
 
-
+    driver.run(argc, argv);
+    driver.exit();
 }
 
 int main(int argc, char** argv) {
     //test_scanner(argc, argv);
-    test_pretty_printer(argc, argv);
+    //test_pretty_printer(argc, argv);
+    test_driver(argc, argv);
 
     return 0;
 }

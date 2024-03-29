@@ -1330,3 +1330,11 @@ bool Parser::next_token_on_same_line() {
 
     return false;
 }
+
+Logger* Parser::get_logger() const {
+    return logger;
+}
+
+void Parser::set_logger(Logger* newLogger) {
+    logger = newLogger;
+}

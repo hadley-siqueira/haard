@@ -183,6 +183,7 @@ set(SOURCES
     ${AST_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}
     src/main.cc
