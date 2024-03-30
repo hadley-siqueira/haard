@@ -31,3 +31,11 @@ void Import::set_alias(Token& token) {
 const Token& Import::get_alias() {
     return alias;
 }
+
+Module* Import::get_module() const {
+    return module;
+}
+
+void Import::set_module(Module* newModule) {
+    module = newModule;
+}

@@ -101,6 +101,7 @@ set(AST_BINOPS_SRC
 
 set(AST_LITERALS
     src/ast/literals/literal.cc
+    src/ast/literals/boolean_literal.cc
     src/ast/literals/integer_literal.cc
     src/ast/literals/float_literal.cc
     src/ast/literals/double_literal.cc

@@ -100,6 +100,7 @@ namespace haard {
         EXPR_POS_DECREMENT,
 
         // Literals
+        EXPR_LITERAL_BOOLEAN,
         EXPR_LITERAL_INTEGER,
         EXPR_LITERAL_FLOAT,
         EXPR_LITERAL_DOUBLE,

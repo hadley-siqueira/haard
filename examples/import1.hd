@@ -1,0 +1,9 @@
+import std.io.print
+import std.io.file
+import array
+import opers
+
+def main : void
+    @args : str[]
+
+    print('a')

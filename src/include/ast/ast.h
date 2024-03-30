@@ -109,6 +109,7 @@
 #include "ast/identifier.h"
 
 #include "ast/literals/literal.h"
+#include "ast/literals/boolean_literal.h"
 #include "ast/literals/integer_literal.h"
 #include "ast/literals/float_literal.h"
 #include "ast/literals/double_literal.h"
