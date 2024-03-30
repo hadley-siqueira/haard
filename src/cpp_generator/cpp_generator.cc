@@ -219,15 +219,15 @@ void CppGenerator::build_expression(Expression* expr) {
     case EXPR_NOT_IN:
         print_not_in_expression((NotIn*) expr);
         break;
-
+*/
     case EXPR_INDEX:
-        print_index_expression(bin);
+        build_index_expression(bin);
         break;
 
     case EXPR_CALL:
-        print_call_expression((Call*) expr);
+        build_call_expression((Call*) expr);
         break;
-
+/*
     case EXPR_HASH_PAIR:
         print_hash_pair_expression((HashPair*) expr);
         break;
@@ -327,11 +327,49 @@ void CppGenerator::build_binary_operator(BinaryOperator* bin, bool no_space) {
     *output << ")";
 }
 
+void CppGenerator::build_index_expression(BinaryOperator* bin) {
+    build_expression(bin->get_left());
+    *output << '[';
+
+    build_expression(bin->get_right());
+    *output << ']';
+}
+
+void CppGenerator::build_call_expression(Call* expr) {
+    build_expression(expr->get_object());
+
+    if (expr->get_arguments()) {
+        build_expression_list(expr->get_arguments(), "(", ")");
+    } else {
+        *output << "()";
+    }
+}
+
 void CppGenerator::build_cast_expression(Cast* expr) {
     *output << "(";
     build_type(expr->get_type());
     *output << ") ";
     build_expression(expr->get_expression());
+}
+
+void CppGenerator::build_expression_list(ExpressionList *list, const char *begin, const char *end, const char *sep) {
+    if (list == nullptr) {
+        return;
+    }
+
+    int i;
+    *output << begin;
+
+    if (list->expressions_count() > 0) {
+        for (i = 0; i < list->expressions_count() - 1; ++i) {
+            build_expression(list->get_expression(i));
+            *output << sep << " ";
+        }
+
+        build_expression(list->get_expression(i));
+    }
+
+    *output << end;
 }
 
 void CppGenerator::build_type(Type* type) {

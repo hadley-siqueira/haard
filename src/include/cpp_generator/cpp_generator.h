@@ -34,7 +34,12 @@ namespace haard {
 
         void build_identifier(Identifier* id);
         void build_binary_operator(BinaryOperator* bin, bool no_space=false);
+
+        void build_index_expression(BinaryOperator* bin);
+        void build_call_expression(Call* expr);
         void build_cast_expression(Cast* expr);
+
+        void build_expression_list(ExpressionList* list, const char* begin, const char* end, const char* sep=",");
 
         void build_type(Type* type);
 

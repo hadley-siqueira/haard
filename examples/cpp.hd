@@ -10,7 +10,9 @@ def sum : int
 def pointer_stuff : void
     a = 0
     p = &a
+    p[0][i + 0] = 0
 
 def main : int
     a = 0 as int
+    b = sum(2, 3)
     return 0
