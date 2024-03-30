@@ -6,5 +6,11 @@ def sum : int
 
     return a + b
 
+
+def pointer_stuff : void
+    a = 0
+    p = &a
+
 def main : int
+    a = 0 as int
     return 0

@@ -34,6 +34,7 @@ namespace haard {
 
         void build_identifier(Identifier* id);
         void build_binary_operator(BinaryOperator* bin, bool no_space=false);
+        void build_cast_expression(Cast* expr);
 
         void build_type(Type* type);
 

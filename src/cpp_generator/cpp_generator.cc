@@ -206,16 +206,16 @@ void CppGenerator::build_expression(Expression* expr) {
     case EXPR_SHIFT_RIGHT_LOGICAL:
         build_binary_operator(bin);
         break;
-/*
+
     case EXPR_DOT:
     case EXPR_ARROW:
         build_binary_operator(bin, true);
         break;
 
     case EXPR_CAST:
-        print_cast_expression((Cast*) expr);
+        build_cast_expression((Cast*) expr);
         break;
-
+/*
     case EXPR_NOT_IN:
         print_not_in_expression((NotIn*) expr);
         break;
@@ -325,6 +325,13 @@ void CppGenerator::build_binary_operator(BinaryOperator* bin, bool no_space) {
 
     build_expression(bin->get_right());
     *output << ")";
+}
+
+void CppGenerator::build_cast_expression(Cast* expr) {
+    *output << "(";
+    build_type(expr->get_type());
+    *output << ") ";
+    build_expression(expr->get_expression());
 }
 
 void CppGenerator::build_type(Type* type) {
