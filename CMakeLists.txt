@@ -172,6 +172,10 @@ set(PRETTY_PRINTER_SRC
     src/pretty_printer/pretty_printer.cc
 )
 
+set(CPP_GENERATOR_SRC
+    src/cpp_generator/cpp_generator.cc
+)
+
 set(LOG_SRC
     src/log/log.cc
     src/log/logger.cc
@@ -187,6 +191,7 @@ set(SOURCES
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}
+    ${CPP_GENERATOR_SRC}
     src/main.cc
 )
 

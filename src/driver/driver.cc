@@ -4,6 +4,7 @@
 
 #include "driver/driver.h"
 #include "parser/parser.h"
+#include "cpp_generator/cpp_generator.h"
 
 using namespace haard;
 
@@ -23,11 +24,25 @@ void Driver::run(int argc, char** argv) {
             main_path = std::string(argv[i]);
         } else if (strcmp(argv[i], "--help") == 0) {
 
+        } else if (strcmp(argv[i], "--cpp") == 0) {
+            commands.push_back(DRIVER_CMD_CPP);
         }
     }
 
     configure();
-    parse_module_imports(parse_file(argv[1]));
+    parse_module_imports(parse_file(main_path));
+
+    exec_commands();
+}
+
+void Driver::exec_commands() {
+    for (int i = 0; i < commands.size(); ++i) {
+        switch (commands[i]) {
+        case DRIVER_CMD_CPP:
+            generate_cpp();
+            break;
+        }
+    }
 }
 
 void Driver::configure() {
@@ -138,6 +153,14 @@ void Driver::set_root_path_from_main_file() {
             root_path += main_path[i];
         }
     }
+}
+
+void Driver::generate_cpp() {
+    CppGenerator gen;
+    std::ofstream file("out.cc");
+
+    gen.build_modules(&modules);
+    file << gen.get_output();
 }
 
 bool Driver::file_exists(std::string path) {

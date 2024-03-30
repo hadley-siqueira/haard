@@ -8,12 +8,17 @@
 #include "ast/modules.h"
 
 namespace haard {
+    enum DriverCommands {
+        DRIVER_CMD_CPP
+    };
+
     class Driver {
     public:
         Driver();
         ~Driver();
 
         void run(int argc, char** argv);
+        void exec_commands();
         void configure();
         void exit();
         void read_configuration(std::string path);
@@ -27,6 +32,8 @@ namespace haard {
         void configure_search_path();
         void set_root_path_from_main_file();
 
+        void generate_cpp();
+
     private:
         bool file_exists(std::string path);
 
@@ -36,6 +43,7 @@ namespace haard {
 
     // system related stuff
     private:
+        std::vector<DriverCommands> commands;
         std::vector<std::string> search_path;
         std::string configuration_file_path;
         std::string main_path;

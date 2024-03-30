@@ -1,0 +1,6 @@
+def sum : int
+    @a : int
+    @b : int
+    @c : int
+
+    return a + b + c + 7

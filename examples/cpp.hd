@@ -1,0 +1,10 @@
+import cpp2
+
+def sum : int
+    @a : int
+    @b : int
+
+    return a + b
+
+def main : int
+    return 0
