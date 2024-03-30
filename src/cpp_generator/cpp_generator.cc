@@ -255,7 +255,7 @@ void CppGenerator::build_expression(Expression* expr) {
     case EXPR_PARENTHESIS:
         print_parenthesis_expression((Parenthesis*) expr);
         break;
-
+*/
     case EXPR_UNARY_PLUS:
     case EXPR_UNARY_MINUS:
     case EXPR_ADDRESS_OF:
@@ -263,28 +263,28 @@ void CppGenerator::build_expression(Expression* expr) {
     case EXPR_BITWISE_NOT:
     case EXPR_PRE_INCREMENT:
     case EXPR_PRE_DECREMENT:
-        print_unary_operator(un);
+        build_unary_operator(un);
         break;
 
     case EXPR_POS_INCREMENT:
     case EXPR_POS_DECREMENT:
-        print_unary_operator(un, true);
+        build_unary_operator(un, true);
         break;
-*/
+
     case EXPR_LITERAL_INTEGER:
     case EXPR_LITERAL_FLOAT:
     case EXPR_LITERAL_DOUBLE:
         *output << literal->get_token().get_value();
         break;
-/*
+
     case EXPR_LITERAL_CHAR:
-        print_char_literal((CharLiteral*) expr);
+        build_char_literal((CharLiteral*) expr);
         break;
 
     case EXPR_LITERAL_STRING:
-        print_string_literal((StringLiteral*) expr);
+        build_string_literal((StringLiteral*) expr);
         break;
-
+/*
     case EXPR_LITERAL_TUPLE:
         print_tuple_expression((TupleLiteral*) expr);
         break;
@@ -311,8 +311,19 @@ void CppGenerator::build_identifier(Identifier* id) {
     *output << id->get_name().get_value();
 }
 
+void CppGenerator::build_unary_operator(UnaryOperator* un, bool last) {
+    const char* oper = un->get_token().get_value();
+
+    if (last) {
+        build_expression(un->get_expression());
+        *output << oper;
+    } else {
+        *output << oper;
+        build_expression(un->get_expression());
+    }
+}
+
 void CppGenerator::build_binary_operator(BinaryOperator* bin, bool no_space) {
-    *output << "(";
     build_expression(bin->get_left());
 
     const char* oper = bin->get_token().get_value();
@@ -324,7 +335,6 @@ void CppGenerator::build_binary_operator(BinaryOperator* bin, bool no_space) {
     }
 
     build_expression(bin->get_right());
-    *output << ")";
 }
 
 void CppGenerator::build_index_expression(BinaryOperator* bin) {
@@ -350,6 +360,14 @@ void CppGenerator::build_cast_expression(Cast* expr) {
     build_type(expr->get_type());
     *output << ") ";
     build_expression(expr->get_expression());
+}
+
+void CppGenerator::build_char_literal(CharLiteral* ch) {
+    *output << '\'' << ch->get_token().get_value() << '\'';
+}
+
+void CppGenerator::build_string_literal(StringLiteral* str) {
+    *output << '"' << str->get_token().get_value() << '"';
 }
 
 void CppGenerator::build_expression_list(ExpressionList *list, const char *begin, const char *end, const char *sep) {

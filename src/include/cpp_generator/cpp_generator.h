@@ -33,11 +33,16 @@ namespace haard {
         void build_expression(Expression* expr);
 
         void build_identifier(Identifier* id);
+
+        void build_unary_operator(UnaryOperator* un, bool last=false);
         void build_binary_operator(BinaryOperator* bin, bool no_space=false);
 
         void build_index_expression(BinaryOperator* bin);
         void build_call_expression(Call* expr);
         void build_cast_expression(Cast* expr);
+
+        void build_char_literal(CharLiteral* ch);
+        void build_string_literal(StringLiteral* str);
 
         void build_expression_list(ExpressionList* list, const char* begin, const char* end, const char* sep=",");
 
