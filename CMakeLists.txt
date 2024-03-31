@@ -164,6 +164,16 @@ set(PARSER_SRC
     src/parser/parser.cc
 )
 
+set(SEMANTIC_SRC
+    src/semantic/semantic_pass.cc
+    src/semantic/semantic_first_pass.cc
+)
+
+set(SYMTAB_SRC
+    src/symbol_table/symbol.cc
+    src/symbol_table/symbol_table.cc
+)
+
 set(DRIVER_SRC
     src/driver/driver.cc
 )
@@ -188,6 +198,8 @@ set(SOURCES
     ${AST_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${SYMTAB_SRC}
+    ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}

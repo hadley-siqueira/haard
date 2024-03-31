@@ -4,6 +4,9 @@
 
 #include "driver/driver.h"
 #include "parser/parser.h"
+
+#include "semantic/semantic_first_pass.h"
+
 #include "cpp_generator/cpp_generator.h"
 
 using namespace haard;
@@ -31,6 +34,7 @@ void Driver::run(int argc, char** argv) {
 
     configure();
     parse_module_imports(parse_file(main_path));
+    semantic_analysis();
 
     exec_commands();
 }
@@ -63,6 +67,13 @@ void Driver::read_configuration(std::string path) {
     } else {
         std::cout << "failed config\n";
     }
+}
+
+void Driver::semantic_analysis() {
+    SemanticFirstPass pass1;
+
+    pass1.set_logger(logger);
+    pass1.build_modules(&modules);
 }
 
 Module* Driver::parse_file(std::string path) {

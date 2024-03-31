@@ -115,7 +115,15 @@ void CppGenerator::build_statement(Statement* stmt) {
 }
 
 void CppGenerator::build_while_statement(WhileStatement* stmt) {
-
+    print_indentation();
+    *output << "while (";
+    build_expression(stmt->get_condition());
+    *output << ") {\n";
+    indent();
+    build_compound_statement(stmt->get_statements());
+    dedent();
+    print_indentation();
+    *output << "}\n";
 }
 
 void CppGenerator::build_for_statement(ForStatement* stmt) {

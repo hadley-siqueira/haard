@@ -24,6 +24,9 @@ namespace haard {
         void read_configuration(std::string path);
 
     public:
+        void semantic_analysis();
+
+    public:
         Module* parse_file(std::string path);
         void parse_module_imports(Module* module);
         void parse_import(Import* import);
