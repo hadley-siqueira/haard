@@ -2,8 +2,17 @@
 
 using namespace haard;
 
-void SemanticPass::enter_scope(SymbolTable* scope) {
+SemanticPass::SemanticPass() {
+    current_scope = nullptr;
+}
+
+void SemanticPass::enter_scope(Scope* scope, bool set_parent) {
     scope_stack.push(current_scope);
+
+    if (set_parent) {
+        scope->set_parent(current_scope);
+    }
+
     current_scope = scope;
 }
 
@@ -14,6 +23,10 @@ void SemanticPass::leave_scope() {
 
 Symbol* SemanticPass::resolve(std::string name) {
     return current_scope->resolve(name);
+}
+
+void SemanticPass::define(SymbolKind kind, std::string name, void* descriptor) {
+    current_scope->define(kind, name, descriptor);
 }
 
 Logger* SemanticPass::get_logger() const {

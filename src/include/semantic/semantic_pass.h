@@ -9,17 +9,21 @@
 namespace haard {
     class SemanticPass {
     public:
-        void enter_scope(SymbolTable* scope);
+        SemanticPass();
+
+    public:
+        void enter_scope(Scope* scope, bool set_parent=true);
         void leave_scope();
 
         Symbol* resolve(std::string name);
+        void define(SymbolKind kind, std::string name, void* descriptor);
 
         Logger* get_logger() const;
         void set_logger(Logger* newLogger);
 
     protected:
-        SymbolTable* current_scope;
-        std::stack<SymbolTable*> scope_stack;
+        Scope* current_scope;
+        std::stack<Scope*> scope_stack;
         Logger* logger;
     };
 }

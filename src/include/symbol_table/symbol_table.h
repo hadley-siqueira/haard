@@ -1,5 +1,5 @@
-#ifndef HAARD_SYMBOL_TABLE_H
-#define HAARD_SYMBOL_TABLE_H
+#ifndef HAARD_SCOPE_H
+#define HAARD_SCOPE_H
 
 #include <map>
 #include <string>
@@ -7,20 +7,20 @@
 #include "symbol_table/symbol.h"
 
 namespace haard {
-    class SymbolTable {
+    class Scope {
     public:
-        SymbolTable();
+        Scope();
 
     public:
         Symbol* define(SymbolKind kind, std::string name, void* descriptor);
 
         Symbol* resolve(const std::string& name);
 
-        SymbolTable* get_parent() const;
-        void set_parent(SymbolTable *newParent);
+        Scope* get_parent() const;
+        void set_parent(Scope *newParent);
 
     private:
-        SymbolTable* parent;
+        Scope* parent;
         std::map<std::string, Symbol*> symbols;
     };
 }

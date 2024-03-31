@@ -22,7 +22,7 @@ namespace haard {
         bool has_alias();
 
         TypeList* get_generics() const;
-        void set_generics(TypeList *newGenerics);
+        void set_generics(TypeList* newGenerics);
 
     private:
         Token alias;

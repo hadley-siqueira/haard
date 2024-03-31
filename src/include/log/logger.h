@@ -7,6 +7,9 @@
 namespace haard {
     class Logger {
     public:
+        Logger();
+
+    public:
         void log(std::string message);
         void info(std::string message);
         void error(std::string message);
@@ -15,6 +18,7 @@ namespace haard {
 
     private:
         std::vector<Log> logs;
+        bool error_flag;
     };
 }
 

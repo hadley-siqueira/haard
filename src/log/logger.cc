@@ -4,6 +4,10 @@
 
 using namespace haard;
 
+Logger::Logger() {
+    error_flag = false;
+}
+
 void Logger::log(std::string message) {
     Log log;
 
@@ -22,6 +26,7 @@ void Logger::info(std::string message) {
 void Logger::error(std::string message) {
     Log log;
 
+    error_flag = true;
     log.set_level(LOG_ERROR);
     log.set_message(message);
     Logger::logs.push_back(log);

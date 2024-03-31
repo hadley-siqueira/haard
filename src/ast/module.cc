@@ -4,12 +4,15 @@ using namespace haard;
 
 Module::Module() {
     set_kind(AST_MODULE);
+    set_scope(new Scope());
 }
 
 Module::~Module() {
     for (auto d : declarations) {
         delete d;
     }
+
+    delete scope;
 }
 
 void Module::add_import(Import* import) {
@@ -75,5 +78,13 @@ int Module::declarations_count() {
 
 Declaration* Module::get_declaration(int idx) {
     return declarations[idx];
+}
+
+Scope* Module::get_scope() const {
+    return scope;
+}
+
+void Module::set_scope(Scope* newScope) {
+    scope = newScope;
 }
 

@@ -2,11 +2,11 @@
 
 using namespace haard;
 
-SymbolTable::SymbolTable() {
+Scope::Scope() {
     set_parent(nullptr);
 }
 
-Symbol* SymbolTable::define(SymbolKind kind, std::string name, void* descriptor) {
+Symbol* Scope::define(SymbolKind kind, std::string name, void* descriptor) {
     Symbol* sym;
 
     if (symbols.count(name) == 0) {
@@ -20,14 +20,14 @@ Symbol* SymbolTable::define(SymbolKind kind, std::string name, void* descriptor)
     return sym;
 }
 
-Symbol* SymbolTable::resolve(const std::string& name) {
+Symbol* Scope::resolve(const std::string& name) {
     return nullptr;
 }
 
-SymbolTable* SymbolTable::get_parent() const {
+Scope* Scope::get_parent() const {
     return parent;
 }
 
-void SymbolTable::set_parent(SymbolTable* newParent) {
+void Scope::set_parent(Scope* newParent) {
     parent = newParent;
 }

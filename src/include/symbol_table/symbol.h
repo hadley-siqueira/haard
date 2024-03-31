@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "ast/function.h"
+
 namespace haard {
     enum SymbolKind {
         SYM_CLASS,
@@ -22,6 +24,8 @@ namespace haard {
         void set_kind(SymbolKind newKind);
 
         void add_descriptor(void* descriptor);
+        int descriptors_count();
+        void* get_descriptor(int idx);
 
     public:
         bool is_function();

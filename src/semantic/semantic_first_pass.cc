@@ -9,7 +9,11 @@ void SemanticFirstPass::build_modules(Modules* modules) {
 }
 
 void SemanticFirstPass::build_module(Module* module) {
+    enter_scope(module->get_scope());
+
     build_module_functions(module);
+
+    leave_scope();
 }
 
 void SemanticFirstPass::build_module_functions(Module* module) {
@@ -24,14 +28,37 @@ void SemanticFirstPass::build_function(Function* function) {
     Symbol* sym = resolve(name);
 
     if (sym == nullptr) {
-/*        define_function(function);
-        define(SYM_FUNCTION, name, function);
-        return;*/
+        define_function(function);
+        return;
     }
 
     if (sym->is_function()) {
+        Function* other = check_for_overloaded(sym, function);
 
+        if (other != nullptr) {
+            logger->error("Can't define function. Function already defined with same signature");
+        } else {
+            define_function(function);
+        }
     }
 
-    logger->error("can't define function " + name + ". Already defined ");
+    logger->error("Can't define function " + name + ". Already defined ");
+}
+
+void SemanticFirstPass::define_function(Function* function) {
+    define(SYM_FUNCTION, function->get_name().get_value(), function);
+}
+
+Function* SemanticFirstPass::check_for_overloaded(Symbol* sym, Function* function) {
+    Function* other = nullptr;
+
+    for (int i = 0; i < sym->descriptors_count(); ++i) {
+        other = (Function*) sym->get_descriptor(i);
+
+        if (false /*function->equals(other)*/) {
+            return other;
+        }
+    }
+
+    return nullptr;
 }

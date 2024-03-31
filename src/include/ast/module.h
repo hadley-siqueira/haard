@@ -9,6 +9,7 @@
 #include "ast/class.h"
 #include "ast/struct.h"
 #include "ast/union.h"
+#include "symbol_table/symbol_table.h"
 
 namespace haard {
     class Module : public AstNode {
@@ -36,6 +37,9 @@ namespace haard {
         int declarations_count();
         Declaration* get_declaration(int idx);
 
+        Scope* get_scope() const;
+        void set_scope(Scope* newScope);
+
     private:
         std::vector<Import*> imports;
         std::vector<Function*> functions;
@@ -43,6 +47,7 @@ namespace haard {
         std::vector<Class*> classes;
         std::vector<Struct*> structs;
         std::vector<Union*> unions;
+        Scope* scope;
     };
 }
 
