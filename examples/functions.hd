@@ -1,0 +1,13 @@
+def sum : int
+    @a : int
+    @b : int
+
+    return a + b
+
+def foo : void
+    @a : int
+
+    return
+
+def main : void
+    pass

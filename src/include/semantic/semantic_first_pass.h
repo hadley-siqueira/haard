@@ -8,7 +8,7 @@ namespace haard {
     class SemanticFirstPass : public SemanticPass {
     public:
         void build_modules(Modules* modules);
-        void build_module(Module* module);
+        void build_modules_function(Modules* modules);
 
         void build_module_functions(Module* module);
         void build_function(Function* function);

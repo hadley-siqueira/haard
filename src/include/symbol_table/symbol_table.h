@@ -10,6 +10,7 @@ namespace haard {
     class Scope {
     public:
         Scope();
+        ~Scope();
 
     public:
         Symbol* define(SymbolKind kind, std::string name, void* descriptor);
@@ -17,7 +18,8 @@ namespace haard {
         Symbol* resolve(const std::string& name);
 
         Scope* get_parent() const;
-        void set_parent(Scope *newParent);
+        void set_parent(Scope* newParent);
+        void inspect();
 
     private:
         Scope* parent;
