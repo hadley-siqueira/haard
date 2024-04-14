@@ -34,6 +34,8 @@ Module* Parser::parse_module() {
             module->add_struct(parse_struct());
         } else if (lookahead(TK_UNION)) {
             module->add_union(parse_union());
+        } else if (lookahead(TK_ENUM)) {
+            module->add_enum(parse_enum());
         } else {
             break;
         }
@@ -159,6 +161,38 @@ Union* Parser::parse_union() {
     return st;
 }
 
+Enum* Parser::parse_enum() {
+    Enum* st = new Enum();
+
+    expect(TK_ENUM);
+    expect(TK_ID);
+    st->set_name(matched);
+    st->set_generics(parse_generics());
+
+    if (match(TK_LEFT_PARENTHESIS)) {
+        st->set_super_type(parse_type());
+        expect(TK_RIGHT_PARENTHESIS);
+    }
+
+    expect(TK_COLON);
+    indent();
+
+    while (is_indented()) {
+        if (lookahead(TK_DEF)) {
+            st->add_function(parse_function());
+        } else if (lookahead(TK_ID)) {
+            st->add_variable(parse_enum_variable());
+        } else if (match(TK_PASS)) {
+            break;
+        } else {
+            break;
+        }
+    }
+
+    dedent();
+    return st;
+}
+
 Variable* Parser::parse_variable() {
     Variable* var = new Variable();
 
@@ -167,6 +201,39 @@ Variable* Parser::parse_variable() {
 
     expect(TK_COLON);
     var->set_type(parse_type());
+
+    if (match(TK_ASSIGNMENT)) {
+        Expression* expr = parse_expression();
+
+        if (expr == nullptr) {
+            logger->error("missing expression on member");
+        } else {
+            var->set_expression(expr);
+        }
+    }
+
+    return var;
+}
+
+Variable* Parser::parse_enum_variable() {
+    Variable* var = new Variable();
+
+    expect(TK_ID);
+    var->set_name(matched);
+
+    if (match(TK_COLON)) {
+        var->set_type(parse_type());
+    }
+
+    if (match(TK_ASSIGNMENT)) {
+        Expression* expr = parse_expression();
+
+        if (expr == nullptr) {
+            logger->error("missing expression on enum member");
+        } else {
+            var->set_expression(expr);
+        }
+    }
 
     return var;
 }

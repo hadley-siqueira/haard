@@ -130,6 +130,7 @@ set(AST_SRC
     src/ast/class.cc
     src/ast/struct.cc
     src/ast/union.cc
+    src/ast/enum.cc
     src/ast/variable.cc
     src/ast/type.cc
     src/ast/function_type.cc

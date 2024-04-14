@@ -9,6 +9,7 @@
 #include "ast/class.h"
 #include "ast/struct.h"
 #include "ast/union.h"
+#include "ast/enum.h"
 #include "symbol_table/symbol_table.h"
 
 namespace haard {
@@ -26,13 +27,18 @@ namespace haard {
         void add_class(Class* klass);
         void add_struct(Struct* s);
         void add_union(Union* u);
+        void add_enum(Enum* e);
 
         int functions_count();
         int classes_count();
         int structs_count();
         int unions_count();
+        int enums_count();
 
         Class* get_class(int idx);
+        Struct* get_struct(int idx);
+        Union* get_union(int idx);
+        Enum* get_enum(int idx);
         Function* get_function(int idx);
 
         int declarations_count();
@@ -48,6 +54,7 @@ namespace haard {
         std::vector<Class*> classes;
         std::vector<Struct*> structs;
         std::vector<Union*> unions;
+        std::vector<Enum*> enums;
         Scope* scope;
     };
 }

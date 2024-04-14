@@ -23,7 +23,10 @@ namespace haard {
         Class* parse_class();
         Struct* parse_struct();
         Union* parse_union();
+        Enum* parse_enum();
+
         Variable* parse_variable();
+        Variable* parse_enum_variable();
 
         Function* parse_function();
         void parse_parameters(Function* function);

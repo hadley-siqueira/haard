@@ -48,6 +48,11 @@ void Module::add_union(Union* u) {
     declarations.push_back(u);
 }
 
+void Module::add_enum(Enum* e) {
+    enums.push_back(e);
+    declarations.push_back(e);
+}
+
 int Module::functions_count() {
     return functions.size();
 }
@@ -64,9 +69,37 @@ int Module::unions_count() {
     return unions.size();
 }
 
+int Module::enums_count() {
+    return enums.size();
+}
+
 Class* Module::get_class(int idx) {
     if (idx < classes_count()) {
         return classes[idx];
+    }
+
+    return nullptr;
+}
+
+Struct* Module::get_struct(int idx) {
+    if (idx < structs_count()) {
+        return structs[idx];
+    }
+
+    return nullptr;
+}
+
+Union* Module::get_union(int idx) {
+    if (idx < unions_count()) {
+        return unions[idx];
+    }
+
+    return nullptr;
+}
+
+Enum* Module::get_enum(int idx) {
+    if (idx < enums_count()) {
+        return enums[idx];
     }
 
     return nullptr;

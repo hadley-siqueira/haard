@@ -1,0 +1,18 @@
+enum Packet:
+    TCP
+    UDP
+
+enum Action:
+    Click    : (int, int)
+    Keypress : char
+    
+
+enum Packet2(int):
+    TCP = 0
+    UDP = 1 << 3
+
+enum Action2:
+    Click    : (int, int) = (0, 0)
+    Keypress : char
+    Move     : (int, int)
+
