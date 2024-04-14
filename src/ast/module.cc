@@ -64,6 +64,14 @@ int Module::unions_count() {
     return unions.size();
 }
 
+Class* Module::get_class(int idx) {
+    if (idx < classes_count()) {
+        return classes[idx];
+    }
+
+    return nullptr;
+}
+
 Function* Module::get_function(int idx) {
     if (idx < functions_count()) {
         return functions[idx];

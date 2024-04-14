@@ -5,13 +5,30 @@
 using namespace haard;
 
 void SemanticFirstPass::build_modules(Modules* modules) {
+    build_modules_classes(modules);
     build_modules_function(modules);
+}
+
+void SemanticFirstPass::build_modules_classes(Modules* modules) {
+    for (int i = 0; i < modules->modules_count(); ++i) {
+        build_module_classes(modules->get_module(i));
+    }
 }
 
 void SemanticFirstPass::build_modules_function(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         build_module_functions(modules->get_module(i));
     }
+}
+
+void SemanticFirstPass::build_module_classes(Module* module) {
+    enter_scope(module->get_scope());
+
+    for (int i = 0; i < module->classes_count(); ++i) {
+        build_class(module->get_class(i));
+    }
+
+    leave_scope();
 }
 
 void SemanticFirstPass::build_module_functions(Module* module) {
@@ -22,6 +39,17 @@ void SemanticFirstPass::build_module_functions(Module* module) {
     }
 
     leave_scope();
+}
+
+void SemanticFirstPass::build_class(Class* klass) {
+    std::string name = klass->get_name().get_value();
+
+    Symbol* sym = resolve(name);
+
+    if (sym == nullptr) {
+        define_class(klass);
+        return;
+    }
 }
 
 void SemanticFirstPass::build_function(Function* function) {
@@ -43,8 +71,14 @@ void SemanticFirstPass::build_function(Function* function) {
             define_function(function);
         }
     } else {
-        logger->error("Can't define function " + name + ". Already defined ");
+        logger->error("Can't define function " + name + ". Already defined");
     }
+}
+
+void SemanticFirstPass::define_class(Class* klass) {
+    std::string name = klass->get_name().get_value();
+    define(SYM_CLASS, name, klass);
+    logger->info("defining class " + name);
 }
 
 void SemanticFirstPass::define_function(Function* function) {

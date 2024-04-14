@@ -1,0 +1,9 @@
+class File:
+    path       : str
+    descriptor : void*
+
+    def open : void
+        @path : str&
+
+        this.path = path
+        descriptor = null

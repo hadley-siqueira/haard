@@ -32,6 +32,7 @@ namespace haard {
         int structs_count();
         int unions_count();
 
+        Class* get_class(int idx);
         Function* get_function(int idx);
 
         int declarations_count();
