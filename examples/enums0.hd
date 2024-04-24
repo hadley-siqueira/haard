@@ -5,7 +5,6 @@ enum Packet:
 enum Action:
     Click    : (int, int)
     Keypress : char
-    
 
 enum Packet2(int):
     TCP = 0
@@ -16,3 +15,10 @@ enum Action2:
     Keypress : char
     Move     : (int, int)
 
+    def to_str : str
+        case this:
+        with Click(x, y):
+            return "Click($x, $y)"
+
+        with Keypress(c):
+            return "Keypress('$c')"

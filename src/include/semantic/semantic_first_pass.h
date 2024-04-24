@@ -17,6 +17,15 @@ namespace haard {
         void build_class(Class* klass);
         void build_function(Function* function);
 
+        void build_expression(Expression* expr);
+        void build_identifier(Identifier* expr);
+
+        void build_assignment(Assignment* expr);
+
+    private:
+        bool is_new_variable_assignment(Assignment* expr);
+        void create_local_variable_for_assignment(Assignment* expr);
+
     private:
         void define_class(Class* klass);
         void define_function(Function* function);

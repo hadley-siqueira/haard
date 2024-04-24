@@ -13,6 +13,10 @@ namespace haard {
         SYM_STRUCT,
         SYM_FUNCTION,
         SYM_METHOD,
+
+        SYM_PARAMETER,
+        SYM_INSTANCE_VARIABLE,
+        SYM_LOCAL_VARIABLE,
     };
 
     class Symbol {

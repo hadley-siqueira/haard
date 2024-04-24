@@ -4,6 +4,7 @@
 #include "token/token.h"
 #include "ast/expression.h"
 #include "ast/type_list.h"
+#include "symbol_table/symbol.h"
 
 namespace haard {
     class Identifier : public Expression {
@@ -24,11 +25,15 @@ namespace haard {
         TypeList* get_generics() const;
         void set_generics(TypeList* newGenerics);
 
+        Symbol* get_symbol() const;
+        void set_symbol(Symbol* newSymbol);
+
     private:
         Token alias;
         bool alias_flag;
         bool global_alias_flag;
         TypeList* generics;
+        Symbol* symbol;
     };
 }
 

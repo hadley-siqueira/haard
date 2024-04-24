@@ -54,3 +54,11 @@ TypeList* Identifier::get_generics() const {
 void Identifier::set_generics(TypeList* newGenerics) {
     generics = newGenerics;
 }
+
+Symbol* Identifier::get_symbol() const {
+    return symbol;
+}
+
+void Identifier::set_symbol(Symbol* newSymbol) {
+    symbol = newSymbol;
+}
