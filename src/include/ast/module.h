@@ -10,7 +10,7 @@
 #include "ast/struct.h"
 #include "ast/union.h"
 #include "ast/enum.h"
-#include "symbol_table/symbol_table.h"
+#include "scope/scope.h"
 
 namespace haard {
     class Module : public AstNode {

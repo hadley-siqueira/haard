@@ -170,9 +170,9 @@ set(SEMANTIC_SRC
     src/semantic/semantic_first_pass.cc
 )
 
-set(SYMTAB_SRC
-    src/symbol_table/symbol.cc
-    src/symbol_table/symbol_table.cc
+set(SCOPE_SRC
+    src/scope/symbol.cc
+    src/scope/scope.cc
 )
 
 set(DRIVER_SRC
@@ -199,7 +199,7 @@ set(SOURCES
     ${AST_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
-    ${SYMTAB_SRC}
+    ${SCOPE_SRC}
     ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}

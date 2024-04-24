@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-#include "symbol_table/symbol.h"
+#include "scope/symbol.h"
 
 namespace haard {
     class Scope {

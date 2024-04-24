@@ -1,4 +1,4 @@
-#include "symbol_table/symbol.h"
+#include "scope/symbol.h"
 
 using namespace haard;
 

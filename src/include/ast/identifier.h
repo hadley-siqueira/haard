@@ -4,7 +4,7 @@
 #include "token/token.h"
 #include "ast/expression.h"
 #include "ast/type_list.h"
-#include "symbol_table/symbol.h"
+#include "scope/symbol.h"
 
 namespace haard {
     class Identifier : public Expression {

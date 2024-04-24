@@ -3,7 +3,7 @@
 
 #include <stack>
 
-#include "symbol_table/symbol_table.h"
+#include "scope/scope.h"
 #include "log/logger.h"
 
 namespace haard {

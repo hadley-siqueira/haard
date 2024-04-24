@@ -22,6 +22,8 @@ namespace haard {
 
         void build_assignment(Assignment* expr);
 
+        void build_plus(Plus* expr);
+
     private:
         bool is_new_variable_assignment(Assignment* expr);
         void create_local_variable_for_assignment(Assignment* expr);

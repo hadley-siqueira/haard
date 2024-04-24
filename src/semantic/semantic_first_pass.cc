@@ -91,6 +91,10 @@ void SemanticFirstPass::build_expression(Expression* expr) {
     case EXPR_ASSIGNMENT:
         build_assignment((Assignment*) expr);
         break;
+
+    case EXPR_PLUS:
+        build_plus((Plus*) expr);
+        break;
     }
 }
 
@@ -120,6 +124,16 @@ void SemanticFirstPass::build_assignment(Assignment* expr) {
 
     build_expression(left);
     expr->set_type(left->get_type());
+}
+
+void SemanticFirstPass::build_plus(Plus* expr) {
+    Expression* left = expr->get_left();
+    Expression* right = expr->get_right();
+
+    build_expression(left);
+    build_expression(right);
+
+
 }
 
 bool SemanticFirstPass::is_new_variable_assignment(Assignment* expr) {

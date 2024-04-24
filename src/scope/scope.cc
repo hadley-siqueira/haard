@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "symbol_table/symbol_table.h"
+#include "scope/scope.h"
 
 using namespace haard;
 
