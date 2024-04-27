@@ -157,6 +157,12 @@ set(AST_SRC
     src/ast/identifier.cc
 )
 
+set(IR_SRC
+    src/ir/ir.cc
+    src/ir/ir_value.cc
+    src/ir/ir_binop.cc
+)
+
 set(SCANNER_SRC
     src/scanner/scanner.cc
 )
@@ -197,6 +203,7 @@ set(SOURCES
     ${TYPE_POOL_SRC}
     ${TOKEN_SRC}
     ${AST_SRC}
+    ${IR_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${SCOPE_SRC}
