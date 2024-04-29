@@ -5,30 +5,48 @@
 using namespace haard;
 
 void SemanticFirstPass::build_modules(Modules* modules) {
-    build_modules_classes(modules);
-    build_modules_function(modules);
+    define_modules_classes(modules);
+    define_modules_function(modules);
+
+    build_modules_functions(modules);
 }
 
-void SemanticFirstPass::build_modules_classes(Modules* modules) {
+void SemanticFirstPass::define_modules_classes(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
-        build_module_classes(modules->get_module(i));
+        define_module_classes(modules->get_module(i));
     }
 }
 
-void SemanticFirstPass::build_modules_function(Modules* modules) {
+void SemanticFirstPass::define_modules_function(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
-        build_module_functions(modules->get_module(i));
+        define_module_functions(modules->get_module(i));
     }
 }
 
-void SemanticFirstPass::build_module_classes(Module* module) {
+void SemanticFirstPass::define_module_classes(Module* module) {
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->classes_count(); ++i) {
-        build_class(module->get_class(i));
+        define_class(module->get_class(i));
     }
 
     leave_scope();
+}
+
+void SemanticFirstPass::define_module_functions(Module* module) {
+    enter_scope(module->get_scope());
+
+    for (int i = 0; i < module->functions_count(); ++i) {
+        define_function(module->get_function(i));
+    }
+
+    leave_scope();
+}
+
+void SemanticFirstPass::build_modules_functions(Modules* modules) {
+    for (int i = 0; i < modules->modules_count(); ++i) {
+        build_module_functions(modules->get_module(i));
+    }
 }
 
 void SemanticFirstPass::build_module_functions(Module* module) {
@@ -41,24 +59,62 @@ void SemanticFirstPass::build_module_functions(Module* module) {
     leave_scope();
 }
 
-void SemanticFirstPass::build_class(Class* klass) {
+void SemanticFirstPass::build_function(Function* function) {
+    enter_scope(function->get_scope());
+
+    leave_scope();
+}
+
+void SemanticFirstPass::build_statement(Statement* stmt) {
+    ExpressionStatement* expr = (ExpressionStatement*) stmt;
+
+    if (stmt == nullptr) {
+        return;
+    }
+
+    int kind = stmt->get_kind();
+
+    switch (kind) {
+    case STMT_COMPOUND:
+        build_compound_statement((CompoundStatement*) stmt);
+        break;
+
+    case STMT_EXPRESSION:
+        build_expression(expr->get_expression());
+        break;
+    }
+}
+
+void SemanticFirstPass::build_compound_statement(CompoundStatement* stmt) {
+    enter_scope(stmt->get_scope());
+
+    for (int i = 0; i < stmt->statements_count(); ++i) {
+        build_statement(stmt->get_statement(i));
+    }
+
+    leave_scope();
+}
+
+void SemanticFirstPass::define_class(Class* klass) {
     std::string name = klass->get_name().get_value();
 
     Symbol* sym = resolve(name);
 
     if (sym == nullptr) {
-        define_class(klass);
+        define(SYM_CLASS, name, klass);
+        logger->info("defining class " + name);
         return;
     }
 }
 
-void SemanticFirstPass::build_function(Function* function) {
+void SemanticFirstPass::define_function(Function* function) {
     std::string name = function->get_name().get_value();
 
     Symbol* sym = resolve(name);
 
     if (sym == nullptr) {
-        define_function(function);
+        define(SYM_FUNCTION, name, function);
+        logger->info("defining function " + name);
         return;
     }
 
@@ -68,7 +124,8 @@ void SemanticFirstPass::build_function(Function* function) {
         if (other != nullptr) {
             logger->error("Can't define function. Function already defined with same signature");
         } else {
-            define_function(function);
+            define(SYM_FUNCTION, name, function);
+            logger->info("defining function " + name);
         }
     } else {
         logger->error("Can't define function " + name + ". Already defined");
@@ -132,8 +189,6 @@ void SemanticFirstPass::build_plus(Plus* expr) {
 
     build_expression(left);
     build_expression(right);
-
-
 }
 
 bool SemanticFirstPass::is_new_variable_assignment(Assignment* expr) {
@@ -159,18 +214,6 @@ void SemanticFirstPass::create_local_variable_for_assignment(Assignment* expr) {
     var->set_name(name);
     var->set_type(expr->get_right()->get_type());
     define(SYM_LOCAL_VARIABLE, name.get_value(), var);
-}
-
-void SemanticFirstPass::define_class(Class* klass) {
-    std::string name = klass->get_name().get_value();
-    define(SYM_CLASS, name, klass);
-    logger->info("defining class " + name);
-}
-
-void SemanticFirstPass::define_function(Function* function) {
-    std::string name = function->get_name().get_value();
-    define(SYM_FUNCTION, name, function);
-    logger->info("defining function " + name);
 }
 
 Function* SemanticFirstPass::check_for_overloaded(Symbol* sym, Function* function) {

@@ -3,7 +3,7 @@
 using namespace haard;
 
 ExpressionStatement::ExpressionStatement(Expression* expr) {
-    set_kind(AST_EXPRESSION_STATEMENT);
+    set_kind(STMT_EXPRESSION);
     set_expression(expr);
 }
 

@@ -202,11 +202,11 @@ void PrettyPrinter::print_function_parameters(Function* function) {
 
 void PrettyPrinter::print_statement(Statement* stmt) {
     switch (stmt->get_kind()) {
-    case AST_COMPOUND_STATEMENT:
+    case STMT_COMPOUND:
         print_compound_statement((CompoundStatement*) stmt);
         break;
 
-    case AST_EXPRESSION_STATEMENT:
+    case STMT_EXPRESSION:
         print_expression_statement((ExpressionStatement*) stmt);
         break;
 

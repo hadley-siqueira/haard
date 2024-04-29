@@ -1,4 +1,5 @@
 #include "ast/function.h"
+#include "scope/scope.h"
 
 using namespace haard;
 
@@ -7,6 +8,7 @@ Function::Function() {
     set_generics(nullptr);
     set_return_type(nullptr);
     set_statements(nullptr);
+    set_scope(new Scope());
 }
 
 Function::~Function() {
@@ -14,6 +16,7 @@ Function::~Function() {
         delete v;
     }
 
+    delete scope;
     delete statements;
 }
 
@@ -51,4 +54,12 @@ CompoundStatement* Function::get_statements() const {
 
 void Function::set_statements(CompoundStatement* newStatements) {
     statements = newStatements;
+}
+
+Scope* Function::get_scope() const {
+    return scope;
+}
+
+void Function::set_scope(Scope* newScope) {
+    scope = newScope;
 }

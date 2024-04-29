@@ -8,7 +8,10 @@
 #include "ast/type_list.h"
 #include "ast/compound_statement.h"
 
+
 namespace haard {
+    class Scope;
+
     class Function : public Declaration {
     public:
         Function();
@@ -27,9 +30,13 @@ namespace haard {
         CompoundStatement* get_statements() const;
         void set_statements(CompoundStatement *newStatements);
 
+        Scope* get_scope() const;
+        void set_scope(Scope* newScope);
+
     private:
         Type* return_type;
         TypeList* generics;
+        Scope* scope;
         CompoundStatement* statements;
         std::vector<Variable*> parameters;
     };

@@ -88,11 +88,11 @@ void CppGenerator::build_function_body(Function* function) {
 
 void CppGenerator::build_statement(Statement* stmt) {
     switch (stmt->get_kind()) {
-    case AST_COMPOUND_STATEMENT:
+    case STMT_COMPOUND:
         build_compound_statement((CompoundStatement*) stmt);
         break;
 
-    case AST_EXPRESSION_STATEMENT:
+    case STMT_EXPRESSION:
         build_expression_statement((ExpressionStatement*) stmt);
         break;
 

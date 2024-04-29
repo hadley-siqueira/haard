@@ -8,14 +8,22 @@ namespace haard {
     class SemanticFirstPass : public SemanticPass {
     public:
         void build_modules(Modules* modules);
-        void build_modules_classes(Modules* modules);
-        void build_modules_function(Modules* modules);
+        void define_modules_classes(Modules* modules);
+        void define_modules_function(Modules* modules);
 
-        void build_module_classes(Module* module);
+        void define_module_classes(Module* module);
+        void define_module_functions(Module* module);
+
+        void define_class(Class* klass);
+        void define_function(Function* function);
+
+        void build_modules_functions(Modules* modules);
         void build_module_functions(Module* module);
 
-        void build_class(Class* klass);
         void build_function(Function* function);
+
+        void build_statement(Statement* stmt);
+        void build_compound_statement(CompoundStatement* stmt);
 
         void build_expression(Expression* expr);
         void build_identifier(Identifier* expr);
@@ -29,9 +37,6 @@ namespace haard {
         void create_local_variable_for_assignment(Assignment* expr);
 
     private:
-        void define_class(Class* klass);
-        void define_function(Function* function);
-
         Function* check_for_overloaded(Symbol* sym, Function* function);
     };
 }
