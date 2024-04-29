@@ -5,7 +5,7 @@
 #include "driver/driver.h"
 #include "parser/parser.h"
 
-#include "semantic/semantic_first_pass.h"
+#include "semantic/semantic_define_pass.h"
 
 #include "cpp_generator/cpp_generator.h"
 
@@ -70,7 +70,7 @@ void Driver::read_configuration(std::string path) {
 }
 
 void Driver::semantic_analysis() {
-    SemanticFirstPass pass1;
+    SemanticDefinePass pass1;
 
     pass1.set_logger(logger);
     pass1.build_modules(&modules);

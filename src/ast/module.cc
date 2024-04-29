@@ -36,6 +36,7 @@ void Module::add_function(Function* function) {
 void Module::add_class(Class* klass) {
     classes.push_back(klass);
     declarations.push_back(klass);
+    klass->set_module(this);
 }
 
 void Module::add_struct(Struct* s) {
@@ -127,5 +128,17 @@ Scope* Module::get_scope() const {
 
 void Module::set_scope(Scope* newScope) {
     scope = newScope;
+}
+
+std::string Module::get_qualified_path() {
+    return path;
+}
+
+const std::string& Module::get_path() const {
+    return path;
+}
+
+void Module::set_path(const std::string& newPath) {
+    path = newPath;
 }
 

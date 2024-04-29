@@ -173,7 +173,7 @@ set(PARSER_SRC
 
 set(SEMANTIC_SRC
     src/semantic/semantic_pass.cc
-    src/semantic/semantic_first_pass.cc
+    src/semantic/semantic_define_pass.cc
 )
 
 set(SCOPE_SRC

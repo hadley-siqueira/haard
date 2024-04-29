@@ -5,7 +5,7 @@
 #include "ast/ast.h"
 
 namespace haard {
-    class SemanticFirstPass : public SemanticPass {
+    class SemanticDefinePass : public SemanticPass {
     public:
         void build_modules(Modules* modules);
         void define_modules_classes(Modules* modules);

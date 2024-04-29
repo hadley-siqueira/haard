@@ -1,0 +1,10 @@
+import std.io.file
+
+class Pixel:
+    r : u8
+    g : u8
+    b : u8
+
+class Pair<T, K>:
+    first  : T
+    second : K

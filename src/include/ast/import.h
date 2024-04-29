@@ -21,14 +21,10 @@ namespace haard {
         void set_alias(Token& token);
         const Token& get_alias();
 
-        Module* get_module() const;
-        void set_module(Module *newModule);
-
     private:
         std::vector<Token> path;
         Token alias;
         bool alias_flag;
-        Module* module;
     };
 }
 

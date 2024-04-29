@@ -1,4 +1,7 @@
+#include <sstream>
+
 #include "ast/named_type_descriptor.h"
+#include "ast/module.h"
 
 using namespace haard;
 
@@ -63,4 +66,23 @@ Type* NamedTypeDescriptor::get_super_type() const {
 
 void NamedTypeDescriptor::set_super_type(Type* newSuper_type) {
     super_type = newSuper_type;
+}
+
+std::string NamedTypeDescriptor::get_qualified_name() {
+    std::stringstream ss;
+
+    ss << get_module()->get_qualified_path() << ".";
+    ss << get_name().get_value();
+
+    if (get_generics()) {
+        ss << "<";
+
+        for (int i = 0; i < generics->types_count(); ++i) {
+            ss << "%0, ";
+        }
+
+        ss << ">";
+    }
+
+    return ss.str();
 }

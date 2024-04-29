@@ -1,29 +1,29 @@
 #include <iostream>
 
-#include "semantic/semantic_first_pass.h"
+#include "semantic/semantic_define_pass.h"
 
 using namespace haard;
 
-void SemanticFirstPass::build_modules(Modules* modules) {
+void SemanticDefinePass::build_modules(Modules* modules) {
     define_modules_classes(modules);
     define_modules_function(modules);
 
     build_modules_functions(modules);
 }
 
-void SemanticFirstPass::define_modules_classes(Modules* modules) {
+void SemanticDefinePass::define_modules_classes(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         define_module_classes(modules->get_module(i));
     }
 }
 
-void SemanticFirstPass::define_modules_function(Modules* modules) {
+void SemanticDefinePass::define_modules_function(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         define_module_functions(modules->get_module(i));
     }
 }
 
-void SemanticFirstPass::define_module_classes(Module* module) {
+void SemanticDefinePass::define_module_classes(Module* module) {
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->classes_count(); ++i) {
@@ -33,7 +33,7 @@ void SemanticFirstPass::define_module_classes(Module* module) {
     leave_scope();
 }
 
-void SemanticFirstPass::define_module_functions(Module* module) {
+void SemanticDefinePass::define_module_functions(Module* module) {
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->functions_count(); ++i) {
@@ -43,13 +43,13 @@ void SemanticFirstPass::define_module_functions(Module* module) {
     leave_scope();
 }
 
-void SemanticFirstPass::build_modules_functions(Modules* modules) {
+void SemanticDefinePass::build_modules_functions(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         build_module_functions(modules->get_module(i));
     }
 }
 
-void SemanticFirstPass::build_module_functions(Module* module) {
+void SemanticDefinePass::build_module_functions(Module* module) {
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->functions_count(); ++i) {
@@ -59,13 +59,13 @@ void SemanticFirstPass::build_module_functions(Module* module) {
     leave_scope();
 }
 
-void SemanticFirstPass::build_function(Function* function) {
+void SemanticDefinePass::build_function(Function* function) {
     enter_scope(function->get_scope());
 
     leave_scope();
 }
 
-void SemanticFirstPass::build_statement(Statement* stmt) {
+void SemanticDefinePass::build_statement(Statement* stmt) {
     ExpressionStatement* expr = (ExpressionStatement*) stmt;
 
     if (stmt == nullptr) {
@@ -85,7 +85,7 @@ void SemanticFirstPass::build_statement(Statement* stmt) {
     }
 }
 
-void SemanticFirstPass::build_compound_statement(CompoundStatement* stmt) {
+void SemanticDefinePass::build_compound_statement(CompoundStatement* stmt) {
     enter_scope(stmt->get_scope());
 
     for (int i = 0; i < stmt->statements_count(); ++i) {
@@ -95,19 +95,19 @@ void SemanticFirstPass::build_compound_statement(CompoundStatement* stmt) {
     leave_scope();
 }
 
-void SemanticFirstPass::define_class(Class* klass) {
+void SemanticDefinePass::define_class(Class* klass) {
     std::string name = klass->get_name().get_value();
 
     Symbol* sym = resolve(name);
 
     if (sym == nullptr) {
         define(SYM_CLASS, name, klass);
-        logger->info("defining class " + name);
+        logger->info("defining class " + name + " (" + klass->get_qualified_name() + ")");
         return;
     }
 }
 
-void SemanticFirstPass::define_function(Function* function) {
+void SemanticDefinePass::define_function(Function* function) {
     std::string name = function->get_name().get_value();
 
     Symbol* sym = resolve(name);
@@ -132,7 +132,7 @@ void SemanticFirstPass::define_function(Function* function) {
     }
 }
 
-void SemanticFirstPass::build_expression(Expression* expr) {
+void SemanticDefinePass::build_expression(Expression* expr) {
     if (expr == nullptr) {
         logger->error("semantic: expr == null");
         return;
@@ -157,7 +157,7 @@ void SemanticFirstPass::build_expression(Expression* expr) {
 
 /* This method checks for simple identifiers. For instance a and my_id
  * not a.foo.bar or a[2] or foo(2, 3) */
-void SemanticFirstPass::build_identifier(Identifier* expr) {
+void SemanticDefinePass::build_identifier(Identifier* expr) {
     std::string name = expr->get_name().get_value();
 
     Symbol* sym = resolve(name);
@@ -169,7 +169,7 @@ void SemanticFirstPass::build_identifier(Identifier* expr) {
     }
 }
 
-void SemanticFirstPass::build_assignment(Assignment* expr) {
+void SemanticDefinePass::build_assignment(Assignment* expr) {
     Expression* left = expr->get_left();
     Expression* right = expr->get_right();
 
@@ -183,7 +183,7 @@ void SemanticFirstPass::build_assignment(Assignment* expr) {
     expr->set_type(left->get_type());
 }
 
-void SemanticFirstPass::build_plus(Plus* expr) {
+void SemanticDefinePass::build_plus(Plus* expr) {
     Expression* left = expr->get_left();
     Expression* right = expr->get_right();
 
@@ -191,7 +191,7 @@ void SemanticFirstPass::build_plus(Plus* expr) {
     build_expression(right);
 }
 
-bool SemanticFirstPass::is_new_variable_assignment(Assignment* expr) {
+bool SemanticDefinePass::is_new_variable_assignment(Assignment* expr) {
     Expression* left = expr->get_left();
 
     if (left->get_kind() == AST_ID) {
@@ -205,7 +205,7 @@ bool SemanticFirstPass::is_new_variable_assignment(Assignment* expr) {
     return false;
 }
 
-void SemanticFirstPass::create_local_variable_for_assignment(Assignment* expr) {
+void SemanticDefinePass::create_local_variable_for_assignment(Assignment* expr) {
     Variable* var = new Variable();
     Expression* left = expr->get_left();
     Identifier* id = (Identifier*) left;
@@ -216,7 +216,7 @@ void SemanticFirstPass::create_local_variable_for_assignment(Assignment* expr) {
     define(SYM_LOCAL_VARIABLE, name.get_value(), var);
 }
 
-Function* SemanticFirstPass::check_for_overloaded(Symbol* sym, Function* function) {
+Function* SemanticDefinePass::check_for_overloaded(Symbol* sym, Function* function) {
     Function* other = nullptr;
 
     for (int i = 0; i < sym->descriptors_count(); ++i) {

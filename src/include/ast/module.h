@@ -47,7 +47,13 @@ namespace haard {
         Scope* get_scope() const;
         void set_scope(Scope* newScope);
 
+        std::string get_qualified_path();
+
+        const std::string& get_path() const;
+        void set_path(const std::string& newPath);
+
     private:
+        std::string path;
         std::vector<Import*> imports;
         std::vector<Function*> functions;
         std::vector<Declaration*> declarations;

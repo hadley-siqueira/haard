@@ -26,8 +26,10 @@ namespace haard {
         TypeList* get_generics() const;
         void set_generics(TypeList* newGenerics);
 
-        Type *get_super_type() const;
-        void set_super_type(Type *newSuper_type);
+        Type* get_super_type() const;
+        void set_super_type(Type* newSuper_type);
+
+        virtual std::string get_qualified_name();
 
     private:
         TypeList* generics;
