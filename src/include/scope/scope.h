@@ -16,6 +16,7 @@ namespace haard {
         Symbol* define(SymbolKind kind, std::string name, void* descriptor);
 
         Symbol* resolve(const std::string& name);
+        Symbol* resolve_in_module(const std::string& name);
 
         Scope* get_parent() const;
         void set_parent(Scope* newParent);
@@ -23,6 +24,7 @@ namespace haard {
 
     private:
         Scope* parent;
+        std::vector<Scope*> siblings;
         std::map<std::string, Symbol*> symbols;
     };
 }

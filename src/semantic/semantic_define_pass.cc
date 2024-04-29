@@ -98,19 +98,23 @@ void SemanticDefinePass::build_compound_statement(CompoundStatement* stmt) {
 void SemanticDefinePass::define_class(Class* klass) {
     std::string name = klass->get_name().get_value();
 
-    Symbol* sym = resolve(name);
+    Symbol* sym = current_scope->resolve_in_module(name);
+    current_scope->inspect(); std::cout << " >> " << name << "\n";
 
     if (sym == nullptr) {
         define(SYM_CLASS, name, klass);
         logger->info("defining class " + name + " (" + klass->get_qualified_name() + ")");
         return;
+    } else {
+        logger->error(name + " already defined");
+
     }
 }
 
 void SemanticDefinePass::define_function(Function* function) {
     std::string name = function->get_name().get_value();
 
-    Symbol* sym = resolve(name);
+    Symbol* sym = current_scope->resolve_in_module(name);
 
     if (sym == nullptr) {
         define(SYM_FUNCTION, name, function);

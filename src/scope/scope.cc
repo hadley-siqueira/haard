@@ -29,6 +29,30 @@ Symbol* Scope::define(SymbolKind kind, std::string name, void* descriptor) {
 }
 
 Symbol* Scope::resolve(const std::string& name) {
+    Symbol* sym = resolve_in_module(name);
+
+    if (sym == nullptr) {
+        for (int i = 0; i < siblings.size(); ++i) {
+            sym = siblings[i]->resolve_in_module(name);
+
+            if (sym != nullptr) {
+                break;
+            }
+        }
+    }
+
+    return sym;
+}
+
+Symbol *Scope::resolve_in_module(const std::string& name) {
+    if (symbols.count(name) > 0) {
+        return symbols[name];
+    }
+
+    if (get_parent()) {
+        return get_parent()->resolve(name);
+    }
+
     return nullptr;
 }
 
