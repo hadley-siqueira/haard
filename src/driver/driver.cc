@@ -87,7 +87,7 @@ Module* Driver::parse_file(std::string path) {
 
         logger->info("parsing file " + path);
         parser.set_logger(logger);
-        modules.add_module(path, parser.read(path));
+        modules.add_module(path, parser.read(path, build_relative_path(path)));
     }
 
     return modules.get_module(path);
@@ -143,6 +143,38 @@ std::string Driver::build_import_path(Import* import) {
     return str;
 }
 
+std::string Driver::build_relative_path(std::string path) {
+    int i;
+    int j;
+    bool found;
+    std::string s;
+
+    for (i = 0; i < search_path.size(); ++i) {
+        found = true;
+
+        for (j = 0; j < search_path[i].size(); ++j) {
+            if (search_path[i][j] != path[j]) {
+                found = false;
+            }
+        }
+
+        if (found) {
+            // -3 to remove '.hd'
+            for (j = j + 1; j < path.size() - 3; ++j) {
+                if (path[j] == path_delimiter) {
+                    s += ".";
+                } else {
+                    s += path[j];
+                }
+            }
+
+            break;
+        }
+    }
+
+    return s;
+}
+
 void Driver::configure_search_path() {
     set_root_path_from_main_file();
     search_path.push_back(root_path);
@@ -159,6 +191,7 @@ void Driver::set_root_path_from_main_file() {
     // name.hd
     if (c == -1) {
         root_path = ".";
+        main_path = root_path + path_delimiter + main_path;
     } else {
         for (int i = 0; i < c; ++i) {
             root_path += main_path[i];

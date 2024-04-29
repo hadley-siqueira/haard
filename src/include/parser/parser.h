@@ -14,7 +14,7 @@ namespace haard {
         Parser();
 
     public:
-        Module* read(std::string path);
+        Module* read(std::string path, std::string relative_path = "");
 
     public:
         Module* parse_module();

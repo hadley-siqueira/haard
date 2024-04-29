@@ -9,7 +9,7 @@ Parser::Parser() {
     idx = 0;
 }
 
-Module* Parser::read(std::string path) {
+Module* Parser::read(std::string path, std::string relative_path) {
     Module* module;
     Scanner sc;
 
@@ -17,6 +17,7 @@ Module* Parser::read(std::string path) {
     tokens = sc.read(path);
     module = parse_module();
     module->set_path(path);
+    module->set_relative_path(relative_path);
 
     return module;
 }

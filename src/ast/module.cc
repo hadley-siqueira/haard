@@ -131,7 +131,7 @@ void Module::set_scope(Scope* newScope) {
 }
 
 std::string Module::get_qualified_path() {
-    return path;
+    return relative_path;
 }
 
 const std::string& Module::get_path() const {
@@ -140,5 +140,13 @@ const std::string& Module::get_path() const {
 
 void Module::set_path(const std::string& newPath) {
     path = newPath;
+}
+
+const std::string& Module::get_relative_path() const {
+    return relative_path;
+}
+
+void Module::set_relative_path(const std::string& newRelative_path) {
+    relative_path = newRelative_path;
 }
 

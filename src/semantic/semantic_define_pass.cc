@@ -99,7 +99,6 @@ void SemanticDefinePass::define_class(Class* klass) {
     std::string name = klass->get_name().get_value();
 
     Symbol* sym = current_scope->resolve_in_module(name);
-    current_scope->inspect(); std::cout << " >> " << name << "\n";
 
     if (sym == nullptr) {
         define(SYM_CLASS, name, klass);
@@ -107,7 +106,6 @@ void SemanticDefinePass::define_class(Class* klass) {
         return;
     } else {
         logger->error(name + " already defined");
-
     }
 }
 

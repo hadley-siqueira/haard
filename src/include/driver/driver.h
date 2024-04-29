@@ -32,6 +32,7 @@ namespace haard {
         void parse_import(Import* import);
         void parse_simple_import(Import* import);
         std::string build_import_path(Import* import);
+        std::string build_relative_path(std::string path);
         void configure_search_path();
         void set_root_path_from_main_file();
 

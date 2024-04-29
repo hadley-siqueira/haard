@@ -52,8 +52,12 @@ namespace haard {
         const std::string& get_path() const;
         void set_path(const std::string& newPath);
 
+        const std::string &get_relative_path() const;
+        void set_relative_path(const std::string &newRelative_path);
+
     private:
         std::string path;
+        std::string relative_path;
         std::vector<Import*> imports;
         std::vector<Function*> functions;
         std::vector<Declaration*> declarations;
