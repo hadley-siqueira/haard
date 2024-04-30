@@ -12,6 +12,7 @@ namespace haard {
         void build_header(Class* klass);
 
         std::string get_header();
+        std::string get_cpp();
 
     private:
         std::stringstream header;

@@ -58,6 +58,6 @@ void ModuleCppGenerator::build_module_classes(Module* module) {
         ClassCppGenerator gen;
 
         gen.build(module->get_class(i));
-        output << indent(gen.get_header(), 4);
+        output << indent(gen.get_header(), 4) << '\n';
     }
 }

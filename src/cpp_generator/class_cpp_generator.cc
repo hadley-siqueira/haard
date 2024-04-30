@@ -13,11 +13,20 @@ void ClassCppGenerator::build_header(Class* klass) {
 
     }
 
-    header << " {\n";
+    header << " {\npublic:\n";
+
+    for (int i = 0; i < klass->variables_count(); ++i) {
+        header << "    int " <<
+        klass->get_variable(i)->get_name().get_value() << ";\n";
+    }
 
     header << "};\n";
 }
 
 std::string ClassCppGenerator::get_header() {
     return header.str();
+}
+
+std::string ClassCppGenerator::get_cpp() {
+    return cpp.str();
 }

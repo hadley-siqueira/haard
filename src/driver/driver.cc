@@ -201,10 +201,8 @@ void Driver::set_root_path_from_main_file() {
 
 void Driver::generate_cpp() {
     CppGenerator gen;
-    std::ofstream file("out.cc");
 
     gen.build_modules(&modules);
-    file << gen.get_output();
 }
 
 bool Driver::file_exists(std::string path) {
