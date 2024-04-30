@@ -1,6 +1,6 @@
 #include <iostream>
 #include "cpp_generator/cpp_generator.h"
-#include "cpp_generator/module_cpp_generator.h"
+#include "cpp_generator/modules_cpp_generator.h"
 
 using namespace haard;
 
@@ -38,6 +38,10 @@ void CppGenerator::build_modules(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         build_module(modules->get_module(i));
     }
+
+    ModulesCppGenerator gen;
+
+    gen.build(modules);
 }
 
 void CppGenerator::build_module(Module* module) {
@@ -46,10 +50,6 @@ void CppGenerator::build_module(Module* module) {
     for (int i = 0; i < module->functions_count(); ++i) {
         build_function(module->get_function(i));
     }
-
-    ModuleCppGenerator gen;
-
-    gen.build(module);
 }
 
 void CppGenerator::build_module_classes(Module* module) {
