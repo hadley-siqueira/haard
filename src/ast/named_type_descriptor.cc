@@ -87,3 +87,4 @@ std::string NamedTypeDescriptor::get_qualified_name() {
 
     return ss.str();
 }
+

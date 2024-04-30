@@ -6,6 +6,10 @@ include_directories(src/include)
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -g -fsanitize=address")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -g")
 
+set(UTILS_SRC
+    src/utils/utils.cc
+)
+
 set(STRING_POOL_SRC
     src/string_pool/string_pool.cc
 )
@@ -191,6 +195,7 @@ set(PRETTY_PRINTER_SRC
 
 set(CPP_GENERATOR_SRC
     src/cpp_generator/cpp_generator.cc
+    src/cpp_generator/module_cpp_generator.cc
 )
 
 set(LOG_SRC
@@ -199,6 +204,7 @@ set(LOG_SRC
 )
 
 set(SOURCES
+    ${UTILS_SRC}
     ${STRING_POOL_SRC}
     ${TYPE_POOL_SRC}
     ${TOKEN_SRC}

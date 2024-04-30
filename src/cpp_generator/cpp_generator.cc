@@ -1,5 +1,6 @@
 #include <iostream>
 #include "cpp_generator/cpp_generator.h"
+#include "cpp_generator/module_cpp_generator.h"
 
 using namespace haard;
 
@@ -45,6 +46,10 @@ void CppGenerator::build_module(Module* module) {
     for (int i = 0; i < module->functions_count(); ++i) {
         build_function(module->get_function(i));
     }
+
+    ModuleCppGenerator gen;
+
+    gen.build(module);
 }
 
 void CppGenerator::build_module_classes(Module* module) {
@@ -56,20 +61,21 @@ void CppGenerator::build_module_classes(Module* module) {
 void CppGenerator::build_class(Class* klass) {
     set_output(&classes);
 
-    *output << "struct " << klass->get_name().get_value() << " {\n";
+    *output << "// " << klass->get_qualified_name() << "\n";
+    *output << "class " << klass->get_uid() << " {\npublic:\n";
     indent();
 
     for (int i = 0; i < klass->variables_count(); ++i) {
         build_member_variable(klass->get_variable(i));
     }
 
-    dedent();
-    *output << "};\n\n";
-    restore_output();
-
     for (int i = 0; i < klass->functions_count(); ++i) {
         build_function(klass->get_function(i));
     }
+
+    dedent();
+    *output << "};\n\n";
+    restore_output();
 }
 
 void CppGenerator::build_member_variable(Variable* var) {
@@ -92,10 +98,6 @@ std::string CppGenerator::build_function_header(Function* function) {
     set_output(&ss);
     build_type(function->get_return_type());
     ss << ' ' << function->get_name().get_value() << '(';
-
-    if (function->is_method()) {
-        ss << "void* _this, ";
-    }
 
     if (function->parameters_count() > 0) {
         for (i = 0; i < function->parameters_count() - 1; ++i) {
