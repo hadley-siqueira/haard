@@ -19,6 +19,11 @@ namespace haard {
         void build_modules(Modules* modules);
         void build_module(Module* module);
 
+        void build_module_classes(Module* module);
+
+        void build_class(Class* klass);
+        void build_member_variable(Variable* var);
+
         void build_function(Function* function);
         std::string build_function_header(Function* function);
         void build_function_body(Function* function);
@@ -60,6 +65,7 @@ namespace haard {
         int indent_level;
         std::stringstream* output;
         std::stringstream headers;
+        std::stringstream classes;
         std::stringstream bodies;
         std::stack<std::stringstream*> output_stack;
     };

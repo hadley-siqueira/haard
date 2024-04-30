@@ -22,6 +22,7 @@ NamedTypeDescriptor::~NamedTypeDescriptor() {
 
 void NamedTypeDescriptor::add_function(Function* function) {
     functions.push_back(function);
+    function->set_named_type_descriptor(this);
 }
 
 void NamedTypeDescriptor::add_variable(Variable* variable) {

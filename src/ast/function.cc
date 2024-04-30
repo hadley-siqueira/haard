@@ -9,6 +9,7 @@ Function::Function() {
     set_return_type(nullptr);
     set_statements(nullptr);
     set_scope(new Scope());
+    set_named_type_descriptor(nullptr);
 }
 
 Function::~Function() {
@@ -62,4 +63,16 @@ Scope* Function::get_scope() const {
 
 void Function::set_scope(Scope* newScope) {
     scope = newScope;
+}
+
+bool Function::is_method() {
+    return get_named_type_descriptor() != nullptr;
+}
+
+NamedTypeDescriptor* Function::get_named_type_descriptor() const {
+    return named_type_descriptor;
+}
+
+void Function::set_named_type_descriptor(NamedTypeDescriptor* newNamed_type_descriptor) {
+    named_type_descriptor = newNamed_type_descriptor;
 }

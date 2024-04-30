@@ -8,9 +8,9 @@
 #include "ast/type_list.h"
 #include "ast/compound_statement.h"
 
-
 namespace haard {
     class Scope;
+    class NamedTypeDescriptor;
 
     class Function : public Declaration {
     public:
@@ -33,11 +33,17 @@ namespace haard {
         Scope* get_scope() const;
         void set_scope(Scope* newScope);
 
+        bool is_method();
+
+        NamedTypeDescriptor* get_named_type_descriptor() const;
+        void set_named_type_descriptor(NamedTypeDescriptor* newNamed_type_descriptor);
+
     private:
         Type* return_type;
         TypeList* generics;
         Scope* scope;
         CompoundStatement* statements;
+        NamedTypeDescriptor* named_type_descriptor;
         std::vector<Variable*> parameters;
     };
 }

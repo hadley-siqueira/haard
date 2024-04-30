@@ -13,6 +13,7 @@ std::string CppGenerator::get_output() {
 
 
     res << build_cpp_header();
+    res << classes.str();
     res << headers.str() << '\n';
     res << bodies.str();
 
@@ -22,9 +23,14 @@ std::string CppGenerator::get_output() {
 std::string CppGenerator::build_cpp_header() {
     return "#include <iostream>\n"
            "#include <cstdint>\n\n"
+           "typedef uint8_t u8;\n"
+           "typedef int8_t i8;\n"
+           "typedef uint16_t u16;\n"
+           "typedef int16_t i16;\n"
            "typedef uint32_t u32;\n"
            "typedef int32_t i32;\n"
-           "typedef uint64_t u64;\n\n";
+           "typedef uint64_t u64;\n"
+           "typedef int64_t i64;\n\n";
 }
 
 void CppGenerator::build_modules(Modules* modules) {
@@ -34,9 +40,42 @@ void CppGenerator::build_modules(Modules* modules) {
 }
 
 void CppGenerator::build_module(Module* module) {
+    build_module_classes(module);
+
     for (int i = 0; i < module->functions_count(); ++i) {
         build_function(module->get_function(i));
     }
+}
+
+void CppGenerator::build_module_classes(Module* module) {
+    for (int i = 0; i < module->classes_count(); ++i) {
+        build_class(module->get_class(i));
+    }
+}
+
+void CppGenerator::build_class(Class* klass) {
+    set_output(&classes);
+
+    *output << "struct " << klass->get_name().get_value() << " {\n";
+    indent();
+
+    for (int i = 0; i < klass->variables_count(); ++i) {
+        build_member_variable(klass->get_variable(i));
+    }
+
+    dedent();
+    *output << "};\n\n";
+    restore_output();
+
+    for (int i = 0; i < klass->functions_count(); ++i) {
+        build_function(klass->get_function(i));
+    }
+}
+
+void CppGenerator::build_member_variable(Variable* var) {
+    print_indentation();
+    build_type(var->get_type());
+    *output << " " << var->get_name().get_value() << ";\n";
 }
 
 void CppGenerator::build_function(Function* function) {
@@ -53,6 +92,10 @@ std::string CppGenerator::build_function_header(Function* function) {
     set_output(&ss);
     build_type(function->get_return_type());
     ss << ' ' << function->get_name().get_value() << '(';
+
+    if (function->is_method()) {
+        ss << "void* _this, ";
+    }
 
     if (function->parameters_count() > 0) {
         for (i = 0; i < function->parameters_count() - 1; ++i) {
@@ -400,8 +443,72 @@ void CppGenerator::build_expression_list(ExpressionList *list, const char *begin
 
 void CppGenerator::build_type(Type* type) {
     switch (type->get_kind()) {
+    case TYPE_U8:
+        *output << "u8";
+        break;
+
+    case TYPE_U16:
+        *output << "u16";
+        break;
+
+    case TYPE_U32:
+        *output << "u32";
+        break;
+
+    case TYPE_U64:
+        *output << "u64";
+        break;
+
+    case TYPE_I8:
+        *output << "i8";
+        break;
+
+    case TYPE_I16:
+        *output << "i16";
+        break;
+
+    case TYPE_I32:
+        *output << "i32";
+        break;
+
+    case TYPE_I64:
+        *output << "i64";
+        break;
+
+    case TYPE_BOOL:
+        *output << "bool";
+        break;
+
+    case TYPE_CHAR:
+        *output << "i8";
+        break;
+
+    case TYPE_UCHAR:
+        *output << "u8";
+        break;
+
+    case TYPE_SHORT:
+        *output << "i16";
+        break;
+
+    case TYPE_USHORT:
+        *output << "u16";
+        break;
+
     case TYPE_INT:
         *output << "i32";
+        break;
+
+    case TYPE_UINT:
+        *output << "u32";
+        break;
+
+    case TYPE_LONG:
+        *output << "i64";
+        break;
+
+    case TYPE_ULONG:
+        *output << "u64";
         break;
 
     case TYPE_VOID:

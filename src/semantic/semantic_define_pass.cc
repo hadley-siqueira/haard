@@ -62,6 +62,8 @@ void SemanticDefinePass::build_module_functions(Module* module) {
 void SemanticDefinePass::build_function(Function* function) {
     enter_scope(function->get_scope());
 
+    build_statement(function->get_statements());
+
     leave_scope();
 }
 

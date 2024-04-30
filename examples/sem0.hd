@@ -5,6 +5,9 @@ class Pixel:
     g : u8
     b : u8
 
+    def set_white : void
+        r = 255
+
 class Pair<T, K>:
     first  : T
     second : K
@@ -13,3 +16,9 @@ class Pixel:
     r : u8
     g : u8
     b : u8
+
+def sum : int
+    @a : int
+    @b : int
+
+    return a + b
