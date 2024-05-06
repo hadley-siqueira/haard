@@ -4,9 +4,13 @@ class Pixel:
     r : u8
     g : u8
     b : u8
+    a : int
 
     def set_white : void
         r = 255
+
+    def set_black : void
+        r = 0
 
 class Pair<T, K>:
     first  : T

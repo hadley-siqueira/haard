@@ -10,6 +10,8 @@ namespace haard {
         Type();
         virtual ~Type();
 
+        virtual std::string to_cpp();
+
     public:
         Type(int kind, const Token& token);
 

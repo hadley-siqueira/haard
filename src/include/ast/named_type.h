@@ -13,6 +13,8 @@ namespace haard {
         Identifier* get_identifier() const;
         void set_identifier(Identifier* newIdentifier);
 
+        std::string to_cpp();
+
     private:
         Identifier* identifier;
     };

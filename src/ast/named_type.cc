@@ -18,3 +18,7 @@ Identifier* NamedType::get_identifier() const {
 void NamedType::set_identifier(Identifier* newIdentifier) {
     identifier = newIdentifier;
 }
+
+std::string NamedType::to_cpp() {
+    return "unknown named type";
+}
