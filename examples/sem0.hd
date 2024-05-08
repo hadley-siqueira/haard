@@ -16,6 +16,11 @@ class Pair<T, K>:
     first  : T
     second : K
 
+    def set_first : void
+        @a : int
+
+        a = 0
+
 class Pixel:
     r : u8
     g : u8

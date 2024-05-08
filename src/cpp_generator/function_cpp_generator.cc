@@ -1,4 +1,6 @@
 #include "cpp_generator/function_cpp_generator.h"
+#include "ast/named_type_descriptor.h"
+#include "ast/named_type.h"
 
 using namespace haard;
 
@@ -15,6 +17,24 @@ void FunctionCppGenerator::build_header(Function* function) {
 
 void FunctionCppGenerator::build_cpp(Function* function) {
     std::string signature = get_signature(function);
+
+    if (function->is_method()) {
+        int i;
+        NamedType* named;
+        NamedTypeDescriptor* desc = function->get_named_type_descriptor();
+
+        if (desc->get_generics()) {
+            cpp << "template <";
+
+            for (i = 0; i < desc->get_generics()->types_count() - 1; ++i) {
+                named = (NamedType*) desc->get_generics()->get_type(i);
+                cpp << "typename " << named->get_identifier()->get_name().get_value() << ", ";
+            }
+
+            named = (NamedType*) desc->get_generics()->get_type(i);
+            cpp << "typename " << named->get_identifier()->get_name().get_value() << ">\n";
+        }
+    }
 
     cpp << signature << " {\n\n}\n\n";
 }

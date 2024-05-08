@@ -2,6 +2,7 @@
 
 #include "ast/named_type_descriptor.h"
 #include "ast/module.h"
+#include "ast/named_type.h"
 
 using namespace haard;
 
@@ -87,4 +88,3 @@ std::string NamedTypeDescriptor::get_qualified_name() {
 
     return ss.str();
 }
-

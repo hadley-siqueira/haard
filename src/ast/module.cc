@@ -1,4 +1,5 @@
 #include "ast/module.h"
+#include "utils/utils.h"
 
 using namespace haard;
 

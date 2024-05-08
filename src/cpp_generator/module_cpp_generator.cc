@@ -24,7 +24,6 @@ void ModuleCppGenerator::create_module_directory(Module* module) {
     for (i = 0; i < p.size() - 1; ++i) {
         filepath += p[i] + "/";
         std::string pp = "cpp/" + filepath;
-        std::cout << "PATH = " << pp << '\n';
         mkdir(pp);
     }
 

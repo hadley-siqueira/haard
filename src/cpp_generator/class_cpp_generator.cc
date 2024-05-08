@@ -76,8 +76,6 @@ void ClassCppGenerator::build_class_functions(Class* klass) {
         fgen.build(klass->get_function(i));
         functions_header << "    " << fgen.get_header();
         functions_cpp << fgen.get_cpp();
-
-        std::cout << "FF = " << fgen.get_cpp() << "\n\n";
     }
 }
 
