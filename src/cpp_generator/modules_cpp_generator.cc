@@ -5,7 +5,7 @@
 using namespace haard;
 
 void ModulesCppGenerator::build(Modules* modules) {
-    rmdir("cpp");
+    //rmdir("cpp");
     mkdir("cpp");
 
     for (int i = 0; i < modules->modules_count(); ++i) {

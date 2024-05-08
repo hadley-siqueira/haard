@@ -15,7 +15,8 @@ namespace haard {
         void build_module_classes(Module* module);
 
     private:
-        std::stringstream output;
+        std::stringstream cpp;
+        std::stringstream header;
         std::string filepath;
     };
 }

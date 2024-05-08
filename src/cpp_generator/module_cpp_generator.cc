@@ -9,6 +9,9 @@ using namespace haard;
 
 void ModuleCppGenerator::build(Module* module) {
     create_module_directory(module);
+
+    build_module_classes(module);
+
     build_module_header(module);
     build_module_cpp(module);
 }
@@ -31,26 +34,25 @@ void ModuleCppGenerator::create_module_directory(Module* module) {
 void ModuleCppGenerator::build_module_header(Module* module) {
     std::ofstream f("cpp/" + filepath + ".h");
 
-    std::string header = uppercase(join(split(filepath, '/'), "_")) + "_H";
+    std::string header_h = uppercase(join(split(filepath, '/'), "_")) + "_H";
     std::string ns = join(split(filepath, '/'), "::");
 
-    output << "#ifndef " << header << "\n";
-    output << "#define " << header << "\n\n";
+    f << "#ifndef " << header_h << "\n";
+    f << "#define " << header_h << "\n\n";
 
-    output << "namespace " << ns << " {\n";
+    f << "namespace " << ns << " {\n";
 
-    build_module_classes(module);
+    f << indent(header.str(), 4);
 
-    output << "}\n\n";
-    output << "#endif";
-
-    f << output.str();
+    f << "}\n\n";
+    f << "#endif";
 }
 
 void ModuleCppGenerator::build_module_cpp(Module* module) {
     std::ofstream f("cpp/" + filepath + ".cpp");
 
-    f << "the .cpp";
+    f << "#include \"" << filepath << ".h\"\n\n";
+    f << cpp.str();
 }
 
 void ModuleCppGenerator::build_module_classes(Module* module) {
@@ -58,6 +60,7 @@ void ModuleCppGenerator::build_module_classes(Module* module) {
         ClassCppGenerator gen;
 
         gen.build(module->get_class(i));
-        output << indent(gen.get_header(), 4) << '\n';
+        header << gen.get_header() << '\n';
+        cpp << gen.get_cpp();
     }
 }

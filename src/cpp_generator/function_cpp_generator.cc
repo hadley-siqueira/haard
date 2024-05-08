@@ -4,13 +4,19 @@ using namespace haard;
 
 void FunctionCppGenerator::build(Function* function) {
     build_header(function);
+    build_cpp(function);
 }
 
 void FunctionCppGenerator::build_header(Function* function) {
     std::string signature = get_signature(function);
 
     header << signature << ";\n";
-    cpp << signature << " {\n\n}\n";
+}
+
+void FunctionCppGenerator::build_cpp(Function* function) {
+    std::string signature = get_signature(function);
+
+    cpp << signature << " {\n\n}\n\n";
 }
 
 std::string FunctionCppGenerator::get_signature(Function* function) {
