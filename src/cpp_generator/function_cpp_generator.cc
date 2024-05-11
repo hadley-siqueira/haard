@@ -12,18 +12,20 @@ void FunctionCppGenerator::build(Function* function) {
 void FunctionCppGenerator::build_header(Function* function) {
     std::string signature = get_signature(function);
 
+    header << function->get_return_type()->to_cpp() << ' ';
     header << signature << ";\n";
 }
 
 void FunctionCppGenerator::build_cpp(Function* function) {
     std::string signature = get_signature(function);
+    std::string ns;
 
     if (function->is_method()) {
         int i;
         NamedType* named;
         NamedTypeDescriptor* desc = function->get_named_type_descriptor();
 
-        if (desc->get_generics()) {
+        /*if (desc->get_generics()) {
             cpp << "template <";
 
             for (i = 0; i < desc->get_generics()->types_count() - 1; ++i) {
@@ -33,16 +35,21 @@ void FunctionCppGenerator::build_cpp(Function* function) {
 
             named = (NamedType*) desc->get_generics()->get_type(i);
             cpp << "typename " << named->get_identifier()->get_name().get_value() << ">\n";
+        }*/
+
+        if (!desc->get_generics()) {
+            ns = function->get_named_type_descriptor()->get_name().get_value();
+            ns = ns + "::";
         }
     }
 
-    cpp << signature << " {\n\n}\n\n";
+    cpp << function->get_return_type()->to_cpp() << ' ';
+    cpp << ns << signature << " {\n\n}\n\n";
 }
 
 std::string FunctionCppGenerator::get_signature(Function* function) {
     std::stringstream ss;
 
-    ss << function->get_return_type()->to_cpp() << ' ';
     ss << function->get_name().get_value() << "(";
 
     if (function->parameters_count() > 0) {

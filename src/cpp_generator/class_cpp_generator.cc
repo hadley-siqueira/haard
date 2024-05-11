@@ -3,6 +3,7 @@
 #include "cpp_generator/class_cpp_generator.h"
 #include "cpp_generator/function_cpp_generator.h"
 #include "ast/named_type.h"
+#include "utils/utils.h"
 
 using namespace haard;
 
@@ -42,7 +43,7 @@ void ClassCppGenerator::build_header(Class* klass) {
     header << "class " << klass->get_name().get_value();
 
     if (klass->get_super_type()) {
-
+        header << " : public Super";
     }
 
     header << " {\npublic:\n";
@@ -59,7 +60,11 @@ void ClassCppGenerator::build_header(Class* klass) {
             header << "\n";
         }
 
-        header << functions_header.str();
+        if (klass->get_generics()) {
+            header << indent(functions_cpp.str(), 4);
+        } else {
+            header << functions_header.str();
+        }
     }
 
     header << "};\n";
