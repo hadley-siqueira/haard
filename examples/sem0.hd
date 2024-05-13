@@ -13,6 +13,7 @@ class Pixel:
         r = 0
         r = 0
         r = 0
+        set_white()
 
         while true:
             r = 0
@@ -22,8 +23,8 @@ class Pixel:
                 r = 0
 
 class Pair<T, K>:
-    first  : T
-    second : K
+    first  : int
+    second : int
 
     def set_first : void
         @a : int

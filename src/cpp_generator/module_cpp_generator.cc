@@ -41,6 +41,7 @@ void ModuleCppGenerator::build_module_header(Module* module) {
     f << "#ifndef " << header_h << "\n";
     f << "#define " << header_h << "\n\n";
 
+    f << "#include \"haard.h\"\n\n";
     f << "namespace " << module->get_cpp_namespace() << " {\n";
 
     f << indent(header.str(), 4);
@@ -54,6 +55,11 @@ void ModuleCppGenerator::build_module_cpp(Module* module) {
 
     f << "#include \"" << filepath << ".h\"\n\n";
     f << cpp.str();
+
+    if (main_function != nullptr) {
+        f << "int main(int argc, char** argv) {\n";
+        f << "    " << main_function->get_cpp_namespace() << "(argc, argv);\n" << "}\n";
+    }
 }
 
 void ModuleCppGenerator::build_module_classes(Module* module) {
@@ -67,11 +73,21 @@ void ModuleCppGenerator::build_module_classes(Module* module) {
 }
 
 void ModuleCppGenerator::build_module_functions(Module* module) {
+    main_function = nullptr;
+
     for (int i = 0; i < module->functions_count(); ++i) {
         FunctionCppGenerator gen;
+        Function* function = module->get_function(i);
 
-        gen.build(module->get_function(i));
+        gen.build(function);
         header << gen.get_header() << '\n';
         cpp << gen.get_cpp();
+
+        std::string name = function->get_name().get_value();
+
+        if (name == "main") {
+            main_function = function;
+        }
     }
 }
+

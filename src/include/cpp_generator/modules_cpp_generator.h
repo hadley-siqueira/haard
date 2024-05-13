@@ -9,6 +9,7 @@ namespace haard {
         void build(Modules* modules);
         void build_module(Module* module);
         void generate_cmake(Modules* modules);
+        void generate_haard_header();
     };
 }
 

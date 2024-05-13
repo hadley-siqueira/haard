@@ -20,6 +20,8 @@ namespace haard {
         void build_modulo(Modulo* expr);
         void build_interger_division(IntegerDivision* expr);
 
+        void build_call(Call* expr);
+
         void build_identifier(Identifier* expr);
         void build_boolean_literal(BooleanLiteral* expr);
         void build_integer_literal(IntegerLiteral* expr);

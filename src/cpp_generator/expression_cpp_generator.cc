@@ -38,6 +38,10 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_interger_division((IntegerDivision*) expr);
         break;
 
+    case EXPR_CALL:
+        build_call((Call*) expr);
+        break;
+
     case AST_ID:
         build_identifier((Identifier*) expr);
         break;
@@ -82,6 +86,30 @@ void ExpressionCppGenerator::build_modulo(Modulo* expr) {
 
 void ExpressionCppGenerator::build_interger_division(IntegerDivision* expr) {
     build_binop(expr, "/ (int)");
+}
+
+void ExpressionCppGenerator::build_call(Call* expr) {
+    ExpressionCppGenerator gen;
+
+    gen.build(expr->get_object());
+    output << gen.get_output() << "(";
+
+    if (expr->get_arguments()->expressions_count() > 0) {
+        int i;
+
+        for (i = 0; i < expr->get_arguments()->expressions_count() - 1; ++i) {
+            ExpressionCppGenerator g;
+
+            g.build(expr->get_arguments()->get_expression(i));
+            output << g.get_output() << ", ";
+        }
+
+        ExpressionCppGenerator g;
+        g.build(expr->get_arguments()->get_expression(i));
+        output << g.get_output();
+    }
+
+    output << ")";
 }
 
 void ExpressionCppGenerator::build_identifier(Identifier* expr) {

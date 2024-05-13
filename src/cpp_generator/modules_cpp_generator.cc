@@ -15,6 +15,7 @@ void ModulesCppGenerator::build(Modules* modules) {
         build_module(modules->get_module(i));
     }
 
+    generate_haard_header();
     generate_cmake(modules);
 }
 
@@ -42,4 +43,21 @@ void ModulesCppGenerator::generate_cmake(Modules* modules) {
     output << "add_executable(${PROJECT_NAME} ${SOURCES})\n";
 
     f << output.str();
+}
+
+void ModulesCppGenerator::generate_haard_header() {
+    std::ofstream f("cpp/haard.h");
+
+    f << "#ifndef HAARD_H\n"
+         "#define HAARD_H\n\n"
+         "#include <cstdint>\n\n"
+         "typedef uint8_t u8;\n"
+         "typedef uint16_t u16;\n"
+         "typedef uint32_t u32;\n"
+         "typedef uint64_t u64;\n\n"
+         "typedef int8_t i8;\n"
+         "typedef int16_t i16;\n"
+         "typedef int32_t i32;\n"
+         "typedef int64_t i64;\n\n"
+         "#endif";
 }
