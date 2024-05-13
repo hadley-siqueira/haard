@@ -79,7 +79,7 @@ void ClassCppGenerator::build_class_functions(Class* klass) {
         FunctionCppGenerator fgen;
 
         fgen.build(klass->get_function(i));
-        functions_header << "    " << fgen.get_header();
+        functions_header << "    " << fgen.get_header() << '\n';
         functions_cpp << fgen.get_cpp();
     }
 }

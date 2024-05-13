@@ -48,6 +48,8 @@ namespace haard {
         void set_scope(Scope* newScope);
 
         std::string get_qualified_path();
+        std::string get_cpp_namespace();
+        std::string get_cpp_path();
 
         const std::string& get_path() const;
         void set_path(const std::string& newPath);

@@ -11,6 +11,15 @@ class Pixel:
 
     def set_black : void
         r = 0
+        r = 0
+        r = 0
+
+        while true:
+            r = 0
+            r = 0
+
+            while true:
+                r = 0
 
 class Pair<T, K>:
     first  : T
@@ -21,13 +30,14 @@ class Pair<T, K>:
 
         a = 0
 
-class Pixel:
-    r : u8
-    g : u8
-    b : u8
-
 def sum : int
     @a : int
     @b : int
 
     return a + b
+
+def main : int
+    @argc : int
+    @argv : char**
+
+    return 0

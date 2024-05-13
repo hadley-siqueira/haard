@@ -1,6 +1,10 @@
 #include "cpp_generator/function_cpp_generator.h"
+#include "cpp_generator/statement_cpp_generator.h"
 #include "ast/named_type_descriptor.h"
 #include "ast/named_type.h"
+#include "ast/function.h"
+#include "ast/module.h"
+#include "utils/utils.h"
 
 using namespace haard;
 
@@ -13,7 +17,7 @@ void FunctionCppGenerator::build_header(Function* function) {
     std::string signature = get_signature(function);
 
     header << function->get_return_type()->to_cpp() << ' ';
-    header << signature << ";\n";
+    header << signature << ";";
 }
 
 void FunctionCppGenerator::build_cpp(Function* function) {
@@ -38,13 +42,27 @@ void FunctionCppGenerator::build_cpp(Function* function) {
         }*/
 
         if (!desc->get_generics()) {
-            ns = function->get_named_type_descriptor()->get_name().get_value();
+            ns = function->get_named_type_descriptor()->get_cpp_namespace();
             ns = ns + "::";
         }
+    } else {
+        ns = function->get_module()->get_cpp_namespace();
+        ns = ns + "::";
     }
 
     cpp << function->get_return_type()->to_cpp() << ' ';
-    cpp << ns << signature << " {\n\n}\n\n";
+    cpp << ns << signature;
+
+    build_body(function);
+}
+
+void FunctionCppGenerator::build_body(Function* function) {
+    StatementCppGenerator gen;
+
+    gen.build(function->get_statements());
+    cpp << " {\n";
+    cpp << indent(gen.get_output(), 4);
+    cpp << "\n}\n\n";
 }
 
 std::string FunctionCppGenerator::get_signature(Function* function) {

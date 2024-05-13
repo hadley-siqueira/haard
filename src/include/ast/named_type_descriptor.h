@@ -30,6 +30,7 @@ namespace haard {
         void set_super_type(Type* newSuper_type);
 
         virtual std::string get_qualified_name();
+        virtual std::string get_cpp_namespace();
 
     private:
         TypeList* generics;

@@ -7,6 +7,7 @@ namespace haard {
     class PointerType : public SubtypedType {
     public:
         PointerType(Type* subtype);
+        std::string to_cpp();
     };
 }
 

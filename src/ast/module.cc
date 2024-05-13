@@ -32,6 +32,7 @@ Import* Module::get_import(int idx) {
 void Module::add_function(Function* function) {
     functions.push_back(function);
     declarations.push_back(function);
+    function->set_module(this);
 }
 
 void Module::add_class(Class* klass) {
@@ -43,16 +44,19 @@ void Module::add_class(Class* klass) {
 void Module::add_struct(Struct* s) {
     structs.push_back(s);
     declarations.push_back(s);
+    s->set_module(this);
 }
 
 void Module::add_union(Union* u) {
     unions.push_back(u);
     declarations.push_back(u);
+    u->set_module(this);
 }
 
 void Module::add_enum(Enum* e) {
     enums.push_back(e);
     declarations.push_back(e);
+    e->set_module(this);
 }
 
 int Module::functions_count() {
@@ -133,6 +137,14 @@ void Module::set_scope(Scope* newScope) {
 
 std::string Module::get_qualified_path() {
     return relative_path;
+}
+
+std::string Module::get_cpp_namespace() {
+    return join(split(relative_path, '.'), "::");
+}
+
+std::string Module::get_cpp_path() {
+    return join(split(relative_path, '.'), "/") + ".cpp";
 }
 
 const std::string& Module::get_path() const {

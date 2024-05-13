@@ -1,5 +1,7 @@
 #include "ast/function.h"
 #include "scope/scope.h"
+#include "ast/named_type_descriptor.h"
+#include "ast/module.h"
 
 using namespace haard;
 
@@ -75,4 +77,18 @@ NamedTypeDescriptor* Function::get_named_type_descriptor() const {
 
 void Function::set_named_type_descriptor(NamedTypeDescriptor* newNamed_type_descriptor) {
     named_type_descriptor = newNamed_type_descriptor;
+}
+
+std::string Function::get_cpp_namespace() {
+    std::string ns;
+
+    if (is_method()) {
+        ns = named_type_descriptor->get_cpp_namespace();
+    } else {
+        ns = get_module()->get_cpp_namespace();
+    }
+
+    ns += "::";
+    ns += get_name().get_value();
+    return ns;
 }

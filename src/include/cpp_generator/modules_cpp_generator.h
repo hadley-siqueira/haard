@@ -8,6 +8,7 @@ namespace haard {
     public:
         void build(Modules* modules);
         void build_module(Module* module);
+        void generate_cmake(Modules* modules);
     };
 }
 

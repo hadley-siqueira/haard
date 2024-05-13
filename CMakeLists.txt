@@ -199,6 +199,8 @@ set(CPP_GENERATOR_SRC
     src/cpp_generator/module_cpp_generator.cc
     src/cpp_generator/class_cpp_generator.cc
     src/cpp_generator/function_cpp_generator.cc
+    src/cpp_generator/statement_cpp_generator.cc
+    src/cpp_generator/expression_cpp_generator.cc
 )
 
 set(LOG_SRC

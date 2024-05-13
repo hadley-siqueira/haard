@@ -11,6 +11,7 @@ namespace haard {
         void build(Function* function);
         void build_header(Function* function);
         void build_cpp(Function* function);
+        void build_body(Function* function);
 
         std::string get_signature(Function* function);
         std::string get_header();

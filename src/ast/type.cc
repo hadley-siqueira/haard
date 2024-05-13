@@ -50,10 +50,10 @@ std::string Type::to_cpp() {
         return "bool";
 
     case TYPE_CHAR:
-        return "i8";
+        return "char";
 
     case TYPE_UCHAR:
-        return "u8";
+        return "unsigned char";
 
     case TYPE_SHORT:
         return "i16";

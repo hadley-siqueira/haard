@@ -37,6 +37,7 @@ namespace haard {
 
         NamedTypeDescriptor* get_named_type_descriptor() const;
         void set_named_type_descriptor(NamedTypeDescriptor* newNamed_type_descriptor);
+        std::string get_cpp_namespace();
 
     private:
         Type* return_type;

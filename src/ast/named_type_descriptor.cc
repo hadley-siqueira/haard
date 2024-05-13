@@ -88,3 +88,7 @@ std::string NamedTypeDescriptor::get_qualified_name() {
 
     return ss.str();
 }
+
+std::string NamedTypeDescriptor::get_cpp_namespace() {
+    return get_module()->get_cpp_namespace() + "::" + get_name().get_value();
+}
