@@ -57,6 +57,7 @@ void ModuleCppGenerator::build_module_cpp(Module* module) {
     std::ofstream f("cpp/" + filepath + ".cpp");
 
     f << "#include \"" << filepath << ".h\"\n\n";
+    f << imports_cpp.str() << '\n';
     f << cpp.str();
 
     if (main_function != nullptr) {
@@ -72,11 +73,18 @@ std::string ModuleCppGenerator::build_module_imports(Module* module) {
         for (int i = 0; i < module->imports_count(); ++i) {
             Import* imp = module->get_import(i);
             std::string path = imp->get_module()->get_cpp_path();
-            path.pop_back();
+            path.pop_back(); // remove cpp
             path.pop_back();
             path.pop_back();
             path += 'h';
             imports << "#include \"" << path << "\"\n";
+        }
+
+        imports << "\n\n";
+
+        for (int i = 0; i < module->imports_count(); ++i) {
+            Import* imp = module->get_import(i);
+            imports_cpp << "using namespace " << imp->get_module()->get_cpp_namespace() << ";\n";
         }
 
         imports << '\n';

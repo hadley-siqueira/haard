@@ -20,6 +20,7 @@ namespace haard {
         std::string ns;
         std::stringstream cpp;
         std::stringstream header;
+        std::stringstream imports_cpp;
         std::string filepath;
         Function* main_function;
     };

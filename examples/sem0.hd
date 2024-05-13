@@ -42,6 +42,7 @@ def main : int
     @argc : int
     @argv : char**
 
-    #print('a')
+    println(777)
+    println(123)
 
     return 0
