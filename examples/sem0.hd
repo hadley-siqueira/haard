@@ -1,4 +1,5 @@
 import std.io.file
+import std.io.print
 
 class Pixel:
     r : u8
@@ -40,5 +41,7 @@ def sum : int
 def main : int
     @argc : int
     @argv : char**
+
+    #print('a')
 
     return 0

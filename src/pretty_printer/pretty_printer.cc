@@ -399,6 +399,7 @@ void PrettyPrinter::print_expression(Expression* expr) {
     case EXPR_BITWISE_NOT:
     case EXPR_PRE_INCREMENT:
     case EXPR_PRE_DECREMENT:
+    case EXPR_DOUBLE_DOLAR:
         print_unary_operator(un);
         break;
 

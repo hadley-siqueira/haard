@@ -960,6 +960,9 @@ Expression* Parser::parse_unary_expression() {
     } else if (match(TK_DEC)) {
         oper = matched;
         expr = new PreDecrement(oper, parse_unary_expression());
+    } else if (match(TK_DOUBLE_DOLAR)) {
+        oper = matched;
+        expr = new DoubleDolar(oper, parse_unary_expression());
     } else if (match(TK_SIZEOF)) {
         oper = matched;
         expect(TK_LEFT_PARENTHESIS);

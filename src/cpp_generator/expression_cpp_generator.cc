@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "cpp_generator/expression_cpp_generator.h"
 
 using namespace haard;
@@ -36,6 +38,10 @@ void ExpressionCppGenerator::build(Expression* expr) {
 
     case EXPR_INTEGER_DIVISION:
         build_interger_division((IntegerDivision*) expr);
+        break;
+
+    case EXPR_DOUBLE_DOLAR:
+        build_double_dolar((DoubleDolar*) expr);
         break;
 
     case EXPR_CALL:
@@ -86,6 +92,12 @@ void ExpressionCppGenerator::build_modulo(Modulo* expr) {
 
 void ExpressionCppGenerator::build_interger_division(IntegerDivision* expr) {
     build_binop(expr, "/ (int)");
+}
+
+void ExpressionCppGenerator::build_double_dolar(DoubleDolar* expr) {
+    StringLiteral* s = (StringLiteral*) expr->get_expression();
+    std::string t = s->get_token().get_value();
+    output << t;
 }
 
 void ExpressionCppGenerator::build_call(Call* expr) {

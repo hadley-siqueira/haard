@@ -93,6 +93,7 @@ namespace haard {
         EXPR_DELETE,
         EXPR_DELETE_ARRAY,
         EXPR_PARENTHESIS,
+        EXPR_DOUBLE_DOLAR,
 
         EXPR_PRE_INCREMENT,
         EXPR_PRE_DECREMENT,

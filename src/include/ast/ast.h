@@ -106,6 +106,7 @@
 #include "ast/unary_operators/unary_operator.h"
 #include "ast/unary_operators/unary_plus.h"
 #include "ast/unary_operators/parenthesis.h"
+#include "ast/unary_operators/double_dolar.h"
 
 #include "ast/expression_list.h"
 #include "ast/identifier.h"

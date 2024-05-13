@@ -39,6 +39,7 @@ set(AST_UNOP_SRC
     src/ast/unary_operators/delete.cc
     src/ast/unary_operators/delete_array.cc
     src/ast/unary_operators/parenthesis.cc
+    src/ast/unary_operators/double_dolar.cc
 )
 
 set(AST_BINOPS_SRC

@@ -12,6 +12,7 @@ namespace haard {
         void build_module_header(Module* module);
         void build_module_cpp(Module* module);
 
+        std::string build_module_imports(Module* module);
         void build_module_classes(Module* module);
         void build_module_functions(Module* module);
 

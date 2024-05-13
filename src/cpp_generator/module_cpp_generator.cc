@@ -42,6 +42,9 @@ void ModuleCppGenerator::build_module_header(Module* module) {
     f << "#define " << header_h << "\n\n";
 
     f << "#include \"haard.h\"\n\n";
+
+    f << build_module_imports(module);
+
     f << "namespace " << module->get_cpp_namespace() << " {\n";
 
     f << indent(header.str(), 4);
@@ -60,6 +63,27 @@ void ModuleCppGenerator::build_module_cpp(Module* module) {
         f << "int main(int argc, char** argv) {\n";
         f << "    " << main_function->get_cpp_namespace() << "(argc, argv);\n" << "}\n";
     }
+}
+
+std::string ModuleCppGenerator::build_module_imports(Module* module) {
+    std::stringstream imports;
+
+    if (module->imports_count() > 0) {
+        for (int i = 0; i < module->imports_count(); ++i) {
+            Import* imp = module->get_import(i);
+            std::string path = imp->get_module()->get_cpp_path();
+            path.pop_back();
+            path.pop_back();
+            path.pop_back();
+            path += 'h';
+            imports << "#include \"" << path << "\"\n";
+        }
+
+        imports << '\n';
+    }
+
+
+    return imports.str();
 }
 
 void ModuleCppGenerator::build_module_classes(Module* module) {
