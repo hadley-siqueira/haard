@@ -20,5 +20,5 @@ void NamedType::set_identifier(Identifier* newIdentifier) {
 }
 
 std::string NamedType::to_cpp() {
-    return "unknown named type";
+    return identifier->get_name().get_value();
 }

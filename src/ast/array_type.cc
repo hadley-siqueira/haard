@@ -1,4 +1,7 @@
+#include <sstream>
+
 #include "ast/array_type.h"
+#include "cpp_generator/expression_cpp_generator.h"
 
 using namespace haard;
 
@@ -18,4 +21,15 @@ Expression* ArrayType::get_expression() const {
 
 void ArrayType::set_expression(Expression* newExpression) {
     expression = newExpression;
+}
+
+std::string ArrayType::to_cpp() {
+    ExpressionCppGenerator gen;
+    std::stringstream ss;
+
+    ss << get_subtype()->to_cpp() << '[';
+    gen.build(get_expression());
+    ss << gen.get_output() << ']';
+
+    return ss.str();
 }

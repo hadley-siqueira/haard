@@ -11,9 +11,9 @@ namespace haard {
         ~ArrayType();
 
     public:
-
         Expression* get_expression() const;
         void set_expression(Expression* newExpression);
+        std::string to_cpp();
 
     private:
         Expression* expression;

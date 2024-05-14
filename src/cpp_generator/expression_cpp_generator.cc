@@ -68,6 +68,18 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_double_dolar((DoubleDolar*) expr);
         break;
 
+    case EXPR_NEW:
+        build_new((New*) expr);
+        break;
+
+    case EXPR_DELETE:
+        build_delete((Delete*) expr);
+        break;
+
+    case EXPR_DELETE_ARRAY:
+        build_delete_array((DeleteArray*) expr);
+        break;
+
     case EXPR_DOT:
         build_dot((Dot*) expr);
         break;
@@ -94,6 +106,22 @@ void ExpressionCppGenerator::build(Expression* expr) {
 
     case EXPR_LITERAL_INTEGER:
         build_integer_literal((IntegerLiteral*) expr);
+        break;
+
+    case EXPR_LITERAL_FLOAT:
+        build_float_literal((FloatLiteral*) expr);
+        break;
+
+    case EXPR_LITERAL_DOUBLE:
+        build_double_literal((DoubleLiteral*) expr);
+        break;
+
+    case EXPR_LITERAL_CHAR:
+        build_char_literal((CharLiteral*) expr);
+        break;
+
+    case EXPR_LITERAL_STRING:
+        build_string_literal((StringLiteral*) expr);
         break;
 
     default:
@@ -160,6 +188,43 @@ void ExpressionCppGenerator::build_double_dolar(DoubleDolar* expr) {
     output << t;
 }
 
+void ExpressionCppGenerator::build_new(New* expr) {
+    output << "new ";
+    output << expr->get_type()->to_cpp();
+
+    if (expr->get_arguments()) {
+        int i;
+
+        output << "(";
+
+        for (i = 0; i < expr->get_arguments()->expressions_count() - 1; ++i) {
+            ExpressionCppGenerator gen;
+
+            gen.build(expr->get_arguments()->get_expression(i));
+            output << gen.get_output() << ", ";
+        }
+
+        ExpressionCppGenerator gen;
+
+        gen.build(expr->get_arguments()->get_expression(i));
+        output << gen.get_output() << ")";
+    }
+}
+
+void ExpressionCppGenerator::build_delete(Delete* expr) {
+    ExpressionCppGenerator gen;
+
+    gen.build(expr->get_expression());
+    output << "delete " << gen.get_output();
+}
+
+void ExpressionCppGenerator::build_delete_array(DeleteArray* expr) {
+    ExpressionCppGenerator gen;
+
+    gen.build(expr->get_expression());
+    output << "delete[] " << gen.get_output();
+}
+
 void ExpressionCppGenerator::build_dot(Dot* expr) {
     build_binop(expr, ".", true);
 }
@@ -212,6 +277,22 @@ void ExpressionCppGenerator::build_boolean_literal(BooleanLiteral* expr) {
 
 void ExpressionCppGenerator::build_integer_literal(IntegerLiteral* expr) {
     output << expr->get_token().get_value();
+}
+
+void ExpressionCppGenerator::build_float_literal(FloatLiteral* expr) {
+    output << expr->get_token().get_value();
+}
+
+void ExpressionCppGenerator::build_double_literal(DoubleLiteral* expr) {
+    output << expr->get_token().get_value();
+}
+
+void ExpressionCppGenerator::build_char_literal(CharLiteral* expr) {
+    output << "'" << expr->get_token().get_value() << "'";
+}
+
+void ExpressionCppGenerator::build_string_literal(StringLiteral* expr) {
+    output << '"' << expr->get_token().get_value() << '"';
 }
 
 void ExpressionCppGenerator::build_binop(BinaryOperator* expr, const char* oper, bool no_space) {

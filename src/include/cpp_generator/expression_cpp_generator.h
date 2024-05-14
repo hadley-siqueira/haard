@@ -27,6 +27,9 @@ namespace haard {
         void build_unary_minus(UnaryMinus* expr);
         void build_unary_plus(UnaryPlus* expr);
         void build_double_dolar(DoubleDolar* expr);
+        void build_new(New* expr);
+        void build_delete(Delete* expr);
+        void build_delete_array(DeleteArray* expr);
 
         void build_dot(Dot* expr);
         void build_arrow(Arrow* expr);
@@ -37,6 +40,10 @@ namespace haard {
         void build_identifier(Identifier* expr);
         void build_boolean_literal(BooleanLiteral* expr);
         void build_integer_literal(IntegerLiteral* expr);
+        void build_float_literal(FloatLiteral* expr);
+        void build_double_literal(DoubleLiteral* expr);
+        void build_char_literal(CharLiteral* expr);
+        void build_string_literal(StringLiteral* expr);
 
         void build_binop(BinaryOperator* expr, const char* oper, bool no_space=false);
         void build_unary(UnaryOperator* expr, const char* oper, bool last=false);
