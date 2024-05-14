@@ -38,6 +38,23 @@ def sum : int
 
     return a + b
 
+def swap : void
+    @a : int*
+    @b : int*
+
+    *a = *a
+    *a = *b
+    *b = *b
+
+    *a = ~*a
+    *b = not true
+    *b = !true
+
+    *a = +1
+    *a = -1
+
+    a[2 + 2] = 2
+
 def main : int
     @argc : int
     @argv : char**
