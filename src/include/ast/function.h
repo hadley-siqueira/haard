@@ -34,6 +34,8 @@ namespace haard {
         void set_scope(Scope* newScope);
 
         bool is_method();
+        bool is_constructor();
+        bool is_destructor();
 
         NamedTypeDescriptor* get_named_type_descriptor() const;
         void set_named_type_descriptor(NamedTypeDescriptor* newNamed_type_descriptor);

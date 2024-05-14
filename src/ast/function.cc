@@ -71,6 +71,18 @@ bool Function::is_method() {
     return get_named_type_descriptor() != nullptr;
 }
 
+bool Function::is_constructor() {
+    std::string name = get_name().get_value();
+
+    return is_method() && name == "init";
+}
+
+bool Function::is_destructor() {
+    std::string name = get_name().get_value();
+
+    return is_method() && name == "destroy";
+}
+
 NamedTypeDescriptor* Function::get_named_type_descriptor() const {
     return named_type_descriptor;
 }

@@ -40,6 +40,30 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_interger_division((IntegerDivision*) expr);
         break;
 
+    case EXPR_BITWISE_OR:
+        build_bitwise_or((BitwiseOr*) expr);
+        break;
+
+    case EXPR_BITWISE_XOR:
+        build_bitwise_xor((BitwiseXor*) expr);
+        break;
+
+    case EXPR_BITWISE_AND:
+        build_bitwise_and((BitwiseAnd*) expr);
+        break;
+
+    case EXPR_SHIFT_LEFT_LOGICAL:
+        build_shift_left_logical((ShiftLeftLogical*) expr);
+        break;
+
+    case EXPR_SHIFT_RIGHT_LOGICAL:
+        build_shift_right_logical((ShiftRightLogical*) expr);
+        break;
+
+    case EXPR_SHIFT_RIGHT_ARITHMETIC:
+        build_shift_right_arithmetic((ShiftRightArithmetic*) expr);
+        break;
+
     case EXPR_LOGICAL_NOT:
         build_logical_not((LogicalNot*) expr);
         break;
@@ -124,6 +148,10 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_string_literal((StringLiteral*) expr);
         break;
 
+    case EXPR_PARENTHESIS:
+        build_parenthesis((Parenthesis*) expr);
+        break;
+
     default:
         output << "expr";
         break;
@@ -156,6 +184,30 @@ void ExpressionCppGenerator::build_modulo(Modulo* expr) {
 
 void ExpressionCppGenerator::build_interger_division(IntegerDivision* expr) {
     build_binop(expr, "/ (int)");
+}
+
+void ExpressionCppGenerator::build_bitwise_or(BitwiseOr* expr) {
+    build_binop(expr, "|");
+}
+
+void ExpressionCppGenerator::build_bitwise_xor(BitwiseXor* expr) {
+    build_binop(expr, "^");
+}
+
+void ExpressionCppGenerator::build_bitwise_and(BitwiseAnd* expr) {
+    build_binop(expr, "&");
+}
+
+void ExpressionCppGenerator::build_shift_left_logical(ShiftLeftLogical* expr) {
+    build_binop(expr, "<<");
+}
+
+void ExpressionCppGenerator::build_shift_right_logical(ShiftRightLogical* expr) {
+    build_binop(expr, ">>");
+}
+
+void ExpressionCppGenerator::build_shift_right_arithmetic(ShiftRightArithmetic* expr) {
+    build_binop(expr, ">>");
 }
 
 void ExpressionCppGenerator::build_logical_not(LogicalNot* expr) {
@@ -293,6 +345,13 @@ void ExpressionCppGenerator::build_char_literal(CharLiteral* expr) {
 
 void ExpressionCppGenerator::build_string_literal(StringLiteral* expr) {
     output << '"' << expr->get_token().get_value() << '"';
+}
+
+void ExpressionCppGenerator::build_parenthesis(Parenthesis* expr) {
+    ExpressionCppGenerator gen;
+
+    gen.build(expr->get_expression());
+    output << "(" << gen.get_output() << ")";
 }
 
 void ExpressionCppGenerator::build_binop(BinaryOperator* expr, const char* oper, bool no_space) {

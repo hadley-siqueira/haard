@@ -51,6 +51,7 @@ void ModulesCppGenerator::generate_haard_header() {
     f << "#ifndef HAARD_H\n"
          "#define HAARD_H\n\n"
          "#include <iostream>\n"
+         "#include <array>\n"
          "#include <cstdint>\n\n"
          "typedef uint8_t u8;\n"
          "typedef uint16_t u16;\n"

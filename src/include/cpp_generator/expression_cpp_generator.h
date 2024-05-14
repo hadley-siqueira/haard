@@ -20,6 +20,13 @@ namespace haard {
         void build_modulo(Modulo* expr);
         void build_interger_division(IntegerDivision* expr);
 
+        void build_bitwise_or(BitwiseOr* expr);
+        void build_bitwise_xor(BitwiseXor* expr);
+        void build_bitwise_and(BitwiseAnd* expr);
+        void build_shift_left_logical(ShiftLeftLogical* expr);
+        void build_shift_right_logical(ShiftRightLogical* expr);
+        void build_shift_right_arithmetic(ShiftRightArithmetic* expr);
+
         void build_logical_not(LogicalNot* expr);
         void build_address_of(AddressOf* expr);
         void build_dereference(Dereference* expr);
@@ -44,6 +51,7 @@ namespace haard {
         void build_double_literal(DoubleLiteral* expr);
         void build_char_literal(CharLiteral* expr);
         void build_string_literal(StringLiteral* expr);
+        void build_parenthesis(Parenthesis* expr);
 
         void build_binop(BinaryOperator* expr, const char* oper, bool no_space=false);
         void build_unary(UnaryOperator* expr, const char* oper, bool last=false);

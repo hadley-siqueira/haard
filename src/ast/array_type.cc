@@ -27,9 +27,16 @@ std::string ArrayType::to_cpp() {
     ExpressionCppGenerator gen;
     std::stringstream ss;
 
-    ss << get_subtype()->to_cpp() << '[';
-    gen.build(get_expression());
-    ss << gen.get_output() << ']';
+    if (false) {
+        ss << get_subtype()->to_cpp() << '[';
+        gen.build(get_expression());
+        ss << gen.get_output() << ']';
+    } else {
+        ss << "std::array<";
+        ss << get_subtype()->to_cpp() << ", ";
+        gen.build(get_expression());
+        ss << gen.get_output() << ">";
+    }
 
     return ss.str();
 }

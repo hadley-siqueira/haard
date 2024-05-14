@@ -32,6 +32,20 @@ class PixelBuffer:
     def destroy : void
         delete[] pixels
 
+class HivekVM:
+    regs : u64[32][4]*
+    regs : u64*[32][4]
+    ip   : u64
+    sp   : u64
+
+    def reset : void
+        ip = 0
+        sp = 0
+
+    def tick : void
+        @instruction : u32
+
+        opcode = (instruction >> 20) & 0x3f
 
 class Pair<T, K>:
     first  : int

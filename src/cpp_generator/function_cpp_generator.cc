@@ -16,7 +16,10 @@ void FunctionCppGenerator::build(Function* function) {
 void FunctionCppGenerator::build_header(Function* function) {
     std::string signature = get_signature(function);
 
-    header << function->get_return_type()->to_cpp() << ' ';
+    if (!function->is_constructor() && !function->is_destructor()) {
+        header << function->get_return_type()->to_cpp() << ' ';
+    }
+
     header << signature << ";";
 }
 
@@ -50,7 +53,10 @@ void FunctionCppGenerator::build_cpp(Function* function) {
         ns = ns + "::";
     }
 
-    cpp << function->get_return_type()->to_cpp() << ' ';
+    if (!function->is_constructor() && !function->is_destructor()) {
+        cpp << function->get_return_type()->to_cpp() << ' ';
+    }
+
     cpp << ns << signature;
 
     build_body(function);
@@ -68,7 +74,15 @@ void FunctionCppGenerator::build_body(Function* function) {
 std::string FunctionCppGenerator::get_signature(Function* function) {
     std::stringstream ss;
 
-    ss << function->get_name().get_value() << "(";
+    if (function->is_constructor()) {
+        ss << function->get_named_type_descriptor()->get_name().get_value();
+    } else if (function->is_destructor()) {
+        ss << "~" << function->get_named_type_descriptor()->get_name().get_value();
+    } else {
+        ss << function->get_name().get_value() ;
+    }
+
+    ss << "(";
 
     if (function->parameters_count() > 0) {
         int i;
