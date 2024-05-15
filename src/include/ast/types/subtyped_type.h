@@ -10,6 +10,7 @@ namespace haard {
         SubtypedType(int kind, Type* type);
 
     public:
+        bool equals(Type* other);
         Type* get_subtype() const;
         void set_subtype(Type *newSubtype);
 

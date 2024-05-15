@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "semantic/semantic_define_pass.h"
 
@@ -49,11 +50,10 @@ void SemanticDefinePass::define_module_functions(Module* module) {
 
 void SemanticDefinePass::define_module_function(Function* function) {
     std::string fname = function->get_name().get_value();
-    Scope* scope = current_module->get_scope();
-    Symbol* sym = scope->resolve_local(fname);
+    Symbol* sym = current_scope->resolve_local(fname);
 
     if (sym == nullptr) {
-        scope->define(SYM_FUNCTION, fname, function);
+        current_scope->define(SYM_FUNCTION, fname, function);
         logger->info("defining function " + fname);
         return;
     }
@@ -62,9 +62,9 @@ void SemanticDefinePass::define_module_function(Function* function) {
         Function* other = check_for_overloaded(sym, function);
 
         if (other != nullptr) {
-            logger->error("Can't define function. Function already defined with same signature");
+            logger->error("Can't define function '" + fname + "'. Function already defined with same signature");
         } else {
-            define(SYM_FUNCTION, fname, function);
+            current_scope->define(SYM_FUNCTION, fname, function);
             logger->info("defining function " + fname);
         }
     } else {
@@ -298,12 +298,14 @@ Function* SemanticDefinePass::check_for_overloaded(Symbol* sym, Function* functi
         }
 
         flag = true;
+
         for (int j = 0; j < n1_params; ++j) {
-            t1 = function->get_parameter(i)->get_type();
-            t2 = other->get_parameter(i)->get_type();
+            t1 = function->get_parameter(j)->get_type();
+            t2 = other->get_parameter(j)->get_type();
 
             if (!t1->equals(t2)) {
                 flag = false;
+                break;
             }
         }
 

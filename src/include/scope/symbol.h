@@ -22,6 +22,7 @@ namespace haard {
     class Symbol {
     public:
         Symbol();
+        Symbol(SymbolKind kind);
 
     public:
         SymbolKind get_kind() const;
@@ -29,7 +30,7 @@ namespace haard {
 
         void add_descriptor(void* descriptor);
         int descriptors_count();
-        void* get_descriptor(int idx);
+        void* get_descriptor(int idx=0);
 
     public:
         bool is_function();

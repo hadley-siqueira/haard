@@ -18,7 +18,7 @@ Symbol* Scope::define(SymbolKind kind, std::string name, void* descriptor) {
     Symbol* sym;
 
     if (symbols.count(name) == 0) {
-        sym = new Symbol();
+        sym = new Symbol(kind);
         symbols[name] = sym;
     } else {
         sym = symbols[name];

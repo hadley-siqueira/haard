@@ -12,6 +12,8 @@ namespace haard {
         TypeList* get_types() const;
         void set_types(TypeList* newTypes);
 
+        bool equals(Type* other);
+
     private:
         TypeList* types;
     };

@@ -6,6 +6,10 @@ Symbol::Symbol() {
 
 }
 
+Symbol::Symbol(SymbolKind kind) {
+    set_kind(kind);
+}
+
 SymbolKind Symbol::get_kind() const {
     return kind;
 }

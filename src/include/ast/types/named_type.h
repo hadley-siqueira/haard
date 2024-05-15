@@ -12,8 +12,10 @@ namespace haard {
 
         Identifier* get_identifier() const;
         void set_identifier(Identifier* newIdentifier);
+        NamedTypeDescriptor* get_descriptor();
 
         std::string to_cpp();
+        bool equals(Type* other);
 
     private:
         Identifier* identifier;
