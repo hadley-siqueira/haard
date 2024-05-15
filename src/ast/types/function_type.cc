@@ -1,4 +1,4 @@
-#include "ast/function_type.h"
+#include "ast/types/function_type.h"
 
 using namespace haard;
 

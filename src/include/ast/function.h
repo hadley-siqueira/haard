@@ -4,7 +4,7 @@
 #include <vector>
 #include "ast/declaration.h"
 #include "ast/variable.h"
-#include "ast/type.h"
+#include "ast/types/type.h"
 #include "ast/type_list.h"
 #include "ast/compound_statement.h"
 

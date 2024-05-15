@@ -2,7 +2,7 @@
 #define HAARD_TYPE_POOL_H
 
 #include <vector>
-#include "ast/type.h"
+#include "ast/types/type.h"
 
 namespace haard {
     class TypePool {

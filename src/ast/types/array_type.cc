@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "ast/array_type.h"
+#include "ast/types/array_type.h"
 #include "cpp_generator/expression_cpp_generator.h"
 
 using namespace haard;

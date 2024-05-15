@@ -2,7 +2,7 @@
 #define HAARD_VARIABLE_H
 
 #include "ast/declaration.h"
-#include "ast/type.h"
+#include "ast/types/type.h"
 #include "ast/expression.h"
 
 namespace haard {

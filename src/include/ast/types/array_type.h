@@ -1,7 +1,7 @@
 #ifndef HAARD_ARRAY_TYPE_H
 #define HAARD_ARRAY_TYPE_H
 
-#include "ast/subtyped_type.h"
+#include "ast/types/subtyped_type.h"
 #include "ast/expression.h"
 
 namespace haard {

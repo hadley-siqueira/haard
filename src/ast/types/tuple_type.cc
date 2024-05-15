@@ -1,4 +1,4 @@
-#include "ast/tuple_type.h"
+#include "ast/types/tuple_type.h"
 
 using namespace haard;
 

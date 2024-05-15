@@ -1,4 +1,4 @@
-#include "ast/pointer_type.h"
+#include "ast/types/pointer_type.h"
 
 using namespace haard;
 

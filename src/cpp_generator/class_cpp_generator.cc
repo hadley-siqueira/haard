@@ -2,7 +2,7 @@
 
 #include "cpp_generator/class_cpp_generator.h"
 #include "cpp_generator/function_cpp_generator.h"
-#include "ast/named_type.h"
+#include "ast/types/named_type.h"
 #include "utils/utils.h"
 
 using namespace haard;

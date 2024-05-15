@@ -1,4 +1,4 @@
-#include "ast/list_type.h"
+#include "ast/types/list_type.h"
 
 using namespace haard;
 

@@ -1,4 +1,4 @@
-#include "ast/subtyped_type.h"
+#include "ast/types/subtyped_type.h"
 
 using namespace haard;
 

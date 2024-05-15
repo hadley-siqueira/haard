@@ -2,7 +2,7 @@
 #define HAARD_GENERICS_H
 
 #include <vector>
-#include "ast/type.h"
+#include "ast/types/type.h"
 
 namespace haard {
     class TypeList : public Type {

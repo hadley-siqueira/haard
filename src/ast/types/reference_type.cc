@@ -1,4 +1,4 @@
-#include "ast/reference_type.h"
+#include "ast/types/reference_type.h"
 
 using namespace haard;
 

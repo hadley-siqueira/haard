@@ -1,7 +1,7 @@
 #ifndef HAARD_EXPRESSION_H
 #define HAARD_EXPRESSION_H
 
-#include "ast/type.h"
+#include "ast/types/type.h"
 
 namespace haard {
     class Expression : public AstNode {

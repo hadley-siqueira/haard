@@ -1,7 +1,7 @@
 #ifndef HAARD_FUNCTION_TYPE_H
 #define HAARD_FUNCTION_TYPE_H
 
-#include "ast/type.h"
+#include "ast/types/type.h"
 #include "ast/type_list.h"
 
 namespace haard {

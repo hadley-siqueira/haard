@@ -1,5 +1,5 @@
 #include <set>
-#include "ast/type.h"
+#include "ast/types/type.h"
 #include "type_pool/type_pool.h"
 
 using namespace haard;

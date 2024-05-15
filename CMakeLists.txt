@@ -124,6 +124,18 @@ set(AST_STMTS
     src/ast/statements/return_statement.cc
 )
 
+set(AST_TYPES
+    src/ast/types/type.cc
+    src/ast/types/function_type.cc
+    src/ast/types/pointer_type.cc
+    src/ast/types/reference_type.cc
+    src/ast/types/list_type.cc
+    src/ast/types/tuple_type.cc
+    src/ast/types/array_type.cc
+    src/ast/types/subtyped_type.cc
+    src/ast/types/named_type.cc
+)
+
 set(AST_SRC
     src/ast/ast_node.cc
     src/ast/declaration.cc
@@ -137,15 +149,6 @@ set(AST_SRC
     src/ast/union.cc
     src/ast/enum.cc
     src/ast/variable.cc
-    src/ast/type.cc
-    src/ast/function_type.cc
-    src/ast/pointer_type.cc
-    src/ast/reference_type.cc
-    src/ast/list_type.cc
-    src/ast/tuple_type.cc
-    src/ast/array_type.cc
-    src/ast/subtyped_type.cc
-    src/ast/named_type.cc
     src/ast/type_list.cc
     src/ast/statement.cc
     src/ast/compound_statement.cc
@@ -154,6 +157,7 @@ set(AST_SRC
     src/ast/expression_list.cc
     src/ast/sequence.cc
 
+    ${AST_TYPES}
     ${AST_UNOP_SRC}
     ${AST_BINOPS_SRC}
     ${AST_LITERALS}

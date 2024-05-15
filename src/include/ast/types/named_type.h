@@ -1,7 +1,7 @@
 #ifndef HAARD_NAMED_TYPE_H
 #define HAARD_NAMED_TYPE_H
 
-#include "ast/type.h"
+#include "ast/types/type.h"
 #include "ast/identifier.h"
 
 namespace haard {
