@@ -11,6 +11,7 @@ namespace haard {
         virtual ~Type();
 
         virtual std::string to_cpp();
+        virtual bool equals(Type* other);
 
     public:
         Type(int kind, const Token& token);

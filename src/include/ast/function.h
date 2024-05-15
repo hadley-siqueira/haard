@@ -21,6 +21,10 @@ namespace haard {
         int parameters_count();
         Variable* get_parameter(int idx);
 
+        void add_variable(Variable* var);
+        int variables_count();
+        Variable* get_variable(int idx);
+
         Type* get_return_type() const;
         void set_return_type(Type* newReturn_type);
 
@@ -48,6 +52,7 @@ namespace haard {
         CompoundStatement* statements;
         NamedTypeDescriptor* named_type_descriptor;
         std::vector<Variable*> parameters;
+        std::vector<Variable*> variables;
     };
 }
 

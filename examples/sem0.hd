@@ -46,6 +46,8 @@ class HivekVM:
         @instruction : u32
 
         opcode = (instruction >> 20) & 0x3f
+        regs[i][j] = 0
+
 
 class Pair<T, K>:
     first  : int
@@ -59,6 +61,12 @@ class Pair<T, K>:
 def sum : int
     @a : int
     @b : int
+    @b : int
+
+    a = 0
+    b = 0
+    a = 0
+    c = 0
 
     return a + b
 
@@ -89,7 +97,7 @@ def main : int
     println('a')
     println('あ Ya')
 
-    argc = 10
+    argcr = 10
 
     while argc:
         println(argc)

@@ -15,7 +15,11 @@ Function::Function() {
 }
 
 Function::~Function() {
-    for (auto v : parameters) {
+    for (auto p : parameters) {
+        delete p;
+    }
+
+    for (auto v : variables) {
         delete v;
     }
 
@@ -33,6 +37,18 @@ int Function::parameters_count() {
 
 Variable* Function::get_parameter(int idx) {
     return parameters[idx];
+}
+
+void Function::add_variable(Variable* var) {
+    variables.push_back(var);
+}
+
+int Function::variables_count() {
+    return variables.size();
+}
+
+Variable* Function::get_variable(int idx) {
+    return variables[idx];
 }
 
 Type* Function::get_return_type() const {

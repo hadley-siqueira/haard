@@ -22,6 +22,7 @@ namespace haard {
         void add_import(Import* import);
         int imports_count();
         Import* get_import(int idx);
+        Import* get_import_with_alias(std::string alias);
 
         void add_function(Function* function);
         void add_class(Class* klass);

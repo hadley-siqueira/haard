@@ -24,6 +24,7 @@ void SemanticDefinePass::define_modules_function(Modules* modules) {
 }
 
 void SemanticDefinePass::define_module_classes(Module* module) {
+    current_module = module;
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->classes_count(); ++i) {
@@ -31,16 +32,44 @@ void SemanticDefinePass::define_module_classes(Module* module) {
     }
 
     leave_scope();
+    current_module = nullptr;
 }
 
 void SemanticDefinePass::define_module_functions(Module* module) {
+    current_module = module;
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->functions_count(); ++i) {
-        define_function(module->get_function(i));
+        define_module_function(module->get_function(i));
     }
 
     leave_scope();
+    current_module = nullptr;
+}
+
+void SemanticDefinePass::define_module_function(Function* function) {
+    std::string fname = function->get_name().get_value();
+    Scope* scope = current_module->get_scope();
+    Symbol* sym = scope->resolve_local(fname);
+
+    if (sym == nullptr) {
+        scope->define(SYM_FUNCTION, fname, function);
+        logger->info("defining function " + fname);
+        return;
+    }
+
+    if (sym->is_function()) {
+        Function* other = check_for_overloaded(sym, function);
+
+        if (other != nullptr) {
+            logger->error("Can't define function. Function already defined with same signature");
+        } else {
+            define(SYM_FUNCTION, fname, function);
+            logger->info("defining function " + fname);
+        }
+    } else {
+        logger->error("Can't define function " + fname + ". Already defined");
+    }
 }
 
 void SemanticDefinePass::build_modules_functions(Modules* modules) {
@@ -50,6 +79,7 @@ void SemanticDefinePass::build_modules_functions(Modules* modules) {
 }
 
 void SemanticDefinePass::build_module_functions(Module* module) {
+    current_module = module;
     enter_scope(module->get_scope());
 
     for (int i = 0; i < module->functions_count(); ++i) {
@@ -57,14 +87,17 @@ void SemanticDefinePass::build_module_functions(Module* module) {
     }
 
     leave_scope();
+    current_module = nullptr;
 }
 
 void SemanticDefinePass::build_function(Function* function) {
+    current_function = function;
     enter_scope(function->get_scope());
 
     build_statement(function->get_statements());
 
     leave_scope();
+    current_function = nullptr;
 }
 
 void SemanticDefinePass::build_statement(Statement* stmt) {
@@ -119,6 +152,7 @@ void SemanticDefinePass::define_function(Function* function) {
     if (sym == nullptr) {
         define(SYM_FUNCTION, name, function);
         logger->info("defining function " + name);
+        define_function_parameters(function);
         return;
     }
 
@@ -133,6 +167,24 @@ void SemanticDefinePass::define_function(Function* function) {
         }
     } else {
         logger->error("Can't define function " + name + ". Already defined");
+    }
+}
+
+void SemanticDefinePass::define_function_parameters(Function* function) {
+    Scope* scope = function->get_scope();
+    Symbol* sym;
+
+    for (int i = 0; i < function->parameters_count(); ++i) {
+        Variable* param = function->get_parameter(i);
+        std::string param_name = param->get_name().get_value();
+
+        sym = scope->resolve_local(param_name);
+
+        if (sym == nullptr) {
+            scope->define(SYM_PARAMETER, param_name, param);
+        } else {
+            logger->error("parameter " + param_name + " already defined");
+        }
     }
 }
 
@@ -162,9 +214,15 @@ void SemanticDefinePass::build_expression(Expression* expr) {
 /* This method checks for simple identifiers. For instance a and my_id
  * not a.foo.bar or a[2] or foo(2, 3) */
 void SemanticDefinePass::build_identifier(Identifier* expr) {
+    Symbol* sym;
     std::string name = expr->get_name().get_value();
 
-    Symbol* sym = resolve(name);
+    if (expr->has_alias()) {
+        Import* imp = current_module->get_import_with_alias(expr->get_alias().get_value());
+        sym = imp->get_module()->get_scope()->resolve_in_module(name);
+    } else {
+        sym = resolve(name);
+    }
 
     if (sym == nullptr) {
         logger->error("'"+ name + "' not on scope");
@@ -218,15 +276,38 @@ void SemanticDefinePass::create_local_variable_for_assignment(Assignment* expr) 
     var->set_name(name);
     var->set_type(expr->get_right()->get_type());
     define(SYM_LOCAL_VARIABLE, name.get_value(), var);
+
+    if (current_function) {
+        current_function->add_variable(var);
+    }
 }
 
 Function* SemanticDefinePass::check_for_overloaded(Symbol* sym, Function* function) {
     Function* other = nullptr;
+    Type* t1;
+    Type* t2;
+    bool flag = true;
+    int n1_params = function->parameters_count();
 
     for (int i = 0; i < sym->descriptors_count(); ++i) {
         other = (Function*) sym->get_descriptor(i);
+        int n2_params = other->parameters_count();
 
-        if (false /*function->equals(other)*/) {
+        if (n1_params != n2_params) {
+            continue;
+        }
+
+        flag = true;
+        for (int j = 0; j < n1_params; ++j) {
+            t1 = function->get_parameter(i)->get_type();
+            t2 = other->get_parameter(i)->get_type();
+
+            if (!t1->equals(t2)) {
+                flag = false;
+            }
+        }
+
+        if (flag) {
             return other;
         }
     }

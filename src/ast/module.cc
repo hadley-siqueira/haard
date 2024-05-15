@@ -29,6 +29,20 @@ Import* Module::get_import(int idx) {
     return imports[idx];
 }
 
+Import* Module::get_import_with_alias(std::string alias) {
+    for (int i = 0; i < imports_count(); ++i) {
+        Import* imp = get_import(i);
+
+        std::string imp_alias = imp->get_alias().get_value();
+
+        if (alias == imp_alias) {
+            return imp;
+        }
+    }
+
+    return nullptr;
+}
+
 void Module::add_function(Function* function) {
     functions.push_back(function);
     declarations.push_back(function);

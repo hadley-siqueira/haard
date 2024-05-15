@@ -79,3 +79,7 @@ std::string Type::to_cpp() {
 
     return "unknown type";
 }
+
+bool Type::equals(Type* other) {
+    return get_kind() == other->get_kind();
+}

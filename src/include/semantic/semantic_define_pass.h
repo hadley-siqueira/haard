@@ -12,10 +12,13 @@ namespace haard {
         void define_modules_function(Modules* modules);
 
         void define_module_classes(Module* module);
+
         void define_module_functions(Module* module);
+        void define_module_function(Function* function);
 
         void define_class(Class* klass);
         void define_function(Function* function);
+        void define_function_parameters(Function* function);
 
         void build_modules_functions(Modules* modules);
         void build_module_functions(Module* module);
@@ -37,6 +40,8 @@ namespace haard {
         void create_local_variable_for_assignment(Assignment* expr);
 
     private:
+        Module* current_module;
+        Function* current_function;
         Function* check_for_overloaded(Symbol* sym, Function* function);
     };
 }
