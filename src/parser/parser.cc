@@ -288,6 +288,16 @@ void Parser::parse_parameters(Function* function) {
             assert(false && "expected type in parameter");
         }
 
+        if (match(TK_ASSIGNMENT)) {
+            Expression* expr = parse_expression();
+
+            if (expr == nullptr) {
+                logger->error("missing expression on default value");
+            }
+
+            param->set_expression(parse_expression());
+        }
+
         function->add_parameter(param);
     }
 }

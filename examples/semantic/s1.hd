@@ -8,8 +8,8 @@ class Pair<T, K>:
     second : K
 
 def sum : int
-    @a : int
-    @b : int
+    @a : int = 0
+    @b : int = 0
 
     return a + b
 

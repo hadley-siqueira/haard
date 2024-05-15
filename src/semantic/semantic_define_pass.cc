@@ -256,7 +256,8 @@ void SemanticDefinePass::build_simple_call(Call* expr) {
     SymbolKind kind = sym->get_kind();
 
     if (kind == SYM_FUNCTION) {
-        bool found;
+        bool found = false;
+
         for (int i = 0; i < sym->descriptors_count(); ++i) {
             Function* f = (Function*) sym->get_descriptor(i);
 
