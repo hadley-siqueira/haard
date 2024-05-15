@@ -29,11 +29,28 @@ namespace haard {
         void build_compound_statement(CompoundStatement* stmt);
 
         void build_expression(Expression* expr);
+        void build_call(Call* expr);
+        void build_call_arguments(Call* expr);
+        void build_simple_call(Call* expr);
+
         void build_identifier(Identifier* expr);
+        void build_integer_literal(IntegerLiteral* expr);
 
         void build_assignment(Assignment* expr);
 
         void build_plus(Plus* expr);
+
+        void build_type(Type* type);
+        void build_pointer_type(PointerType* type);
+        void build_reference_type(ReferenceType* type);
+        void build_list_type(ListType* type);
+        void build_array_type(ArrayType* type);
+        void build_tuple_type(TupleType* type);
+        void build_function_type(FunctionType* type);
+        void build_named_type(NamedType* type);
+        void build_type_list(TypeList* types);
+
+        void build_expression_list(ExpressionList* exprs);
 
     private:
         bool is_new_variable_assignment(Assignment* expr);

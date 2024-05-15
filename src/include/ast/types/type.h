@@ -8,6 +8,7 @@ namespace haard {
     class Type : public AstNode {
     public:
         Type();
+        Type(int kind);
         virtual ~Type();
 
         virtual std::string to_cpp();

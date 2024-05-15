@@ -29,12 +29,16 @@ namespace haard {
         Type* get_super_type() const;
         void set_super_type(Type* newSuper_type);
 
+        Type* get_self_type();
+        void set_self_type(Type* type);
+
         virtual std::string get_qualified_name();
         virtual std::string get_cpp_namespace();
 
     private:
         TypeList* generics;
         Type* super_type;
+        Type* self_type;
         std::vector<Function*> functions;
         std::vector<Variable*> variables;
     };

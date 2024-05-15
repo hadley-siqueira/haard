@@ -32,6 +32,8 @@ namespace haard {
         int descriptors_count();
         void* get_descriptor(int idx=0);
 
+        Type* get_type(int idx=0);
+
     public:
         bool is_function();
 

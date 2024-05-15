@@ -10,6 +10,10 @@ Type::Type() {
     type_pool.add_type(this);
 }
 
+Type::Type(int kind) {
+    set_kind(kind);
+}
+
 Type::~Type() {
 
 }

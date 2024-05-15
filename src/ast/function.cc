@@ -59,6 +59,14 @@ void Function::set_return_type(Type* newReturn_type) {
     return_type = newReturn_type;
 }
 
+Type* Function::get_self_type() {
+    return self_type;
+}
+
+void Function::set_self_type(Type* type) {
+    self_type = type;
+}
+
 TypeList* Function::get_generics() const {
     return generics;
 }

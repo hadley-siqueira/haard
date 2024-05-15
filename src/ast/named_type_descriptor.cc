@@ -70,6 +70,14 @@ void NamedTypeDescriptor::set_super_type(Type* newSuper_type) {
     super_type = newSuper_type;
 }
 
+Type* NamedTypeDescriptor::get_self_type() {
+    return self_type;
+}
+
+void NamedTypeDescriptor::set_self_type(Type* type) {
+    self_type = type;
+}
+
 std::string NamedTypeDescriptor::get_qualified_name() {
     std::stringstream ss;
 

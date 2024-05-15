@@ -6,6 +6,7 @@ Identifier::Identifier() {
     set_kind(AST_ID);
     alias_flag = false;
     global_alias_flag = false;
+    set_overload_index(0);
 }
 
 Identifier::Identifier(Token &alias, Token &name, bool alias_flag, bool global_flag, TypeList* generics) {
@@ -13,6 +14,7 @@ Identifier::Identifier(Token &alias, Token &name, bool alias_flag, bool global_f
     set_name(name);
     set_alias(alias);
     set_generics(generics);
+    set_overload_index(0);
     this->alias_flag = alias_flag;
     this->global_alias_flag = global_flag;
 }
@@ -61,4 +63,12 @@ Symbol* Identifier::get_symbol() const {
 
 void Identifier::set_symbol(Symbol* newSymbol) {
     symbol = newSymbol;
+}
+
+int Identifier::get_overload_index() const {
+    return overload_index;
+}
+
+void Identifier::set_overload_index(int newOverload_index) {
+    overload_index = newOverload_index;
 }

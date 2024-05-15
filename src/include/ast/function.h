@@ -27,6 +27,8 @@ namespace haard {
 
         Type* get_return_type() const;
         void set_return_type(Type* newReturn_type);
+        Type* get_self_type();
+        void set_self_type(Type* type);
 
         TypeList* get_generics() const;
         void set_generics(TypeList* newGenerics);
@@ -46,6 +48,7 @@ namespace haard {
         std::string get_cpp_namespace();
 
     private:
+        Type* self_type;
         Type* return_type;
         TypeList* generics;
         Scope* scope;

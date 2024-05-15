@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "semantic/semantic_define_pass.h"
+#include "ast/types/named_type.h"
 
 using namespace haard;
 
@@ -135,13 +136,19 @@ void SemanticDefinePass::define_class(Class* klass) {
 
     Symbol* sym = current_scope->resolve_in_module(name);
 
-    if (sym == nullptr) {
-        define(SYM_CLASS, name, klass);
-        logger->info("defining class " + name + " (" + klass->get_qualified_name() + ")");
-        return;
-    } else {
+    if (sym != nullptr) {
         logger->error(name + " already defined");
+        return;
     }
+
+    current_scope->define(SYM_CLASS, name, klass);
+    logger->info("defining class " + name + " (" + klass->get_qualified_name() + ")");
+
+    Identifier* id = new Identifier();
+    id->set_name(klass->get_name());
+    NamedType* named = new NamedType(id);
+    build_type(named);
+    klass->set_self_type(named);
 }
 
 void SemanticDefinePass::define_function(Function* function) {
@@ -197,17 +204,87 @@ void SemanticDefinePass::build_expression(Expression* expr) {
     int kind = expr->get_kind();
 
     switch (kind) {
-    case AST_ID:
-        build_identifier((Identifier*) expr);
-        break;
-
     case EXPR_ASSIGNMENT:
         build_assignment((Assignment*) expr);
+        break;
+
+    case EXPR_CALL:
+        build_call((Call*) expr);
         break;
 
     case EXPR_PLUS:
         build_plus((Plus*) expr);
         break;
+
+    case AST_ID:
+        build_identifier((Identifier*) expr);
+        break;
+
+    case EXPR_LITERAL_INTEGER:
+        build_integer_literal((IntegerLiteral*) expr);
+        break;
+    }
+}
+
+void SemanticDefinePass::build_call(Call* expr) {
+    int kind = expr->get_object()->get_kind();
+
+    build_call_arguments(expr);
+
+    switch (kind) {
+    case AST_ID:
+        build_simple_call(expr);
+        break;
+    }
+}
+
+void SemanticDefinePass::build_call_arguments(Call* expr) {
+    build_expression_list(expr->get_arguments());
+}
+
+void SemanticDefinePass::build_simple_call(Call* expr) {
+    Identifier* id = (Identifier*) expr->get_object();
+
+    std::string name = id->get_name().get_value();
+    Symbol* sym = current_scope->resolve(name);
+
+    if (sym == nullptr) {
+        logger->error("Callable not in scope: " + name);
+        return;
+    }
+
+    SymbolKind kind = sym->get_kind();
+
+    if (kind == SYM_FUNCTION) {
+        bool found;
+        for (int i = 0; i < sym->descriptors_count(); ++i) {
+            Function* f = (Function*) sym->get_descriptor(i);
+
+            if (f->parameters_count() == expr->get_arguments()->expressions_count()) {
+                found = true;
+
+                for (int j = 0; j < f->parameters_count(); ++j) {
+                    Type* t1 = f->get_parameter(j)->get_type();
+                    Type* t2 = expr->get_arguments()->get_expression(j)->get_type();
+
+                    if (!t1->equals(t2)) {
+                        found = false;
+                    }
+                }
+
+                if (found) {
+                    id->set_symbol(sym);
+                    id->set_overload_index(i);
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            logger->error("no matching argument types");
+        }
+    } else {
+        logger->error("Trying to call " + name + " but it's not a function");
     }
 }
 
@@ -228,7 +305,14 @@ void SemanticDefinePass::build_identifier(Identifier* expr) {
         logger->error("'"+ name + "' not on scope");
     } else {
         expr->set_symbol(sym);
+        expr->set_type(sym->get_type());
     }
+
+    build_type(expr->get_type());
+}
+
+void SemanticDefinePass::build_integer_literal(IntegerLiteral* expr) {
+    expr->set_type(new Type(TYPE_INT));
 }
 
 void SemanticDefinePass::build_assignment(Assignment* expr) {
@@ -251,6 +335,96 @@ void SemanticDefinePass::build_plus(Plus* expr) {
 
     build_expression(left);
     build_expression(right);
+}
+
+void SemanticDefinePass::build_type(Type* type) {
+
+    if (type == nullptr) {
+        return;
+    }
+
+    int kind = type->get_kind();
+
+    switch (kind) {
+    case TYPE_POINTER:
+        build_pointer_type((PointerType*) type);
+        break;
+
+    case TYPE_REFERENCE:
+        build_reference_type((ReferenceType*) type);
+        break;
+
+    case TYPE_LIST:
+        build_list_type((ListType*) type);
+        break;
+
+    case TYPE_ARRAY:
+        build_array_type((ArrayType*) type);
+        break;
+
+    case TYPE_TUPLE:
+        build_tuple_type((TupleType*) type);
+        break;
+
+    case TYPE_FUNCTION:
+        build_function_type((FunctionType*) type);
+        break;
+
+    case TYPE_NAMED:
+        build_named_type((NamedType*) type);
+        break;
+    }
+}
+
+void SemanticDefinePass::build_pointer_type(PointerType* type) {
+    build_type(type->get_subtype());
+}
+
+void SemanticDefinePass::build_reference_type(ReferenceType* type) {
+    build_type(type->get_subtype());
+}
+
+void SemanticDefinePass::build_list_type(ListType* type) {
+    build_type(type->get_subtype());
+}
+
+void SemanticDefinePass::build_array_type(ArrayType* type) {
+    build_expression(type->get_expression());
+    build_type(type->get_subtype());
+}
+
+void SemanticDefinePass::build_tuple_type(TupleType* type) {
+    build_type_list(type->get_types());
+}
+
+void SemanticDefinePass::build_function_type(FunctionType* type) {
+    build_type_list(type->get_param_types());
+    build_type(type->get_return_type());
+}
+
+void SemanticDefinePass::build_named_type(NamedType* type) {
+    std::string name = type->get_identifier()->get_name().get_value();
+
+    Symbol* sym = resolve(name);
+
+    if (sym == nullptr) {
+        logger->error("Type " + name + " not in scope");
+        return;
+    }
+
+    type->get_identifier()->set_symbol(sym);
+}
+
+void SemanticDefinePass::build_type_list(TypeList* types) {
+    for (int i = 0; i < types->types_count(); ++i) {
+        build_type(types->get_type(i));
+    }
+}
+
+void SemanticDefinePass::build_expression_list(ExpressionList* exprs) {
+    for (int i = 0; i < exprs->expressions_count(); ++i) {
+        build_expression(exprs->get_expression(i));
+    }
 }
 
 bool SemanticDefinePass::is_new_variable_assignment(Assignment* expr) {

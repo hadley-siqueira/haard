@@ -28,7 +28,11 @@ namespace haard {
         Symbol* get_symbol() const;
         void set_symbol(Symbol* newSymbol);
 
+        int get_overload_index() const;
+        void set_overload_index(int newOverload_index);
+
     private:
+        int overload_index;
         Token alias;
         bool alias_flag;
         bool global_alias_flag;
