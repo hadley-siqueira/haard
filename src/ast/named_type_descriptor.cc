@@ -9,6 +9,7 @@ using namespace haard;
 NamedTypeDescriptor::NamedTypeDescriptor() {
     set_generics(nullptr);
     set_super_type(nullptr);
+    set_scope(new Scope());
 }
 
 NamedTypeDescriptor::~NamedTypeDescriptor() {
@@ -19,6 +20,8 @@ NamedTypeDescriptor::~NamedTypeDescriptor() {
     for (auto f : functions) {
         delete f;
     }
+
+    delete scope;
 }
 
 void NamedTypeDescriptor::add_function(Function* function) {
@@ -99,4 +102,12 @@ std::string NamedTypeDescriptor::get_qualified_name() {
 
 std::string NamedTypeDescriptor::get_cpp_namespace() {
     return get_module()->get_cpp_namespace() + "::" + get_name().get_value();
+}
+
+Scope* NamedTypeDescriptor::get_scope() const {
+    return scope;
+}
+
+void NamedTypeDescriptor::set_scope(Scope* newScope) {
+    scope = newScope;
 }

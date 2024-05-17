@@ -25,7 +25,7 @@ Symbol* SemanticPass::resolve(std::string name) {
     return current_scope->resolve(name);
 }
 
-void SemanticPass::define(SymbolKind kind, std::string name, void* descriptor) {
+void SemanticPass::define(SymbolDescriptorKind kind, std::string name, void* descriptor) {
     current_scope->define(kind, name, descriptor);
 }
 

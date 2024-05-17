@@ -110,6 +110,7 @@
 
 #include "ast/expression_list.h"
 #include "ast/identifier.h"
+#include "ast/this.h"
 
 #include "ast/literals/literal.h"
 #include "ast/literals/boolean_literal.h"

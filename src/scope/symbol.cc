@@ -7,27 +7,25 @@ Symbol::Symbol() {
 
 }
 
-Symbol::Symbol(SymbolKind kind) {
-    set_kind(kind);
+Symbol::~Symbol() {
+    for (auto d : descriptors) {
+        delete d;
+    }
 }
 
-SymbolKind Symbol::get_kind() const {
-    return kind;
-}
+void Symbol::add_descriptor(SymbolDescriptorKind kind, void* descriptor) {
+    SymbolDescriptor* sd = new SymbolDescriptor();
 
-void Symbol::set_kind(SymbolKind newKind) {
-    kind = newKind;
-}
-
-void Symbol::add_descriptor(void* descriptor) {
-    descriptors.push_back(descriptor);
+    sd->set_kind(kind);
+    sd->set_descriptor(descriptor);
+    descriptors.push_back(sd);
 }
 
 int Symbol::descriptors_count() {
     return descriptors.size();
 }
 
-void* Symbol::get_descriptor(int idx) {
+SymbolDescriptor* Symbol::get_descriptor(int idx) {
     if (idx < descriptors_count()) {
         return descriptors[idx];
     }
@@ -35,7 +33,7 @@ void* Symbol::get_descriptor(int idx) {
     return nullptr;
 }
 
-Type* Symbol::get_type(int idx) {
+Type* Symbol::get_type(int idx) {/*
     Variable* var = (Variable*) descriptors[idx];
     NamedTypeDescriptor* named = (NamedTypeDescriptor*) descriptors[idx];
     Function* func = (Function*) descriptors[idx];
@@ -57,9 +55,9 @@ Type* Symbol::get_type(int idx) {
         return var->get_type();
     }
 
-    return nullptr;
+    return nullptr;*/
 }
 
-bool Symbol::is_function() {
-    return kind == SYM_FUNCTION;
+bool Symbol::is_function() {/*
+    return kind == SYM_FUNCTION;*/ return false;
 }

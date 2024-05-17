@@ -111,6 +111,7 @@ namespace haard {
         EXPR_LITERAL_ARRAY,
         EXPR_LITERAL_HASH,
         EXPR_LITERAL_TUPLE,
+        EXPR_THIS,
 
         EXPR_SEQUENCE,
 

@@ -18,6 +18,7 @@ void mkdir(std::string path);
 void rmdir(std::string path);
 
 std::string indent(std::string s, int ws=4);
+std::string colorify(std::string msg, bool no_normal=false);
 
 
 #endif

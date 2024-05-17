@@ -14,17 +14,17 @@ Scope::~Scope() {
     }
 }
 
-Symbol* Scope::define(SymbolKind kind, std::string name, void* descriptor) {
+Symbol* Scope::define(SymbolDescriptorKind kind, std::string name, void* descriptor) {
     Symbol* sym;
 
     if (symbols.count(name) == 0) {
-        sym = new Symbol(kind);
+        sym = new Symbol();
         symbols[name] = sym;
     } else {
         sym = symbols[name];
     }
 
-    sym->add_descriptor(descriptor);
+    sym->add_descriptor(kind, descriptor);
     return sym;
 }
 

@@ -3,6 +3,20 @@ class Pixel:
     g : u8
     b : u8
 
+    def init : void
+        r = 255
+        g = 255
+        b = 255
+
+    def init : void
+        @r : u8
+        @g : u8
+        @b : u8
+
+        this.r = r
+        this.g = g
+        this.b = b
+
 class Pair<T, K>:
     first  : T
     second : K
@@ -17,3 +31,4 @@ def foo : void
     a = sum(2, 3, 4)
     a = sum(2, 3)
     a = sum(2)
+    p = Pixel()

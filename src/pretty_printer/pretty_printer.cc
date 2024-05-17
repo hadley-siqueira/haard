@@ -408,6 +408,10 @@ void PrettyPrinter::print_expression(Expression* expr) {
         print_unary_operator(un, true);
         break;
 
+    case EXPR_THIS:
+        out << "this";
+        break;
+
     case EXPR_LITERAL_INTEGER:
     case EXPR_LITERAL_FLOAT:
     case EXPR_LITERAL_DOUBLE:

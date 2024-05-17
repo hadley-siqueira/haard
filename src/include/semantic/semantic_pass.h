@@ -16,7 +16,7 @@ namespace haard {
         void leave_scope();
 
         Symbol* resolve(std::string name);
-        void define(SymbolKind kind, std::string name, void* descriptor);
+        void define(SymbolDescriptorKind kind, std::string name, void* descriptor);
 
         Logger* get_logger() const;
         void set_logger(Logger* newLogger);

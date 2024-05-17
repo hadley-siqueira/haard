@@ -164,6 +164,7 @@ set(AST_SRC
     ${AST_STMTS}
 
     src/ast/identifier.cc
+    src/ast/this.cc
 )
 
 set(IR_SRC
@@ -186,6 +187,7 @@ set(SEMANTIC_SRC
 )
 
 set(SCOPE_SRC
+    src/scope/symbol_descriptor.cc
     src/scope/symbol.cc
     src/scope/scope.cc
 )

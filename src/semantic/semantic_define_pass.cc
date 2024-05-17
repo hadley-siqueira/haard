@@ -3,6 +3,7 @@
 
 #include "semantic/semantic_define_pass.h"
 #include "ast/types/named_type.h"
+#include "utils/utils.h"
 
 using namespace haard;
 
@@ -242,7 +243,7 @@ void SemanticDefinePass::build_call_arguments(Call* expr) {
     build_expression_list(expr->get_arguments());
 }
 
-void SemanticDefinePass::build_simple_call(Call* expr) {
+void SemanticDefinePass::build_simple_call(Call* expr) {/*
     Identifier* id = (Identifier*) expr->get_object();
 
     std::string name = id->get_name().get_value();
@@ -253,7 +254,7 @@ void SemanticDefinePass::build_simple_call(Call* expr) {
         return;
     }
 
-    SymbolKind kind = sym->get_kind();
+    SymbolDescriptorKind kind = sym->get_kind();
 
     if (kind == SYM_FUNCTION) {
         bool found = false;
@@ -276,6 +277,8 @@ void SemanticDefinePass::build_simple_call(Call* expr) {
                 if (found) {
                     id->set_symbol(sym);
                     id->set_overload_index(i);
+                    expr->set_type(f->get_return_type());
+                    build_type(expr->get_type());
                     break;
                 }
             }
@@ -284,9 +287,50 @@ void SemanticDefinePass::build_simple_call(Call* expr) {
         if (!found) {
             logger->error("no matching argument types");
         }
+    } else if (kind == SYM_CLASS) {
+        NamedTypeDescriptor* named_descriptor = (NamedTypeDescriptor*) sym->get_descriptor();
+        Scope* scope = named_descriptor->get_scope();
+        Symbol* sym = scope->resolve_local("init");
+
+        bool found = false;
+
+        if (sym) {
+            std::cout << "found " << sym->descriptors_count() << " constructor\n";
+        } else {
+            std::cout << "found 0 constructors (not in scope)\n";
+        }
+
+        for (int i = 0; sym != nullptr && i < sym->descriptors_count(); ++i) {
+            Function* f = (Function*) sym->get_descriptor(i);
+
+            if (f->parameters_count() == expr->get_arguments()->expressions_count()) {
+                found = true;
+
+                for (int j = 0; j < f->parameters_count(); ++j) {
+                    Type* t1 = f->get_parameter(j)->get_type();
+                    Type* t2 = expr->get_arguments()->get_expression(j)->get_type();
+
+                    if (!t1->equals(t2)) {
+                        found = false;
+                    }
+                }
+
+                if (found) {
+                    id->set_symbol(sym);
+                    id->set_overload_index(i);
+                    expr->set_type(named_descriptor->get_self_type());
+                    build_type(expr->get_type());
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            logger->error("no matching argument types for constructor");
+        }
     } else {
         logger->error("Trying to call " + name + " but it's not a function");
-    }
+    }*/
 }
 
 /* This method checks for simple identifiers. For instance a and my_id
@@ -339,7 +383,6 @@ void SemanticDefinePass::build_plus(Plus* expr) {
 }
 
 void SemanticDefinePass::build_type(Type* type) {
-
     if (type == nullptr) {
         return;
     }

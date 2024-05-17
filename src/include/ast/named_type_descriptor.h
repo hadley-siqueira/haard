@@ -6,6 +6,7 @@
 #include "ast/variable.h"
 #include "ast/function.h"
 #include "ast/type_list.h"
+#include "scope/scope.h"
 
 namespace haard {
     class NamedTypeDescriptor : public Declaration {
@@ -35,10 +36,14 @@ namespace haard {
         virtual std::string get_qualified_name();
         virtual std::string get_cpp_namespace();
 
+        Scope *get_scope() const;
+        void set_scope(Scope *newScope);
+
     private:
         TypeList* generics;
         Type* super_type;
         Type* self_type;
+        Scope* scope;
         std::vector<Function*> functions;
         std::vector<Variable*> variables;
     };

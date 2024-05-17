@@ -1027,6 +1027,8 @@ Expression* Parser::parse_primary_expression() {
 
     if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
         expr = parse_identifier();
+    } else if (match(TK_THIS)) {
+        expr = new This(matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
         expr = new BooleanLiteral(matched);
     } else if (match(TK_LITERAL_INTEGER)) {

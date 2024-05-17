@@ -13,7 +13,7 @@ namespace haard {
         ~Scope();
 
     public:
-        Symbol* define(SymbolKind kind, std::string name, void* descriptor);
+        Symbol* define(SymbolDescriptorKind kind, std::string name, void* descriptor);
 
         Symbol* resolve(const std::string& name);
         Symbol* resolve_local(const std::string& name);
