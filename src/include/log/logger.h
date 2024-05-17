@@ -19,6 +19,7 @@ namespace haard {
     private:
         std::vector<Log> logs;
         bool error_flag;
+        bool log_info_flag;
     };
 }
 

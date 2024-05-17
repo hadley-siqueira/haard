@@ -13,11 +13,11 @@ std::string Log::to_str() {
 
     switch (level) {
     case LOG_INFO:
-        ss << "info: " << get_message();
+        ss << "<blue>info:<normal> " << get_message();
         break;
 
     case LOG_ERROR:
-        ss << "error: " << get_message();
+        ss << "<red>error:<normal> " << get_message();
         break;
 
     default:

@@ -1,3 +1,5 @@
+import s2
+
 class Pixel:
     r : u8
     g : u8
@@ -20,6 +22,11 @@ class Pixel:
 class Pair<T, K>:
     first  : T
     second : K
+
+class Pixel:
+    r : u8
+    g : u8
+    b : u8
 
 def sum : int
     @a : int = 0

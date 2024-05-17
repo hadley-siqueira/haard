@@ -1,11 +1,13 @@
 #include <sstream>
 
 #include "log/logger.h"
+#include "utils/utils.h"
 
 using namespace haard;
 
 Logger::Logger() {
     error_flag = false;
+    log_info_flag = true;
 }
 
 void Logger::log(std::string message) {
@@ -16,6 +18,9 @@ void Logger::log(std::string message) {
 }
 
 void Logger::info(std::string message) {
+    if (!log_info_flag)
+        return;
+
     Log log;
 
     log.set_level(LOG_INFO);
@@ -36,7 +41,7 @@ std::string Logger::to_str() {
     std::stringstream ss;
 
     for (auto log : logs) {
-        ss << log.to_str() << std::endl;
+        ss << colorify(log.to_str()) << std::endl;
     }
 
     return ss.str();

@@ -8,6 +8,7 @@ namespace haard {
         SYM_ENUM,
         SYM_UNION,
         SYM_STRUCT,
+        SYM_INTERFACE,
         SYM_FUNCTION,
         SYM_METHOD,
 

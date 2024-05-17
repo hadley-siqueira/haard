@@ -5,13 +5,19 @@
 #include "ast/types/named_type.h"
 #include "utils/utils.h"
 
+#include "semantic/modules_semantic_analyser.h"
+
 using namespace haard;
 
 void SemanticDefinePass::build_modules(Modules* modules) {
-    define_modules_classes(modules);
+    /*define_modules_classes(modules);
     define_modules_function(modules);
 
-    build_modules_functions(modules);
+    build_modules_functions(modules);*/
+
+    ModulesSemanticAnalyser gen;
+    gen.set_logger(logger);
+    gen.build(modules);
 }
 
 void SemanticDefinePass::define_modules_classes(Modules* modules) {
