@@ -1,5 +1,8 @@
 // for mkdir
+#include <iostream>
 #include <cstdlib>
+#include <fstream>
+#include <sstream>
 #include <unistd.h>
 #include <map>
 
@@ -127,7 +130,11 @@ std::string colorify(std::string msg, bool no_normal) {
                 ++i;
             }
 
-            r += color_map[color];
+            if (color_map.count(color) > 0) {
+                r += color_map[color];
+            } else {
+                r += "<" + color + ">";
+            }
         } else {
             r += msg[i];
         }
@@ -138,4 +145,49 @@ std::string colorify(std::string msg, bool no_normal) {
     }
 
     return r;
+}
+
+std::string get_line_from_file(std::string path, int line) {
+    std::ifstream f(path);
+    char c = '\0';
+    int counter = 1;
+
+    while (line != counter) {
+        f.get(c);
+
+        if (c == '\n') {
+            ++counter;
+        }
+    }
+
+    c = '\0';
+    std::string buffer;
+
+    while (c != '\n') {
+        buffer += c;
+        f.get(c);
+    }
+
+    return buffer;
+}
+
+std::string build_message(std::string path, int line, int column, std::string msg) {
+    std::string contents = get_line_from_file(path, line);
+    std::stringstream msg2;
+    std::stringstream line_size;
+
+    line_size << "  " << line << " | ";
+
+    for (int i = 0; i < line_size.str().size() - 3; ++i) {
+        msg2 << ' ';
+    }
+
+    msg2 << "--> " << path << '\n' << line_size.str() << contents << '\n';
+
+    for (int i = 0; i < column + line_size.str().size(); ++i) {
+        msg2 << ' ';
+    }
+
+    msg2 << '^' << " " << msg;
+    return msg2.str();
 }

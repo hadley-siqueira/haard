@@ -1,3 +1,6 @@
+#include <sstream>
+#include <fstream>
+
 #include "semantic/module_semantic_analyser.h"
 
 using namespace haard;
@@ -17,6 +20,18 @@ void ModuleSemanticAnalyser::define_classes(Module* module) {
     for (int i = 0; i < module->classes_count(); ++i) {
         define_class(module, module->get_class(i));
     }
+}
+
+std::string error_message() {
+    std::stringstream ss;
+    std::string name;
+    int line1;
+    int line2;
+
+    ss << "can't define " << name << " on line " << line1 << " because it is also defined on line " << line2;
+
+
+    return ss.str();
 }
 
 void ModuleSemanticAnalyser::define_class(Module* module, Class* klass) {
@@ -68,6 +83,10 @@ void ModuleSemanticAnalyser::define_structs(Module* module) {
     logger->info("defining structs for module " + module->get_path());
 
     for (int i = 0; i < module->classes_count(); ++i) {
-        define_class(module, module->get_class(i));
+        define_struct(module, module->get_struct(i));
     }
+}
+
+void ModuleSemanticAnalyser::define_struct(Module* module, Struct* s) {
+
 }

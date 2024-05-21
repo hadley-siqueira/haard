@@ -20,5 +20,8 @@ void rmdir(std::string path);
 std::string indent(std::string s, int ws=4);
 std::string colorify(std::string msg, bool no_normal=false);
 
+std::string get_line_from_file(std::string path, int line);
+std::string build_message(std::string path, int line, int column, std::string msg);
+
 
 #endif

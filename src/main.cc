@@ -5,6 +5,7 @@
 #include "string_pool/string_pool.h"
 #include "pretty_printer/pretty_printer.h"
 #include "driver/driver.h"
+#include "utils/utils.h"
 
 using namespace haard;
 
@@ -46,6 +47,18 @@ void test_driver(int argc, char** argv) {
 int main(int argc, char** argv) {
     //test_scanner(argc, argv);
     //test_pretty_printer(argc, argv);
+    std::cout << colorify("<red>error<normal>: can't define Foo because it is alredy defined\n");
+    std::cout << build_message(argv[1], 3, 3, "teste") << '\n';
+    std::stringstream tst;
+    tst << "<red>error<normal>: can't define class <white>'Foo<T, K>'<normal> because it is already defined on line 70\n"
+           "   --> ./file.hd\n"
+           "120 | class Foo<T, K>:\n"
+           "            ^ tried to define here\n\n"
+           "   --> ./file.hd\n"
+           " 70 | struct Foo<T, K>:\n"
+           "             ^ but conflicts here\n";
+
+    std::cout << colorify(tst.str()) << '\n';
     test_driver(argc, argv);
 
     return 0;
