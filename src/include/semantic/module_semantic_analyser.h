@@ -14,7 +14,7 @@ namespace haard {
         void define_type(SymbolDescriptorKind kind, NamedTypeDescriptor* desc);
         void define_type_in_scope(SymbolDescriptorKind kind, NamedTypeDescriptor* desc);
 
-        void check_for_type_redefinition(NamedTypeDescriptor* desc, Symbol* sym);
+        NamedTypeDescriptor* check_for_type_redefinition(NamedTypeDescriptor* desc, Symbol* sym);
 
         Logger *get_logger() const;
         void set_logger(Logger *newLogger);

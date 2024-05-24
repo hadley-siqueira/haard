@@ -112,7 +112,13 @@ void ModuleSemanticAnalyser::define_type(SymbolDescriptorKind kind, NamedTypeDes
         return;
     }
 
-    check_for_type_redefinition(desc, sym);
+    NamedTypeDescriptor* other = check_for_type_redefinition(desc, sym);
+
+    if (other != nullptr) {
+        logger->error(error_type_redefinition(desc, other));
+    } else {
+        define_type_in_scope(kind, desc);
+    }
 }
 
 void ModuleSemanticAnalyser::define_type_in_scope(SymbolDescriptorKind kind, NamedTypeDescriptor* desc) {
@@ -120,17 +126,19 @@ void ModuleSemanticAnalyser::define_type_in_scope(SymbolDescriptorKind kind, Nam
     logger->info("defining class " + desc->get_qualified_name());
 }
 
-void ModuleSemanticAnalyser::check_for_type_redefinition(NamedTypeDescriptor* desc, Symbol* sym) {
+NamedTypeDescriptor* ModuleSemanticAnalyser::check_for_type_redefinition(NamedTypeDescriptor* desc, Symbol* sym) {
     for (int i = 0; i < sym->descriptors_count(); ++i) {
         SymbolDescriptor* sd = sym->get_descriptor(i);
         NamedTypeDescriptor* other = (NamedTypeDescriptor*) sd->get_descriptor();
 
         if (sd->is_named_type()) {
             if (same_generics(desc->get_generics(), other->get_generics())) {
-                logger->error(error_type_redefinition(desc, other));
+                return other;
             }
         }
     }
+
+    return nullptr;
 }
 
 Logger* ModuleSemanticAnalyser::get_logger() const {

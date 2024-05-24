@@ -33,15 +33,18 @@ struct Node<T>:
     right : Node<T>*
     value : T
 
-struct Node2:
+struct Node:
     left  : Node*
     right : Node*
     value : int
 
-struct Node2:
+struct Node:
     left  : Node*
     right : Node*
     value : int
+
+struct Pixel:
+    a : int
 
 def sum : int
     @a : int = 0
