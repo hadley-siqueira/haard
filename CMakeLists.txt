@@ -186,6 +186,7 @@ set(SEMANTIC_SRC
     src/semantic/semantic_define_pass.cc
     src/semantic/modules_semantic_analyser.cc
     src/semantic/module_semantic_analyser.cc
+    src/semantic/module_named_type_definer.cc
 )
 
 set(SCOPE_SRC
