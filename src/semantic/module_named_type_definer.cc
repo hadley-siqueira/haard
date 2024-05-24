@@ -134,7 +134,7 @@ std::string ModuleNamedTypeDefiner::error_type_redefinition(NamedTypeDescriptor*
 
     ss << "can't define <white>'" << kind1 << " " << name << "'<normal> on line " << line1 << " because it is already defined as <white>'" << kind2 << " " << name << "'<normal> on line " << line2 << '\n';
     ss << build_message(path1, line1, column1, "tried to define here") << "\n\n";
-    ss << build_message(path2, line2, column2, "but is also defined here");
+    ss << build_message(path2, line2, column2, "but is also defined here") << '\n';
 
     return ss.str();
 }
