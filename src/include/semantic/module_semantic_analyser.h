@@ -8,13 +8,19 @@ namespace haard {
     class ModuleSemanticAnalyser {
     public:
         void define_types(Module* module);
-        void define_classes(Module* module);
-        void define_class(Module* module, Class* klass);
+        void define_classes();
+        void define_structs();
+        void define_unions();
+        void define_type(SymbolDescriptorKind kind, NamedTypeDescriptor* desc);
+        void define_type_in_scope(SymbolDescriptorKind kind, NamedTypeDescriptor* desc);
 
-        void define_structs(Module* module);
-        void define_struct(Module* module, Struct* s);
+        void check_for_type_redefinition(NamedTypeDescriptor* desc, Symbol* sym);
+
+        Logger *get_logger() const;
+        void set_logger(Logger *newLogger);
 
     private:
+        Module* module;
         Logger* logger;
 
     };

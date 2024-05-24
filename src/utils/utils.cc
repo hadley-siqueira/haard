@@ -184,7 +184,7 @@ std::string build_message(std::string path, int line, int column, std::string ms
 
     msg2 << "--> " << path << '\n' << line_size.str() << contents << '\n';
 
-    for (int i = 0; i < column + line_size.str().size(); ++i) {
+    for (int i = 0; i < column + line_size.str().size() - 1; ++i) {
         msg2 << ' ';
     }
 

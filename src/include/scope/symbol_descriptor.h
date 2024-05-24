@@ -28,6 +28,9 @@ namespace haard {
         void* get_descriptor();
         void set_descriptor(void* descriptor);
 
+    public:
+        bool is_named_type();
+
     private:
         SymbolDescriptorKind kind;
         void* descriptor;

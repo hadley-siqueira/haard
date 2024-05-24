@@ -33,6 +33,16 @@ struct Node<T>:
     right : Node<T>*
     value : T
 
+struct Node2:
+    left  : Node*
+    right : Node*
+    value : int
+
+struct Node2:
+    left  : Node*
+    right : Node*
+    value : int
+
 def sum : int
     @a : int = 0
     @b : int = 0

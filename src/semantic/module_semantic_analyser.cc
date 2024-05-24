@@ -1,16 +1,20 @@
+#include <iostream>
 #include <sstream>
 #include <fstream>
+#include "utils/utils.h"
 
 #include "semantic/module_semantic_analyser.h"
 
 using namespace haard;
 
 void ModuleSemanticAnalyser::define_types(Module* module) {
-    define_classes(module);
-    define_structs(module);
+    this->module = module;
+    define_classes();
+    define_structs();
+    define_unions();
 }
 
-void ModuleSemanticAnalyser::define_classes(Module* module) {
+void ModuleSemanticAnalyser::define_classes() {
     if (module->classes_count() == 0) {
         return;
     }
@@ -18,75 +22,121 @@ void ModuleSemanticAnalyser::define_classes(Module* module) {
     logger->info("defining classes for module " + module->get_path());
 
     for (int i = 0; i < module->classes_count(); ++i) {
-        define_class(module, module->get_class(i));
+        define_type(SYM_CLASS, module->get_class(i));
     }
 }
 
-std::string error_message() {
-    std::stringstream ss;
-    std::string name;
-    int line1;
-    int line2;
-
-    ss << "can't define " << name << " on line " << line1 << " because it is also defined on line " << line2;
-
-
-    return ss.str();
-}
-
-void ModuleSemanticAnalyser::define_class(Module* module, Class* klass) {
-    std::string name = klass->get_name().get_value();
-    Scope* scope = module->get_scope();
-    Symbol* sym = scope->resolve_local(name);
-
-    if (sym == nullptr) {
-        scope->define(SYM_CLASS, name, klass);
-        logger->info("defining class " + klass->get_qualified_name());
-        return;
-    }
-
-    for (int i = 0; i < sym->descriptors_count(); ++i) {
-        SymbolDescriptor* sd = sym->get_descriptor(i);
-        NamedTypeDescriptor* other = (Class*) sd->get_descriptor();
-
-        switch (sd->get_kind()) {
-        case SYM_CLASS:
-        case SYM_ENUM:
-        case SYM_UNION:
-        case SYM_STRUCT:
-        case SYM_INTERFACE:
-            if (klass->get_generics() && other->get_generics()) {
-                int n1 = klass->get_generics()->types_count();
-                int n2 = other->get_generics()->types_count();
-
-                if (n1 == n2) {
-                    logger->error(name + " already defined in here");
-                }
-            } else if (klass->get_generics() == nullptr && other->get_generics() == nullptr) {
-                logger->error(name + " already defined in here");
-            }
-
-            break;
-
-        case SYM_FUNCTION:
-            logger->error(name + " already defined in here");
-            break;
-        }
-    }
-}
-
-void ModuleSemanticAnalyser::define_structs(Module* module) {
+void ModuleSemanticAnalyser::define_structs() {
     if (module->structs_count() == 0) {
         return;
     }
 
     logger->info("defining structs for module " + module->get_path());
 
-    for (int i = 0; i < module->classes_count(); ++i) {
-        define_struct(module, module->get_struct(i));
+    for (int i = 0; i < module->structs_count(); ++i) {
+        define_type(SYM_STRUCT, module->get_struct(i));
     }
 }
 
-void ModuleSemanticAnalyser::define_struct(Module* module, Struct* s) {
+void ModuleSemanticAnalyser::define_unions() {
+    if (module->unions_count() == 0) {
+        return;
+    }
 
+    logger->info("defining unions for module " + module->get_path());
+
+    for (int i = 0; i < module->unions_count(); ++i) {
+        define_type(SYM_UNION, module->get_union(i));
+    }
+}
+
+std::string get_kind_as_str(NamedTypeDescriptor* n) {
+    switch (n->get_kind()) {
+    case AST_CLASS:
+        return "class";
+
+    case AST_ENUM:
+        return "enum";
+
+    case AST_UNION:
+        return "union";
+
+    case AST_STRUCT:
+        return "struct";
+    }
+
+    return "unknown";
+}
+
+std::string error_type_redefinition(NamedTypeDescriptor* c1, NamedTypeDescriptor* c2) {
+    std::stringstream ss;
+    std::string name = c1->get_name().get_value();
+    int line1 = c1->get_name().get_line();
+    int line2 = c2->get_name().get_line();
+    int column1 = c1->get_name().get_column();
+    int column2 = c2->get_name().get_column();
+    std::string path1 = c1->get_module()->get_path();
+    std::string path2 = c2->get_module()->get_path();
+    std::string kind1 = get_kind_as_str(c1);
+    std::string kind2 = get_kind_as_str(c2);
+
+    ss << "can't define <white>'" << kind1 << " " << name << "'<normal> on line " << line1 << " because it is already defined as <white>'" << kind2 << " " << name << "'<normal> on line " << line2 << '\n';
+    ss << build_message(path1, line1, column1, "tried to define here") << "\n\n";
+    ss << build_message(path2, line2, column2, "but is also defined here");
+
+    return ss.str();
+}
+
+bool same_generics(TypeList* t1, TypeList* t2) {
+    if (t1 && t2) {
+        int n1 = t1->types_count();
+        int n2 = t2->types_count();
+
+        if (n1 == n2) {
+            return true;
+        }
+    } else if (t1 == nullptr && t2 == nullptr) {
+        return true;
+    }
+
+    return false;
+}
+
+void ModuleSemanticAnalyser::define_type(SymbolDescriptorKind kind, NamedTypeDescriptor *desc) {
+    std::string name = desc->get_name().get_value();
+    Scope* scope = module->get_scope();
+    Symbol* sym = scope->resolve_local(name);
+
+    if (sym == nullptr) {
+        define_type_in_scope(kind, desc);
+        return;
+    }
+
+    check_for_type_redefinition(desc, sym);
+}
+
+void ModuleSemanticAnalyser::define_type_in_scope(SymbolDescriptorKind kind, NamedTypeDescriptor* desc) {
+    module->get_scope()->define(kind, desc->get_name().get_value(), desc);
+    logger->info("defining class " + desc->get_qualified_name());
+}
+
+void ModuleSemanticAnalyser::check_for_type_redefinition(NamedTypeDescriptor* desc, Symbol* sym) {
+    for (int i = 0; i < sym->descriptors_count(); ++i) {
+        SymbolDescriptor* sd = sym->get_descriptor(i);
+        NamedTypeDescriptor* other = (NamedTypeDescriptor*) sd->get_descriptor();
+
+        if (sd->is_named_type()) {
+            if (same_generics(desc->get_generics(), other->get_generics())) {
+                logger->error(error_type_redefinition(desc, other));
+            }
+        }
+    }
+}
+
+Logger* ModuleSemanticAnalyser::get_logger() const {
+    return logger;
+}
+
+void ModuleSemanticAnalyser::set_logger(Logger* newLogger) {
+    logger = newLogger;
 }

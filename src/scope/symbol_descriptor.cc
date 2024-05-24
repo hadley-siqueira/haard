@@ -22,3 +22,11 @@ void* SymbolDescriptor::get_descriptor() {
 void SymbolDescriptor::set_descriptor(void* descriptor) {
     this->descriptor = descriptor;
 }
+
+bool SymbolDescriptor::is_named_type() {
+    return kind == SYM_CLASS ||
+            kind == SYM_ENUM ||
+            kind == SYM_INTERFACE ||
+            kind == SYM_UNION ||
+            kind == SYM_STRUCT;
+}

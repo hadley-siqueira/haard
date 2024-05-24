@@ -13,6 +13,7 @@ void ModulesSemanticAnalyser::define_types(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         ModuleSemanticAnalyser gen;
 
+        gen.set_logger(get_logger());
         gen.define_types(modules->get_module(i));
     }
 }
