@@ -2,6 +2,7 @@
 
 #include "semantic/module_named_type_definer.h"
 #include "utils/utils.h"
+#include "ast/types/named_type.h"
 
 using namespace haard;
 
@@ -131,6 +132,22 @@ std::string ModuleNamedTypeDefiner::error_type_redefinition(NamedTypeDescriptor*
     std::string path2 = c2->get_module()->get_path();
     std::string kind1 = get_kind_as_str(c1);
     std::string kind2 = get_kind_as_str(c2);
+
+    if (c1->get_generics()) {
+        int i;
+        NamedType* n;
+        name += '<';
+
+        for (i = 0; i < c1->get_generics()->types_count() - 1; ++i) {
+            n = (NamedType*) c1->get_generics()->get_type(i);
+            name += n->get_identifier()->get_name().get_value();
+            name += ", ";
+        }
+
+        n = (NamedType*) c1->get_generics()->get_type(i);
+        name += n->get_identifier()->get_name().get_value();
+        name += '>';
+    }
 
     ss << "can't define <white>'" << kind1 << " " << name << "'<normal> on line " << line1 << " because it is already defined as <white>'" << kind2 << " " << name << "'<normal> on line " << line2 << '\n';
     ss << build_message(path1, line1, column1, "tried to define here") << "\n\n";
