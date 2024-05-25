@@ -1,5 +1,18 @@
 import s2
 
+interface Comparable<T>:
+    def compare_to : int
+        @a : T
+        @b : T
+
+
+    def compare_to : int
+        @a : T
+
+interface Serializable:
+    def read : void
+    def write : void
+
 class Pixel:
     r : u8
     g : u8
