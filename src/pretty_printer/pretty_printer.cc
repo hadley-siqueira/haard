@@ -218,6 +218,18 @@ void PrettyPrinter::print_statement(Statement* stmt) {
         print_for_statement((ForStatement*) stmt);
         break;
 
+    case STMT_IF:
+        print_if_statement((BranchStatement*) stmt);
+        break;
+
+    case STMT_ELIF:
+        print_elif_statement((BranchStatement*) stmt);
+        break;
+
+    case STMT_ELSE:
+        print_else_statement((BranchStatement*) stmt);
+        break;
+
     case STMT_RETURN:
         print_return_statement((ReturnStatement*) stmt);
         break;
@@ -256,6 +268,50 @@ void PrettyPrinter::print_for_statement(ForStatement* stmt) {
     out << ":\n";
     indent();
     print_compound_statement(stmt->get_statements());
+    dedent();
+    out << '\n';
+}
+
+void PrettyPrinter::print_if_statement(BranchStatement* stmt) {
+    print_indentation();
+    out << "if ";
+
+    print_expression(stmt->get_condition());
+    out << ":\n";
+    indent();
+    print_statement(stmt->get_true_statements());
+    dedent();
+
+    if (stmt->get_false_statements()) {
+        print_statement(stmt->get_false_statements());
+    } else {
+        out << '\n';
+    }
+}
+
+void PrettyPrinter::print_elif_statement(BranchStatement* stmt) {
+    print_indentation();
+    out << "elif ";
+
+    print_expression(stmt->get_condition());
+    out << ":\n";
+    indent();
+    print_statement(stmt->get_true_statements());
+    dedent();
+
+    if (stmt->get_false_statements()) {
+        print_statement(stmt->get_false_statements());
+    } else {
+        out << '\n';
+    }
+}
+
+void PrettyPrinter::print_else_statement(BranchStatement* stmt) {
+    print_indentation();
+    out << "else:\n ";
+
+    indent();
+    print_statement(stmt->get_true_statements());
     dedent();
     out << '\n';
 }

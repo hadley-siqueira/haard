@@ -121,6 +121,7 @@ set(AST_LITERALS
 set(AST_STMTS
     src/ast/statements/while_statement.cc
     src/ast/statements/for_statement.cc
+    src/ast/statements/branch_statement.cc
     src/ast/statements/return_statement.cc
 )
 

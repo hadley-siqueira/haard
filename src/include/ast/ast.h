@@ -14,6 +14,7 @@
 #include "ast/expression_statement.h"
 #include "ast/statements/while_statement.h"
 #include "ast/statements/for_statement.h"
+#include "ast/statements/branch_statement.h"
 #include "ast/statements/return_statement.h"
 
 #include "ast/types/type.h"

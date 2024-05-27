@@ -332,6 +332,8 @@ Statement* Parser::parse_statement() {
         stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
         stmt = parse_for_statement();
+    } else if (lookahead(TK_IF)) {
+        stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
         stmt = parse_return_statement();
     } else {
@@ -388,6 +390,77 @@ ForStatement* Parser::parse_for_statement() {
     expect(TK_COLON);
     indent();
     stmt->set_statements(parse_compound_statement());
+    dedent();
+
+    return stmt;
+}
+
+BranchStatement* Parser::parse_if_statement() {
+    BranchStatement* stmt = new BranchStatement(STMT_IF);
+    Expression* condition;
+
+    expect(TK_IF);
+    stmt->set_token(matched);
+
+    condition = parse_expression();
+
+    if (condition == nullptr) {
+        logger->error("missing condition in if statement");
+    }
+
+    stmt->set_condition(condition);
+
+    expect(TK_COLON);
+    indent();
+    stmt->set_true_statements(parse_compound_statement());
+    dedent();
+
+    if (lookahead(TK_ELIF) && is_indented()) {
+        stmt->set_false_statements(parse_elif_statement());
+    } else if (lookahead(TK_ELSE) && is_indented()) {
+        stmt->set_false_statements(parse_else_statement());
+    }
+
+    return stmt;
+}
+
+BranchStatement* Parser::parse_elif_statement() {
+    Expression* condition;
+    BranchStatement* stmt = new BranchStatement(STMT_ELIF);
+
+    expect(TK_ELIF);
+    stmt->set_token(matched);
+    condition = parse_expression();
+
+    if (condition == nullptr) {
+        logger->error("missing condition in elif");
+    }
+
+    stmt->set_condition(condition);
+
+    expect(TK_COLON);
+    indent();
+    stmt->set_true_statements(parse_compound_statement());
+    dedent();
+
+    if (lookahead(TK_ELIF) && is_indented()) {
+        stmt->set_false_statements(parse_elif_statement());
+    } else if (lookahead(TK_ELSE) && is_indented()) {
+        stmt->set_false_statements(parse_else_statement());
+    }
+
+    return stmt;
+}
+
+BranchStatement* Parser::parse_else_statement() {
+    BranchStatement* stmt = new BranchStatement(STMT_ELSE);
+
+    expect(TK_ELSE);
+    stmt->set_token(matched);
+
+    expect(TK_COLON);
+    indent();
+    stmt->set_true_statements(parse_compound_statement());
     dedent();
 
     return stmt;
