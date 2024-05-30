@@ -7,6 +7,7 @@ void ModulesSemanticAnalyser::build(Modules* modules) {
     logger->info("Starting semantic analysis...");
 
     define_types(modules);
+    define_functions(modules);
 }
 
 void ModulesSemanticAnalyser::define_types(Modules* modules) {
@@ -15,6 +16,15 @@ void ModulesSemanticAnalyser::define_types(Modules* modules) {
 
         gen.set_logger(get_logger());
         gen.define_types(modules->get_module(i));
+    }
+}
+
+void ModulesSemanticAnalyser::define_functions(Modules* modules) {
+    for (int i = 0; i < modules->modules_count(); ++i) {
+        ModuleSemanticAnalyser gen;
+
+        gen.set_logger(get_logger());
+        gen.define_functions(modules->get_module(i));
     }
 }
 

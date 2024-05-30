@@ -9,6 +9,7 @@ namespace haard {
     public:
         void build(Modules* modules);
         void define_types(Modules* modules);
+        void define_functions(Modules* modules);
 
         Logger* get_logger() const;
         void set_logger(Logger* newLogger);

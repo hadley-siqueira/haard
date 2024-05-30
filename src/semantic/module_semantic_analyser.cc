@@ -5,11 +5,19 @@
 
 #include "semantic/module_semantic_analyser.h"
 #include "semantic/module_named_type_definer.h"
+#include "semantic/module_function_definer.h"
 
 using namespace haard;
 
 void ModuleSemanticAnalyser::define_types(Module* module) {
     ModuleNamedTypeDefiner gen;
+
+    gen.set_logger(get_logger());
+    gen.build(module);
+}
+
+void ModuleSemanticAnalyser::define_functions(Module* module) {
+    ModuleFunctionDefiner gen;
 
     gen.set_logger(get_logger());
     gen.build(module);
