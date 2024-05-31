@@ -36,11 +36,12 @@ void ModuleFunctionDefiner::define_function_in_scope(Function* function) {
     logger->info("defining function " + std::string(function->get_name().get_value()));
 }
 
-void ModuleFunctionDefiner::check_for_function_redefinition(Function* f1, Function* f2) {
+bool ModuleFunctionDefiner::check_for_function_redefinition(Function* f1, Function* f2) {
     TypeList* g1 = f1->get_generics();
     TypeList* g2 = f2->get_generics();
     int np1 = f1->parameters_count();
     int np2 = f2->parameters_count();
+    bool flag = true;
 
     if (g1 == nullptr && g2 == nullptr) {
 
@@ -51,9 +52,16 @@ void ModuleFunctionDefiner::check_for_function_redefinition(Function* f1, Functi
             Type* t1 = f1->get_parameter(i)->get_type();
             Type* t2 = f2->get_parameter(i)->get_type();
 
-            if (t1->equals(t2)) {
-
+            if (!t1->equals(t2)) {
+                flag = false;
+                break;
             }
         }
     }
+
+    if (flag) {
+        logger->error("function aa already defined");
+    }
+
+    return true;
 }

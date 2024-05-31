@@ -1,0 +1,11 @@
+def sum : int
+    @a : int
+    @b : int
+
+    return 0
+
+def sum : int
+    @a : int
+    @b : int
+
+    return 0
