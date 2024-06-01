@@ -189,6 +189,8 @@ set(SEMANTIC_SRC
     src/semantic/module_semantic_analyser.cc
     src/semantic/module_named_type_definer.cc
     src/semantic/module_function_definer.cc
+    src/semantic/type_linker.cc
+    src/semantic/semantic_context.cc
 )
 
 set(SCOPE_SRC

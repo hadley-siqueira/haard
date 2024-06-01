@@ -17,6 +17,7 @@ namespace haard {
         SYM_LOCAL_VARIABLE,
     };
 
+    class Symbol;
     class SymbolDescriptor {
     public:
         SymbolDescriptor();
@@ -31,9 +32,13 @@ namespace haard {
     public:
         bool is_named_type();
 
+        Symbol *get_symbol() const;
+        void set_symbol(Symbol *newSymbol);
+
     private:
         SymbolDescriptorKind kind;
         void* descriptor;
+        Symbol* symbol;
     };
 }
 

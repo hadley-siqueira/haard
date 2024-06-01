@@ -5,6 +5,7 @@ using namespace haard;
 SymbolDescriptor::SymbolDescriptor() {
     set_kind(SYM_UNKNOWN);
     set_descriptor(nullptr);
+    set_symbol(nullptr);
 }
 
 SymbolDescriptorKind SymbolDescriptor::get_kind() {
@@ -29,4 +30,12 @@ bool SymbolDescriptor::is_named_type() {
             kind == SYM_INTERFACE ||
             kind == SYM_UNION ||
             kind == SYM_STRUCT;
+}
+
+Symbol* SymbolDescriptor::get_symbol() const {
+    return symbol;
+}
+
+void SymbolDescriptor::set_symbol(Symbol* newSymbol) {
+    symbol = newSymbol;
 }

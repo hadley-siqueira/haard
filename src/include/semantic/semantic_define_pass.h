@@ -59,6 +59,7 @@ namespace haard {
     private:
         Module* current_module;
         Function* current_function;
+        Scope* current_scope;
         Function* check_for_overloaded(Symbol* sym, Function* function);
     };
 }

@@ -1,3 +1,8 @@
+class Pixel:
+    r : u8
+    g : u8
+    b : u8
+
 def sum : int
     @a : int
     @b : int
@@ -6,6 +11,11 @@ def sum : int
 
 def sum : int
     @a : int
-    @b : int
+    @b : float
+
+    return 0
+
+def test : void
+    @pixel : Pixel*
 
     return 0

@@ -18,6 +18,7 @@ void Symbol::add_descriptor(SymbolDescriptorKind kind, void* descriptor) {
 
     sd->set_kind(kind);
     sd->set_descriptor(descriptor);
+    sd->set_symbol(this);
     descriptors.push_back(sd);
 }
 

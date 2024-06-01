@@ -1,9 +1,10 @@
 #include "semantic/module_function_definer.h"
+#include "semantic/type_linker.h"
 
 using namespace haard;
 
 void ModuleFunctionDefiner::build(Module* module) {
-    this->module = module;
+    context->set_module(module);
 
     for (int i = 0; i < module->functions_count(); ++i) {
         define_function(module->get_function(i));
@@ -14,6 +15,8 @@ void ModuleFunctionDefiner::define_function(Function* function) {
     std::string name = function->get_name().get_value();
     Scope* scope = module->get_scope();
     Symbol* sym = scope->resolve_local(name);
+
+    link_parameters_type(function);
 
     if (sym == nullptr) {
         define_function_in_scope(function);
@@ -28,6 +31,15 @@ void ModuleFunctionDefiner::define_function(Function* function) {
             check_for_function_redefinition(function, (Function*) sd->get_descriptor());
             break;
         }
+    }
+}
+
+void ModuleFunctionDefiner::link_parameters_type(Function* function) {
+    for (int i = 0; i < function->parameters_count(); ++i) {
+        TypeLinker linker;
+
+        linker.set_context(get_context());
+        linker.build(function->get_parameter(i)->get_type());
     }
 }
 
@@ -61,6 +73,8 @@ bool ModuleFunctionDefiner::check_for_function_redefinition(Function* f1, Functi
 
     if (flag) {
         logger->error("function aa already defined");
+    } else {
+        define_function_in_scope(f1);
     }
 
     return true;

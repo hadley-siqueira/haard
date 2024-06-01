@@ -9,6 +9,14 @@
 
 using namespace haard;
 
+ModuleSemanticAnalyser::ModuleSemanticAnalyser() {
+    set_context(new SemanticContext());
+}
+
+ModuleSemanticAnalyser::~ModuleSemanticAnalyser() {
+    delete get_context();
+}
+
 void ModuleSemanticAnalyser::define_types(Module* module) {
     ModuleNamedTypeDefiner gen;
 
@@ -19,6 +27,7 @@ void ModuleSemanticAnalyser::define_types(Module* module) {
 void ModuleSemanticAnalyser::define_functions(Module* module) {
     ModuleFunctionDefiner gen;
 
+    gen.set_context(get_context());
     gen.set_logger(get_logger());
     gen.build(module);
 }

@@ -5,6 +5,7 @@
 
 #include "scope/scope.h"
 #include "log/logger.h"
+#include "semantic/semantic_context.h"
 
 namespace haard {
     class SemanticPass {
@@ -21,9 +22,11 @@ namespace haard {
         Logger* get_logger() const;
         void set_logger(Logger* newLogger);
 
+        SemanticContext* get_context() const;
+        void set_context(SemanticContext* newContext);
+
     protected:
-        Scope* current_scope;
-        std::stack<Scope*> scope_stack;
+        SemanticContext* context;
         Logger* logger;
     };
 }

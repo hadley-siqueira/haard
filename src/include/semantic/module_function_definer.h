@@ -10,6 +10,7 @@ namespace haard {
     public:
         void build(Module* module);
         void define_function(Function* function);
+        void link_parameters_type(Function* function);
 
         void define_function_in_scope(Function* function);
         bool check_for_function_redefinition(Function* f1, Function* f2);
