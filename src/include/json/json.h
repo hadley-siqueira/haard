@@ -36,7 +36,7 @@ namespace haard {
         Json* clone();
 
     private:
-        std::map<std::string, JsonValue*> pairs;
+        std::map<const char*, JsonValue*> pairs;
         //std::unordered_map<std::string, JsonValue*> pairs;
         //std::list<std::pair<std::string, JsonValue*>> pairs;
         //std::vector<std::pair<std::string, JsonValue*>> pairs;
