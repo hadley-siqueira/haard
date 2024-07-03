@@ -1,4 +1,4 @@
-import std.io.print
+import std.io.print as io
 import std.io.file
 import array
 import opers

@@ -7,6 +7,7 @@
 using namespace haard;
 
 JsonValue::JsonValue() {
+    set_kind(JSON_NULL);
     value.array = nullptr;
 }
 
@@ -66,7 +67,16 @@ void JsonValue::set_value(Json* obj) {
 }
 
 void JsonValue::add(bool boolean) {
+    JsonValue* new_value = new JsonValue();
 
+    new_value->set_value(boolean);
+    set_kind(JSON_ARRAY);
+
+    if (this->value.array == nullptr) {
+        this->value.array = new std::vector<JsonValue*>();
+    }
+
+    value.array->push_back(new_value);
 }
 
 void JsonValue::add(int number) {

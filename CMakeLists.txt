@@ -181,6 +181,7 @@ set(IR_SRC
 
 set(SCANNER_SRC
     src/scanner/scanner.cc
+    src/scanner/scanner2.cc
 )
 
 set(PARSER_SRC
