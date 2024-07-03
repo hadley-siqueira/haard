@@ -7,7 +7,7 @@ void ModulesSemanticAnalyser::build(Modules* modules) {
     logger->info("Starting semantic analysis...");
 
     define_types(modules);
-    define_functions(modules);
+    //define_functions(modules);
 }
 
 void ModulesSemanticAnalyser::define_types(Modules* modules) {

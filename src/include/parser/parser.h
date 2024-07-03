@@ -89,9 +89,6 @@ namespace haard {
         TypeList* parse_generics();
         TypeList* parse_type_list(int kind);
 
-        Logger* get_logger() const;
-        void set_logger(Logger* newLogger);
-
     private:
         void advance();
         bool lookahead(int kind, int offset=0);
@@ -109,7 +106,6 @@ namespace haard {
         bool next_token_on_same_line();
 
     private:
-        Logger* logger;
         Module* module;
         Token matched;
         int idx;

@@ -6,6 +6,7 @@
 #include "pretty_printer/pretty_printer.h"
 #include "driver/driver.h"
 #include "utils/utils.h"
+#include "json/json.h"
 
 using namespace haard;
 
@@ -17,6 +18,31 @@ void test_scanner(int argc, char** argv) {
     for (auto tk : tks) {
         std::cout << tk.to_str() << '\n';
     }
+}
+
+void test_json() {
+    Json* function = new Json();
+    Json* module = new Json();
+    Json* cloned;
+
+    function->set("line", 10);
+    function->set("column", 20);
+    function->set("name", "my_function");
+    function->add("parameters", 2);
+    function->add("parameters", 3);
+    function->add("parameters", "hello");
+
+    cloned = function->clone();
+
+    module->set("path", "/home/foo.hd");
+    module->add("functions", function);
+
+    std::cout << function->to_str() << "\n";
+    std::cout << cloned->to_str() << "\n";
+    std::cout << module->to_str() << "\n";
+
+    delete module;
+    delete cloned;
 }
 
 void test_parser(int argc, char** argv) {
@@ -47,7 +73,8 @@ void test_driver(int argc, char** argv) {
 int main(int argc, char** argv) {
     //test_scanner(argc, argv);
     //test_pretty_printer(argc, argv);
-    test_driver(argc, argv);
+    //test_driver(argc, argv);
+    test_json();
 
     return 0;
 }

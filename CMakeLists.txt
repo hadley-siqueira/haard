@@ -22,6 +22,11 @@ set(TOKEN_SRC
     src/token/token.cc
 )
 
+set(JSON_SRC
+    src/json/json.cc
+    src/json/json_value.cc
+)
+
 set(AST_UNOP_SRC
     src/ast/unary_operators/unary_operator.cc
     src/ast/unary_operators/unary_minus.cc
@@ -183,6 +188,7 @@ set(PARSER_SRC
 )
 
 set(SEMANTIC_SRC
+    src/semantic/semantic_analyser.cc
     src/semantic/semantic_pass.cc
     src/semantic/semantic_define_pass.cc
     src/semantic/modules_semantic_analyser.cc
@@ -220,12 +226,14 @@ set(CPP_GENERATOR_SRC
 set(LOG_SRC
     src/log/log.cc
     src/log/logger.cc
+    src/log/logs.cc
 )
 
 set(SOURCES
     ${UTILS_SRC}
     ${STRING_POOL_SRC}
     ${TYPE_POOL_SRC}
+    ${JSON_SRC}
     ${TOKEN_SRC}
     ${AST_SRC}
     ${IR_SRC}

@@ -1,7 +1,9 @@
 #include <iostream>
+#include <cassert>
+
 #include "parser/parser.h"
 #include "scanner/scanner.h"
-#include <cassert>
+#include "log/logs.h"
 
 using namespace haard;
 
@@ -208,7 +210,7 @@ Variable* Parser::parse_variable() {
         Expression* expr = parse_expression();
 
         if (expr == nullptr) {
-            logger->error("missing expression on member");
+            log_error("missing expression on member");
         } else {
             var->set_expression(expr);
         }
@@ -231,7 +233,7 @@ Variable* Parser::parse_enum_variable() {
         Expression* expr = parse_expression();
 
         if (expr == nullptr) {
-            logger->error("missing expression on enum member");
+            log_error("missing expression on enum member");
         } else {
             var->set_expression(expr);
         }
@@ -292,7 +294,7 @@ void Parser::parse_parameters(Function* function) {
             Expression* expr = parse_expression();
 
             if (expr == nullptr) {
-                logger->error("missing expression on default value");
+                log_error("missing expression on default value");
             }
 
             param->set_expression(parse_expression());
@@ -405,7 +407,7 @@ BranchStatement* Parser::parse_if_statement() {
     condition = parse_expression();
 
     if (condition == nullptr) {
-        logger->error("missing condition in if statement");
+        log_error("missing condition in if statement");
     }
 
     stmt->set_condition(condition);
@@ -433,7 +435,7 @@ BranchStatement* Parser::parse_elif_statement() {
     condition = parse_expression();
 
     if (condition == nullptr) {
-        logger->error("missing condition in elif");
+        log_error("missing condition in elif");
     }
 
     stmt->set_condition(condition);
@@ -1490,10 +1492,3 @@ bool Parser::next_token_on_same_line() {
     return false;
 }
 
-Logger* Parser::get_logger() const {
-    return logger;
-}
-
-void Parser::set_logger(Logger* newLogger) {
-    logger = newLogger;
-}

@@ -15,7 +15,7 @@ def sum : int
 
     return 0
 
-def test : void
-    @pixel : Pixel*
-
-    return 0
+#def test : void
+#    @pixel : Pixel*
+#
+#    return 0

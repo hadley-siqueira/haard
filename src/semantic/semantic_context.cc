@@ -8,6 +8,7 @@ SemanticContext::SemanticContext() {
     set_union(nullptr);
     set_enum(nullptr);
     set_struct(nullptr);
+    set_scope(nullptr);
 }
 
 Module* SemanticContext::get_module() const {
@@ -64,9 +65,4 @@ Scope* SemanticContext::get_scope() const {
 
 void SemanticContext::set_scope(Scope* newScope) {
     scope = newScope;
-}
-
-void SemanticContext::push_scope(Scope* scope) {
-    scope_stack.push(this->scope);
-    this->scope = scope;
 }

@@ -36,8 +36,6 @@ namespace haard {
         Scope* get_scope() const;
         void set_scope(Scope *newScope);
 
-        void push_scope(Scope* scope);
-
     private:
         Module* module;
         Class* klass;
@@ -46,7 +44,6 @@ namespace haard {
         Struct* struct_;
         Function* function;
         Scope* scope;
-        std::stack<Scope*> scope_stack;
     };
 }
 

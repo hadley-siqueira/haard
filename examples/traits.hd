@@ -1,0 +1,33 @@
+    a = v[i]
+
+    add t0, base, 0
+    sll t1, i, 4
+    add t0, t0, t1
+    lw t2, 0(t0)
+    
+    lw4 t0, base, i  mem[base + i * 4]
+
+
+import std.io
+
+def main : void
+    @args : str[]
+
+    for arg in args:
+        print(arg)
+
+def print : void
+    @p : Printable
+
+if (p implements Printable)
+    wrapp(p, Printable)
+
+class Pixel:
+    def to_str : void
+
+trait 
+
+trait Pixel<T>(Printable<T>):
+    def to_str : str
+        
+

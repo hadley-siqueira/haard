@@ -19,7 +19,7 @@ void SemanticDefinePass::build_modules(Modules* modules) {
     gen.set_logger(logger);
     gen.build(modules);
 }
-
+/*
 void SemanticDefinePass::define_modules_classes(Modules* modules) {
     for (int i = 0; i < modules->modules_count(); ++i) {
         define_module_classes(modules->get_module(i));
@@ -248,7 +248,7 @@ void SemanticDefinePass::build_call(Call* expr) {
 void SemanticDefinePass::build_call_arguments(Call* expr) {
     build_expression_list(expr->get_arguments());
 }
-
+*/
 void SemanticDefinePass::build_simple_call(Call* expr) {/*
     Identifier* id = (Identifier*) expr->get_object();
 
@@ -340,7 +340,7 @@ void SemanticDefinePass::build_simple_call(Call* expr) {/*
 }
 
 /* This method checks for simple identifiers. For instance a and my_id
- * not a.foo.bar or a[2] or foo(2, 3) */
+ * not a.foo.bar or a[2] or foo(2, 3) *//*
 void SemanticDefinePass::build_identifier(Identifier* expr) {
     Symbol* sym;
     std::string name = expr->get_name().get_value();
@@ -540,3 +540,4 @@ Function* SemanticDefinePass::check_for_overloaded(Symbol* sym, Function* functi
 
     return nullptr;
 }
+*/

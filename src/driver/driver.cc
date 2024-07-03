@@ -9,16 +9,17 @@
 
 #include "cpp_generator/cpp_generator.h"
 
+#include "log/logs.h"
+
 using namespace haard;
 
 Driver::Driver() {
     path_delimiter = '/';
     configuration_file_path = "...";
-    logger = new Logger();
 }
 
 Driver::~Driver() {
-    delete logger;
+
 }
 
 void Driver::run(int argc, char** argv) {
@@ -55,7 +56,7 @@ void Driver::configure() {
 }
 
 void Driver::exit() {
-    std::cout << logger->to_str() << std::endl;
+    std::cout << get_logs() << std::endl;
     ::exit(0);
 }
 
@@ -72,21 +73,19 @@ void Driver::read_configuration(std::string path) {
 void Driver::semantic_analysis() {
     SemanticDefinePass pass1;
 
-    pass1.set_logger(logger);
     pass1.build_modules(&modules);
 }
 
 Module* Driver::parse_file(std::string path) {
     if (!file_exists(path)) {
-        logger->error("file '" + path + "' couldn't be opened");
+        log_error("file '" + path + "' couldn't be opened");
         exit();
     }
 
     if (!modules.has_module(path)) {
         Parser parser;
 
-        logger->info("parsing file " + path);
-        parser.set_logger(logger);
+        log_info("parsing file " + path);
         modules.add_module(path, parser.read(path, build_relative_path(path)));
     }
 

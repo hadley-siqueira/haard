@@ -13,7 +13,7 @@ void ModuleFunctionDefiner::build(Module* module) {
 
 void ModuleFunctionDefiner::define_function(Function* function) {
     std::string name = function->get_name().get_value();
-    Scope* scope = module->get_scope();
+    Scope* scope = context->get_module()->get_scope();
     Symbol* sym = scope->resolve_local(name);
 
     link_parameters_type(function);

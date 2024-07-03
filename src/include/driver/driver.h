@@ -43,7 +43,6 @@ namespace haard {
 
     private:
         Modules modules;
-        Logger* logger;
 
     // system related stuff
     private:
