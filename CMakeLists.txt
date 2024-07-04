@@ -143,6 +143,7 @@ set(AST_TYPES
 )
 
 set(AST_SRC
+    src/ast/ast.cc
     src/ast/ast_node.cc
     src/ast/declaration.cc
     src/ast/modules.cc
