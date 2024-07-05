@@ -192,6 +192,18 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Expressions */
+    case EXPR_PARENTHESIS:
+        print_parenthesis(node);
+        break;
+
+    case AST_TUPLE:
+        print_tuple(node);
+        break;
+
+    case AST_SEQUENCE:
+        print_sequence_expression(node);
+        break;
+
     case AST_GENERIC_APPLICATION:
         print_generic_application(node);
         break;
@@ -205,6 +217,14 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Literals */
+    case AST_THIS:
+        out << "this";
+        break;
+
+    case AST_NULL:
+        out << "null";
+        break;
+
     case AST_LITERAL_BOOLEAN:
         out << node->get_value();
         break;
@@ -251,6 +271,12 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_parenthesis(Ast* node) {
+    out << "(";
+    print(node->get_child(0));
+    out << ")";
 }
 
 void PrettyPrinter::print_generic_application(Ast* node) {
@@ -698,8 +724,8 @@ void PrettyPrinter::print_expression(Expression* expr) {
         print_string_literal((StringLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_TUPLE:
-        print_tuple_expression((TupleLiteral*) expr);
+    case AST_TUPLE:
+        print_tuple((TupleLiteral*) expr);
         break;
 
     case EXPR_LITERAL_LIST:
@@ -714,7 +740,7 @@ void PrettyPrinter::print_expression(Expression* expr) {
         print_hash_literal((HashLiteral*) expr);
         break;
 
-    case EXPR_SEQUENCE:
+    case AST_SEQUENCE:
         print_sequence_expression((Sequence*) expr);
         break;
     }
@@ -894,8 +920,8 @@ void PrettyPrinter::print_string_literal(StringLiteral* str) {
     out << c << str->get_token().get_value() << c;
 }
 
-void PrettyPrinter::print_tuple_expression(TupleLiteral* expr) {
-    print_expression_list(expr->get_expressions(), "(", ")");
+void PrettyPrinter::print_tuple(Ast* expr) {
+    print_expression_list(expr, "(", ")");
 }
 
 void PrettyPrinter::print_list_expression(ListLiteral* expr) {
@@ -910,11 +936,11 @@ void PrettyPrinter::print_hash_literal(HashLiteral* expr) {
     print_expression_list(expr->get_expressions(), "{", "}");
 }
 
-void PrettyPrinter::print_sequence_expression(Sequence* expr) {
-    print_expression_list(expr->get_expressions(), "(", ")", ";");
+void PrettyPrinter::print_sequence_expression(Ast* expr) {
+    print_expression_list(expr, "(", ")", ";");
 }
 
-void PrettyPrinter::print_expression_list(ExpressionList* list, const char* begin, const char* end, const char* sep) {
+void PrettyPrinter::print_expression_list(Ast* list, const char* begin, const char* end, const char* sep) {
     if (list == nullptr) {
         return;
     }
@@ -922,13 +948,13 @@ void PrettyPrinter::print_expression_list(ExpressionList* list, const char* begi
     int i;
     out << begin;
 
-    if (list->expressions_count() > 0) {
-        for (i = 0; i < list->expressions_count() - 1; ++i) {
-            print_expression(list->get_expression(i));
+    if (list->children_count() > 0) {
+        for (i = 0; i < list->children_count() - 1; ++i) {
+            print(list->get_child(i));
             out << sep << " ";
         }
 
-        print_expression(list->get_expression(i));
+        print(list->get_child(i));
     }
 
     out << end;

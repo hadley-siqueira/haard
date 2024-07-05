@@ -15,6 +15,13 @@ namespace haard {
 
         void print_module(Ast* module);
 
+        /* Imports */
+        void print_imports(Ast* imports);
+        void print_import(Ast* import);
+        void print_import_path(Ast* path);
+        void print_import_path_member(Ast* member);
+        void print_import_alias(Ast* alias);
+
         /* Statements */
         void print_statements(Ast* stmts);
         void print_expression(Ast* stmt);
@@ -23,15 +30,13 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_parenthesis(Ast* node);
+
         void print_generic_application(Ast* node);
         void print_scope(Ast* scope);
         void print_identifier(Ast* id);
 
-        void print_imports(Ast* imports);
-        void print_import(Ast* import);
-        void print_import_path(Ast* path);
-        void print_import_path_member(Ast* member);
-        void print_import_alias(Ast* alias);
+
 
         void print_class(Class* klass);
         void print_struct(Struct* st);
@@ -81,13 +86,13 @@ namespace haard {
 
         void print_char_literal(CharLiteral* ch);
         void print_string_literal(StringLiteral* str);
-        void print_tuple_expression(TupleLiteral* expr);
+        void print_tuple(Ast* expr);
         void print_list_expression(ListLiteral* expr);
         void print_array_literal(ArrayLiteral* expr);
         void print_hash_literal(HashLiteral* expr);
-        void print_sequence_expression(Sequence* expr);
+        void print_sequence(Ast* expr);
 
-        void print_expression_list(ExpressionList* list, const char* begin, const char* end, const char* sep=",");
+        void print_expression_list(Ast* list, const char* begin, const char* end, const char* sep=",");
 
     private:
         void indent();

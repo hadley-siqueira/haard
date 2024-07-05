@@ -1181,8 +1181,10 @@ Ast* Parser::parse_primary_expression() {
         expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
         expr = new Ast(AST_LITERAL_STRING, matched);
+    } else if (match(TK_NULL)) {
+        expr = new Ast(AST_NULL, matched);
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
-        //expr = parse_parenthesis_or_tuple_or_sequence();
+        expr = parse_parenthesis_or_tuple_or_sequence();
     } else if (lookahead(TK_LEFT_SQUARE_BRACKET)) {
         //expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
@@ -1209,56 +1211,50 @@ Expression* Parser::parse_delete_expression() {
     return expr;
 }
 
-Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
+Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
     Token oper;
-    Expression* expr = nullptr;
-    TupleLiteral* tuple = nullptr;
-    Sequence* sequence = nullptr;
+    Ast* expr = nullptr;
+    Ast* subexpr = nullptr;
 
     expect(TK_LEFT_PARENTHESIS);
-    oper = matched;
-    //expr = parse_expression();
+    subexpr = parse_expression();
 
-    if (expr == nullptr) {
-        assert(false && "expression can't be null on tuple");
+    if (subexpr == nullptr) {
+        log_error("expression can't be null inside parenthesis");
+        return nullptr;
     }
 
+    expr = new Ast(EXPR_PARENTHESIS);
+    expr->add_child(subexpr);
+
     if (lookahead(TK_COMMA)) {
-        tuple = new TupleLiteral();
-        tuple->add_expression(expr);
+        expr->set_type(AST_TUPLE);
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-                //expr = parse_expression();
+                subexpr = parse_expression();
 
-                if (expr == nullptr) {
-                    assert(false && "expression can't be null on tuple2");
+                if (subexpr == nullptr) {
+                    log_error("missing expression inside tuple");
                 }
 
-                tuple->add_expression(expr);
+                expr->add_child(subexpr);
             }
         }
-
-        expr = tuple;
     } else if (lookahead(TK_SEMICOLON)) {
-        sequence = new Sequence();
-        sequence->add_expression(expr);
+        expr->set_type(AST_SEQUENCE);
 
         while (match(TK_SEMICOLON)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-                //expr = parse_expression();
+                subexpr = parse_expression();
 
-                if (expr == nullptr) {
-                    assert(false && "expression can't be null on sequence");
+                if (subexpr == nullptr) {
+                    log_error("expression can't be null on sequence");
                 }
 
-                sequence->add_expression(expr);
+                expr->add_child(subexpr);
             }
         }
-
-        expr = sequence;
-    } else if (lookahead(TK_RIGHT_PARENTHESIS)) {
-        expr = new Parenthesis(oper, expr);
     }
 
     expect(TK_RIGHT_PARENTHESIS);

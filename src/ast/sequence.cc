@@ -3,7 +3,7 @@
 using namespace haard;
 
 Sequence::Sequence() {
-    set_kind(EXPR_SEQUENCE);
+    set_kind(AST_SEQUENCE);
     expressions = new ExpressionList();
 }
 

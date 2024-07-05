@@ -119,6 +119,8 @@ namespace haard {
         EXPR_POS_DECREMENT,
 
         // Literals
+        AST_THIS,
+        AST_NULL,
         AST_LITERAL_BOOLEAN,
         AST_LITERAL_INTEGER,
         AST_LITERAL_FLOAT,
@@ -128,10 +130,9 @@ namespace haard {
         EXPR_LITERAL_LIST,
         EXPR_LITERAL_ARRAY,
         EXPR_LITERAL_HASH,
-        EXPR_LITERAL_TUPLE,
-        AST_THIS,
+        AST_TUPLE,
 
-        EXPR_SEQUENCE,
+        AST_SEQUENCE,
 
         // Types
         AST_TYPE_BOOL,
