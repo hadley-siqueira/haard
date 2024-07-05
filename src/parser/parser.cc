@@ -278,7 +278,6 @@ Ast* Parser::parse_function() {
     expect(TK_DEF);
     expect(TK_ID);
     function->set_from_token(matched);
-
     function->add_child(parse_generics());
 
     expect(TK_COLON);
@@ -287,14 +286,14 @@ Ast* Parser::parse_function() {
     Ast* return_type = parse_type();
 
     if (return_type) {
-        //function->set_return_type(return_type);
+        Ast* rtype = new Ast(AST_RETURN_TYPE);
+        rtype->add_child(return_type);
+        function->add_child(rtype);
     } else {
         assert(false && "Expected return type");
     }
 
-    if (has_parameters()) {
-        //parse_parameters(function);
-    }
+    function->add_child(parse_parameters());
 
     //function->set_statements(parse_compound_statement());
     parse_compound_statement();
@@ -303,37 +302,44 @@ Ast* Parser::parse_function() {
     return function;
 }
 
-void Parser::parse_parameters(Function* function) {
-    Variable* param;
+Ast* Parser::parse_parameters() {
+    if (!has_parameters()) {
+        return nullptr;
+    }
+
+    Ast* params = new Ast(AST_PARAMETERS);
+    Ast* param;
 
     while (has_parameters()) {
-        param = new Variable();
+        param = new Ast(AST_PARAMETER);
 
         expect(TK_AT);
         expect(TK_ID);
-        param->set_name(matched);
+        param->set_from_token(matched);
 
         expect(TK_COLON);
-        Type* type;// = parse_type();
+        Ast* type = parse_type();
 
         if (type != nullptr) {
-            param->set_type(type);
+            param->add_child(type);
         } else {
             assert(false && "expected type in parameter");
         }
 
         if (match(TK_ASSIGNMENT)) {
-            Expression* expr = parse_expression();
+            //Expression* expr = parse_expression();
 
-            if (expr == nullptr) {
+            //if (expr == nullptr) {
                 log_error("missing expression on default value");
-            }
+            //}
 
-            param->set_expression(parse_expression());
+            //param->set_expression(parse_expression());
         }
 
-        function->add_parameter(param);
+        params->add_child(param);
     }
+
+    return params;
 }
 
 Statement* Parser::parse_statement() {
@@ -711,8 +717,9 @@ Ast* Parser::parse_primary_type() {
 
         expect(TK_RIGHT_SQUARE_BRACKET);
     } else if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
-        std::cout << "implement me " << __LINE__ << '\n'; exit(0);
-        //type = new NamedType(parse_identifier());
+        Ast* id = parse_generic_instantiation();
+        type = new Ast(AST_TYPE_NAMED);
+        type->add_child(id);
     }
 
     while (type != nullptr) {
@@ -1120,15 +1127,16 @@ Expression* Parser::parse_unary_expression() {
 
 Expression* Parser::parse_postfix_expression() {
     Token oper;
-    Expression* expr = parse_primary_expression();
+    Expression* expr;// = parse_primary_expression();
+    parse_primary_expression();
 
     while (true) {
         if (match(TK_DOT)) {
             oper = matched;
-            expr = new Dot(oper, expr, parse_identifier());
+            //expr = new Dot(oper, expr, parse_identifier());
         } else if (match(TK_ARROW)) {
             oper = matched;
-            expr = new Arrow(oper, expr, parse_identifier());
+            //expr = new Arrow(oper, expr, parse_identifier());
         } else if (match(TK_LEFT_SQUARE_BRACKET)) {
             oper = matched;
             expr = new Index(oper, expr, parse_expression());
@@ -1151,18 +1159,18 @@ Expression* Parser::parse_postfix_expression() {
     return expr;
 }
 
-Expression* Parser::parse_primary_expression() {
-    Expression* expr = nullptr;
+Ast* Parser::parse_primary_expression() {
+    Ast* expr = nullptr;
 
     if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
-        expr = parse_identifier();
+        expr = parse_generic_instantiation();
     } else if (match(TK_THIS)) {
-        expr = new This(matched);
+        expr = new Ast(AST_THIS, matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
-        expr = new BooleanLiteral(matched);
+        expr = new Ast(AST_LITERAL_BOOLEAN, matched);
     } else if (match(TK_LITERAL_INTEGER)) {
-        expr = new IntegerLiteral(matched);
-    } else if (match(TK_LITERAL_FLOAT)) {
+        expr = new Ast(AST_LITERAL_INTEGER, matched);
+    }/* else if (match(TK_LITERAL_FLOAT)) {
         expr = new FloatLiteral(matched);
     } else if (match(TK_LITERAL_DOUBLE)) {
         expr = new DoubleLiteral(matched);
@@ -1178,7 +1186,7 @@ Expression* Parser::parse_primary_expression() {
         expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
         expr = parse_array_or_hash_expression();
-    }
+    }*/
 
     return expr;
 }
@@ -1347,7 +1355,7 @@ Expression* Parser::parse_hash(Expression* key) {
 
     while (match(TK_COMMA)) {
         if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-            key = parse_identifier();
+            //key = parse_identifier();
             expect(TK_COLON);
             expr = new HashPair(key, parse_expression());
             hash->add_expression(expr);
@@ -1369,6 +1377,28 @@ ExpressionList* Parser::parse_argument_list() {
     }
 
     return arguments;
+}
+
+Ast* Parser::parse_generic_instantiation() {
+    Ast* apply = nullptr;
+    Ast* generics;
+    Ast* id = parse_scope();
+
+    if (id == nullptr) {
+        return nullptr;
+    }
+
+    generics = parse_generics();
+
+    if (generics) {
+        apply = new Ast(AST_GENERIC_APPLICATION);
+        apply->add_child(id);
+        apply->add_child(generics);
+    } else {
+        apply = id;
+    }
+
+    return apply;
 }
 
 Expression* Parser::parse_new_expression() {
@@ -1394,36 +1424,47 @@ Expression* Parser::parse_new_expression() {
     return expr;
 }
 
-Identifier* Parser::parse_identifier() {
-    Token name;
-    Token alias;
-    bool alias_flag = false;
-    bool global_flag = false;
-    Identifier* id = nullptr;
-    TypeList* generics = nullptr;
+Ast* Parser::parse_scope() {
+    Ast* scoped = nullptr;
+    Ast* id;
+    Ast* alias;
 
     if (match(TK_SCOPE)) {
-        expect(TK_ID);
-        name = matched;
-        global_flag = true;
-    } else if (match(TK_ID)) {
-        if (lookahead(TK_SCOPE)) {
-            alias = matched;
-            expect(TK_SCOPE);
-            expect(TK_ID);
-            name = matched;
-            alias_flag = true;
+        scoped = new Ast(AST_SCOPE, matched);
+        id = parse_identifier();
+
+        if (id) {
+            scoped->add_child(parse_identifier());
         } else {
-            name = matched;
+            log_error("missing identifier in global scope");
         }
-    } else {
-        match();
-        std::cout << matched.to_str() << '\n';
-        assert(false && "invalid id");
+    } else if (lookahead(TK_ID)) {
+        Ast* id = parse_identifier();
+
+        if (match(TK_SCOPE)) {
+            scoped = new Ast(AST_SCOPE, matched);
+            scoped->add_child(id);
+            alias = parse_identifier();
+
+            if (alias) {
+                scoped->add_child(alias);
+            } else {
+                log_error("missing name in scope");
+            }
+        } else {
+            scoped = id;
+        }
     }
 
-   // generics = parse_generics();
-    id = new Identifier(alias, name, alias_flag, global_flag, generics);
+    return scoped;
+}
+
+Ast* Parser::parse_identifier() {
+    Ast* id = nullptr;
+
+    if (match(TK_ID)) {
+        id = new Ast(AST_ID, matched);
+    }
 
     return id;
 }
@@ -1439,7 +1480,7 @@ Ast* Parser::parse_generics() {
     return generics;
 }
 
-Ast* Parser::parse_type_list(AstKind kind) {
+Ast* Parser::parse_type_list(AstType kind) {
     Ast* type_list = new Ast(kind);
     Ast* type = parse_type();
 

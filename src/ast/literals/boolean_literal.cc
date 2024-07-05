@@ -3,6 +3,6 @@
 using namespace haard;
 
 BooleanLiteral::BooleanLiteral(Token& token) {
-    set_kind(EXPR_LITERAL_BOOLEAN);
+    set_kind(AST_LITERAL_BOOLEAN);
     set_token(token);
 }

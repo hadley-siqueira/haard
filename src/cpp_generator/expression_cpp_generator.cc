@@ -124,11 +124,11 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_identifier((Identifier*) expr);
         break;
 
-    case EXPR_LITERAL_BOOLEAN:
+    case AST_LITERAL_BOOLEAN:
         build_boolean_literal((BooleanLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_INTEGER:
+    case AST_LITERAL_INTEGER:
         build_integer_literal((IntegerLiteral*) expr);
         break;
 

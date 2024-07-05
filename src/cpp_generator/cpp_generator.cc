@@ -324,7 +324,7 @@ void CppGenerator::build_expression(Expression* expr) {
         build_unary_operator(un, true);
         break;
 
-    case EXPR_LITERAL_INTEGER:
+    case AST_LITERAL_INTEGER:
     case EXPR_LITERAL_FLOAT:
     case EXPR_LITERAL_DOUBLE:
         *output << literal->get_token().get_value();
@@ -445,55 +445,55 @@ void CppGenerator::build_expression_list(ExpressionList *list, const char *begin
 
 void CppGenerator::build_type(Type* type) {
     switch (type->get_kind()) {
-    case TYPE_U8:
+    case AST_TYPE_U8:
         *output << "u8";
         break;
 
-    case TYPE_U16:
+    case AST_TYPE_U16:
         *output << "u16";
         break;
 
-    case TYPE_U32:
+    case AST_TYPE_U32:
         *output << "u32";
         break;
 
-    case TYPE_U64:
+    case AST_TYPE_U64:
         *output << "u64";
         break;
 
-    case TYPE_I8:
+    case AST_TYPE_I8:
         *output << "i8";
         break;
 
-    case TYPE_I16:
+    case AST_TYPE_I16:
         *output << "i16";
         break;
 
-    case TYPE_I32:
+    case AST_TYPE_I32:
         *output << "i32";
         break;
 
-    case TYPE_I64:
+    case AST_TYPE_I64:
         *output << "i64";
         break;
 
-    case TYPE_BOOL:
+    case AST_TYPE_BOOL:
         *output << "bool";
         break;
 
-    case TYPE_CHAR:
+    case AST_TYPE_CHAR:
         *output << "i8";
         break;
 
-    case TYPE_UCHAR:
+    case AST_TYPE_UCHAR:
         *output << "u8";
         break;
 
-    case TYPE_SHORT:
+    case AST_TYPE_SHORT:
         *output << "i16";
         break;
 
-    case TYPE_USHORT:
+    case AST_TYPE_USHORT:
         *output << "u16";
         break;
 
@@ -501,19 +501,19 @@ void CppGenerator::build_type(Type* type) {
         *output << "i32";
         break;
 
-    case TYPE_UINT:
+    case AST_TYPE_UINT:
         *output << "u32";
         break;
 
-    case TYPE_LONG:
+    case AST_TYPE_LONG:
         *output << "i64";
         break;
 
-    case TYPE_ULONG:
+    case AST_TYPE_ULONG:
         *output << "u64";
         break;
 
-    case TYPE_VOID:
+    case AST_TYPE_VOID:
         *output << "void";
         break;
     }

@@ -18,7 +18,10 @@ namespace haard {
         /* types */
         void print_list_type(Ast* node);
 
-        void print_declaration(Declaration* decl);
+        /* Expressions */
+        void print_generic_application(Ast* node);
+        void print_scope(Ast* scope);
+        void print_identifier(Ast* id);
 
         void print_imports(Ast* imports);
         void print_import(Ast* import);
@@ -29,8 +32,10 @@ namespace haard {
         void print_class(Class* klass);
         void print_struct(Struct* st);
         void print_union(Union* u);
-        void print_function(Function* function);
-        void print_function_parameters(Function* function);
+
+        void print_function(Ast* function);
+        void print_parameters(Ast* parameters);
+        void print_parameter(Ast* parameter);
 
         void print_statement(Statement* stmt);
         void print_while_statement(WhileStatement* stmt);
@@ -62,8 +67,6 @@ namespace haard {
         void print_parenthesis_expression(Parenthesis* expr);
         void print_call_expression(Call* expr);
 
-        void print_type(Ast* type);
-        void print_subtyped_type(SubtypedType* type);
         void print_tuple_type(Ast *tuple);
         void print_function_type(Ast *type);
         void print_named_type(Ast *type);
@@ -71,7 +74,7 @@ namespace haard {
         void print_type_list(Ast *tlist, const char* begin, const char* end);
 
         void print_identifier(Identifier* id);
-        void print_generics(TypeList* g);
+        void print_generics(Ast* g);
 
         void print_char_literal(CharLiteral* ch);
         void print_string_literal(StringLiteral* str);

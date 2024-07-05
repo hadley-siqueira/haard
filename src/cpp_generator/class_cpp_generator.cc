@@ -24,7 +24,7 @@ void ClassCppGenerator::build_header(Class* klass) {
         for (i = 0; i < types->types_count() - 1; ++i) {
             Type* type = types->get_type(i);
 
-            if (type->get_kind() == TYPE_NAMED) {
+            if (type->get_kind() == AST_TYPE_NAMED) {
                 named = (NamedType*) type;
                 header << "typename " << named->get_identifier()->get_name().get_value() << ", ";
             }
@@ -32,7 +32,7 @@ void ClassCppGenerator::build_header(Class* klass) {
 
         Type* type = types->get_type(i);
 
-        if (type->get_kind() == TYPE_NAMED) {
+        if (type->get_kind() == AST_TYPE_NAMED) {
             named = (NamedType*) type;
             header << "typename " << named->get_identifier()->get_name().get_value();
         }

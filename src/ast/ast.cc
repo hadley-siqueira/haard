@@ -9,12 +9,12 @@ Ast::Ast() {
     set_value(nullptr);
 }
 
-Ast::Ast(AstKind type) {
+Ast::Ast(AstType type) {
     set_type(type);
     set_value(nullptr);
 }
 
-Ast::Ast(AstKind type, Token& token) {
+Ast::Ast(AstType type, Token& token) {
     set_type(type);
     set_from_token(token);
 }
@@ -25,7 +25,7 @@ Ast::~Ast() {
     }
 }
 
-AstKind Ast::get_type() const {
+AstType Ast::get_type() const {
     return type;
 }
 
@@ -41,7 +41,7 @@ const char* Ast::get_value() const {
     return value;
 }
 
-void Ast::set_type(AstKind type) {
+void Ast::set_type(AstType type) {
     this->type = type;
 }
 
@@ -66,6 +66,16 @@ void Ast::add_child(Ast* child) {
 Ast* Ast::get_child(size_t index) {
     if (index < children_count()) {
         return children[index];
+    }
+
+    return nullptr;
+}
+
+Ast* Ast::get_child(AstType type) {
+    for (auto child : children) {
+        if (child->get_type() == type) {
+            return child;
+        }
     }
 
     return nullptr;

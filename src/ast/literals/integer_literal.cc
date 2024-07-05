@@ -3,6 +3,6 @@
 using namespace haard;
 
 IntegerLiteral::IntegerLiteral(Token& token) {
-    set_kind(EXPR_LITERAL_INTEGER);
+    set_kind(AST_LITERAL_INTEGER);
     set_token(token);
 }

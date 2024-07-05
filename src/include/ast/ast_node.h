@@ -4,12 +4,17 @@
 #include "token/token.h"
 
 namespace haard {
-    typedef enum AstKind {
+    typedef enum AstType {
         AST_UNKNOWN,
 
         AST_MODULE,
 
         AST_FUNCTION,
+        AST_RETURN_TYPE,
+        AST_PARAMETERS,
+        AST_FUNCTION_STATEMENTS,
+        AST_PARAMETER,
+
         AST_CLASS,
         AST_STRUCT,
         AST_ENUM,
@@ -20,6 +25,8 @@ namespace haard {
         AST_IMPORT_PATH_MEMBER,
         AST_IMPORT_ALIAS,
 
+        AST_GENERIC_APPLICATION,
+        AST_SCOPE,
         AST_ID,
 
         AST_UNKNOWN_STATEMENT,
@@ -112,8 +119,8 @@ namespace haard {
         EXPR_POS_DECREMENT,
 
         // Literals
-        EXPR_LITERAL_BOOLEAN,
-        EXPR_LITERAL_INTEGER,
+        AST_LITERAL_BOOLEAN,
+        AST_LITERAL_INTEGER,
         EXPR_LITERAL_FLOAT,
         EXPR_LITERAL_DOUBLE,
         EXPR_LITERAL_CHAR,
@@ -122,7 +129,7 @@ namespace haard {
         EXPR_LITERAL_ARRAY,
         EXPR_LITERAL_HASH,
         EXPR_LITERAL_TUPLE,
-        EXPR_THIS,
+        AST_THIS,
 
         EXPR_SEQUENCE,
 
@@ -160,7 +167,7 @@ namespace haard {
         AST_TYPE_TUPLE,
         AST_TYPE_FUNCTION,
         AST_GENERICS
-    } AstKind;
+    } AstType;
 
     class AstNode {
     public:

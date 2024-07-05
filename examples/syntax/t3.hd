@@ -1,0 +1,44 @@
+import std
+import std.io
+import std.foo.bar
+import std as std
+
+def main : int
+    return 0
+
+def sum : float
+    @a : int
+    @b : int
+
+    return 0
+
+def primitive_types<T, K> : void
+    @b : u8
+    @b : u16
+    @b : u32
+    @b : u64
+    @b : i8
+    @b : i16
+    @b : i32
+    @b : i64
+    @d : f32
+    @d : f64
+    @d : bool
+    @d : char
+    @e : short
+    @e : int
+    @e : long
+    @e : ushort
+    @e : uint
+    @e : ulong
+    @e : float
+    @e : double
+
+def other_types<std::Key, Value<int, str>> : void
+    @a : u8*
+    @b : u8***
+    @c : int[]
+    @d : u8&
+    @e : [int]
+    @f : (int, int, str)
+    @g : (int, int, str) -> int*

@@ -5,3 +5,9 @@ import std as std
 
 def main : int
     return 0
+
+def sum : float
+    @a : int
+    @b : int
+
+    return 0

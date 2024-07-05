@@ -134,29 +134,30 @@ namespace haard {
     class Ast {
     public:
         Ast();
-        Ast(AstKind type);
-        Ast(AstKind type, Token& token);
+        Ast(AstType type);
+        Ast(AstType type, Token& token);
         ~Ast();
 
     public:
-        AstKind get_type() const;
+        AstType get_type() const;
         int get_line() const;
         int get_column() const;
         const char* get_value() const;
 
-        void set_type(AstKind type);
+        void set_type(AstType type);
         void set_line(int line);
         void set_column(int column);
         void set_value(const char* value);
 
         void add_child(Ast* child);
         Ast* get_child(size_t index);
+        Ast* get_child(AstType type);
         size_t children_count();
 
         void set_from_token(Token& token);
 
     private:
-        AstKind type;
+        AstType type;
         int line;
         int column;
         const char* value;

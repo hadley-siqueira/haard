@@ -35,7 +35,7 @@ namespace haard {
         Variable* parse_enum_variable();
 
         Ast* parse_function();
-        void parse_parameters(Function* function);
+        Ast* parse_parameters();
 
         Statement* parse_statement();
         WhileStatement* parse_while_statement();
@@ -80,7 +80,7 @@ namespace haard {
 
         Expression* parse_unary_expression();
         Expression* parse_postfix_expression();
-        Expression* parse_primary_expression();
+        Ast* parse_primary_expression();
         Expression* parse_new_expression();
         Expression* parse_delete_expression();
         Expression* parse_parenthesis_or_tuple_or_sequence();
@@ -90,10 +90,12 @@ namespace haard {
 
         ExpressionList* parse_argument_list();
 
-        Identifier* parse_identifier();
+        Ast* parse_generic_instantiation();
+        Ast* parse_scope();
+        Ast* parse_identifier();
 
         Ast* parse_generics();
-        Ast* parse_type_list(AstKind kind);
+        Ast* parse_type_list(AstType kind);
 
     private:
         void advance();
