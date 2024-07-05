@@ -11,10 +11,17 @@ namespace haard {
 
     public:
         std::string get_output();
+        void print(Ast* node);
 
-        void print_module(Module* module);
+        void print_module(Ast* module);
         void print_declaration(Declaration* decl);
-        void print_import(Import* import);
+
+        void print_imports(Ast* imports);
+        void print_import(Ast* import);
+        void print_import_path(Ast* path);
+        void print_import_path_member(Ast* member);
+        void print_import_alias(Ast* alias);
+
         void print_class(Class* klass);
         void print_struct(Struct* st);
         void print_union(Union* u);

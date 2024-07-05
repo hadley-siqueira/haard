@@ -5,13 +5,20 @@
 
 namespace haard {
     typedef enum AstKind {
+        AST_UNKNOWN,
         AST_MODULE,
         AST_FUNCTION,
         AST_CLASS,
         AST_STRUCT,
         AST_ENUM,
         AST_UNION,
+
+        AST_IMPORTS,
         AST_IMPORT,
+        AST_IMPORT_PATH,
+        AST_IMPORT_PATH_MEMBER,
+        AST_IMPORT_ALIAS,
+
         AST_ID,
 
         AST_UNKNOWN_STATEMENT,

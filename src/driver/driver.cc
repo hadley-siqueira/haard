@@ -86,7 +86,7 @@ Module* Driver::parse_file(std::string path) {
         Parser parser;
 
         log_info("parsing file " + path);
-        modules.add_module(path, parser.read(path, build_relative_path(path)));
+        modules.add_module(path, (Module*) parser.read(path, build_relative_path(path)));
     }
 
     return modules.get_module(path);

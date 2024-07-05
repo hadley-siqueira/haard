@@ -11,24 +11,34 @@ Parser::Parser() {
     idx = 0;
 }
 
-Module* Parser::read(std::string path, std::string relative_path) {
-    Module* module;
+Ast* Parser::read(std::string path, std::string relative_path) {
+    Ast* module;
     Scanner sc;
 
     idx = 0;
     tokens = sc.read(path);
     module = parse_module();
-    module->set_path(path);
-    module->set_relative_path(relative_path);
 
     return module;
 }
 
-Module* Parser::parse_module() {
-    Module* module = new Module();
+Ast* Parser::parse_module() {
+    Ast* module = new Ast(AST_MODULE);
+    Ast* imports;
+
+    imports = parse_imports();
+
+    if (imports != nullptr) {
+        module->add_child(imports);
+    }
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
+            module->add_child(parse_import());
+        } else {
+            break;
+        }
+        /*if (lookahead(TK_IMPORT)) {
             module->add_import(parse_import());
         } else if (lookahead(TK_DEF)) {
             module->add_function(parse_function());
@@ -42,31 +52,81 @@ Module* Parser::parse_module() {
             module->add_enum(parse_enum());
         } else {
             break;
-        }
+        }*/
     }
 
     return module;
 }
 
-Import* Parser::parse_import() {
-    Import* import = new Import();
+Ast* Parser::parse_imports() {
+    if (!lookahead(TK_IMPORT)) {
+        return nullptr;
+    }
+
+    Ast* imports = new Ast(AST_IMPORTS);
+
+    while (true) {
+        if (lookahead(TK_IMPORT)) {
+            imports->add_child(parse_import());
+        } else {
+            break;
+        }
+    }
+
+    return imports;
+}
+
+Ast* Parser::parse_import() {
+    Ast* import = new Ast(AST_IMPORT);
+    Ast* path;
+    Ast* alias;
 
     expect(TK_IMPORT);
+    import->set_from_token(matched);
+    path = parse_import_path();
 
-    expect(TK_ID);
-    import->add_to_path(matched);
-
-    while (match(TK_DOT)) {
-        expect(TK_ID);
-        import->add_to_path(matched);
+    if (path == nullptr) {
+        log_error("missing path in import");
+    } else {
+        import->add_child(path);
     }
 
     if (match(TK_AS)) {
         expect(TK_ID);
-        import->set_alias(matched);
+        alias = new Ast(AST_IMPORT_ALIAS);
+        alias->set_from_token(matched);
+        import->add_child(alias);
     }
 
     return import;
+}
+
+Ast* Parser::parse_import_path() {
+    Ast* path = nullptr;
+    Ast* member = parse_import_path_member();
+
+    if (member != nullptr) {
+        path = new Ast(AST_IMPORT_PATH);
+        path->add_child(member);
+
+        while (match(TK_DOT)) {
+            member = parse_import_path_member();
+            path->add_child(member);
+        }
+    }
+
+    return path;
+}
+
+Ast* Parser::parse_import_path_member() {
+    Ast* node = nullptr;
+
+    if (match(TK_ID)) {
+        node = new Ast(AST_IMPORT_PATH_MEMBER);
+        node->set_from_token(matched);
+    }
+
+    return node;
 }
 
 Class* Parser::parse_class() {

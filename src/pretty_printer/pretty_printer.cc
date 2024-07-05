@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 #include "pretty_printer/pretty_printer.h"
 
 using namespace haard;
@@ -11,14 +12,48 @@ std::string PrettyPrinter::get_output() {
     return out.str();
 }
 
-void PrettyPrinter::print_module(Module* module) {
-    /*for (int i = 0; i < module->imports_count(); ++i) {
-        print_import(module->get_import(i));
-        out << '\n';
-    }*/
+void PrettyPrinter::print(Ast* node) {
+    if (node == nullptr) {
+        return;
+    }
 
-    for (int i = 0; i < module->declarations_count(); ++i) {
-        print_declaration(module->get_declaration(i));
+    switch (node->get_type()) {
+    case AST_UNKNOWN:
+        break;
+
+    case AST_MODULE:
+        print_module(node);
+        break;
+
+    case AST_IMPORTS:
+        print_imports(node);
+        break;
+
+    case AST_IMPORT:
+        print_import(node);
+        break;
+
+    case AST_IMPORT_PATH:
+        print_import_path(node);
+        break;
+
+    case AST_IMPORT_ALIAS:
+        print_import_alias(node);
+        break;
+
+    case AST_IMPORT_PATH_MEMBER:
+        print_import_path_member(node);
+        break;
+
+    default:
+        std::cout << "unhandled case: " << node->get_type() << "\n";
+        break;
+    }
+}
+
+void PrettyPrinter::print_module(Ast* module) {
+    for (size_t i = 0; i < module->children_count(); ++i) {
+        print(module->get_child(i));
     }
 }
 
@@ -27,7 +62,7 @@ void PrettyPrinter::print_declaration(Declaration* decl) {
 
     switch (kind) {
     case AST_IMPORT:
-        print_import((Import*) decl);
+        //print_import((Import*) decl);
         break;
 
     case AST_FUNCTION:
@@ -50,20 +85,43 @@ void PrettyPrinter::print_declaration(Declaration* decl) {
     out << '\n';
 }
 
-void PrettyPrinter::print_import(Import* import) {
+void PrettyPrinter::print_imports(Ast* imports) {
+    for (size_t i = 0; i < imports->children_count(); ++i) {
+        print(imports->get_child(i));
+        out << "\n";
+    }
+
+    out << "\n";
+}
+
+void PrettyPrinter::print_import(Ast* import) {
     int i;
 
     out << "import ";
 
-    for (i = 0; i < import->path_count() - 1; ++i) {
-        out << import->get_path_token(i).get_value() << ".";
+    for (size_t i = 0; i < import->children_count(); ++i) {
+        print(import->get_child(i));
+    }
+}
+
+void PrettyPrinter::print_import_path(Ast* path) {
+    size_t i;
+
+    for (i = 0; i < path->children_count() - 1; ++i) {
+        print(path->get_child(i));
+        out << ".";
     }
 
-    out << import->get_path_token(i).get_value();
+    print(path->get_child(i));
+}
 
-    if (import->has_alias()) {
-        out << " as " << import->get_alias().get_value();
-    }
+void PrettyPrinter::print_import_path_member(Ast* member) {
+    out << member->get_value();
+}
+
+void PrettyPrinter::print_import_alias(Ast* alias) {
+    out << " as ";
+    out << alias->get_value();
 }
 
 void PrettyPrinter::print_class(Class* klass) {

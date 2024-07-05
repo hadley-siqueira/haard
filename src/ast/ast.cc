@@ -4,6 +4,16 @@
 
 using namespace haard;
 
+Ast::Ast() {
+    set_type(AST_UNKNOWN);
+    set_value(nullptr);
+}
+
+Ast::Ast(AstKind type) {
+    set_type(type);
+    set_value(nullptr);
+}
+
 Ast::~Ast() {
     for (auto child : children) {
         delete child;
@@ -27,7 +37,7 @@ const char* Ast::get_value() const {
 }
 
 void Ast::set_type(AstKind type) {
-    type = type;
+    this->type = type;
 }
 
 void Ast::set_line(int line) {

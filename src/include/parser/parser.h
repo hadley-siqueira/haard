@@ -14,11 +14,15 @@ namespace haard {
         Parser();
 
     public:
-        Module* read(std::string path, std::string relative_path = "");
+        Ast* read(std::string path, std::string relative_path = "");
 
     public:
-        Module* parse_module();
-        Import* parse_import();
+        Ast* parse_module();
+
+        Ast* parse_imports();
+        Ast* parse_import();
+        Ast* parse_import_path();
+        Ast* parse_import_path_member();
 
         Class* parse_class();
         Struct* parse_struct();

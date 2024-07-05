@@ -35,8 +35,11 @@ void test_pretty_printer(int argc, char** argv) {
     Parser parser;
     PrettyPrinter printer;
 
-    Module* module = parser.read(argv[1]);
-    printer.print_module(module);
+    std::cout << "parsing...\n";
+    Ast* module = parser.read(argv[1]);
+
+    std::cout << "printing...\n";
+    printer.print(module);
     std::cout << printer.get_output() << '\n';
 
     delete module;
@@ -51,8 +54,7 @@ void test_driver(int argc, char** argv) {
 
 int main(int argc, char** argv) {
     if (argc > 2)
-    test_scanner(argc, argv);
-       // test_pretty_printer(argc, argv);
+    test_pretty_printer(argc, argv);
 
     //test_driver(argc, argv);
 
