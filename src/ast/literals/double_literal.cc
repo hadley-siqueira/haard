@@ -3,6 +3,6 @@
 using namespace haard;
 
 DoubleLiteral::DoubleLiteral(Token& token) {
-    set_kind(EXPR_LITERAL_DOUBLE);
+    set_kind(AST_LITERAL_DOUBLE);
     set_token(token);
 }

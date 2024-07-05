@@ -10,7 +10,7 @@ void StatementCppGenerator::build(Statement* stmt) {
     }
 
     switch (stmt->get_kind()) {
-    case STMT_COMPOUND:
+    case AST_STATEMENTS:
         build_compound_statement((CompoundStatement*) stmt);
         break;
 
@@ -18,7 +18,7 @@ void StatementCppGenerator::build(Statement* stmt) {
         build_while_statement((WhileStatement*) stmt);
         break;
 
-    case STMT_EXPRESSION:
+    case AST_EXPRESSION:
         build_expression_statement((ExpressionStatement*) stmt);
         break;
     }

@@ -294,9 +294,8 @@ Ast* Parser::parse_function() {
     }
 
     function->add_child(parse_parameters());
+    function->add_child(parse_statements());
 
-    //function->set_statements(parse_compound_statement());
-    parse_compound_statement();
     dedent();
 
     return function;
@@ -342,9 +341,9 @@ Ast* Parser::parse_parameters() {
     return params;
 }
 
-Statement* Parser::parse_statement() {
-    Statement* stmt = nullptr;
-    Expression* expr = nullptr;
+Ast* Parser::parse_statement() {
+    Ast* stmt = nullptr;
+    Ast* expr = nullptr;
 
     /*if (lookahead(TK_WHILE)) {
         stmt = parse_while_statement();
@@ -369,13 +368,13 @@ Statement* Parser::parse_statement() {
     //}
 
     if (lookahead(TK_WHILE)) {
-        stmt = parse_while_statement();
+        //stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
-        stmt = parse_for_statement();
+        //stmt = parse_for_statement();
     } else if (lookahead(TK_IF)) {
-        stmt = parse_if_statement();
+        //stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
-        stmt = parse_return_statement();
+        //stmt = parse_return_statement();
     } else {
         expr = parse_expression();
 
@@ -383,13 +382,14 @@ Statement* Parser::parse_statement() {
             assert(false && "expected an expression statement");
         }
 
-        stmt = new ExpressionStatement(expr);
+        stmt = new Ast(AST_EXPRESSION);
+        stmt->add_child(expr);
     }
 
     return stmt;
 }
 
-WhileStatement* Parser::parse_while_statement() {
+WhileStatement* Parser::parse_while_statement() {/*
     Expression* condition;
     WhileStatement* stmt = new WhileStatement();
 
@@ -407,10 +407,10 @@ WhileStatement* Parser::parse_while_statement() {
     stmt->set_statements(parse_compound_statement());
     dedent();
 
-    return stmt;
+    return stmt;*/
 }
 
-ForStatement* Parser::parse_for_statement() {
+ForStatement* Parser::parse_for_statement() {/*
     ForStatement* stmt = new ForStatement();
 
     Expression* test = nullptr;
@@ -432,10 +432,10 @@ ForStatement* Parser::parse_for_statement() {
     stmt->set_statements(parse_compound_statement());
     dedent();
 
-    return stmt;
+    return stmt;*/
 }
 
-BranchStatement* Parser::parse_if_statement() {
+BranchStatement* Parser::parse_if_statement() {/*
     BranchStatement* stmt = new BranchStatement(STMT_IF);
     Expression* condition;
 
@@ -461,10 +461,10 @@ BranchStatement* Parser::parse_if_statement() {
         stmt->set_false_statements(parse_else_statement());
     }
 
-    return stmt;
+    return stmt;*/
 }
 
-BranchStatement* Parser::parse_elif_statement() {
+BranchStatement* Parser::parse_elif_statement() {/*
     Expression* condition;
     BranchStatement* stmt = new BranchStatement(STMT_ELIF);
 
@@ -489,10 +489,10 @@ BranchStatement* Parser::parse_elif_statement() {
         stmt->set_false_statements(parse_else_statement());
     }
 
-    return stmt;
+    return stmt;*/
 }
 
-BranchStatement* Parser::parse_else_statement() {
+BranchStatement* Parser::parse_else_statement() {/*
     BranchStatement* stmt = new BranchStatement(STMT_ELSE);
 
     expect(TK_ELSE);
@@ -537,10 +537,10 @@ void Parser::parse_for_init_or_range(ForStatement* stmt) {
         }
 
         stmt->set_init(init);
-    }
+    }*/
 }
 
-void Parser::parse_for_test(ForStatement* stmt) {
+void Parser::parse_for_test(ForStatement* stmt) {/*
     Expression* test = nullptr;
 
     if (lookahead(TK_SEMICOLON)) {
@@ -553,10 +553,10 @@ void Parser::parse_for_test(ForStatement* stmt) {
         assert(false && "expected for test expression");
     }
 
-    stmt->set_test(test);
+    stmt->set_test(test);*/
 }
 
-void Parser::parse_for_update(ForStatement* stmt) {
+void Parser::parse_for_update(ForStatement* stmt) {/*
     if (lookahead(TK_COLON)) {
         return;
     }
@@ -580,10 +580,10 @@ void Parser::parse_for_update(ForStatement* stmt) {
         update->add_expression(expr);
     }
 
-    stmt->set_update(update);
+    stmt->set_update(update);*/
 }
 
-Statement* Parser::parse_return_statement() {
+Statement* Parser::parse_return_statement() {/*
     ReturnStatement* stmt = new ReturnStatement();
     Expression* expr = nullptr;
 
@@ -599,18 +599,18 @@ Statement* Parser::parse_return_statement() {
         stmt->set_expression(expr);
     }
 
-    return stmt;
+    return stmt;*/
 }
 
-CompoundStatement* Parser::parse_compound_statement() {
-    CompoundStatement* statements = new CompoundStatement();
+Ast* Parser::parse_statements() {
+    Ast* statements = new Ast(AST_STATEMENTS);
 
     if (match(TK_PASS)) {
         return statements;
     }
 
     while (is_indented() && !lookahead(TK_RIGHT_CURLY_BRACKET)) {
-        statements->add_statement(parse_statement());
+        statements->add_child(parse_statement());
     }
 
     return statements;
@@ -761,8 +761,9 @@ Ast* Parser::parse_primary_type() {
     return type;
 }
 
-Expression* Parser::parse_expression() {
-    return parse_assignment_expression();
+Ast* Parser::parse_expression() {
+    return parse_primary_expression();
+    //return parse_assignment_expression();
 }
 
 Expression* Parser::parse_assignment_expression() {
@@ -1112,7 +1113,7 @@ Expression* Parser::parse_unary_expression() {
     } else if (match(TK_SIZEOF)) {
         oper = matched;
         expect(TK_LEFT_PARENTHESIS);
-        expr = new Sizeof(oper, parse_expression());
+        //expr = new Sizeof(oper, parse_expression());
         expect(TK_RIGHT_PARENTHESIS);
     } else if (lookahead(TK_NEW)) {
         expr = parse_new_expression();
@@ -1139,7 +1140,7 @@ Expression* Parser::parse_postfix_expression() {
             //expr = new Arrow(oper, expr, parse_identifier());
         } else if (match(TK_LEFT_SQUARE_BRACKET)) {
             oper = matched;
-            expr = new Index(oper, expr, parse_expression());
+            //expr = new Index(oper, expr, parse_expression());
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else if (match_same_line(TK_LEFT_PARENTHESIS)) {
             oper = matched;
@@ -1170,23 +1171,23 @@ Ast* Parser::parse_primary_expression() {
         expr = new Ast(AST_LITERAL_BOOLEAN, matched);
     } else if (match(TK_LITERAL_INTEGER)) {
         expr = new Ast(AST_LITERAL_INTEGER, matched);
-    }/* else if (match(TK_LITERAL_FLOAT)) {
-        expr = new FloatLiteral(matched);
+    } else if (match(TK_LITERAL_FLOAT)) {
+        expr = new Ast(AST_LITERAL_FLOAT, matched);
     } else if (match(TK_LITERAL_DOUBLE)) {
-        expr = new DoubleLiteral(matched);
+        expr = new Ast(AST_LITERAL_DOUBLE, matched);
     } else if (match(TK_LITERAL_CHAR)) {
-        expr = new CharLiteral(matched);
+        expr = new Ast(AST_LITERAL_CHAR, matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING)) {
-        expr = new StringLiteral(matched);
+        expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
-        expr = new StringLiteral(matched);
+        expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
-        expr = parse_parenthesis_or_tuple_or_sequence();
+        //expr = parse_parenthesis_or_tuple_or_sequence();
     } else if (lookahead(TK_LEFT_SQUARE_BRACKET)) {
-        expr = parse_list_expression();
+        //expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
-        expr = parse_array_or_hash_expression();
-    }*/
+        //expr = parse_array_or_hash_expression();
+    }
 
     return expr;
 }
@@ -1200,9 +1201,9 @@ Expression* Parser::parse_delete_expression() {
 
     if (match(TK_LEFT_SQUARE_BRACKET)) {
         expect(TK_RIGHT_SQUARE_BRACKET);
-        expr = new DeleteArray(oper, parse_expression());
+        //expr = new DeleteArray(oper, parse_expression());
     } else {
-        expr = new Delete(oper, parse_expression());
+        //expr = new Delete(oper, parse_expression());
     }
 
     return expr;
@@ -1216,7 +1217,7 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
 
     expect(TK_LEFT_PARENTHESIS);
     oper = matched;
-    expr = parse_expression();
+    //expr = parse_expression();
 
     if (expr == nullptr) {
         assert(false && "expression can't be null on tuple");
@@ -1228,7 +1229,7 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-                expr = parse_expression();
+                //expr = parse_expression();
 
                 if (expr == nullptr) {
                     assert(false && "expression can't be null on tuple2");
@@ -1245,7 +1246,7 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
 
         while (match(TK_SEMICOLON)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-                expr = parse_expression();
+                //expr = parse_expression();
 
                 if (expr == nullptr) {
                     assert(false && "expression can't be null on sequence");
@@ -1271,7 +1272,7 @@ Expression* Parser::parse_list_expression() {
     expect(TK_LEFT_SQUARE_BRACKET);
 
     if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
-        expr = parse_expression();
+        //expr = parse_expression();
 
         if (expr == nullptr) {
             assert(false && "expected expression on list literal");
@@ -1281,7 +1282,7 @@ Expression* Parser::parse_list_expression() {
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
-                expr = parse_expression();
+                //expr = parse_expression();
 
                 if (expr == nullptr) {
                     assert(false && "expected expression on list literal");
@@ -1304,7 +1305,7 @@ Expression* Parser::parse_array_or_hash_expression() {
     expect(TK_LEFT_CURLY_BRACKET);
 
     if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-        expr = parse_expression();
+        //expr = parse_expression();
 
         if (expr == nullptr) {
             assert(false && "missing expression on array or hash literal");
@@ -1318,7 +1319,7 @@ Expression* Parser::parse_array_or_hash_expression() {
 
             while (match(TK_COMMA)) {
                 if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-                    expr = parse_expression();
+                    //expr = parse_expression();
 
                     if (expr == nullptr) {
                         assert(false && "missing expression on array literal");
@@ -1343,7 +1344,7 @@ Expression* Parser::parse_hash(Expression* key) {
     HashLiteral* hash = new HashLiteral();
 
     expect(TK_COLON);
-    expr = parse_expression();
+    //expr = parse_expression();
 
     if (expr == nullptr) {
         assert(false && "missing value on hash");
@@ -1357,7 +1358,7 @@ Expression* Parser::parse_hash(Expression* key) {
         if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
             //key = parse_identifier();
             expect(TK_COLON);
-            expr = new HashPair(key, parse_expression());
+            //expr = new HashPair(key, parse_expression());
             hash->add_expression(expr);
         }
     }
@@ -1369,10 +1370,10 @@ ExpressionList* Parser::parse_argument_list() {
     ExpressionList* arguments = new ExpressionList();
 
     if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-        arguments->add_expression(parse_expression());
+        //arguments->add_expression(parse_expression());
 
         while (match(TK_COMMA)) {
-            arguments->add_expression(parse_expression());
+            //arguments->add_expression(parse_expression());
         }
     }
 

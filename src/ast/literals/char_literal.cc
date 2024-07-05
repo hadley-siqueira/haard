@@ -3,6 +3,6 @@
 using namespace haard;
 
 CharLiteral::CharLiteral(Token& token) {
-    set_kind(EXPR_LITERAL_CHAR);
+    set_kind(AST_LITERAL_CHAR);
     set_token(token);
 }

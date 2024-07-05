@@ -37,7 +37,7 @@ namespace haard {
         Ast* parse_function();
         Ast* parse_parameters();
 
-        Statement* parse_statement();
+        Ast* parse_statement();
         WhileStatement* parse_while_statement();
         ForStatement* parse_for_statement();
 
@@ -49,14 +49,14 @@ namespace haard {
         void parse_for_test(ForStatement* stmt);
         void parse_for_update(ForStatement* stmt);
         Statement* parse_return_statement();
-        CompoundStatement* parse_compound_statement();
+        Ast* parse_statements();
 
         Ast* parse_type();
         Type* parse_function_type();
         Ast* parse_tuple_or_function_type();
         Ast* parse_primary_type();
 
-        Expression* parse_expression();
+        Ast* parse_expression();
         Expression* parse_assignment_expression();
         Expression* parse_cast_expression();
 
@@ -80,7 +80,10 @@ namespace haard {
 
         Expression* parse_unary_expression();
         Expression* parse_postfix_expression();
+
+
         Ast* parse_primary_expression();
+
         Expression* parse_new_expression();
         Expression* parse_delete_expression();
         Expression* parse_parenthesis_or_tuple_or_sequence();

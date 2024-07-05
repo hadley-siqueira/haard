@@ -133,11 +133,11 @@ void CppGenerator::build_function_body(Function* function) {
 
 void CppGenerator::build_statement(Statement* stmt) {
     switch (stmt->get_kind()) {
-    case STMT_COMPOUND:
+    case AST_STATEMENTS:
         build_compound_statement((CompoundStatement*) stmt);
         break;
 
-    case STMT_EXPRESSION:
+    case AST_EXPRESSION:
         build_expression_statement((ExpressionStatement*) stmt);
         break;
 
@@ -325,16 +325,16 @@ void CppGenerator::build_expression(Expression* expr) {
         break;
 
     case AST_LITERAL_INTEGER:
-    case EXPR_LITERAL_FLOAT:
-    case EXPR_LITERAL_DOUBLE:
+    case AST_LITERAL_FLOAT:
+    case AST_LITERAL_DOUBLE:
         *output << literal->get_token().get_value();
         break;
 
-    case EXPR_LITERAL_CHAR:
+    case AST_LITERAL_CHAR:
         build_char_literal((CharLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_STRING:
+    case AST_LITERAL_STRING:
         build_string_literal((StringLiteral*) expr);
         break;
 /*

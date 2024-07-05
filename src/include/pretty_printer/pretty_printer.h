@@ -15,6 +15,10 @@ namespace haard {
 
         void print_module(Ast* module);
 
+        /* Statements */
+        void print_statements(Ast* stmts);
+        void print_expression(Ast* stmt);
+
         /* types */
         void print_list_type(Ast* node);
 
@@ -37,7 +41,6 @@ namespace haard {
         void print_parameters(Ast* parameters);
         void print_parameter(Ast* parameter);
 
-        void print_statement(Statement* stmt);
         void print_while_statement(WhileStatement* stmt);
         void print_for_statement(ForStatement* stmt);
 
@@ -46,8 +49,8 @@ namespace haard {
         void print_else_statement(BranchStatement* stmt);
 
         void print_return_statement(ReturnStatement* stmt);
-        void print_compound_statement(CompoundStatement* stmt);
-        void print_expression_statement(ExpressionStatement* stmt);
+
+
 
         void print_expression(Expression* expr);
 

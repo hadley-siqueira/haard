@@ -55,6 +55,15 @@ void PrettyPrinter::print(Ast* node) {
         print_parameter(node);
         break;
 
+    /* Statements */
+    case AST_STATEMENTS:
+        print_statements(node);
+        break;
+
+    case AST_EXPRESSION:
+        print_expression(node);
+        break;
+
     /* Types */
     case AST_TYPE_I8:
         out << "i8";
@@ -200,8 +209,24 @@ void PrettyPrinter::print(Ast* node) {
         out << node->get_value();
         break;
 
+    case AST_LITERAL_CHAR:
+        out << "'" << node->get_value() << "'";
+        break;
+
     case AST_LITERAL_INTEGER:
         out << node->get_value();
+        break;
+
+    case AST_LITERAL_FLOAT:
+        out << node->get_value();
+        break;
+
+    case AST_LITERAL_DOUBLE:
+        out << node->get_value();
+        break;
+
+    case AST_LITERAL_STRING:
+        out << "\"" << node->get_value() << "\"";
         break;
 
     /* Others */
@@ -404,7 +429,7 @@ void PrettyPrinter::print_function(Ast* function) {
     indent();
 
     print(function->get_child(AST_PARAMETERS));
-    //print_statement(function->get_statements());
+    print(function->get_child(AST_STATEMENTS));
 
     dedent();
 }
@@ -429,53 +454,13 @@ void PrettyPrinter::print_parameter(Ast* parameter) {
     }
 }
 
-void PrettyPrinter::print_statement(Statement* stmt) {
-    switch (stmt->get_kind()) {
-    case STMT_COMPOUND:
-        print_compound_statement((CompoundStatement*) stmt);
-        break;
-
-    case STMT_EXPRESSION:
-        print_expression_statement((ExpressionStatement*) stmt);
-        break;
-
-    case STMT_WHILE:
-        print_while_statement((WhileStatement*) stmt);
-        break;
-
-    case STMT_FOR:
-        print_for_statement((ForStatement*) stmt);
-        break;
-
-    case STMT_IF:
-        print_if_statement((BranchStatement*) stmt);
-        break;
-
-    case STMT_ELIF:
-        print_elif_statement((BranchStatement*) stmt);
-        break;
-
-    case STMT_ELSE:
-        print_else_statement((BranchStatement*) stmt);
-        break;
-
-    case STMT_RETURN:
-        print_return_statement((ReturnStatement*) stmt);
-        break;
-
-    default:
-        assert(false && "invalid statement");
-        break;
-    }
-}
-
 void PrettyPrinter::print_while_statement(WhileStatement* stmt) {
     print_indentation();
     out << "while ";
     print_expression(stmt->get_condition());
     out << ":\n";
     indent();
-    print_compound_statement(stmt->get_statements());
+    //print_statements(stmt->get_statements());
     dedent();
     out << '\n';
 }
@@ -496,7 +481,7 @@ void PrettyPrinter::print_for_statement(ForStatement* stmt) {
 
     out << ":\n";
     indent();
-    print_compound_statement(stmt->get_statements());
+    //print_statements(stmt->get_statements());
     dedent();
     out << '\n';
 }
@@ -508,11 +493,11 @@ void PrettyPrinter::print_if_statement(BranchStatement* stmt) {
     print_expression(stmt->get_condition());
     out << ":\n";
     indent();
-    print_statement(stmt->get_true_statements());
+    //print_statement(stmt->get_true_statements());
     dedent();
 
     if (stmt->get_false_statements()) {
-        print_statement(stmt->get_false_statements());
+       // print_statement(stmt->get_false_statements());
     } else {
         out << '\n';
     }
@@ -525,11 +510,11 @@ void PrettyPrinter::print_elif_statement(BranchStatement* stmt) {
     print_expression(stmt->get_condition());
     out << ":\n";
     indent();
-    print_statement(stmt->get_true_statements());
+   // print_statement(stmt->get_true_statements());
     dedent();
 
     if (stmt->get_false_statements()) {
-        print_statement(stmt->get_false_statements());
+       // print_statement(stmt->get_false_statements());
     } else {
         out << '\n';
     }
@@ -540,7 +525,7 @@ void PrettyPrinter::print_else_statement(BranchStatement* stmt) {
     out << "else:\n ";
 
     indent();
-    print_statement(stmt->get_true_statements());
+   // print_statement(stmt->get_true_statements());
     dedent();
     out << '\n';
 }
@@ -555,20 +540,22 @@ void PrettyPrinter::print_return_statement(ReturnStatement* stmt) {
     }
 }
 
-void PrettyPrinter::print_compound_statement(CompoundStatement* stmt) {
-    if (stmt->statements_count() == 0) {
+/* Statements */
+void PrettyPrinter::print_statements(Ast* stmts) {
+    if (stmts->children_count() == 0) {
+        print_indentation();
         out << "pass";
         return;
     }
 
-    for (int i = 0; i < stmt->statements_count(); ++i) {
-        print_statement(stmt->get_statement(i));
+    for (int i = 0; i < stmts->children_count(); ++i) {
+        print(stmts->get_child(i));
     }
 }
 
-void PrettyPrinter::print_expression_statement(ExpressionStatement* stmt) {
+void PrettyPrinter::print_expression(Ast* stmt) {
     print_indentation();
-    print_expression(stmt->get_expression());
+    print(stmt->get_child(0));
     out << '\n';
 }
 
@@ -698,16 +685,16 @@ void PrettyPrinter::print_expression(Expression* expr) {
         break;
 
     case AST_LITERAL_INTEGER:
-    case EXPR_LITERAL_FLOAT:
-    case EXPR_LITERAL_DOUBLE:
+    case AST_LITERAL_FLOAT:
+    case AST_LITERAL_DOUBLE:
         out << literal->get_token().get_value();
         break;
 
-    case EXPR_LITERAL_CHAR:
+    case AST_LITERAL_CHAR:
         print_char_literal((CharLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_STRING:
+    case AST_LITERAL_STRING:
         print_string_literal((StringLiteral*) expr);
         break;
 

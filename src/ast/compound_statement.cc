@@ -4,7 +4,7 @@
 using namespace haard;
 
 CompoundStatement::CompoundStatement() {
-    set_kind(STMT_COMPOUND);
+    set_kind(AST_STATEMENTS);
     set_scope(new Scope());
 }
 

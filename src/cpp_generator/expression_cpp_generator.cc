@@ -132,19 +132,19 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_integer_literal((IntegerLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_FLOAT:
+    case AST_LITERAL_FLOAT:
         build_float_literal((FloatLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_DOUBLE:
+    case AST_LITERAL_DOUBLE:
         build_double_literal((DoubleLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_CHAR:
+    case AST_LITERAL_CHAR:
         build_char_literal((CharLiteral*) expr);
         break;
 
-    case EXPR_LITERAL_STRING:
+    case AST_LITERAL_STRING:
         build_string_literal((StringLiteral*) expr);
         break;
 

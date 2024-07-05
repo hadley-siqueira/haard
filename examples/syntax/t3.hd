@@ -4,13 +4,13 @@ import std.foo.bar
 import std as std
 
 def main : int
-    return 0
+    0
 
 def sum : float
     @a : int
     @b : int
 
-    return 0
+    0
 
 def primitive_types<T, K> : void
     @b : u8
@@ -42,3 +42,15 @@ def other_types<std::Key, Value<int, str>> : void
     @e : [int]
     @f : (int, int, str)
     @g : (int, int, str) -> int*
+
+    0
+    1
+    2
+    2.2
+    2.2f
+    'a'
+    'aa'
+    "aa"
+    a
+    io::print
+    std::array<int>
