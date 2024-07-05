@@ -174,6 +174,10 @@ set(AST_SRC
     src/ast/this.cc
 )
 
+set(DESCRIPTORS_SRC
+    src/haard/descriptors/module.cc
+)
+
 set(IR_SRC
     src/ir/ir.cc
     src/ir/ir_value.cc

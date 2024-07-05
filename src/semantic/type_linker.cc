@@ -6,11 +6,11 @@ using namespace haard;
 
 void TypeLinker::build(Type* type) {
     switch (type->get_kind()) {
-    case TYPE_POINTER:
+    case AST_TYPE_POINTER:
         build_pointer_type((PointerType*) type);
         break;
 
-    case TYPE_NAMED:
+    case AST_TYPE_NAMED:
         build_named_type((NamedType*) type);
         break;
     }

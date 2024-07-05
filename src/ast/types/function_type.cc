@@ -3,7 +3,7 @@
 using namespace haard;
 
 FunctionType::FunctionType(TypeList* params_type, Type* return_type) {
-    set_kind(TYPE_FUNCTION);
+    set_kind(AST_TYPE_FUNCTION);
     set_param_types(params_type);
     set_return_type(return_type);
 }

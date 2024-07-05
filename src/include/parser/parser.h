@@ -24,6 +24,8 @@ namespace haard {
         Ast* parse_import_path();
         Ast* parse_import_path_member();
 
+        Ast* parse_definitions();
+
         Class* parse_class();
         Struct* parse_struct();
         Union* parse_union();
@@ -32,7 +34,7 @@ namespace haard {
         Variable* parse_variable();
         Variable* parse_enum_variable();
 
-        Function* parse_function();
+        Ast* parse_function();
         void parse_parameters(Function* function);
 
         Statement* parse_statement();
@@ -49,10 +51,10 @@ namespace haard {
         Statement* parse_return_statement();
         CompoundStatement* parse_compound_statement();
 
-        Type* parse_type();
+        Ast* parse_type();
         Type* parse_function_type();
-        Type* parse_tuple_or_function_type();
-        Type* parse_primary_type();
+        Ast* parse_tuple_or_function_type();
+        Ast* parse_primary_type();
 
         Expression* parse_expression();
         Expression* parse_assignment_expression();
@@ -90,8 +92,8 @@ namespace haard {
 
         Identifier* parse_identifier();
 
-        TypeList* parse_generics();
-        TypeList* parse_type_list(int kind);
+        Ast* parse_generics();
+        Ast* parse_type_list(AstKind kind);
 
     private:
         void advance();

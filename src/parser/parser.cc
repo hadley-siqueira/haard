@@ -24,56 +24,26 @@ Ast* Parser::read(std::string path, std::string relative_path) {
 
 Ast* Parser::parse_module() {
     Ast* module = new Ast(AST_MODULE);
-    Ast* imports;
-
-    imports = parse_imports();
-
-    if (imports != nullptr) {
-        module->add_child(imports);
-    }
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
             module->add_child(parse_import());
+        } else if (lookahead(TK_DEF)) {
+            module->add_child(parse_function());
+        } else if (lookahead(TK_CLASS)) {
+        //    module->add_class(parse_class());
+        } else if (lookahead(TK_STRUCT)) {
+          //  module->add_struct(parse_struct());
+        } else if (lookahead(TK_UNION)) {
+            //module->add_union(parse_union());
+        } else if (lookahead(TK_ENUM)) {
+            //module->add_enum(parse_enum());
         } else {
             break;
         }
-        /*if (lookahead(TK_IMPORT)) {
-            module->add_import(parse_import());
-        } else if (lookahead(TK_DEF)) {
-            module->add_function(parse_function());
-        } else if (lookahead(TK_CLASS)) {
-            module->add_class(parse_class());
-        } else if (lookahead(TK_STRUCT)) {
-            module->add_struct(parse_struct());
-        } else if (lookahead(TK_UNION)) {
-            module->add_union(parse_union());
-        } else if (lookahead(TK_ENUM)) {
-            module->add_enum(parse_enum());
-        } else {
-            break;
-        }*/
     }
 
     return module;
-}
-
-Ast* Parser::parse_imports() {
-    if (!lookahead(TK_IMPORT)) {
-        return nullptr;
-    }
-
-    Ast* imports = new Ast(AST_IMPORTS);
-
-    while (true) {
-        if (lookahead(TK_IMPORT)) {
-            imports->add_child(parse_import());
-        } else {
-            break;
-        }
-    }
-
-    return imports;
 }
 
 Ast* Parser::parse_import() {
@@ -129,7 +99,7 @@ Ast* Parser::parse_import_path_member() {
     return node;
 }
 
-Class* Parser::parse_class() {
+Class* Parser::parse_class() {/*
     Class* klass = new Class();
 
     expect(TK_CLASS);
@@ -158,10 +128,10 @@ Class* Parser::parse_class() {
     }
 
     dedent();
-    return klass;
+    return klass;*/
 }
 
-Struct* Parser::parse_struct() {
+Struct* Parser::parse_struct() {/*
     Struct* st = new Struct();
 
     expect(TK_STRUCT);
@@ -190,10 +160,10 @@ Struct* Parser::parse_struct() {
     }
 
     dedent();
-    return st;
+    return st;*/
 }
 
-Union* Parser::parse_union() {
+Union* Parser::parse_union() {/*
     Union* st = new Union();
 
     expect(TK_UNION);
@@ -222,10 +192,10 @@ Union* Parser::parse_union() {
     }
 
     dedent();
-    return st;
+    return st;*/
 }
 
-Enum* Parser::parse_enum() {
+Enum* Parser::parse_enum() {/*
     Enum* st = new Enum();
 
     expect(TK_ENUM);
@@ -254,10 +224,10 @@ Enum* Parser::parse_enum() {
     }
 
     dedent();
-    return st;
+    return st;*/
 }
 
-Variable* Parser::parse_variable() {
+Variable* Parser::parse_variable() {/*
     Variable* var = new Variable();
 
     expect(TK_ID);
@@ -276,10 +246,10 @@ Variable* Parser::parse_variable() {
         }
     }
 
-    return var;
+    return var;*/
 }
 
-Variable* Parser::parse_enum_variable() {
+Variable* Parser::parse_enum_variable() {/*
     Variable* var = new Variable();
 
     expect(TK_ID);
@@ -299,33 +269,35 @@ Variable* Parser::parse_enum_variable() {
         }
     }
 
-    return var;
+    return var;*/
 }
 
-Function* Parser::parse_function() {
-    Function* function = new Function();
+Ast* Parser::parse_function() {
+    Ast* function = new Ast(AST_FUNCTION);
 
     expect(TK_DEF);
     expect(TK_ID);
-    function->set_name(matched);
-    function->set_generics(parse_generics());
+    function->set_from_token(matched);
+
+    function->add_child(parse_generics());
 
     expect(TK_COLON);
     indent();
 
-    Type* return_type = parse_type();
+    Ast* return_type = parse_type();
 
     if (return_type) {
-        function->set_return_type(return_type);
+        //function->set_return_type(return_type);
     } else {
         assert(false && "Expected return type");
     }
 
     if (has_parameters()) {
-        parse_parameters(function);
+        //parse_parameters(function);
     }
 
-    function->set_statements(parse_compound_statement());
+    //function->set_statements(parse_compound_statement());
+    parse_compound_statement();
     dedent();
 
     return function;
@@ -342,7 +314,7 @@ void Parser::parse_parameters(Function* function) {
         param->set_name(matched);
 
         expect(TK_COLON);
-        Type* type = parse_type();
+        Type* type;// = parse_type();
 
         if (type != nullptr) {
             param->set_type(type);
@@ -638,20 +610,20 @@ CompoundStatement* Parser::parse_compound_statement() {
     return statements;
 }
 
-Type* Parser::parse_type() {
+Ast* Parser::parse_type() {
     return parse_tuple_or_function_type();
 }
 
-Type* Parser::parse_tuple_or_function_type() {
-    Type* type;
-    TypeList* types;
+Ast* Parser::parse_tuple_or_function_type() {
+    Ast* type;
+    Ast* types;
 
     if (!lookahead(TK_LEFT_PARENTHESIS)) {
         return parse_primary_type();
     }
 
     expect(TK_LEFT_PARENTHESIS);
-    types = parse_type_list(TYPE_TUPLE);
+    types = parse_type_list(AST_TYPE_TUPLE);
     expect(TK_RIGHT_PARENTHESIS);
 
     if (match(TK_ARROW)) {
@@ -659,98 +631,120 @@ Type* Parser::parse_tuple_or_function_type() {
             assert(false && "return type should be on same line");
         }
 
-        type = parse_type();
+        Ast* return_type = parse_type();
 
-        if (type == nullptr) {
+        if (return_type == nullptr) {
             assert(false && "expected return type");
         }
 
-        type = new FunctionType(types, type);
+        type = new Ast(AST_TYPE_FUNCTION);
+        type->add_child(types);
+        type->add_child(return_type);
     } else {
-        type = new TupleType(types);
+        type = types;
     }
 
     return type;
 }
 
-Type* Parser::parse_primary_type() {
-    Type* type = nullptr;
+Ast* Parser::parse_primary_type() {
+    Ast* type = nullptr;
+    Ast* subtype = nullptr;
 
     if (match(TK_INT)) {
-       type = new Type(TYPE_INT, matched);
+       type = new Ast(AST_TYPE_INT, matched);
     } else if (match(TK_UINT)) {
-       type = new Type(TYPE_UINT, matched);
+       type = new Ast(AST_TYPE_UINT, matched);
     } else if (match(TK_FLOAT)) {
-       type = new Type(TYPE_FLOAT, matched);
+       type = new Ast(AST_TYPE_FLOAT, matched);
     } else if (match(TK_DOUBLE)) {
-       type = new Type(TYPE_DOUBLE, matched);
+       type = new Ast(AST_TYPE_DOUBLE, matched);
     } else if (match(TK_SHORT)) {
-       type = new Type(TYPE_SHORT, matched);
+       type = new Ast(AST_TYPE_SHORT, matched);
     } else if (match(TK_USHORT)) {
-       type = new Type(TYPE_USHORT, matched);
+       type = new Ast(AST_TYPE_USHORT, matched);
     } else if (match(TK_LONG)) {
-       type = new Type(TYPE_LONG, matched);
+       type = new Ast(AST_TYPE_LONG, matched);
     } else if (match(TK_ULONG)) {
-       type = new Type(TYPE_ULONG, matched);
+       type = new Ast(AST_TYPE_ULONG, matched);
     } else if (match(TK_CHAR)) {
-       type = new Type(TYPE_CHAR, matched);
+       type = new Ast(AST_TYPE_CHAR, matched);
     } else if (match(TK_UCHAR)) {
-       type = new Type(TYPE_UCHAR, matched);
+       type = new Ast(AST_TYPE_UCHAR, matched);
     } else if (match(TK_SYMBOL)) {
-       type = new Type(TYPE_SYMBOL, matched);
+       type = new Ast(AST_TYPE_SYMBOL, matched);
     } else if (match(TK_VOID)) {
-       type = new Type(TYPE_VOID, matched);
+       type = new Ast(AST_TYPE_VOID, matched);
     } else if (match(TK_BOOL)) {
-       type = new Type(TYPE_BOOL, matched);
+       type = new Ast(AST_TYPE_BOOL, matched);
     } else if (match(TK_STR)) {
-       type = new Type(TYPE_STR, matched);
+       type = new Ast(AST_TYPE_STR, matched);
     } else if (match(TK_I8)) {
-       type = new Type(TYPE_I8, matched);
+       type = new Ast(AST_TYPE_I8, matched);
     } else if (match(TK_I16)) {
-       type = new Type(TYPE_I16, matched);
+       type = new Ast(AST_TYPE_I16, matched);
     } else if (match(TK_I32)) {
-       type = new Type(TYPE_I32, matched);
+       type = new Ast(AST_TYPE_I32, matched);
     } else if (match(TK_I64)) {
-       type = new Type(TYPE_I64, matched);
+       type = new Ast(AST_TYPE_I64, matched);
     } else if (match(TK_U8)) {
-       type = new Type(TYPE_U8, matched);
+       type = new Ast(AST_TYPE_U8, matched);
     } else if (match(TK_U16)) {
-       type = new Type(TYPE_U16, matched);
+       type = new Ast(AST_TYPE_U16, matched);
     } else if (match(TK_U32)) {
-       type = new Type(TYPE_U32, matched);
+       type = new Ast(AST_TYPE_U32, matched);
     } else if (match(TK_U64)) {
-       type = new Type(TYPE_U64, matched);
+       type = new Ast(AST_TYPE_U64, matched);
     } else if (match(TK_F32)) {
-       type = new Type(TYPE_F32, matched);
+       type = new Ast(AST_TYPE_F32, matched);
     } else if (match(TK_F64)) {
-       type = new Type(TYPE_F64, matched);
+       type = new Ast(AST_TYPE_F64, matched);
     } else if (match(TK_LEFT_SQUARE_BRACKET)) {
-        type = parse_type();
+        subtype = parse_type();
 
-        if (type == nullptr) {
+        if (subtype == nullptr) {
             assert(false && "no type");
         } else {
-            type = new ListType(type);
+            type = new Ast(AST_TYPE_LIST);
+            type->add_child(subtype);
         }
 
         expect(TK_RIGHT_SQUARE_BRACKET);
     } else if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
-        type = new NamedType(parse_identifier());
+        std::cout << "implement me " << __LINE__ << '\n'; exit(0);
+        //type = new NamedType(parse_identifier());
     }
 
     while (type != nullptr) {
         if (match_same_line(TK_TIMES)) {
-            type = new PointerType(type);
+            subtype = type;
+            type = new Ast(AST_TYPE_POINTER, matched);
+            type->add_child(subtype);
         } else if (match_same_line(TK_POWER)) {
-            type = new PointerType(type);
-            type = new PointerType(type);
+            subtype = type;
+            type = new Ast(AST_TYPE_POINTER, matched);
+            type->add_child(subtype);
+
+            subtype = type;
+            type = new Ast(AST_TYPE_POINTER, matched);
+            type->add_child(subtype);
         } else if (match_same_line(TK_BITWISE_AND)) {
-            type = new ReferenceType(type);
+            subtype = type;
+            type = new Ast(AST_TYPE_REFERENCE, matched);
+            type->add_child(subtype);
         } else if (match_same_line(TK_LOGICAL_AND)) {
-            type = new ReferenceType(type);
-            type = new ReferenceType(type);
+            subtype = type;
+            type = new Ast(AST_TYPE_REFERENCE, matched);
+            type->add_child(subtype);
+
+            subtype = type;
+            type = new Ast(AST_TYPE_REFERENCE, matched);
+            type->add_child(subtype);
         } else if (match_same_line(TK_LEFT_SQUARE_BRACKET)) {
-            type = new ArrayType(type, parse_expression());
+            subtype = type;
+            type = new Ast(AST_TYPE_ARRAY, matched);
+            type->add_child(subtype);
+            //type->add_child(parse_expression());
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else {
             break;
@@ -821,7 +815,7 @@ Expression* Parser::parse_assignment_expression() {
 
 Expression* Parser::parse_cast_expression() {
     Token oper;
-    Type* type = nullptr;
+    Ast* type = nullptr;
     Expression* expr = parse_logical_or_expression();
 
     if (match(TK_AS)) {
@@ -835,7 +829,7 @@ Expression* Parser::parse_cast_expression() {
             assert(false && "missing type on cast expression");
         }
 
-        expr = new Cast(oper, expr, type);
+        expr = nullptr;//new Cast(oper, expr, type);
     }
 
     return expr;
@@ -1378,7 +1372,7 @@ ExpressionList* Parser::parse_argument_list() {
 }
 
 Expression* Parser::parse_new_expression() {
-    Type* type;
+    Ast* type;
     New* expr = new New();
 
     expect(TK_NEW);
@@ -1390,7 +1384,7 @@ Expression* Parser::parse_new_expression() {
         assert(false && "missing type on new");
     }
 
-    expr->set_type(type);
+    //expr->set_type(type);
 
     if (match(TK_LEFT_PARENTHESIS)) {
         expr->set_arguments(parse_argument_list());
@@ -1428,14 +1422,14 @@ Identifier* Parser::parse_identifier() {
         assert(false && "invalid id");
     }
 
-    generics = parse_generics();
+   // generics = parse_generics();
     id = new Identifier(alias, name, alias_flag, global_flag, generics);
 
     return id;
 }
 
-TypeList* Parser::parse_generics() {
-    TypeList* generics = nullptr;
+Ast* Parser::parse_generics() {
+    Ast* generics = nullptr;
 
     if (match(TK_BEGIN_TEMPLATE)) {
         generics = parse_type_list(AST_GENERICS);
@@ -1445,15 +1439,15 @@ TypeList* Parser::parse_generics() {
     return generics;
 }
 
-TypeList* Parser::parse_type_list(int kind) {
-    TypeList* type_list = new TypeList(kind);
-    Type* type = parse_type();
+Ast* Parser::parse_type_list(AstKind kind) {
+    Ast* type_list = new Ast(kind);
+    Ast* type = parse_type();
 
     if (type == nullptr) {
         assert(false && "type can't be null on function generics");
     }
 
-    type_list->add_type(type);
+    type_list->add_child(type);
 
     while (match(TK_COMMA)) {
         type = parse_type();
@@ -1462,7 +1456,7 @@ TypeList* Parser::parse_type_list(int kind) {
             assert(false && "type can't be null on function generics");
         }
 
-        type_list->add_type(type);
+        type_list->add_child(type);
     }
 
     return type_list;

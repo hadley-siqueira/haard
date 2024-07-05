@@ -53,10 +53,7 @@ void test_driver(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-    if (argc > 2)
-    test_pretty_printer(argc, argv);
-
-    //test_driver(argc, argv);
+    test_driver(argc, argv);
 
     return 0;
 }

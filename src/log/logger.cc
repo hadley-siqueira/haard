@@ -37,6 +37,10 @@ void Logger::error(std::string message) {
     Logger::logs.push_back(log);
 }
 
+void Logger::clear() {
+    logs.clear();
+}
+
 std::string Logger::to_str() {
     std::stringstream ss;
 

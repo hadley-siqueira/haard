@@ -3,7 +3,7 @@
 using namespace haard;
 
 TupleType::TupleType(TypeList* types) {
-    set_kind(TYPE_TUPLE);
+    set_kind(AST_TYPE_TUPLE);
     set_types(types);
 }
 

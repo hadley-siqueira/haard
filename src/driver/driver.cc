@@ -9,6 +9,8 @@
 
 #include "cpp_generator/cpp_generator.h"
 
+#include "pretty_printer/pretty_printer.h"
+
 #include "log/logs.h"
 
 using namespace haard;
@@ -30,12 +32,15 @@ void Driver::run(int argc, char** argv) {
 
         } else if (strcmp(argv[i], "--cpp") == 0) {
             commands.push_back(DRIVER_CMD_CPP);
+        } else if (strcmp(argv[i], "--pretty") == 0) {
+            commands.push_back(DRIVER_CMD_PRETTY_PRINT);
         }
     }
 
     configure();
-    parse_module_imports(parse_file(main_path));
-    semantic_analysis();
+    parse_file(main_path);
+    //parse_module_imports(parse_file(main_path));
+    //semantic_analysis();
 
     exec_commands();
 }
@@ -45,6 +50,10 @@ void Driver::exec_commands() {
         switch (commands[i]) {
         case DRIVER_CMD_CPP:
             generate_cpp();
+            break;
+
+        case DRIVER_CMD_PRETTY_PRINT:
+            pretty_print();
             break;
         }
     }
@@ -56,7 +65,7 @@ void Driver::configure() {
 }
 
 void Driver::exit() {
-    std::cout << get_logs() << std::endl;
+    show_logs();
     ::exit(0);
 }
 
@@ -86,7 +95,8 @@ Module* Driver::parse_file(std::string path) {
         Parser parser;
 
         log_info("parsing file " + path);
-        modules.add_module(path, (Module*) parser.read(path, build_relative_path(path)));
+        //modules.add_module(path, parser.read(path, build_relative_path(path)));
+        ast = parser.read(path, build_relative_path(path));
     }
 
     return modules.get_module(path);
@@ -196,6 +206,16 @@ void Driver::set_root_path_from_main_file() {
             root_path += main_path[i];
         }
     }
+}
+
+void Driver::pretty_print() {
+    PrettyPrinter printer;
+
+    show_logs();
+    std::cout << "printing...\n";
+    printer.print(ast);
+    delete ast;
+    std::cout << printer.get_output() << '\n';
 }
 
 void Driver::generate_cpp() {

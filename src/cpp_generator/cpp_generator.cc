@@ -497,7 +497,7 @@ void CppGenerator::build_type(Type* type) {
         *output << "u16";
         break;
 
-    case TYPE_INT:
+    case AST_TYPE_INT:
         *output << "i32";
         break;
 

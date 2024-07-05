@@ -25,10 +25,6 @@ void PrettyPrinter::print(Ast* node) {
         print_module(node);
         break;
 
-    case AST_IMPORTS:
-        print_imports(node);
-        break;
-
     case AST_IMPORT:
         print_import(node);
         break;
@@ -45,6 +41,133 @@ void PrettyPrinter::print(Ast* node) {
         print_import_path_member(node);
         break;
 
+    /* Types */
+    case AST_TYPE_I8:
+        out << "i8";
+        break;
+
+    case AST_TYPE_U8:
+        out << "u8";
+        break;
+
+    case AST_TYPE_I16:
+        out << "i16";
+        break;
+
+    case AST_TYPE_U16:
+        out << "u16";
+        break;
+
+    case AST_TYPE_I32:
+        out << "i32";
+        break;
+
+    case AST_TYPE_U32:
+        out << "u32";
+        break;
+
+    case AST_TYPE_I64:
+        out << "i64";
+        break;
+
+    case AST_TYPE_U64:
+        out << "u64";
+        break;
+
+    case AST_TYPE_F32:
+        out << "f32";
+        break;
+
+    case AST_TYPE_F64:
+        out << "f64";
+        break;
+
+    case AST_TYPE_CHAR:
+        out << "char";
+        break;
+
+    case AST_TYPE_UCHAR:
+        out << "uchar";
+        break;
+
+    case AST_TYPE_SHORT:
+        out << "short";
+        break;
+
+    case AST_TYPE_USHORT:
+        out << "ushort";
+        break;
+
+    case AST_TYPE_INT:
+        out << "int";
+        break;
+
+    case AST_TYPE_UINT:
+        out << "uint";
+        break;
+
+    case AST_TYPE_LONG:
+        out << "long";
+        break;
+
+    case AST_TYPE_ULONG:
+        out << "ulong";
+        break;
+
+    case AST_TYPE_FLOAT:
+        out << "float";
+        break;
+
+    case AST_TYPE_DOUBLE:
+        out << "double";
+        break;
+
+    case AST_TYPE_VOID:
+        out << "void";
+        break;
+
+    case AST_TYPE_STR:
+        out << "str";
+        break;
+
+    case AST_TYPE_SYMBOL:
+        out << "sym";
+        break;
+
+    case AST_TYPE_BOOL:
+        out << "bool";
+        break;
+
+    case AST_TYPE_POINTER:
+        print(node->get_child(0));
+        out << '*';
+        break;
+
+    case AST_TYPE_REFERENCE:
+        print(node->get_child(0));
+        out << '&';
+        break;
+
+    case AST_TYPE_LIST:
+        print_list_type(node);
+        break;
+
+    case AST_TYPE_ARRAY:
+        print_array_type(node);
+        break;
+
+    case AST_TYPE_TUPLE:
+        print_tuple_type(node);
+        break;
+
+    case AST_TYPE_FUNCTION:
+        print_function_type(node);
+        break;
+
+    case AST_TYPE_NAMED:
+        print_named_type(node);
+        break;
+
     default:
         std::cout << "unhandled case: " << node->get_type() << "\n";
         break;
@@ -54,7 +177,14 @@ void PrettyPrinter::print(Ast* node) {
 void PrettyPrinter::print_module(Ast* module) {
     for (size_t i = 0; i < module->children_count(); ++i) {
         print(module->get_child(i));
+        out << "\n";
     }
+}
+
+void PrettyPrinter::print_list_type(Ast* node) {
+    out << '[';
+    print(node->get_child(0));
+    out << ']';
 }
 
 void PrettyPrinter::print_declaration(Declaration* decl) {
@@ -134,7 +264,7 @@ void PrettyPrinter::print_class(Class* klass) {
 
     if (klass->get_super_type()) {
         out << "(";
-        print_type(klass->get_super_type());
+        //print_type(get_super_type());
         out << ")";
     }
 
@@ -146,7 +276,7 @@ void PrettyPrinter::print_class(Class* klass) {
 
         print_indentation();
         out << var->get_name().get_value() << " : ";
-        print_type(var->get_type());
+        //print_type(var->get_type());
         out << '\n';
     }
 
@@ -169,7 +299,7 @@ void PrettyPrinter::print_struct(Struct* st) {
 
     if (st->get_super_type()) {
         out << "(";
-        print_type(st->get_super_type());
+        //print_type(st->get_super_type());
         out << ")";
     }
 
@@ -181,7 +311,7 @@ void PrettyPrinter::print_struct(Struct* st) {
 
         print_indentation();
         out << var->get_name().get_value() << " : ";
-        print_type(var->get_type());
+        //print_type(var->get_type());
         out << '\n';
     }
 
@@ -204,7 +334,7 @@ void PrettyPrinter::print_union(Union* u) {
 
     if (u->get_super_type()) {
         out << "(";
-        print_type(u->get_super_type());
+        //print_type(u->get_super_type());
         out << ")";
     }
 
@@ -216,7 +346,7 @@ void PrettyPrinter::print_union(Union* u) {
 
         print_indentation();
         out << var->get_name().get_value() << " : ";
-        print_type(var->get_type());
+        //print_type(var->get_type());
         out << '\n';
     }
 
@@ -236,7 +366,7 @@ void PrettyPrinter::print_function(Function* function) {
     print_generics(function->get_generics());
 
     out << " : ";
-    print_type(function->get_return_type());
+    //print_type(function->get_return_type());
     out << '\n';
     indent();
 
@@ -253,7 +383,7 @@ void PrettyPrinter::print_function_parameters(Function* function) {
         param = function->get_parameter(i);
         print_indentation();
         out << "@" << param->get_name().get_value() << " : ";
-        print_type(param->get_type());
+        //print_type(param->get_type());
         out << "\n";
     }
 }
@@ -565,7 +695,7 @@ void PrettyPrinter::print_expression(Expression* expr) {
 void PrettyPrinter::print_cast_expression(Cast* expr) {
     print_expression(expr->get_expression());
     out << " as ";
-    print_type(expr->get_type());
+    //print_type(expr->get_type());
 }
 
 void PrettyPrinter::print_not_in_expression(NotIn* expr) {
@@ -605,7 +735,7 @@ void PrettyPrinter::print_sizeof_expression(UnaryOperator* un) {
 
 void PrettyPrinter::print_new_expression(New* expr) {
     out << "new ";
-    print_type(expr->get_type());
+    //print_type(expr->get_type());
     print_expression_list(expr->get_arguments(), "(", ")");
 }
 
@@ -667,128 +797,18 @@ void PrettyPrinter::print_unary_operator(UnaryOperator* un, bool last) {
     out << ")";
 }
 
-void PrettyPrinter::print_type(Type* type) {
+void PrettyPrinter::print_type(Ast* type) {
     if (type == nullptr) return;
 
     int kind = type->get_kind();
 
     switch (kind) {
-    case TYPE_I8:
-        out << "i8";
-        break;
 
-    case TYPE_U8:
-        out << "u8";
-        break;
 
-    case TYPE_I16:
-        out << "i16";
-        break;
-
-    case TYPE_U16:
-        out << "u16";
-        break;
-
-    case TYPE_I32:
-        out << "i32";
-        break;
-
-    case TYPE_U32:
-        out << "u32";
-        break;
-
-    case TYPE_I64:
-        out << "i64";
-        break;
-
-    case TYPE_U64:
-        out << "u64";
-        break;
-
-    case TYPE_F32:
-        out << "f32";
-        break;
-
-    case TYPE_F64:
-        out << "f64";
-        break;
-
-    case TYPE_CHAR:
-        out << "char";
-        break;
-
-    case TYPE_UCHAR:
-        out << "uchar";
-        break;
-
-    case TYPE_SHORT:
-        out << "short";
-        break;
-
-    case TYPE_USHORT:
-        out << "ushort";
-        break;
-
-    case TYPE_INT:
-        out << "int";
-        break;
-
-    case TYPE_UINT:
-        out << "uint";
-        break;
-
-    case TYPE_LONG:
-        out << "long";
-        break;
-
-    case TYPE_ULONG:
-        out << "ulong";
-        break;
-
-    case TYPE_FLOAT:
-        out << "float";
-        break;
-
-    case TYPE_DOUBLE:
-        out << "double";
-        break;
-
-    case TYPE_VOID:
-        out << "void";
-        break;
-
-    case TYPE_STR:
-        out << "str";
-        break;
-
-    case TYPE_SYMBOL:
-        out << "sym";
-        break;
-
-    case TYPE_BOOL:
-        out << "bool";
-        break;
-
-    case TYPE_POINTER:
-    case TYPE_REFERENCE:
-    case TYPE_LIST:
+    case AST_TYPE_POINTER:
+    case AST_TYPE_REFERENCE:
+    case AST_TYPE_LIST:
         print_subtyped_type((SubtypedType*) type);
-        break;
-
-    case TYPE_ARRAY:
-        print_array_type((ArrayType*) type);
-        break;
-
-    case TYPE_TUPLE:
-        print_tuple_type((TupleType*) type);
-        break;
-
-    case TYPE_FUNCTION:
-        print_function_type((FunctionType*) type);
-        break;
-
-    case TYPE_NAMED:
-        print_named_type((NamedType*) type);
         break;
     }
 }
@@ -797,17 +817,14 @@ void PrettyPrinter::print_subtyped_type(SubtypedType* type) {
     int kind = type->get_kind();
 
     switch (kind) {
-    case TYPE_POINTER:
-        print_type(type->get_subtype());
-        out << '*';
-        break;
 
-    case TYPE_REFERENCE:
+
+    case AST_TYPE_REFERENCE:
         print_type(type->get_subtype());
         out << '&';
         break;
 
-    case TYPE_LIST:
+    case AST_TYPE_LIST:
         out << '[';
         print_type(type->get_subtype());
         out << ']';
@@ -815,32 +832,28 @@ void PrettyPrinter::print_subtyped_type(SubtypedType* type) {
     }
 }
 
-void PrettyPrinter::print_tuple_type(TupleType* tuple) {
-    print_type_list(tuple->get_types(), "(", ")");
+void PrettyPrinter::print_tuple_type(Ast* tuple) {
+    print_type_list(tuple, "(", ")");
 }
 
-void PrettyPrinter::print_function_type(FunctionType* type) {
-    print_type_list(type->get_param_types(), "(", ")");
+void PrettyPrinter::print_function_type(Ast* type) {
+    print_type_list(type->get_child(0), "(", ")");
     out << " -> ";
-    print_type(type->get_return_type());
+    print(type->get_child(1));
 }
 
-void PrettyPrinter::print_named_type(NamedType* type) {
-    print_identifier(type->get_identifier());
+void PrettyPrinter::print_named_type(Ast* type) {
+    //print_identifier(type->get_identifier());
 }
 
-void PrettyPrinter::print_array_type(ArrayType* type) {
-    print_type(type->get_subtype());
+void PrettyPrinter::print_array_type(Ast* type) {
+    print(type->get_child(0));
     out << "[";
-
-    if (type->get_expression()) {
-        print_expression(type->get_expression());
-    }
-
+    print(type->get_child(1));
     out << "]";
 }
 
-void PrettyPrinter::print_type_list(TypeList* tlist, const char* begin, const char* end) {
+void PrettyPrinter::print_type_list(Ast* tlist, const char* begin, const char* end) {
     if (tlist == nullptr) {
         return;
     }
@@ -849,12 +862,12 @@ void PrettyPrinter::print_type_list(TypeList* tlist, const char* begin, const ch
 
     out << begin;
 
-    for (i = 0; i < tlist->types_count() - 1; ++i) {
-        print_type(tlist->get_type(i));
+    for (i = 0; i < tlist->children_count() - 1; ++i) {
+        print(tlist->get_child(i));
         out << ", ";
     }
 
-    print_type(tlist->get_type(i));
+    print(tlist->get_child(i));
     out << end;
 }
 

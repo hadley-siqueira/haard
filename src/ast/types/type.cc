@@ -26,58 +26,58 @@ Type::Type(int kind, const Token& token) {
 
 std::string Type::to_cpp() {
     switch (get_kind()) {
-    case TYPE_U8:
+    case AST_TYPE_U8:
         return "u8";
 
-    case TYPE_U16:
+    case AST_TYPE_U16:
         return "u16";
 
-    case TYPE_U32:
+    case AST_TYPE_U32:
         return "u32";
 
-    case TYPE_U64:
+    case AST_TYPE_U64:
         return "u64";
 
-    case TYPE_I8:
+    case AST_TYPE_I8:
         return "i8";
 
-    case TYPE_I16:
+    case AST_TYPE_I16:
         return "i16";
 
-    case TYPE_I32:
+    case AST_TYPE_I32:
         return "i32";
 
-    case TYPE_I64:
+    case AST_TYPE_I64:
         return "i64";
 
-    case TYPE_BOOL:
+    case AST_TYPE_BOOL:
         return "bool";
 
-    case TYPE_CHAR:
+    case AST_TYPE_CHAR:
         return "char";
 
-    case TYPE_UCHAR:
+    case AST_TYPE_UCHAR:
         return "unsigned char";
 
-    case TYPE_SHORT:
+    case AST_TYPE_SHORT:
         return "i16";
 
-    case TYPE_USHORT:
+    case AST_TYPE_USHORT:
         return "u16";
 
-    case TYPE_INT:
+    case AST_TYPE_INT:
         return "i32";
 
-    case TYPE_UINT:
+    case AST_TYPE_UINT:
         return "u32";
 
-    case TYPE_LONG:
+    case AST_TYPE_LONG:
         return "i64";
 
-    case TYPE_ULONG:
+    case AST_TYPE_ULONG:
         return "u64";
 
-    case TYPE_VOID:
+    case AST_TYPE_VOID:
         return "void";
     }
 

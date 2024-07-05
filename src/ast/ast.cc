@@ -14,6 +14,11 @@ Ast::Ast(AstKind type) {
     set_value(nullptr);
 }
 
+Ast::Ast(AstKind type, Token& token) {
+    set_type(type);
+    set_from_token(token);
+}
+
 Ast::~Ast() {
     for (auto child : children) {
         delete child;
@@ -53,7 +58,9 @@ void Ast::set_value(const char* value) {
 }
 
 void Ast::add_child(Ast* child) {
-    children.push_back(child);
+    if (child != nullptr) {
+        children.push_back(child);
+    }
 }
 
 Ast* Ast::get_child(size_t index) {

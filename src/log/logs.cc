@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "log/logs.h"
 #include "log/logger.h"
 
@@ -14,5 +16,10 @@ namespace haard {
 
     std::string get_logs() {
         return logger.to_str();
+    }
+
+    void show_logs() {
+        std::cout << get_logs() << std::endl;
+        logger.clear();
     }
 }

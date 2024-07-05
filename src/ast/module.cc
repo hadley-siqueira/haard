@@ -176,4 +176,3 @@ const std::string& Module::get_relative_path() const {
 void Module::set_relative_path(const std::string& newRelative_path) {
     relative_path = newRelative_path;
 }
-

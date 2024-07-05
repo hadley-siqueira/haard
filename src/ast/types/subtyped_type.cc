@@ -3,7 +3,7 @@
 using namespace haard;
 
 SubtypedType::SubtypedType() {
-    set_kind(TYPE_UNKNOWN);
+    set_kind(AST_TYPE_UNKNOWN);
 }
 
 SubtypedType::SubtypedType(int kind, Type* type) {

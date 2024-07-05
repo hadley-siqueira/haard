@@ -135,6 +135,7 @@ namespace haard {
     public:
         Ast();
         Ast(AstKind type);
+        Ast(AstKind type, Token& token);
         ~Ast();
 
     public:

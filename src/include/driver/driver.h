@@ -6,9 +6,11 @@
 
 #include "log/logger.h"
 #include "ast/modules.h"
+#include "ast/ast.h"
 
 namespace haard {
     enum DriverCommands {
+        DRIVER_CMD_PRETTY_PRINT,
         DRIVER_CMD_CPP
     };
 
@@ -36,6 +38,8 @@ namespace haard {
         void configure_search_path();
         void set_root_path_from_main_file();
 
+    public:
+        void pretty_print();
         void generate_cpp();
 
     private:
@@ -43,6 +47,7 @@ namespace haard {
 
     private:
         Modules modules;
+        Ast* ast;
 
     // system related stuff
     private:

@@ -3,7 +3,7 @@
 using namespace haard;
 
 PointerType::PointerType(Type* subtype) {
-    set_kind(TYPE_POINTER);
+    set_kind(AST_TYPE_POINTER);
     set_subtype(subtype);
 }
 
