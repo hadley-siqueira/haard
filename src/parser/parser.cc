@@ -379,7 +379,7 @@ Ast* Parser::parse_statement() {
         expr = parse_expression();
 
         if (expr == nullptr) {
-            assert(false && "expected an expression statement");
+            log_error("expected an expression statement");
         }
 
         stmt = new Ast(AST_EXPRESSION);
@@ -1186,9 +1186,9 @@ Ast* Parser::parse_primary_expression() {
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
         expr = parse_parenthesis_or_tuple_or_sequence();
     } else if (lookahead(TK_LEFT_SQUARE_BRACKET)) {
-        //expr = parse_list_expression();
+        expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
-        //expr = parse_array_or_hash_expression();
+        expr = parse_array_or_hash_expression();
     }
 
     return expr;
@@ -1261,30 +1261,30 @@ Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
     return expr;
 }
 
-Expression* Parser::parse_list_expression() {
-    Expression* expr = nullptr;
-    ListLiteral* list = new ListLiteral();
+Ast* Parser::parse_list_expression() {
+    Ast* expr = nullptr;
+    Ast* list = new Ast(AST_LIST);
 
     expect(TK_LEFT_SQUARE_BRACKET);
 
     if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
-        //expr = parse_expression();
+        expr = parse_expression();
 
         if (expr == nullptr) {
-            assert(false && "expected expression on list literal");
+            log_error("expected expression on list literal");
         }
 
-        list->add_expression(expr);
+        list->add_child(expr);
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
-                //expr = parse_expression();
+                expr = parse_expression();
 
                 if (expr == nullptr) {
-                    assert(false && "expected expression on list literal");
+                    log_error("expected expression on list literal");
                 }
 
-                list->add_expression(expr);
+                list->add_child(expr);
             }
         }
     }
@@ -1293,69 +1293,70 @@ Expression* Parser::parse_list_expression() {
     return list;
 }
 
-Expression* Parser::parse_array_or_hash_expression() {
-    Expression* expr = nullptr;
-    ExpressionList* list = nullptr;
-    ArrayLiteral* array;
+Ast* Parser::parse_array_or_hash_expression() {
+    Ast* expr;
+    Ast* array_or_hash;
 
     expect(TK_LEFT_CURLY_BRACKET);
 
     if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-        //expr = parse_expression();
+        expr = parse_expression();
 
         if (expr == nullptr) {
-            assert(false && "missing expression on array or hash literal");
+            log_error("missing expression on array or hash literal");
         }
 
-        if (expr->get_kind() == AST_ID && lookahead(TK_COLON)) {
-            expr = parse_hash(expr);
+        if (lookahead(TK_COLON)) {
+            array_or_hash = parse_hash(expr);
         } else {
-            array = new ArrayLiteral();
-            array->add_expression(expr);
+            array_or_hash = new Ast(AST_ARRAY);
+            array_or_hash->add_child(expr);
 
             while (match(TK_COMMA)) {
                 if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-                    //expr = parse_expression();
+                    expr = parse_expression();
 
                     if (expr == nullptr) {
-                        assert(false && "missing expression on array literal");
+                        log_error("missing expression on array literal");
                     }
 
-                    array->add_expression(expr);
+                    array_or_hash->add_child(expr);
                 }
             }
-
-            expr = array;
         }
-    } else {
-        expr = new ArrayLiteral();
     }
 
     expect(TK_RIGHT_CURLY_BRACKET);
-    return expr;
+    return array_or_hash;
 }
 
-Expression* Parser::parse_hash(Expression* key) {
-    Expression* expr = nullptr;
-    HashLiteral* hash = new HashLiteral();
+Ast* Parser::parse_hash(Ast* key) {
+    Ast* value = nullptr;
+    Ast* pair = nullptr;
+    Ast* hash = new Ast(AST_HASH);
 
     expect(TK_COLON);
-    //expr = parse_expression();
+    value = parse_expression();
 
-    if (expr == nullptr) {
-        assert(false && "missing value on hash");
+    if (value == nullptr) {
+        log_error("missing value on hash pair");
     }
 
-    expr = new HashPair(key, expr);
+    pair = new Ast(AST_HASH_PAIR);
+    pair->add_child(key);
+    pair->add_child(value);
 
-    hash->add_expression(expr);
+    hash->add_child(pair);
 
     while (match(TK_COMMA)) {
         if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-            //key = parse_identifier();
+            key = parse_expression();
             expect(TK_COLON);
-            //expr = new HashPair(key, parse_expression());
-            hash->add_expression(expr);
+            value = parse_expression();
+            pair = new Ast(AST_HASH_PAIR);
+            pair->add_child(key);
+            pair->add_child(value);
+            hash->add_child(pair);
         }
     }
 

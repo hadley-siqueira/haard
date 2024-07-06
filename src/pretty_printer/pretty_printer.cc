@@ -201,7 +201,23 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_SEQUENCE:
-        print_sequence_expression(node);
+        print_sequence(node);
+        break;
+
+    case AST_LIST:
+        print_list(node);
+        break;
+
+    case AST_ARRAY:
+        print_array(node);
+        break;
+
+    case AST_HASH:
+        print_hash(node);
+        break;
+
+    case AST_HASH_PAIR:
+        print_hash_pair(node);
         break;
 
     case AST_GENERIC_APPLICATION:
@@ -498,11 +514,11 @@ void PrettyPrinter::print_for_statement(ForStatement* stmt) {
     if (stmt->is_foreach()) {
         print_expression(stmt->get_range());
     } else {
-        print_expression_list(stmt->get_init(), "", "");
+        //print_expression_list(stmt->get_init(), "", "");
         out << "; ";
         print_expression(stmt->get_test());
         out << "; ";
-        print_expression_list(stmt->get_update(), "", "");
+        //print_expression_list(stmt->get_update(), "", "");
     }
 
     out << ":\n";
@@ -585,167 +601,6 @@ void PrettyPrinter::print_expression(Ast* stmt) {
     out << '\n';
 }
 
-void PrettyPrinter::print_expression(Expression* expr) {
-    BinaryOperator* bin = (BinaryOperator*) expr;
-    UnaryOperator* un = (UnaryOperator*) expr;
-    Literal* literal = (Literal*) expr;
-
-    if (expr == nullptr) {
-        return;
-    }
-
-    switch (expr->get_kind()) {
-    case AST_ID:
-        print_identifier((Identifier*) expr);
-        break;
-
-    // Binary operators
-    case EXPR_ASSIGNMENT:
-    case EXPR_BITWISE_AND_ASSIGNMENT:
-    case EXPR_BITWISE_XOR_ASSIGNMENT:
-    case EXPR_BITWISE_OR_ASSIGNMENT:
-    case EXPR_BITWISE_NOT_ASSIGNMENT:
-    case EXPR_DIVISION_ASSIGNMENT:
-    case EXPR_INTEGER_DIVISION_ASSIGNMENT:
-    case EXPR_MINUS_ASSIGNMENT:
-    case EXPR_MODULO_ASSIGNMENT:
-    case EXPR_PLUS_ASSIGNMENT:
-    case EXPR_TIMES_ASSIGNMENT:
-    case EXPR_SHIFT_LEFT_LOGICAL_ASSIGNMENT:
-    case EXPR_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT:
-    case EXPR_SHIFT_RIGHT_LOGICAL_ASSIGNMENT:
-    case EXPR_LOGICAL_OR:
-    case EXPR_LOGICAL_AND:
-    case EXPR_EQUAL:
-    case EXPR_NOT_EQUAL:
-    case EXPR_LESS_THAN:
-    case EXPR_LESS_THAN_OR_EQUAL:
-    case EXPR_GREATER_THAN:
-    case EXPR_GREATER_THAN_OR_EQUAL:
-    case EXPR_IN:
-    case EXPR_INCLUSIVE_RANGE:
-    case EXPR_EXCLUSIVE_RANGE:
-    case EXPR_PLUS:
-    case EXPR_MINUS:
-    case EXPR_TIMES:
-    case EXPR_DIVISION:
-    case EXPR_MODULO:
-    case EXPR_INTEGER_DIVISION:
-    case EXPR_POWER:
-    case EXPR_BITWISE_OR:
-    case EXPR_BITWISE_XOR:
-    case EXPR_BITWISE_AND:
-    case EXPR_SHIFT_LEFT_LOGICAL:
-    case EXPR_SHIFT_RIGHT_ARITHMETIC:
-    case EXPR_SHIFT_RIGHT_LOGICAL:
-        print_binary_operator(bin);
-        break;
-
-    case EXPR_DOT:
-    case EXPR_ARROW:
-        print_binary_operator(bin, true);
-        break;
-
-    case EXPR_CAST:
-        print_cast_expression((Cast*) expr);
-        break;
-
-    case EXPR_NOT_IN:
-        print_not_in_expression((NotIn*) expr);
-        break;
-
-    case EXPR_INDEX:
-        print_index_expression(bin);
-        break;
-
-    case EXPR_CALL:
-        print_call_expression((Call*) expr);
-        break;
-
-    case EXPR_HASH_PAIR:
-        print_hash_pair_expression((HashPair*) expr);
-        break;
-
-    case EXPR_LOGICAL_NOT:
-        print_logical_not_expression(un);
-        break;
-
-    case EXPR_SIZEOF:
-        print_sizeof_expression(un);
-        break;
-
-    case EXPR_NEW:
-        print_new_expression((New*) expr);
-        break;
-
-    case EXPR_DELETE:
-        print_delete_expression((Delete*) expr);
-        break;
-
-    case EXPR_DELETE_ARRAY:
-        print_delete_array_expression((DeleteArray*) expr);
-        break;
-
-    case EXPR_PARENTHESIS:
-        print_parenthesis_expression((Parenthesis*) expr);
-        break;
-
-    case EXPR_UNARY_PLUS:
-    case EXPR_UNARY_MINUS:
-    case EXPR_ADDRESS_OF:
-    case EXPR_DEREFERENCE:
-    case EXPR_BITWISE_NOT:
-    case EXPR_PRE_INCREMENT:
-    case EXPR_PRE_DECREMENT:
-    case EXPR_DOUBLE_DOLAR:
-        print_unary_operator(un);
-        break;
-
-    case EXPR_POS_INCREMENT:
-    case EXPR_POS_DECREMENT:
-        print_unary_operator(un, true);
-        break;
-
-    case AST_THIS:
-        out << "this";
-        break;
-
-    case AST_LITERAL_INTEGER:
-    case AST_LITERAL_FLOAT:
-    case AST_LITERAL_DOUBLE:
-        out << literal->get_token().get_value();
-        break;
-
-    case AST_LITERAL_CHAR:
-        print_char_literal((CharLiteral*) expr);
-        break;
-
-    case AST_LITERAL_STRING:
-        print_string_literal((StringLiteral*) expr);
-        break;
-
-    case AST_TUPLE:
-        print_tuple((TupleLiteral*) expr);
-        break;
-
-    case EXPR_LITERAL_LIST:
-        print_list_expression((ListLiteral*) expr);
-        break;
-
-    case EXPR_LITERAL_ARRAY:
-        print_array_literal((ArrayLiteral*) expr);
-        break;
-
-    case EXPR_LITERAL_HASH:
-        print_hash_literal((HashLiteral*) expr);
-        break;
-
-    case AST_SEQUENCE:
-        print_sequence_expression((Sequence*) expr);
-        break;
-    }
-}
-
 void PrettyPrinter::print_cast_expression(Cast* expr) {
     print_expression(expr->get_expression());
     out << " as ";
@@ -766,10 +621,10 @@ void PrettyPrinter::print_index_expression(BinaryOperator* bin) {
     out << ']';
 }
 
-void PrettyPrinter::print_hash_pair_expression(HashPair* pair) {
-    print_expression(pair->get_left());
+void PrettyPrinter::print_hash_pair(Ast* pair) {
+    print(pair->get_child(0));
     out << ": ";
-    print_expression(pair->get_right());
+    print(pair->get_child(1));
 }
 
 void PrettyPrinter::print_logical_not_expression(UnaryOperator* un) {
@@ -790,7 +645,7 @@ void PrettyPrinter::print_sizeof_expression(UnaryOperator* un) {
 void PrettyPrinter::print_new_expression(New* expr) {
     out << "new ";
     //print_type(expr->get_type());
-    print_expression_list(expr->get_arguments(), "(", ")");
+    //print_expression_list(expr->get_arguments(), "(", ")");
 }
 
 void PrettyPrinter::print_delete_expression(Delete* expr) {
@@ -813,11 +668,13 @@ void PrettyPrinter::print_call_expression(Call* expr) {
     print_expression(expr->get_object());
 
     if (expr->get_arguments()) {
-        print_expression_list(expr->get_arguments(), "(", ")");
+        //print_expression_list(expr->get_arguments(), "(", ")");
     } else {
         out << "()";
     }
 }
+
+void PrettyPrinter::print_expression(Expression* expr) {};
 
 void PrettyPrinter::print_binary_operator(BinaryOperator* bin, bool no_space) {
     out << "(";
@@ -924,20 +781,20 @@ void PrettyPrinter::print_tuple(Ast* expr) {
     print_expression_list(expr, "(", ")");
 }
 
-void PrettyPrinter::print_list_expression(ListLiteral* expr) {
-    print_expression_list(expr->get_expressions(), "[", "]");
-}
-
-void PrettyPrinter::print_array_literal(ArrayLiteral* expr) {
-    print_expression_list(expr->get_expressions(), "{", "}");
-}
-
-void PrettyPrinter::print_hash_literal(HashLiteral* expr) {
-    print_expression_list(expr->get_expressions(), "{", "}");
-}
-
-void PrettyPrinter::print_sequence_expression(Ast* expr) {
+void PrettyPrinter::print_sequence(Ast* expr) {
     print_expression_list(expr, "(", ")", ";");
+}
+
+void PrettyPrinter::print_list(Ast* expr) {
+    print_expression_list(expr, "[", "]");
+}
+
+void PrettyPrinter::print_array(Ast* expr) {
+    print_expression_list(expr, "{", "}");
+}
+
+void PrettyPrinter::print_hash(Ast* expr) {
+    print_expression_list(expr, "{", "}");
 }
 
 void PrettyPrinter::print_expression_list(Ast* list, const char* begin, const char* end, const char* sep) {

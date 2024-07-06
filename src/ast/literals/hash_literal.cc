@@ -3,7 +3,7 @@
 using namespace haard;
 
 HashLiteral::HashLiteral() {
-    set_kind(EXPR_LITERAL_HASH);
+    set_kind(AST_HASH);
     expressions = new ExpressionList();
 }
 

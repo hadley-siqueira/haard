@@ -98,7 +98,7 @@ namespace haard {
         EXPR_ARROW,
         EXPR_INDEX,
         EXPR_CALL,
-        EXPR_HASH_PAIR,
+        AST_HASH_PAIR,
 
         EXPR_ADDRESS_OF,
         EXPR_DEREFERENCE,
@@ -127,9 +127,9 @@ namespace haard {
         AST_LITERAL_DOUBLE,
         AST_LITERAL_CHAR,
         AST_LITERAL_STRING,
-        EXPR_LITERAL_LIST,
-        EXPR_LITERAL_ARRAY,
-        EXPR_LITERAL_HASH,
+        AST_LIST,
+        AST_ARRAY,
+        AST_HASH,
         AST_TUPLE,
 
         AST_SEQUENCE,

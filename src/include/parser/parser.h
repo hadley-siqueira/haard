@@ -87,9 +87,9 @@ namespace haard {
         Expression* parse_new_expression();
         Expression* parse_delete_expression();
         Ast* parse_parenthesis_or_tuple_or_sequence();
-        Expression* parse_list_expression();
-        Expression* parse_array_or_hash_expression();
-        Expression* parse_hash(Expression* key);
+        Ast* parse_list_expression();
+        Ast* parse_array_or_hash_expression();
+        Ast* parse_hash(Ast* key);
 
         ExpressionList* parse_argument_list();
 

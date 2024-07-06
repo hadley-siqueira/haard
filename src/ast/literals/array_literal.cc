@@ -3,7 +3,7 @@
 using namespace haard;
 
 ArrayLiteral::ArrayLiteral() {
-    set_kind(EXPR_LITERAL_ARRAY);
+    set_kind(AST_ARRAY);
     expressions = new ExpressionList();
 }
 

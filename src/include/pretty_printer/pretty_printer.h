@@ -55,14 +55,11 @@ namespace haard {
 
         void print_return_statement(ReturnStatement* stmt);
 
-
-
         void print_expression(Expression* expr);
-
         void print_cast_expression(Cast* expr);
         void print_not_in_expression(NotIn* expr);
         void print_index_expression(BinaryOperator* bin);
-        void print_hash_pair_expression(HashPair* pair);
+        void print_hash_pair(Ast* pair);
 
         void print_binary_operator(BinaryOperator* bin, bool no_space=false);
 
@@ -87,9 +84,9 @@ namespace haard {
         void print_char_literal(CharLiteral* ch);
         void print_string_literal(StringLiteral* str);
         void print_tuple(Ast* expr);
-        void print_list_expression(ListLiteral* expr);
-        void print_array_literal(ArrayLiteral* expr);
-        void print_hash_literal(HashLiteral* expr);
+        void print_list(Ast* expr);
+        void print_array(Ast* expr);
+        void print_hash(Ast* expr);
         void print_sequence(Ast* expr);
 
         void print_expression_list(Ast* list, const char* begin, const char* end, const char* sep=",");

@@ -58,3 +58,21 @@ def other_types<std::Key, Value<int, str>> : void
     a
     io::print
     std::array<int>
+    (a)
+    (1, 2, 3)
+    (1; 2; 3)
+    [1, 2, 3]
+    {1, 2, 3}
+
+    {
+        name: "Hello",
+        age: 10,
+        type: "node"
+    }
+
+     {
+        "name": "Hello",
+        "age": 10,
+        type: "node"
+    }
+   
