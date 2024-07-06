@@ -64,15 +64,15 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_shift_right_arithmetic((ShiftRightArithmetic*) expr);
         break;
 
-    case EXPR_LOGICAL_NOT:
+    case AST_LOGICAL_NOT:
         build_logical_not((LogicalNot*) expr);
         break;
 
-    case EXPR_ADDRESS_OF:
+    case AST_ADDRESS_OF:
         build_address_of((AddressOf*) expr);
         break;
 
-    case EXPR_DEREFERENCE:
+    case AST_DEREFERENCE:
         build_dereference((Dereference*) expr);
         break;
 

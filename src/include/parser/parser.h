@@ -78,7 +78,11 @@ namespace haard {
 
         Expression* parse_shift_expression();
 
-        Expression* parse_unary_expression();
+        Ast* parse_unary_expression();
+        Ast* parse_logical_not();
+        Ast* parse_not();
+        Ast* parse_address_of();
+        Ast* parse_dereference();
         Ast* parse_postfix_expression();
 
         Ast* parse_primary_expression();
@@ -107,6 +111,8 @@ namespace haard {
         bool match();
         bool expect(int kind);
         bool has_next(int offset=0);
+        void recover();
+        void unexpected_token();
 
         void indent();
         void dedent();

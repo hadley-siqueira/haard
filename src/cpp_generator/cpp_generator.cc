@@ -311,8 +311,8 @@ void CppGenerator::build_expression(Expression* expr) {
 */
     case EXPR_UNARY_PLUS:
     case EXPR_UNARY_MINUS:
-    case EXPR_ADDRESS_OF:
-    case EXPR_DEREFERENCE:
+    case AST_ADDRESS_OF:
+    case AST_DEREFERENCE:
     case EXPR_BITWISE_NOT:
     case EXPR_PRE_INCREMENT:
     case EXPR_PRE_DECREMENT:

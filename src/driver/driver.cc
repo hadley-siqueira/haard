@@ -37,8 +37,16 @@ void Driver::run(int argc, char** argv) {
         }
     }
 
+    if (argc == 1) {
+        return;
+    }
+
     configure();
     parse_file(main_path);
+
+    if (log_has_error()) {
+        exit();
+    }
     //parse_module_imports(parse_file(main_path));
     //semantic_analysis();
 

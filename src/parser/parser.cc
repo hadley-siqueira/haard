@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <cassert>
 
 #include "parser/parser.h"
@@ -290,7 +291,7 @@ Ast* Parser::parse_function() {
         rtype->add_child(return_type);
         function->add_child(rtype);
     } else {
-        assert(false && "Expected return type");
+        log_error("Expected return type");
     }
 
     function->add_child(parse_parameters());
@@ -380,6 +381,8 @@ Ast* Parser::parse_statement() {
 
         if (expr == nullptr) {
             log_error("expected an expression statement");
+            //recover();
+            unexpected_token();
         }
 
         stmt = new Ast(AST_EXPRESSION);
@@ -762,8 +765,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    //return parse_primary_expression();
-    return parse_postfix_expression();
+    return parse_unary_expression();
     //return parse_assignment_expression();
 }
 
@@ -1056,72 +1058,165 @@ Expression* Parser::parse_bitwise_and_expression() {
 
 Expression* Parser::parse_shift_expression() {
     Token oper;
-    Expression* expr = parse_unary_expression();
+    Ast* expr = parse_unary_expression();
 
     while (true) {
         if (match(TK_SLL)) {
             oper = matched;
-            expr = new ShiftLeftLogical(oper, expr, parse_unary_expression());
+            //expr = new ShiftLeftLogical(oper, expr, parse_unary_expression());
         } else if (match(TK_SRL)) {
             oper = matched;
-            expr = new ShiftRightLogical(oper, expr, parse_unary_expression());
+            //expr = new ShiftRightLogical(oper, expr, parse_unary_expression());
         } else if (match(TK_SRA)) {
             oper = matched;
-            expr = new ShiftRightArithmetic(oper, expr, parse_unary_expression());
+            //expr = new ShiftRightArithmetic(oper, expr, parse_unary_expression());
         } else {
             break;
         }
     }
 
-    return expr;
+    return nullptr;//expr;
 }
 
-Expression* Parser::parse_unary_expression() {
+Ast* Parser::parse_unary_expression() {
     Token oper;
-    Expression* expr = nullptr;
+    Ast* subexpr;
+    Ast* expr = nullptr;
 
-    if (match(TK_LOGICAL_NOT) || match(TK_NOT)) {
-        oper = matched;
-        expr = new LogicalNot(oper, parse_unary_expression());
-    } else if (match(TK_BITWISE_AND)) {
-        oper = matched;
-        expr = new AddressOf(oper, parse_unary_expression());
-    } else if (match(TK_TIMES)) {
-        oper = matched;
-        expr = new Dereference(oper, parse_unary_expression());
-    } else if (match(TK_POWER)) {
-        oper = matched;
-        expr = new Dereference(oper, parse_unary_expression());
-        expr = new Dereference(oper, expr);
+    if (lookahead(TK_LOGICAL_NOT)) {
+        expr = parse_logical_not();
+    } else if (lookahead(TK_NOT)) {
+        expr = parse_not();
+    } else if (lookahead(TK_BITWISE_AND)) {
+        expr = parse_address_of();
+    } else if (lookahead(TK_TIMES) || lookahead(TK_POWER)) {
+        expr = parse_dereference();
     } else if (match(TK_BITWISE_NOT)) {
         oper = matched;
-        expr = new BitwiseNot(oper, parse_unary_expression());
+        //expr = new BitwiseNot(oper, parse_unary_expression());
     } else if (match(TK_MINUS)) {
         oper = matched;
-        expr = new UnaryMinus(oper, parse_unary_expression());
+       // expr = new UnaryMinus(oper, parse_unary_expression());
     } else if (match(TK_PLUS)) {
         oper = matched;
-        expr = new UnaryPlus(oper, parse_unary_expression());
+       // expr = new UnaryPlus(oper, parse_unary_expression());
     } else if (match(TK_INC)) {
         oper = matched;
-        expr = new PreIncrement(oper, parse_unary_expression());
+       // expr = new PreIncrement(oper, parse_unary_expression());
     } else if (match(TK_DEC)) {
         oper = matched;
-        expr = new PreDecrement(oper, parse_unary_expression());
+       // expr = new PreDecrement(oper, parse_unary_expression());
     } else if (match(TK_DOUBLE_DOLAR)) {
         oper = matched;
-        expr = new DoubleDolar(oper, parse_unary_expression());
+       // expr = new DoubleDolar(oper, parse_unary_expression());
     } else if (match(TK_SIZEOF)) {
         oper = matched;
         expect(TK_LEFT_PARENTHESIS);
         //expr = new Sizeof(oper, parse_expression());
         expect(TK_RIGHT_PARENTHESIS);
     } else if (lookahead(TK_NEW)) {
-        expr = parse_new_expression();
+        //expr = parse_new_expression();
     } else if (lookahead(TK_DELETE)) {
-        expr = parse_delete_expression();
+        //expr = parse_delete_expression();
     } else {
-        //expr = parse_postfix_expression();
+        expr = parse_postfix_expression();
+    }
+
+    return expr;
+}
+
+Ast* Parser::parse_logical_not() {
+    Ast* expr = new Ast(AST_LOGICAL_NOT, matched);
+    Ast* subexpr;
+
+    expect(TK_LOGICAL_NOT);
+
+    if (!next_token_on_same_line()) {
+        log_error("expected an expression for not operator. Maybe you typed in another line");
+    } else {
+        subexpr = parse_unary_expression();
+
+        if (subexpr == nullptr) {
+            log_error("expected an expression for not operator");
+        }
+
+        expr->add_child(subexpr);
+    }
+
+    return expr;
+}
+
+Ast* Parser::parse_not() {
+    Ast* expr = new Ast(AST_NOT, matched);
+    Ast* subexpr;
+
+    expect(TK_NOT);
+
+    if (!next_token_on_same_line()) {
+        log_error("expected an expression for not operator. Maybe you typed in another line");
+    } else {
+        subexpr = parse_unary_expression();
+
+        if (subexpr == nullptr) {
+            log_error("expected an expression for not operator");
+        }
+
+        expr->add_child(subexpr);
+    }
+
+    return expr;
+}
+
+Ast* Parser::parse_address_of() {
+    Ast* expr = new Ast(AST_ADDRESS_OF, matched);
+    Ast* subexpr;
+
+    expect(TK_BITWISE_AND);
+
+    if (!next_token_on_same_line()) {
+        log_error("expected an expression for '&' operator. Maybe you typed in another line");
+    } else {
+        subexpr = parse_unary_expression();
+
+        if (subexpr == nullptr) {
+            log_error("expected an expression for '&' operator");
+        }
+
+        expr->add_child(subexpr);
+    }
+
+    return expr;
+}
+
+Ast* Parser::parse_dereference() {
+    Ast* expr = new Ast(AST_DEREFERENCE, matched);
+    Ast* subexpr;
+    bool power = false;
+
+    if (match(TK_TIMES)) {
+        power = false;
+    } else if (match(TK_POWER)) {
+        power = true;
+    } else {
+        log_error("error while parsing dereference");
+    }
+
+    if (!next_token_on_same_line()) {
+        log_error("expected an expression for '*' operator. Maybe you typed in another line");
+    } else {
+        subexpr = parse_unary_expression();
+
+        if (subexpr == nullptr) {
+            log_error("expected an expression for '*' operator");
+        }
+
+        expr->add_child(subexpr);
+
+        if (power) {
+            subexpr = expr;
+            expr = new Ast(AST_DEREFERENCE, matched);
+            expr->add_child(subexpr);
+        }
     }
 
     return expr;
@@ -1581,26 +1676,42 @@ bool Parser::match() {
 }
 
 bool Parser::expect(int kind) {
+    std::stringstream ss;
+
     if (match(kind)) {
         return true;
     }
 
     match();
 
-    std::cout << "Expected a " << token_kind_to_str_map.at(kind)
-              << " but got a " << token_kind_to_str_map.at(matched.get_kind())
-              << std::endl;
+    ss << "Expected a " << token_kind_to_str_map.at(kind)
+              << " but got a " << token_kind_to_str_map.at(matched.get_kind());
 
-    for (int i = 0; i <= idx; ++i) {
-        std::cout << tokens[i].to_str() << '\n';
-    }
-
-    show_logs();
-    assert(false && "expected token");
+    log_error(ss.str());
 }
 
 bool Parser::has_next(int offset) {
     return idx + offset < tokens.size();
+}
+
+void Parser::recover() {
+    bool flag = true;
+
+    while (flag) {
+        flag = false;
+        flag = flag || lookahead(TK_DEF);
+        flag = flag || lookahead(TK_CLASS);
+        flag = flag || lookahead(TK_UNION);
+        flag = flag || lookahead(TK_STRUCT);
+        flag = flag || lookahead(TK_ENUM);
+        flag = flag || lookahead(TK_EOF);
+        advance();
+    }
+}
+
+void Parser::unexpected_token() {
+    match();
+    log_error("unexpected token");
 }
 
 void Parser::indent() {

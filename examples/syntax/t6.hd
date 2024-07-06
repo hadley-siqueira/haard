@@ -1,0 +1,111 @@
+import std
+import std.io
+import std.foo.bar
+import std as std
+
+def main : int
+    0
+
+def sum : float
+    @a : int
+    @b : int
+
+    0
+
+def primitive_types<T, K> : void
+    @b : u8
+    @b : u16
+    @b : u32
+    @b : u64
+    @b : i8
+    @b : i16
+    @b : i32
+    @b : i64
+    @d : f32
+    @d : f64
+    @d : bool
+    @d : char
+    @e : short
+    @e : int
+    @e : long
+    @e : ushort
+    @e : uint
+    @e : ulong
+    @e : float
+    @e : double
+
+def other_types<std::Key, Value<int, str>> : void
+    @a : u8*
+    @b : u8***
+    @c : int[]
+    @d : u8&
+    @e : [int]
+    @f : (int, int, str)
+    @g : (int, int, str) -> int*
+
+    0
+    1
+    2
+    2.2
+    2.2f
+    'a'
+    'aa'
+    "aa"
+    true
+    false
+    null
+    this
+    a
+    io::print
+    std::array<int>
+    (a)
+    (1, 2, 3)
+    (1; 2; 3)
+    [1, 2, 3]
+    {1, 2, 3}
+
+    {
+        name: "Hello",
+        age: 10,
+        type: "node"
+    }
+
+    {
+        "name": "Hello",
+        "age": 10,
+        type: "node"
+    }
+
+    a.b
+    a->b
+    a.b->m[i][j]
+
+    print("Hello, world!")
+    print("Hello, world!", 2)
+
+    std::array<int>.push(2)
+
+    {
+        type: "call",
+        callee: "foo",
+        arguments: [1, 2]
+    }
+
+    a++
+    a--
+    !
+    a++
+    a[][m[]]
+    a[
+    2++
+
+def sum :
+    2++
+    2++
+
+
+def sum :
+def sum :
+def sum :
+    a
+def sum :

@@ -192,6 +192,22 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Expressions */
+    case AST_LOGICAL_NOT:
+        print_logical_not(node);
+        break;
+
+    case AST_NOT:
+        print_not(node);
+        break;
+
+    case AST_ADDRESS_OF:
+        print_address_of(node);
+        break;
+
+    case AST_DEREFERENCE:
+        print_dereference(node);
+        break;
+
     case AST_DOT:
         print_dot(node);
         break;
@@ -667,13 +683,24 @@ void PrettyPrinter::print_hash_pair(Ast* pair) {
     print(pair->get_child(1));
 }
 
-void PrettyPrinter::print_logical_not_expression(UnaryOperator* un) {
-    if (un->get_token().get_kind() == TK_LOGICAL_NOT) {
-        print_unary_operator(un);
-    } else {
-        out << "not ";
-        print_expression(un->get_expression());
-    }
+void PrettyPrinter::print_logical_not(Ast* un) {
+    out << "!";
+    print(un->get_child(0));
+}
+
+void PrettyPrinter::print_not(Ast* un) {
+    out << "not ";
+    print(un->get_child(0));
+}
+
+void PrettyPrinter::print_address_of(Ast* node) {
+    out << "&";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_dereference(Ast* node) {
+    out << "*";
+    print(node->get_child());
 }
 
 void PrettyPrinter::print_sizeof_expression(UnaryOperator* un) {

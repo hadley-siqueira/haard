@@ -37,6 +37,10 @@ void Logger::error(std::string message) {
     Logger::logs.push_back(log);
 }
 
+bool Logger::has_error() {
+    return error_flag;
+}
+
 void Logger::clear() {
     logs.clear();
 }

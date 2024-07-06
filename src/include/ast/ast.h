@@ -150,7 +150,7 @@ namespace haard {
         void set_value(const char* value);
 
         void add_child(Ast* child);
-        Ast* get_child(size_t index);
+        Ast* get_child(size_t index=0);
         Ast* get_child(AstType type);
         size_t children_count();
 

@@ -22,4 +22,8 @@ namespace haard {
         std::cout << get_logs() << std::endl;
         logger.clear();
     }
+
+    bool log_has_error() {
+        return logger.has_error();
+    }
 }
