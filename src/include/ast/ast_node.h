@@ -94,10 +94,11 @@ namespace haard {
         EXPR_SHIFT_RIGHT_ARITHMETIC,
         EXPR_SHIFT_RIGHT_LOGICAL,
 
-        EXPR_DOT,
-        EXPR_ARROW,
-        EXPR_INDEX,
-        EXPR_CALL,
+        AST_DOT,
+        AST_ARROW,
+        AST_INDEX,
+        AST_CALL,
+        AST_ARGUMENTS,
         AST_HASH_PAIR,
 
         EXPR_ADDRESS_OF,
@@ -115,8 +116,8 @@ namespace haard {
 
         EXPR_PRE_INCREMENT,
         EXPR_PRE_DECREMENT,
-        EXPR_POS_INCREMENT,
-        EXPR_POS_DECREMENT,
+        AST_POS_INCREMENT,
+        AST_POS_DECREMENT,
 
         // Literals
         AST_THIS,

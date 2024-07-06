@@ -30,13 +30,13 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_dot(Ast* node);
+        void print_arrow(Ast* node);
         void print_parenthesis(Ast* node);
 
         void print_generic_application(Ast* node);
         void print_scope(Ast* scope);
         void print_identifier(Ast* id);
-
-
 
         void print_class(Class* klass);
         void print_struct(Struct* st);
@@ -58,7 +58,7 @@ namespace haard {
         void print_expression(Expression* expr);
         void print_cast_expression(Cast* expr);
         void print_not_in_expression(NotIn* expr);
-        void print_index_expression(BinaryOperator* bin);
+        void print_index(Ast* node);
         void print_hash_pair(Ast* pair);
 
         void print_binary_operator(BinaryOperator* bin, bool no_space=false);
@@ -70,7 +70,11 @@ namespace haard {
         void print_delete_expression(Delete* expr);
         void print_delete_array_expression(DeleteArray* expr);
         void print_parenthesis_expression(Parenthesis* expr);
-        void print_call_expression(Call* expr);
+
+        void print_call(Ast* expr);
+        void print_arguments(Ast* args);
+        void print_pos_increment(Ast* node);
+        void print_pos_decrement(Ast* node);
 
         void print_tuple_type(Ast *tuple);
         void print_function_type(Ast *type);

@@ -3,13 +3,13 @@
 using namespace haard;
 
 Index::Index(Expression* left, Expression* right) {
-    set_kind(EXPR_INDEX);
+    set_kind(AST_INDEX);
     set_left(left);
     set_right(right);
 }
 
 Index::Index(Token& token, Expression* left, Expression* right) {
-    set_kind(EXPR_INDEX);
+    set_kind(AST_INDEX);
     set_left(left);
     set_right(right);
     set_token(token);

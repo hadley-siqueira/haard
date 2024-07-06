@@ -4,13 +4,13 @@
 using namespace haard;
 
 Call::Call(Expression* object, ExpressionList* arguments) {
-    set_kind(EXPR_CALL);
+    set_kind(AST_CALL);
     set_object(object);
     set_arguments(arguments);
 }
 
 Call::Call(Token& token, Expression* object, ExpressionList* arguments) {
-    set_kind(EXPR_CALL);
+    set_kind(AST_CALL);
     set_object(object);
     set_arguments(arguments);
     set_token(token);

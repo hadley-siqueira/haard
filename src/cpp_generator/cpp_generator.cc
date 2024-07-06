@@ -260,8 +260,8 @@ void CppGenerator::build_expression(Expression* expr) {
         build_binary_operator(bin);
         break;
 
-    case EXPR_DOT:
-    case EXPR_ARROW:
+    case AST_DOT:
+    case AST_ARROW:
         build_binary_operator(bin, true);
         break;
 
@@ -273,11 +273,11 @@ void CppGenerator::build_expression(Expression* expr) {
         print_not_in_expression((NotIn*) expr);
         break;
 */
-    case EXPR_INDEX:
+    case AST_INDEX:
         build_index_expression(bin);
         break;
 
-    case EXPR_CALL:
+    case AST_CALL:
         build_call_expression((Call*) expr);
         break;
 /*
@@ -319,8 +319,8 @@ void CppGenerator::build_expression(Expression* expr) {
         build_unary_operator(un);
         break;
 
-    case EXPR_POS_INCREMENT:
-    case EXPR_POS_DECREMENT:
+    case AST_POS_INCREMENT:
+    case AST_POS_DECREMENT:
         build_unary_operator(un, true);
         break;
 

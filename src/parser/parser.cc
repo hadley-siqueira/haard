@@ -762,7 +762,8 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_primary_expression();
+    //return parse_primary_expression();
+    return parse_postfix_expression();
     //return parse_assignment_expression();
 }
 
@@ -1120,38 +1121,68 @@ Expression* Parser::parse_unary_expression() {
     } else if (lookahead(TK_DELETE)) {
         expr = parse_delete_expression();
     } else {
-        expr = parse_postfix_expression();
+        //expr = parse_postfix_expression();
     }
 
     return expr;
 }
 
-Expression* Parser::parse_postfix_expression() {
-    Token oper;
-    Expression* expr;// = parse_primary_expression();
-    parse_primary_expression();
+Ast* Parser::parse_postfix_expression() {
+    Ast* left = nullptr;
+    Ast* right = nullptr;
+    Ast* expr = parse_primary_expression();
 
     while (true) {
         if (match(TK_DOT)) {
-            oper = matched;
-            //expr = new Dot(oper, expr, parse_identifier());
+            left = expr;
+            expr = new Ast(AST_DOT, matched);
+            right = parse_generic_instantiation();
+
+            if (right == nullptr) {
+                log_error("missing member field in member access");
+            } else {
+                expr->add_child(left);
+                expr->add_child(right);
+            }
         } else if (match(TK_ARROW)) {
-            oper = matched;
-            //expr = new Arrow(oper, expr, parse_identifier());
-        } else if (match(TK_LEFT_SQUARE_BRACKET)) {
-            oper = matched;
-            //expr = new Index(oper, expr, parse_expression());
+            expr = new Ast(AST_ARROW, matched);
+            right = parse_generic_instantiation();
+
+            if (right == nullptr) {
+                log_error("missing member field in arrow member access");
+            } else {
+                expr->add_child(left);
+                expr->add_child(right);
+            }
+
+            left = expr;
+        } else if (match_same_line(TK_LEFT_SQUARE_BRACKET)) {
+            expr = new Ast(AST_INDEX, matched);
+            right = parse_expression();
+
+            if (right == nullptr) {
+                log_error("missing index expression in array access");
+            } else {
+                expr->add_child(left);
+                expr->add_child(right);
+            }
+
+            left = expr;
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else if (match_same_line(TK_LEFT_PARENTHESIS)) {
-            oper = matched;
-            expr = new Call(oper, expr, parse_argument_list());
+            expr = new Ast(AST_CALL, matched);
+            expr->add_child(left);
+            expr->add_child(parse_argument_list());
+            left = expr;
             expect(TK_RIGHT_PARENTHESIS);
         } else if (match_same_line(TK_INC)) {
-            oper = matched;
-            expr = new UnaryOperator(EXPR_POS_INCREMENT, oper, expr);
+            left = expr;
+            expr = new Ast(AST_POS_INCREMENT, matched);
+            expr->add_child(left);
         } else if (match_same_line(TK_DEC)) {
-            oper = matched;
-            expr = new UnaryOperator(EXPR_POS_DECREMENT, oper, expr);
+            left = expr;
+            expr = new Ast(AST_POS_DECREMENT, matched);
+            expr->add_child(left);
         } else {
             break;
         }
@@ -1295,7 +1326,7 @@ Ast* Parser::parse_list_expression() {
 
 Ast* Parser::parse_array_or_hash_expression() {
     Ast* expr;
-    Ast* array_or_hash;
+    Ast* array_or_hash = nullptr;
 
     expect(TK_LEFT_CURLY_BRACKET);
 
@@ -1363,14 +1394,27 @@ Ast* Parser::parse_hash(Ast* key) {
     return hash;
 }
 
-ExpressionList* Parser::parse_argument_list() {
-    ExpressionList* arguments = new ExpressionList();
+Ast* Parser::parse_argument_list() {
+    Ast* expr;
+    Ast* arguments = new Ast(AST_ARGUMENTS);
 
     if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-        //arguments->add_expression(parse_expression());
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("Expected an expression, but got something else");
+        }
+
+        arguments->add_child(expr);
 
         while (match(TK_COMMA)) {
-            //arguments->add_expression(parse_expression());
+            expr = parse_expression();
+
+            if (expr == nullptr) {
+                log_error("Expected an expression, but got something else");
+            }
+
+            arguments->add_child(expr);
         }
     }
 
@@ -1415,7 +1459,7 @@ Expression* Parser::parse_new_expression() {
     //expr->set_type(type);
 
     if (match(TK_LEFT_PARENTHESIS)) {
-        expr->set_arguments(parse_argument_list());
+        //expr->set_arguments(parse_argument_list());
         expect(TK_RIGHT_PARENTHESIS);
     }
 
@@ -1547,9 +1591,11 @@ bool Parser::expect(int kind) {
               << " but got a " << token_kind_to_str_map.at(matched.get_kind())
               << std::endl;
 
-    for (auto tk : tokens) {
-        std::cout << tk.to_str() << '\n';
+    for (int i = 0; i <= idx; ++i) {
+        std::cout << tokens[i].to_str() << '\n';
     }
+
+    show_logs();
     assert(false && "expected token");
 }
 

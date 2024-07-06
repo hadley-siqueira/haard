@@ -104,19 +104,19 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_delete_array((DeleteArray*) expr);
         break;
 
-    case EXPR_DOT:
+    case AST_DOT:
         build_dot((Dot*) expr);
         break;
 
-    case EXPR_ARROW:
+    case AST_ARROW:
         build_arrow((Arrow*) expr);
         break;
 
-    case EXPR_INDEX:
+    case AST_INDEX:
         build_index((Index*) expr);
         break;
 
-    case EXPR_CALL:
+    case AST_CALL:
         build_call((Call*) expr);
         break;
 

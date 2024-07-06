@@ -54,6 +54,7 @@ void test_driver(int argc, char** argv) {
 
 int main(int argc, char** argv) {
     test_driver(argc, argv);
+    //test_scanner(argc, argv);
 
     return 0;
 }

@@ -192,6 +192,34 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Expressions */
+    case AST_DOT:
+        print_dot(node);
+        break;
+
+    case AST_ARROW:
+        print_arrow(node);
+        break;
+
+    case AST_INDEX:
+        print_index(node);
+        break;
+
+    case AST_CALL:
+        print_call(node);
+        break;
+
+    case AST_ARGUMENTS:
+        print_arguments(node);
+        break;
+
+    case AST_POS_DECREMENT:
+        print_pos_decrement(node);
+        break;
+
+    case AST_POS_INCREMENT:
+        print_pos_increment(node);
+        break;
+
     case EXPR_PARENTHESIS:
         print_parenthesis(node);
         break;
@@ -287,6 +315,18 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_dot(Ast* node) {
+    print(node->get_child(0));
+    out << ".";
+    print(node->get_child(1));
+}
+
+void PrettyPrinter::print_arrow(Ast* node) {
+    print(node->get_child(0));
+    out << "->";
+    print(node->get_child(1));
 }
 
 void PrettyPrinter::print_parenthesis(Ast* node) {
@@ -613,11 +653,11 @@ void PrettyPrinter::print_not_in_expression(NotIn* expr) {
     print_expression(expr->get_right());
 }
 
-void PrettyPrinter::print_index_expression(BinaryOperator* bin) {
-    print_expression(bin->get_left());
+void PrettyPrinter::print_index(Ast* node) {
+    print(node->get_child(0));
     out << '[';
 
-    print_expression(bin->get_right());
+    print(node->get_child(1));
     out << ']';
 }
 
@@ -664,14 +704,23 @@ void PrettyPrinter::print_parenthesis_expression(Parenthesis* expr) {
     out << ")";
 }
 
-void PrettyPrinter::print_call_expression(Call* expr) {
-    print_expression(expr->get_object());
+void PrettyPrinter::print_call(Ast* expr) {
+    print(expr->get_child(0));
+    print(expr->get_child(1));
+}
 
-    if (expr->get_arguments()) {
-        //print_expression_list(expr->get_arguments(), "(", ")");
-    } else {
-        out << "()";
-    }
+void PrettyPrinter::print_arguments(Ast* args) {
+    print_expression_list(args, "(", ")");
+}
+
+void PrettyPrinter::print_pos_increment(Ast* node) {
+    print(node->get_child(0));
+    out << "++";
+}
+
+void PrettyPrinter::print_pos_decrement(Ast* node) {
+    print(node->get_child(0));
+    out << "--";
 }
 
 void PrettyPrinter::print_expression(Expression* expr) {};

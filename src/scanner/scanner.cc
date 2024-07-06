@@ -25,6 +25,7 @@ std::vector<Token> Scanner::read(std::string path) {
         get_token();
     }
 
+    create_token(TK_EOF);
     return tokens;
 }
 

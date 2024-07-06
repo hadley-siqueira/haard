@@ -75,4 +75,21 @@ def other_types<std::Key, Value<int, str>> : void
         "age": 10,
         type: "node"
     }
-   
+
+    a.b
+    a->b
+    a.b->m[i][j]
+
+    print("Hello, world!")
+    print("Hello, world!", 2)
+
+    std::array<int>.push(2)
+
+    {
+        type: "call",
+        callee: "foo",
+        arguments: [1, 2]
+    }
+
+    a++
+    a--

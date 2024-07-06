@@ -79,8 +79,7 @@ namespace haard {
         Expression* parse_shift_expression();
 
         Expression* parse_unary_expression();
-        Expression* parse_postfix_expression();
-
+        Ast* parse_postfix_expression();
 
         Ast* parse_primary_expression();
 
@@ -91,7 +90,7 @@ namespace haard {
         Ast* parse_array_or_hash_expression();
         Ast* parse_hash(Ast* key);
 
-        ExpressionList* parse_argument_list();
+        Ast* parse_argument_list();
 
         Ast* parse_generic_instantiation();
         Ast* parse_scope();
