@@ -76,15 +76,15 @@ void ExpressionCppGenerator::build(Expression* expr) {
         build_dereference((Dereference*) expr);
         break;
 
-    case EXPR_BITWISE_NOT:
+    case AST_BITWISE_NOT:
         build_bitwise_not((BitwiseNot*) expr);
         break;
 
-    case EXPR_UNARY_MINUS:
+    case AST_UNARY_MINUS:
         build_unary_minus((UnaryMinus*) expr);
         break;
 
-    case EXPR_UNARY_PLUS:
+    case AST_UNARY_PLUS:
         build_unary_plus((UnaryPlus*) expr);
         break;
 

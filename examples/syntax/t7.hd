@@ -99,3 +99,8 @@ def other_types<std::Key, Value<int, str>> : void
     *ptr
     **ptr
     ***ptr
+    ~value
+    -2
+    ++a
+    --a
+    +a

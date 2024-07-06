@@ -103,11 +103,11 @@ namespace haard {
 
         AST_ADDRESS_OF,
         AST_DEREFERENCE,
-        EXPR_UNARY_PLUS,
-        EXPR_UNARY_MINUS,
+        AST_UNARY_PLUS,
+        AST_UNARY_MINUS,
         AST_LOGICAL_NOT,
         AST_NOT,
-        EXPR_BITWISE_NOT,
+        AST_BITWISE_NOT,
         EXPR_SIZEOF,
         EXPR_NEW,
         EXPR_DELETE,
@@ -115,8 +115,8 @@ namespace haard {
         EXPR_PARENTHESIS,
         EXPR_DOUBLE_DOLAR,
 
-        EXPR_PRE_INCREMENT,
-        EXPR_PRE_DECREMENT,
+        AST_PRE_INCREMENT,
+        AST_PRE_DECREMENT,
         AST_POS_INCREMENT,
         AST_POS_DECREMENT,
 

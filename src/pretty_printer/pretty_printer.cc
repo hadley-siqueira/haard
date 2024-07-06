@@ -208,6 +208,26 @@ void PrettyPrinter::print(Ast* node) {
         print_dereference(node);
         break;
 
+    case AST_BITWISE_NOT:
+        print_bitwise_not(node);
+        break;
+
+    case AST_UNARY_MINUS:
+        print_unary_minus(node);
+        break;
+
+    case AST_UNARY_PLUS:
+        print_unary_plus(node);
+        break;
+
+    case AST_PRE_INCREMENT:
+        print_pre_increment(node);
+        break;
+
+    case AST_PRE_DECREMENT:
+        print_pre_decrement(node);
+        break;
+
     case AST_DOT:
         print_dot(node);
         break;
@@ -700,6 +720,31 @@ void PrettyPrinter::print_address_of(Ast* node) {
 
 void PrettyPrinter::print_dereference(Ast* node) {
     out << "*";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_bitwise_not(Ast* node) {
+    out << "~";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_unary_minus(Ast* node) {
+    out << "-";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_unary_plus(Ast* node) {
+    out << "+";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_pre_increment(Ast* node) {
+    out << "++";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_pre_decrement(Ast* node) {
+    out << "--";
     print(node->get_child());
 }
 

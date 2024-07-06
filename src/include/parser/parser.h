@@ -83,6 +83,13 @@ namespace haard {
         Ast* parse_not();
         Ast* parse_address_of();
         Ast* parse_dereference();
+        Ast* parse_bitwise_not();
+        Ast* parse_unary_minus();
+        Ast* parse_unary_plus();
+        Ast* parse_pre_increment();
+        Ast* parse_pre_decrement();
+        Ast* parse_simple_unary_operator(AstType ast_type, TokenKind token_type, const char* oper);
+
         Ast* parse_postfix_expression();
 
         Ast* parse_primary_expression();

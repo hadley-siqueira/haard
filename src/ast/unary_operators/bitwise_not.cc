@@ -3,12 +3,12 @@
 using namespace haard;
 
 BitwiseNot::BitwiseNot(Expression* expression) {
-    set_kind(EXPR_BITWISE_NOT);
+    set_kind(AST_BITWISE_NOT);
     set_expression(expression);
 }
 
 BitwiseNot::BitwiseNot(Token& token, Expression* expression) {
-    set_kind(EXPR_BITWISE_NOT);
+    set_kind(AST_BITWISE_NOT);
     set_expression(expression);
     set_token(token);
 }

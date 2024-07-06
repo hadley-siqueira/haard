@@ -72,6 +72,12 @@ namespace haard {
         void print_not(Ast* un);
         void print_address_of(Ast* node);
         void print_dereference(Ast* node);
+        void print_bitwise_not(Ast* node);
+        void print_unary_minus(Ast* node);
+        void print_unary_plus(Ast* node);
+        void print_pre_increment(Ast* node);
+        void print_pre_decrement(Ast* node);
+
         void print_sizeof_expression(UnaryOperator* un);
         void print_new_expression(New* expr);
         void print_delete_expression(Delete* expr);

@@ -1091,21 +1091,16 @@ Ast* Parser::parse_unary_expression() {
         expr = parse_address_of();
     } else if (lookahead(TK_TIMES) || lookahead(TK_POWER)) {
         expr = parse_dereference();
-    } else if (match(TK_BITWISE_NOT)) {
-        oper = matched;
-        //expr = new BitwiseNot(oper, parse_unary_expression());
-    } else if (match(TK_MINUS)) {
-        oper = matched;
-       // expr = new UnaryMinus(oper, parse_unary_expression());
-    } else if (match(TK_PLUS)) {
-        oper = matched;
-       // expr = new UnaryPlus(oper, parse_unary_expression());
-    } else if (match(TK_INC)) {
-        oper = matched;
-       // expr = new PreIncrement(oper, parse_unary_expression());
-    } else if (match(TK_DEC)) {
-        oper = matched;
-       // expr = new PreDecrement(oper, parse_unary_expression());
+    } else if (lookahead(TK_BITWISE_NOT)) {
+        expr = parse_bitwise_not();
+    } else if (lookahead(TK_MINUS)) {
+        expr = parse_unary_minus();
+    } else if (lookahead(TK_PLUS)) {
+        expr = parse_unary_plus();
+    } else if (lookahead(TK_INC)) {
+        expr = parse_pre_increment();
+    } else if (lookahead(TK_DEC)) {
+        expr = parse_pre_decrement();
     } else if (match(TK_DOUBLE_DOLAR)) {
         oper = matched;
        // expr = new DoubleDolar(oper, parse_unary_expression());
@@ -1126,66 +1121,15 @@ Ast* Parser::parse_unary_expression() {
 }
 
 Ast* Parser::parse_logical_not() {
-    Ast* expr = new Ast(AST_LOGICAL_NOT, matched);
-    Ast* subexpr;
-
-    expect(TK_LOGICAL_NOT);
-
-    if (!next_token_on_same_line()) {
-        log_error("expected an expression for not operator. Maybe you typed in another line");
-    } else {
-        subexpr = parse_unary_expression();
-
-        if (subexpr == nullptr) {
-            log_error("expected an expression for not operator");
-        }
-
-        expr->add_child(subexpr);
-    }
-
-    return expr;
+    return parse_simple_unary_operator(AST_LOGICAL_NOT, TK_LOGICAL_NOT, "!");
 }
 
 Ast* Parser::parse_not() {
-    Ast* expr = new Ast(AST_NOT, matched);
-    Ast* subexpr;
-
-    expect(TK_NOT);
-
-    if (!next_token_on_same_line()) {
-        log_error("expected an expression for not operator. Maybe you typed in another line");
-    } else {
-        subexpr = parse_unary_expression();
-
-        if (subexpr == nullptr) {
-            log_error("expected an expression for not operator");
-        }
-
-        expr->add_child(subexpr);
-    }
-
-    return expr;
+    return parse_simple_unary_operator(AST_NOT, TK_NOT, "not");
 }
 
 Ast* Parser::parse_address_of() {
-    Ast* expr = new Ast(AST_ADDRESS_OF, matched);
-    Ast* subexpr;
-
-    expect(TK_BITWISE_AND);
-
-    if (!next_token_on_same_line()) {
-        log_error("expected an expression for '&' operator. Maybe you typed in another line");
-    } else {
-        subexpr = parse_unary_expression();
-
-        if (subexpr == nullptr) {
-            log_error("expected an expression for '&' operator");
-        }
-
-        expr->add_child(subexpr);
-    }
-
-    return expr;
+    return parse_simple_unary_operator(AST_ADDRESS_OF, TK_BITWISE_AND, "&");
 }
 
 Ast* Parser::parse_dereference() {
@@ -1217,6 +1161,53 @@ Ast* Parser::parse_dereference() {
             expr = new Ast(AST_DEREFERENCE, matched);
             expr->add_child(subexpr);
         }
+    }
+
+    return expr;
+}
+
+Ast* Parser::parse_bitwise_not() {
+    return parse_simple_unary_operator(AST_BITWISE_NOT, TK_BITWISE_NOT, "~");
+}
+
+Ast* Parser::parse_unary_minus() {
+    return parse_simple_unary_operator(AST_UNARY_MINUS, TK_MINUS, "-");
+}
+
+Ast* Parser::parse_unary_plus() {
+    return parse_simple_unary_operator(AST_UNARY_PLUS, TK_PLUS, "+");
+}
+
+Ast* Parser::parse_pre_increment() {
+    return parse_simple_unary_operator(AST_PRE_INCREMENT, TK_INC, "++");
+}
+
+Ast* Parser::parse_pre_decrement() {
+    return parse_simple_unary_operator(AST_PRE_DECREMENT, TK_DEC, "--");
+}
+
+Ast* Parser::parse_simple_unary_operator(AstType ast_type, TokenKind token_type, const char* oper) {
+    std::stringstream ss;
+    Ast* expr;
+    Ast* subexpr;
+
+    expect(token_type);
+    expr = new Ast(ast_type, matched);
+
+    if (!next_token_on_same_line()) {
+        ss << "expected an expression for unary '";
+        ss << oper << "' operator";
+        log_error(ss.str());
+    } else {
+        subexpr = parse_unary_expression();
+
+        if (subexpr == nullptr) {
+            ss << "expected an expression for unary '";
+            ss << oper << "' operator";
+            log_error(ss.str());
+        }
+
+        expr->add_child(subexpr);
     }
 
     return expr;

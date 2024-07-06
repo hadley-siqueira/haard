@@ -309,13 +309,13 @@ void CppGenerator::build_expression(Expression* expr) {
         print_parenthesis_expression((Parenthesis*) expr);
         break;
 */
-    case EXPR_UNARY_PLUS:
-    case EXPR_UNARY_MINUS:
+    case AST_UNARY_PLUS:
+    case AST_UNARY_MINUS:
     case AST_ADDRESS_OF:
     case AST_DEREFERENCE:
-    case EXPR_BITWISE_NOT:
-    case EXPR_PRE_INCREMENT:
-    case EXPR_PRE_DECREMENT:
+    case AST_BITWISE_NOT:
+    case AST_PRE_INCREMENT:
+    case AST_PRE_DECREMENT:
         build_unary_operator(un);
         break;
 
