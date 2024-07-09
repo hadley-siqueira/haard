@@ -36,6 +36,7 @@ namespace haard {
 
         Ast* parse_function();
         Ast* parse_parameters();
+        Ast* parse_parameter();
 
         Ast* parse_statement();
         WhileStatement* parse_while_statement();

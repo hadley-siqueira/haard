@@ -3,4 +3,10 @@ def main : void
     my_var.foo(2, 3, name: 'name', age: 0)
     my_var.foo
     my_var.foo.bar
-    my_var.foo(2, 3, name: 'name', age: 0, 2)
+    #my_var.foo(2, 3, name: 'name', age: 0, 2)
+
+def sum : int
+    @a : int = 0
+    @b : [int] = [1, 2, 3]
+
+    a

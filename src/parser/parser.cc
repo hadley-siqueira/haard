@@ -308,38 +308,41 @@ Ast* Parser::parse_parameters() {
     }
 
     Ast* params = new Ast(AST_PARAMETERS);
-    Ast* param;
 
     while (has_parameters()) {
-        param = new Ast(AST_PARAMETER);
-
-        expect(TK_AT);
-        expect(TK_ID);
-        param->set_from_token(matched);
-
-        expect(TK_COLON);
-        Ast* type = parse_type();
-
-        if (type != nullptr) {
-            param->add_child(type);
-        } else {
-            assert(false && "expected type in parameter");
-        }
-
-        if (match(TK_ASSIGNMENT)) {
-            //Expression* expr = parse_expression();
-
-            //if (expr == nullptr) {
-                log_error("missing expression on default value");
-            //}
-
-            //param->set_expression(parse_expression());
-        }
-
-        params->add_child(param);
+        params->add_child(parse_parameter());
     }
 
     return params;
+}
+
+Ast* Parser::parse_parameter() {
+    Ast* param = new Ast(AST_PARAMETER);
+
+    expect(TK_AT);
+    expect(TK_ID);
+    param->set_from_token(matched);
+
+    expect(TK_COLON);
+    Ast* type = parse_type();
+
+    if (type != nullptr) {
+        param->add_child(type);
+    } else {
+        log_error("expected type in parameter");
+    }
+
+    if (match(TK_ASSIGNMENT)) {
+        Ast* expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("missing expression on default parameter value");
+        }
+
+        param->add_child(expr);
+    }
+
+    return param;
 }
 
 Ast* Parser::parse_statement() {
