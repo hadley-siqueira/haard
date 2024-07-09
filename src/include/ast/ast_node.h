@@ -99,6 +99,7 @@ namespace haard {
         AST_INDEX,
         AST_CALL,
         AST_ARGUMENTS,
+        AST_NAMED_ARGUMENT,
         AST_HASH_PAIR,
 
         AST_ADDRESS_OF,

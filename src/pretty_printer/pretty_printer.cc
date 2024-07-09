@@ -248,6 +248,10 @@ void PrettyPrinter::print(Ast* node) {
         print_arguments(node);
         break;
 
+    case AST_NAMED_ARGUMENT:
+        print_argument_name(node);
+        break;
+
     case AST_POS_DECREMENT:
         print_pos_decrement(node);
         break;
@@ -783,6 +787,11 @@ void PrettyPrinter::print_call(Ast* expr) {
 
 void PrettyPrinter::print_arguments(Ast* args) {
     print_expression_list(args, "(", ")");
+}
+
+void PrettyPrinter::print_argument_name(Ast* node) {
+    out << node->get_value() << ": ";
+    print(node->get_child());
 }
 
 void PrettyPrinter::print_pos_increment(Ast* node) {

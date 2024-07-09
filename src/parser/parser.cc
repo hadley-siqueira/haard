@@ -1231,6 +1231,7 @@ Ast* Parser::parse_postfix_expression() {
                 expr->add_child(right);
             }
         } else if (match(TK_ARROW)) {
+            left = expr;
             expr = new Ast(AST_ARROW, matched);
             right = parse_generic_instantiation();
 
@@ -1240,9 +1241,8 @@ Ast* Parser::parse_postfix_expression() {
                 expr->add_child(left);
                 expr->add_child(right);
             }
-
-            left = expr;
         } else if (match_same_line(TK_LEFT_SQUARE_BRACKET)) {
+            left = expr;
             expr = new Ast(AST_INDEX, matched);
             right = parse_expression();
 
@@ -1253,13 +1253,12 @@ Ast* Parser::parse_postfix_expression() {
                 expr->add_child(right);
             }
 
-            left = expr;
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else if (match_same_line(TK_LEFT_PARENTHESIS)) {
+            left = expr;
             expr = new Ast(AST_CALL, matched);
             expr->add_child(left);
             expr->add_child(parse_argument_list());
-            left = expr;
             expect(TK_RIGHT_PARENTHESIS);
         } else if (match_same_line(TK_INC)) {
             left = expr;
@@ -1481,27 +1480,43 @@ Ast* Parser::parse_hash(Ast* key) {
 }
 
 Ast* Parser::parse_argument_list() {
+    bool has_named_arguments = false;
     Ast* expr;
+    Ast* name;
     Ast* arguments = new Ast(AST_ARGUMENTS);
 
     if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-        expr = parse_expression();
+        do {
+            name = nullptr;
 
-        if (expr == nullptr) {
-            log_error("Expected an expression, but got something else");
-        }
+            if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
+                expect(TK_ID);
+                name = new Ast(AST_NAMED_ARGUMENT, matched);
+                expect(TK_COLON);
+                has_named_arguments = true;
+            } else if (has_named_arguments) {
+                if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
+                    expect(TK_ID);
+                    name = new Ast(AST_NAMED_ARGUMENT, matched);
+                    expect(TK_COLON);
+                } else {
+                    log_error("Missing named argument. You're using named arguments, but now is trying to type an unamed argument");
+                }
+            }
 
-        arguments->add_child(expr);
-
-        while (match(TK_COMMA)) {
             expr = parse_expression();
 
             if (expr == nullptr) {
                 log_error("Expected an expression, but got something else");
             }
 
-            arguments->add_child(expr);
-        }
+            if (name) {
+                name->add_child(expr);
+                arguments->add_child(name);
+            } else {
+                arguments->add_child(expr);
+            }
+        } while (match(TK_COMMA));
     }
 
     return arguments;

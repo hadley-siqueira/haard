@@ -1,0 +1,6 @@
+def main : void
+    my_var.foo.bar(name: 'name', age: 0)
+    my_var.foo(2, 3, name: 'name', age: 0)
+    my_var.foo
+    my_var.foo.bar
+    my_var.foo(2, 3, name: 'name', age: 0, 2)

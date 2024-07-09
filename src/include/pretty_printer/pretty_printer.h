@@ -34,6 +34,7 @@ namespace haard {
         void print_arrow(Ast* node);
         void print_call(Ast* expr);
         void print_arguments(Ast* args);
+        void print_argument_name(Ast* node);
         void print_pos_increment(Ast* node);
         void print_pos_decrement(Ast* node);
 
