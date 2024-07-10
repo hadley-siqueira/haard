@@ -5,10 +5,14 @@
 #include <map>
 
 #include "log/logger.h"
-#include "ast/modules.h"
-#include "ast/ast.h"
+
+#include "haard/ast/ast.h"
+#include "haard/ast/module.h"
+#include "haard/ast/import.h"
 
 namespace haard {
+    using namespace ast;
+
     enum DriverCommands {
         DRIVER_CMD_PRETTY_PRINT,
         DRIVER_CMD_CPP
@@ -29,8 +33,8 @@ namespace haard {
         void semantic_analysis();
 
     public:
-        Module* parse_file(std::string path);
-        void parse_module_imports(Module* module);
+        Ast* parse_file(std::string path);
+        void parse_module_imports(Ast* module);
         void parse_import(Import* import);
         void parse_simple_import(Import* import);
         std::string build_import_path(Import* import);
@@ -46,8 +50,8 @@ namespace haard {
         bool file_exists(std::string path);
 
     private:
-        Modules modules;
-        Ast* ast;
+        //Modules modules;
+        Module* ast;
 
     // system related stuff
     private:

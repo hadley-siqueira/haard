@@ -1,15 +1,13 @@
-#include "ast/ast.h"
+#include "haard/ast/ast.h"
 
-using namespace haard;
+using namespace haard::ast;
 
 Ast::Ast() {
     set_kind(AST_UNKNOWN);
-    set_value(nullptr);
 }
 
 Ast::Ast(AstKind type) {
     set_kind(type);
-    set_value(nullptr);
 }
 
 Ast::Ast(AstKind type, Token& token) {
@@ -35,7 +33,7 @@ int Ast::get_column() const {
     return column;
 }
 
-const char* Ast::get_value() const {
+const std::string& Ast::get_value() const {
     return value;
 }
 
@@ -51,7 +49,7 @@ void Ast::set_column(int column) {
     this->column = column;
 }
 
-void Ast::set_value(const char* value) {
+void Ast::set_value(const std::string& value) {
     this->value = value;
 }
 

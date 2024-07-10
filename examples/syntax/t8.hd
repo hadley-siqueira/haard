@@ -8,5 +8,6 @@ def main : void
 def sum : int
     @a : int = 0
     @b : [int] = [1, 2, 3]
+    @a : int = 0
 
     a

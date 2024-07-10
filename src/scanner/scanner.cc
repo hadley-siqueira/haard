@@ -2,7 +2,6 @@
 #include <iostream>
 #include <map>
 #include "scanner/scanner.h"
-#include "token/token.h"
 #include "string_pool/string_pool.h"
 
 using namespace haard;
@@ -366,7 +365,7 @@ void Scanner::create_token(int kind) {
     Token token;
 
     token.set_kind(kind);
-    token.set_value(StringPool::get(value));
+    token.set_value(value);
     token.set_line(token_line);
     token.set_column(token_column);
     token.set_whitespace(whitespace_counter);

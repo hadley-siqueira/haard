@@ -1,5 +1,4 @@
 #include "scope/symbol.h"
-#include "ast/named_type_descriptor.h"
 
 using namespace haard;
 
@@ -34,7 +33,7 @@ SymbolDescriptor* Symbol::get_descriptor(int idx) {
     return nullptr;
 }
 
-Type* Symbol::get_type(int idx) {/*
+/*Type* Symbol::get_type(int idx) {
     Variable* var = (Variable*) descriptors[idx];
     NamedTypeDescriptor* named = (NamedTypeDescriptor*) descriptors[idx];
     Function* func = (Function*) descriptors[idx];
@@ -56,8 +55,8 @@ Type* Symbol::get_type(int idx) {/*
         return var->get_type();
     }
 
-    return nullptr;*/
-}
+    return nullptr;
+}*/
 
 bool Symbol::is_function() {/*
     return kind == SYM_FUNCTION;*/ return false;

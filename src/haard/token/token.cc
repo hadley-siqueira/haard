@@ -1,5 +1,5 @@
 #include <sstream>
-#include "token/token.h"
+#include "haard/token/token.h"
 
 using namespace haard;
 
@@ -7,40 +7,32 @@ int Token::get_kind() const {
     return kind;
 }
 
-void Token::set_kind(int newKind) {
-    kind = newKind;
+void Token::set_kind(int kind) {
+    this->kind = kind;
 }
 
 int Token::get_line() const {
     return line;
 }
 
-void Token::set_line(int newLine) {
-    line = newLine;
+void Token::set_line(int line) {
+    this->line = line;
 }
 
 int Token::get_column() const {
     return column;
 }
 
-void Token::set_column(int newColumn) {
-    column = newColumn;
+void Token::set_column(int column) {
+    this->column = column;
 }
 
 int Token::get_whitespace() const {
     return whitespace;
 }
 
-void Token::set_whitespace(int newWhitespace) {
-    whitespace = newWhitespace;
-}
-
-const char* Token::get_value() const {
-    return value;
-}
-
-void Token::set_value(const char* newValue) {
-    value = newValue;
+void Token::set_whitespace(int whitespace) {
+    this->whitespace = whitespace;
 }
 
 std::string Token::to_str() {
@@ -54,4 +46,12 @@ std::string Token::to_str() {
     ss << get_whitespace() << ")";
 
     return ss.str();
+}
+
+const std::string& Token::get_value() const {
+    return value;
+}
+
+void Token::set_value(const std::string& value) {
+    this->value = value;
 }

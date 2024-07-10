@@ -2,22 +2,30 @@
 #define HAARD_PRETTY_PRINTER_H
 
 #include <sstream>
-#include "ast/ast.h"
+
+#include "haard/ast/ast.h"
+#include "haard/ast/module.h"
+#include "haard/ast/import.h"
 
 namespace haard {
+    using namespace ast;
+
     class PrettyPrinter {
     public:
         PrettyPrinter();
 
     public:
         std::string get_output();
+
         void print(Ast* node);
+        void print(Module* module);
+        void print(Import* import);
 
         void print_module(Ast* module);
 
         /* Imports */
         void print_imports(Ast* imports);
-        void print_import(Ast* import);
+
         void print_import_path(Ast* path);
         void print_import_path_member(Ast* member);
         void print_import_alias(Ast* alias);
@@ -43,32 +51,32 @@ namespace haard {
         void print_scope(Ast* scope);
         void print_identifier(Ast* id);
 
-        void print_class(Class* klass);
-        void print_struct(Struct* st);
-        void print_union(Union* u);
+//        void print_class(Class* klass);
+//        void print_struct(Struct* st);
+//        void print_union(Union* u);
 
         void print_function(Ast* function);
         void print_parameters(Ast* parameters);
         void print_parameter(Ast* parameter);
 
-        void print_while_statement(WhileStatement* stmt);
-        void print_for_statement(ForStatement* stmt);
+//        void print_while_statement(WhileStatement* stmt);
+//        void print_for_statement(ForStatement* stmt);
 
-        void print_if_statement(BranchStatement* stmt);
-        void print_elif_statement(BranchStatement* stmt);
-        void print_else_statement(BranchStatement* stmt);
+//        void print_if_statement(BranchStatement* stmt);
+//        void print_elif_statement(BranchStatement* stmt);
+//        void print_else_statement(BranchStatement* stmt);
 
-        void print_return_statement(ReturnStatement* stmt);
+//        void print_return_statement(ReturnStatement* stmt);
 
-        void print_expression(Expression* expr);
-        void print_cast_expression(Cast* expr);
-        void print_not_in_expression(NotIn* expr);
+//        void print_expression(Expression* expr);
+//        void print_cast_expression(Cast* expr);
+//        void print_not_in_expression(NotIn* expr);
         void print_index(Ast* node);
         void print_hash_pair(Ast* pair);
 
-        void print_binary_operator(BinaryOperator* bin, bool no_space=false);
+//        void print_binary_operator(BinaryOperator* bin, bool no_space=false);
 
-        void print_unary_operator(UnaryOperator* un, bool last=false);
+//        void print_unary_operator(UnaryOperator* un, bool last=false);
         void print_logical_not(Ast* un);
         void print_not(Ast* un);
         void print_address_of(Ast* node);
@@ -79,11 +87,11 @@ namespace haard {
         void print_pre_increment(Ast* node);
         void print_pre_decrement(Ast* node);
 
-        void print_sizeof_expression(UnaryOperator* un);
-        void print_new_expression(New* expr);
-        void print_delete_expression(Delete* expr);
-        void print_delete_array_expression(DeleteArray* expr);
-        void print_parenthesis_expression(Parenthesis* expr);
+//        void print_sizeof_expression(UnaryOperator* un);
+//        void print_new_expression(New* expr);
+//        void print_delete_expression(Delete* expr);
+//        void print_delete_array_expression(DeleteArray* expr);
+//        void print_parenthesis_expression(Parenthesis* expr);
 
         void print_tuple_type(Ast *tuple);
         void print_function_type(Ast *type);
@@ -91,11 +99,11 @@ namespace haard {
         void print_array_type(Ast* type);
         void print_type_list(Ast *tlist, const char* begin, const char* end);
 
-        void print_identifier(Identifier* id);
+//        void print_identifier(Identifier* id);
         void print_generics(Ast* g);
 
-        void print_char_literal(CharLiteral* ch);
-        void print_string_literal(StringLiteral* str);
+//        void print_char_literal(CharLiteral* ch);
+//        void print_string_literal(StringLiteral* str);
         void print_tuple(Ast* expr);
         void print_list(Ast* expr);
         void print_array(Ast* expr);

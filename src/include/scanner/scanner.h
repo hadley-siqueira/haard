@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "token/token.h"
+#include "haard/token/token.h"
 
 namespace haard {
     class Scanner {

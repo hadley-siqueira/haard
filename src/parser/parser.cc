@@ -12,8 +12,8 @@ Parser::Parser() {
     idx = 0;
 }
 
-Ast* Parser::read(std::string path, std::string relative_path) {
-    Ast* module;
+Module* Parser::read(std::string path, std::string relative_path) {
+    Module* module;
     Scanner sc;
 
     idx = 0;
@@ -23,14 +23,14 @@ Ast* Parser::read(std::string path, std::string relative_path) {
     return module;
 }
 
-Ast* Parser::parse_module() {
-    Ast* module = new Ast(AST_MODULE);
+Module* Parser::parse_module() {
+    Module* module = new Module();
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
-            module->add_child(parse_import());
+            module->add_import(parse_import());
         } else if (lookahead(TK_DEF)) {
-            module->add_child(parse_function());
+            module->add_function(parse_function());
         } else if (lookahead(TK_CLASS)) {
         //    module->add_class(parse_class());
         } else if (lookahead(TK_STRUCT)) {
@@ -47,60 +47,26 @@ Ast* Parser::parse_module() {
     return module;
 }
 
-Ast* Parser::parse_import() {
-    Ast* import = new Ast(AST_IMPORT);
-    Ast* path;
-    Ast* alias;
+Import* Parser::parse_import() {
+    Import* import = new Import();
 
     expect(TK_IMPORT);
     import->set_from_token(matched);
-    path = parse_import_path();
 
-    if (path == nullptr) {
-        log_error("missing path in import");
-    } else {
-        import->add_child(path);
-    }
+    do {
+        expect(TK_ID);
+        import->add_to_path(matched.get_value());
+    } while (match(TK_DOT));
 
     if (match(TK_AS)) {
         expect(TK_ID);
-        alias = new Ast(AST_IMPORT_ALIAS);
-        alias->set_from_token(matched);
-        import->add_child(alias);
+        import->set_alias(matched.get_value());
     }
 
     return import;
 }
 
-Ast* Parser::parse_import_path() {
-    Ast* path = nullptr;
-    Ast* member = parse_import_path_member();
-
-    if (member != nullptr) {
-        path = new Ast(AST_IMPORT_PATH);
-        path->add_child(member);
-
-        while (match(TK_DOT)) {
-            member = parse_import_path_member();
-            path->add_child(member);
-        }
-    }
-
-    return path;
-}
-
-Ast* Parser::parse_import_path_member() {
-    Ast* node = nullptr;
-
-    if (match(TK_ID)) {
-        node = new Ast(AST_IMPORT_PATH_MEMBER);
-        node->set_from_token(matched);
-    }
-
-    return node;
-}
-
-Class* Parser::parse_class() {/*
+Ast* Parser::parse_class() {/*
     Class* klass = new Class();
 
     expect(TK_CLASS);
@@ -132,7 +98,7 @@ Class* Parser::parse_class() {/*
     return klass;*/
 }
 
-Struct* Parser::parse_struct() {/*
+Ast* Parser::parse_struct() {/*
     Struct* st = new Struct();
 
     expect(TK_STRUCT);
@@ -164,7 +130,7 @@ Struct* Parser::parse_struct() {/*
     return st;*/
 }
 
-Union* Parser::parse_union() {/*
+Ast* Parser::parse_union() {/*
     Union* st = new Union();
 
     expect(TK_UNION);
@@ -196,7 +162,7 @@ Union* Parser::parse_union() {/*
     return st;*/
 }
 
-Enum* Parser::parse_enum() {/*
+Ast* Parser::parse_enum() {/*
     Enum* st = new Enum();
 
     expect(TK_ENUM);
@@ -228,7 +194,7 @@ Enum* Parser::parse_enum() {/*
     return st;*/
 }
 
-Variable* Parser::parse_variable() {/*
+Ast* Parser::parse_variable() {/*
     Variable* var = new Variable();
 
     expect(TK_ID);
@@ -250,7 +216,7 @@ Variable* Parser::parse_variable() {/*
     return var;*/
 }
 
-Variable* Parser::parse_enum_variable() {/*
+Ast* Parser::parse_enum_variable() {/*
     Variable* var = new Variable();
 
     expect(TK_ID);
@@ -273,13 +239,14 @@ Variable* Parser::parse_enum_variable() {/*
     return var;*/
 }
 
-Ast* Parser::parse_function() {
-    Ast* function = new Ast(AST_FUNCTION);
+Function* Parser::parse_function() {
+    Function* function = new Function();
 
     expect(TK_DEF);
     expect(TK_ID);
-    function->set_from_token(matched);
-    function->add_child(parse_generics());
+//    function->set_from_token(matched);
+//    function->add_child(parse_generics());
+    function->set_name(matched.get_value());
 
     expect(TK_COLON);
     indent();
@@ -289,12 +256,15 @@ Ast* Parser::parse_function() {
     if (return_type) {
         Ast* rtype = new Ast(AST_RETURN_TYPE);
         rtype->add_child(return_type);
-        function->add_child(rtype);
+//        function->add_child(rtype);
     } else {
         log_error("Expected return type");
     }
 
-    function->add_child(parse_parameters());
+    while (has_parameters()) {
+        function->add_parameter(parse_parameter());
+    }
+
     function->add_child(parse_statements());
 
     dedent();
@@ -302,26 +272,13 @@ Ast* Parser::parse_function() {
     return function;
 }
 
-Ast* Parser::parse_parameters() {
-    if (!has_parameters()) {
-        return nullptr;
-    }
-
-    Ast* params = new Ast(AST_PARAMETERS);
-
-    while (has_parameters()) {
-        params->add_child(parse_parameter());
-    }
-
-    return params;
-}
-
-Ast* Parser::parse_parameter() {
-    Ast* param = new Ast(AST_PARAMETER);
+Parameter* Parser::parse_parameter() {
+    Parameter* param = new Parameter();
 
     expect(TK_AT);
     expect(TK_ID);
-    param->set_from_token(matched);
+//    param->set_from_token(matched);
+    param->set_name(matched.get_value());
 
     expect(TK_COLON);
     Ast* type = parse_type();
@@ -395,7 +352,7 @@ Ast* Parser::parse_statement() {
     return stmt;
 }
 
-WhileStatement* Parser::parse_while_statement() {/*
+Ast* Parser::parse_while_statement() {/*
     Expression* condition;
     WhileStatement* stmt = new WhileStatement();
 
@@ -416,7 +373,7 @@ WhileStatement* Parser::parse_while_statement() {/*
     return stmt;*/
 }
 
-ForStatement* Parser::parse_for_statement() {/*
+Ast* Parser::parse_for_statement() {/*
     ForStatement* stmt = new ForStatement();
 
     Expression* test = nullptr;
@@ -441,7 +398,7 @@ ForStatement* Parser::parse_for_statement() {/*
     return stmt;*/
 }
 
-BranchStatement* Parser::parse_if_statement() {/*
+Ast* Parser::parse_if_statement() {/*
     BranchStatement* stmt = new BranchStatement(STMT_IF);
     Expression* condition;
 
@@ -470,7 +427,7 @@ BranchStatement* Parser::parse_if_statement() {/*
     return stmt;*/
 }
 
-BranchStatement* Parser::parse_elif_statement() {/*
+Ast* Parser::parse_elif_statement() {/*
     Expression* condition;
     BranchStatement* stmt = new BranchStatement(STMT_ELIF);
 
@@ -498,7 +455,7 @@ BranchStatement* Parser::parse_elif_statement() {/*
     return stmt;*/
 }
 
-BranchStatement* Parser::parse_else_statement() {/*
+Ast* Parser::parse_else_statement() {/*
     BranchStatement* stmt = new BranchStatement(STMT_ELSE);
 
     expect(TK_ELSE);
@@ -546,7 +503,7 @@ void Parser::parse_for_init_or_range(ForStatement* stmt) {
     }*/
 }
 
-void Parser::parse_for_test(ForStatement* stmt) {/*
+void Parser::parse_for_test(Ast* stmt) {/*
     Expression* test = nullptr;
 
     if (lookahead(TK_SEMICOLON)) {
@@ -562,7 +519,7 @@ void Parser::parse_for_test(ForStatement* stmt) {/*
     stmt->set_test(test);*/
 }
 
-void Parser::parse_for_update(ForStatement* stmt) {/*
+void Parser::parse_for_update(Ast* stmt) {/*
     if (lookahead(TK_COLON)) {
         return;
     }
@@ -589,7 +546,7 @@ void Parser::parse_for_update(ForStatement* stmt) {/*
     stmt->set_update(update);*/
 }
 
-Statement* Parser::parse_return_statement() {/*
+Ast* Parser::parse_return_statement() {/*
     ReturnStatement* stmt = new ReturnStatement();
     Expression* expr = nullptr;
 
@@ -772,7 +729,7 @@ Ast* Parser::parse_expression() {
     //return parse_assignment_expression();
 }
 
-Expression* Parser::parse_assignment_expression() {
+Ast* Parser::parse_assignment_expression() {/*
     Token oper;
     Expression* expr = parse_cast_expression();
 
@@ -824,10 +781,10 @@ Expression* Parser::parse_assignment_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_cast_expression() {
+Ast* Parser::parse_cast_expression() {/*
     Token oper;
     Ast* type = nullptr;
     Expression* expr = parse_logical_or_expression();
@@ -846,10 +803,10 @@ Expression* Parser::parse_cast_expression() {
         expr = nullptr;//new Cast(oper, expr, type);
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_logical_or_expression() {
+Ast* Parser::parse_logical_or_expression() {/*
     Token oper;
     Expression* expr = parse_logical_and_expression();
 
@@ -862,10 +819,10 @@ Expression* Parser::parse_logical_or_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_logical_and_expression() {
+Ast* Parser::parse_logical_and_expression() {/*
     Token oper;
     Expression* expr = parse_equality_expression();
 
@@ -878,10 +835,10 @@ Expression* Parser::parse_logical_and_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_equality_expression() {
+Ast* Parser::parse_equality_expression() {/*
     Token oper;
     Expression* expr = parse_relational_expression();
 
@@ -897,10 +854,10 @@ Expression* Parser::parse_equality_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_relational_expression() {
+Ast* Parser::parse_relational_expression() {/*
     Token oper;
     Expression* expr = parse_range_expression();
 
@@ -929,10 +886,10 @@ Expression* Parser::parse_relational_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_range_expression() {
+Ast* Parser::parse_range_expression() {/*
     Token oper;
     Expression* expr = parse_arith_expression();
 
@@ -948,10 +905,10 @@ Expression* Parser::parse_range_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_arith_expression() {
+Ast* Parser::parse_arith_expression() {/*
     Token oper;
     Expression* expr = parse_term_expression();
 
@@ -967,10 +924,10 @@ Expression* Parser::parse_arith_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_term_expression() {
+Ast* Parser::parse_term_expression() {/*
     Token oper;
     Expression* expr = parse_power_expression();
 
@@ -992,10 +949,10 @@ Expression* Parser::parse_term_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_power_expression() {
+Ast* Parser::parse_power_expression() {/*
     Token oper;
     Expression* expr = parse_bitwise_or_expression();
 
@@ -1008,10 +965,10 @@ Expression* Parser::parse_power_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_bitwise_or_expression() {
+Ast* Parser::parse_bitwise_or_expression() {/*
     Token oper;
     Expression* expr = parse_bitwise_xor_expression();
 
@@ -1024,10 +981,10 @@ Expression* Parser::parse_bitwise_or_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_bitwise_xor_expression() {
+Ast* Parser::parse_bitwise_xor_expression() {/*
     Token oper;
     Expression* expr = parse_bitwise_and_expression();
 
@@ -1040,10 +997,10 @@ Expression* Parser::parse_bitwise_xor_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_bitwise_and_expression() {
+Ast* Parser::parse_bitwise_and_expression() {/*
     Token oper;
     Expression* expr = parse_shift_expression();
 
@@ -1056,10 +1013,10 @@ Expression* Parser::parse_bitwise_and_expression() {
         }
     }
 
-    return expr;
+    return expr;*/
 }
 
-Expression* Parser::parse_shift_expression() {
+Ast* Parser::parse_shift_expression() {/*
     Token oper;
     Ast* expr = parse_unary_expression();
 
@@ -1078,7 +1035,7 @@ Expression* Parser::parse_shift_expression() {
         }
     }
 
-    return nullptr;//expr;
+    return nullptr;//expr;*/
 }
 
 Ast* Parser::parse_unary_expression() {
@@ -1189,7 +1146,7 @@ Ast* Parser::parse_pre_decrement() {
     return parse_simple_unary_operator(AST_PRE_DECREMENT, TK_DEC, "--");
 }
 
-Ast* Parser::parse_simple_unary_operator(AstType ast_type, TokenKind token_type, const char* oper) {
+Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper) {
     std::stringstream ss;
     Ast* expr;
     Ast* subexpr;
@@ -1313,7 +1270,7 @@ Ast* Parser::parse_primary_expression() {
     return expr;
 }
 
-Expression* Parser::parse_delete_expression() {
+Ast* Parser::parse_delete_expression() {/*
     Token oper;
     Expression* expr = nullptr;
 
@@ -1327,7 +1284,7 @@ Expression* Parser::parse_delete_expression() {
         //expr = new Delete(oper, parse_expression());
     }
 
-    return expr;
+    return expr;*/
 }
 
 Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
@@ -1347,7 +1304,7 @@ Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
     expr->add_child(subexpr);
 
     if (lookahead(TK_COMMA)) {
-        expr->set_type(AST_TUPLE);
+        expr->set_kind(AST_TUPLE);
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
@@ -1361,7 +1318,7 @@ Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
             }
         }
     } else if (lookahead(TK_SEMICOLON)) {
-        expr->set_type(AST_SEQUENCE);
+        expr->set_kind(AST_SEQUENCE);
 
         while (match(TK_SEMICOLON)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
@@ -1547,7 +1504,7 @@ Ast* Parser::parse_generic_instantiation() {
     return apply;
 }
 
-Expression* Parser::parse_new_expression() {
+Ast* Parser::parse_new_expression() {/*
     Ast* type;
     New* expr = new New();
 
@@ -1567,7 +1524,7 @@ Expression* Parser::parse_new_expression() {
         expect(TK_RIGHT_PARENTHESIS);
     }
 
-    return expr;
+    return expr;*/
 }
 
 Ast* Parser::parse_scope() {
@@ -1626,7 +1583,7 @@ Ast* Parser::parse_generics() {
     return generics;
 }
 
-Ast* Parser::parse_type_list(AstType kind) {
+Ast* Parser::parse_type_list(AstKind kind) {
     Ast* type_list = new Ast(kind);
     Ast* type = parse_type();
 

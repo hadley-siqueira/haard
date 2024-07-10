@@ -27,4 +27,5 @@ namespace haard {
         Module* module;
     };
 }
+
 #endif

@@ -422,28 +422,28 @@ namespace haard {
     class Token {
     public:
         int get_kind() const;
-        void set_kind(int newKind);
+        void set_kind(int kind);
 
         int get_line() const;
-        void set_line(int newLine);
+        void set_line(int line);
 
         int get_column() const;
-        void set_column(int newColumn);
+        void set_column(int column);
 
         int get_whitespace() const;
-        void set_whitespace(int newWhitespace);
-
-        const char* get_value() const;
-        void set_value(const char* newValue);
+        void set_whitespace(int whitespace);
 
         std::string to_str();
+
+        const std::string& get_value() const;
+        void set_value(const std::string& value);
 
     private:
         int kind;
         int line;
         int column;
         int whitespace;
-        const char* value;
+        std::string value;
     };
 }
 

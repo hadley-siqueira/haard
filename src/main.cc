@@ -1,13 +1,11 @@
 #include <iostream>
-#include "token/token.h"
+#include "haard/token/token.h"
 #include "scanner/scanner.h"
-#include "scanner/scanner2.h"
 #include "parser/parser.h"
-#include "string_pool/string_pool.h"
-#include "pretty_printer/pretty_printer.h"
+
+
 #include "driver/driver.h"
 #include "utils/utils.h"
-#include "json/json.h"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -31,20 +29,6 @@ void test_parser(int argc, char** argv) {
     delete m;
 }
 
-void test_pretty_printer(int argc, char** argv) {
-    Parser parser;
-    PrettyPrinter printer;
-
-    std::cout << "parsing...\n";
-    Ast* module = parser.read(argv[1]);
-
-    std::cout << "printing...\n";
-    printer.print(module);
-    std::cout << printer.get_output() << '\n';
-
-    delete module;
-}
-
 void test_driver(int argc, char** argv) {
     Driver driver;
 
@@ -54,7 +38,6 @@ void test_driver(int argc, char** argv) {
 
 int main(int argc, char** argv) {
     test_driver(argc, argv);
-    //test_scanner(argc, argv);
 
     return 0;
 }

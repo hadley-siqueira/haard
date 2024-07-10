@@ -5,9 +5,9 @@
 #include "driver/driver.h"
 #include "parser/parser.h"
 
-#include "semantic/semantic_define_pass.h"
+//#include "semantic/semantic_define_pass.h"
 
-#include "cpp_generator/cpp_generator.h"
+//#include "cpp_generator/cpp_generator.h"
 
 #include "pretty_printer/pretty_printer.h"
 
@@ -88,18 +88,18 @@ void Driver::read_configuration(std::string path) {
 }
 
 void Driver::semantic_analysis() {
-    SemanticDefinePass pass1;
+    /*SemanticDefinePass pass1;
 
-    pass1.build_modules(&modules);
+    pass1.build_modules(&modules);*/
 }
 
-Module* Driver::parse_file(std::string path) {
+Ast* Driver::parse_file(std::string path) {
     if (!file_exists(path)) {
         log_error("file '" + path + "' couldn't be opened");
         exit();
     }
 
-    if (!modules.has_module(path)) {
+    if (true) {//!modules.has_module(path)) {
         Parser parser;
 
         log_info("parsing file " + path);
@@ -107,24 +107,24 @@ Module* Driver::parse_file(std::string path) {
         ast = parser.read(path, build_relative_path(path));
     }
 
-    return modules.get_module(path);
+    return nullptr; //modules.get_module(path);
 }
 
-void Driver::parse_module_imports(Module* module) {
+void Driver::parse_module_imports(Ast* module) {/*
     if (module == nullptr) {
         return;
     }
 
     for (int i = 0; i < module->imports_count(); ++i) {
         parse_import(module->get_import(i));
-    }
+    }*/
 }
 
 void Driver::parse_import(Import* import) {
     parse_simple_import(import);
 }
 
-void Driver::parse_simple_import(Import* import) {
+void Driver::parse_simple_import(Import* import) {/*
     Module* file = nullptr;
     std::string path = build_import_path(import);
 
@@ -136,7 +136,7 @@ void Driver::parse_simple_import(Import* import) {
         file = parse_file(path);
         import->set_module(file);
         parse_module_imports(file);
-    }
+    }*/
 }
 
 std::string Driver::build_import_path(Import* import) {
@@ -144,7 +144,7 @@ std::string Driver::build_import_path(Import* import) {
 
     for (int i = 0; i < import->path_count(); ++i) {
         str += path_delimiter;
-        str += import->get_path_token(i).get_value();
+        //str += import->get_path_token(i).get_value();
     }
 
     str += ".hd";
@@ -227,9 +227,9 @@ void Driver::pretty_print() {
 }
 
 void Driver::generate_cpp() {
-    CppGenerator gen;
+    /*CppGenerator gen;
 
-    gen.build_modules(&modules);
+    gen.build_modules(&modules);*/
 }
 
 bool Driver::file_exists(std::string path) {
