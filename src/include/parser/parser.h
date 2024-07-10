@@ -7,11 +7,6 @@
 #include "log/logger.h"
 
 #include "haard/ast/ast.h"
-#include "haard/ast/module.h"
-#include "haard/ast/import.h"
-#include "haard/ast/function.h"
-
-#include "haard/token/token.h"
 
 namespace haard {
     using namespace haard::ast;
@@ -21,13 +16,12 @@ namespace haard {
         Parser();
 
     public:
-        Module* read(std::string path, std::string relative_path = "");
+        Ast* read(std::string path, std::string relative_path = "");
 
     public:
-        Module* parse_module();
+        Ast* parse_module();
 
         Ast* parse_imports();
-        Import* parse_import();
 
         Ast* parse_definitions();
 
@@ -39,8 +33,8 @@ namespace haard {
         Ast* parse_variable();
         Ast* parse_enum_variable();
 
-        Function* parse_function();
-        void parse_parameters(Function *function);
+        Ast* parse_function();
+        Ast* parse_parameters();
         Ast* parse_parameter();
 
         Ast* parse_statement();
@@ -62,7 +56,7 @@ namespace haard {
         Ast* parse_tuple_or_function_type();
         Ast* parse_primary_type();
 
-        Ast* parse_expression();
+        Expression* parse_expression();
         Ast* parse_assignment_expression();
         Ast* parse_cast_expression();
 
@@ -98,7 +92,7 @@ namespace haard {
 
         Ast* parse_postfix_expression();
 
-        Ast* parse_primary_expression();
+        Expression* parse_primary_expression();
 
         Ast* parse_new_expression();
         Ast* parse_delete_expression();

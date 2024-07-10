@@ -24,23 +24,22 @@ namespace haard::ast {
         AST_UNION,
 
         AST_IMPORT,
-        AST_IMPORT_PATH,
-        AST_IMPORT_PATH_MEMBER,
-        AST_IMPORT_ALIAS,
+        AST_PATH,
+        AST_ALIAS,
 
         AST_GENERIC_APPLICATION,
         AST_SCOPE,
         AST_ID,
 
         AST_UNKNOWN_STATEMENT,
-        AST_STATEMENTS,
+        AST_COMPOUND_STATEMENT,
         AST_EXPRESSION,
         STMT_WHILE,
         STMT_FOR,
         STMT_IF,
         STMT_ELIF,
         STMT_ELSE,
-        STMT_RETURN,
+        AST_RETURN,
 
         AST_EXPRESSION_UNKNOWN,
 
@@ -181,7 +180,7 @@ namespace haard::ast {
         Ast();
         Ast(AstKind type);
         Ast(AstKind type, Token& token);
-        ~Ast();
+        virtual ~Ast();
 
     public:
         AstKind get_kind() const;

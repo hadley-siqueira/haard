@@ -18,10 +18,9 @@ namespace haard {
         std::string get_output();
 
         void print(Ast* node);
-        void print(Module* module);
-        void print(Import* import);
 
-        void print_module(Ast* module);
+        void print_import(Import* import);
+        void print_module(Module *module);
 
         /* Imports */
         void print_imports(Ast* imports);

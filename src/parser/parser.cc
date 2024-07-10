@@ -12,8 +12,8 @@ Parser::Parser() {
     idx = 0;
 }
 
-Module* Parser::read(std::string path, std::string relative_path) {
-    Module* module;
+Ast* Parser::read(std::string path, std::string relative_path) {
+    Ast* module;
     Scanner sc;
 
     idx = 0;
@@ -23,14 +23,14 @@ Module* Parser::read(std::string path, std::string relative_path) {
     return module;
 }
 
-Module* Parser::parse_module() {
-    Module* module = new Module();
+Ast* Parser::parse_module() {
+    Ast* module = new Ast(AST_MODULE);
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
-            module->add_import(parse_import());
+            module->add_child(parse_import());
         } else if (lookahead(TK_DEF)) {
-            module->add_function(parse_function());
+            module->add_child(parse_function());
         } else if (lookahead(TK_CLASS)) {
         //    module->add_class(parse_class());
         } else if (lookahead(TK_STRUCT)) {
@@ -47,15 +47,16 @@ Module* Parser::parse_module() {
     return module;
 }
 
-Import* Parser::parse_import() {
-    Import* import = new Import();
+Ast* Parser::parse_import() {
+    Ast* import = new Ast(AST_IMPORT);
+    Ast* path = new Ast(AST_PATH);
 
     expect(TK_IMPORT);
     import->set_from_token(matched);
 
     do {
         expect(TK_ID);
-        import->add_to_path(matched.get_value());
+        path->add_child(matched.get_value());
     } while (match(TK_DOT));
 
     if (match(TK_AS)) {
@@ -265,14 +266,15 @@ Function* Parser::parse_function() {
         function->add_parameter(parse_parameter());
     }
 
-    function->add_child(parse_statements());
+    //function->add_child(parse_statements());
+    parse_statements();
 
     dedent();
 
     return function;
 }
 
-Parameter* Parser::parse_parameter() {
+Ast* Parser::parse_parameter() {
     Parameter* param = new Parameter();
 
     expect(TK_AT);
@@ -284,7 +286,7 @@ Parameter* Parser::parse_parameter() {
     Ast* type = parse_type();
 
     if (type != nullptr) {
-        param->add_child(type);
+        //param->add_child(type);
     } else {
         log_error("expected type in parameter");
     }
@@ -296,7 +298,7 @@ Parameter* Parser::parse_parameter() {
             log_error("missing expression on default parameter value");
         }
 
-        param->add_child(expr);
+        //param->add_child(expr);
     }
 
     return param;
@@ -335,7 +337,7 @@ Ast* Parser::parse_statement() {
     } else if (lookahead(TK_IF)) {
         //stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
-        //stmt = parse_return_statement();
+        stmt = parse_return_statement();
     } else {
         expr = parse_expression();
 
@@ -546,8 +548,8 @@ void Parser::parse_for_update(Ast* stmt) {/*
     stmt->set_update(update);*/
 }
 
-Ast* Parser::parse_return_statement() {/*
-    ReturnStatement* stmt = new ReturnStatement();
+Ast* Parser::parse_return_statement() {
+    JumpStatement* stmt = new JumpStatement(AST_RETURN);
     Expression* expr = nullptr;
 
     expect(TK_RETURN);
@@ -556,17 +558,17 @@ Ast* Parser::parse_return_statement() {/*
         expr = parse_expression();
 
         if (expr == nullptr) {
-            assert(false && "expected an expression on return statement");
+            log_error("expected an expression on return statement but got an invalid token");
         }
 
         stmt->set_expression(expr);
     }
 
-    return stmt;*/
+    return stmt;
 }
 
 Ast* Parser::parse_statements() {
-    Ast* statements = new Ast(AST_STATEMENTS);
+    Ast* statements = new Ast(AST_COMPOUND_STATEMENT);
 
     if (match(TK_PASS)) {
         return statements;
@@ -724,8 +726,8 @@ Ast* Parser::parse_primary_type() {
     return type;
 }
 
-Ast* Parser::parse_expression() {
-    return parse_unary_expression();
+Expression* Parser::parse_expression() {
+    return (Expression*) parse_unary_expression();
     //return parse_assignment_expression();
 }
 
@@ -1236,7 +1238,7 @@ Ast* Parser::parse_postfix_expression() {
     return expr;
 }
 
-Ast* Parser::parse_primary_expression() {
+Expression* Parser::parse_primary_expression() {
     Ast* expr = nullptr;
 
     if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
@@ -1244,19 +1246,19 @@ Ast* Parser::parse_primary_expression() {
     } else if (match(TK_THIS)) {
         expr = new Ast(AST_THIS, matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
-        expr = new Ast(AST_LITERAL_BOOLEAN, matched);
+        expr = new Literal(AST_LITERAL_BOOLEAN, matched);
     } else if (match(TK_LITERAL_INTEGER)) {
-        expr = new Ast(AST_LITERAL_INTEGER, matched);
+        expr = new Literal(AST_LITERAL_INTEGER, matched);
     } else if (match(TK_LITERAL_FLOAT)) {
-        expr = new Ast(AST_LITERAL_FLOAT, matched);
+        expr = new Literal(AST_LITERAL_FLOAT, matched);
     } else if (match(TK_LITERAL_DOUBLE)) {
-        expr = new Ast(AST_LITERAL_DOUBLE, matched);
+        expr = new Literal(AST_LITERAL_DOUBLE, matched);
     } else if (match(TK_LITERAL_CHAR)) {
-        expr = new Ast(AST_LITERAL_CHAR, matched);
+        expr = new Literal(AST_LITERAL_CHAR, matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING)) {
-        expr = new Ast(AST_LITERAL_STRING, matched);
+        expr = new Literal(AST_LITERAL_STRING, matched);
     } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
-        expr = new Ast(AST_LITERAL_STRING, matched);
+        expr = new Literal(AST_LITERAL_STRING, matched);
     } else if (match(TK_NULL)) {
         expr = new Ast(AST_NULL, matched);
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
@@ -1267,7 +1269,7 @@ Ast* Parser::parse_primary_expression() {
         expr = parse_array_or_hash_expression();
     }
 
-    return expr;
+    return (Expression*) expr;
 }
 
 Ast* Parser::parse_delete_expression() {/*

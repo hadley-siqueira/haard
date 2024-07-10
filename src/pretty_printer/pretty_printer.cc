@@ -12,7 +12,7 @@ std::string PrettyPrinter::get_output() {
     return out.str();
 }
 
-void PrettyPrinter::print(Import* import) {
+void PrettyPrinter::print_import(Import* import) {
     size_t i;
 
     out << "import ";
@@ -73,7 +73,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Statements */
-    case AST_STATEMENTS:
+    case AST_COMPOUND_STATEMENT:
         print_statements(node);
         break;
 
@@ -361,15 +361,13 @@ void PrettyPrinter::print(Ast* node) {
     }
 }
 
-void PrettyPrinter::print(Module* module) {
-    for (size_t i = 0; i < module->imports_count(); ++i) {
-        print(module->get_import(i));
+void PrettyPrinter::print_module(Module* module) {
+    for (auto i = 0; module->imports_count(); ++i) {
+        print_import(module->get_import(i));
         out << "\n";
     }
-}
 
-void PrettyPrinter::print_module(Ast* module) {
-    for (size_t i = 0; i < module->children_count(); ++i) {
+    for (size_t i = 0; i < module->functions_count(); ++i) {
         print(module->get_child(i));
         out << "\n";
     }
@@ -567,7 +565,7 @@ void PrettyPrinter::print_function(Ast* function) {
     indent();
 
     print(function->get_child(AST_PARAMETERS));
-    print(function->get_child(AST_STATEMENTS));
+    print(function->get_child(AST_COMPOUND_STATEMENT));
 
     dedent();
 }
