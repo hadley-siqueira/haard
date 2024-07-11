@@ -77,6 +77,22 @@ void PrettyPrinter::print(Ast* node) {
         print_expression(node, true);
         break;
 
+    case AST_TIMES:
+        print_times(node);
+        break;
+
+    case AST_DIVISION:
+        print_division(node);
+        break;
+
+    case AST_MODULO:
+        print_modulo(node);
+        break;
+
+    case AST_INTEGER_DIVISION:
+        print_integer_division(node);
+        break;
+
     case AST_POWER:
         print_power(node);
         break;
@@ -177,7 +193,7 @@ void PrettyPrinter::print(Ast* node) {
         print_pos_increment(node);
         break;
 
-    case EXPR_PARENTHESIS:
+    case AST_PARENTHESIS:
         print_parenthesis(node);
         break;
 
@@ -431,6 +447,22 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_times(Ast* node) {
+    print_binop(node, "*");
+}
+
+void PrettyPrinter::print_division(Ast* node) {
+    print_binop(node, "/");
+}
+
+void PrettyPrinter::print_modulo(Ast* node) {
+    print_binop(node, "%");
+}
+
+void PrettyPrinter::print_integer_division(Ast* node) {
+    print_binop(node, "//");
 }
 
 void PrettyPrinter::print_power(Ast* node) {

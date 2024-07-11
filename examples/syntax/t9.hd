@@ -19,6 +19,10 @@ def sum : int
     a | 2
     a ^ 2
     &a
+    2 * 3
+    2 / 3
+    2 % 3
+    2 // 3
 
     out << "a value"
         << "other value"

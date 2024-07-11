@@ -498,7 +498,7 @@ void Parser::parse_for_init_or_range(ForStatement* stmt) {
         assert(false && "expected for expression");
     }
 
-    if (expr->get_kind() == EXPR_IN) {
+    if (expr->get_kind() == AST_IN) {
         stmt->set_range(expr);
     } else {
         init = new ExpressionList();
@@ -740,7 +740,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_power_expression();
+    return parse_term_expression();
     //return parse_assignment_expression();
 }
 
@@ -942,29 +942,24 @@ Ast* Parser::parse_arith_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_term_expression() {/*
-    Token oper;
-    Expression* expr = parse_power_expression();
+Ast* Parser::parse_term_expression() {
+    Ast* expr = parse_power_expression();
 
     while (true) {
         if (match_same_line(TK_TIMES)) {
-            oper = matched;
-            expr = new Times(oper, expr, parse_power_expression());
+            expr = parse_binary_operator(AST_TIMES, "*", expr, &Parser::parse_power_expression);
         } else if (match_same_line(TK_DIVISION)) {
-            oper = matched;
-            expr = new Division(oper, expr, parse_power_expression());
+            expr = parse_binary_operator(AST_DIVISION, "/", expr, &Parser::parse_power_expression);
         } else if (match_same_line(TK_MODULO)) {
-            oper = matched;
-            expr = new Modulo(oper, expr, parse_power_expression());
+            expr = parse_binary_operator(AST_MODULO, "%", expr, &Parser::parse_power_expression);
         } else if (match_same_line(TK_INTEGER_DIVISION)) {
-            oper = matched;
-            expr = new IntegerDivision(oper, expr, parse_power_expression());
+            expr = parse_binary_operator(AST_INTEGER_DIVISION, "//", expr, &Parser::parse_power_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_power_expression() {
@@ -1335,7 +1330,7 @@ Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
         return nullptr;
     }
 
-    expr = new Ast(EXPR_PARENTHESIS);
+    expr = new Ast(AST_PARENTHESIS);
     expr->add_child(subexpr);
 
     if (lookahead(TK_COMMA)) {
