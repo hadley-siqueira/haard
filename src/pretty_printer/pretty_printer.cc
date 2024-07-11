@@ -77,6 +77,10 @@ void PrettyPrinter::print(Ast* node) {
         print_expression(node, true);
         break;
 
+    case AST_POWER:
+        print_power(node);
+        break;
+
     case AST_BITWISE_OR:
         print_bitwise_or(node);
         break;
@@ -427,6 +431,10 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_power(Ast* node) {
+    print_binop(node, "**");
 }
 
 void PrettyPrinter::print_bitwise_or(Ast* node) {
@@ -1058,6 +1066,7 @@ void PrettyPrinter::print_indentation() {
 }
 
 void PrettyPrinter::print_binop(Ast* node, const char* oper, bool no_space) {
+    //out << "(";
     print(node->get_child(0));
 
     if (no_space) {
@@ -1067,4 +1076,5 @@ void PrettyPrinter::print_binop(Ast* node, const char* oper, bool no_space) {
     }
 
     print(node->get_child(1));
+    //out << ")";
 }

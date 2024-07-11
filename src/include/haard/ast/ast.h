@@ -88,7 +88,7 @@ namespace haard::ast {
         EXPR_MODULO,
         EXPR_INTEGER_DIVISION,
 
-        EXPR_POWER,
+        AST_POWER,
 
         AST_BITWISE_OR,
         AST_BITWISE_XOR,

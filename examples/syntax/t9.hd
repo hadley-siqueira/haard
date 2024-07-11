@@ -23,6 +23,8 @@ def sum : int
     out << "a value"
         << "other value"
 
+    3 ** -2 ** 3 ** 4
+
     return a &
            b &
            c

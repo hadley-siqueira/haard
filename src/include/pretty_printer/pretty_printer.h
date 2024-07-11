@@ -38,6 +38,7 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_power(Ast* node);
         void print_bitwise_or(Ast* node);
         void print_bitwise_xor(Ast* node);
         void print_bitwise_and(Ast* node);

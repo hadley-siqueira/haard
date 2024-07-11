@@ -740,7 +740,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_bitwise_or_expression();
+    return parse_power_expression();
     //return parse_assignment_expression();
 }
 
@@ -967,20 +967,14 @@ Ast* Parser::parse_term_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_power_expression() {/*
-    Token oper;
-    Expression* expr = parse_bitwise_or_expression();
+Ast* Parser::parse_power_expression() {
+    Ast* expr = parse_bitwise_or_expression();
 
-    while (true) {
-        if (match(TK_POWER)) {
-            oper = matched;
-            expr = new Power(oper, expr, parse_bitwise_or_expression());
-        } else {
-            break;
-        }
+    if (match(TK_POWER)) {
+        expr = parse_binary_operator(AST_POWER, "**", expr, &Parser::parse_power_expression);
     }
 
-    return expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_bitwise_or_expression() {
