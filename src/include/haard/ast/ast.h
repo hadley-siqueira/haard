@@ -35,7 +35,8 @@ namespace haard::ast {
         AST_UNKNOWN_STATEMENT,
         AST_COMPOUND_STATEMENT,
         AST_EXPRESSION,
-        STMT_WHILE,
+        AST_EXPRESSION_WITH_SEMICOLON,
+        AST_WHILE,
         STMT_FOR,
         STMT_IF,
         STMT_ELIF,
@@ -91,11 +92,11 @@ namespace haard::ast {
 
         EXPR_BITWISE_OR,
         EXPR_BITWISE_XOR,
-        EXPR_BITWISE_AND,
+        AST_BITWISE_AND,
 
-        EXPR_SHIFT_LEFT_LOGICAL,
-        EXPR_SHIFT_RIGHT_ARITHMETIC,
-        EXPR_SHIFT_RIGHT_LOGICAL,
+        AST_SHIFT_LEFT_LOGICAL,
+        AST_SHIFT_RIGHT_ARITHMETIC,
+        AST_SHIFT_RIGHT_LOGICAL,
 
         AST_DOT,
         AST_ARROW,

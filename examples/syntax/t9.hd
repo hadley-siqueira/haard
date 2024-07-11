@@ -1,0 +1,38 @@
+def main : void
+    my_var.foo.bar(name: 'name', age: 0)
+    my_var.foo(2, 3, name: 'name', age: 0)
+    my_var.foo
+    my_var.foo.bar
+    #my_var.foo(2, 3, name: 'name', age: 0, 2)
+
+def sum : int
+    @a : int = 0
+    @b : [int] = [1, 2, 3]
+    @a : int = 0
+
+    a << 2
+    a << 2
+    a << 2
+    a >> 2
+    a >>> 2
+    a & 2;
+    &a
+
+    return a &
+           b &
+           c
+
+    return foo_with_a_long_name
+        .obj()
+        .filter()
+        .map()
+
+    mystr
+            .lowercaseString
+            .replace("hello", withString: "goodbye")
+
+    while true:
+        print("Hi")
+
+def foo : void
+    return

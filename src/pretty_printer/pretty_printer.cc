@@ -60,6 +60,10 @@ void PrettyPrinter::print(Ast* node) {
         print_statements(node);
         break;
 
+    case AST_WHILE:
+        print_while(node);
+        break;
+
     case AST_RETURN:
         print_return(node);
         break;
@@ -67,6 +71,26 @@ void PrettyPrinter::print(Ast* node) {
     /* Expressions */
     case AST_EXPRESSION:
         print_expression(node);
+        break;
+
+    case AST_EXPRESSION_WITH_SEMICOLON:
+        print_expression(node, true);
+        break;
+
+    case AST_BITWISE_AND:
+        print_bitwise_and(node);
+        break;
+
+    case AST_SHIFT_LEFT_LOGICAL:
+        print_shift_left_logical(node);
+        break;
+
+    case AST_SHIFT_RIGHT_LOGICAL:
+        print_shift_right_logical(node);
+        break;
+
+    case AST_SHIFT_RIGHT_ARITHMETIC:
+        print_shift_right_arithmetic(node);
         break;
 
     case AST_LOGICAL_NOT:
@@ -397,6 +421,22 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << ']';
 }
 
+void PrettyPrinter::print_bitwise_and(Ast* node) {
+    print_binop(node, "&");
+}
+
+void PrettyPrinter::print_shift_left_logical(Ast* node) {
+    print_binop(node, "<<");
+}
+
+void PrettyPrinter::print_shift_right_logical(Ast* node) {
+print_binop(node, ">>>");
+}
+
+void PrettyPrinter::print_shift_right_arithmetic(Ast* node) {
+print_binop(node, ">>");
+}
+
 void PrettyPrinter::print_dot(Ast* node) {
     print(node->get_child(0));
     out << ".";
@@ -583,17 +623,17 @@ void PrettyPrinter::print_parameter(Ast* parameter) {
         print(parameter->get_child(1));
     }
 }
-/*
-void PrettyPrinter::print_while_statement(WhileStatement* stmt) {
+
+void PrettyPrinter::print_while(Ast* stmt) {
     print_indentation();
     out << "while ";
-    print_expression(stmt->get_condition());
+    print(stmt->get_child(0));
     out << ":\n";
     indent();
-    //print_statements(stmt->get_statements());
+    print(stmt->get_child(1));
     dedent();
     out << '\n';
-}*/
+}
 
 /*
 void PrettyPrinter::print_for_statement(ForStatement* stmt) {
@@ -702,9 +742,14 @@ void PrettyPrinter::print_return(Ast* node) {
     out << "\n";
 }
 
-void PrettyPrinter::print_expression(Ast* stmt) {
+void PrettyPrinter::print_expression(Ast* stmt, bool has_semicolon) {
     print_indentation();
     print(stmt->get_child(0));
+
+    if (has_semicolon) {
+        out << ";";
+    }
+
     out << '\n';
 }
 /*
@@ -994,4 +1039,16 @@ void PrettyPrinter::print_indentation() {
     for (int i = 0; i < indent_level; ++i) {
         out << "    ";
     }
+}
+
+void PrettyPrinter::print_binop(Ast* node, const char* oper, bool no_space) {
+    print(node->get_child(0));
+
+    if (no_space) {
+        out << oper;
+    } else {
+        out << " " << oper << " ";
+    }
+
+    print(node->get_child(1));
 }

@@ -15,5 +15,3 @@ def sum : float
     @b : int
 
     return 0
-    a.t
-    sizeof(a.t)

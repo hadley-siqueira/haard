@@ -340,7 +340,7 @@ Ast* Parser::parse_statement() {
     //}
 
     if (lookahead(TK_WHILE)) {
-        //stmt = parse_while_statement();
+        stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
         //stmt = parse_for_statement();
     } else if (lookahead(TK_IF)) {
@@ -358,30 +358,34 @@ Ast* Parser::parse_statement() {
 
         stmt = new Ast(AST_EXPRESSION);
         stmt->add_child(expr);
+
+        if (match(TK_SEMICOLON)) {
+            stmt->set_kind(AST_EXPRESSION_WITH_SEMICOLON);
+        }
     }
 
     return stmt;
 }
 
-Ast* Parser::parse_while_statement() {/*
-    Expression* condition;
-    WhileStatement* stmt = new WhileStatement();
+Ast* Parser::parse_while_statement() {
+    Ast* condition;
+    Ast* stmt = new Ast(AST_WHILE);
 
     expect(TK_WHILE);
-    stmt->set_token(matched);
+    stmt->set_from_token(matched);
     condition = parse_expression();
 
     if (condition == nullptr) {
-        assert(false && "expected while condition");
+        log_error("expected while condition");
     }
 
-    stmt->set_condition(condition);
+    stmt->add_child(condition);
     expect(TK_COLON);
     indent();
-    stmt->set_statements(parse_compound_statement());
+    stmt->add_child(parse_statements());
     dedent();
 
-    return stmt;*/
+    return stmt;
 }
 
 Ast* Parser::parse_for_statement() {/*
@@ -736,7 +740,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_unary_expression();
+    return parse_bitwise_and_expression();
     //return parse_assignment_expression();
 }
 
@@ -1011,42 +1015,39 @@ Ast* Parser::parse_bitwise_xor_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_bitwise_and_expression() {/*
+Ast* Parser::parse_bitwise_and_expression() {
     Token oper;
-    Expression* expr = parse_shift_expression();
+    Ast* expr = parse_shift_expression();
 
     while (true) {
-        if (match(TK_BITWISE_AND)) {
-            oper = matched;
-            expr = new BitwiseAnd(oper, expr, parse_shift_expression());
+        if (match_same_line(TK_BITWISE_AND)) {
+            expr = parse_binary_operator(AST_BITWISE_AND, "&", expr, &Parser::parse_shift_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_shift_expression() {/*
-    Token oper;
+Ast* Parser::parse_shift_expression() {
     Ast* expr = parse_unary_expression();
+    Ast* left;
+    Ast* right;
 
     while (true) {
         if (match(TK_SLL)) {
-            oper = matched;
-            //expr = new ShiftLeftLogical(oper, expr, parse_unary_expression());
+            expr = parse_binary_operator(AST_SHIFT_LEFT_LOGICAL, "sll", expr, &Parser::parse_unary_expression);
         } else if (match(TK_SRL)) {
-            oper = matched;
-            //expr = new ShiftRightLogical(oper, expr, parse_unary_expression());
+            expr = parse_binary_operator(AST_SHIFT_RIGHT_LOGICAL, "srl", expr, &Parser::parse_unary_expression);
         } else if (match(TK_SRA)) {
-            oper = matched;
-            //expr = new ShiftRightArithmetic(oper, expr, parse_unary_expression());
+            expr = parse_binary_operator(AST_SHIFT_RIGHT_ARITHMETIC, "sra", expr, &Parser::parse_unary_expression);
         } else {
             break;
         }
     }
 
-    return nullptr;//expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_unary_expression() {
@@ -1196,6 +1197,23 @@ Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type,
         expr->add_child(subexpr);
     }
 
+    return expr;
+}
+
+Ast* Parser::parse_binary_operator(AstKind kind, const char* oper, Ast* left, Ast* (Parser::*function)()) {
+    std::stringstream ss;
+    Ast* expr = new Ast(kind, matched);
+    Ast* right = (this->*function)();
+
+    if (right == nullptr) {
+        ss << "expected an rhs for operator <white>";
+        ss << oper;
+        ss << "<normal>";
+        log_error(ss.str());
+    }
+
+    expr->add_child(left);
+    expr->add_child(right);
     return expr;
 }
 

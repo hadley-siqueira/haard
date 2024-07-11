@@ -89,6 +89,7 @@ namespace haard {
         Ast* parse_pre_decrement();
         Ast* parse_sizeof();
         Ast* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
+        Ast* parse_binary_operator(AstKind kind, const char* oper, Ast* left, Ast* (Parser::*function)(void));
 
         Ast* parse_postfix_expression();
 

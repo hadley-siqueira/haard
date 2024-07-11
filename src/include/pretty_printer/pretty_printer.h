@@ -30,13 +30,20 @@ namespace haard {
 
         /* Statements */
         void print_statements(Ast* stmts);
+        void print_while(Ast* stmt);
         void print_return(Ast* node);
-        void print_expression(Ast* stmt);
+        void print_expression(Ast* stmt, bool has_semicolon=false);
 
         /* types */
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_bitwise_and(Ast* node);
+
+        void print_shift_left_logical(Ast* node);
+        void print_shift_right_logical(Ast* node);
+        void print_shift_right_arithmetic(Ast* node);
+
         void print_dot(Ast* node);
         void print_arrow(Ast* node);
         void print_call(Ast* expr);
@@ -57,7 +64,7 @@ namespace haard {
 
 
 
-//        void print_while_statement(WhileStatement* stmt);
+
 //        void print_for_statement(ForStatement* stmt);
 
 //        void print_if_statement(BranchStatement* stmt);
@@ -114,6 +121,7 @@ namespace haard {
         void indent();
         void dedent();
         void print_indentation();
+        void print_binop(Ast* node, const char* oper, bool no_space=false);
 
     private:
         int indent_level;
