@@ -740,7 +740,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_bitwise_and_expression();
+    return parse_bitwise_or_expression();
     //return parse_assignment_expression();
 }
 
@@ -983,36 +983,33 @@ Ast* Parser::parse_power_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_bitwise_or_expression() {/*
-    Token oper;
-    Expression* expr = parse_bitwise_xor_expression();
+Ast* Parser::parse_bitwise_or_expression() {
+    Ast* expr = parse_bitwise_xor_expression();
 
     while (true) {
         if (match(TK_BITWISE_OR)) {
-            oper = matched;
-            expr = new BitwiseOr(oper, expr, parse_bitwise_xor_expression());
+            expr = parse_binary_operator(AST_BITWISE_OR, "|", expr, &Parser::parse_bitwise_xor_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_bitwise_xor_expression() {/*
+Ast* Parser::parse_bitwise_xor_expression() {
     Token oper;
-    Expression* expr = parse_bitwise_and_expression();
+    Ast* expr = parse_bitwise_and_expression();
 
     while (true) {
         if (match(TK_BITWISE_XOR)) {
-            oper = matched;
-            expr = new BitwiseXor(oper, expr, parse_bitwise_and_expression());
+            expr = parse_binary_operator(AST_BITWISE_XOR, "^", expr, &Parser::parse_bitwise_and_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_bitwise_and_expression() {

@@ -90,8 +90,8 @@ namespace haard::ast {
 
         EXPR_POWER,
 
-        EXPR_BITWISE_OR,
-        EXPR_BITWISE_XOR,
+        AST_BITWISE_OR,
+        AST_BITWISE_XOR,
         AST_BITWISE_AND,
 
         AST_SHIFT_LEFT_LOGICAL,

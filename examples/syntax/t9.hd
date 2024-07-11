@@ -15,8 +15,13 @@ def sum : int
     a << 2
     a >> 2
     a >>> 2
-    a & 2;
+    a & 2
+    a | 2
+    a ^ 2
     &a
+
+    out << "a value"
+        << "other value"
 
     return a &
            b &
@@ -30,6 +35,13 @@ def sum : int
     mystr
             .lowercaseString
             .replace("hello", withString: "goodbye")
+
+    while true:
+        print("Hi")
+
+        while true:
+            print("Hi")
+            print("Hi")
 
     while true:
         print("Hi")
