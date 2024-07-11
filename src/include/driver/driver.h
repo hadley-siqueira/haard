@@ -7,8 +7,6 @@
 #include "log/logger.h"
 
 #include "haard/ast/ast.h"
-#include "haard/ast/module.h"
-#include "haard/ast/import.h"
 
 namespace haard {
     using namespace ast;
@@ -35,9 +33,9 @@ namespace haard {
     public:
         Ast* parse_file(std::string path);
         void parse_module_imports(Ast* module);
-        void parse_import(Import* import);
-        void parse_simple_import(Import* import);
-        std::string build_import_path(Import* import);
+        void parse_import(Ast* import);
+        void parse_simple_import(Ast* import);
+        std::string build_import_path(Ast* import);
         std::string build_relative_path(std::string path);
         void configure_search_path();
         void set_root_path_from_main_file();
@@ -51,7 +49,7 @@ namespace haard {
 
     private:
         //Modules modules;
-        Module* ast;
+        Ast* module;
 
     // system related stuff
     private:

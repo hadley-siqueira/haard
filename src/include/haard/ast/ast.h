@@ -24,8 +24,9 @@ namespace haard::ast {
         AST_UNION,
 
         AST_IMPORT,
-        AST_PATH,
-        AST_ALIAS,
+        AST_IMPORT_PATH,
+        AST_IMPORT_PATH_MEMBER,
+        AST_IMPORT_ALIAS,
 
         AST_GENERIC_APPLICATION,
         AST_SCOPE,
@@ -111,7 +112,7 @@ namespace haard::ast {
         AST_LOGICAL_NOT,
         AST_NOT,
         AST_BITWISE_NOT,
-        EXPR_SIZEOF,
+        AST_SIZEOF,
         EXPR_NEW,
         EXPR_DELETE,
         EXPR_DELETE_ARRAY,
@@ -194,6 +195,8 @@ namespace haard::ast {
         void set_value(const std::string& value);
 
         void add_child(Ast* child);
+        void add_child(AstKind kind, Token& token);
+        void add_child(AstKind kind, Ast* subchild);
         Ast* get_child(size_t index=0);
         Ast* get_child(AstKind type);
         size_t children_count();

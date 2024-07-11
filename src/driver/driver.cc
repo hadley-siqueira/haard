@@ -104,7 +104,7 @@ Ast* Driver::parse_file(std::string path) {
 
         log_info("parsing file " + path);
         //modules.add_module(path, parser.read(path, build_relative_path(path)));
-        ast = parser.read(path, build_relative_path(path));
+        module = parser.read(path, build_relative_path(path));
     }
 
     return nullptr; //modules.get_module(path);
@@ -120,11 +120,11 @@ void Driver::parse_module_imports(Ast* module) {/*
     }*/
 }
 
-void Driver::parse_import(Import* import) {
+void Driver::parse_import(Ast* import) {
     parse_simple_import(import);
 }
 
-void Driver::parse_simple_import(Import* import) {/*
+void Driver::parse_simple_import(Ast* import) {/*
     Module* file = nullptr;
     std::string path = build_import_path(import);
 
@@ -139,7 +139,7 @@ void Driver::parse_simple_import(Import* import) {/*
     }*/
 }
 
-std::string Driver::build_import_path(Import* import) {
+std::string Driver::build_import_path(Ast* import) {/*
     std::string str;
 
     for (int i = 0; i < import->path_count(); ++i) {
@@ -157,7 +157,7 @@ std::string Driver::build_import_path(Import* import) {
         }
     }
 
-    return str;
+    return str;*/
 }
 
 std::string Driver::build_relative_path(std::string path) {
@@ -221,8 +221,8 @@ void Driver::pretty_print() {
 
     show_logs();
     std::cout << "printing...\n";
-    printer.print(ast);
-    delete ast;
+    printer.print(module);
+    delete module;
     std::cout << printer.get_output() << '\n';
 }
 

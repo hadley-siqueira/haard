@@ -59,6 +59,17 @@ void Ast::add_child(Ast* child) {
     }
 }
 
+void Ast::add_child(AstKind kind, Token& token) {
+    Ast* child = new Ast(kind, token);
+    add_child(child);
+}
+
+void Ast::add_child(AstKind kind, Ast* subchild) {
+    Ast* child = new Ast(kind);
+    child->add_child(subchild);
+    add_child(child);
+}
+
 Ast* Ast::get_child(size_t index) {
     if (index < children_count()) {
         return children[index];

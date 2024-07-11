@@ -20,8 +20,7 @@ namespace haard {
 
     public:
         Ast* parse_module();
-
-        Ast* parse_imports();
+        Ast* parse_import();
 
         Ast* parse_definitions();
 
@@ -56,7 +55,7 @@ namespace haard {
         Ast* parse_tuple_or_function_type();
         Ast* parse_primary_type();
 
-        Expression* parse_expression();
+        Ast* parse_expression();
         Ast* parse_assignment_expression();
         Ast* parse_cast_expression();
 
@@ -88,11 +87,12 @@ namespace haard {
         Ast* parse_unary_plus();
         Ast* parse_pre_increment();
         Ast* parse_pre_decrement();
+        Ast* parse_sizeof();
         Ast* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
 
         Ast* parse_postfix_expression();
 
-        Expression* parse_primary_expression();
+        Ast* parse_primary_expression();
 
         Ast* parse_new_expression();
         Ast* parse_delete_expression();

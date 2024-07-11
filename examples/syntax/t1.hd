@@ -1,13 +1,19 @@
 import std
 import std.io
 import std.foo.bar
-import std as std
+import std.file as std
+import std as std2
 
 def main : int
     return 0
+
+def foo : void
+    return
 
 def sum : float
     @a : int
     @b : int
 
     return 0
+    a.t
+    sizeof(a.t)

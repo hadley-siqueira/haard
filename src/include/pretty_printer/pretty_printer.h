@@ -4,8 +4,6 @@
 #include <sstream>
 
 #include "haard/ast/ast.h"
-#include "haard/ast/module.h"
-#include "haard/ast/import.h"
 
 namespace haard {
     using namespace ast;
@@ -19,18 +17,20 @@ namespace haard {
 
         void print(Ast* node);
 
-        void print_import(Import* import);
-        void print_module(Module *module);
+        void print_module(Ast* module);
 
-        /* Imports */
-        void print_imports(Ast* imports);
-
+        void print_import(Ast* import);
         void print_import_path(Ast* path);
         void print_import_path_member(Ast* member);
         void print_import_alias(Ast* alias);
 
+        void print_function(Ast* function);
+        void print_parameters(Ast* parameters);
+        void print_parameter(Ast* parameter);
+
         /* Statements */
         void print_statements(Ast* stmts);
+        void print_return(Ast* node);
         void print_expression(Ast* stmt);
 
         /* types */
@@ -44,6 +44,7 @@ namespace haard {
         void print_argument_name(Ast* node);
         void print_pos_increment(Ast* node);
         void print_pos_decrement(Ast* node);
+        void print_sizeof(Ast* node);
 
         void print_parenthesis(Ast* node);
         void print_generic_application(Ast* node);
@@ -54,9 +55,7 @@ namespace haard {
 //        void print_struct(Struct* st);
 //        void print_union(Union* u);
 
-        void print_function(Ast* function);
-        void print_parameters(Ast* parameters);
-        void print_parameter(Ast* parameter);
+
 
 //        void print_while_statement(WhileStatement* stmt);
 //        void print_for_statement(ForStatement* stmt);

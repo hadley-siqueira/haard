@@ -49,21 +49,24 @@ Ast* Parser::parse_module() {
 
 Ast* Parser::parse_import() {
     Ast* import = new Ast(AST_IMPORT);
-    Ast* path = new Ast(AST_PATH);
+    Ast* path = new Ast(AST_IMPORT_PATH);
+    Ast* alias = nullptr;
 
     expect(TK_IMPORT);
     import->set_from_token(matched);
 
     do {
         expect(TK_ID);
-        path->add_child(matched.get_value());
+        path->add_child(AST_IMPORT_PATH_MEMBER, matched);
     } while (match(TK_DOT));
 
     if (match(TK_AS)) {
         expect(TK_ID);
-        import->set_alias(matched.get_value());
+        alias = new Ast(AST_IMPORT_ALIAS, matched);
     }
 
+    import->add_child(path);
+    import->add_child(alias);
     return import;
 }
 
@@ -240,14 +243,13 @@ Ast* Parser::parse_enum_variable() {/*
     return var;*/
 }
 
-Function* Parser::parse_function() {
-    Function* function = new Function();
+Ast* Parser::parse_function() {
+    Ast* function = new Ast(AST_FUNCTION);
 
     expect(TK_DEF);
     expect(TK_ID);
-//    function->set_from_token(matched);
-//    function->add_child(parse_generics());
-    function->set_name(matched.get_value());
+    function->set_from_token(matched);
+    function->add_child(parse_generics());
 
     expect(TK_COLON);
     indent();
@@ -255,38 +257,45 @@ Function* Parser::parse_function() {
     Ast* return_type = parse_type();
 
     if (return_type) {
-        Ast* rtype = new Ast(AST_RETURN_TYPE);
-        rtype->add_child(return_type);
-//        function->add_child(rtype);
+        function->add_child(AST_RETURN_TYPE, return_type);
     } else {
-        log_error("Expected return type");
+        log_error("Expected return type in function " + function->get_value());
     }
 
-    while (has_parameters()) {
-        function->add_parameter(parse_parameter());
-    }
-
-    //function->add_child(parse_statements());
-    parse_statements();
+    function->add_child(parse_parameters());
+    function->add_child(parse_statements());
 
     dedent();
 
     return function;
 }
 
+Ast* Parser::parse_parameters() {
+    if (!has_parameters()) {
+        return nullptr;
+    }
+
+    Ast* parameters = new Ast(AST_PARAMETERS);
+
+    while (has_parameters()) {
+        parameters->add_child(parse_parameter());
+    }
+
+    return parameters;
+}
+
 Ast* Parser::parse_parameter() {
-    Parameter* param = new Parameter();
+    Ast* param = new Ast(AST_PARAMETER);
 
     expect(TK_AT);
     expect(TK_ID);
-//    param->set_from_token(matched);
-    param->set_name(matched.get_value());
+    param->set_from_token(matched);
 
     expect(TK_COLON);
     Ast* type = parse_type();
 
     if (type != nullptr) {
-        //param->add_child(type);
+        param->add_child(type);
     } else {
         log_error("expected type in parameter");
     }
@@ -298,7 +307,7 @@ Ast* Parser::parse_parameter() {
             log_error("missing expression on default parameter value");
         }
 
-        //param->add_child(expr);
+        param->add_child(expr);
     }
 
     return param;
@@ -549,8 +558,8 @@ void Parser::parse_for_update(Ast* stmt) {/*
 }
 
 Ast* Parser::parse_return_statement() {
-    JumpStatement* stmt = new JumpStatement(AST_RETURN);
-    Expression* expr = nullptr;
+    Ast* stmt = new Ast(AST_RETURN);
+    Ast* expr = nullptr;
 
     expect(TK_RETURN);
 
@@ -561,7 +570,7 @@ Ast* Parser::parse_return_statement() {
             log_error("expected an expression on return statement but got an invalid token");
         }
 
-        stmt->set_expression(expr);
+        stmt->add_child(expr);
     }
 
     return stmt;
@@ -726,8 +735,8 @@ Ast* Parser::parse_primary_type() {
     return type;
 }
 
-Expression* Parser::parse_expression() {
-    return (Expression*) parse_unary_expression();
+Ast* Parser::parse_expression() {
+    return parse_unary_expression();
     //return parse_assignment_expression();
 }
 
@@ -1066,11 +1075,8 @@ Ast* Parser::parse_unary_expression() {
     } else if (match(TK_DOUBLE_DOLAR)) {
         oper = matched;
        // expr = new DoubleDolar(oper, parse_unary_expression());
-    } else if (match(TK_SIZEOF)) {
-        oper = matched;
-        expect(TK_LEFT_PARENTHESIS);
-        //expr = new Sizeof(oper, parse_expression());
-        expect(TK_RIGHT_PARENTHESIS);
+    } else if (lookahead(TK_SIZEOF)) {
+        expr = parse_sizeof();
     } else if (lookahead(TK_NEW)) {
         //expr = parse_new_expression();
     } else if (lookahead(TK_DELETE)) {
@@ -1146,6 +1152,24 @@ Ast* Parser::parse_pre_increment() {
 
 Ast* Parser::parse_pre_decrement() {
     return parse_simple_unary_operator(AST_PRE_DECREMENT, TK_DEC, "--");
+}
+
+Ast* Parser::parse_sizeof() {
+    expect(TK_SIZEOF);
+
+    Ast* expr = new Ast(AST_SIZEOF, matched);
+
+    expect(TK_LEFT_PARENTHESIS);
+    Ast* subexpr = parse_expression();
+
+    if (subexpr) {
+        expr->add_child(subexpr);
+    } else {
+        log_error("missing expression for sizeof operator");
+    }
+
+    expect(TK_RIGHT_PARENTHESIS);
+    return expr;
 }
 
 Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper) {
@@ -1238,7 +1262,7 @@ Ast* Parser::parse_postfix_expression() {
     return expr;
 }
 
-Expression* Parser::parse_primary_expression() {
+Ast* Parser::parse_primary_expression() {
     Ast* expr = nullptr;
 
     if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
@@ -1246,19 +1270,19 @@ Expression* Parser::parse_primary_expression() {
     } else if (match(TK_THIS)) {
         expr = new Ast(AST_THIS, matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
-        expr = new Literal(AST_LITERAL_BOOLEAN, matched);
+        expr = new Ast(AST_LITERAL_BOOLEAN, matched);
     } else if (match(TK_LITERAL_INTEGER)) {
-        expr = new Literal(AST_LITERAL_INTEGER, matched);
+        expr = new Ast(AST_LITERAL_INTEGER, matched);
     } else if (match(TK_LITERAL_FLOAT)) {
-        expr = new Literal(AST_LITERAL_FLOAT, matched);
+        expr = new Ast(AST_LITERAL_FLOAT, matched);
     } else if (match(TK_LITERAL_DOUBLE)) {
-        expr = new Literal(AST_LITERAL_DOUBLE, matched);
+        expr = new Ast(AST_LITERAL_DOUBLE, matched);
     } else if (match(TK_LITERAL_CHAR)) {
-        expr = new Literal(AST_LITERAL_CHAR, matched);
+        expr = new Ast(AST_LITERAL_CHAR, matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING)) {
-        expr = new Literal(AST_LITERAL_STRING, matched);
+        expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
-        expr = new Literal(AST_LITERAL_STRING, matched);
+        expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (match(TK_NULL)) {
         expr = new Ast(AST_NULL, matched);
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
@@ -1269,7 +1293,7 @@ Expression* Parser::parse_primary_expression() {
         expr = parse_array_or_hash_expression();
     }
 
-    return (Expression*) expr;
+    return expr;
 }
 
 Ast* Parser::parse_delete_expression() {/*
@@ -1703,7 +1727,7 @@ bool Parser::has_parameters() {
 }
 
 bool Parser::next_token_on_same_line() {
-    if (has_next()) {
+    if (has_next() && !lookahead(TK_EOF)) {
         return matched.get_line() == tokens[idx].get_line();
     }
 

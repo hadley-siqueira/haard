@@ -12,23 +12,6 @@ std::string PrettyPrinter::get_output() {
     return out.str();
 }
 
-void PrettyPrinter::print_import(Import* import) {
-    size_t i;
-
-    out << "import ";
-
-    for (i = 0; i < import->path_count() - 1; ++i) {
-        out << import->get_path_member(i);
-        out << '.';
-    }
-
-    out << import->get_path_member(i);
-
-    if (import->has_alias()) {
-        out << " as " << import->get_alias();
-    }
-}
-
 void PrettyPrinter::print(Ast* node) {
     if (node == nullptr) {
         return;
@@ -44,7 +27,7 @@ void PrettyPrinter::print(Ast* node) {
 
     /* Import */
     case AST_IMPORT:
-        print((Import*) node);
+        print_import(node);
         break;
 
     case AST_IMPORT_PATH:
@@ -77,8 +60,158 @@ void PrettyPrinter::print(Ast* node) {
         print_statements(node);
         break;
 
+    case AST_RETURN:
+        print_return(node);
+        break;
+
+    /* Expressions */
     case AST_EXPRESSION:
         print_expression(node);
+        break;
+
+    case AST_LOGICAL_NOT:
+        print_logical_not(node);
+        break;
+
+    case AST_NOT:
+        print_not(node);
+        break;
+
+    case AST_ADDRESS_OF:
+        print_address_of(node);
+        break;
+
+    case AST_DEREFERENCE:
+        print_dereference(node);
+        break;
+
+    case AST_BITWISE_NOT:
+        print_bitwise_not(node);
+        break;
+
+    case AST_UNARY_MINUS:
+        print_unary_minus(node);
+        break;
+
+    case AST_UNARY_PLUS:
+        print_unary_plus(node);
+        break;
+
+    case AST_PRE_INCREMENT:
+        print_pre_increment(node);
+        break;
+
+    case AST_PRE_DECREMENT:
+        print_pre_decrement(node);
+        break;
+
+    case AST_SIZEOF:
+        print_sizeof(node);
+        break;
+
+    case AST_DOT:
+        print_dot(node);
+        break;
+
+    case AST_ARROW:
+        print_arrow(node);
+        break;
+
+    case AST_INDEX:
+        print_index(node);
+        break;
+
+    case AST_CALL:
+        print_call(node);
+        break;
+
+    case AST_ARGUMENTS:
+        print_arguments(node);
+        break;
+
+    case AST_NAMED_ARGUMENT:
+        print_argument_name(node);
+        break;
+
+    case AST_POS_DECREMENT:
+        print_pos_decrement(node);
+        break;
+
+    case AST_POS_INCREMENT:
+        print_pos_increment(node);
+        break;
+
+    case EXPR_PARENTHESIS:
+        print_parenthesis(node);
+        break;
+
+    case AST_TUPLE:
+        print_tuple(node);
+        break;
+
+    case AST_SEQUENCE:
+        print_sequence(node);
+        break;
+
+    case AST_LIST:
+        print_list(node);
+        break;
+
+    case AST_ARRAY:
+        print_array(node);
+        break;
+
+    case AST_HASH:
+        print_hash(node);
+        break;
+
+    case AST_HASH_PAIR:
+        print_hash_pair(node);
+        break;
+
+    case AST_GENERIC_APPLICATION:
+        print_generic_application(node);
+        break;
+
+    case AST_SCOPE:
+        print_scope(node);
+        break;
+
+    case AST_ID:
+        print_identifier(node);
+        break;
+
+    /* Literals */
+    case AST_THIS:
+        out << "this";
+        break;
+
+    case AST_NULL:
+        out << "null";
+        break;
+
+    case AST_LITERAL_BOOLEAN:
+        out << node->get_value();
+        break;
+
+    case AST_LITERAL_CHAR:
+        out << "'" << node->get_value() << "'";
+        break;
+
+    case AST_LITERAL_INTEGER:
+        out << node->get_value();
+        break;
+
+    case AST_LITERAL_FLOAT:
+        out << node->get_value();
+        break;
+
+    case AST_LITERAL_DOUBLE:
+        out << node->get_value();
+        break;
+
+    case AST_LITERAL_STRING:
+        out << "\"" << node->get_value() << "\"";
         break;
 
     /* Types */
@@ -208,148 +341,6 @@ void PrettyPrinter::print(Ast* node) {
         print_named_type(node);
         break;
 
-    /* Expressions */
-    case AST_LOGICAL_NOT:
-        print_logical_not(node);
-        break;
-
-    case AST_NOT:
-        print_not(node);
-        break;
-
-    case AST_ADDRESS_OF:
-        print_address_of(node);
-        break;
-
-    case AST_DEREFERENCE:
-        print_dereference(node);
-        break;
-
-    case AST_BITWISE_NOT:
-        print_bitwise_not(node);
-        break;
-
-    case AST_UNARY_MINUS:
-        print_unary_minus(node);
-        break;
-
-    case AST_UNARY_PLUS:
-        print_unary_plus(node);
-        break;
-
-    case AST_PRE_INCREMENT:
-        print_pre_increment(node);
-        break;
-
-    case AST_PRE_DECREMENT:
-        print_pre_decrement(node);
-        break;
-
-    case AST_DOT:
-        print_dot(node);
-        break;
-
-    case AST_ARROW:
-        print_arrow(node);
-        break;
-
-    case AST_INDEX:
-        print_index(node);
-        break;
-
-    case AST_CALL:
-        print_call(node);
-        break;
-
-    case AST_ARGUMENTS:
-        print_arguments(node);
-        break;
-
-    case AST_NAMED_ARGUMENT:
-        print_argument_name(node);
-        break;
-
-    case AST_POS_DECREMENT:
-        print_pos_decrement(node);
-        break;
-
-    case AST_POS_INCREMENT:
-        print_pos_increment(node);
-        break;
-
-    case EXPR_PARENTHESIS:
-        print_parenthesis(node);
-        break;
-
-    case AST_TUPLE:
-        print_tuple(node);
-        break;
-
-    case AST_SEQUENCE:
-        print_sequence(node);
-        break;
-
-    case AST_LIST:
-        print_list(node);
-        break;
-
-    case AST_ARRAY:
-        print_array(node);
-        break;
-
-    case AST_HASH:
-        print_hash(node);
-        break;
-
-    case AST_HASH_PAIR:
-        print_hash_pair(node);
-        break;
-
-    case AST_GENERIC_APPLICATION:
-        print_generic_application(node);
-        break;
-
-    case AST_SCOPE:
-        print_scope(node);
-        break;
-
-    case AST_ID:
-        print_identifier(node);
-        break;
-
-    /* Literals */
-    case AST_THIS:
-        out << "this";
-        break;
-
-    case AST_NULL:
-        out << "null";
-        break;
-
-    case AST_LITERAL_BOOLEAN:
-        out << node->get_value();
-        break;
-
-    case AST_LITERAL_CHAR:
-        out << "'" << node->get_value() << "'";
-        break;
-
-    case AST_LITERAL_INTEGER:
-        out << node->get_value();
-        break;
-
-    case AST_LITERAL_FLOAT:
-        out << node->get_value();
-        break;
-
-    case AST_LITERAL_DOUBLE:
-        out << node->get_value();
-        break;
-
-    case AST_LITERAL_STRING:
-        out << "\"" << node->get_value() << "\"";
-        break;
-
     /* Others */
     case AST_GENERICS:
         print_generics(node);
@@ -361,16 +352,43 @@ void PrettyPrinter::print(Ast* node) {
     }
 }
 
-void PrettyPrinter::print_module(Module* module) {
-    for (auto i = 0; module->imports_count(); ++i) {
-        print_import(module->get_import(i));
-        out << "\n";
-    }
+void PrettyPrinter::print_module(Ast* module) {
+    AstKind kind;
 
-    for (size_t i = 0; i < module->functions_count(); ++i) {
+    for (auto i = 0; i < module->children_count(); ++i) {
+        kind = module->get_child(i)->get_kind();
+
         print(module->get_child(i));
         out << "\n";
     }
+}
+
+void PrettyPrinter::print_import(Ast* import) {
+    size_t i;
+
+    out << "import ";
+    print(import->get_child(0));
+    print(import->get_child(1));
+}
+
+void PrettyPrinter::print_import_path(Ast* path) {
+    size_t i;
+
+    for (i = 0; i < path->children_count() - 1; ++i) {
+        print(path->get_child(i));
+        out << ".";
+    }
+
+    print(path->get_child(i));
+}
+
+void PrettyPrinter::print_import_path_member(Ast* member) {
+    out << member->get_value();
+}
+
+void PrettyPrinter::print_import_alias(Ast* alias) {
+    out << " as ";
+    out << alias->get_value();
 }
 
 void PrettyPrinter::print_list_type(Ast* node) {
@@ -417,34 +435,6 @@ void PrettyPrinter::print_identifier(Ast* id) {
     out << id->get_value();
 }
 
-void PrettyPrinter::print_imports(Ast* imports) {
-    for (size_t i = 0; i < imports->children_count(); ++i) {
-        print(imports->get_child(i));
-        out << "\n";
-    }
-
-    out << "\n";
-}
-
-void PrettyPrinter::print_import_path(Ast* path) {
-    size_t i;
-
-    for (i = 0; i < path->children_count() - 1; ++i) {
-        print(path->get_child(i));
-        out << ".";
-    }
-
-    print(path->get_child(i));
-}
-
-void PrettyPrinter::print_import_path_member(Ast* member) {
-    out << member->get_value();
-}
-
-void PrettyPrinter::print_import_alias(Ast* alias) {
-    out << " as ";
-    out << alias->get_value();
-}
 /*
 void PrettyPrinter::print_class(Class* klass) {
     out << "class ";
@@ -578,6 +568,10 @@ void PrettyPrinter::print_parameters(Ast* parameters) {
         print(parameters->get_child(i));
         out << "\n";
     }
+
+    if (parameters->children_count() > 0) {
+        out << "\n";
+    }
 }
 
 void PrettyPrinter::print_parameter(Ast* parameter) {
@@ -692,6 +686,20 @@ void PrettyPrinter::print_statements(Ast* stmts) {
     for (int i = 0; i < stmts->children_count(); ++i) {
         print(stmts->get_child(i));
     }
+}
+
+void PrettyPrinter::print_return(Ast* node) {
+    print_indentation();
+    out << "return";
+
+    Ast* expr = node->get_child();
+
+    if (expr) {
+        out << " ";
+        print(expr);
+    }
+
+    out << "\n";
 }
 
 void PrettyPrinter::print_expression(Ast* stmt) {
@@ -823,6 +831,13 @@ void PrettyPrinter::print_pos_decrement(Ast* node) {
     print(node->get_child(0));
     out << "--";
 }
+
+void PrettyPrinter::print_sizeof(Ast* node) {
+    out << "sizeof(";
+    print(node->get_child());
+    out << ")";
+}
+
 /*
 void PrettyPrinter::print_expression(Expression* expr) {};
 
