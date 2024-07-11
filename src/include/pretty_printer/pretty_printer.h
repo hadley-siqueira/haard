@@ -38,6 +38,12 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_inclusive_range(Ast* node);
+        void print_exclusive_range(Ast* node);
+
+        void print_plus(Ast* node);
+        void print_minus(Ast* node);
+
         void print_times(Ast* node);
         void print_division(Ast* node);
         void print_modulo(Ast* node);

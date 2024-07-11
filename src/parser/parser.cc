@@ -740,7 +740,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_term_expression();
+    return parse_range_expression();
     //return parse_assignment_expression();
 }
 
@@ -904,42 +904,36 @@ Ast* Parser::parse_relational_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_range_expression() {/*
-    Token oper;
-    Expression* expr = parse_arith_expression();
+Ast* Parser::parse_range_expression() {
+    Ast* expr = parse_arith_expression();
 
     while (true) {
         if (match(TK_INCLUSIVE_RANGE)) {
-            oper = matched;
-            expr = new InclusiveRange(oper, expr, parse_arith_expression());
+            expr = parse_binary_operator(AST_INCLUSIVE_RANGE, "..", expr, &Parser::parse_arith_expression);
         } else if (match(TK_EXCLUSIVE_RANGE)) {
-            oper = matched;
-            expr = new ExclusiveRange(oper, expr, parse_arith_expression());
+            expr = parse_binary_operator(AST_EXCLUSIVE_RANGE, "...", expr, &Parser::parse_arith_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_arith_expression() {/*
-    Token oper;
-    Expression* expr = parse_term_expression();
+Ast* Parser::parse_arith_expression() {
+    Ast* expr = parse_term_expression();
 
     while (true) {
         if (match_same_line(TK_PLUS)) {
-            oper = matched;
-            expr = new Plus(oper, expr, parse_term_expression());
+            expr = parse_binary_operator(AST_PLUS, "+", expr, &Parser::parse_term_expression);
         } else if (match_same_line(TK_MINUS)) {
-            oper = matched;
-            expr = new Minus(oper, expr, parse_term_expression());
+            expr = parse_binary_operator(AST_MINUS, "-", expr, &Parser::parse_term_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_term_expression() {

@@ -22,7 +22,11 @@ def sum : int
     2 * 3
     2 / 3
     2 % 3
-    2 // 3
+    2 // 3 
+    1 + 1
+    1 - 1
+    0 .. 10
+    0 ... 10
 
     out << "a value"
         << "other value"

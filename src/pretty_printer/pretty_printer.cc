@@ -77,6 +77,22 @@ void PrettyPrinter::print(Ast* node) {
         print_expression(node, true);
         break;
 
+    case AST_INCLUSIVE_RANGE:
+        print_inclusive_range(node);
+        break;
+
+    case AST_EXCLUSIVE_RANGE:
+        print_exclusive_range(node);
+        break;
+
+    case AST_PLUS:
+        print_plus(node);
+        break;
+
+    case AST_MINUS:
+        print_minus(node);
+        break;
+
     case AST_TIMES:
         print_times(node);
         break;
@@ -447,6 +463,22 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_inclusive_range(Ast* node) {
+    print_binop(node, "..");
+}
+
+void PrettyPrinter::print_exclusive_range(Ast* node) {
+    print_binop(node, "...");
+}
+
+void PrettyPrinter::print_plus(Ast* node) {
+    print_binop(node, "+");
+}
+
+void PrettyPrinter::print_minus(Ast* node) {
+    print_binop(node, "-");
 }
 
 void PrettyPrinter::print_times(Ast* node) {
