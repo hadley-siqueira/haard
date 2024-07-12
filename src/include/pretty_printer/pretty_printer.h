@@ -38,6 +38,22 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_logical_or(Ast* node);
+        void print_or(Ast* node);
+
+        void print_logical_and(Ast* node);
+        void print_and(Ast* node);
+
+        void print_equal(Ast* node);
+        void print_not_equal(Ast* node);
+
+        void print_less_than(Ast* node);
+        void print_less_than_or_equal(Ast* node);
+        void print_greater_than(Ast* node);
+        void print_greater_than_or_equal(Ast* node);
+        void print_in(Ast* node);
+        void print_not_in(Ast* node);
+
         void print_inclusive_range(Ast* node);
         void print_exclusive_range(Ast* node);
 

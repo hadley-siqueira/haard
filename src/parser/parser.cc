@@ -740,7 +740,7 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_range_expression();
+    return parse_logical_or_expression();
     //return parse_assignment_expression();
 }
 
@@ -821,87 +821,77 @@ Ast* Parser::parse_cast_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_logical_or_expression() {/*
-    Token oper;
-    Expression* expr = parse_logical_and_expression();
+Ast* Parser::parse_logical_or_expression() {
+    Ast* expr = parse_logical_and_expression();
 
     while (true) {
-        if (match(TK_OR) || match(TK_LOGICAL_OR)) {
-            oper = matched;
-            expr = new LogicalOr(oper, expr, parse_logical_and_expression());
+        if (match(TK_LOGICAL_OR)) {
+            expr = parse_binary_operator(AST_LOGICAL_OR, "||", expr, &Parser::parse_logical_and_expression);
+        } else if (match(TK_OR)) {
+            expr = parse_binary_operator(AST_OR, "or", expr, &Parser::parse_logical_and_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_logical_and_expression() {/*
-    Token oper;
-    Expression* expr = parse_equality_expression();
+Ast* Parser::parse_logical_and_expression() {
+    Ast* expr = parse_equality_expression();
 
     while (true) {
         if (match(TK_AND) || match(TK_LOGICAL_AND)) {
-            oper = matched;
-            expr = new LogicalAnd(oper, expr, parse_equality_expression());
+            expr = parse_binary_operator(AST_LOGICAL_AND, "&&", expr, &Parser::parse_equality_expression);
+        } else if (match(TK_AND)) {
+            expr = parse_binary_operator(AST_AND, "and", expr, &Parser::parse_equality_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_equality_expression() {/*
-    Token oper;
-    Expression* expr = parse_relational_expression();
+Ast* Parser::parse_equality_expression() {
+    Ast* expr = parse_relational_expression();
 
     while (true) {
         if (match(TK_EQ)) {
-            oper = matched;
-            expr = new Equal(oper, expr, parse_relational_expression());
+            expr = parse_binary_operator(AST_EQUAL, "==", expr, &Parser::parse_relational_expression);
         } else if (match(TK_NE)) {
-            oper = matched;
-            expr = new NotEqual(oper, expr, parse_relational_expression());
+            expr = parse_binary_operator(AST_NOT_EQUAL, "!=", expr, &Parser::parse_relational_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_relational_expression() {/*
-    Token oper;
-    Expression* expr = parse_range_expression();
+Ast* Parser::parse_relational_expression() {
+    Ast* expr = parse_range_expression();
 
     while (true) {
         if (match(TK_LT)) {
-            oper = matched;
-            expr = new LessThan(oper, expr, parse_range_expression());
+            expr = parse_binary_operator(AST_LESS_THAN, "<", expr, &Parser::parse_range_expression);
         } else if (match(TK_GT)) {
-            oper = matched;
-            expr = new GreaterThan(oper, expr, parse_range_expression());
+            expr = parse_binary_operator(AST_GREATER_THAN, ">", expr, &Parser::parse_range_expression);
         } else if (match(TK_LE)) {
-            oper = matched;
-            expr = new LessThanOrEqual(oper, expr, parse_range_expression());
+            expr = parse_binary_operator(AST_LESS_THAN_OR_EQUAL, "<=", expr, &Parser::parse_range_expression);
         } else if (match(TK_GE)) {
-            oper = matched;
-            expr = new GreaterThanOrEqual(oper, expr, parse_range_expression());
+            expr = parse_binary_operator(AST_GREATER_THAN_OR_EQUAL, ">=", expr, &Parser::parse_range_expression);
         } else if (match(TK_IN)) {
-            oper = matched;
-            expr = new In(oper, expr, parse_range_expression());
+            expr = parse_binary_operator(AST_IN, "in", expr, &Parser::parse_range_expression);
         } else if (match(TK_NOT)) {
-            oper = matched;
             expect(TK_IN);
-            expr = new NotIn(oper, expr, parse_range_expression());
+            expr = parse_binary_operator(AST_NOT_IN, "not in", expr, &Parser::parse_range_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_range_expression() {

@@ -77,6 +77,54 @@ void PrettyPrinter::print(Ast* node) {
         print_expression(node, true);
         break;
 
+    case AST_LOGICAL_OR:
+        print_logical_or(node);
+        break;
+
+    case AST_OR:
+        print_or(node);
+        break;
+
+    case AST_LOGICAL_AND:
+        print_logical_and(node);
+        break;
+
+    case AST_AND:
+        print_and(node);
+        break;
+
+    case AST_EQUAL:
+        print_equal(node);
+        break;
+
+    case AST_NOT_EQUAL:
+        print_not_equal(node);
+        break;
+
+    case AST_LESS_THAN:
+        print_less_than(node);
+        break;
+
+    case AST_LESS_THAN_OR_EQUAL:
+        print_less_than_or_equal(node);
+        break;
+
+    case AST_GREATER_THAN:
+        print_greater_than(node);
+        break;
+
+    case AST_GREATER_THAN_OR_EQUAL:
+        print_greater_than_or_equal(node);
+        break;
+
+    case AST_IN:
+        print_in(node);
+        break;
+
+    case AST_NOT_IN:
+        print_not_in(node);
+        break;
+
     case AST_INCLUSIVE_RANGE:
         print_inclusive_range(node);
         break;
@@ -463,6 +511,54 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_logical_or(Ast* node) {
+    print_binop(node, "||");
+}
+
+void PrettyPrinter::print_or(Ast* node) {
+    print_binop(node, "or");
+}
+
+void PrettyPrinter::print_logical_and(Ast* node) {
+    print_binop(node, "&&");
+}
+
+void PrettyPrinter::print_and(Ast* node) {
+    print_binop(node, "and");
+}
+
+void PrettyPrinter::print_equal(Ast* node) {
+    print_binop(node, "==");
+}
+
+void PrettyPrinter::print_not_equal(Ast* node) {
+    print_binop(node, "!=");
+}
+
+void PrettyPrinter::print_less_than(Ast* node) {
+    print_binop(node, "<");
+}
+
+void PrettyPrinter::print_less_than_or_equal(Ast* node) {
+    print_binop(node, "<=");
+}
+
+void PrettyPrinter::print_greater_than(Ast* node) {
+    print_binop(node, ">");
+}
+
+void PrettyPrinter::print_greater_than_or_equal(Ast* node) {
+    print_binop(node, ">=");
+}
+
+void PrettyPrinter::print_in(Ast* node) {
+    print_binop(node, "in");
+}
+
+void PrettyPrinter::print_not_in(Ast* node) {
+    print_binop(node, "not in");
 }
 
 void PrettyPrinter::print_inclusive_range(Ast* node) {

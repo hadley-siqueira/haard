@@ -64,7 +64,9 @@ namespace haard::ast {
         AST_CAST,
 
         AST_LOGICAL_OR,
+        AST_OR,
         AST_LOGICAL_AND,
+        AST_AND,
 
         AST_EQUAL,
         AST_NOT_EQUAL,
