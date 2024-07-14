@@ -78,9 +78,60 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_ASSIGNMENT:
+        print_assignment(node);
+        break;
+
+    case AST_DIVISION_ASSIGNMENT:
+        print_division_assignment(node);
+        break;
+
+    case AST_TIMES_ASSIGNMENT:
+        print_times_assignment(node);
+        break;
+
+    case AST_INTEGER_DIVISION_ASSIGNMENT:
+        print_integer_division_assignment(node);
+        break;
+
+    case AST_MODULO_ASSIGNMENT:
+        print_modulo_assignment(node);
+        break;
+
+    case AST_MINUS_ASSIGNMENT:
+        print_minus_assignment(node);
+        break;
+
+    case AST_PLUS_ASSIGNMENT:
+        print_plus_assignment(node);
+        break;
+
+    case AST_SHIFT_LEFT_LOGICAL_ASSIGNMENT:
+        print_shift_left_logical_assignment(node);
+        break;
+
+    case AST_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT:
+        print_shift_right_arithmetic_assignment(node);
+        break;
+
+    case AST_SHIFT_RIGHT_LOGICAL_ASSIGNMENT:
+        print_shift_right_logical_assignment(node);
+        break;
+
     case AST_BITWISE_AND_ASSIGNMENT:
+        print_bitwise_and_assignment(node);
+        break;
+
     case AST_BITWISE_XOR_ASSIGNMENT:
-sdfsdf
+        print_bitwise_xor_assignment(node);
+        break;
+
+    case AST_BITWISE_OR_ASSIGNMENT:
+        print_bitwise_or_assignment(node);
+        break;
+
+    case AST_BITWISE_NOT_ASSIGNMENT:
+        print_bitwise_not_assignment(node);
+        break;
 
     case AST_CAST:
         print_cast(node);
@@ -520,6 +571,62 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_assignment(Ast* node) {
+    print_binop(node, "=");
+}
+
+void PrettyPrinter::print_times_assignment(Ast* node) {
+    print_binop(node, "*=");
+}
+
+void PrettyPrinter::print_division_assignment(Ast* node) {
+    print_binop(node, "/=");
+}
+
+void PrettyPrinter::print_integer_division_assignment(Ast* node) {
+    print_binop(node, "//=");
+}
+
+void PrettyPrinter::print_modulo_assignment(Ast* node) {
+    print_binop(node, "%=");
+}
+
+void PrettyPrinter::print_minus_assignment(Ast* node) {
+    print_binop(node, "-=");
+}
+
+void PrettyPrinter::print_plus_assignment(Ast* node) {
+    print_binop(node, "+=");
+}
+
+void PrettyPrinter::print_shift_left_logical_assignment(Ast* node) {
+    print_binop(node, "<<=");
+}
+
+void PrettyPrinter::print_shift_right_arithmetic_assignment(Ast* node){
+    print_binop(node, ">>=");
+}
+
+void PrettyPrinter::print_shift_right_logical_assignment(Ast* node) {
+    print_binop(node, ">>>=");
+}
+
+void PrettyPrinter::print_bitwise_and_assignment(Ast* node) {
+    print_binop(node, "&=");
+}
+
+void PrettyPrinter::print_bitwise_xor_assignment(Ast* node) {
+    print_binop(node, "^=");
+}
+
+void PrettyPrinter::print_bitwise_or_assignment(Ast* node) {
+    print_binop(node, "|=");
+}
+
+void PrettyPrinter::print_bitwise_not_assignment(Ast* node) {
+    print_binop(node, "~=");
 }
 
 void PrettyPrinter::print_cast(Ast* node) {

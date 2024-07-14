@@ -41,6 +41,21 @@ def sum : int
     a != 0
     0x123 as int**
 
+    a = 0
+    a *= 1
+    a /= 1
+    a //= 1
+    a %= 1
+    a += 1
+    a -= 1
+    a >>= 1
+    a <<= 1
+    a >>>= 1
+    a &= 1
+    a |= 1
+    a ^= 1
+    a ~= 1
+
     out << "a value"
         << "other value"
 

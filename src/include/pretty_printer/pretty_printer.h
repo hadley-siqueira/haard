@@ -38,6 +38,21 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_assignment(Ast* node);
+        void print_times_assignment(Ast* node);
+        void print_division_assignment(Ast* node);
+        void print_integer_division_assignment(Ast* node);
+        void print_modulo_assignment(Ast* node);
+        void print_minus_assignment(Ast* node);
+        void print_plus_assignment(Ast* node);
+        void print_shift_left_logical_assignment(Ast* node);
+        void print_shift_right_arithmetic_assignment(Ast* node);
+        void print_shift_right_logical_assignment(Ast* node);
+        void print_bitwise_and_assignment(Ast* node);
+        void print_bitwise_xor_assignment(Ast* node);
+        void print_bitwise_or_assignment(Ast* node);
+        void print_bitwise_not_assignment(Ast* node);
+
         void print_cast(Ast* node);
 
         void print_logical_or(Ast* node);
