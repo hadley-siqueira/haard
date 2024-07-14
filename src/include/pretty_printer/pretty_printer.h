@@ -38,6 +38,8 @@ namespace haard {
         void print_list_type(Ast* node);
 
         /* Expressions */
+        void print_cast(Ast* node);
+
         void print_logical_or(Ast* node);
         void print_or(Ast* node);
 

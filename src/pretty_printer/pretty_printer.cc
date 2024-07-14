@@ -77,6 +77,15 @@ void PrettyPrinter::print(Ast* node) {
         print_expression(node, true);
         break;
 
+    case AST_ASSIGNMENT:
+    case AST_BITWISE_AND_ASSIGNMENT:
+    case AST_BITWISE_XOR_ASSIGNMENT:
+sdfsdf
+
+    case AST_CAST:
+        print_cast(node);
+        break;
+
     case AST_LOGICAL_OR:
         print_logical_or(node);
         break;
@@ -511,6 +520,10 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_cast(Ast* node) {
+    print_binop(node, "as");
 }
 
 void PrettyPrinter::print_logical_or(Ast* node) {

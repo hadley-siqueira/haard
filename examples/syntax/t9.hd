@@ -39,6 +39,7 @@ def sum : int
     true || true
     a == 0
     a != 0
+    0x123 as int**
 
     out << "a value"
         << "other value"

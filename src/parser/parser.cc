@@ -740,85 +740,71 @@ Ast* Parser::parse_primary_type() {
 }
 
 Ast* Parser::parse_expression() {
-    return parse_logical_or_expression();
-    //return parse_assignment_expression();
+    return parse_assignment_expression();
 }
 
-Ast* Parser::parse_assignment_expression() {/*
-    Token oper;
-    Expression* expr = parse_cast_expression();
+Ast* Parser::parse_assignment_expression() {
+    Ast* expr = parse_cast_expression();
 
     while (true) {
         if (match(TK_ASSIGNMENT)) {
-            oper = matched;
-            expr = new Assignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_ASSIGNMENT, "=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_BITWISE_AND_ASSIGNMENT)) {
-            oper = matched;
-            expr = new BitwiseAndAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_BITWISE_AND_ASSIGNMENT, "&=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_BITWISE_XOR_ASSIGNMENT)) {
-            oper = matched;
-            expr = new BitwiseXorAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_BITWISE_XOR_ASSIGNMENT, "^=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_BITWISE_OR_ASSIGNMENT)) {
-            oper = matched;
-            expr = new BitwiseOrAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_BITWISE_OR_ASSIGNMENT, "|=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_BITWISE_NOT_ASSIGNMENT)) {
-            oper = matched;
-            expr = new BitwiseNotAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_BITWISE_NOT_ASSIGNMENT, "~=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_DIVISION_ASSIGNMENT)) {
-            oper = matched;
-            expr = new DivisionAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_DIVISION_ASSIGNMENT, "/=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_INTEGER_DIVISION_ASSIGNMENT)) {
-            oper = matched;
-            expr = new IntegerDivisionAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_INTEGER_DIVISION_ASSIGNMENT, "//=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_MINUS_ASSIGNMENT)) {
-            oper = matched;
-            expr = new MinusAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_MINUS_ASSIGNMENT, "-=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_MODULO_ASSIGNMENT)) {
-            oper = matched;
-            expr = new ModuloAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_MODULO_ASSIGNMENT, "%=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_PLUS_ASSIGNMENT)) {
-            oper = matched;
-            expr = new PlusAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_PLUS_ASSIGNMENT, "+=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_TIMES_ASSIGNMENT)) {
-            oper = matched;
-            expr = new TimesAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_TIMES_ASSIGNMENT, "*=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_SLL_ASSIGNMENT)) {
-            oper = matched;
-            expr = new ShiftLeftLogicalAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_SHIFT_LEFT_LOGICAL_ASSIGNMENT, "<<=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_SRA_ASSIGNMENT)) {
-            oper = matched;
-            expr = new ShiftRightArithmeticAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT, ">>=", expr, &Parser::parse_cast_expression);
         } else if (match(TK_SRL_ASSIGNMENT)) {
-            oper = matched;
-            expr = new ShiftRightLogicalAssignment(oper, expr, parse_cast_expression());
+            expr = parse_binary_operator(AST_SHIFT_RIGHT_LOGICAL_ASSIGNMENT, ">>>=", expr, &Parser::parse_cast_expression);
         } else {
             break;
         }
     }
 
-    return expr;*/
+    return expr;
 }
 
-Ast* Parser::parse_cast_expression() {/*
-    Token oper;
+Ast* Parser::parse_cast_expression() {
     Ast* type = nullptr;
-    Expression* expr = parse_logical_or_expression();
+    Ast* subexpr;
+    Ast* expr = parse_logical_or_expression();
 
-    if (match(TK_AS)) {
-        oper = matched;
+    if (expr != nullptr && match(TK_AS)) {
+        subexpr = expr;
+        expr = new Ast(AST_CAST, matched);
 
         if (next_token_on_same_line()) {
             type = parse_type();
         }
 
         if (type == nullptr) {
-            assert(false && "missing type on cast expression");
+            log_error("missing type on cast expression");
         }
 
-        expr = nullptr;//new Cast(oper, expr, type);
+        expr->add_child(subexpr);
+        expr->add_child(type);
     }
 
-    return expr;*/
+    return expr;
 }
 
 Ast* Parser::parse_logical_or_expression() {
