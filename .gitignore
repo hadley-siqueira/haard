@@ -36,3 +36,8 @@ tags
 
 # Tests
 examples/cpp
+
+# Qt Creator
+build
+CMakeLists.txt.user
+CMakeLists.txt.user.2634242
