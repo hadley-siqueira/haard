@@ -85,4 +85,7 @@ def sum : int
         print("Hi")
 
 def foo : void
+    for i in range(0, 10):
+        print(i)
+
     return

@@ -44,9 +44,6 @@ namespace haard {
         Ast* parse_elif_statement();
         Ast* parse_else_statement();
 
-        void parse_for_init_or_range(Ast* stmt);
-        void parse_for_test(Ast* stmt);
-        void parse_for_update(Ast* stmt);
         Ast* parse_return_statement();
         Ast* parse_statements();
 

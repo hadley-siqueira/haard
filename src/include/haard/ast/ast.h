@@ -37,10 +37,16 @@ namespace haard::ast {
         AST_EXPRESSION,
         AST_EXPRESSION_WITH_SEMICOLON,
         AST_WHILE,
-        STMT_FOR,
-        STMT_IF,
-        STMT_ELIF,
-        STMT_ELSE,
+
+        AST_FOR,
+        AST_FOR_RANGE,
+        AST_FOR_INIT,
+        AST_FOR_TEST,
+        AST_FOR_UPDATE,
+
+        AST_IF,
+        AST_ELIF,
+        AST_ELSE,
         AST_RETURN,
 
         AST_EXPRESSION_UNKNOWN,
