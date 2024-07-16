@@ -64,6 +64,18 @@ void PrettyPrinter::print(Ast* node) {
         print_while(node);
         break;
 
+    case AST_FOR:
+        print_for(node);
+        break;
+
+    case AST_FOR_INIT:
+        print_for_init(node);
+        break;
+
+    case AST_FOR_UPDATE:
+        print_for_update(node);
+        break;
+
     case AST_RETURN:
         print_return(node);
         break;
@@ -939,27 +951,41 @@ void PrettyPrinter::print_while(Ast* stmt) {
     out << '\n';
 }
 
-/*
-void PrettyPrinter::print_for_statement(ForStatement* stmt) {
+void PrettyPrinter::print_for(Ast* stmt) {
+    Ast* tmp;
+
     print_indentation();
     out << "for ";
 
-    if (stmt->is_foreach()) {
-        print_expression(stmt->get_range());
+    tmp = stmt->get_child(AST_FOR_RANGE);
+
+    if (tmp) {
+        print(tmp->get_child());
     } else {
-        //print_expression_list(stmt->get_init(), "", "");
+        print(stmt->get_child(AST_FOR_INIT));
         out << "; ";
-        print_expression(stmt->get_test());
+
+        tmp = stmt->get_child(AST_FOR_TEST);
+        print(tmp->get_child());
         out << "; ";
-        //print_expression_list(stmt->get_update(), "", "");
+
+        print(stmt->get_child(AST_FOR_UPDATE));
     }
 
     out << ":\n";
     indent();
-    //print_statements(stmt->get_statements());
+    print(stmt->get_child(AST_COMPOUND_STATEMENT));
     dedent();
     out << '\n';
-}*/
+}
+
+void PrettyPrinter::print_for_init(Ast* node) {
+    print_expression_list(node, "", "");
+}
+
+void PrettyPrinter::print_for_update(Ast* node) {
+    print_expression_list(node, "", "");
+}
 
 /*
 void PrettyPrinter::print_if_statement(BranchStatement* stmt) {
@@ -1056,19 +1082,7 @@ void PrettyPrinter::print_expression(Ast* stmt, bool has_semicolon) {
 
     out << '\n';
 }
-/*
-void PrettyPrinter::print_cast_expression(Cast* expr) {
-    print_expression(expr->get_expression());
-    out << " as ";
-    //print_type(expr->get_type());
-}
 
-void PrettyPrinter::print_not_in_expression(NotIn* expr) {
-    print_expression(expr->get_left());
-    out << " not in ";
-    print_expression(expr->get_right());
-}
-*/
 void PrettyPrinter::print_index(Ast* node) {
     print(node->get_child(0));
     out << '[';

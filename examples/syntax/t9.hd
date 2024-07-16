@@ -88,4 +88,13 @@ def foo : void
     for i in range(0, 10):
         print(i)
 
+    for i = 0; i < 10; ++i:
+        print(i)
+
+    for i = 0, j = 0; i < 10; ++i, ++j:
+        print(i)
+
+    for ; i < 10; ++i, ++j:
+        print(i)
+
     return
