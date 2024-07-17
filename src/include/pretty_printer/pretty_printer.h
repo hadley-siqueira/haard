@@ -34,6 +34,9 @@ namespace haard {
         void print_for(Ast* stmt);
         void print_for_init(Ast* node);
         void print_for_update(Ast* node);
+        void print_if(Ast* node);
+        void print_elif(Ast* node);
+        void print_else(Ast* node);
         void print_return(Ast* node);
         void print_expression(Ast* stmt, bool has_semicolon=false);
 

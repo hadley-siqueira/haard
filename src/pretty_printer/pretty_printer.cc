@@ -76,6 +76,18 @@ void PrettyPrinter::print(Ast* node) {
         print_for_update(node);
         break;
 
+    case AST_IF:
+        print_if(node);
+        break;
+
+    case AST_ELIF:
+        print_elif(node);
+        break;
+
+    case AST_ELSE:
+        print_else(node);
+        break;
+
     case AST_RETURN:
         print_return(node);
         break;
@@ -987,63 +999,40 @@ void PrettyPrinter::print_for_update(Ast* node) {
     print_expression_list(node, "", "");
 }
 
-/*
-void PrettyPrinter::print_if_statement(BranchStatement* stmt) {
+void PrettyPrinter::print_if(Ast* node) {
     print_indentation();
     out << "if ";
-
-    print_expression(stmt->get_condition());
+    print(node->get_child(0));
     out << ":\n";
     indent();
-    //print_statement(stmt->get_true_statements());
+    print(node->get_child(1));
     dedent();
 
-    if (stmt->get_false_statements()) {
-       // print_statement(stmt->get_false_statements());
-    } else {
-        out << '\n';
-    }
-}*/
+    print(node->get_child(2));
+    /*if (node->get_child(2)) {
 
-/*
-void PrettyPrinter::print_elif_statement(BranchStatement* stmt) {
+    }*/
+}
+
+void PrettyPrinter::print_elif(Ast* node) {
     print_indentation();
     out << "elif ";
-
-    print_expression(stmt->get_condition());
+    print(node->get_child(0));
     out << ":\n";
     indent();
-   // print_statement(stmt->get_true_statements());
+    print(node->get_child(1));
     dedent();
 
-    if (stmt->get_false_statements()) {
-       // print_statement(stmt->get_false_statements());
-    } else {
-        out << '\n';
-    }
-}*/
+    print(node->get_child(2));
+}
 
-/*
-void PrettyPrinter::print_else_statement(BranchStatement* stmt) {
+void PrettyPrinter::print_else(Ast* node) {
     print_indentation();
-    out << "else:\n ";
-
+    out << "else:\n";
     indent();
-   // print_statement(stmt->get_true_statements());
+    print(node->get_child());
     dedent();
-    out << '\n';
-}*/
-
-/*
-void PrettyPrinter::print_return_statement(ReturnStatement* stmt) {
-    print_indentation();
-    out << "return";
-
-    if (stmt->get_expression()) {
-        out << ' ';
-        print_expression(stmt->get_expression());
-    }
-}*/
+}
 
 /* Statements */
 void PrettyPrinter::print_statements(Ast* stmts) {
