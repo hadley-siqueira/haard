@@ -317,28 +317,6 @@ Ast* Parser::parse_statement() {
     Ast* stmt = nullptr;
     Ast* expr = nullptr;
 
-    /*if (lookahead(TK_WHILE)) {
-        stmt = parse_while_statement();
-    } else if (lookahead(TK_FOR)) {
-        stmt = parse_for_statement();
-    } else if (lookahead(TK_IF)) {
-        stmt = parse_if_statement();
-    } else if (lookahead(TK_RETURN)) {
-        stmt = parse_jump_statement(TK_RETURN, STMT_RETURN);
-    } else if (lookahead(TK_YIELD)) {
-        stmt = parse_jump_statement(TK_YIELD, STMT_YIELD);
-    } else if (lookahead(TK_CONTINUE)) {
-        stmt = parse_jump_statement(TK_CONTINUE, STMT_CONTINUE);
-    } else if (lookahead(TK_GOTO)) {
-        stmt = parse_jump_statement(TK_GOTO, STMT_GOTO);
-    } else if (lookahead(TK_BREAK)) {
-        stmt = parse_jump_statement(TK_BREAK, STMT_BREAK);
-    } else if (lookahead(TK_VAR)) {
-        stmt = parse_variable_declaration();*/
-    //} else {
-        //stmt = new ExpressionStatement(parse_expression());
-    //}
-
     if (lookahead(TK_WHILE)) {
         stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
@@ -391,6 +369,7 @@ Ast* Parser::parse_while_statement() {
 Ast* Parser::parse_for_statement() {
     Ast* stmt = new Ast(AST_FOR);
     Ast* expr = nullptr;
+    bool is_range = false;
 
     expect(TK_FOR);
 
@@ -404,6 +383,7 @@ Ast* Parser::parse_for_statement() {
 
     if (expr != nullptr && expr->get_kind() == AST_IN) {
         stmt->add_child(AST_FOR_RANGE, expr);
+        is_range = true;
     } else if (expr != nullptr) {
         Ast* init = new Ast(AST_FOR_INIT);
         init->add_child(expr);
@@ -420,33 +400,33 @@ Ast* Parser::parse_for_statement() {
 
         stmt->add_child(init);
         expect(TK_SEMICOLON);
+    }
 
-        if (!match(TK_SEMICOLON)) {
+    if (!is_range && !match(TK_SEMICOLON)) {
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("missing test expression in for loop");
+        }
+
+        stmt->add_child(AST_FOR_TEST, expr);
+        expect(TK_SEMICOLON);
+    }
+
+    if (!is_range && !lookahead(TK_COLON)) {
+        Ast* update = new Ast(AST_FOR_UPDATE);
+
+        do {
             expr = parse_expression();
 
             if (expr == nullptr) {
-                log_error("missing test expression in for loop");
+                log_error("missing expression in for update expression");
             }
 
-            stmt->add_child(AST_FOR_TEST, expr);
-            expect(TK_SEMICOLON);
-        }
+            update->add_child(expr);
+        } while (match(TK_COMMA));
 
-        if (!lookahead(TK_COLON)) {
-            Ast* update = new Ast(AST_FOR_UPDATE);
-
-            do {
-                expr = parse_expression();
-
-                if (expr == nullptr) {
-                    log_error("missing expression in for update expression");
-                }
-
-                update->add_child(expr);
-            } while (match(TK_COMMA));
-
-            stmt->add_child(update);
-        }
+        stmt->add_child(update);
     }
 
     expect(TK_COLON);

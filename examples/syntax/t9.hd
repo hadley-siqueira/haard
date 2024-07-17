@@ -97,4 +97,7 @@ def foo : void
     for ; i < 10; ++i, ++j:
         print(i)
 
+    for ; i < 10; :
+        print(i)
+
     return
