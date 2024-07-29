@@ -325,6 +325,8 @@ Ast* Parser::parse_statement() {
         stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
         stmt = parse_return_statement();
+    } else if (lookahead(TK_SWITCH)) {
+        stmt = parse_switch_statement();
     } else {
         expr = parse_expression();
 
@@ -533,6 +535,47 @@ Ast* Parser::parse_return_statement() {
 
         stmt->add_child(expr);
     }
+
+    return stmt;
+}
+
+Ast* Parser::parse_switch_statement() {
+    Ast* stmt = new Ast(AST_SWITCH);
+    Ast* expr;
+
+    expect(TK_SWITCH);
+    stmt->set_from_token(matched);
+    expr = parse_expression();
+
+    if (expr == nullptr) {
+        log_error("missing expression on switch statement");
+    } else {
+        stmt->add_child(expr);
+    }
+
+    expect(TK_COLON);
+    indent();
+
+    while (true) {
+        if (match(TK_CASE)) {
+            Ast* cs = new Ast(AST_SWITCH_CASE);
+            expr = parse_expression();
+
+            if (expr == nullptr) {
+                log_error("missing expression on case");
+            } else {
+                cs->add_child(expr);
+                expect(TK_COLON);
+                indent();
+                cs->add_child(parse_statements());
+                dedent();
+            }
+        } else {
+            expect(TK_PASS);
+        }
+    }
+
+    dedent();
 
     return stmt;
 }

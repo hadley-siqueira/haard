@@ -45,6 +45,8 @@ namespace haard {
         Ast* parse_else_statement();
 
         Ast* parse_return_statement();
+        Ast* parse_switch_statement();
+
         Ast* parse_statements();
 
         Ast* parse_type();

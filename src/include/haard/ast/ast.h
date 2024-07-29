@@ -49,6 +49,10 @@ namespace haard::ast {
         AST_ELSE,
         AST_RETURN,
 
+        AST_SWITCH,
+        AST_SWITCH_CASE,
+        AST_SWITCH_DEFAULT,
+
         AST_EXPRESSION_UNKNOWN,
 
         // Binary operators

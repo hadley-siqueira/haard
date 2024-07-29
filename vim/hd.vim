@@ -59,7 +59,7 @@ set cpo&vim
 syn keyword HDStatement	true, null, false
 syn keyword HDStatement	as assert break continue del exec global
 syn keyword HDStatement	lambda nonlocal pass return with yield new delete
-syn keyword HDStatement	interface class this def function var const enum union struct data alias nextgroup=HDFunction skipwhite
+syn keyword HDStatement	interface class this def function var const enum union struct switch default data alias nextgroup=HDFunction skipwhite
 syn keyword HDConditional	elif else if
 syn keyword HDRepeat	for while case others 
 syn keyword HDOperator	and in is not or sizeof
