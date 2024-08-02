@@ -50,6 +50,8 @@ namespace haard::ast {
         AST_RETURN,
 
         AST_SWITCH,
+        AST_SWITCH_BRACE,
+        AST_SWITCH_CASES,
         AST_SWITCH_CASE,
         AST_SWITCH_DEFAULT,
 

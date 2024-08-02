@@ -38,6 +38,10 @@ namespace haard {
         void print_elif(Ast* node);
         void print_else(Ast* node);
         void print_return(Ast* node);
+        void print_switch(Ast* node);
+        void print_switch_brace(Ast* node);
+        void print_switch_cases(Ast* node);
+        void print_switch_case(Ast* node);
         void print_expression(Ast* stmt, bool has_semicolon=false);
 
         /* types */

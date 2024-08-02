@@ -557,27 +557,47 @@ Ast* Parser::parse_switch_statement() {
     indent();
 
     while (true) {
-        if (match(TK_CASE)) {
-            Ast* cs = new Ast(AST_SWITCH_CASE);
-            expr = parse_expression();
+        if (lookahead(TK_CASE)) {
+            Ast* cases = parse_switch_cases();
+            Ast* brace = new Ast(AST_SWITCH_BRACE);
 
-            if (expr == nullptr) {
-                log_error("missing expression on case");
-            } else {
-                cs->add_child(expr);
-                expect(TK_COLON);
-                indent();
-                cs->add_child(parse_statements());
-                dedent();
-            }
+            brace->add_child(cases);
+            indent();
+            brace->add_child(parse_statements());
+            dedent();
+        } else if (match(TK_DEFAULT)) {
+            Ast* cs = new Ast(AST_SWITCH_DEFAULT);
+            expect(TK_COLON);
+            indent();
+            cs->add_child(parse_statements());
+            dedent();
+            stmt->add_child(cs);
         } else {
             expect(TK_PASS);
         }
     }
 
     dedent();
-
     return stmt;
+}
+
+Ast* Parser::parse_switch_cases() {
+    Ast* node = new Ast(AST_SWITCH_CASES);
+
+    while (match(TK_CASE)) {
+        Ast* cs = new Ast(AST_SWITCH_CASE, matched);
+        Ast* expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("missing expression on case");
+        }
+
+        cs->add_child(expr);
+        expect(TK_COLON);
+        node->add_child(cs);
+    }
+
+    return node;
 }
 
 Ast* Parser::parse_statements() {
