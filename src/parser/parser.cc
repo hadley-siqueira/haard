@@ -565,6 +565,7 @@ Ast* Parser::parse_switch_statement() {
             indent();
             brace->add_child(parse_statements());
             dedent();
+            stmt->add_child(brace);
         } else if (match(TK_DEFAULT)) {
             Ast* cs = new Ast(AST_SWITCH_DEFAULT);
             expect(TK_COLON);
@@ -573,7 +574,8 @@ Ast* Parser::parse_switch_statement() {
             dedent();
             stmt->add_child(cs);
         } else {
-            expect(TK_PASS);
+            //expect(TK_PASS);
+            break;
         }
     }
 

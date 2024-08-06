@@ -1,0 +1,16 @@
+def main : void
+    switch kind:
+        case 0:
+            print("0")
+
+        case 5:
+            print("11")
+
+        case 1:
+        case 2:
+            print("11")
+
+        default:
+            print("default")
+
+    a = a + 1

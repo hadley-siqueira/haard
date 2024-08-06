@@ -105,7 +105,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_SWITCH_CASE:
-        print_switch_case(node);sdfsdf
+        print_switch_case(node);
+        break;
+
+    case AST_SWITCH_DEFAULT:
+        print_switch_default(node);
         break;
 
     /* Expressions */
@@ -1097,6 +1101,7 @@ void PrettyPrinter::print_switch_brace(Ast* node) {
     indent();
     print(node->get_child(1));
     dedent();
+    out << "\n";
 }
 
 void PrettyPrinter::print_switch_cases(Ast* node) {
@@ -1111,6 +1116,15 @@ void PrettyPrinter::print_switch_case(Ast* node) {
     out << "case ";
     print(node->get_child());
     out << ":";
+}
+
+void PrettyPrinter::print_switch_default(Ast* node) {
+    print_indentation();
+    out << "default:\n";
+    indent();
+    print(node->get_child());
+    dedent();
+    out << "\n";
 }
 
 void PrettyPrinter::print_expression(Ast* stmt, bool has_semicolon) {
