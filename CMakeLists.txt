@@ -10,10 +10,6 @@ set(UTILS_SRC
     src/utils/utils.cc
 )
 
-set(STRING_POOL_SRC
-    src/string_pool/string_pool.cc
-)
-
 set(TOKEN_SRC
     src/haard/token/token.cc
 )
@@ -66,16 +62,6 @@ set(PRETTY_PRINTER_SRC
     src/pretty_printer/pretty_printer.cc
 )
 
-set(CPP_GENERATOR_SRC
-#    src/cpp_generator/cpp_generator.cc
-#    src/cpp_generator/modules_cpp_generator.cc
-#    src/cpp_generator/module_cpp_generator.cc
-#    src/cpp_generator/class_cpp_generator.cc
-#    src/cpp_generator/function_cpp_generator.cc
-#    src/cpp_generator/statement_cpp_generator.cc
-#    src/cpp_generator/expression_cpp_generator.cc
-)
-
 set(LOG_SRC
     src/log/log.cc
     src/log/logger.cc
@@ -97,7 +83,6 @@ set(SOURCES
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}
-    #${CPP_GENERATOR_SRC}
     src/main.cc
 )
 

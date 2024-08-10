@@ -2,7 +2,6 @@
 #include <iostream>
 #include <map>
 #include "scanner/scanner.h"
-#include "string_pool/string_pool.h"
 
 using namespace haard;
 
