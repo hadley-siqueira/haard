@@ -43,6 +43,14 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Definitions */
+    case AST_CLASS:
+        print_class(node);
+        break;
+
+    case AST_SUPER:
+        print_super_type(node);
+        break;
+
     case AST_FUNCTION:
         print_function(node);
         break;
@@ -611,6 +619,28 @@ void PrettyPrinter::print_import_alias(Ast* alias) {
     out << alias->get_value();
 }
 
+void PrettyPrinter::print_class(Ast* node) {
+    out << "class ";
+    out << node->get_value();
+
+    print(node->get_child(AST_SUPER));
+
+    out << ":\n";
+    indent();
+
+    for (int i = 0; i < node->get_child(AST_FUNCTIONS)->children_count(); ++i) {asd
+        print(node->get_child(i));
+    }
+
+    dedent();
+}
+
+void PrettyPrinter::print_super_type(Ast* node) {
+    out << "(";
+    print(node->get_child());
+    out << ")";
+}
+
 void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
@@ -932,6 +962,7 @@ void PrettyPrinter::print_union(Union* u) {
 }*/
 
 void PrettyPrinter::print_function(Ast* function) {
+    print_indentation();
     out << "def ";
     out << function->get_value();
 

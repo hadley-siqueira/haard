@@ -24,6 +24,9 @@ namespace haard {
         void print_import_path_member(Ast* member);
         void print_import_alias(Ast* alias);
 
+        void print_class(Ast* node);
+        void print_super_type(Ast* node);
+
         void print_function(Ast* function);
         void print_parameters(Ast* parameters);
         void print_parameter(Ast* parameter);

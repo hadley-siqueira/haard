@@ -1,0 +1,17 @@
+class Pixel:
+    def init : void
+        @r : u8
+        @g : u8
+        @b : u8
+
+        pass
+
+class PixelWithAlpha(Pixel):
+    def init : void
+        @r : u8
+        @g : u8
+        @b : u8
+        @a : u8
+        @p : Pixel*
+
+        pass

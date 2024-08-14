@@ -22,6 +22,8 @@ namespace haard::ast {
         AST_STRUCT,
         AST_ENUM,
         AST_UNION,
+        AST_SUPER,
+        AST_FUNCTIONS,
 
         AST_IMPORT,
         AST_IMPORT_PATH,

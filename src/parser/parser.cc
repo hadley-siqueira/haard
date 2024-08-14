@@ -32,7 +32,7 @@ Ast* Parser::parse_module() {
         } else if (lookahead(TK_DEF)) {
             module->add_child(parse_function());
         } else if (lookahead(TK_CLASS)) {
-        //    module->add_class(parse_class());
+            module->add_child(parse_class());
         } else if (lookahead(TK_STRUCT)) {
           //  module->add_struct(parse_struct());
         } else if (lookahead(TK_UNION)) {
@@ -70,27 +70,40 @@ Ast* Parser::parse_import() {
     return import;
 }
 
-Ast* Parser::parse_class() {/*
-    Class* klass = new Class();
+Ast* Parser::parse_class() {
+    Ast* klass = new Ast(AST_CLASS);
 
     expect(TK_CLASS);
     expect(TK_ID);
-    klass->set_name(matched);
-    klass->set_generics(parse_generics());
+    klass->set_from_token(matched);
+    klass->add_child(parse_generics());
 
     if (match(TK_LEFT_PARENTHESIS)) {
-        klass->set_super_type(parse_type());
+        Ast* type = parse_type();
+
+        if (type == nullptr) {
+            log_error("missing super type");
+        } else {
+            klass->add_child(AST_SUPER, type);
+        }
+
         expect(TK_RIGHT_PARENTHESIS);
     }
 
     expect(TK_COLON);
     indent();
 
+    Ast* variables;
+    Ast* functions = new Ast(AST_FUNCTIONS);
+
+    klass->add_child(variables);
+    klass->add_child(functions);
+
     while (is_indented()) {
         if (lookahead(TK_DEF)) {
-            klass->add_function(parse_function());
+            functions->add_child(parse_function());
         } else if (lookahead(TK_ID)) {
-            klass->add_variable(parse_variable());
+            //klass->add_variable(parse_variable());
         } else if (match(TK_PASS)) {
             break;
         } else {
@@ -99,7 +112,7 @@ Ast* Parser::parse_class() {/*
     }
 
     dedent();
-    return klass;*/
+    return klass;
 }
 
 Ast* Parser::parse_struct() {/*
