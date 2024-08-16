@@ -24,6 +24,7 @@ namespace haard::ast {
         AST_UNION,
         AST_SUPER,
         AST_VARIABLE,
+        AST_VARIABLE_DEFINITION,
 
         AST_FUNCTIONS,
         AST_VARIABLES,

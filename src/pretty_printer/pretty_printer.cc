@@ -63,6 +63,10 @@ void PrettyPrinter::print(Ast* node) {
         print_variable(node);
         break;
 
+    case AST_VARIABLE_DEFINITION:
+        print_variable_definition(node);
+        break;
+
     case AST_FUNCTION:
         print_function(node);
         break;
@@ -673,6 +677,16 @@ void PrettyPrinter::print_variables(Ast* node) {
 
 void PrettyPrinter::print_variable(Ast* node) {
     out << node->get_value() << " : ";
+    print(node->get_child(0));
+
+    if (node->get_child(1)) {
+        out << " = ";
+        print(node->get_child(1));
+    }
+}
+
+void PrettyPrinter::print_variable_definition(Ast* node) {
+    out << "var " << node->get_value() << " : ";
     print(node->get_child(0));
 
     if (node->get_child(1)) {

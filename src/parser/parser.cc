@@ -39,6 +39,8 @@ Ast* Parser::parse_module() {
             //module->add_union(parse_union());
         } else if (lookahead(TK_ENUM)) {
             //module->add_enum(parse_enum());
+        } else if (lookahead(TK_VAR)) {
+            module->add_child(parse_variable_definition());
         } else {
             break;
         }
@@ -254,6 +256,46 @@ Ast* Parser::parse_enum_variable() {/*
     }
 
     return var;*/
+}
+
+Ast* Parser::parse_variable_definition() {
+    bool need_expression = true;
+    Ast* var = new Ast(AST_VARIABLE_DEFINITION);
+
+    expect(TK_VAR);
+    expect(TK_ID);
+    var->set_from_token(matched);
+
+    if (match(TK_COLON)) {
+        Ast* type = parse_type();
+        need_expression = false;
+
+        if (type == nullptr) {
+            log_error("missing type on variable definition");
+        } else {
+            var->add_child(type);
+        }
+    }
+
+    if (need_expression) {
+        expect(TK_ASSIGNMENT);
+    } else {
+        if (match(TK_ASSIGNMENT)) {
+            need_expression = true;
+        }
+    }
+
+    if (need_expression) {
+        Ast* expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("missing expression on variable definition");
+        } else {
+            var->add_child(expr);
+        }
+    }
+
+    return var;
 }
 
 Ast* Parser::parse_function() {
