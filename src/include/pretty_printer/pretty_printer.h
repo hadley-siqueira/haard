@@ -26,6 +26,9 @@ namespace haard {
 
         void print_class(Ast* node);
         void print_super_type(Ast* node);
+        void print_functions(Ast* node);
+        void print_variables(Ast* node);
+        void print_variable(Ast* node);
 
         void print_function(Ast* function);
         void print_parameters(Ast* parameters);

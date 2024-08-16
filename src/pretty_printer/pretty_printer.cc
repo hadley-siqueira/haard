@@ -51,6 +51,18 @@ void PrettyPrinter::print(Ast* node) {
         print_super_type(node);
         break;
 
+    case AST_FUNCTIONS:
+        print_functions(node);
+        break;
+
+    case AST_VARIABLES:
+        print_variables(node);
+        break;
+
+    case AST_VARIABLE:
+        print_variable(node);
+        break;
+
     case AST_FUNCTION:
         print_function(node);
         break;
@@ -628,9 +640,8 @@ void PrettyPrinter::print_class(Ast* node) {
     out << ":\n";
     indent();
 
-    for (int i = 0; i < node->get_child(AST_FUNCTIONS)->children_count(); ++i) {asd
-        print(node->get_child(i));
-    }
+    print(node->get_child(AST_VARIABLES));
+    print(node->get_child(AST_FUNCTIONS));
 
     dedent();
 }
@@ -639,6 +650,35 @@ void PrettyPrinter::print_super_type(Ast* node) {
     out << "(";
     print(node->get_child());
     out << ")";
+}
+
+void PrettyPrinter::print_functions(Ast* node) {
+    for (int i = 0; i < node->children_count(); ++i) {
+        print(node->get_child(i));
+        out << "\n\n";
+    }
+}
+
+void PrettyPrinter::print_variables(Ast* node) {
+    if (node->children_count() > 0) {
+        for (int i = 0; i < node->children_count(); ++i) {
+            print_indentation();
+            print(node->get_child(i));
+            out << "\n";
+        }
+
+        out << "\n";
+    }
+}
+
+void PrettyPrinter::print_variable(Ast* node) {
+    out << node->get_value() << " : ";
+    print(node->get_child(0));
+
+    if (node->get_child(1)) {
+        out << " = ";
+        print(node->get_child(1));
+    }
 }
 
 void PrettyPrinter::print_list_type(Ast* node) {

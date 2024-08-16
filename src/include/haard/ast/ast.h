@@ -23,7 +23,10 @@ namespace haard::ast {
         AST_ENUM,
         AST_UNION,
         AST_SUPER,
+        AST_VARIABLE,
+
         AST_FUNCTIONS,
+        AST_VARIABLES,
 
         AST_IMPORT,
         AST_IMPORT_PATH,

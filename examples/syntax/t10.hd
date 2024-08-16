@@ -1,4 +1,8 @@
 class Pixel:
+    x    : int = 2
+    y    : int = 2
+    name : str
+
     def init : void
         @r : u8
         @g : u8
@@ -14,4 +18,9 @@ class PixelWithAlpha(Pixel):
         @a : u8
         @p : Pixel*
 
+        x = 2
+        y = 2 + 3
+        std::foo<int, int>(2, 3)
+
+    def destroy : void
         pass

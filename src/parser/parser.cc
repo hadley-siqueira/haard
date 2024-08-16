@@ -93,7 +93,7 @@ Ast* Parser::parse_class() {
     expect(TK_COLON);
     indent();
 
-    Ast* variables;
+    Ast* variables = new Ast(AST_VARIABLES);
     Ast* functions = new Ast(AST_FUNCTIONS);
 
     klass->add_child(variables);
@@ -103,7 +103,7 @@ Ast* Parser::parse_class() {
         if (lookahead(TK_DEF)) {
             functions->add_child(parse_function());
         } else if (lookahead(TK_ID)) {
-            //klass->add_variable(parse_variable());
+            variables->add_child(parse_variable());
         } else if (match(TK_PASS)) {
             break;
         } else {
@@ -211,26 +211,26 @@ Ast* Parser::parse_enum() {/*
     return st;*/
 }
 
-Ast* Parser::parse_variable() {/*
-    Variable* var = new Variable();
+Ast* Parser::parse_variable() {
+    Ast* var = new Ast(AST_VARIABLE);
 
     expect(TK_ID);
-    var->set_name(matched);
+    var->set_from_token(matched);
 
     expect(TK_COLON);
-    var->set_type(parse_type());
+    var->add_child(parse_type());
 
     if (match(TK_ASSIGNMENT)) {
-        Expression* expr = parse_expression();
+        Ast* expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("missing expression on member");
         } else {
-            var->set_expression(expr);
+            var->add_child(expr);
         }
     }
 
-    return var;*/
+    return var;
 }
 
 Ast* Parser::parse_enum_variable() {/*
