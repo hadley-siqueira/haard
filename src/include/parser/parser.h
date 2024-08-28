@@ -30,7 +30,7 @@ namespace haard {
         Ast* parse_enum();
 
         Ast* parse_variable();
-        Ast* parse_enum_variable();
+        Ast* parse_enum_field();
 
         Ast* parse_variable_definition();
 

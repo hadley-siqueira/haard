@@ -20,7 +20,15 @@ namespace haard::ast {
 
         AST_CLASS,
         AST_STRUCT,
+
         AST_ENUM,
+        AST_ENUM_SUPER,
+        AST_ENUM_FIELDS,
+        AST_ENUM_FUNCTIONS,
+        AST_ENUM_FIELD,
+        AST_ENUM_FIELD_TYPE,
+        AST_ENUM_FIELD_EXPRESSION,
+
         AST_UNION,
         AST_SUPER,
         AST_VARIABLE,
@@ -28,6 +36,9 @@ namespace haard::ast {
 
         AST_FUNCTIONS,
         AST_VARIABLES,
+
+        AST_FIELD_TYPE,
+        AST_FIELD_EXPRESSION,
 
         AST_IMPORT,
         AST_IMPORT_PATH,

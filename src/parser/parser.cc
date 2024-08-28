@@ -38,7 +38,7 @@ Ast* Parser::parse_module() {
         } else if (lookahead(TK_UNION)) {
             //module->add_union(parse_union());
         } else if (lookahead(TK_ENUM)) {
-            //module->add_enum(parse_enum());
+            module->add_child(parse_enum());
         } else if (lookahead(TK_VAR)) {
             module->add_child(parse_variable_definition());
         } else {
@@ -84,7 +84,7 @@ Ast* Parser::parse_class() {
         Ast* type = parse_type();
 
         if (type == nullptr) {
-            log_error("missing super type");
+            log_error("missing super type on class definition");
         } else {
             klass->add_child(AST_SUPER, type);
         }
@@ -181,27 +181,40 @@ Ast* Parser::parse_union() {/*
     return st;*/
 }
 
-Ast* Parser::parse_enum() {/*
-    Enum* st = new Enum();
+Ast* Parser::parse_enum() {
+    Ast* st = new Ast(AST_ENUM);
 
     expect(TK_ENUM);
     expect(TK_ID);
-    st->set_name(matched);
-    st->set_generics(parse_generics());
+    st->set_from_token(matched);
+    st->add_child(parse_generics());
 
     if (match(TK_LEFT_PARENTHESIS)) {
-        st->set_super_type(parse_type());
+        Ast* type = parse_type();
+
+        if (type == nullptr) {
+            log_error("missing super type on enum definition");
+        } else {
+            st->add_child(AST_ENUM_SUPER, type);
+        }
+
         expect(TK_RIGHT_PARENTHESIS);
     }
 
     expect(TK_COLON);
     indent();
 
+    Ast* fields = new Ast(AST_ENUM_FIELDS);
+    Ast* functions = new Ast(AST_ENUM_FUNCTIONS);
+
+    st->add_child(fields);
+    st->add_child(functions);
+
     while (is_indented()) {
         if (lookahead(TK_DEF)) {
-            st->add_function(parse_function());
+           functions->add_child(parse_function());
         } else if (lookahead(TK_ID)) {
-            st->add_variable(parse_enum_variable());
+            fields->add_child(parse_enum_field());
         } else if (match(TK_PASS)) {
             break;
         } else {
@@ -210,7 +223,7 @@ Ast* Parser::parse_enum() {/*
     }
 
     dedent();
-    return st;*/
+    return st;
 }
 
 Ast* Parser::parse_variable() {
@@ -235,27 +248,27 @@ Ast* Parser::parse_variable() {
     return var;
 }
 
-Ast* Parser::parse_enum_variable() {/*
-    Variable* var = new Variable();
+Ast* Parser::parse_enum_field() {
+    Ast* var = new Ast(AST_ENUM_FIELD);
 
     expect(TK_ID);
-    var->set_name(matched);
+    var->set_from_token(matched);
 
     if (match(TK_COLON)) {
-        var->set_type(parse_type());
+        var->add_child(AST_ENUM_FIELD_TYPE, parse_type());
     }
 
     if (match(TK_ASSIGNMENT)) {
-        Expression* expr = parse_expression();
+        Ast* expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("missing expression on enum member");
         } else {
-            var->set_expression(expr);
+            var->add_child(AST_ENUM_FIELD_EXPRESSION, expr);
         }
     }
 
-    return var;*/
+    return var;
 }
 
 Ast* Parser::parse_variable_definition() {

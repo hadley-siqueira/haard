@@ -29,3 +29,20 @@ class PixelWithAlpha(Pixel):
 
     def destroy : void
         pass
+
+enum Color:
+    RED = 0xff0000
+    GREEN = 0x00ff00
+    BLUE = 0x0000ff
+
+enum Packet:
+    TCP
+    UDP
+
+enum Event:
+    Click    : (int, int)
+    Keypress : char
+
+enum Option<T>:
+    Some : T
+    None

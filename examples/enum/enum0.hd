@@ -1,0 +1,24 @@
+enum Packet:
+    TCP
+    UDP
+
+enum Color(u8):
+    RED
+    GREEN
+    BLUE
+
+enum Color2(u8):
+    RED = 0xff0000
+    GREEN = 0x00ff00
+    BLUE = 0x0000ff
+
+enum Event:
+    Move  : (int, int)
+    Click : (int, int)
+    Copy  : str
+
+    def init : void
+        i = 0
+
+    def to_str : str
+        i = 0
