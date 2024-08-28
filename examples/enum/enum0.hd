@@ -22,3 +22,11 @@ enum Event:
 
     def to_str : str
         i = 0
+
+enum Pair<A, B>:
+    first  : A
+    second : B
+
+enum Tree<T>:
+    NULL
+    Node : (T, Tree<T>*, Tree<T>*)

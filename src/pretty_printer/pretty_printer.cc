@@ -679,7 +679,8 @@ void PrettyPrinter::print_enum(Ast* node) {
     out << "enum ";
     out << node->get_value();
 
-    print(node->get_child(AST_ENUM_SUPER));
+    print(node->get_child(AST_GENERICS));
+    print(node->get_child(AST_SUPER));
     out << ":\n";
     indent();
 

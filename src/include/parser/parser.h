@@ -25,9 +25,6 @@ namespace haard {
         Ast* parse_definitions();
 
         Ast* parse_user_type();
-        Ast* parse_struct();
-        Ast* parse_union();
-        Ast* parse_enum();
 
         Ast* parse_variable();
         Ast* parse_field();
