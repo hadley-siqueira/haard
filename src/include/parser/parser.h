@@ -24,13 +24,13 @@ namespace haard {
 
         Ast* parse_definitions();
 
-        Ast* parse_class();
+        Ast* parse_user_type();
         Ast* parse_struct();
         Ast* parse_union();
         Ast* parse_enum();
 
         Ast* parse_variable();
-        Ast* parse_enum_field();
+        Ast* parse_field();
 
         Ast* parse_variable_definition();
 

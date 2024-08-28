@@ -28,14 +28,13 @@ namespace haard {
 
         void print_enum(Ast* node);
         void print_enum_super(Ast* node);
-        void print_enum_fields(Ast* node);
-        void print_enum_functions(Ast* node);
-        void print_enum_field(Ast* node);
-        void print_enum_field_type(Ast* node);
-        void print_enum_field_expresion(Ast* node);
+        void print_fields(Ast* node);
+        void print_functions(Ast* node);
+        void print_field(Ast* node);
+        void print_field_type(Ast* node);
+        void print_field_expresion(Ast* node);
 
         void print_super_type(Ast* node);
-        void print_functions(Ast* node);
         void print_variables(Ast* node);
         void print_member_variable(Ast* node);
         void print_variable_definition(Ast* node);

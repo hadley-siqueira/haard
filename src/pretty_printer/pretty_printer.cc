@@ -2,6 +2,7 @@
 #include <iostream>
 #include "pretty_printer/pretty_printer.h"
 
+
 using namespace haard;
 
 PrettyPrinter::PrettyPrinter() {
@@ -87,24 +88,20 @@ void PrettyPrinter::print(Ast* node) {
         print_enum_super(node);
         break;
 
-    case AST_ENUM_FIELDS:
-        print_enum_fields(node);
+    case AST_FIELDS:
+        print_fields(node);
         break;
 
-    case AST_ENUM_FUNCTIONS:
-        print_enum_functions(node);
+    case AST_FIELD:
+        print_field(node);
         break;
 
-    case AST_ENUM_FIELD:
-        print_enum_field(node);
+    case AST_FIELD_TYPE:
+        print_field_type(node);
         break;
 
-    case AST_ENUM_FIELD_TYPE:
-        print_enum_field_type(node);
-        break;
-
-    case AST_ENUM_FIELD_EXPRESSION:
-        print_enum_field_expresion(node);
+    case AST_FIELD_EXPRESSION:
+        print_field_expresion(node);
         break;
 
     /* Statements */
@@ -686,8 +683,8 @@ void PrettyPrinter::print_enum(Ast* node) {
     out << ":\n";
     indent();
 
-    print(node->get_child(AST_ENUM_FIELDS));
-    print(node->get_child(AST_ENUM_FUNCTIONS));
+    print(node->get_child(AST_FIELDS));
+    print(node->get_child(AST_FUNCTIONS));
 
     dedent();
 }
@@ -698,7 +695,7 @@ void PrettyPrinter::print_enum_super(Ast* node) {
     out << ")";
 }
 
-void PrettyPrinter::print_enum_fields(Ast* node) {
+void PrettyPrinter::print_fields(Ast* node) {
     for (int i = 0; i < node->children_count(); ++i) {
         print_indentation();
         print(node->get_child(i));
@@ -706,7 +703,7 @@ void PrettyPrinter::print_enum_fields(Ast* node) {
     }
 }
 
-void PrettyPrinter::print_enum_functions(Ast* node) {
+void PrettyPrinter::print_functions(Ast* node) {
     int i;
 
     if (node->children_count() > 0) {
@@ -719,19 +716,19 @@ void PrettyPrinter::print_enum_functions(Ast* node) {
     }
 }
 
-void PrettyPrinter::print_enum_field(Ast* node) {
+void PrettyPrinter::print_field(Ast* node) {
     out << node->get_value();
 
-    print(node->get_child(AST_ENUM_FIELD_TYPE));
-    print(node->get_child(AST_ENUM_FIELD_EXPRESSION));
+    print(node->get_child(AST_FIELD_TYPE));
+    print(node->get_child(AST_FIELD_EXPRESSION));
 }
 
-void PrettyPrinter::print_enum_field_type(Ast* node) {
+void PrettyPrinter::print_field_type(Ast* node) {
     out << " : ";
     print(node->get_child());
 }
 
-void PrettyPrinter::print_enum_field_expresion(Ast* node) {
+void PrettyPrinter::print_field_expresion(Ast* node) {
     out << " = ";
     print(node->get_child());
 }
@@ -740,13 +737,6 @@ void PrettyPrinter::print_super_type(Ast* node) {
     out << "(";
     print(node->get_child());
     out << ")";
-}
-
-void PrettyPrinter::print_functions(Ast* node) {
-    for (int i = 0; i < node->children_count(); ++i) {
-        print(node->get_child(i));
-        out << "\n\n";
-    }
 }
 
 void PrettyPrinter::print_variables(Ast* node) {

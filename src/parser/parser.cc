@@ -32,13 +32,13 @@ Ast* Parser::parse_module() {
         } else if (lookahead(TK_DEF)) {
             module->add_child(parse_function());
         } else if (lookahead(TK_CLASS)) {
-            module->add_child(parse_class());
+            module->add_child(parse_user_type());
         } else if (lookahead(TK_STRUCT)) {
-          //  module->add_struct(parse_struct());
+            module->add_child(parse_user_type());
         } else if (lookahead(TK_UNION)) {
-            //module->add_union(parse_union());
+            module->add_child(parse_user_type());
         } else if (lookahead(TK_ENUM)) {
-            module->add_child(parse_enum());
+            module->add_child(parse_user_type());
         } else if (lookahead(TK_VAR)) {
             module->add_child(parse_variable_definition());
         } else {
@@ -72,21 +72,34 @@ Ast* Parser::parse_import() {
     return import;
 }
 
-Ast* Parser::parse_class() {
-    Ast* klass = new Ast(AST_CLASS);
+Ast* Parser::parse_user_type() {
+    bool has_children = false;
+    Ast* user_type = nullptr;
 
-    expect(TK_CLASS);
+    if (match(TK_CLASS)) {
+        user_type = new Ast(AST_CLASS);
+    } else if (match(TK_STRUCT)) {
+        user_type = new Ast(AST_STRUCT);
+    } else if (match(TK_UNION)) {
+        user_type = new Ast(AST_UNION);
+    } else if (match(TK_ENUM)) {
+        user_type = new Ast(AST_ENUM);
+    } else {
+        log_error("missing user type builder");
+        return nullptr;
+    }
+
     expect(TK_ID);
-    klass->set_from_token(matched);
-    klass->add_child(parse_generics());
+    user_type->set_from_token(matched);
+    user_type->add_child(parse_generics());
 
     if (match(TK_LEFT_PARENTHESIS)) {
         Ast* type = parse_type();
 
         if (type == nullptr) {
-            log_error("missing super type on class definition");
+            log_error("missing super type on type definition");
         } else {
-            klass->add_child(AST_SUPER, type);
+            user_type->add_child(AST_SUPER, type);
         }
 
         expect(TK_RIGHT_PARENTHESIS);
@@ -95,18 +108,24 @@ Ast* Parser::parse_class() {
     expect(TK_COLON);
     indent();
 
-    Ast* variables = new Ast(AST_VARIABLES);
+    Ast* fields = new Ast(AST_FIELDS);
     Ast* functions = new Ast(AST_FUNCTIONS);
 
-    klass->add_child(variables);
-    klass->add_child(functions);
+    user_type->add_child(fields);
+    user_type->add_child(functions);
 
     while (is_indented()) {
         if (lookahead(TK_DEF)) {
+            has_children = true;
             functions->add_child(parse_function());
         } else if (lookahead(TK_ID)) {
-            variables->add_child(parse_variable());
+            has_children = true;
+            fields->add_child(parse_field());
         } else if (match(TK_PASS)) {
+            if (has_children) {
+                log_error("unexpected pass because fields were already declared");
+            }
+
             break;
         } else {
             break;
@@ -114,157 +133,26 @@ Ast* Parser::parse_class() {
     }
 
     dedent();
-    return klass;
+    return user_type;
 }
 
-Ast* Parser::parse_struct() {/*
-    Struct* st = new Struct();
-
-    expect(TK_STRUCT);
-    expect(TK_ID);
-    st->set_name(matched);
-    st->set_generics(parse_generics());
-
-    if (match(TK_LEFT_PARENTHESIS)) {
-        st->set_super_type(parse_type());
-        expect(TK_RIGHT_PARENTHESIS);
-    }
-
-    expect(TK_COLON);
-    indent();
-
-    while (is_indented()) {
-        if (lookahead(TK_DEF)) {
-            st->add_function(parse_function());
-        } else if (lookahead(TK_ID)) {
-            st->add_variable(parse_variable());
-        } else if (match(TK_PASS)) {
-            break;
-        } else {
-            break;
-        }
-    }
-
-    dedent();
-    return st;*/
-}
-
-Ast* Parser::parse_union() {/*
-    Union* st = new Union();
-
-    expect(TK_UNION);
-    expect(TK_ID);
-    st->set_name(matched);
-    st->set_generics(parse_generics());
-
-    if (match(TK_LEFT_PARENTHESIS)) {
-        st->set_super_type(parse_type());
-        expect(TK_RIGHT_PARENTHESIS);
-    }
-
-    expect(TK_COLON);
-    indent();
-
-    while (is_indented()) {
-        if (lookahead(TK_DEF)) {
-            st->add_function(parse_function());
-        } else if (lookahead(TK_ID)) {
-            st->add_variable(parse_variable());
-        } else if (match(TK_PASS)) {
-            break;
-        } else {
-            break;
-        }
-    }
-
-    dedent();
-    return st;*/
-}
-
-Ast* Parser::parse_enum() {
-    Ast* st = new Ast(AST_ENUM);
-
-    expect(TK_ENUM);
-    expect(TK_ID);
-    st->set_from_token(matched);
-    st->add_child(parse_generics());
-
-    if (match(TK_LEFT_PARENTHESIS)) {
-        Ast* type = parse_type();
-
-        if (type == nullptr) {
-            log_error("missing super type on enum definition");
-        } else {
-            st->add_child(AST_ENUM_SUPER, type);
-        }
-
-        expect(TK_RIGHT_PARENTHESIS);
-    }
-
-    expect(TK_COLON);
-    indent();
-
-    Ast* fields = new Ast(AST_ENUM_FIELDS);
-    Ast* functions = new Ast(AST_ENUM_FUNCTIONS);
-
-    st->add_child(fields);
-    st->add_child(functions);
-
-    while (is_indented()) {
-        if (lookahead(TK_DEF)) {
-           functions->add_child(parse_function());
-        } else if (lookahead(TK_ID)) {
-            fields->add_child(parse_enum_field());
-        } else if (match(TK_PASS)) {
-            break;
-        } else {
-            break;
-        }
-    }
-
-    dedent();
-    return st;
-}
-
-Ast* Parser::parse_variable() {
-    Ast* var = new Ast(AST_VARIABLE);
-
-    expect(TK_ID);
-    var->set_from_token(matched);
-
-    expect(TK_COLON);
-    var->add_child(parse_type());
-
-    if (match(TK_ASSIGNMENT)) {
-        Ast* expr = parse_expression();
-
-        if (expr == nullptr) {
-            log_error("missing expression on member");
-        } else {
-            var->add_child(expr);
-        }
-    }
-
-    return var;
-}
-
-Ast* Parser::parse_enum_field() {
-    Ast* var = new Ast(AST_ENUM_FIELD);
+Ast* Parser::parse_field() {
+    Ast* var = new Ast(AST_FIELD);
 
     expect(TK_ID);
     var->set_from_token(matched);
 
     if (match(TK_COLON)) {
-        var->add_child(AST_ENUM_FIELD_TYPE, parse_type());
+        var->add_child(AST_FIELD_TYPE, parse_type());
     }
 
     if (match(TK_ASSIGNMENT)) {
         Ast* expr = parse_expression();
 
         if (expr == nullptr) {
-            log_error("missing expression on enum member");
+            log_error("missing field");
         } else {
-            var->add_child(AST_ENUM_FIELD_EXPRESSION, expr);
+            var->add_child(AST_FIELD_EXPRESSION, expr);
         }
     }
 
