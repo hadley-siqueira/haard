@@ -1,8 +1,7 @@
 #include <iostream>
 #include "haard/token/token.h"
-#include "scanner/scanner.h"
-#include "parser/parser.h"
-
+#include "haard/scanner/scanner.h"
+#include "haard/parser/parser.h"
 
 #include "driver/driver.h"
 #include "utils/utils.h"

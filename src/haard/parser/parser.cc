@@ -2,8 +2,8 @@
 #include <sstream>
 #include <cassert>
 
-#include "parser/parser.h"
-#include "scanner/scanner.h"
+#include "haard/parser/parser.h"
+#include "haard/scanner/scanner.h"
 #include "log/logs.h"
 
 using namespace haard;

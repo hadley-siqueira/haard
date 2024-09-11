@@ -29,11 +29,11 @@ set(IR_SRC
 )
 
 set(SCANNER_SRC
-    src/scanner/scanner.cc
+    src/haard/scanner/scanner.cc
 )
 
 set(PARSER_SRC
-    src/parser/parser.cc
+    src/haard/parser/parser.cc
 )
 
 set(SEMANTIC_SRC

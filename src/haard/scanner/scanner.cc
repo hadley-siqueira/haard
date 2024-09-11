@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include "scanner/scanner.h"
+#include "haard/scanner/scanner.h"
 
 using namespace haard;
 
