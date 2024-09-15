@@ -1243,6 +1243,8 @@ Ast* Parser::parse_primary_expression() {
         expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
         expr = parse_array_or_hash_expression();
+    } else if (lookahead(TK_BITWISE_OR)) {
+        expr = parse_lambda();
     }
 
     return expr;
@@ -1415,6 +1417,48 @@ Ast* Parser::parse_hash(Ast* key) {
     }
 
     return hash;
+}
+
+Ast* Parser::parse_lambda() {
+    Ast* parameters = nullptr;
+
+    expect(TK_BITWISE_OR);
+    Ast* lambda = new Ast(AST_LAMBDA);
+    lambda->add_child(parse_lambda_parameters());
+    expect(TK_BITWISE_OR);
+
+    expect(TK_LEFT_CURLY_BRACKET);
+    lambda->add_child(AST_LAMBDA_STATEMENTS, parse_statements());
+    expect(TK_RIGHT_CURLY_BRACKET);
+
+    return lambda;
+}
+
+Ast* Parser::parse_lambda_parameters() {
+    Ast* parameters = new Ast(AST_LAMBDA_PARAMETERS);
+
+    if (lookahead(TK_BITWISE_OR)) {
+        return parameters;
+    }
+
+    do {
+        expect(TK_ID);
+        Ast* parameter = new Ast(AST_LAMBDA_PARAMETER, matched);
+
+        if (match(TK_COLON)) {
+            Ast* type = parse_type();
+            parameter->add_child(type);
+        }
+
+        if (match(TK_ASSIGNMENT)) {
+            Ast* expr = parse_expression();
+            parameter->add_child(expr);
+        }
+
+        parameters->add_child(parameter);
+    } while (match(TK_COMMA));
+
+    return parameters;
 }
 
 Ast* Parser::parse_argument_list() {

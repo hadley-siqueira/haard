@@ -102,6 +102,9 @@ namespace haard {
         Ast* parse_array_or_hash_expression();
         Ast* parse_hash(Ast* key);
 
+        Ast* parse_lambda();
+        Ast* parse_lambda_parameters();
+
         Ast* parse_argument_list();
 
         Ast* parse_generic_instantiation();

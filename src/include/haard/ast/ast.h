@@ -28,6 +28,11 @@ namespace haard::ast {
         AST_FIELD_TYPE,
         AST_FIELD_EXPRESSION,
 
+        AST_LAMBDA,
+        AST_LAMBDA_PARAMETERS,
+        AST_LAMBDA_PARAMETER,
+        AST_LAMBDA_STATEMENTS,
+
         AST_UNION,
         AST_SUPER,
         AST_VARIABLE,

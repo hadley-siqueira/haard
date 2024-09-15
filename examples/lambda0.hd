@@ -1,0 +1,11 @@
+def main : void
+    n = |a| {    
+        println(a)
+
+        if a > 0:
+            print("a > 0")
+
+            my_array.map(|e| {
+                return e + 1
+            })
+    }

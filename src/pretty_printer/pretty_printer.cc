@@ -80,6 +80,22 @@ void PrettyPrinter::print(Ast* node) {
         print_parameter(node);
         break;
 
+    case AST_LAMBDA:
+        print_lambda(node);
+        break;
+
+    case AST_LAMBDA_PARAMETERS:
+        print_lambda_parameters(node);
+        break;
+
+    case AST_LAMBDA_PARAMETER:
+        print_lambda_parameter(node);
+        break;
+
+    case AST_LAMBDA_STATEMENTS:
+        print_lambda_statements(node);
+        break;
+
     case AST_ENUM:
         print_enum(node);
         break;
@@ -1132,6 +1148,41 @@ void PrettyPrinter::print_parameter(Ast* parameter) {
         out << " = ";
         print(parameter->get_child(1));
     }
+}
+
+void PrettyPrinter::print_lambda(Ast* node) {
+    print(node->get_child(AST_LAMBDA_PARAMETERS));
+    out << " ";
+    print(node->get_child(AST_LAMBDA_STATEMENTS));
+}
+
+void PrettyPrinter::print_lambda_parameters(Ast* node) {
+    int i;
+    out << "|";
+
+    if (node->children_count() > 0) {
+        for (i = 0; i < node->children_count() - 1; ++i) {
+            print(node->get_child(i));
+            out << ", ";
+        }
+
+        print(node->get_child(i));
+    }
+
+    out << "|";
+}
+
+void PrettyPrinter::print_lambda_parameter(Ast* node) {
+    out << node->get_value();
+}
+
+void PrettyPrinter::print_lambda_statements(Ast* node) {
+    out << "{\n";
+    indent();
+    print(node->get_child());
+    dedent();
+    print_indentation();
+    out << "}";
 }
 
 void PrettyPrinter::print_while(Ast* stmt) {
