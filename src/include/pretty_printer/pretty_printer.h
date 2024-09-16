@@ -44,8 +44,11 @@ namespace haard {
         void print_parameter(Ast* parameter);
 
         void print_lambda(Ast* node);
+        void print_lambda_return_type(Ast* node);
         void print_lambda_parameters(Ast* node);
         void print_lambda_parameter(Ast* node);
+        void print_lambda_parameter_type(Ast* node);
+        void print_lambda_parameter_expression(Ast* node);
         void print_lambda_statements(Ast* node);
 
         /* Statements */

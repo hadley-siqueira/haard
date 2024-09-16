@@ -84,12 +84,24 @@ void PrettyPrinter::print(Ast* node) {
         print_lambda(node);
         break;
 
+    case AST_LAMBDA_RETURN_TYPE:
+        print_lambda_return_type(node);
+        break;
+
     case AST_LAMBDA_PARAMETERS:
         print_lambda_parameters(node);
         break;
 
     case AST_LAMBDA_PARAMETER:
         print_lambda_parameter(node);
+        break;
+
+    case AST_LAMBDA_PARAMETER_TYPE:
+        print_lambda_parameter_type(node);
+        break;
+
+    case AST_LAMBDA_PARAMETER_EXPRESSION:
+        print_lambda_parameter_expression(node);
         break;
 
     case AST_LAMBDA_STATEMENTS:
@@ -1152,8 +1164,14 @@ void PrettyPrinter::print_parameter(Ast* parameter) {
 
 void PrettyPrinter::print_lambda(Ast* node) {
     print(node->get_child(AST_LAMBDA_PARAMETERS));
+    print(node->get_child(AST_LAMBDA_RETURN_TYPE));
     out << " ";
     print(node->get_child(AST_LAMBDA_STATEMENTS));
+}
+
+void PrettyPrinter::print_lambda_return_type(Ast* node) {
+    out << " -> ";
+    print(node->get_child());
 }
 
 void PrettyPrinter::print_lambda_parameters(Ast* node) {
@@ -1174,6 +1192,18 @@ void PrettyPrinter::print_lambda_parameters(Ast* node) {
 
 void PrettyPrinter::print_lambda_parameter(Ast* node) {
     out << node->get_value();
+    print(node->get_child(AST_LAMBDA_PARAMETER_TYPE));
+    print(node->get_child(AST_LAMBDA_PARAMETER_EXPRESSION));
+}
+
+void PrettyPrinter::print_lambda_parameter_type(Ast* node) {
+    out << " : ";
+    print(node->get_child());
+}
+
+void PrettyPrinter::print_lambda_parameter_expression(Ast* node) {
+    out << " = ";
+    print(node->get_child());
 }
 
 void PrettyPrinter::print_lambda_statements(Ast* node) {

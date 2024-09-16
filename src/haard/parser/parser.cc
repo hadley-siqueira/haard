@@ -1427,6 +1427,16 @@ Ast* Parser::parse_lambda() {
     lambda->add_child(parse_lambda_parameters());
     expect(TK_BITWISE_OR);
 
+    if (match(TK_ARROW)) {
+        Ast* type = parse_type();
+
+        if (type == nullptr) {
+            log_error("missing return type on lambda definition");
+        } else {
+            lambda->add_child(AST_LAMBDA_RETURN_TYPE, type);
+        }
+    }
+
     expect(TK_LEFT_CURLY_BRACKET);
     lambda->add_child(AST_LAMBDA_STATEMENTS, parse_statements());
     expect(TK_RIGHT_CURLY_BRACKET);
@@ -1447,12 +1457,22 @@ Ast* Parser::parse_lambda_parameters() {
 
         if (match(TK_COLON)) {
             Ast* type = parse_type();
-            parameter->add_child(type);
+
+            if (type == nullptr) {
+                log_error("missing type on lambda parameter");
+            } else {
+                parameter->add_child(AST_LAMBDA_PARAMETER_TYPE, type);
+            }
         }
 
         if (match(TK_ASSIGNMENT)) {
             Ast* expr = parse_expression();
-            parameter->add_child(expr);
+
+            if (expr == nullptr) {
+                log_error("missing expression on lambda parameter");
+            } else {
+                parameter->add_child(AST_LAMBDA_PARAMETER_EXPRESSION, expr);
+            }
         }
 
         parameters->add_child(parameter);

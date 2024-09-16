@@ -9,3 +9,13 @@ def main : void
                 return e + 1
             })
     }
+
+    n = |a : int, b : int| -> int {
+        n = |a : int, b : int| {
+            return a + b
+        }
+
+        foo(| | { })
+
+        return a + b
+    }
