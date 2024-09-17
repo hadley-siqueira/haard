@@ -54,7 +54,8 @@ void Scanner::get_token() {
         get_single_quote_string();
     } else if (is_alpha()) {
         get_keyword_or_identifier();
-    } else if (is_symbol)
+    } else if (is_symbol()) {
+        get_symbol();
     } else if (is_operator()) {
         get_operator();
     } else if (is_digit()) {
@@ -148,6 +149,8 @@ void Scanner::get_number() {
     create_token(kind);
 }
 
+
+
 void Scanner::get_operator() {
     int kind;
     std::string tmp;
@@ -196,6 +199,37 @@ void Scanner::get_operator() {
     }
 
     // handle invalid operator
+}
+
+void Scanner::get_symbol() {
+    char bg;
+
+    advance();
+    bg = buffer[idx];
+
+    if (bg == '\'' || bg == '"') {
+        advance();
+        start_token();
+
+        while (!lookahead(bg)) {
+            if (lookahead('\\')) {
+                advance();
+            }
+
+            advance();
+        }
+
+        create_token(TK_LITERAL_SYMBOL);
+        advance();
+    } else {
+        start_token();
+
+        while (is_alphanum()) {
+            advance();
+        }
+
+        create_token(TK_LITERAL_SYMBOL);
+    }
 }
 
 void Scanner::get_single_quote_string() {
@@ -267,6 +301,10 @@ bool Scanner::is_digit(int offset) {
 
 bool Scanner::is_alphanum(int offset) {
     return is_alpha(offset) || is_digit(offset);
+}
+
+bool Scanner::is_symbol() {
+    return lookahead(':') && (lookahead('"', 1) || lookahead('\'', 1) || is_alphanum(1));
 }
 
 bool Scanner::is_operator() {

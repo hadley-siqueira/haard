@@ -1,2 +1,5 @@
 def main : void
     a = :a_symbol
+
+    a = :"test with spaces"
+    a = :'test with spaces'

@@ -512,7 +512,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_LITERAL_SYMBOL:
-        out << node->get_value();
+        out << ':' << node->get_value();
         break;
 
     /* Types */

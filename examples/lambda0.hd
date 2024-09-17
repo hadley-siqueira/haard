@@ -15,7 +15,7 @@ def main : void
             return a + b
         }
 
-        foo(| | { })
+        foo(|a :  | -> { })
 
         return a + b
     }

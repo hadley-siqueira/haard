@@ -20,6 +20,7 @@ namespace haard {
         void get_keyword_or_identifier();
         void get_number();
         void get_operator();
+        void get_symbol();
         void get_single_quote_string();
         void get_double_quote_string();
         void skip_comment();
@@ -31,6 +32,7 @@ namespace haard {
         bool is_alpha(int offset=0);
         bool is_digit(int offset=0);
         bool is_alphanum(int offset=0);
+        bool is_symbol();
         bool is_operator();
 
         bool has_base();
