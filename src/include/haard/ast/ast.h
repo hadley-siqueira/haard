@@ -169,6 +169,7 @@ namespace haard::ast {
         AST_LITERAL_DOUBLE,
         AST_LITERAL_CHAR,
         AST_LITERAL_STRING,
+        AST_LITERAL_SYMBOL,
         AST_LIST,
         AST_ARRAY,
         AST_HASH,

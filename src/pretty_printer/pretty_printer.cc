@@ -511,6 +511,10 @@ void PrettyPrinter::print(Ast* node) {
         out << "\"" << node->get_value() << "\"";
         break;
 
+    case AST_LITERAL_SYMBOL:
+        out << node->get_value();
+        break;
+
     /* Types */
     case AST_TYPE_I8:
         out << "i8";

@@ -1235,6 +1235,8 @@ Ast* Parser::parse_primary_expression() {
         expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
         expr = new Ast(AST_LITERAL_STRING, matched);
+    } else if (match(TK_LITERAL_SYMBOL)) {
+        expr = new Ast(AST_LITERAL_SYMBOL, matched);
     } else if (match(TK_NULL)) {
         expr = new Ast(AST_NULL, matched);
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {

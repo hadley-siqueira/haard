@@ -54,6 +54,7 @@ void Scanner::get_token() {
         get_single_quote_string();
     } else if (is_alpha()) {
         get_keyword_or_identifier();
+    } else if (is_symbol)
     } else if (is_operator()) {
         get_operator();
     } else if (is_digit()) {
