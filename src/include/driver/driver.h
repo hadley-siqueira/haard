@@ -21,6 +21,7 @@ namespace haard {
         Driver();
         ~Driver();
 
+        void parse_args(int argc, char** argv);
         void run(int argc, char** argv);
         void exec_commands();
         void configure();

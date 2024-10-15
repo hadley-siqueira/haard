@@ -24,7 +24,7 @@ Driver::~Driver() {
 
 }
 
-void Driver::run(int argc, char** argv) {
+void Driver::parse_args(int argc, char** argv) {
     for (int i = 0; i < argc; ++i) {
         if (strstr(argv[i], ".hd") != nullptr) {
             main_path = std::string(argv[i]);
@@ -36,11 +36,14 @@ void Driver::run(int argc, char** argv) {
             commands.push_back(DRIVER_CMD_PRETTY_PRINT);
         }
     }
+}
 
+void Driver::run(int argc, char** argv) {
     if (argc == 1) {
         return;
     }
 
+    parse_args(argc, argv);
     configure();
     parse_file(main_path);
 
