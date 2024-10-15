@@ -71,7 +71,6 @@ set(LOG_SRC
 set(SOURCES
     ${UTILS_SRC}
     ${STRING_POOL_SRC}
-    ${TYPE_POOL_SRC}
     ${JSON_SRC}
     ${TOKEN_SRC}
     ${AST_SRC}
