@@ -265,6 +265,19 @@ def main : void
     negative(&pixel)
 ```
 
+### String interpolation
+
+We intend to support string interpolation. Some examples
+
+```python
+def main : void
+    a = 2
+    b = 5
+    c = "a + b = ${a + b}"
+    d = "a = $a and b = $b"
+
+```
+
 ### Classes
 
 A simple Player class
