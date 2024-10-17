@@ -13,3 +13,7 @@ Ast* ModulesManager::get_module_by_path(std::string& path) {
 
     return nullptr;
 }
+
+std::map<std::string, Ast*>& ModulesManager::get_modules() {
+    return modules;
+}

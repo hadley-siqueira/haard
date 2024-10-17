@@ -1,0 +1,4 @@
+def print : void
+    @c : char
+
+    return

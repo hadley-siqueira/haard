@@ -126,27 +126,25 @@ void Driver::parse_import(Ast* import) {
     parse_simple_import(import);
 }
 
-void Driver::parse_simple_import(Ast* import) {/*
-    Module* file = nullptr;
+void Driver::parse_simple_import(Ast* import) {
+    Ast* module = nullptr;
     std::string path = build_import_path(import);
 
-    file = modules.get_module(path);
+    module = modules.get_module_by_path(path);
 
-    if (file != nullptr) {
-        import->set_module(file);
-    } else {
-        file = parse_file(path);
-        import->set_module(file);
-        parse_module_imports(file);
-    }*/
+    if (module == nullptr) {
+        module = parse_file(path);
+        parse_module_imports(module);
+    }
 }
 
-std::string Driver::build_import_path(Ast* import) {/*
+std::string Driver::build_import_path(Ast* import) {
     std::string str;
+    std::vector<Ast*> path = import->get_child(AST_IMPORT_PATH)->get_children(AST_IMPORT_PATH_MEMBER);
 
-    for (int i = 0; i < import->path_count(); ++i) {
+    for (int i = 0; i < path.size(); ++i) {
         str += path_delimiter;
-        //str += import->get_path_token(i).get_value();
+        str += path[i]->get_value();
     }
 
     str += ".hd";
@@ -159,7 +157,7 @@ std::string Driver::build_import_path(Ast* import) {/*
         }
     }
 
-    return str;*/
+    return str;
 }
 
 std::string Driver::build_relative_path(std::string path) {
@@ -219,13 +217,14 @@ void Driver::set_root_path_from_main_file() {
 }
 
 void Driver::pretty_print() {
-    PrettyPrinter printer;
-
     show_logs();
-    std::cout << "printing...\n";
-    printer.print(module);
-    delete module;
-    std::cout << printer.get_output() << '\n';
+
+    for (auto it : modules.get_modules()) {
+        std::cout << "printing " << it.first << "...\n";
+        PrettyPrinter printer;
+        printer.print(it.second);
+        std::cout << printer.get_output() << '\n';
+    }
 }
 
 bool Driver::file_exists(std::string path) {

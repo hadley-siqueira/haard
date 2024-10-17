@@ -1,0 +1,4 @@
+import print
+
+def main : void
+    print('hello')

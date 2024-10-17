@@ -11,6 +11,7 @@ namespace haard {
     public:
         void add_module(std::string& path, Ast* module);
         Ast* get_module_by_path(std::string& path);
+        std::map<std::string, Ast*>& get_modules();
 
     private:
         std::map<std::string, Ast*> modules;
