@@ -36,6 +36,10 @@ set(PARSER_SRC
     src/haard/parser/parser.cc
 )
 
+set(MODULES_MANAGER_SRC
+    src/haard/modules_manager/modules_manager.cc
+)
+
 set(SEMANTIC_SRC
     src/semantic/semantic_analyser.cc
     src/semantic/semantic_pass.cc
@@ -75,6 +79,7 @@ set(SOURCES
     ${IR_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${MODULES_MANAGER_SRC}
     ${SCOPE_SRC}
     #${SEMANTIC_SRC}
     ${LOG_SRC}

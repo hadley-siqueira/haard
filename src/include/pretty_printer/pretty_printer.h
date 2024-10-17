@@ -6,8 +6,6 @@
 #include "haard/ast/ast.h"
 
 namespace haard {
-    using namespace ast;
-
     class PrettyPrinter {
     public:
         PrettyPrinter();

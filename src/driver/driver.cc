@@ -30,8 +30,6 @@ void Driver::parse_args(int argc, char** argv) {
             main_path = std::string(argv[i]);
         } else if (strcmp(argv[i], "--help") == 0) {
 
-        } else if (strcmp(argv[i], "--cpp") == 0) {
-            commands.push_back(DRIVER_CMD_CPP);
         } else if (strcmp(argv[i], "--pretty") == 0) {
             commands.push_back(DRIVER_CMD_PRETTY_PRINT);
         }
@@ -45,12 +43,12 @@ void Driver::run(int argc, char** argv) {
 
     parse_args(argc, argv);
     configure();
-    parse_file(main_path);
 
     if (log_has_error()) {
         exit();
     }
-    //parse_module_imports(parse_file(main_path));
+
+    parse_module_imports(parse_file(main_path));
     //semantic_analysis();
 
     exec_commands();
@@ -59,10 +57,6 @@ void Driver::run(int argc, char** argv) {
 void Driver::exec_commands() {
     for (int i = 0; i < commands.size(); ++i) {
         switch (commands[i]) {
-        case DRIVER_CMD_CPP:
-            generate_cpp();
-            break;
-
         case DRIVER_CMD_PRETTY_PRINT:
             pretty_print();
             break;
@@ -102,25 +96,30 @@ Ast* Driver::parse_file(std::string path) {
         exit();
     }
 
-    if (true) {//!modules.has_module(path)) {
+    module = modules.get_module_by_path(path);
+
+    if (module == nullptr) {
         Parser parser;
 
         log_info("parsing file " + path);
-        //modules.add_module(path, parser.read(path, build_relative_path(path)));
         module = parser.read(path, build_relative_path(path));
+        modules.add_module(path, module);
+
     }
 
-    return nullptr; //modules.get_module(path);
+    return module;
 }
 
-void Driver::parse_module_imports(Ast* module) {/*
+void Driver::parse_module_imports(Ast* module) {
     if (module == nullptr) {
         return;
     }
 
-    for (int i = 0; i < module->imports_count(); ++i) {
-        parse_import(module->get_import(i));
-    }*/
+    std::vector<Ast*> imports = module->get_children(AST_IMPORT);
+
+    for (int i = 0; i < imports.size(); ++i) {
+        parse_import(imports[i]);
+    }
 }
 
 void Driver::parse_import(Ast* import) {
@@ -227,12 +226,6 @@ void Driver::pretty_print() {
     printer.print(module);
     delete module;
     std::cout << printer.get_output() << '\n';
-}
-
-void Driver::generate_cpp() {
-    /*CppGenerator gen;
-
-    gen.build_modules(&modules);*/
 }
 
 bool Driver::file_exists(std::string path) {

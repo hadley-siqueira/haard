@@ -6,7 +6,7 @@
 
 #include "haard/token/token.h"
 
-namespace haard::ast {
+namespace haard {
     typedef enum AstKind {
         AST_UNKNOWN,
 
@@ -236,6 +236,7 @@ namespace haard::ast {
         void add_child(AstKind kind, Ast* subchild);
         Ast* get_child(size_t index=0);
         Ast* get_child(AstKind type);
+        std::vector<Ast*> get_children(AstKind kind);
         size_t children_count();
 
         void set_from_token(Token& token);

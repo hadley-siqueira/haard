@@ -9,8 +9,6 @@
 #include "haard/ast/ast.h"
 
 namespace haard {
-    using namespace haard::ast;
-
     class Parser {
     public:
         Parser();

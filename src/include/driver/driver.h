@@ -7,13 +7,11 @@
 #include "log/logger.h"
 
 #include "haard/ast/ast.h"
+#include "haard/modules_manager/modules_manager.h"
 
 namespace haard {
-    using namespace ast;
-
     enum DriverCommands {
         DRIVER_CMD_PRETTY_PRINT,
-        DRIVER_CMD_CPP
     };
 
     class Driver {
@@ -43,13 +41,12 @@ namespace haard {
 
     public:
         void pretty_print();
-        void generate_cpp();
 
     private:
         bool file_exists(std::string path);
 
     private:
-        //Modules modules;
+        ModulesManager modules;
         Ast* module;
 
     // system related stuff

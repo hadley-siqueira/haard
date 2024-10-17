@@ -1,6 +1,6 @@
 #include "haard/ast/ast.h"
 
-using namespace haard::ast;
+using namespace haard;
 
 Ast::Ast() {
     set_kind(AST_UNKNOWN);
@@ -86,6 +86,18 @@ Ast* Ast::get_child(AstKind type) {
     }
 
     return nullptr;
+}
+
+std::vector<Ast*> Ast::get_children(AstKind kind) {
+    std::vector<Ast*> r;
+
+    for (int i = 0; i < children_count(); ++i) {
+        if (children[i]->get_kind() == kind) {
+            r.push_back(children[i]);
+        }
+    }
+
+    return r;
 }
 
 size_t Ast::children_count() {
