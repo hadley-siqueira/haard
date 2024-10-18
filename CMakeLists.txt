@@ -40,18 +40,6 @@ set(MODULES_MANAGER_SRC
     src/haard/modules_manager/modules_manager.cc
 )
 
-set(SEMANTIC_SRC
-    src/semantic/semantic_analyser.cc
-    src/semantic/semantic_pass.cc
-    src/semantic/semantic_define_pass.cc
-    src/semantic/modules_semantic_analyser.cc
-    src/semantic/module_semantic_analyser.cc
-    src/semantic/module_named_type_definer.cc
-    src/semantic/module_function_definer.cc
-    src/semantic/type_linker.cc
-    src/semantic/semantic_context.cc
-)
-
 set(SCOPE_SRC
     src/scope/symbol_descriptor.cc
     src/scope/symbol.cc
@@ -81,7 +69,6 @@ set(SOURCES
     ${PARSER_SRC}
     ${MODULES_MANAGER_SRC}
     ${SCOPE_SRC}
-    #${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}
