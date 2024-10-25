@@ -16,6 +16,8 @@ set(TOKEN_SRC
 
 set(AST_SRC
     src/haard/ast/ast.cc
+    src/haard/ast/module.cc
+    src/haard/ast/import.cc
 )
 
 set(DESCRIPTORS_SRC

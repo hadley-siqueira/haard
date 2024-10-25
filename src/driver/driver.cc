@@ -48,7 +48,8 @@ void Driver::run(int argc, char** argv) {
         exit();
     }
 
-    parse_module_imports(parse_file(main_path));
+    parse_file(main_path);
+    //parse_module_imports(parse_file(main_path));
     //semantic_analysis();
 
     exec_commands();
@@ -104,7 +105,6 @@ Ast* Driver::parse_file(std::string path) {
         log_info("parsing file " + path);
         module = parser.read(path, build_relative_path(path));
         modules.add_module(path, module);
-
     }
 
     return module;

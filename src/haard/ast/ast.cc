@@ -37,6 +37,10 @@ const std::string& Ast::get_value() const {
     return value;
 }
 
+Ast* Ast::get_parent() const {
+    return parent;
+}
+
 void Ast::set_kind(AstKind kind) {
     this->kind = kind;
 }
@@ -53,9 +57,14 @@ void Ast::set_value(const std::string& value) {
     this->value = value;
 }
 
+void Ast::set_parent(Ast* parent) {
+    this->parent = parent;
+}
+
 void Ast::add_child(Ast* child) {
     if (child != nullptr) {
         children.push_back(child);
+        child->set_parent(this);
     }
 }
 

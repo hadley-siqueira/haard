@@ -7,6 +7,7 @@
 #include "log/logger.h"
 
 #include "haard/ast/ast.h"
+#include "haard/ast/import.h"
 
 namespace haard {
     class Parser {
@@ -18,7 +19,7 @@ namespace haard {
 
     public:
         Ast* parse_module();
-        Ast* parse_import();
+        Import* parse_import();
 
         Ast* parse_definitions();
 

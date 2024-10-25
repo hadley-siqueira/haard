@@ -1,0 +1,5968 @@
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+def main : void
+    # unary
+    a = &a
+    a = *a
+    *a = a
+    a = !a
+    a = not a
+    a = ++a
+    a = --a
+    a = ~a
+    a = +a
+    a = -a
+    a = a++
+    a = a--
+    a = sizeof(a)
+    a = sizeof(a as char)
+
+    # shift
+    a = a << a
+    a = a >> a
+    a = a >>> a
+
+    # bitwise
+    a = a | b
+    a = a ^ b
+    a = a & b
+
+    # power
+    a = a * a ** b
+
+    # term
+    a = a * a
+    a = a / a
+    a = a // a
+    a = a % a
+
+    # arith
+    a = a + a
+    a = a - a
+
+    # range
+    a = a .. b
+    a = a ... b
+
+    # comparison
+    a = a > a
+    a = a < a
+    a = a >= a
+    a = a <= a
+    a = a in a
+    a = a not in a
+
+    # equality
+    a = a == a
+    a = a != a
+
+    # logical and
+    a = a and b
+    a = a && b
+
+    # logical or
+    a = a or a
+    a = a || a
+
+    # cast
+    a = a as int
+    a = a as [String]
+
+    # assignments
+    a = a
+    a &= a
+    a ^= a
+    a |= a
+    a ~= a
+    a /= a
+    a //= a
+    a -= a
+    a %= a
+    a += a
+    a *= a
+    a <<= a
+    a >>= a
+    a >>>= a
+
+    a = obj.field
+    a = obj->field
+    a = a++
+    a = a--
+    a[a + a.foo + a->bar]
+    a(a, b)
+    foo.bar(a, b)
+    foo.bar()
+    bar()
+    bar(bar(a[idx]))
+
+    # literals
+    a = 0 + 1
+    a = 0x123_abc
+    a = 0b1001_1001_1101
+
+    a = 3.1415f
+    a = 3.1415
+
+    a = 'b'
+    a = '\n'
+    a = '\t'
+
+    a = "hello"
+    a = 'hello'
+
+    a = (1 + 2) * 3
+
+    (a, b) = (1, 2)
+    v = (1, 2, true)
+    v = (1 + 2; print('foo'); foo())
+
+
+

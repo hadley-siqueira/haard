@@ -49,8 +49,8 @@ Ast* Parser::parse_module() {
     return module;
 }
 
-Ast* Parser::parse_import() {
-    Ast* import = new Ast(AST_IMPORT);
+Import* Parser::parse_import() {
+    Import* import = new Import();
     Ast* path = new Ast(AST_IMPORT_PATH);
     Ast* alias = nullptr;
 
@@ -59,16 +59,14 @@ Ast* Parser::parse_import() {
 
     do {
         expect(TK_ID);
-        path->add_child(AST_IMPORT_PATH_MEMBER, matched);
+        import->add_to_path(matched);
     } while (match(TK_DOT));
 
     if (match(TK_AS)) {
         expect(TK_ID);
-        alias = new Ast(AST_IMPORT_ALIAS, matched);
+        import->set_alias(matched);
     }
 
-    import->add_child(path);
-    import->add_child(alias);
     return import;
 }
 
