@@ -23,12 +23,12 @@ Ast* Parser::read(std::string path, std::string relative_path) {
     return module;
 }
 
-Ast* Parser::parse_module() {
-    Ast* module = new Ast(AST_MODULE);
+Module* Parser::parse_module() {
+    Module* module = new Module();
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
-            module->add_child(parse_import());
+            module->add_import(parse_import());
         } else if (lookahead(TK_DEF)) {
             module->add_child(parse_function());
         } else if (lookahead(TK_CLASS)) {

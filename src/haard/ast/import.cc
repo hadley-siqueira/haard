@@ -2,6 +2,10 @@
 
 using namespace haard;
 
+Import::Import() {
+    set_kind(AST_IMPORT);
+}
+
 void Import::add_to_path(Token& value) {
     path.push_back(value);
 }

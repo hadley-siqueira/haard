@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "haard/ast/ast.h"
+#include "haard/ast/module.h"
 #include "haard/ast/import.h"
 
 namespace haard {
@@ -16,7 +17,7 @@ namespace haard {
 
         void print(Ast* node);
 
-        void print_module(Ast* module);
+        void print_module(Module* module);
 
         void print_import(Import* import);
         void print_import_path(Ast* path);

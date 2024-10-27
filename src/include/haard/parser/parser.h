@@ -7,6 +7,7 @@
 #include "log/logger.h"
 
 #include "haard/ast/ast.h"
+#include "haard/ast/module.h"
 #include "haard/ast/import.h"
 
 namespace haard {
@@ -18,7 +19,7 @@ namespace haard {
         Ast* read(std::string path, std::string relative_path = "");
 
     public:
-        Ast* parse_module();
+        Module* parse_module();
         Import* parse_import();
 
         Ast* parse_definitions();

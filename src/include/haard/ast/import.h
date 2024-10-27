@@ -10,6 +10,9 @@
 namespace haard {
     class Import : public Ast {
     public:
+        Import();
+
+    public:
         void add_to_path(Token &value);
         void set_alias(Token& alias);
 

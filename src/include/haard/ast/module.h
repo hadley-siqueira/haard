@@ -1,5 +1,5 @@
 #ifndef HAARD_AST_MODULE_H
-#define HAARD_AST_MOULE_H
+#define HAARD_AST_MODULE_H
 
 #include <vector>
 
@@ -8,8 +8,19 @@
 
 namespace haard {
     class Module : public Ast {
+    public:
+        Module();
+        ~Module();
+
+    public:
+        void add_import(Import* import);
+        const std::vector<Import*>& get_imports();
+
+        const std::vector<Ast*>& get_defs();
+
     private:
         std::vector<Import*> imports;
+        std::vector<Ast*> defs;
     };
 }
 

@@ -23,7 +23,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_MODULE:
-        print_module(node);
+        print_module((Module*) node);
         break;
 
     /* Import */
@@ -653,13 +653,11 @@ void PrettyPrinter::print(Ast* node) {
     }
 }
 
-void PrettyPrinter::print_module(Ast* module) {
+void PrettyPrinter::print_module(Module* module) {
     AstKind kind;
 
-    for (auto i = 0; i < module->children_count(); ++i) {
-        kind = module->get_child(i)->get_kind();
-
-        print(module->get_child(i));
+    for (auto node : module->get_defs()) {
+        print(node);
         out << "\n";
     }
 }
