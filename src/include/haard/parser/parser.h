@@ -16,7 +16,7 @@ namespace haard {
         Parser();
 
     public:
-        Ast* read(std::string path, std::string relative_path = "");
+        Module* read(std::string path, std::string relative_path = "");
 
     public:
         Module* parse_module();
@@ -31,7 +31,7 @@ namespace haard {
 
         Ast* parse_variable_definition();
 
-        Ast* parse_function();
+        Function* parse_function();
         Ast* parse_parameters();
         Ast* parse_parameter();
 

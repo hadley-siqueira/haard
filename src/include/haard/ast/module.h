@@ -5,6 +5,7 @@
 
 #include "haard/ast/ast.h"
 #include "haard/ast/import.h"
+#include "haard/ast/function.h"
 
 namespace haard {
     class Module : public Ast {
@@ -16,10 +17,13 @@ namespace haard {
         void add_import(Import* import);
         const std::vector<Import*>& get_imports();
 
+        void add_function(Function* function);
+
         const std::vector<Ast*>& get_defs();
 
     private:
         std::vector<Import*> imports;
+        std::vector<Function*> functions;
         std::vector<Ast*> defs;
     };
 }

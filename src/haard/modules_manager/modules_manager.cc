@@ -2,11 +2,11 @@
 
 using namespace haard;
 
-void ModulesManager::add_module(std::string& path, Ast* module) {
+void Modules::add_module(std::string& path, Module* module) {
     modules[path] = module;
 }
 
-Ast* ModulesManager::get_module_by_path(std::string& path) {
+Module* Modules::get_module_by_path(std::string& path) {
     if (modules.count(path) > 0) {
         return modules.at(path);
     }
@@ -14,6 +14,6 @@ Ast* ModulesManager::get_module_by_path(std::string& path) {
     return nullptr;
 }
 
-std::map<std::string, Ast*>& ModulesManager::get_modules() {
+std::map<std::string, Module*>& Modules::get_modules() {
     return modules;
 }

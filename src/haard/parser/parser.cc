@@ -12,8 +12,8 @@ Parser::Parser() {
     idx = 0;
 }
 
-Ast* Parser::read(std::string path, std::string relative_path) {
-    Ast* module;
+Module* Parser::read(std::string path, std::string relative_path) {
+    Module* module;
     Scanner sc;
 
     idx = 0;
@@ -30,7 +30,7 @@ Module* Parser::parse_module() {
         if (lookahead(TK_IMPORT)) {
             module->add_import(parse_import());
         } else if (lookahead(TK_DEF)) {
-            module->add_child(parse_function());
+            module->add_function(parse_function());
         } else if (lookahead(TK_CLASS)) {
             module->add_child(parse_user_type());
         } else if (lookahead(TK_STRUCT)) {
@@ -197,12 +197,12 @@ Ast* Parser::parse_variable_definition() {
     return var;
 }
 
-Ast* Parser::parse_function() {
-    Ast* function = new Ast(AST_FUNCTION);
+Function* Parser::parse_function() {
+    Function* function = new Function();
 
     expect(TK_DEF);
     expect(TK_ID);
-    function->set_from_token(matched);
+    function->set_name(matched);
     function->add_child(parse_generics());
 
     expect(TK_COLON);
