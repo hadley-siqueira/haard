@@ -10,6 +10,10 @@
 #include "haard/ast/module.h"
 #include "haard/ast/import.h"
 
+#include "haard/ast/types/type.h"
+#include "haard/ast/types/primitive_type.h"
+#include "haard/ast/types/subtyped_type.h"
+
 namespace haard {
     class Parser {
     public:

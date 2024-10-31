@@ -8,6 +8,7 @@ namespace haard {
     public:
 
     private:
+
     };
 }
 

@@ -3,7 +3,7 @@
 
 #include "haard/token/token.h"
 #include "haard/ast/ast.h"
-#include "haard/ast/type.h"
+#include "haard/ast/types/type.h"
 
 namespace haard {
     class Variable : public Ast {
