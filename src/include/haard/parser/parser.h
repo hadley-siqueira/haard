@@ -7,12 +7,6 @@
 #include "log/logger.h"
 
 #include "haard/ast/ast.h"
-#include "haard/ast/module.h"
-#include "haard/ast/import.h"
-
-#include "haard/ast/types/type.h"
-#include "haard/ast/types/primitive_type.h"
-#include "haard/ast/types/subtyped_type.h"
 
 namespace haard {
     class Parser {
@@ -20,11 +14,11 @@ namespace haard {
         Parser();
 
     public:
-        Module* read(std::string path, std::string relative_path = "");
+        Ast* read(std::string path, std::string relative_path = "");
 
     public:
-        Module* parse_module();
-        Import* parse_import();
+        Ast* parse_module();
+        Ast* parse_import();
 
         Ast* parse_definitions();
 
@@ -35,7 +29,7 @@ namespace haard {
 
         Ast* parse_variable_definition();
 
-        Function* parse_function();
+        Ast* parse_function();
         Ast* parse_parameters();
         Ast* parse_parameter();
 

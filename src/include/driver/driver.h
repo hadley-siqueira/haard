@@ -46,8 +46,8 @@ namespace haard {
         bool file_exists(std::string path);
 
     private:
-        Modules modules;
-        Module* module;
+        ModulesManager modules;
+        Ast* module;
 
     // system related stuff
     private:

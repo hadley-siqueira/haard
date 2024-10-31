@@ -12,8 +12,8 @@ Parser::Parser() {
     idx = 0;
 }
 
-Module* Parser::read(std::string path, std::string relative_path) {
-    Module* module;
+Ast* Parser::read(std::string path, std::string relative_path) {
+    Ast* module;
     Scanner sc;
 
     idx = 0;
@@ -23,14 +23,14 @@ Module* Parser::read(std::string path, std::string relative_path) {
     return module;
 }
 
-Module* Parser::parse_module() {
-    Module* module = new Module();
+Ast* Parser::parse_module() {
+    Ast* module = new Ast(AST_MODULE);
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
-            module->add_import(parse_import());
+            module->add_child(parse_import());
         } else if (lookahead(TK_DEF)) {
-            module->add_function(parse_function());
+            module->add_child(parse_function());
         } else if (lookahead(TK_CLASS)) {
             module->add_child(parse_user_type());
         } else if (lookahead(TK_STRUCT)) {
@@ -49,8 +49,8 @@ Module* Parser::parse_module() {
     return module;
 }
 
-Import* Parser::parse_import() {
-    Import* import = new Import();
+Ast* Parser::parse_import() {
+    Ast* import = new Ast(AST_IMPORT);
     Ast* path = new Ast(AST_IMPORT_PATH);
     Ast* alias = nullptr;
 
@@ -59,14 +59,16 @@ Import* Parser::parse_import() {
 
     do {
         expect(TK_ID);
-        import->add_to_path(matched);
+        path->add_child(AST_IMPORT_PATH_MEMBER, matched);
     } while (match(TK_DOT));
 
     if (match(TK_AS)) {
         expect(TK_ID);
-        import->set_alias(matched);
+        alias = new Ast(AST_IMPORT_ALIAS, matched);
     }
 
+    import->add_child(path);
+    import->add_child(alias);
     return import;
 }
 
@@ -197,12 +199,12 @@ Ast* Parser::parse_variable_definition() {
     return var;
 }
 
-Function* Parser::parse_function() {
-    Function* function = new Function();
+Ast* Parser::parse_function() {
+    Ast* function = new Ast(AST_FUNCTION);
 
     expect(TK_DEF);
     expect(TK_ID);
-    function->set_name(matched);
+    function->set_from_token(matched);
     function->add_child(parse_generics());
 
     expect(TK_COLON);
@@ -608,64 +610,65 @@ Ast* Parser::parse_tuple_or_function_type() {
 }
 
 Ast* Parser::parse_primary_type() {
-    Type* type = nullptr;
-    Type* subtype = nullptr;
+    Ast* type = nullptr;
+    Ast* subtype = nullptr;
 
     if (match(TK_INT)) {
-       type = new PrimitiveType(AST_TYPE_INT, matched);
+       type = new Ast(AST_TYPE_INT, matched);
     } else if (match(TK_UINT)) {
-       type = new PrimitiveType(AST_TYPE_UINT, matched);
+       type = new Ast(AST_TYPE_UINT, matched);
     } else if (match(TK_FLOAT)) {
-       type = new PrimitiveType(AST_TYPE_FLOAT, matched);
+       type = new Ast(AST_TYPE_FLOAT, matched);
     } else if (match(TK_DOUBLE)) {
-       type = new PrimitiveType(AST_TYPE_DOUBLE, matched);
+       type = new Ast(AST_TYPE_DOUBLE, matched);
     } else if (match(TK_SHORT)) {
-       type = new PrimitiveType(AST_TYPE_SHORT, matched);
+       type = new Ast(AST_TYPE_SHORT, matched);
     } else if (match(TK_USHORT)) {
-       type = new PrimitiveType(AST_TYPE_USHORT, matched);
+       type = new Ast(AST_TYPE_USHORT, matched);
     } else if (match(TK_LONG)) {
-       type = new PrimitiveType(AST_TYPE_LONG, matched);
+       type = new Ast(AST_TYPE_LONG, matched);
     } else if (match(TK_ULONG)) {
-       type = new PrimitiveType(AST_TYPE_ULONG, matched);
+       type = new Ast(AST_TYPE_ULONG, matched);
     } else if (match(TK_CHAR)) {
-       type = new PrimitiveType(AST_TYPE_CHAR, matched);
+       type = new Ast(AST_TYPE_CHAR, matched);
     } else if (match(TK_UCHAR)) {
-       type = new PrimitiveType(AST_TYPE_UCHAR, matched);
+       type = new Ast(AST_TYPE_UCHAR, matched);
     } else if (match(TK_SYMBOL)) {
-       type = new PrimitiveType(AST_TYPE_SYMBOL, matched);
+       type = new Ast(AST_TYPE_SYMBOL, matched);
     } else if (match(TK_VOID)) {
-       type = new PrimitiveType(AST_TYPE_VOID, matched);
+       type = new Ast(AST_TYPE_VOID, matched);
     } else if (match(TK_BOOL)) {
-       type = new PrimitiveType(AST_TYPE_BOOL, matched);
+       type = new Ast(AST_TYPE_BOOL, matched);
     } else if (match(TK_STR)) {
-       type = new PrimitiveType(AST_TYPE_STR, matched);
+       type = new Ast(AST_TYPE_STR, matched);
     } else if (match(TK_I8)) {
-       type = new PrimitiveType(AST_TYPE_I8, matched);
+       type = new Ast(AST_TYPE_I8, matched);
     } else if (match(TK_I16)) {
-       type = new PrimitiveType(AST_TYPE_I16, matched);
+       type = new Ast(AST_TYPE_I16, matched);
     } else if (match(TK_I32)) {
-       type = new PrimitiveType(AST_TYPE_I32, matched);
+       type = new Ast(AST_TYPE_I32, matched);
     } else if (match(TK_I64)) {
-       type = new PrimitiveType(AST_TYPE_I64, matched);
+       type = new Ast(AST_TYPE_I64, matched);
     } else if (match(TK_U8)) {
-       type = new PrimitiveType(AST_TYPE_U8, matched);
+       type = new Ast(AST_TYPE_U8, matched);
     } else if (match(TK_U16)) {
-       type = new PrimitiveType(AST_TYPE_U16, matched);
+       type = new Ast(AST_TYPE_U16, matched);
     } else if (match(TK_U32)) {
-       type = new PrimitiveType(AST_TYPE_U32, matched);
+       type = new Ast(AST_TYPE_U32, matched);
     } else if (match(TK_U64)) {
-       type = new PrimitiveType(AST_TYPE_U64, matched);
+       type = new Ast(AST_TYPE_U64, matched);
     } else if (match(TK_F32)) {
-       type = new PrimitiveType(AST_TYPE_F32, matched);
+       type = new Ast(AST_TYPE_F32, matched);
     } else if (match(TK_F64)) {
-       type = new PrimitiveType(AST_TYPE_F64, matched);
+       type = new Ast(AST_TYPE_F64, matched);
     } else if (match(TK_LEFT_SQUARE_BRACKET)) {
         subtype = parse_type();
 
         if (subtype == nullptr) {
             assert(false && "no type");
         } else {
-            type = new SubtypedType(subtype);
+            type = new Ast(AST_TYPE_LIST);
+            type->add_child(subtype);
         }
 
         expect(TK_RIGHT_SQUARE_BRACKET);

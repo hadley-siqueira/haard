@@ -23,12 +23,12 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_MODULE:
-        print_module((Module*) node);
+        print_module(node);
         break;
 
     /* Import */
     case AST_IMPORT:
-        print_import((Import*) node);
+        print_import(node);
         break;
 
     case AST_IMPORT_PATH:
@@ -653,31 +653,23 @@ void PrettyPrinter::print(Ast* node) {
     }
 }
 
-void PrettyPrinter::print_module(Module* module) {
+void PrettyPrinter::print_module(Ast* module) {
     AstKind kind;
 
-    for (auto node : module->get_defs()) {
-        print(node);
+    for (auto i = 0; i < module->children_count(); ++i) {
+        kind = module->get_child(i)->get_kind();
+
+        print(module->get_child(i));
         out << "\n";
     }
 }
 
-void PrettyPrinter::print_import(Import* import) {
+void PrettyPrinter::print_import(Ast* import) {
     size_t i;
-    std::string path;
 
     out << "import ";
-
-    for (auto tk : import->get_path()) {
-        path += tk.get_value() + ".";
-    }
-
-    path.pop_back();
-    out << path;
-
-    if (import->has_alias()) {
-        out << " as " << import->get_alias().get_value();
-    }
+    print(import->get_child(0));
+    print(import->get_child(1));
 }
 
 void PrettyPrinter::print_import_path(Ast* path) {

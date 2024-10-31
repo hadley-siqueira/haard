@@ -16,13 +16,6 @@ set(TOKEN_SRC
 
 set(AST_SRC
     src/haard/ast/ast.cc
-    src/haard/ast/module.cc
-    src/haard/ast/import.cc
-    src/haard/ast/function.cc
-    src/haard/ast/variable.cc
-    src/haard/ast/types/type.cc
-    src/haard/ast/types/primitive_type.cc
-    src/haard/ast/types/subtyped_type.cc
 )
 
 set(DESCRIPTORS_SRC

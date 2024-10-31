@@ -225,13 +225,11 @@ namespace haard {
         int get_line() const;
         int get_column() const;
         const std::string& get_value() const;
-        Ast* get_parent() const;
 
         void set_kind(AstKind kind);
         void set_line(int line);
         void set_column(int column);
         void set_value(const std::string& value);
-        void set_parent(Ast *parent);
 
         void add_child(Ast* child);
         void add_child(AstKind kind, Token& token);
@@ -248,7 +246,6 @@ namespace haard {
         int line;
         int column;
         std::string value;
-        Ast* parent;
         std::vector<Ast*> children;
     };
 }
