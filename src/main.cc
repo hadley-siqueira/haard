@@ -3,8 +3,8 @@
 #include "haard/scanner/scanner.h"
 #include "haard/parser/parser.h"
 
-#include "driver/driver.h"
-#include "utils/utils.h"
+#include "haard/driver/driver.h"
+#include "haard/utils/utils.h"
 
 #include <sys/types.h>
 #include <unistd.h>

@@ -56,6 +56,7 @@ void Ast::set_value(const std::string& value) {
 void Ast::add_child(Ast* child) {
     if (child != nullptr) {
         children.push_back(child);
+        child->set_parent(this);
     }
 }
 
@@ -108,4 +109,12 @@ void Ast::set_from_token(Token& token) {
     set_line(token.get_line());
     set_column(token.get_column());
     set_value(token.get_value());
+}
+
+Ast* Ast::get_parent() const {
+    return parent;
+}
+
+void Ast::set_parent(Ast* parent) {
+    this->parent = parent;
 }

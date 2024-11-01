@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 
-#include "log/logger.h"
+#include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
 #include "haard/modules_manager/modules_manager.h"

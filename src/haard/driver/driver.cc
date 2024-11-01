@@ -2,16 +2,11 @@
 #include <fstream>
 #include <cstring>
 
-#include "driver/driver.h"
+#include "haard/driver/driver.h"
 #include "haard/parser/parser.h"
+#include "haard/pretty_printer/pretty_printer.h"
 
-//#include "semantic/semantic_define_pass.h"
-
-//#include "cpp_generator/cpp_generator.h"
-
-#include "pretty_printer/pretty_printer.h"
-
-#include "log/logs.h"
+#include "haard/log/logs.h"
 
 using namespace haard;
 
@@ -49,8 +44,6 @@ void Driver::run(int argc, char** argv) {
     }
 
     parse_module_imports(parse_file(main_path));
-    //semantic_analysis();
-
     exec_commands();
 }
 

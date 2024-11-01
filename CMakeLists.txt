@@ -7,7 +7,7 @@ include_directories(src/include)
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -g")
 
 set(UTILS_SRC
-    src/utils/utils.cc
+    src/haard/utils/utils.cc
 )
 
 set(TOKEN_SRC
@@ -40,24 +40,18 @@ set(MODULES_MANAGER_SRC
     src/haard/modules_manager/modules_manager.cc
 )
 
-set(SCOPE_SRC
-    src/scope/symbol_descriptor.cc
-    src/scope/symbol.cc
-    src/scope/scope.cc
-)
-
 set(DRIVER_SRC
-    src/driver/driver.cc
+    src/haard/driver/driver.cc
 )
 
 set(PRETTY_PRINTER_SRC
-    src/pretty_printer/pretty_printer.cc
+    src/haard/pretty_printer/pretty_printer.cc
 )
 
 set(LOG_SRC
-    src/log/log.cc
-    src/log/logger.cc
-    src/log/logs.cc
+    src/haard/log/log.cc
+    src/haard/log/logger.cc
+    src/haard/log/logs.cc
 )
 
 set(SOURCES
@@ -68,7 +62,6 @@ set(SOURCES
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${MODULES_MANAGER_SRC}
-    ${SCOPE_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}

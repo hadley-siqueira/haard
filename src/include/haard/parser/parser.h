@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <stack>
-#include "log/logger.h"
+#include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
 

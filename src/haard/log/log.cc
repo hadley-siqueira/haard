@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "log/log.h"
+#include "haard/log/log.h"
 
 using namespace haard;
 

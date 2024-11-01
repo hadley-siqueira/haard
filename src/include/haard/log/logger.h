@@ -2,7 +2,7 @@
 #define HAARD_LOGGER_H
 
 #include <vector>
-#include "log/log.h"
+#include "haard/log/log.h"
 
 namespace haard {
     class Logger {

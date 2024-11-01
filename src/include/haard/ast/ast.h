@@ -241,11 +241,15 @@ namespace haard {
 
         void set_from_token(Token& token);
 
+        Ast* get_parent() const;
+        void set_parent(Ast* parent);
+
     private:
         AstKind kind;
         int line;
         int column;
         std::string value;
+        Ast* parent;
         std::vector<Ast*> children;
     };
 }

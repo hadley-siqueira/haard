@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-#include "pretty_printer/pretty_printer.h"
+#include "haard/pretty_printer/pretty_printer.h"
 
 
 using namespace haard;

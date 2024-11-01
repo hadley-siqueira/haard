@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "log/logs.h"
-#include "log/logger.h"
+#include "haard/log/logs.h"
+#include "haard/log/logger.h"
 
 namespace haard {
     Logger logger;

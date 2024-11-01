@@ -4,7 +4,7 @@
 
 #include "haard/parser/parser.h"
 #include "haard/scanner/scanner.h"
-#include "log/logs.h"
+#include "haard/log/logs.h"
 
 using namespace haard;
 
