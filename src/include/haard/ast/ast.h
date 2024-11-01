@@ -41,9 +41,6 @@ namespace haard {
         AST_VARIABLE,
         AST_VARIABLE_DEFINITION,
 
-        AST_FUNCTIONS,
-        AST_VARIABLES,
-
         AST_IMPORT,
         AST_IMPORT_PATH,
         AST_IMPORT_PATH_MEMBER,

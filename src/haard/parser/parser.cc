@@ -108,19 +108,13 @@ Ast* Parser::parse_user_type() {
     expect(TK_COLON);
     indent();
 
-    Ast* fields = new Ast(AST_FIELDS);
-    Ast* functions = new Ast(AST_FUNCTIONS);
-
-    user_type->add_child(fields);
-    user_type->add_child(functions);
-
     while (is_indented()) {
         if (lookahead(TK_DEF)) {
             has_children = true;
-            functions->add_child(parse_function());
+            user_type->add_child(parse_function());
         } else if (lookahead(TK_ID)) {
             has_children = true;
-            fields->add_child(parse_field());
+            user_type->add_child(parse_field());
         } else if (match(TK_PASS)) {
             if (has_children) {
                 log_error("unexpected pass because fields were already declared");

@@ -40,6 +40,10 @@ set(MODULES_MANAGER_SRC
     src/haard/modules_manager/modules_manager.cc
 )
 
+set(SEMANTIC_SRC
+    src/haard/semantic/semantic_analyzer.cc
+)
+
 set(DRIVER_SRC
     src/haard/driver/driver.cc
 )
@@ -62,6 +66,7 @@ set(SOURCES
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${MODULES_MANAGER_SRC}
+    ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}

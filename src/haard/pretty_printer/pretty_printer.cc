@@ -45,19 +45,14 @@ void PrettyPrinter::print(Ast* node) {
 
     /* Definitions */
     case AST_CLASS:
-        print_class(node);
+    case AST_ENUM:
+    case AST_STRUCT:
+    case AST_UNION:
+        print_user_type(node);
         break;
 
     case AST_SUPER:
         print_super_type(node);
-        break;
-
-    case AST_FUNCTIONS:
-        print_functions(node);
-        break;
-
-    case AST_VARIABLES:
-        print_variables(node);
         break;
 
     case AST_VARIABLE:
@@ -106,18 +101,6 @@ void PrettyPrinter::print(Ast* node) {
 
     case AST_LAMBDA_STATEMENTS:
         print_lambda_statements(node);
-        break;
-
-    case AST_ENUM:
-        print_enum(node);
-        break;
-
-    case AST_ENUM_SUPER:
-        print_enum_super(node);
-        break;
-
-    case AST_FIELDS:
-        print_fields(node);
         break;
 
     case AST_FIELD:
@@ -692,8 +675,17 @@ void PrettyPrinter::print_import_alias(Ast* alias) {
     out << alias->get_value();
 }
 
-void PrettyPrinter::print_class(Ast* node) {
-    out << "class ";
+void PrettyPrinter::print_user_type(Ast* node) {
+    if (node->get_kind() == AST_CLASS) {
+        out << "class ";
+    } else if (node->get_kind() == AST_ENUM) {
+        out << "enum ";
+    } else if (node->get_kind() == AST_STRUCT) {
+        out << "struct ";
+    } else {
+        out << "union ";
+    }
+
     out << node->get_value();
 
     print(node->get_child(AST_SUPER));
@@ -701,52 +693,19 @@ void PrettyPrinter::print_class(Ast* node) {
     out << ":\n";
     indent();
 
-    print(node->get_child(AST_VARIABLES));
-    print(node->get_child(AST_FUNCTIONS));
-
-    dedent();
-}
-
-void PrettyPrinter::print_enum(Ast* node) {
-    out << "enum ";
-    out << node->get_value();
-
-    print(node->get_child(AST_GENERICS));
-    print(node->get_child(AST_SUPER));
-    out << ":\n";
-    indent();
-
-    print(node->get_child(AST_FIELDS));
-    print(node->get_child(AST_FUNCTIONS));
-
-    dedent();
-}
-
-void PrettyPrinter::print_enum_super(Ast* node) {
-    out << "(";
-    print(node->get_child());
-    out << ")";
-}
-
-void PrettyPrinter::print_fields(Ast* node) {
-    for (int i = 0; i < node->children_count(); ++i) {
+    for (auto f : node->get_children(AST_FIELD)) {
         print_indentation();
-        print(node->get_child(i));
+        print(f);
         out << "\n";
     }
-}
 
-void PrettyPrinter::print_functions(Ast* node) {
-    int i;
-
-    if (node->children_count() > 0) {
-        for (i = 0; i < node->children_count() - 1; ++i) {
-            print(node->get_child(i));
-            out << "\n";
-        }
-
-        print(node->get_child(i));
+    for (auto f : node->get_children(AST_FUNCTION)) {
+        print_indentation();
+        print(f);
+        out << "\n";
     }
+
+    dedent();
 }
 
 void PrettyPrinter::print_field(Ast* node) {

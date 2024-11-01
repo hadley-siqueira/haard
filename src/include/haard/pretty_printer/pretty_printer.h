@@ -22,12 +22,7 @@ namespace haard {
         void print_import_path_member(Ast* member);
         void print_import_alias(Ast* alias);
 
-        void print_class(Ast* node);
-
-        void print_enum(Ast* node);
-        void print_enum_super(Ast* node);
-        void print_fields(Ast* node);
-        void print_functions(Ast* node);
+        void print_user_type(Ast* node);
         void print_field(Ast* node);
         void print_field_type(Ast* node);
         void print_field_expresion(Ast* node);
