@@ -3,7 +3,12 @@ class Pixel:
     g : u8
     b : u8
 
-class Pixel:
+class Pixel<T>:
+    r : u8
+    g : u8
+    b : u8
+
+class Pixel<A, B>
     r : u8
     g : u8
     b : u8

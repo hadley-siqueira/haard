@@ -1,4 +1,7 @@
+#include <sstream>
+
 #include "haard/semantic/semantic_analyzer.h"
+#include "haard/pretty_printer/pretty_printer.h"
 #include "haard/log/logs.h"
 
 using namespace haard;
@@ -28,6 +31,8 @@ void SemanticAnalyzer::declare_user_type(Ast* type) {
     std::string name = type->get_value();
     SymbolKind kind = SYM_CLASS;
     std::string kind_as_str = "class";
+    std::stringstream msg;
+    bool not_declared = true;
 
     if (type->get_kind() == AST_CLASS) {
         kind = SYM_CLASS;
@@ -45,27 +50,39 @@ void SemanticAnalyzer::declare_user_type(Ast* type) {
 
     auto symbols = current_scope->resolve_local(name);
 
-    if (symbols.size() == 0) {
-        current_scope->define(kind, name, type);
-        log_info("Defining " + kind_as_str + " '" + name + "'");
-    } else {
+    if (symbols.size() > 0) {
         for (auto sym : symbols) {
             Ast* other = sym->get_ast();
 
-            Ast* g1 = other->get_child(AST_GENERICS);
+            Ast* g1 = type->get_child(AST_GENERICS);
             Ast* g2 = other->get_child(AST_GENERICS);
 
             if (g1 && g2) {
                 if (g1->children_count() == g2->children_count()) {
-                    log_error("User type '" + name + "' already defined");
+                    log_error("'" + name + "' already defined");
+                    not_declared = false;
                 }
             } else if (g1 == nullptr && g2 == nullptr) {
                 log_error("User type '" + name + "' already defined");
-            } else {
-                current_scope->define(kind, name, type);
-                log_info("Defining " + kind_as_str + " '" + name + "'");
+                not_declared = false;
             }
         }
+    }
+
+    if (not_declared) {
+        current_scope->define(kind, name, type);
+
+        Ast* g1 = type->get_child(AST_GENERICS);
+        msg << "Defining " + kind_as_str + " '" + name;
+
+        if (g1) {
+            PrettyPrinter p;
+            p.print(g1);
+            msg << p.get_output();
+        }
+
+        msg << "'";
+        log_info(msg.str());
     }
 }
 

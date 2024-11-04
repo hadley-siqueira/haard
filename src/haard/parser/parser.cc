@@ -1613,6 +1613,7 @@ Ast* Parser::parse_identifier() {
 Ast* Parser::parse_generics() {
     Ast* generics = nullptr;
 
+
     if (match(TK_BEGIN_TEMPLATE)) {
         generics = parse_type_list(AST_GENERICS);
         expect(TK_END_TEMPLATE);

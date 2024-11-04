@@ -101,6 +101,10 @@ std::vector<Ast*> Ast::get_children(AstKind kind) {
     return r;
 }
 
+const std::vector<Ast*>& Ast::get_children() const {
+    return children;
+}
+
 size_t Ast::children_count() {
     return children.size();
 }

@@ -234,6 +234,7 @@ namespace haard {
         Ast* get_child(size_t index=0);
         Ast* get_child(AstKind type);
         std::vector<Ast*> get_children(AstKind kind);
+        const std::vector<Ast*>& get_children() const;
         size_t children_count();
 
         void set_from_token(Token& token);
