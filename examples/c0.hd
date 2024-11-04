@@ -9,7 +9,7 @@ class Pixel<T>:
     b : u8
 
 # need to fix missing :
-# need to print generics
+# need to pri32 generics
 class Pixel<A, B>:
     r : u8
     g : u8
@@ -20,56 +20,69 @@ class ListNode<T>:
     prev : ListNode<T>*
     next : ListNode<T>*
 
-def sum : int
-    @a  : int
-    @b  : int
-    @c  : int**
+def sum : i32
+    @a  : i32
+    @b  : i32
+    @c  : i32**
     @p  : Pixel&
     @pp : Pixel[]
     @p2 : Pixel[N_PIX]
 
     return 0
 
-def sum : int
-    @a : int
-    @b : int
+def sum : i32
+    @a : i32
+    @b : i32
 
     return 0
 
-def sum : int
-    @a : int
+def sum : i32
+    @a : i32
     @b : char
 
     return 0
 
-def sum : int
+def sum : i32
     @p : Pixel
     @a : Pixel
 
     return 0
 
-def sum : int
+def sum : i32
     @p : Pixel
     @a : Pixel
 
     return 0
 
-def sum : int
+def sum : i32
     @p : Pixel
 
     return 0
 
-def sum2 : int
-    @node : ListNode<int>*
+def sum2 : i32
+    @node : ListNode<i32>*
 
     return 0
 
-def sum2 : int
-    @node : ListNode<float>*
+def sum2 : i32
+    @node : ListNode<f32>*
 
     return 0
 
-def sum2 : int
-    @node : ListNode<int>*
+def sum2 : i32
+    @node : ListNode<i32>*
+
+    v = |a, b| {
+        return a + b
+    }
+
+    var v : i32 = 0
+
+    while v > 0:
+        v = v + 1
 
     return 0
+
+var MAX_ITER = 100
+var MAX : i32 = 100
+var MAX2 : i32

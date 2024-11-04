@@ -28,6 +28,8 @@ void Driver::parse_args(int argc, char** argv) {
 
         } else if (strcmp(argv[i], "--pretty") == 0) {
             commands.push_back(DRIVER_CMD_PRETTY_PRINT);
+        } else if (strcmp(argv[i], "--json") == 0) {
+            commands.push_back(DRIVER_CMD_JSON);
         }
     }
 }
@@ -55,6 +57,10 @@ void Driver::exec_commands() {
         switch (commands[i]) {
         case DRIVER_CMD_PRETTY_PRINT:
             pretty_print();
+            break;
+
+        case DRIVER_CMD_JSON:
+            print_json();
             break;
         }
     }
@@ -221,6 +227,11 @@ void Driver::pretty_print() {
         printer.print(it.second);
         std::cout << printer.get_output() << '\n';
     }
+}
+
+void Driver::print_json() {
+    std::cout << module->to_json() << "\n";
+    exit();
 }
 
 bool Driver::file_exists(std::string path) {

@@ -55,68 +55,16 @@ void PrettyPrinter::print(Ast* node) {
         print_super_type(node);
         break;
 
-    case AST_VARIABLE:
-        print_member_variable(node);
-        break;
-
-    case AST_VARIABLE_DEFINITION:
-        print_variable_definition(node);
-        break;
-
     case AST_FUNCTION:
         print_function(node);
         break;
 
-    case AST_PARAMETER:
-        print_parameter(node);
-        break;
-
-    case AST_PARAMETER_TYPE:
-        print_parameter_type(node);
-        break;
-
-    case AST_PARAMETER_EXPRESSION:
-        print_parameter_expression(node);
+    case AST_VARIABLE:
+        print_variable(node);
         break;
 
     case AST_LAMBDA:
         print_lambda(node);
-        break;
-
-    case AST_LAMBDA_RETURN_TYPE:
-        print_lambda_return_type(node);
-        break;
-
-    case AST_LAMBDA_PARAMETERS:
-        print_lambda_parameters(node);
-        break;
-
-    case AST_LAMBDA_PARAMETER:
-        print_lambda_parameter(node);
-        break;
-
-    case AST_LAMBDA_PARAMETER_TYPE:
-        print_lambda_parameter_type(node);
-        break;
-
-    case AST_LAMBDA_PARAMETER_EXPRESSION:
-        print_lambda_parameter_expression(node);
-        break;
-
-    case AST_LAMBDA_STATEMENTS:
-        print_lambda_statements(node);
-        break;
-
-    case AST_FIELD:
-        print_field(node);
-        break;
-
-    case AST_FIELD_TYPE:
-        print_field_type(node);
-        break;
-
-    case AST_FIELD_EXPRESSION:
-        print_field_expresion(node);
         break;
 
     /* Statements */
@@ -662,9 +610,9 @@ void PrettyPrinter::print_user_type(Ast* node) {
     out << ":\n";
     indent();
 
-    for (auto f : node->get_children(AST_FIELD)) {
+    for (auto v : node->get_children(AST_VARIABLE)) {
         print_indentation();
-        print(f);
+        print(v);
         out << "\n";
     }
 
@@ -677,59 +625,10 @@ void PrettyPrinter::print_user_type(Ast* node) {
     dedent();
 }
 
-void PrettyPrinter::print_field(Ast* node) {
-    out << node->get_value();
-
-    print(node->get_child(AST_FIELD_TYPE));
-    print(node->get_child(AST_FIELD_EXPRESSION));
-}
-
-void PrettyPrinter::print_field_type(Ast* node) {
-    out << " : ";
-    print(node->get_child());
-}
-
-void PrettyPrinter::print_field_expresion(Ast* node) {
-    out << " = ";
-    print(node->get_child());
-}
-
 void PrettyPrinter::print_super_type(Ast* node) {
     out << "(";
     print(node->get_child());
     out << ")";
-}
-
-void PrettyPrinter::print_variables(Ast* node) {
-    if (node->children_count() > 0) {
-        for (int i = 0; i < node->children_count(); ++i) {
-            print_indentation();
-            print(node->get_child(i));
-            out << "\n";
-        }
-
-        out << "\n";
-    }
-}
-
-void PrettyPrinter::print_member_variable(Ast* node) {
-    out << node->get_value() << " : ";
-    print(node->get_child(0));
-
-    if (node->get_child(1)) {
-        out << " = ";
-        print(node->get_child(1));
-    }
-}
-
-void PrettyPrinter::print_variable_definition(Ast* node) {
-    out << "var " << node->get_value() << " : ";
-    print(node->get_child(0));
-
-    if (node->get_child(1)) {
-        out << " = ";
-        print(node->get_child(1));
-    }
 }
 
 void PrettyPrinter::print_list_type(Ast* node) {
@@ -899,11 +798,11 @@ void PrettyPrinter::print_shift_left_logical(Ast* node) {
 }
 
 void PrettyPrinter::print_shift_right_logical(Ast* node) {
-print_binop(node, ">>>");
+    print_binop(node, ">>>");
 }
 
 void PrettyPrinter::print_shift_right_arithmetic(Ast* node) {
-print_binop(node, ">>");
+    print_binop(node, ">>");
 }
 
 void PrettyPrinter::print_dot(Ast* node) {
@@ -945,6 +844,8 @@ void PrettyPrinter::print_identifier(Ast* id) {
 }
 
 void PrettyPrinter::print_function(Ast* function) {
+    bool has_parameters = false;
+
     print_indentation();
     out << "def ";
     out << function->get_value();
@@ -956,9 +857,14 @@ void PrettyPrinter::print_function(Ast* function) {
     out << '\n';
     indent();
 
-    for (auto p : function->get_children(AST_PARAMETER)) {
+    for (auto p : function->get_children(AST_VARIABLE)) {
         print_indentation();
         print(p);
+        out << "\n";
+        has_parameters = true;
+    }
+
+    if (has_parameters) {
         out << "\n";
     }
 
@@ -966,90 +872,75 @@ void PrettyPrinter::print_function(Ast* function) {
     dedent();
 }
 
-void PrettyPrinter::print_parameter(Ast* parameter) {
-    out << "@" << parameter->get_value();
-    print(parameter->get_child(AST_PARAMETER_TYPE));
-    print(parameter->get_child(AST_PARAMETER_EXPRESSION));
-}
+void PrettyPrinter::print_variable(Ast* parameter) {
+    Ast* type = parameter->get_child(AST_TYPE);
+    Ast* expr = parameter->get_child(AST_EXPRESSION);
+    AstKind kind = parameter->get_parent()->get_kind();
 
-void PrettyPrinter::print_parameter_type(Ast* type) {
-    out << " : ";
-    print(type->get_child());
-}
+    if (kind == AST_FUNCTION) {
+        out << "@";
+    } else if (kind == AST_COMPOUND_STATEMENT || kind == AST_MODULE) {
+        out << "var ";
+    }
 
-void PrettyPrinter::print_parameter_expression(Ast* expr) {
-    out << " = ";
-    print(expr->get_child());
+    out << parameter->get_value();
+
+    if (type) {
+        out << " : ";
+        print(type->get_child());
+    }
+
+    if (expr) {
+        out << " = ";
+        print(expr->get_child());
+    }
 }
 
 void PrettyPrinter::print_lambda(Ast* node) {
-    print(node->get_child(AST_LAMBDA_PARAMETERS));
-    print(node->get_child(AST_LAMBDA_RETURN_TYPE));
-    out << " ";
-    print(node->get_child(AST_LAMBDA_STATEMENTS));
-}
-
-void PrettyPrinter::print_lambda_return_type(Ast* node) {
-    out << " -> ";
-    print(node->get_child());
-}
-
-void PrettyPrinter::print_lambda_parameters(Ast* node) {
-    int i;
     out << "|";
 
-    if (node->children_count() > 0) {
-        for (i = 0; i < node->children_count() - 1; ++i) {
-            print(node->get_child(i));
+    auto params = node->get_children(AST_VARIABLE);
+
+    if (params.size() > 0) {
+        int i = 0;
+
+        for (i = 0; i < params.size() - 1; ++i) {
+            print_variable(params[i]);
             out << ", ";
         }
 
-        print(node->get_child(i));
+        print_variable(params[i]);
     }
 
     out << "|";
-}
 
-void PrettyPrinter::print_lambda_parameter(Ast* node) {
-    out << node->get_value();
-    print(node->get_child(AST_LAMBDA_PARAMETER_TYPE));
-    print(node->get_child(AST_LAMBDA_PARAMETER_EXPRESSION));
-}
+    if (node->get_child(AST_TYPE)) {
+        out << " -> ";
+        print(node->get_child(AST_TYPE)->get_child());
+    }
 
-void PrettyPrinter::print_lambda_parameter_type(Ast* node) {
-    out << " : ";
-    print(node->get_child());
-}
+    out << " ";
 
-void PrettyPrinter::print_lambda_parameter_expression(Ast* node) {
-    out << " = ";
-    print(node->get_child());
-}
-
-void PrettyPrinter::print_lambda_statements(Ast* node) {
     out << "{\n";
     indent();
-    print(node->get_child());
+    print(node->get_child(AST_COMPOUND_STATEMENT));
     dedent();
     print_indentation();
     out << "}";
 }
 
 void PrettyPrinter::print_while(Ast* stmt) {
-    print_indentation();
     out << "while ";
     print(stmt->get_child(0));
     out << ":\n";
     indent();
     print(stmt->get_child(1));
     dedent();
-    out << '\n';
 }
 
 void PrettyPrinter::print_for(Ast* stmt) {
     Ast* tmp;
 
-    print_indentation();
     out << "for ";
 
     tmp = stmt->get_child(AST_FOR_RANGE);
@@ -1071,7 +962,6 @@ void PrettyPrinter::print_for(Ast* stmt) {
     indent();
     print(stmt->get_child(AST_COMPOUND_STATEMENT));
     dedent();
-    out << '\n';
 }
 
 void PrettyPrinter::print_for_init(Ast* node) {
@@ -1126,12 +1016,13 @@ void PrettyPrinter::print_statements(Ast* stmts) {
     }
 
     for (int i = 0; i < stmts->children_count(); ++i) {
+        print_indentation();
         print(stmts->get_child(i));
+        out << "\n";
     }
 }
 
 void PrettyPrinter::print_return(Ast* node) {
-    print_indentation();
     out << "return";
 
     Ast* expr = node->get_child();
@@ -1140,12 +1031,9 @@ void PrettyPrinter::print_return(Ast* node) {
         out << " ";
         print(expr);
     }
-
-    out << "\n";
 }
 
 void PrettyPrinter::print_switch(Ast* node) {
-    print_indentation();
     out << "switch ";
     print(node->get_child(0));
     out << ":\n";
@@ -1191,7 +1079,6 @@ void PrettyPrinter::print_switch_default(Ast* node) {
 }
 
 void PrettyPrinter::print_expression_statement(Ast* stmt, bool has_semicolon) {
-    print_indentation();
     print(stmt->get_child(0));
 
     if (has_semicolon) {

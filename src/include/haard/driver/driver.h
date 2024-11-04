@@ -12,6 +12,7 @@
 namespace haard {
     enum DriverCommands {
         DRIVER_CMD_PRETTY_PRINT,
+        DRIVER_CMD_JSON,
     };
 
     class Driver {
@@ -41,6 +42,7 @@ namespace haard {
 
     public:
         void pretty_print();
+        void print_json();
 
     private:
         bool file_exists(std::string path);

@@ -131,13 +131,13 @@ Ast* Parser::parse_user_type() {
 }
 
 Ast* Parser::parse_field() {
-    Ast* var = new Ast(AST_FIELD);
+    Ast* var = new Ast(AST_VARIABLE);
 
     expect(TK_ID);
     var->set_from_token(matched);
 
     if (match(TK_COLON)) {
-        var->add_child(AST_FIELD_TYPE, parse_type());
+        var->add_child(AST_TYPE, parse_type());
     }
 
     if (match(TK_ASSIGNMENT)) {
@@ -146,7 +146,7 @@ Ast* Parser::parse_field() {
         if (expr == nullptr) {
             log_error("missing field");
         } else {
-            var->add_child(AST_FIELD_EXPRESSION, expr);
+            var->add_child(AST_EXPRESSION, expr);
         }
     }
 
@@ -155,7 +155,7 @@ Ast* Parser::parse_field() {
 
 Ast* Parser::parse_variable_definition() {
     bool need_expression = true;
-    Ast* var = new Ast(AST_VARIABLE_DEFINITION);
+    Ast* var = new Ast(AST_VARIABLE);
 
     expect(TK_VAR);
     expect(TK_ID);
@@ -168,7 +168,7 @@ Ast* Parser::parse_variable_definition() {
         if (type == nullptr) {
             log_error("missing type on variable definition");
         } else {
-            var->add_child(type);
+            var->add_child(AST_TYPE, type);
         }
     }
 
@@ -186,7 +186,7 @@ Ast* Parser::parse_variable_definition() {
         if (expr == nullptr) {
             log_error("missing expression on variable definition");
         } else {
-            var->add_child(expr);
+            var->add_child(AST_EXPRESSION, expr);
         }
     }
 
@@ -223,7 +223,7 @@ Ast* Parser::parse_function() {
 }
 
 Ast* Parser::parse_parameter() {
-    Ast* param = new Ast(AST_PARAMETER);
+    Ast* param = new Ast(AST_VARIABLE);
 
     expect(TK_AT);
     expect(TK_ID);
@@ -265,6 +265,8 @@ Ast* Parser::parse_statement() {
         stmt = parse_return_statement();
     } else if (lookahead(TK_SWITCH)) {
         stmt = parse_switch_statement();
+    } else if (lookahead(TK_VAR)) {
+        stmt = parse_variable_definition();
     } else {
         expr = parse_expression();
 
@@ -1394,7 +1396,36 @@ Ast* Parser::parse_lambda() {
 
     expect(TK_BITWISE_OR);
     Ast* lambda = new Ast(AST_LAMBDA);
-    lambda->add_child(parse_lambda_parameters());
+
+    if (!lookahead(TK_BITWISE_OR)) {
+        do {
+            expect(TK_ID);
+            Ast* parameter = new Ast(AST_VARIABLE, matched);
+
+            if (match(TK_COLON)) {
+                Ast* type = parse_type();
+
+                if (type == nullptr) {
+                    log_error("missing type on lambda parameter");
+                } else {
+                    parameter->add_child(AST_TYPE, type);
+                }
+            }
+
+            if (match(TK_ASSIGNMENT)) {
+                Ast* expr = parse_expression();
+
+                if (expr == nullptr) {
+                    log_error("missing expression on lambda parameter");
+                } else {
+                    parameter->add_child(AST_EXPRESSION, expr);
+                }
+            }
+
+            lambda->add_child(parameter);
+        } while (match(TK_COMMA));
+    }
+
     expect(TK_BITWISE_OR);
 
     if (match(TK_ARROW)) {
@@ -1403,52 +1434,15 @@ Ast* Parser::parse_lambda() {
         if (type == nullptr) {
             log_error("missing return type on lambda definition");
         } else {
-            lambda->add_child(AST_LAMBDA_RETURN_TYPE, type);
+            lambda->add_child(AST_TYPE, type);
         }
     }
 
     expect(TK_LEFT_CURLY_BRACKET);
-    lambda->add_child(AST_LAMBDA_STATEMENTS, parse_statements());
+    lambda->add_child(parse_statements());
     expect(TK_RIGHT_CURLY_BRACKET);
 
     return lambda;
-}
-
-Ast* Parser::parse_lambda_parameters() {
-    Ast* parameters = new Ast(AST_LAMBDA_PARAMETERS);
-
-    if (lookahead(TK_BITWISE_OR)) {
-        return parameters;
-    }
-
-    do {
-        expect(TK_ID);
-        Ast* parameter = new Ast(AST_LAMBDA_PARAMETER, matched);
-
-        if (match(TK_COLON)) {
-            Ast* type = parse_type();
-
-            if (type == nullptr) {
-                log_error("missing type on lambda parameter");
-            } else {
-                parameter->add_child(AST_LAMBDA_PARAMETER_TYPE, type);
-            }
-        }
-
-        if (match(TK_ASSIGNMENT)) {
-            Ast* expr = parse_expression();
-
-            if (expr == nullptr) {
-                log_error("missing expression on lambda parameter");
-            } else {
-                parameter->add_child(AST_LAMBDA_PARAMETER_EXPRESSION, expr);
-            }
-        }
-
-        parameters->add_child(parameter);
-    } while (match(TK_COMMA));
-
-    return parameters;
 }
 
 Ast* Parser::parse_argument_list() {

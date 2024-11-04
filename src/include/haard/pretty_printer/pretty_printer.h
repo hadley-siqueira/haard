@@ -23,19 +23,11 @@ namespace haard {
         void print_import_alias(Ast* alias);
 
         void print_user_type(Ast* node);
-        void print_field(Ast* node);
-        void print_field_type(Ast* node);
-        void print_field_expresion(Ast* node);
 
         void print_super_type(Ast* node);
-        void print_variables(Ast* node);
-        void print_member_variable(Ast* node);
-        void print_variable_definition(Ast* node);
 
         void print_function(Ast* function);
-        void print_parameter(Ast* parameter);
-        void print_parameter_type(Ast* type);
-        void print_parameter_expression(Ast* expr);
+        void print_variable(Ast* parameter);
 
         void print_lambda(Ast* node);
         void print_lambda_return_type(Ast* node);
