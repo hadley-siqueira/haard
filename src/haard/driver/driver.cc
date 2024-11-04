@@ -5,6 +5,7 @@
 #include "haard/driver/driver.h"
 #include "haard/parser/parser.h"
 #include "haard/pretty_printer/pretty_printer.h"
+#include "haard/semantic/semantic_analyzer.h"
 
 #include "haard/log/logs.h"
 
@@ -45,6 +46,8 @@ void Driver::run(int argc, char** argv) {
 
     parse_module_imports(parse_file(main_path));
     exec_commands();
+    semantic_analysis();
+    exit();
 }
 
 void Driver::exec_commands() {
@@ -78,9 +81,9 @@ void Driver::read_configuration(std::string path) {
 }
 
 void Driver::semantic_analysis() {
-    /*SemanticDefinePass pass1;
+    SemanticAnalyzer analyzer;
 
-    pass1.build_modules(&modules);*/
+    analyzer.process_module(module);
 }
 
 Ast* Driver::parse_file(std::string path) {

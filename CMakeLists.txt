@@ -18,10 +18,6 @@ set(AST_SRC
     src/haard/ast/ast.cc
 )
 
-set(DESCRIPTORS_SRC
-    src/haard/descriptors/module.cc
-)
-
 set(IR_SRC
     src/ir/ir.cc
     src/ir/ir_value.cc
@@ -42,6 +38,14 @@ set(MODULES_MANAGER_SRC
 
 set(SEMANTIC_SRC
     src/haard/semantic/semantic_analyzer.cc
+)
+
+set(SCOPE_SRC
+    src/haard/scope/scope.cc
+)
+
+set(SYMBOL_SRC
+    src/haard/symbol/symbol.cc
 )
 
 set(DRIVER_SRC
@@ -66,6 +70,8 @@ set(SOURCES
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${MODULES_MANAGER_SRC}
+    ${SYMBOL_SRC}
+    ${SCOPE_SRC}
     ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}

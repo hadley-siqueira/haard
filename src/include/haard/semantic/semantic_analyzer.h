@@ -2,9 +2,14 @@
 #define HAARD_SEMANTIC_ANALYZER_H
 
 #include "haard/ast/ast.h"
+#include "haard/scope/scope.h"
 
 namespace haard {
     class SemanticAnalyzer {
+    public:
+        SemanticAnalyzer();
+        ~SemanticAnalyzer();
+
     public:
         void process_module(Ast* mod);
 
@@ -15,6 +20,7 @@ namespace haard {
         void declare_function(Ast* f);
 
     private:
+        Scope* current_scope;
     };
 }
 
