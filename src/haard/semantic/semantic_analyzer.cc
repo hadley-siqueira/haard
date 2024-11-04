@@ -105,15 +105,15 @@ void SemanticAnalyzer::declare_function(Ast* f) {
     if (symbols.size() > 0) {
         for (auto sym : symbols) {
             Ast* other = sym->get_ast();
-            Ast* other_params = other->get_child(AST_PARAMETERS);
-            Ast* params = f->get_child(AST_PARAMETERS);
+            auto other_params = other->get_children(AST_PARAMETER);
+            auto params = f->get_children(AST_PARAMETER);
 
-            if (other_params->children_count() == params->children_count()) {
+            if (other_params.size() == params.size()) {
                 bool same = true;
 
-                for (int i = 0; i < other_params->children_count(); ++i) {
-                    Ast* t1 = other_params->get_child(i)->get_child(AST_PARAMETER_TYPE)->get_child();
-                    Ast* t2 = params->get_child(i)->get_child(AST_PARAMETER_TYPE)->get_child();
+                for (int i = 0; i < other_params.size(); ++i) {
+                    Ast* t1 = other_params[i]->get_child(AST_TYPE)->get_child();
+                    Ast* t2 = params[i]->get_child(AST_TYPE)->get_child();
 
                     if (!equal_types(t1, t2, current_scope)) {
                         same = false;
@@ -133,19 +133,19 @@ void SemanticAnalyzer::declare_function(Ast* f) {
         current_scope->define(SYM_FUNCTION, name, f);
 
         msg << "Defining function '" + name + "(";
-        Ast* params = f->get_child(AST_PARAMETERS);
+        auto params = f->get_children(AST_PARAMETER);
 
-        if (params) {
+        if (params.size() > 0) {
             int i;
 
-            for (i = 0; i < params->children_count() - 1; ++i) {
+            for (i = 0; i < params.size() - 1; ++i) {
                 PrettyPrinter pp;
-                pp.print(params->get_child(i)->get_child(AST_PARAMETER_TYPE)->get_child());
+                pp.print(params[i]->get_child(AST_TYPE)->get_child());
                 msg << pp.get_output() << ", ";
             }
 
             PrettyPrinter pp;
-            pp.print(params->get_child(i)->get_child(AST_PARAMETER_TYPE)->get_child());
+            pp.print(params[i]->get_child(AST_TYPE)->get_child());
             msg << pp.get_output();
         }
 

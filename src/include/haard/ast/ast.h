@@ -12,20 +12,18 @@ namespace haard {
 
         AST_MODULE,
 
+        AST_CLASS,
+        AST_STRUCT,
+        AST_ENUM,
+        AST_UNION,
+        AST_SUPER,
+
         AST_FUNCTION,
-        AST_RETURN_TYPE,
-        AST_PARAMETERS,
         AST_FUNCTION_STATEMENTS,
         AST_PARAMETER,
         AST_PARAMETER_TYPE,
         AST_PARAMETER_EXPRESSION,
 
-        AST_CLASS,
-        AST_STRUCT,
-
-        AST_ENUM,
-        AST_ENUM_SUPER,
-        AST_FIELDS,
         AST_FIELD,
         AST_FIELD_TYPE,
         AST_FIELD_EXPRESSION,
@@ -38,8 +36,6 @@ namespace haard {
         AST_LAMBDA_PARAMETER_EXPRESSION,
         AST_LAMBDA_STATEMENTS,
 
-        AST_UNION,
-        AST_SUPER,
         AST_VARIABLE,
         AST_VARIABLE_DEFINITION,
 
@@ -52,9 +48,10 @@ namespace haard {
         AST_SCOPE,
         AST_ID,
 
-        AST_UNKNOWN_STATEMENT,
+        // statements
+        AST_STATEMENT,
         AST_COMPOUND_STATEMENT,
-        AST_EXPRESSION,
+        AST_EXPRESSION_STATEMENT,
         AST_EXPRESSION_WITH_SEMICOLON,
         AST_WHILE,
 
@@ -75,7 +72,8 @@ namespace haard {
         AST_SWITCH_CASE,
         AST_SWITCH_DEFAULT,
 
-        AST_EXPRESSION_UNKNOWN,
+        // Expressions
+        AST_EXPRESSION,
 
         // Binary operators
         AST_ASSIGNMENT,
@@ -140,6 +138,7 @@ namespace haard {
         AST_NAMED_ARGUMENT,
         AST_HASH_PAIR,
 
+        // Unary operators
         AST_ADDRESS_OF,
         AST_DEREFERENCE,
         AST_UNARY_PLUS,
@@ -177,17 +176,9 @@ namespace haard {
         AST_SEQUENCE,
 
         // Types
+        AST_TYPE,
         AST_TYPE_BOOL,
         AST_TYPE_CHAR,
-        AST_TYPE_UCHAR,
-        AST_TYPE_SHORT,
-        AST_TYPE_USHORT,
-        AST_TYPE_INT,
-        AST_TYPE_UINT,
-        AST_TYPE_LONG,
-        AST_TYPE_ULONG,
-        AST_TYPE_FLOAT,
-        AST_TYPE_DOUBLE,
         AST_TYPE_I8,
         AST_TYPE_U8,
         AST_TYPE_I16,

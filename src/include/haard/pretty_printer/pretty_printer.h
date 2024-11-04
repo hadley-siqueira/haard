@@ -33,7 +33,6 @@ namespace haard {
         void print_variable_definition(Ast* node);
 
         void print_function(Ast* function);
-        void print_parameters(Ast* parameters);
         void print_parameter(Ast* parameter);
         void print_parameter_type(Ast* type);
         void print_parameter_expression(Ast* expr);
@@ -61,7 +60,7 @@ namespace haard {
         void print_switch_cases(Ast* node);
         void print_switch_case(Ast* node);
         void print_switch_default(Ast* node);
-        void print_expression(Ast* stmt, bool has_semicolon=false);
+        void print_expression_statement(Ast* stmt, bool has_semicolon=false);
 
         /* types */
         void print_list_type(Ast* node);

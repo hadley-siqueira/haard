@@ -30,7 +30,6 @@ namespace haard {
         Ast* parse_variable_definition();
 
         Ast* parse_function();
-        Ast* parse_parameters();
         Ast* parse_parameter();
 
         Ast* parse_statement();

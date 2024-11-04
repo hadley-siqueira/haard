@@ -67,10 +67,6 @@ void PrettyPrinter::print(Ast* node) {
         print_function(node);
         break;
 
-    case AST_PARAMETERS:
-        print_parameters(node);
-        break;
-
     case AST_PARAMETER:
         print_parameter(node);
         break;
@@ -181,12 +177,12 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Expressions */
-    case AST_EXPRESSION:
-        print_expression(node);
+    case AST_EXPRESSION_STATEMENT:
+        print_expression_statement(node);
         break;
 
     case AST_EXPRESSION_WITH_SEMICOLON:
-        print_expression(node, true);
+        print_expression_statement(node, true);
         break;
 
     case AST_ASSIGNMENT:
@@ -549,42 +545,6 @@ void PrettyPrinter::print(Ast* node) {
 
     case AST_TYPE_CHAR:
         out << "char";
-        break;
-
-    case AST_TYPE_UCHAR:
-        out << "uchar";
-        break;
-
-    case AST_TYPE_SHORT:
-        out << "short";
-        break;
-
-    case AST_TYPE_USHORT:
-        out << "ushort";
-        break;
-
-    case AST_TYPE_INT:
-        out << "int";
-        break;
-
-    case AST_TYPE_UINT:
-        out << "uint";
-        break;
-
-    case AST_TYPE_LONG:
-        out << "long";
-        break;
-
-    case AST_TYPE_ULONG:
-        out << "ulong";
-        break;
-
-    case AST_TYPE_FLOAT:
-        out << "float";
-        break;
-
-    case AST_TYPE_DOUBLE:
-        out << "double";
         break;
 
     case AST_TYPE_VOID:
@@ -992,28 +952,18 @@ void PrettyPrinter::print_function(Ast* function) {
     print_generics(function->get_child(AST_GENERICS));
 
     out << " : ";
-    print(function->get_child(AST_RETURN_TYPE)->get_child(0));
+    print(function->get_child(AST_TYPE)->get_child(0));
     out << '\n';
     indent();
 
-    print(function->get_child(AST_PARAMETERS));
-    print(function->get_child(AST_COMPOUND_STATEMENT));
-
-    dedent();
-}
-
-void PrettyPrinter::print_parameters(Ast* parameters) {
-    Ast* param;
-
-    for (int i = 0; i < parameters->children_count(); ++i) {
+    for (auto p : function->get_children(AST_PARAMETER)) {
         print_indentation();
-        print(parameters->get_child(i));
+        print(p);
         out << "\n";
     }
 
-    if (parameters->children_count() > 0) {
-        out << "\n";
-    }
+    print(function->get_child(AST_COMPOUND_STATEMENT));
+    dedent();
 }
 
 void PrettyPrinter::print_parameter(Ast* parameter) {
@@ -1240,7 +1190,7 @@ void PrettyPrinter::print_switch_default(Ast* node) {
     out << "\n";
 }
 
-void PrettyPrinter::print_expression(Ast* stmt, bool has_semicolon) {
+void PrettyPrinter::print_expression_statement(Ast* stmt, bool has_semicolon) {
     print_indentation();
     print(stmt->get_child(0));
 

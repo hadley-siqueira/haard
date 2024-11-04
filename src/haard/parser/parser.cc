@@ -207,31 +207,19 @@ Ast* Parser::parse_function() {
     Ast* return_type = parse_type();
 
     if (return_type) {
-        function->add_child(AST_RETURN_TYPE, return_type);
+        function->add_child(AST_TYPE, return_type);
     } else {
         log_error("Expected return type in function " + function->get_value());
     }
 
-    function->add_child(parse_parameters());
-    function->add_child(parse_statements());
+    while (has_parameters()) {
+        function->add_child(parse_parameter());
+    }
 
+    function->add_child(parse_statements());
     dedent();
 
     return function;
-}
-
-Ast* Parser::parse_parameters() {
-    if (!has_parameters()) {
-        return nullptr;
-    }
-
-    Ast* parameters = new Ast(AST_PARAMETERS);
-
-    while (has_parameters()) {
-        parameters->add_child(parse_parameter());
-    }
-
-    return parameters;
 }
 
 Ast* Parser::parse_parameter() {
@@ -245,7 +233,7 @@ Ast* Parser::parse_parameter() {
     Ast* type = parse_type();
 
     if (type != nullptr) {
-        param->add_child(AST_PARAMETER_TYPE, type);
+        param->add_child(AST_TYPE, type);
     } else {
         log_error("expected type in parameter");
     }
@@ -257,7 +245,7 @@ Ast* Parser::parse_parameter() {
             log_error("missing expression on default parameter value");
         }
 
-        param->add_child(expr);
+        param->add_child(AST_EXPRESSION, expr);
     }
 
     return param;
@@ -286,7 +274,7 @@ Ast* Parser::parse_statement() {
             unexpected_token();
         }
 
-        stmt = new Ast(AST_EXPRESSION);
+        stmt = new Ast(AST_EXPRESSION_STATEMENT);
         stmt->add_child(expr);
 
         if (match(TK_SEMICOLON)) {
@@ -607,26 +595,8 @@ Ast* Parser::parse_primary_type() {
     Ast* type = nullptr;
     Ast* subtype = nullptr;
 
-    if (match(TK_INT)) {
-       type = new Ast(AST_TYPE_INT, matched);
-    } else if (match(TK_UINT)) {
-       type = new Ast(AST_TYPE_UINT, matched);
-    } else if (match(TK_FLOAT)) {
-       type = new Ast(AST_TYPE_FLOAT, matched);
-    } else if (match(TK_DOUBLE)) {
-       type = new Ast(AST_TYPE_DOUBLE, matched);
-    } else if (match(TK_SHORT)) {
-       type = new Ast(AST_TYPE_SHORT, matched);
-    } else if (match(TK_USHORT)) {
-       type = new Ast(AST_TYPE_USHORT, matched);
-    } else if (match(TK_LONG)) {
-       type = new Ast(AST_TYPE_LONG, matched);
-    } else if (match(TK_ULONG)) {
-       type = new Ast(AST_TYPE_ULONG, matched);
-    } else if (match(TK_CHAR)) {
+    if (match(TK_CHAR)) {
        type = new Ast(AST_TYPE_CHAR, matched);
-    } else if (match(TK_UCHAR)) {
-       type = new Ast(AST_TYPE_UCHAR, matched);
     } else if (match(TK_SYMBOL)) {
        type = new Ast(AST_TYPE_SYMBOL, matched);
     } else if (match(TK_VOID)) {
