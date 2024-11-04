@@ -245,7 +245,7 @@ Ast* Parser::parse_parameter() {
     Ast* type = parse_type();
 
     if (type != nullptr) {
-        param->add_child(type);
+        param->add_child(AST_PARAMETER_TYPE, type);
     } else {
         log_error("expected type in parameter");
     }
@@ -701,7 +701,11 @@ Ast* Parser::parse_primary_type() {
             subtype = type;
             type = new Ast(AST_TYPE_ARRAY, matched);
             type->add_child(subtype);
-            //type->add_child(parse_expression());
+
+            if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
+                type->add_child(parse_expression());
+            }
+
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else {
             break;
@@ -1575,7 +1579,7 @@ Ast* Parser::parse_scope() {
         id = parse_identifier();
 
         if (id) {
-            scoped->add_child(parse_identifier());
+            scoped->add_child(id);
         } else {
             log_error("missing identifier in global scope");
         }

@@ -17,6 +17,8 @@ namespace haard {
         AST_PARAMETERS,
         AST_FUNCTION_STATEMENTS,
         AST_PARAMETER,
+        AST_PARAMETER_TYPE,
+        AST_PARAMETER_EXPRESSION,
 
         AST_CLASS,
         AST_STRUCT,
@@ -241,6 +243,8 @@ namespace haard {
 
         Ast* get_parent() const;
         void set_parent(Ast* parent);
+
+        std::string to_json();
 
     private:
         AstKind kind;

@@ -8,7 +8,68 @@ class Pixel<T>:
     g : u8
     b : u8
 
-class Pixel<A, B>
+# need to fix missing :
+# need to print generics
+class Pixel<A, B>:
     r : u8
     g : u8
     b : u8
+
+class ListNode<T>:
+    elem : T
+    prev : ListNode<T>*
+    next : ListNode<T>*
+
+def sum : int
+    @a  : int
+    @b  : int
+    @c  : int**
+    @p  : Pixel&
+    @pp : Pixel[]
+    @p2 : Pixel[N_PIX]
+
+    return 0
+
+def sum : int
+    @a : int
+    @b : int
+
+    return 0
+
+def sum : int
+    @a : int
+    @b : char
+
+    return 0
+
+def sum : int
+    @p : Pixel
+    @a : Pixel
+
+    return 0
+
+def sum : int
+    @p : Pixel
+    @a : Pixel
+
+    return 0
+
+def sum : int
+    @p : Pixel
+
+    return 0
+
+def sum2 : int
+    @node : ListNode<int>*
+
+    return 0
+
+def sum2 : int
+    @node : ListNode<float>*
+
+    return 0
+
+def sum2 : int
+    @node : ListNode<int>*
+
+    return 0

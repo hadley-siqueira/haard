@@ -35,6 +35,8 @@ namespace haard {
         void print_function(Ast* function);
         void print_parameters(Ast* parameters);
         void print_parameter(Ast* parameter);
+        void print_parameter_type(Ast* type);
+        void print_parameter_expression(Ast* expr);
 
         void print_lambda(Ast* node);
         void print_lambda_return_type(Ast* node);

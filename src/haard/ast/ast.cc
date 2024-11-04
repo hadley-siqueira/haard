@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "haard/ast/ast.h"
 
 using namespace haard;
@@ -121,4 +123,29 @@ Ast* Ast::get_parent() const {
 
 void Ast::set_parent(Ast* parent) {
     this->parent = parent;
+}
+
+std::string Ast::to_json() {
+    int i;
+    std::stringstream ss;
+
+    ss << "{";
+    ss << "\"kind\": " << kind;
+
+    if (value != "") {
+        ss << ", \"value\": \"" << value << "\"";
+    }
+
+    if (children_count() > 0) {
+        ss << ", \"children\": [";
+        for (i = 0; i < children_count() - 1; ++i) {
+            ss << children[i]->to_json() << ", ";
+        }
+
+        ss << children[i]->to_json();
+        ss << "]";
+    }
+
+    ss << "}";
+    return ss.str();
 }

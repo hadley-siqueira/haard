@@ -75,6 +75,14 @@ void PrettyPrinter::print(Ast* node) {
         print_parameter(node);
         break;
 
+    case AST_PARAMETER_TYPE:
+        print_parameter_type(node);
+        break;
+
+    case AST_PARAMETER_EXPRESSION:
+        print_parameter_expression(node);
+        break;
+
     case AST_LAMBDA:
         print_lambda(node);
         break;
@@ -689,6 +697,7 @@ void PrettyPrinter::print_user_type(Ast* node) {
     out << node->get_value();
 
     print(node->get_child(AST_SUPER));
+    print(node->get_child(AST_GENERICS));
 
     out << ":\n";
     indent();
@@ -975,114 +984,6 @@ void PrettyPrinter::print_identifier(Ast* id) {
     out << id->get_value();
 }
 
-/*
-void PrettyPrinter::print_class(Class* klass) {
-    out << "class ";
-    out << klass->get_name().get_value();
-
-    if (klass->get_generics()) {
-       // print_generics(klass->get_generics());
-    }
-
-    if (klass->get_super_type()) {
-        out << "(";
-        //print_type(get_super_type());
-        out << ")";
-    }
-
-    out << ":\n";
-    indent();
-
-    for (int i = 0; i < klass->variables_count(); ++i) {
-        Variable* var = klass->get_variable(i);
-
-        print_indentation();
-        out << var->get_name().get_value() << " : ";
-        //print_type(var->get_type());
-        out << '\n';
-    }
-
-    for (int i = 0; i < klass->functions_count(); ++i) {
-        print_indentation();
-        //print_function(klass->get_function(i));
-        out << '\n';
-    }
-
-    dedent();
-}*/
-
-/*
-void PrettyPrinter::print_struct(Struct* st) {
-    out << "struct ";
-    out << st->get_name().get_value();
-
-    if (st->get_generics()) {
-       // print_generics(st->get_generics());
-    }
-
-    if (st->get_super_type()) {
-        out << "(";
-        //print_type(st->get_super_type());
-        out << ")";
-    }
-
-    out << ":\n";
-    indent();
-
-    for (int i = 0; i < st->variables_count(); ++i) {
-        Variable* var = st->get_variable(i);
-
-        print_indentation();
-        out << var->get_name().get_value() << " : ";
-        //print_type(var->get_type());
-        out << '\n';
-    }
-
-    for (int i = 0; i < st->functions_count(); ++i) {
-        print_indentation();
-        //print_function(st->get_function(i));
-        out << '\n';
-    }
-
-    dedent();
-}*/
-
-/*
-void PrettyPrinter::print_union(Union* u) {
-    out << "union ";
-    out << u->get_name().get_value();
-
-    if (u->get_generics()) {
-       // print_generics(u->get_generics());
-    }
-
-    if (u->get_super_type()) {
-        out << "(";
-        //print_type(u->get_super_type());
-        out << ")";
-    }
-
-    out << ":\n";
-    indent();
-
-    for (int i = 0; i < u->variables_count(); ++i) {
-        Variable* var = u->get_variable(i);
-
-        print_indentation();
-        out << var->get_name().get_value() << " : ";
-        //print_type(var->get_type());
-        out << '\n';
-    }
-
-    for (int i = 0; i < u->functions_count(); ++i) {
-        print_indentation();
-        //print_function(u->get_function(i));
-        out << '\n';
-    }
-
-    dedent();
-}*/
-
 void PrettyPrinter::print_function(Ast* function) {
     print_indentation();
     out << "def ";
@@ -1116,13 +1017,19 @@ void PrettyPrinter::print_parameters(Ast* parameters) {
 }
 
 void PrettyPrinter::print_parameter(Ast* parameter) {
-    out << "@" << parameter->get_value() << " : ";
-    print(parameter->get_child(0));
+    out << "@" << parameter->get_value();
+    print(parameter->get_child(AST_PARAMETER_TYPE));
+    print(parameter->get_child(AST_PARAMETER_EXPRESSION));
+}
 
-    if (parameter->get_child(1)) {
-        out << " = ";
-        print(parameter->get_child(1));
-    }
+void PrettyPrinter::print_parameter_type(Ast* type) {
+    out << " : ";
+    print(type->get_child());
+}
+
+void PrettyPrinter::print_parameter_expression(Ast* expr) {
+    out << " = ";
+    print(expr->get_child());
 }
 
 void PrettyPrinter::print_lambda(Ast* node) {
@@ -1403,35 +1310,6 @@ void PrettyPrinter::print_pre_decrement(Ast* node) {
     print(node->get_child());
 }
 
-/*
-void PrettyPrinter::print_sizeof_expression(UnaryOperator* un) {
-    out << "sizeof(";
-    print_expression(un->get_expression());
-    out << ")";
-}
-
-void PrettyPrinter::print_new_expression(New* expr) {
-    out << "new ";
-    //print_type(expr->get_type());
-    //print_expression_list(expr->get_arguments(), "(", ")");
-}
-
-void PrettyPrinter::print_delete_expression(Delete* expr) {
-    out << "delete ";
-    print_expression(expr->get_expression());
-}
-
-void PrettyPrinter::print_delete_array_expression(DeleteArray* expr) {
-    out << "delete[] ";
-    print_expression(expr->get_expression());
-}
-
-void PrettyPrinter::print_parenthesis_expression(Parenthesis* expr) {
-    out << "(";
-    print_expression(expr->get_expression());
-    out << ")";
-}*/
-
 void PrettyPrinter::print_call(Ast* expr) {
     print(expr->get_child(0));
     print(expr->get_child(1));
@@ -1461,41 +1339,6 @@ void PrettyPrinter::print_sizeof(Ast* node) {
     print(node->get_child());
     out << ")";
 }
-
-/*
-void PrettyPrinter::print_expression(Expression* expr) {};
-
-void PrettyPrinter::print_binary_operator(BinaryOperator* bin, bool no_space) {
-    out << "(";
-    print_expression(bin->get_left());
-
-    const char* oper = bin->get_token().get_value();
-
-    if (no_space) {
-        out << oper;
-    } else {
-        out << ' ' << oper << ' ';
-    }
-
-    print_expression(bin->get_right());
-    out << ")";
-}
-
-void PrettyPrinter::print_unary_operator(UnaryOperator* un, bool last) {
-    out << "(";
-
-    const char* oper = un->get_token().get_value();
-
-    if (last) {
-        print_expression(un->get_expression());
-        out << oper;
-    } else {
-        out << oper;
-        print_expression(un->get_expression());
-    }
-
-    out << ")";
-}*/
 
 void PrettyPrinter::print_tuple_type(Ast* tuple) {
     print_type_list(tuple, "(", ")");
@@ -1535,36 +1378,10 @@ void PrettyPrinter::print_type_list(Ast* tlist, const char* begin, const char* e
     print(tlist->get_child(i));
     out << end;
 }
-/*
-void PrettyPrinter::print_identifier(Identifier* id) {
-    if (id->has_global_alias()) {
-        out << "::";
-    } else if (id->has_alias()) {
-        out << id->get_alias().get_value();
-        out << "::";
-    }
 
-    out << id->get_name().get_value();
-    //print_generics(id->get_generics());
-}
-*/
 void PrettyPrinter::print_generics(Ast* g) {
     print_type_list(g, "<", ">");
 }
-/*
-void PrettyPrinter::print_char_literal(CharLiteral* ch) {
-    out << '\'' << ch->get_token().get_value() << '\'';
-}
-
-void PrettyPrinter::print_string_literal(StringLiteral* str) {
-    char c = '"';
-
-    if (str->get_token().get_kind() == TK_LITERAL_SINGLE_QUOTE_STRING) {
-        c = '\'';
-    }
-
-    out << c << str->get_token().get_value() << c;
-}*/
 
 void PrettyPrinter::print_tuple(Ast* expr) {
     print_expression_list(expr, "(", ")");

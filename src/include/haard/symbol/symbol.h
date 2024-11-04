@@ -10,7 +10,8 @@ namespace haard {
         SYM_CLASS,
         SYM_STRUCT,
         SYM_UNION,
-        SYM_ENUM
+        SYM_ENUM,
+        SYM_FUNCTION
     } SymbolKind;
 
     class Symbol {
