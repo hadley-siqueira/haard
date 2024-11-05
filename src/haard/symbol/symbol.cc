@@ -13,6 +13,10 @@ Symbol::Symbol(SymbolKind kind, const std::string& name, Ast* node, Ast* type) {
     set_type(type);
 }
 
+Symbol::~Symbol() {
+    delete type;
+}
+
 Ast* Symbol::get_ast() const {
     return ast;
 }

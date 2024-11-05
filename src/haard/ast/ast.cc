@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include "haard/ast/ast.h"
+#include "haard/scope/scope.h"
 
 using namespace haard;
 

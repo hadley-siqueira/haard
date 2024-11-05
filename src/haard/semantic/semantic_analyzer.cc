@@ -263,7 +263,7 @@ bool SemanticAnalyzer::equal_types(Ast* t1, Ast* t2) {
     return p1.get_output() == p2.get_output();
 }
 
-bool SemanticAnalyzer::compatible_types(Ast *t1, Ast* t2) {
+bool SemanticAnalyzer::compatible_types(Ast* t1, Ast* t2) {
     return equal_types(t1, t2);
 }
 

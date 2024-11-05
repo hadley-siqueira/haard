@@ -19,6 +19,7 @@ namespace haard {
     public:
         Symbol();
         Symbol(SymbolKind kind, const std::string& name, Ast* node, Ast* type=nullptr);
+        ~Symbol();
 
     public:
         Ast* get_ast() const;
