@@ -19,6 +19,12 @@ set(AST_SRC
     src/haard/ast/modules.cc
     src/haard/ast/module.cc
     src/haard/ast/import.cc
+    src/haard/ast/types/type.cc
+    src/haard/ast/types/primitive_type.cc
+    src/haard/ast/types/pointer_type.cc
+    src/haard/ast/types/reference_type.cc
+    src/haard/ast/types/list_type.cc
+    src/haard/ast/types/array_type.cc
 )
 
 set(IR_SRC

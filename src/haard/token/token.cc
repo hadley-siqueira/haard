@@ -61,7 +61,7 @@ std::string Token::to_json() {
 
     ss << "{\"kind\": \"" << token_kind_to_str_map.at(get_kind()) << "\", \"line\": "
        << line << ", \"column\": " << column << ", \"whitespace\": " << whitespace
-       << "\"value\": \"" << value << "\"";
+       << ", \"value\": \"" << value << "\"}";
 
     return ss.str();
 }

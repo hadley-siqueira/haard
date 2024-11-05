@@ -10,6 +10,13 @@
 #include "haard/ast/module.h"
 #include "haard/ast/import.h"
 
+#include "haard/ast/types/type.h"
+#include "haard/ast/types/primitive_type.h"
+#include "haard/ast/types/pointer_type.h"
+#include "haard/ast/types/reference_type.h"
+#include "haard/ast/types/list_type.h"
+#include "haard/ast/types/array_type.h"
+
 namespace haard {
     class Parser {
     public:
@@ -49,10 +56,10 @@ namespace haard {
 
         Ast* parse_statements();
 
-        Ast* parse_type();
-        Ast* parse_function_type();
-        Ast* parse_tuple_or_function_type();
-        Ast* parse_primary_type();
+        Type* parse_type();
+        Type* parse_function_type();
+        Type* parse_tuple_or_function_type();
+        Type* parse_primary_type();
 
         Ast* parse_expression();
         Ast* parse_assignment_expression();

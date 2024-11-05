@@ -8,11 +8,13 @@
 #include "haard/ast/module.h"
 
 namespace haard {
-    class Modules {
+    class Modules : public Ast {
     public:
         void add_module(std::string& path, Module* module);
         Module* get_module_by_path(std::string& path);
         std::map<std::string, Module*>& get_modules();
+
+        virtual std::string to_json();
 
     private:
         std::map<std::string, Module*> modules;

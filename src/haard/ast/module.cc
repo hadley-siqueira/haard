@@ -30,17 +30,18 @@ void Module::set_path(const std::string &path) {
 std::string Module::to_json() {
     std::stringstream ss;
 
-    ss << "{\"kind\": \"module\"";
+    ss << "{\"kind\": \"AST_MODULE\"";
 
     if (imports.size() > 0) {
-        int i;
         ss << ", \"imports\": [";
 
-        for (i = 0; i < imports.size() - 1; ++i) {
-            ss << imports[i]->to_json() << ", ";
+        bool first = true;
+        for (auto i : imports) {
+            if (!first) ss << ", ";
+            first = false;
+            ss << i->to_json();
         }
 
-        ss << imports[i]->to_json();
         ss << "]";
     }
 

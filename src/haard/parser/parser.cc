@@ -552,11 +552,11 @@ Ast* Parser::parse_statements() {
     return statements;
 }
 
-Ast* Parser::parse_type() {
+Type* Parser::parse_type() {
     return parse_tuple_or_function_type();
 }
 
-Ast* Parser::parse_tuple_or_function_type() {
+Type* Parser::parse_tuple_or_function_type() {
     Ast* type;
     Ast* types;
 
@@ -589,48 +589,47 @@ Ast* Parser::parse_tuple_or_function_type() {
     return type;
 }
 
-Ast* Parser::parse_primary_type() {
-    Ast* type = nullptr;
-    Ast* subtype = nullptr;
+Type* Parser::parse_primary_type() {
+    Type* type = nullptr;
+    Type* subtype = nullptr;
 
     if (match(TK_CHAR)) {
-       type = new Ast(AST_TYPE_CHAR, matched);
+       type = new PrimitiveType(AST_TYPE_CHAR, matched);
     } else if (match(TK_SYMBOL)) {
-       type = new Ast(AST_TYPE_SYMBOL, matched);
+       type = new PrimitiveType(AST_TYPE_SYMBOL, matched);
     } else if (match(TK_VOID)) {
-       type = new Ast(AST_TYPE_VOID, matched);
+       type = new PrimitiveType(AST_TYPE_VOID, matched);
     } else if (match(TK_BOOL)) {
-       type = new Ast(AST_TYPE_BOOL, matched);
+       type = new PrimitiveType(AST_TYPE_BOOL, matched);
     } else if (match(TK_STR)) {
-       type = new Ast(AST_TYPE_STR, matched);
+       type = new PrimitiveType(AST_TYPE_STR, matched);
     } else if (match(TK_I8)) {
-       type = new Ast(AST_TYPE_I8, matched);
+       type = new PrimitiveType(AST_TYPE_I8, matched);
     } else if (match(TK_I16)) {
-       type = new Ast(AST_TYPE_I16, matched);
+       type = new PrimitiveType(AST_TYPE_I16, matched);
     } else if (match(TK_I32)) {
-       type = new Ast(AST_TYPE_I32, matched);
+       type = new PrimitiveType(AST_TYPE_I32, matched);
     } else if (match(TK_I64)) {
-       type = new Ast(AST_TYPE_I64, matched);
+       type = new PrimitiveType(AST_TYPE_I64, matched);
     } else if (match(TK_U8)) {
-       type = new Ast(AST_TYPE_U8, matched);
+       type = new PrimitiveType(AST_TYPE_U8, matched);
     } else if (match(TK_U16)) {
-       type = new Ast(AST_TYPE_U16, matched);
+       type = new PrimitiveType(AST_TYPE_U16, matched);
     } else if (match(TK_U32)) {
-       type = new Ast(AST_TYPE_U32, matched);
+       type = new PrimitiveType(AST_TYPE_U32, matched);
     } else if (match(TK_U64)) {
-       type = new Ast(AST_TYPE_U64, matched);
+       type = new PrimitiveType(AST_TYPE_U64, matched);
     } else if (match(TK_F32)) {
-       type = new Ast(AST_TYPE_F32, matched);
+       type = new PrimitiveType(AST_TYPE_F32, matched);
     } else if (match(TK_F64)) {
-       type = new Ast(AST_TYPE_F64, matched);
+       type = new PrimitiveType(AST_TYPE_F64, matched);
     } else if (match(TK_LEFT_SQUARE_BRACKET)) {
         subtype = parse_type();
 
         if (subtype == nullptr) {
-            assert(false && "no type");
+            log_error("missing subtype on list type");
         } else {
-            type = new Ast(AST_TYPE_LIST);
-            type->add_child(subtype);
+            type = new ListType(subtype);
         }
 
         expect(TK_RIGHT_SQUARE_BRACKET);
@@ -642,38 +641,23 @@ Ast* Parser::parse_primary_type() {
 
     while (type != nullptr) {
         if (match_same_line(TK_TIMES)) {
-            subtype = type;
-            type = new Ast(AST_TYPE_POINTER, matched);
-            type->add_child(subtype);
+            type = new PointerType(type, matched);
         } else if (match_same_line(TK_POWER)) {
-            subtype = type;
-            type = new Ast(AST_TYPE_POINTER, matched);
-            type->add_child(subtype);
-
-            subtype = type;
-            type = new Ast(AST_TYPE_POINTER, matched);
-            type->add_child(subtype);
+            type = new PointerType(type, matched);
+            type = new PointerType(type, matched);
         } else if (match_same_line(TK_BITWISE_AND)) {
-            subtype = type;
-            type = new Ast(AST_TYPE_REFERENCE, matched);
-            type->add_child(subtype);
+            type = new ReferenceType(type, matched);
         } else if (match_same_line(TK_LOGICAL_AND)) {
-            subtype = type;
-            type = new Ast(AST_TYPE_REFERENCE, matched);
-            type->add_child(subtype);
-
-            subtype = type;
-            type = new Ast(AST_TYPE_REFERENCE, matched);
-            type->add_child(subtype);
+            type = new ReferenceType(type, matched);
+            type = new ReferenceType(type, matched);
         } else if (match_same_line(TK_LEFT_SQUARE_BRACKET)) {
-            subtype = type;
-            type = new Ast(AST_TYPE_ARRAY, matched);
-            type->add_child(subtype);
+            auto array = new ArrayType(type, matched);
 
             if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
-                type->add_child(parse_expression());
+                array->set_expression(parse_expression());
             }
 
+            type = array;
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else {
             break;

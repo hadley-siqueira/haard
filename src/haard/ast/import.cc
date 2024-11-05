@@ -25,10 +25,9 @@ void Import::set_alias(const Token &alias) {
 }
 
 std::string Import::to_json() {
-    int i;
     std::stringstream ss;
 
-    ss << "{\"kind\": \"import\"";
+    ss << "{\"kind\": \"AST_IMPORT\"";
 
     if (alias.get_value() != "") {
         ss << ", \"alias\": " << alias.to_json();
@@ -37,11 +36,13 @@ std::string Import::to_json() {
     if (path.size() > 0) {
         ss << ", \"path\": [";
 
-        for (i = 0; i < path.size() - 1; ++i) {
-            ss << path[i].to_json() << ", ";
+        bool first = true;
+        for (auto p : path) {
+            if (!first) ss << ", ";
+            ss << p.to_json();
+            first = false;
         }
 
-        ss << path[i].to_json();
         ss << "]";
     }
 
