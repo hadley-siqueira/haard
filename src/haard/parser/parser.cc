@@ -276,7 +276,7 @@ Ast* Parser::parse_statement() {
             unexpected_token();
         }
 
-        stmt = new Ast(AST_EXPRESSION_STATEMENT);
+        stmt = new Ast(AST_EXPRESSION);
         stmt->add_child(expr);
 
         if (match(TK_SEMICOLON)) {

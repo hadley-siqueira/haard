@@ -35,7 +35,6 @@ namespace haard {
         // statements
         AST_STATEMENT,
         AST_COMPOUND_STATEMENT,
-        AST_EXPRESSION_STATEMENT,
         AST_EXPRESSION_WITH_SEMICOLON,
         AST_WHILE,
 
@@ -217,6 +216,8 @@ namespace haard {
 
         Ast* get_parent() const;
         void set_parent(Ast* parent);
+
+        Ast* clone();
 
         std::string to_json();
 

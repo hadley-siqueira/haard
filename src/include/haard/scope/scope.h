@@ -10,7 +10,11 @@
 namespace haard {
     class Scope {
     public:
-        void define(SymbolKind kind, const std::string &name, Ast* node);
+        Scope();
+        ~Scope();
+
+    public:
+        void define(SymbolKind kind, const std::string &name, Ast* node, Ast* type=nullptr);
 
         std::vector<Symbol*> resolve(std::string& name);
         std::vector<Symbol*> resolve_local(std::string& name);

@@ -18,6 +18,8 @@ SemanticAnalyzer::~SemanticAnalyzer() {
 void SemanticAnalyzer::process_module(Ast* mod) {
     declare_module_user_types(mod);
     declare_module_functions(mod);
+
+    analyze_module_functions(mod);
 }
 
 void SemanticAnalyzer::declare_module_user_types(Ast* mod) {
@@ -95,10 +97,10 @@ void SemanticAnalyzer::declare_module_functions(Ast* mod) {
     }
 }
 
-void SemanticAnalyzer::declare_function(Ast* f) {
+void SemanticAnalyzer::declare_function(Ast* function) {
     bool not_declared = true;
     std::stringstream msg;
-    std::string name = f->get_value();
+    std::string name = function->get_value();
 
     auto symbols = current_scope->resolve_local(name);
 
@@ -106,7 +108,7 @@ void SemanticAnalyzer::declare_function(Ast* f) {
         for (auto sym : symbols) {
             Ast* other = sym->get_ast();
             auto other_params = other->get_children(AST_VARIABLE);
-            auto params = f->get_children(AST_VARIABLE);
+            auto params = function->get_children(AST_VARIABLE);
 
             if (other_params.size() == params.size()) {
                 bool same = true;
@@ -130,10 +132,10 @@ void SemanticAnalyzer::declare_function(Ast* f) {
     }
 
     if (not_declared) {
-        current_scope->define(SYM_FUNCTION, name, f);
+        current_scope->define(SYM_FUNCTION, name, function);
 
         msg << "Defining function '" + name + "(";
-        auto params = f->get_children(AST_VARIABLE);
+        auto params = function->get_children(AST_VARIABLE);
 
         if (params.size() > 0) {
             int i;
@@ -154,6 +156,103 @@ void SemanticAnalyzer::declare_function(Ast* f) {
     }
 }
 
+void SemanticAnalyzer::analyze_module_functions(Ast* mod) {
+    for (auto f : mod->get_children(AST_FUNCTION)) {
+        analyze_function(f);
+    }
+}
+
+void SemanticAnalyzer::analyze_function(Ast* function) {
+    analyze_compound_statement(function->get_child(AST_COMPOUND_STATEMENT));
+}
+
+void SemanticAnalyzer::analyze_statement(Ast* stmt) {
+    auto kind = stmt->get_kind();
+
+    switch (kind) {
+    case AST_COMPOUND_STATEMENT:
+        analyze_compound_statement(stmt);
+        break;
+
+    case AST_WHILE:
+        analyze_while_statement(stmt);
+        break;
+
+    case AST_EXPRESSION:
+        analyze_expression(stmt->get_child());
+        break;
+
+    default:
+        break;
+    }
+}
+
+void SemanticAnalyzer::analyze_compound_statement(Ast* stmts) {
+    for (auto stmt : stmts->get_children()) {
+        analyze_statement(stmt);
+    }
+}
+
+void SemanticAnalyzer::analyze_while_statement(Ast* stmt) {
+
+}
+
+void SemanticAnalyzer::analyze_expression(Ast* expr) {
+    auto kind = expr->get_kind();
+
+    switch (kind) {
+    case AST_ASSIGNMENT:
+        analyze_assignment(expr);
+        break;
+
+    case AST_ID:
+        analyze_identifier(expr);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void SemanticAnalyzer::analyze_assignment(Ast* expr) {
+    Ast* left = expr->get_child(0);
+    Ast* right = expr->get_child(1);
+
+    analyze_expression(right);
+    Ast* t2 = get_expression_type(right, current_scope);
+
+    if (left->get_kind() == AST_ID) {
+        std::string name = left->get_value();
+        auto symbols = current_scope->resolve(name);
+
+        if (symbols.size() == 0) {
+            current_scope->define(SYM_VARIABLE, name, expr, t2->clone());
+            PrettyPrinter pp;
+            pp.print(t2);
+            log_info("Declaring variable " + name + " : " + pp.get_output());
+        }
+    }
+
+    Ast* t1 = get_expression_type(left, current_scope);
+
+    if (!compatible_types(t1, t2)) {
+        log_error("wrong assignment: incompatible types");
+    }
+
+    delete t1;
+    delete t2;
+}
+
+void SemanticAnalyzer::analyze_identifier(Ast* expr) {
+    std::string name = expr->get_value();
+
+    auto symbols = current_scope->resolve(name);
+
+    if (symbols.size() == 0) {
+        log_error(name + " not in scope");
+    }
+}
+
 bool SemanticAnalyzer::equal_types(Ast* t1, Ast* t2) {
     PrettyPrinter p1;
     PrettyPrinter p2;
@@ -162,4 +261,47 @@ bool SemanticAnalyzer::equal_types(Ast* t1, Ast* t2) {
     p2.print(t2);
 
     return p1.get_output() == p2.get_output();
+}
+
+bool SemanticAnalyzer::compatible_types(Ast *t1, Ast* t2) {
+    return equal_types(t1, t2);
+}
+
+Ast* SemanticAnalyzer::get_expression_type(Ast* expr, Scope* scope) {
+    auto kind = expr->get_kind();
+
+    switch (kind) {
+    case AST_ID:
+        return get_identifier_type(expr, scope);
+
+    case AST_LITERAL_INTEGER:
+        return new Ast(AST_TYPE_I32);
+
+    case AST_LITERAL_BOOLEAN:
+        return new Ast(AST_TYPE_BOOL);
+
+    case AST_LITERAL_FLOAT:
+        return new Ast(AST_TYPE_F32);
+
+    case AST_LITERAL_DOUBLE:
+        return new Ast(AST_TYPE_F64);
+
+    default:
+        break;
+    }
+
+    return nullptr;
+}
+
+Ast* SemanticAnalyzer::get_identifier_type(Ast* expr, Scope* scope) {
+    std::string name;
+    name = expr->get_value();
+
+    auto symbols = scope->resolve(name);
+
+    if (symbols.size() == 1) {
+        return symbols[0]->get_type()->clone();
+    }
+
+    return nullptr;
 }

@@ -1,0 +1,7 @@
+def sum : i32
+    @a : i32
+    @b : i32
+
+    c = 2
+    d = c
+    d = d

@@ -6,10 +6,11 @@ Symbol::Symbol() {
 
 }
 
-Symbol::Symbol(SymbolKind kind, const std::string& name, Ast* node) {
+Symbol::Symbol(SymbolKind kind, const std::string& name, Ast* node, Ast* type) {
     set_kind(kind);
     set_name(name);
     set_ast(node);
+    set_type(type);
 }
 
 Ast* Symbol::get_ast() const {
@@ -34,4 +35,12 @@ SymbolKind Symbol::get_kind() const {
 
 void Symbol::set_kind(SymbolKind kind) {
     this->kind = kind;
+}
+
+Ast* Symbol::get_type() const {
+    return type;
+}
+
+void Symbol::set_type(Ast* type) {
+    this->type = type;
 }

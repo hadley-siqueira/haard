@@ -125,7 +125,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Expressions */
-    case AST_EXPRESSION_STATEMENT:
+    case AST_EXPRESSION:
         print_expression_statement(node);
         break;
 
@@ -1084,8 +1084,6 @@ void PrettyPrinter::print_expression_statement(Ast* stmt, bool has_semicolon) {
     if (has_semicolon) {
         out << ";";
     }
-
-    out << '\n';
 }
 
 void PrettyPrinter::print_index(Ast* node) {

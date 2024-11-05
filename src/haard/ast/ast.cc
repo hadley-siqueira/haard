@@ -125,6 +125,20 @@ void Ast::set_parent(Ast* parent) {
     this->parent = parent;
 }
 
+Ast* Ast::clone() {
+    Ast* tmp = new Ast(get_kind());
+
+    tmp->set_line(get_line());
+    tmp->set_column(get_column());
+    tmp->set_value(get_value());
+
+    for (auto c : children) {
+        tmp->add_child(c->clone());
+    }
+
+    return tmp;
+}
+
 std::string Ast::to_json() {
     int i;
     std::stringstream ss;
