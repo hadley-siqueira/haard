@@ -219,9 +219,9 @@ namespace haard {
 
         Ast* clone();
 
-        std::string to_json();
+        virtual std::string to_json();
 
-    private:
+    protected:
         AstKind kind;
         int line;
         int column;

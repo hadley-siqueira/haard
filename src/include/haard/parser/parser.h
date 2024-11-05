@@ -7,6 +7,8 @@
 #include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
+#include "haard/ast/module.h"
+#include "haard/ast/import.h"
 
 namespace haard {
     class Parser {
@@ -14,11 +16,11 @@ namespace haard {
         Parser();
 
     public:
-        Ast* read(std::string path, std::string relative_path = "");
+        Module* read(std::string path, std::string relative_path = "");
 
     public:
-        Ast* parse_module();
-        Ast* parse_import();
+        Module* parse_module();
+        Import* parse_import();
 
         Ast* parse_definitions();
 

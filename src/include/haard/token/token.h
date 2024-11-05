@@ -414,6 +414,8 @@ namespace haard {
         const std::string& get_value() const;
         void set_value(const std::string& value);
 
+        std::string to_json();
+
     private:
         int kind;
         int line;

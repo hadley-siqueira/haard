@@ -16,6 +16,9 @@ set(TOKEN_SRC
 
 set(AST_SRC
     src/haard/ast/ast.cc
+    src/haard/ast/modules.cc
+    src/haard/ast/module.cc
+    src/haard/ast/import.cc
 )
 
 set(IR_SRC
@@ -30,10 +33,6 @@ set(SCANNER_SRC
 
 set(PARSER_SRC
     src/haard/parser/parser.cc
-)
-
-set(MODULES_MANAGER_SRC
-    src/haard/modules_manager/modules_manager.cc
 )
 
 set(SEMANTIC_SRC
@@ -69,7 +68,6 @@ set(SOURCES
     ${IR_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
-    ${MODULES_MANAGER_SRC}
     ${SYMBOL_SRC}
     ${SCOPE_SRC}
     ${SEMANTIC_SRC}

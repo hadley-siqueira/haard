@@ -28,19 +28,7 @@ void PrettyPrinter::print(Ast* node) {
 
     /* Import */
     case AST_IMPORT:
-        print_import(node);
-        break;
-
-    case AST_IMPORT_PATH:
-        print_import_path(node);
-        break;
-
-    case AST_IMPORT_ALIAS:
-        print_import_alias(node);
-        break;
-
-    case AST_IMPORT_PATH_MEMBER:
-        print_import_path_member(node);
+        print_import((Import*) node);
         break;
 
     /* Definitions */
@@ -563,32 +551,23 @@ void PrettyPrinter::print_module(Ast* module) {
     }
 }
 
-void PrettyPrinter::print_import(Ast* import) {
+void PrettyPrinter::print_import(Import* import) {
     size_t i;
 
     out << "import ";
-    print(import->get_child(0));
-    print(import->get_child(1));
-}
+    auto path = import->get_path();
 
-void PrettyPrinter::print_import_path(Ast* path) {
-    size_t i;
+    if (path.size() > 0) {
+        for (i = 0; i < path.size() - 1; ++i) {
+            out << path[i].get_value() << ".";
+        }
 
-    for (i = 0; i < path->children_count() - 1; ++i) {
-        print(path->get_child(i));
-        out << ".";
+        out << path[i].get_value();
     }
 
-    print(path->get_child(i));
-}
-
-void PrettyPrinter::print_import_path_member(Ast* member) {
-    out << member->get_value();
-}
-
-void PrettyPrinter::print_import_alias(Ast* alias) {
-    out << " as ";
-    out << alias->get_value();
+    if (import->has_alias()) {
+        out << " as " << import->get_alias().get_value();
+    }
 }
 
 void PrettyPrinter::print_user_type(Ast* node) {

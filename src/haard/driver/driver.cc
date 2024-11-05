@@ -46,7 +46,8 @@ void Driver::run(int argc, char** argv) {
         exit();
     }
 
-    parse_module_imports(parse_file(main_path));
+    //parse_module_imports(parse_file(main_path));
+    parse_file(main_path);
     exec_commands();
     semantic_analysis();
     exit();

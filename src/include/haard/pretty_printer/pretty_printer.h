@@ -4,6 +4,8 @@
 #include <sstream>
 
 #include "haard/ast/ast.h"
+#include "haard/ast/module.h"
+#include "haard/ast/import.h"
 
 namespace haard {
     class PrettyPrinter {
@@ -17,10 +19,7 @@ namespace haard {
 
         void print_module(Ast* module);
 
-        void print_import(Ast* import);
-        void print_import_path(Ast* path);
-        void print_import_path_member(Ast* member);
-        void print_import_alias(Ast* alias);
+        void print_import(Import* import);
 
         void print_user_type(Ast* node);
 

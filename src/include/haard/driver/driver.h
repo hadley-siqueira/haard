@@ -7,7 +7,8 @@
 #include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
-#include "haard/modules_manager/modules_manager.h"
+#include "haard/ast/modules.h"
+#include "haard/ast/module.h"
 
 namespace haard {
     enum DriverCommands {
@@ -48,8 +49,8 @@ namespace haard {
         bool file_exists(std::string path);
 
     private:
-        ModulesManager modules;
-        Ast* module;
+        Modules modules;
+        Module* module;
 
     // system related stuff
     private:
