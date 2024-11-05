@@ -16,6 +16,7 @@
 #include "haard/ast/types/reference_type.h"
 #include "haard/ast/types/list_type.h"
 #include "haard/ast/types/array_type.h"
+#include "haard/ast/types/named_type.h"
 
 namespace haard {
     class Parser {
@@ -60,6 +61,7 @@ namespace haard {
         Type* parse_function_type();
         Type* parse_tuple_or_function_type();
         Type* parse_primary_type();
+        Type* parse_named_type();
 
         Ast* parse_expression();
         Ast* parse_assignment_expression();

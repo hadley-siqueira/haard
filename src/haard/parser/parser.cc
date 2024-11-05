@@ -558,7 +558,7 @@ Type* Parser::parse_type() {
 
 Type* Parser::parse_tuple_or_function_type() {
     Ast* type;
-    Ast* types;
+    std::vector<Type*> types;
 
     if (!lookahead(TK_LEFT_PARENTHESIS)) {
         return parse_primary_type();
@@ -591,7 +591,7 @@ Type* Parser::parse_tuple_or_function_type() {
 
 Type* Parser::parse_primary_type() {
     Type* type = nullptr;
-    Type* subtype = nullptr;
+    //Type* subtype = nullptr;
 
     if (match(TK_CHAR)) {
        type = new PrimitiveType(AST_TYPE_CHAR, matched);
@@ -624,19 +624,17 @@ Type* Parser::parse_primary_type() {
     } else if (match(TK_F64)) {
        type = new PrimitiveType(AST_TYPE_F64, matched);
     } else if (match(TK_LEFT_SQUARE_BRACKET)) {
-        subtype = parse_type();
+        type = parse_type();
 
-        if (subtype == nullptr) {
+        if (type == nullptr) {
             log_error("missing subtype on list type");
         } else {
-            type = new ListType(subtype);
+            type = new ListType(type);
         }
 
         expect(TK_RIGHT_SQUARE_BRACKET);
     } else if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
-        Ast* id = parse_generic_instantiation();
-        type = new Ast(AST_TYPE_NAMED);
-        type->add_child(id);
+        type = parse_named_type();
     }
 
     while (type != nullptr) {
@@ -665,6 +663,50 @@ Type* Parser::parse_primary_type() {
     }
 
     return type;
+}
+
+Type* Parser::parse_named_type() {
+    Token alias;
+    Token name;
+    std::vector<Type*> generics;
+
+    if (match(TK_ID)) {
+        name = matched;
+
+        if (match(TK_SCOPE)) {
+            alias = name;
+            name = matched;
+        }
+    } else if (match(TK_SCOPE)) {
+        alias = matched;
+
+        expect(TK_ID);
+        name = matched;
+    }
+
+    if (match(TK_BEGIN_TEMPLATE)) {
+        Type* type = parse_type();
+
+        if (type == nullptr) {
+            log_error("Missing type on named type generics");
+        } else {
+            generics.push_back(type);
+        }
+
+        while (match(TK_COMMA)) {
+            type = parse_type();
+
+            if (type == nullptr) {
+                log_error("Missing type on named type generics");
+            } else {
+                generics.push_back(type);
+            }
+        }
+
+        expect(TK_END_TEMPLATE);
+    }
+
+    return new NamedType(alias, name, generics);
 }
 
 Ast* Parser::parse_expression() {
@@ -1560,7 +1602,6 @@ Ast* Parser::parse_identifier() {
 
 Ast* Parser::parse_generics() {
     Ast* generics = nullptr;
-
 
     if (match(TK_BEGIN_TEMPLATE)) {
         generics = parse_type_list(AST_GENERICS);

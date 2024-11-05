@@ -25,6 +25,7 @@ set(AST_SRC
     src/haard/ast/types/reference_type.cc
     src/haard/ast/types/list_type.cc
     src/haard/ast/types/array_type.cc
+    src/haard/ast/types/named_type.cc
 )
 
 set(IR_SRC
