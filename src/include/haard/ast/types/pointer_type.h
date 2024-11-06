@@ -17,6 +17,9 @@ namespace haard {
         Type* get_subtype() const;
         void set_subtype(Type* subtype);
 
+        virtual std::string to_json();
+        virtual std::string to_str();
+
     private:
         Token token;
         Type* subtype;

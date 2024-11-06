@@ -9,6 +9,8 @@
 #include "haard/ast/ast.h"
 #include "haard/ast/module.h"
 #include "haard/ast/import.h"
+#include "haard/ast/function.h"
+#include "haard/ast/variable.h"
 
 #include "haard/ast/types/type.h"
 #include "haard/ast/types/primitive_type.h"
@@ -16,6 +18,8 @@
 #include "haard/ast/types/reference_type.h"
 #include "haard/ast/types/list_type.h"
 #include "haard/ast/types/array_type.h"
+#include "haard/ast/types/tuple_type.h"
+#include "haard/ast/types/function_type.h"
 #include "haard/ast/types/named_type.h"
 
 namespace haard {
@@ -39,7 +43,7 @@ namespace haard {
 
         Ast* parse_variable_definition();
 
-        Ast* parse_function();
+        Function* parse_function();
         Ast* parse_parameter();
 
         Ast* parse_statement();

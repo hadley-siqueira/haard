@@ -223,10 +223,13 @@ void Driver::pretty_print() {
     show_logs();
 
     for (auto it : modules.get_modules()) {
-        std::cout << "printing " << it.first << "...\n";
+        /*std::cout << "printing " << it.first << "...\n";
         PrettyPrinter printer;
         printer.print(it.second);
-        std::cout << printer.get_output() << '\n';
+        std::cout << printer.get_output() << '\n';*/
+
+        std::cout << "to_str() = \n" << it.second->to_str() << "\n";
+        exit();
     }
 }
 

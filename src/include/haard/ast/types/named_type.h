@@ -22,6 +22,9 @@ namespace haard {
         const std::vector<Type*>& get_generics() const;
         void set_generics(const std::vector<Type*>& generics);
 
+        virtual std::string to_json();
+        virtual std::string to_str();
+
     private:
         Token alias;
         Token name;

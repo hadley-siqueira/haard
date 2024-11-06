@@ -5,3 +5,9 @@ import std
 memory as mem
 
 import std.file
+
+def main : i32
+    @argc : i32
+    @argv : char**
+
+    pass

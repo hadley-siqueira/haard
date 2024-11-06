@@ -164,3 +164,7 @@ std::string Ast::to_json() {
     ss << "}";
     return ss.str();
 }
+
+std::string Ast::to_str() {
+
+}

@@ -50,6 +50,25 @@ std::string Import::to_json() {
     return ss.str();
 }
 
+std::string Import::to_str() {
+    std::stringstream ss;
+
+    ss << "import ";
+    bool first = true;
+
+    for (auto p : path) {
+        if (!first) ss << ".";
+        ss << p.get_value();
+        first = false;
+    }
+
+    if (alias.get_value() != "") {
+        ss << " as " << alias.get_value();
+    }
+
+    return ss.str();
+}
+
 const std::vector<Token>& Import::get_path() const {
     return path;
 }

@@ -32,3 +32,11 @@ Type* ReferenceType::get_subtype() const {
 void ReferenceType::set_subtype(Type* subtype) {
     this->subtype = subtype;
 }
+
+std::string ReferenceType::to_json() {
+    return "json reference type";
+}
+
+std::string ReferenceType::to_str() {
+    return subtype->to_str() + "&";
+}

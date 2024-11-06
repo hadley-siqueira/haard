@@ -17,6 +17,13 @@ Module::~Module() {
 void Module::add_import(Import* import) {
     imports.push_back(import);
     children.push_back(import);
+    import->set_parent(this);
+}
+
+void Module::add_function(Function* function) {
+    functions.push_back(function);
+    children.push_back(function);
+    function->set_parent(this);
 }
 
 const std::string &Module::get_path() const {
@@ -46,5 +53,29 @@ std::string Module::to_json() {
     }
 
     ss << "}";
+    return ss.str();
+}
+
+std::string Module::to_str() {
+    std::stringstream ss;
+
+    for (auto child : children) {
+        ss << child->to_str();
+        ss << "\n";
+
+        switch (child->get_kind()) {
+        case AST_FUNCTION:
+        case AST_CLASS:
+        case AST_STRUCT:
+        case AST_ENUM:
+        case AST_UNION:
+            ss << "\n";
+            break;
+
+        default:
+            break;
+        }
+    }
+
     return ss.str();
 }

@@ -5,6 +5,7 @@
 
 #include "haard/ast/ast.h"
 #include "haard/ast/import.h"
+#include "haard/ast/function.h"
 
 namespace haard {
     class Module : public Ast {
@@ -14,15 +15,18 @@ namespace haard {
 
     public:
         void add_import(Import* import);
+        void add_function(Function* function);
 
         const std::string& get_path() const;
         void set_path(const std::string& path);
 
         virtual std::string to_json();
+        virtual std::string to_str();
 
     private:
         std::string path;
         std::vector<Import*> imports;
+        std::vector<Function*> functions;
         //std::vector<Ast*> children;
     };
 }

@@ -19,12 +19,17 @@ set(AST_SRC
     src/haard/ast/modules.cc
     src/haard/ast/module.cc
     src/haard/ast/import.cc
+    src/haard/ast/function.cc
+    src/haard/ast/variable.cc
+    src/haard/ast/generics.cc
     src/haard/ast/types/type.cc
     src/haard/ast/types/primitive_type.cc
     src/haard/ast/types/pointer_type.cc
     src/haard/ast/types/reference_type.cc
     src/haard/ast/types/list_type.cc
     src/haard/ast/types/array_type.cc
+    src/haard/ast/types/tuple_type.cc
+    src/haard/ast/types/function_type.cc
     src/haard/ast/types/named_type.cc
 )
 

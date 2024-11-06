@@ -32,3 +32,11 @@ Type* PointerType::get_subtype() const {
 void PointerType::set_subtype(Type* subtype) {
     this->subtype = subtype;
 }
+
+std::string PointerType::to_json() {
+    return "json pointer type";
+}
+
+std::string PointerType::to_str() {
+    return subtype->to_str() + "*";
+}

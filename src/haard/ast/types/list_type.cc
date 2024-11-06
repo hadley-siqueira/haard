@@ -23,3 +23,11 @@ Type *ListType::get_subtype() const {
 void ListType::set_subtype(Type* type) {
     this->subtype = type;
 }
+
+std::string ListType::to_json() {
+    return "list type json";
+}
+
+std::string ListType::to_str() {
+    return "[" + subtype->to_str() + "]";
+}

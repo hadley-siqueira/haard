@@ -220,6 +220,7 @@ namespace haard {
         Ast* clone();
 
         virtual std::string to_json();
+        virtual std::string to_str();
 
     protected:
         AstKind kind;

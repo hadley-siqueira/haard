@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "haard/ast/types/named_type.h"
 
 using namespace haard;
@@ -41,4 +43,35 @@ const std::vector<Type *>& NamedType::get_generics() const {
 
 void NamedType::set_generics(const std::vector<Type*>& generics) {
     this->generics = generics;
+}
+
+std::string NamedType::to_json() {
+    return "named type json";
+}
+
+std::string NamedType::to_str() {
+    std::stringstream ss;
+
+    if (alias.get_value() == "::") {
+        ss << alias.get_value();
+    } else if (alias.get_value() != "") {
+        ss << alias.get_value() << "::";
+    }
+
+    ss << name.get_value();
+
+    if (generics.size() > 0) {
+        bool first = true;
+        ss << "<";
+
+        for (auto t : generics) {
+            if (!first) ss << ", ";
+            ss << t->to_str();
+            first = false;
+        }
+
+        ss << ">";
+    }
+
+    return ss.str();
 }

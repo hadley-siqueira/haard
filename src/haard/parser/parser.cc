@@ -30,7 +30,7 @@ Module* Parser::parse_module() {
         if (lookahead(TK_IMPORT)) {
             module->add_import(parse_import());
         } else if (lookahead(TK_DEF)) {
-            module->add_child(parse_function());
+            module->add_function(parse_function());
         } else if (lookahead(TK_CLASS)) {
             module->add_child(parse_user_type());
         } else if (lookahead(TK_STRUCT)) {
@@ -189,12 +189,12 @@ Ast* Parser::parse_variable_definition() {
     return var;
 }
 
-Ast* Parser::parse_function() {
-    Ast* function = new Ast(AST_FUNCTION);
+Function* Parser::parse_function() {
+    Function* function = new Function();
 
     expect(TK_DEF);
     expect(TK_ID);
-    function->set_from_token(matched);
+    function->set_name(matched);
     function->add_child(parse_generics());
 
     expect(TK_COLON);
@@ -557,7 +557,7 @@ Type* Parser::parse_type() {
 }
 
 Type* Parser::parse_tuple_or_function_type() {
-    Ast* type;
+    Type* type = nullptr;
     std::vector<Type*> types;
 
     if (!lookahead(TK_LEFT_PARENTHESIS)) {
@@ -565,7 +565,22 @@ Type* Parser::parse_tuple_or_function_type() {
     }
 
     expect(TK_LEFT_PARENTHESIS);
-    types = parse_type_list(AST_TYPE_TUPLE);
+    type = parse_type();
+
+    if (type == nullptr) {
+        log_error("type can't be null on tuple or function type");
+    } else {
+        types.push_back(type);
+    }
+
+    while (match(TK_COMMA)) {
+        if (type == nullptr) {
+            log_error("type can't be null on tuple or function type");
+        } else {
+            types.push_back(type);
+        }
+    }
+
     expect(TK_RIGHT_PARENTHESIS);
 
     if (match(TK_ARROW)) {
@@ -573,17 +588,15 @@ Type* Parser::parse_tuple_or_function_type() {
             assert(false && "return type should be on same line");
         }
 
-        Ast* return_type = parse_type();
+        Type* return_type = parse_type();
 
         if (return_type == nullptr) {
-            assert(false && "expected return type");
+            log_error("missing return type on function type");
+        } else {
+            type = new FunctionType(types, return_type);
         }
-
-        type = new Ast(AST_TYPE_FUNCTION);
-        type->add_child(types);
-        type->add_child(return_type);
     } else {
-        type = types;
+        type = new TupleType(types);
     }
 
     return type;
