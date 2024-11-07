@@ -252,7 +252,7 @@ Statement* Parser::parse_statement() {
     Expression* expr = nullptr;
 
     if (lookahead(TK_WHILE)) {
-        //stmt = parse_while_statement();
+        stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
         //stmt = parse_for_statement();
     } else if (lookahead(TK_IF)) {
@@ -278,22 +278,23 @@ Statement* Parser::parse_statement() {
     return stmt;
 }
 
-Ast* Parser::parse_while_statement() {
-    Ast* condition;
-    Ast* stmt = new Ast(AST_WHILE);
+WhileStatement* Parser::parse_while_statement() {
+    Expression* condition = nullptr;
+    WhileStatement* stmt = new WhileStatement();
 
     expect(TK_WHILE);
-    stmt->set_from_token(matched);
+    stmt->set_token(matched);
     condition = parse_expression();
 
     if (condition == nullptr) {
         log_error("expected while condition");
+    } else {
+        stmt->set_expression(condition);
     }
 
-    stmt->add_child(condition);
     expect(TK_COLON);
     indent();
-    stmt->add_child(parse_statements());
+    stmt->set_statements(parse_statements());
     dedent();
 
     return stmt;
@@ -698,7 +699,7 @@ Type* Parser::parse_named_type() {
 
 Expression* Parser::parse_expression() {
     //return parse_assignment_expression();
-    return parse_identifier();
+    return parse_generic_instantiation();
 }
 
 Ast* Parser::parse_assignment_expression() {
@@ -1498,27 +1499,6 @@ Ast* Parser::parse_argument_list() {
     return arguments;
 }
 
-Ast* Parser::parse_generic_instantiation() {
-    Ast* apply = nullptr;
-    Ast* generics;
-    Ast* id = parse_scope();
-
-    if (id == nullptr) {
-        return nullptr;
-    }
-
-    generics = parse_generics();
-
-    if (generics) {
-        apply = new Ast(AST_GENERIC_APPLICATION);
-        apply->add_child(id);
-        apply->add_child(generics);
-    } else {
-        apply = id;
-    }
-
-    return apply;
-}
 
 Ast* Parser::parse_new_expression() {/*
     Ast* type;
@@ -1543,35 +1523,53 @@ Ast* Parser::parse_new_expression() {/*
     return expr;*/
 }
 
-Ast* Parser::parse_scope() {
-    Ast* scoped = nullptr;
-    Ast* id;
-    Ast* alias;
+Expression* Parser::parse_generic_instantiation() {
+    Ast* apply = nullptr;
+    Generics* generics;
+    Expression* id = parse_scope();
+
+    if (id == nullptr) {
+        return nullptr;
+    }
+
+    generics = parse_generics();
+
+    if (generics) {
+        return new GenericsApplication(id, generics);
+    }
+
+    return id;
+}
+
+Expression* Parser::parse_scope() {
+    Scope* scoped = nullptr;
+    Identifier* name;
+    Identifier* alias;
 
     if (match(TK_SCOPE)) {
-        scoped = new Ast(AST_SCOPE, matched);
-        id = parse_identifier();
+        scoped = new Scope(matched);
+        name = parse_identifier();
 
-        if (id) {
-            scoped->add_child(id);
+        if (name) {
+            scoped->set_name(name);
         } else {
             log_error("missing identifier in global scope");
         }
     } else if (lookahead(TK_ID)) {
-        Ast* id = parse_identifier();
+        alias = parse_identifier();
 
         if (match(TK_SCOPE)) {
-            scoped = new Ast(AST_SCOPE, matched);
-            scoped->add_child(id);
-            alias = parse_identifier();
+            scoped = new Scope(matched);
+            scoped->set_alias(alias);
+            name = parse_identifier();
 
-            if (alias) {
-                scoped->add_child(alias);
+            if (name) {
+                scoped->set_name(name);
             } else {
                 log_error("missing name in scope");
             }
         } else {
-            scoped = id;
+            return alias;
         }
     }
 

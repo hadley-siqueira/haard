@@ -2,11 +2,11 @@
 
 using namespace haard;
 
-Scope::Scope() {
+Scope2::Scope2() {
     set_parent(nullptr);
 }
 
-Scope::~Scope() {
+Scope2::~Scope2() {
     for (auto syms : symbols) {
         for (auto s : syms.second) {
             delete s;
@@ -14,7 +14,7 @@ Scope::~Scope() {
     }
 }
 
-void Scope::define(SymbolKind kind, const std::string& name, Ast* node, Ast* type) {
+void Scope2::define(SymbolKind kind, const std::string& name, Ast* node, Ast* type) {
     Symbol* sym = new Symbol(kind, name, node, type);
 
     if (symbols.count(name) == 0) {
@@ -26,7 +26,7 @@ void Scope::define(SymbolKind kind, const std::string& name, Ast* node, Ast* typ
     }
 }
 
-std::vector<Symbol*> Scope::resolve(std::string& name) {
+std::vector<Symbol*> Scope2::resolve(std::string& name) {
     std::vector<Symbol*> r;
 
     r = resolve_local(name);
@@ -42,7 +42,7 @@ std::vector<Symbol*> Scope::resolve(std::string& name) {
     return r;
 }
 
-std::vector<Symbol*> Scope::resolve_local(std::string& name) {
+std::vector<Symbol*> Scope2::resolve_local(std::string& name) {
     std::vector<Symbol*> r;
 
     if (symbols.count(name) > 0) {
@@ -52,10 +52,10 @@ std::vector<Symbol*> Scope::resolve_local(std::string& name) {
     return r;
 }
 
-Scope* Scope::get_parent() const {
+Scope2* Scope2::get_parent() const {
     return parent;
 }
 
-void Scope::set_parent(Scope* parent) {
+void Scope2::set_parent(Scope2* parent) {
     this->parent = parent;
 }

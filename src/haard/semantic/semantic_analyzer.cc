@@ -8,7 +8,7 @@
 using namespace haard;
 
 SemanticAnalyzer::SemanticAnalyzer() {
-    current_scope = new Scope();
+    current_scope = new Scope2();
 }
 
 SemanticAnalyzer::~SemanticAnalyzer() {
@@ -267,7 +267,7 @@ bool SemanticAnalyzer::compatible_types(Ast* t1, Ast* t2) {
     return equal_types(t1, t2);
 }
 
-Ast* SemanticAnalyzer::get_expression_type(Ast* expr, Scope* scope) {
+Ast* SemanticAnalyzer::get_expression_type(Ast* expr, Scope2* scope) {
     auto kind = expr->get_kind();
 
     switch (kind) {
@@ -293,7 +293,7 @@ Ast* SemanticAnalyzer::get_expression_type(Ast* expr, Scope* scope) {
     return nullptr;
 }
 
-Ast* SemanticAnalyzer::get_identifier_type(Ast* expr, Scope* scope) {
+Ast* SemanticAnalyzer::get_identifier_type(Ast* expr, Scope2* scope) {
     std::string name;
     name = expr->get_value();
 

@@ -33,11 +33,11 @@ namespace haard {
         bool equal_types(Ast* t1, Ast* t2);
         bool compatible_types(Ast* t1, Ast* t2);
 
-        Ast* get_expression_type(Ast* expr, Scope* scope);
-        Ast* get_identifier_type(Ast* expr, Scope* scope);
+        Ast* get_expression_type(Ast* expr, Scope2* scope);
+        Ast* get_identifier_type(Ast* expr, Scope2* scope);
 
     private:
-        Scope* current_scope;
+        Scope2* current_scope;
     };
 }
 

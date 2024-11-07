@@ -28,6 +28,11 @@
 #include "haard/ast/statements/expression_statement.h"
 
 #include "haard/ast/expressions/expression.h"
+
+#include "haard/ast/expressions/operators/binary/binary_operator.h"
+#include "haard/ast/expressions/operators/binary/generics_application.h"
+#include "haard/ast/expressions/operators/binary/scope.h"
+
 #include "haard/ast/expressions/identifier.h"
 
 #include "haard/ast/generics.h"
@@ -57,7 +62,7 @@ namespace haard {
         Variable* parse_parameter();
 
         Statement* parse_statement();
-        Ast* parse_while_statement();
+        WhileStatement* parse_while_statement();
         Ast* parse_for_statement();
 
         Ast* parse_if_statement();
@@ -128,8 +133,8 @@ namespace haard {
 
         Ast* parse_argument_list();
 
-        Ast* parse_generic_instantiation();
-        Ast* parse_scope();
+        Expression* parse_generic_instantiation();
+        Expression* parse_scope();
         Identifier* parse_identifier();
 
         Generics* parse_generics();

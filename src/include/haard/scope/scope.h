@@ -1,5 +1,5 @@
-#ifndef HAARD_SCOPE_H
-#define HAARD_SCOPE_H
+#ifndef HAARD_SCOPE2_H
+#define HAARD_SCOPE2_H
 
 #include <string>
 #include <map>
@@ -8,10 +8,10 @@
 #include "haard/symbol/symbol.h"
 
 namespace haard {
-    class Scope {
+    class Scope2 {
     public:
-        Scope();
-        ~Scope();
+        Scope2();
+        ~Scope2();
 
     public:
         void define(SymbolKind kind, const std::string &name, Ast* node, Ast* type=nullptr);
@@ -19,11 +19,11 @@ namespace haard {
         std::vector<Symbol*> resolve(std::string& name);
         std::vector<Symbol*> resolve_local(std::string& name);
 
-        Scope* get_parent() const;
-        void set_parent(Scope* parent);
+        Scope2* get_parent() const;
+        void set_parent(Scope2* parent);
 
     private:
-        Scope* parent;
+        Scope2* parent;
         std::map<std::string, std::vector<Symbol*>> symbols;
     };
 }

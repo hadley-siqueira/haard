@@ -52,3 +52,11 @@ std::string WhileStatement::to_str() {
 
     return ss.str();
 }
+
+const Token& WhileStatement::get_token() const {
+    return token;
+}
+
+void WhileStatement::set_token(const Token& token) {
+    this->token = token;
+}

@@ -21,7 +21,11 @@ namespace haard {
         virtual std::string to_json();
         virtual std::string to_str();
 
+        const Token& get_token() const;
+        void set_token(const Token& token);
+
     private:
+        Token token;
         Statements* statements;
         Expression* expression;
     };
