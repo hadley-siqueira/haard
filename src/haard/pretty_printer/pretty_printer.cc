@@ -56,7 +56,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     /* Statements */
-    case AST_COMPOUND_STATEMENT:
+    case AST_STATEMENTS:
         print_statements(node);
         break;
 
@@ -397,7 +397,7 @@ void PrettyPrinter::print(Ast* node) {
         print_scope(node);
         break;
 
-    case AST_ID:
+    case AST_IDENTIFIER:
         print_identifier(node);
         break;
 
@@ -847,7 +847,7 @@ void PrettyPrinter::print_function(Ast* function) {
         out << "\n";
     }
 
-    print(function->get_child(AST_COMPOUND_STATEMENT));
+    print(function->get_child(AST_STATEMENTS));
     dedent();
 }
 
@@ -858,7 +858,7 @@ void PrettyPrinter::print_variable(Ast* parameter) {
 
     if (kind == AST_FUNCTION) {
         out << "@";
-    } else if (kind == AST_COMPOUND_STATEMENT || kind == AST_MODULE) {
+    } else if (kind == AST_STATEMENTS || kind == AST_MODULE) {
         out << "var ";
     }
 
@@ -902,7 +902,7 @@ void PrettyPrinter::print_lambda(Ast* node) {
 
     out << "{\n";
     indent();
-    print(node->get_child(AST_COMPOUND_STATEMENT));
+    print(node->get_child(AST_STATEMENTS));
     dedent();
     print_indentation();
     out << "}";
@@ -939,7 +939,7 @@ void PrettyPrinter::print_for(Ast* stmt) {
 
     out << ":\n";
     indent();
-    print(stmt->get_child(AST_COMPOUND_STATEMENT));
+    print(stmt->get_child(AST_STATEMENTS));
     dedent();
 }
 

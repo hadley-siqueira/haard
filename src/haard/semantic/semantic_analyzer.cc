@@ -163,14 +163,14 @@ void SemanticAnalyzer::analyze_module_functions(Ast* mod) {
 }
 
 void SemanticAnalyzer::analyze_function(Ast* function) {
-    analyze_compound_statement(function->get_child(AST_COMPOUND_STATEMENT));
+    analyze_compound_statement(function->get_child(AST_STATEMENTS));
 }
 
 void SemanticAnalyzer::analyze_statement(Ast* stmt) {
     auto kind = stmt->get_kind();
 
     switch (kind) {
-    case AST_COMPOUND_STATEMENT:
+    case AST_STATEMENTS:
         analyze_compound_statement(stmt);
         break;
 
@@ -205,7 +205,7 @@ void SemanticAnalyzer::analyze_expression(Ast* expr) {
         analyze_assignment(expr);
         break;
 
-    case AST_ID:
+    case AST_IDENTIFIER:
         analyze_identifier(expr);
         break;
 
@@ -221,7 +221,7 @@ void SemanticAnalyzer::analyze_assignment(Ast* expr) {
     analyze_expression(right);
     Ast* t2 = get_expression_type(right, current_scope);
 
-    if (left->get_kind() == AST_ID) {
+    if (left->get_kind() == AST_IDENTIFIER) {
         std::string name = left->get_value();
         auto symbols = current_scope->resolve(name);
 
@@ -271,7 +271,7 @@ Ast* SemanticAnalyzer::get_expression_type(Ast* expr, Scope* scope) {
     auto kind = expr->get_kind();
 
     switch (kind) {
-    case AST_ID:
+    case AST_IDENTIFIER:
         return get_identifier_type(expr, scope);
 
     case AST_LITERAL_INTEGER:

@@ -6,10 +6,10 @@
 #include "haard/ast/statements/statement.h"
 
 namespace haard {
-    class CompoundStatement : public Statement {
+    class Statements : public Statement {
     public:
-        CompoundStatement();
-        ~CompoundStatement();
+        Statements();
+        ~Statements();
 
     public:
         void add_statement(Statement* statement);

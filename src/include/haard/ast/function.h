@@ -7,6 +7,7 @@
 #include "haard/ast/types/type.h"
 #include "haard/ast/variable.h"
 #include "haard/ast/generics.h"
+#include "haard/ast/statements/statements.h"
 
 namespace haard {
     class Function : public Ast {
@@ -29,8 +30,8 @@ namespace haard {
         virtual std::string to_json();
         virtual std::string to_str();
 
-        Ast* get_statements() const;
-        void set_statements(Ast* statements);
+        Statements* get_statements() const;
+        void set_statements(Statements *statements);
 
         void add_parameter(Variable* parameter);
 
@@ -39,7 +40,7 @@ namespace haard {
         Type* return_type;
         std::vector<Variable*> parameters;
         Generics* generics;
-        Ast* statements;
+        Statements* statements;
     };
 }
 

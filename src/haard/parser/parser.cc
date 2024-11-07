@@ -212,7 +212,7 @@ Function* Parser::parse_function() {
         function->add_parameter(parse_parameter());
     }
 
-    function->add_child(parse_statements());
+    function->set_statements(parse_statements());
     dedent();
 
     return function;
@@ -247,37 +247,32 @@ Variable* Parser::parse_parameter() {
     return param;
 }
 
-Ast* Parser::parse_statement() {
-    Ast* stmt = nullptr;
-    Ast* expr = nullptr;
+Statement* Parser::parse_statement() {
+    Statement* stmt = nullptr;
+    Expression* expr = nullptr;
 
     if (lookahead(TK_WHILE)) {
-        stmt = parse_while_statement();
+        //stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
-        stmt = parse_for_statement();
+        //stmt = parse_for_statement();
     } else if (lookahead(TK_IF)) {
-        stmt = parse_if_statement();
+        //stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
-        stmt = parse_return_statement();
+        //stmt = parse_return_statement();
     } else if (lookahead(TK_SWITCH)) {
-        stmt = parse_switch_statement();
+        //stmt = parse_switch_statement();
     } else if (lookahead(TK_VAR)) {
-        stmt = parse_variable_definition();
+        //stmt = parse_variable_definition();
     } else {
         expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("expected an expression statement");
-            //recover();
-            unexpected_token();
+        } else {
+            stmt = new ExpressionStatement(expr);
         }
 
-        stmt = new Ast(AST_EXPRESSION);
-        stmt->add_child(expr);
-
-        if (match(TK_SEMICOLON)) {
-            stmt->set_kind(AST_EXPRESSION_WITH_SEMICOLON);
-        }
+        match(TK_SEMICOLON);
     }
 
     return stmt;
@@ -538,15 +533,15 @@ Ast* Parser::parse_switch_cases() {
     return node;
 }
 
-Ast* Parser::parse_statements() {
-    Ast* statements = new Ast(AST_COMPOUND_STATEMENT);
+Statements* Parser::parse_statements() {
+    Statements* statements = new Statements();
 
     if (match(TK_PASS)) {
         return statements;
     }
 
     while (is_indented() && !lookahead(TK_RIGHT_CURLY_BRACKET)) {
-        statements->add_child(parse_statement());
+        statements->add_statement(parse_statement());
     }
 
     return statements;
@@ -701,8 +696,9 @@ Type* Parser::parse_named_type() {
     return new NamedType(alias, name, generics);
 }
 
-Ast* Parser::parse_expression() {
-    return parse_assignment_expression();
+Expression* Parser::parse_expression() {
+    //return parse_assignment_expression();
+    return parse_identifier();
 }
 
 Ast* Parser::parse_assignment_expression() {
@@ -1582,11 +1578,11 @@ Ast* Parser::parse_scope() {
     return scoped;
 }
 
-Ast* Parser::parse_identifier() {
-    Ast* id = nullptr;
+Identifier* Parser::parse_identifier() {
+    Identifier* id = nullptr;
 
     if (match(TK_ID)) {
-        id = new Ast(AST_ID, matched);
+        id = new Identifier(matched);
     }
 
     return id;

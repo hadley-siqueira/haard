@@ -33,10 +33,12 @@ set(AST_SRC
     src/haard/ast/types/named_type.cc
 
     src/haard/ast/statements/statement.cc
-    src/haard/ast/statements/compound_statement.cc
+    src/haard/ast/statements/statements.cc
     src/haard/ast/statements/while_statement.cc
+    src/haard/ast/statements/expression_statement.cc
 
     src/haard/ast/expressions/expression.cc
+    src/haard/ast/expressions/identifier.cc
 )
 
 set(IR_SRC

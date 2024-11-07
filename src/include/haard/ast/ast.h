@@ -10,6 +10,7 @@ namespace haard {
     typedef enum AstKind {
         AST_UNKNOWN,
 
+        AST_MODULES,
         AST_MODULE,
 
         AST_CLASS,
@@ -30,13 +31,14 @@ namespace haard {
 
         AST_GENERIC_APPLICATION,
         AST_SCOPE,
-        AST_ID,
+        AST_IDENTIFIER,
 
         // statements
         AST_STATEMENT,
-        AST_COMPOUND_STATEMENT,
+        AST_STATEMENTS,
         AST_EXPRESSION_WITH_SEMICOLON,
         AST_WHILE,
+        AST_STATEMENT_EXPRESSION,
 
         AST_FOR,
         AST_FOR_RANGE,

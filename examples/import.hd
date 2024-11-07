@@ -16,4 +16,6 @@ def sum : i32
     @a : i32
     @b : i32
 
-    pass
+    a
+    a
+    a

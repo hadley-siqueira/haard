@@ -7,6 +7,8 @@ using namespace haard;
 
 WhileStatement::WhileStatement() {
     set_kind(AST_WHILE);
+    set_expression(nullptr);
+    set_statements(nullptr);
 }
 
 WhileStatement::~WhileStatement() {
@@ -14,12 +16,16 @@ WhileStatement::~WhileStatement() {
     delete expression;
 }
 
-CompoundStatement* WhileStatement::get_statements() const {
+Statements* WhileStatement::get_statements() const {
     return statements;
 }
 
-void WhileStatement::set_statements(CompoundStatement* statements) {
+void WhileStatement::set_statements(Statements* statements) {
     this->statements = statements;
+
+    if (statements) {
+        statements->set_parent(this);
+    }
 }
 
 Expression* WhileStatement::get_expression() const {
@@ -28,6 +34,10 @@ Expression* WhileStatement::get_expression() const {
 
 void WhileStatement::set_expression(Expression* expression) {
     this->expression = expression;
+
+    if (expression) {
+        expression->set_parent(this);
+    }
 }
 
 std::string WhileStatement::to_json() {

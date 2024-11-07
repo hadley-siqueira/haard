@@ -45,7 +45,7 @@ std::string Variable::to_str() {
             ss << "@";
             break;
 
-        case AST_COMPOUND_STATEMENT:
+        case AST_STATEMENTS:
         case AST_MODULE:
             ss << "var ";
 

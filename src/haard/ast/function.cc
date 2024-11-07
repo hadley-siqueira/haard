@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include "haard/ast/function.h"
+#include "haard/utils/utils.h"
 
 using namespace haard;
 
@@ -50,11 +51,11 @@ void Function::set_generics(Generics* generics) {
     this->generics = generics;
 }
 
-Ast* Function::get_statements() const {
+Statements* Function::get_statements() const {
     return statements;
 }
 
-void Function::set_statements(Ast* statements) {
+void Function::set_statements(Statements* statements) {
     this->statements = statements;
 }
 
@@ -85,6 +86,12 @@ std::string Function::to_str() {
         }
 
         ss << "\n";
+    }
+
+    if (statements) {
+        ss << indent(statements->to_str());
+    } else {
+        ss << "    pass";
     }
 
     return ss.str();

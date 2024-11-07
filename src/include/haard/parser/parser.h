@@ -22,6 +22,14 @@
 #include "haard/ast/types/function_type.h"
 #include "haard/ast/types/named_type.h"
 
+#include "haard/ast/statements/statement.h"
+#include "haard/ast/statements/statements.h"
+#include "haard/ast/statements/while_statement.h"
+#include "haard/ast/statements/expression_statement.h"
+
+#include "haard/ast/expressions/expression.h"
+#include "haard/ast/expressions/identifier.h"
+
 #include "haard/ast/generics.h"
 
 namespace haard {
@@ -48,7 +56,7 @@ namespace haard {
         Function* parse_function();
         Variable* parse_parameter();
 
-        Ast* parse_statement();
+        Statement* parse_statement();
         Ast* parse_while_statement();
         Ast* parse_for_statement();
 
@@ -61,7 +69,7 @@ namespace haard {
         Ast* parse_switch_statement();
         Ast* parse_switch_cases();
 
-        Ast* parse_statements();
+        Statements* parse_statements();
 
         Type* parse_type();
         Type* parse_function_type();
@@ -69,7 +77,7 @@ namespace haard {
         Type* parse_primary_type();
         Type* parse_named_type();
 
-        Ast* parse_expression();
+        Expression* parse_expression();
         Ast* parse_assignment_expression();
         Ast* parse_cast_expression();
 
@@ -122,7 +130,7 @@ namespace haard {
 
         Ast* parse_generic_instantiation();
         Ast* parse_scope();
-        Ast* parse_identifier();
+        Identifier* parse_identifier();
 
         Generics* parse_generics();
 
