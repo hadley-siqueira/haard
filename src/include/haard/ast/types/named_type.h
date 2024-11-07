@@ -4,32 +4,24 @@
 #include <vector>
 
 #include "haard/ast/types/type.h"
-#include "haard/ast/generics.h"
+#include "haard/ast/expressions/expression.h"
 
 namespace haard {
     class NamedType : public Type {
     public:
         NamedType();
-        NamedType(Token& alias, Token& name, Generics* generics);
+        NamedType(Expression* expression);
         ~NamedType();
 
     public:
-        const Token& get_alias() const;
-        void set_alias(const Token& alias);
-
-        const Token& get_name() const;
-        void set_name(const Token& name);
-
-        const Generics* get_generics() const;
-        void set_generics(Generics* generics);
-
         virtual std::string to_json();
         virtual std::string to_str();
 
+        Expression* get_name_expression() const;
+        void set_name_expression(Expression* expression);
+
     private:
-        Token alias;
-        Token name;
-        Generics* generics;
+        Expression* name_expression;
     };
 }
 

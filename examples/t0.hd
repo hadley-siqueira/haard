@@ -15,10 +15,12 @@ def main : i32
 def sum : i32
     @a : i32
     @b : i32
+    @c : a::b<i32, b<f32>>
 
     a::b
     a
     a<i32, i32>
+    a::b<i32, i32>
 
     while a:
         a

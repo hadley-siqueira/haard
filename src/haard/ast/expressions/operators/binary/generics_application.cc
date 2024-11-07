@@ -14,25 +14,20 @@ GenericsApplication::GenericsApplication(Expression* expression, Generics* gener
     set_generics(generics);
 }
 
-GenericsApplication::~GenericsApplication() {
-    delete expression;
-    delete generics;
-}
-
-Expression *GenericsApplication::get_expression() const {
-    return expression;
+Expression* GenericsApplication::get_expression() const {
+    return get_left();
 }
 
 void GenericsApplication::set_expression(Expression* expression) {
-    this->expression = expression;
+    set_left(expression);
 }
 
 Generics* GenericsApplication::get_generics() const {
-    return generics;
+    return (Generics*) get_right();
 }
 
 void GenericsApplication::set_generics(Generics* generics) {
-    this->generics = generics;
+    set_right(generics);
 }
 
 std::string GenericsApplication::to_json() {
@@ -40,5 +35,5 @@ std::string GenericsApplication::to_json() {
 }
 
 std::string GenericsApplication::to_str() {
-    return expression->to_str() + generics->to_str();
+    return get_left()->to_str() + get_right()->to_str();
 }

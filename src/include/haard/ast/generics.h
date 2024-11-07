@@ -3,11 +3,11 @@
 
 #include <vector>
 
-#include "haard/ast/ast.h"
+#include "haard/ast/expressions/expression.h"
 #include "haard/ast/types/type.h"
 
 namespace haard {
-    class Generics : public Ast {
+    class Generics : public Expression {
     public:
         Generics();
         ~Generics();

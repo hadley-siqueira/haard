@@ -675,31 +675,18 @@ Type* Parser::parse_primary_type() {
 }
 
 Type* Parser::parse_named_type() {
-    Token alias;
-    Token name;
-    Generics* generics;
+    Expression* name = parse_generic_application();
 
-    if (match(TK_ID)) {
-        name = matched;
-
-        if (match(TK_SCOPE)) {
-            alias = name;
-            name = matched;
-        }
-    } else if (match(TK_SCOPE)) {
-        alias = matched;
-
-        expect(TK_ID);
-        name = matched;
+    if (name == nullptr) {
+        return nullptr;
     }
 
-    generics = parse_generics();
-    return new NamedType(alias, name, generics);
+    return new NamedType(name);
 }
 
 Expression* Parser::parse_expression() {
     //return parse_assignment_expression();
-    return parse_generic_instantiation();
+    return parse_generic_application();
 }
 
 Ast* Parser::parse_assignment_expression() {
@@ -1141,7 +1128,7 @@ Ast* Parser::parse_postfix_expression() {
         if (match(TK_DOT)) {
             left = expr;
             expr = new Ast(AST_DOT, matched);
-            right = parse_generic_instantiation();
+            right = parse_generic_application();
 
             if (right == nullptr) {
                 log_error("missing member field in member access");
@@ -1152,7 +1139,7 @@ Ast* Parser::parse_postfix_expression() {
         } else if (match(TK_ARROW)) {
             left = expr;
             expr = new Ast(AST_ARROW, matched);
-            right = parse_generic_instantiation();
+            right = parse_generic_application();
 
             if (right == nullptr) {
                 log_error("missing member field in arrow member access");
@@ -1199,7 +1186,7 @@ Ast* Parser::parse_primary_expression() {
     Ast* expr = nullptr;
 
     if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
-        expr = parse_generic_instantiation();
+        expr = parse_generic_application();
     } else if (match(TK_THIS)) {
         expr = new Ast(AST_THIS, matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
@@ -1523,8 +1510,7 @@ Ast* Parser::parse_new_expression() {/*
     return expr;*/
 }
 
-Expression* Parser::parse_generic_instantiation() {
-    Ast* apply = nullptr;
+Expression* Parser::parse_generic_application() {
     Generics* generics;
     Expression* id = parse_scope();
 

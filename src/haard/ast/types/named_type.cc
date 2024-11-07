@@ -6,42 +6,16 @@ using namespace haard;
 
 NamedType::NamedType() {
     set_kind(AST_TYPE_NAMED);
-    set_generics(nullptr);
+    set_name_expression(nullptr);
 }
 
-NamedType::NamedType(Token& alias, Token& name, Generics* generics) {
+NamedType::NamedType(Expression* expression) {
     set_kind(AST_TYPE_NAMED);
-    set_name(name);
-    set_alias(alias);
-    set_generics(generics);
+    set_name_expression(expression);
 }
 
 NamedType::~NamedType() {
-    delete generics;
-}
-
-const Token& NamedType::get_alias() const {
-    return alias;
-}
-
-void NamedType::set_alias(const Token& alias) {
-    this->alias = alias;
-}
-
-const Token& NamedType::get_name() const {
-    return name;
-}
-
-void NamedType::set_name(const Token& name) {
-    this->name = name;
-}
-
-const Generics* NamedType::get_generics() const {
-    return generics;
-}
-
-void NamedType::set_generics(Generics *generics) {
-    this->generics = generics;
+    delete name_expression;
 }
 
 std::string NamedType::to_json() {
@@ -49,19 +23,16 @@ std::string NamedType::to_json() {
 }
 
 std::string NamedType::to_str() {
-    std::stringstream ss;
+    return name_expression->to_str();
+}
 
-    if (alias.get_value() == "::") {
-        ss << alias.get_value();
-    } else if (alias.get_value() != "") {
-        ss << alias.get_value() << "::";
+Expression* NamedType::get_name_expression() const {
+    return name_expression;
+}
+
+void NamedType::set_name_expression(Expression* expression) {
+    if (expression) {
+        this->name_expression = expression;
+        expression->set_parent(this);
     }
-
-    ss << name.get_value();
-
-    if (generics) {
-        ss << generics->to_str();
-    }
-
-    return ss.str();
 }

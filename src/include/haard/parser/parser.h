@@ -133,7 +133,7 @@ namespace haard {
 
         Ast* parse_argument_list();
 
-        Expression* parse_generic_instantiation();
+        Expression* parse_generic_application();
         Expression* parse_scope();
         Identifier* parse_identifier();
 
