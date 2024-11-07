@@ -11,3 +11,9 @@ def main : i32
     @argv : char**
 
     pass
+
+def sum : i32
+    @a : i32
+    @b : i32
+
+    pass

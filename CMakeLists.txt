@@ -31,6 +31,12 @@ set(AST_SRC
     src/haard/ast/types/tuple_type.cc
     src/haard/ast/types/function_type.cc
     src/haard/ast/types/named_type.cc
+
+    src/haard/ast/statements/statement.cc
+    src/haard/ast/statements/compound_statement.cc
+    src/haard/ast/statements/while_statement.cc
+
+    src/haard/ast/expressions/expression.cc
 )
 
 set(IR_SRC

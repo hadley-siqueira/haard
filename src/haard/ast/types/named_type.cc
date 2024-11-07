@@ -6,9 +6,10 @@ using namespace haard;
 
 NamedType::NamedType() {
     set_kind(AST_TYPE_NAMED);
+    set_generics(nullptr);
 }
 
-NamedType::NamedType(Token& alias, Token& name, std::vector<Type*>& generics) {
+NamedType::NamedType(Token& alias, Token& name, Generics* generics) {
     set_kind(AST_TYPE_NAMED);
     set_name(name);
     set_alias(alias);
@@ -16,9 +17,7 @@ NamedType::NamedType(Token& alias, Token& name, std::vector<Type*>& generics) {
 }
 
 NamedType::~NamedType() {
-    for (auto t : generics) {
-        delete t;
-    }
+    delete generics;
 }
 
 const Token& NamedType::get_alias() const {
@@ -37,11 +36,11 @@ void NamedType::set_name(const Token& name) {
     this->name = name;
 }
 
-const std::vector<Type *>& NamedType::get_generics() const {
+const Generics* NamedType::get_generics() const {
     return generics;
 }
 
-void NamedType::set_generics(const std::vector<Type*>& generics) {
+void NamedType::set_generics(Generics *generics) {
     this->generics = generics;
 }
 
@@ -60,17 +59,8 @@ std::string NamedType::to_str() {
 
     ss << name.get_value();
 
-    if (generics.size() > 0) {
-        bool first = true;
-        ss << "<";
-
-        for (auto t : generics) {
-            if (!first) ss << ", ";
-            ss << t->to_str();
-            first = false;
-        }
-
-        ss << ">";
+    if (generics) {
+        ss << generics->to_str();
     }
 
     return ss.str();

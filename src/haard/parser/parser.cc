@@ -200,16 +200,16 @@ Function* Parser::parse_function() {
     expect(TK_COLON);
     indent();
 
-    Ast* return_type = parse_type();
+    Type* return_type = parse_type();
 
     if (return_type) {
-        function->add_child(AST_TYPE, return_type);
+        function->set_return_type(return_type);
     } else {
         log_error("Expected return type in function " + function->get_value());
     }
 
     while (has_parameters()) {
-        function->add_child(parse_parameter());
+        function->add_parameter(parse_parameter());
     }
 
     function->add_child(parse_statements());
@@ -218,18 +218,18 @@ Function* Parser::parse_function() {
     return function;
 }
 
-Ast* Parser::parse_parameter() {
-    Ast* param = new Ast(AST_VARIABLE);
+Variable* Parser::parse_parameter() {
+    Variable* param = new Variable();
 
     expect(TK_AT);
     expect(TK_ID);
-    param->set_from_token(matched);
+    param->set_name(matched);
 
     expect(TK_COLON);
-    Ast* type = parse_type();
+    Type* type = parse_type();
 
     if (type != nullptr) {
-        param->add_child(AST_TYPE, type);
+        param->set_type(type);
     } else {
         log_error("expected type in parameter");
     }
@@ -241,7 +241,7 @@ Ast* Parser::parse_parameter() {
             log_error("missing expression on default parameter value");
         }
 
-        param->add_child(AST_EXPRESSION, expr);
+        param->set_expression(expr);
     }
 
     return param;
@@ -681,7 +681,7 @@ Type* Parser::parse_primary_type() {
 Type* Parser::parse_named_type() {
     Token alias;
     Token name;
-    std::vector<Type*> generics;
+    Generics* generics;
 
     if (match(TK_ID)) {
         name = matched;
@@ -697,28 +697,7 @@ Type* Parser::parse_named_type() {
         name = matched;
     }
 
-    if (match(TK_BEGIN_TEMPLATE)) {
-        Type* type = parse_type();
-
-        if (type == nullptr) {
-            log_error("Missing type on named type generics");
-        } else {
-            generics.push_back(type);
-        }
-
-        while (match(TK_COMMA)) {
-            type = parse_type();
-
-            if (type == nullptr) {
-                log_error("Missing type on named type generics");
-            } else {
-                generics.push_back(type);
-            }
-        }
-
-        expect(TK_END_TEMPLATE);
-    }
-
+    generics = parse_generics();
     return new NamedType(alias, name, generics);
 }
 
@@ -1613,38 +1592,27 @@ Ast* Parser::parse_identifier() {
     return id;
 }
 
-Ast* Parser::parse_generics() {
-    Ast* generics = nullptr;
+Generics* Parser::parse_generics() {
+    Type* type;
+    Generics* generics = nullptr;
 
     if (match(TK_BEGIN_TEMPLATE)) {
-        generics = parse_type_list(AST_GENERICS);
+        generics = new Generics();
+
+        do {
+            type = parse_type();
+
+            if (type == nullptr) {
+                log_error("missing type inside generics");
+            } else {
+                generics->add_type(type);
+            }
+        } while (match(TK_COMMA));
+
         expect(TK_END_TEMPLATE);
     }
 
     return generics;
-}
-
-Ast* Parser::parse_type_list(AstKind kind) {
-    Ast* type_list = new Ast(kind);
-    Ast* type = parse_type();
-
-    if (type == nullptr) {
-        assert(false && "type can't be null on function generics");
-    }
-
-    type_list->add_child(type);
-
-    while (match(TK_COMMA)) {
-        type = parse_type();
-
-        if (type == nullptr) {
-            assert(false && "type can't be null on function generics");
-        }
-
-        type_list->add_child(type);
-    }
-
-    return type_list;
 }
 
 void Parser::advance() {

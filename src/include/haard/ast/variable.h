@@ -7,6 +7,10 @@
 namespace haard {
     class Variable : public Ast {
     public:
+        Variable();
+        ~Variable();
+
+    public:
         const Token& get_name() const;
         void set_name(const Token& name);
 
@@ -15,6 +19,9 @@ namespace haard {
 
         virtual std::string to_json();
         virtual std::string to_str();
+
+        Ast* get_expression() const;
+        void set_expression(Ast* expression);
 
     private:
         Token name;

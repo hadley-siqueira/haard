@@ -4,6 +4,16 @@
 
 using namespace haard;
 
+Variable::Variable() {
+    set_type(nullptr);
+    set_expression(nullptr);
+}
+
+Variable::~Variable() {
+    delete type;
+    delete expression;
+}
+
 const Token& Variable::get_name() const {
     return name;
 }
@@ -55,4 +65,12 @@ std::string Variable::to_str() {
     }
 
     return ss.str();
+}
+
+Ast* Variable::get_expression() const {
+    return expression;
+}
+
+void Variable::set_expression(Ast* expression) {
+    this->expression = expression;
 }

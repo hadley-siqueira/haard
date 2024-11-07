@@ -4,12 +4,13 @@
 #include <vector>
 
 #include "haard/ast/types/type.h"
+#include "haard/ast/generics.h"
 
 namespace haard {
     class NamedType : public Type {
     public:
         NamedType();
-        NamedType(Token& alias, Token& name, std::vector<Type*>& generics);
+        NamedType(Token& alias, Token& name, Generics* generics);
         ~NamedType();
 
     public:
@@ -19,8 +20,8 @@ namespace haard {
         const Token& get_name() const;
         void set_name(const Token& name);
 
-        const std::vector<Type*>& get_generics() const;
-        void set_generics(const std::vector<Type*>& generics);
+        const Generics* get_generics() const;
+        void set_generics(Generics* generics);
 
         virtual std::string to_json();
         virtual std::string to_str();
@@ -28,7 +29,7 @@ namespace haard {
     private:
         Token alias;
         Token name;
-        std::vector<Type*> generics;
+        Generics* generics;
     };
 }
 

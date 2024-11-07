@@ -22,8 +22,8 @@ const Token& Function::get_name() const {
     return name;
 }
 
-void Function::set_name(const Token& newName) {
-    this->name = newName;
+void Function::set_name(const Token& name) {
+    this->name = name;
 }
 
 Type* Function::get_return_type() const {
@@ -56,6 +56,11 @@ Ast* Function::get_statements() const {
 
 void Function::set_statements(Ast* statements) {
     this->statements = statements;
+}
+
+void Function::add_parameter(Variable* parameter) {
+    parameters.push_back(parameter);
+    parameter->set_parent(this);
 }
 
 std::string Function::to_json() {

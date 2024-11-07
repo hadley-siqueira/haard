@@ -15,7 +15,7 @@ namespace haard {
         ~Function();
 
         const Token& get_name() const;
-        void set_name(const Token& newName);
+        void set_name(const Token& name);
 
         Type* get_return_type() const;
         void set_return_type(Type* type);
@@ -31,6 +31,8 @@ namespace haard {
 
         Ast* get_statements() const;
         void set_statements(Ast* statements);
+
+        void add_parameter(Variable* parameter);
 
     private:
         Token name;

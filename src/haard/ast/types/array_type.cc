@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "haard/ast/types/array_type.h"
 
 using namespace haard;
@@ -5,12 +7,14 @@ using namespace haard;
 ArrayType::ArrayType() {
     set_kind(AST_TYPE_ARRAY);
     set_subtype(nullptr);
+    set_expression(nullptr);
 }
 
 ArrayType::ArrayType(Type* subtype, Token& token) {
     set_kind(AST_TYPE_ARRAY);
     set_subtype(subtype);
     set_token(token);
+    set_expression(nullptr);
 }
 
 ArrayType::~ArrayType() {
@@ -24,6 +28,23 @@ const Token& ArrayType::get_token() const {
 
 void ArrayType::set_token(const Token& token) {
     this->token = token;
+}
+
+std::string ArrayType::to_json() {
+    return "array type json";
+}
+
+std::string ArrayType::to_str() {
+    std::stringstream ss;
+
+    ss << subtype->to_str() << "[";
+
+    if (expression) {
+        ss << expression->to_str();
+    }
+
+    ss << "]";
+    return ss.str();
 }
 
 Type* ArrayType::get_subtype() const {

@@ -22,6 +22,8 @@
 #include "haard/ast/types/function_type.h"
 #include "haard/ast/types/named_type.h"
 
+#include "haard/ast/generics.h"
+
 namespace haard {
     class Parser {
     public:
@@ -44,7 +46,7 @@ namespace haard {
         Ast* parse_variable_definition();
 
         Function* parse_function();
-        Ast* parse_parameter();
+        Variable* parse_parameter();
 
         Ast* parse_statement();
         Ast* parse_while_statement();
@@ -122,8 +124,7 @@ namespace haard {
         Ast* parse_scope();
         Ast* parse_identifier();
 
-        Ast* parse_generics();
-        Ast* parse_type_list(AstKind kind);
+        Generics* parse_generics();
 
     private:
         void advance();
