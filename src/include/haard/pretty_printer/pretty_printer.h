@@ -17,7 +17,7 @@ namespace haard {
 
         void print(Ast* node);
 
-        void print_module(Ast* module);
+        void print_module(Module* module);
 
         void print_import(Import* import);
 
@@ -25,7 +25,7 @@ namespace haard {
 
         void print_super_type(Ast* node);
 
-        void print_function(Ast* function);
+        void print_function(Function* function);
         void print_variable(Ast* parameter);
 
         void print_lambda(Ast* node);
@@ -37,7 +37,7 @@ namespace haard {
         void print_lambda_statements(Ast* node);
 
         /* Statements */
-        void print_statements(Ast* stmts);
+        void print_statements(Statements* stmts);
         void print_while(Ast* stmt);
         void print_for(Ast* stmt);
         void print_for_init(Ast* node);
@@ -171,7 +171,7 @@ namespace haard {
         void print_type_list(Ast *tlist, const char* begin, const char* end);
 
 //        void print_identifier(Identifier* id);
-        void print_generics(Ast* g);
+        void print_generics(const Generics *g);
 
 //        void print_char_literal(CharLiteral* ch);
 //        void print_string_literal(StringLiteral* str);

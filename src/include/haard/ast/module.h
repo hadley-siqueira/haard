@@ -20,9 +20,6 @@ namespace haard {
         const std::string& get_path() const;
         void set_path(const std::string& path);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
     private:
         std::string path;
         std::vector<Import*> imports;

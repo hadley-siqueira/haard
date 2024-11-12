@@ -19,27 +19,7 @@ void Generics::add_type(Type* type) {
     type->set_parent(this);
 }
 
-std::string Generics::to_json() {
-    return "generics json";
-}
-
-std::string Generics::to_str() {
-    std::stringstream ss;
-
-    ss << "<";
-    bool first = true;
-
-    for (auto t : types) {
-        if (!first) ss << ", ";
-        ss << t->to_str();
-        first = false;
-    }
-
-    ss << ">";
-    return ss.str();
-}
-
-const std::vector<Type *> &Generics::get_types() const {
+const std::vector<Type *>& Generics::get_types() const {
     return types;
 }
 

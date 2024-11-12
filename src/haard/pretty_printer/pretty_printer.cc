@@ -2,7 +2,6 @@
 #include <iostream>
 #include "haard/pretty_printer/pretty_printer.h"
 
-
 using namespace haard;
 
 PrettyPrinter::PrettyPrinter() {
@@ -23,7 +22,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_MODULE:
-        print_module(node);
+        print_module((Module*) node);
         break;
 
     /* Import */
@@ -44,7 +43,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_FUNCTION:
-        print_function(node);
+        print_function((Function*) node);
         break;
 
     case AST_VARIABLE:
@@ -57,7 +56,7 @@ void PrettyPrinter::print(Ast* node) {
 
     /* Statements */
     case AST_STATEMENTS:
-        print_statements(node);
+        print_statements((Statements*) node);
         break;
 
     case AST_WHILE:
@@ -531,7 +530,7 @@ void PrettyPrinter::print(Ast* node) {
 
     /* Others */
     case AST_GENERICS:
-        print_generics(node);
+        print_generics((Generics*) node);
         break;
 
     default:
@@ -540,14 +539,23 @@ void PrettyPrinter::print(Ast* node) {
     }
 }
 
-void PrettyPrinter::print_module(Ast* module) {
-    AstKind kind;
-
-    for (auto i = 0; i < module->children_count(); ++i) {
-        kind = module->get_child(i)->get_kind();
-
-        print(module->get_child(i));
+void PrettyPrinter::print_module(Module* module) {
+    for (auto child : module->get_children()) {
+        out << child->to_str();
         out << "\n";
+
+        switch (child->get_kind()) {
+        case AST_FUNCTION:
+        case AST_CLASS:
+        case AST_STRUCT:
+        case AST_ENUM:
+        case AST_UNION:
+            out << "\n";
+            break;
+
+        default:
+            break;
+        }
     }
 }
 
@@ -822,17 +830,16 @@ void PrettyPrinter::print_identifier(Ast* id) {
     out << id->get_value();
 }
 
-void PrettyPrinter::print_function(Ast* function) {
+void PrettyPrinter::print_function(Function* function) {
     bool has_parameters = false;
 
     print_indentation();
-    out << "def ";
-    out << function->get_value();
+    out << "def " << function->get_name().get_value();
 
-    print_generics(function->get_child(AST_GENERICS));
+    print_generics(function->get_generics());
 
     out << " : ";
-    print(function->get_child(AST_TYPE)->get_child(0));
+    print(function->get_return_type());
     out << '\n';
     indent();
 
@@ -847,7 +854,7 @@ void PrettyPrinter::print_function(Ast* function) {
         out << "\n";
     }
 
-    print(function->get_child(AST_STATEMENTS));
+    print_statements(function->get_statements());
     dedent();
 }
 
@@ -987,7 +994,8 @@ void PrettyPrinter::print_else(Ast* node) {
 }
 
 /* Statements */
-void PrettyPrinter::print_statements(Ast* stmts) {
+void PrettyPrinter::print_statements(Statements* stmts) {
+    /*auto s = stmts->get_st
     if (stmts->children_count() == 0) {
         print_indentation();
         out << "pass";
@@ -998,7 +1006,7 @@ void PrettyPrinter::print_statements(Ast* stmts) {
         print_indentation();
         print(stmts->get_child(i));
         out << "\n";
-    }
+    }*/
 }
 
 void PrettyPrinter::print_return(Ast* node) {
@@ -1193,8 +1201,17 @@ void PrettyPrinter::print_type_list(Ast* tlist, const char* begin, const char* e
     out << end;
 }
 
-void PrettyPrinter::print_generics(Ast* g) {
-    print_type_list(g, "<", ">");
+void PrettyPrinter::print_generics(const Generics* g) {
+    out << "<";
+    bool first = true;
+
+    for (auto t : g->get_types()) {
+        if (!first) out << ", ";
+        out << t->to_str();
+        first = false;
+    }
+
+    out << ">";
 }
 
 void PrettyPrinter::print_tuple(Ast* expr) {

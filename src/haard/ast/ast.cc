@@ -2,6 +2,7 @@
 
 #include "haard/ast/ast.h"
 #include "haard/scope/scope.h"
+#include "haard/pretty_printer/pretty_printer.h"
 
 using namespace haard;
 
@@ -166,5 +167,8 @@ std::string Ast::to_json() {
 }
 
 std::string Ast::to_str() {
+    PrettyPrinter p;
 
+    p.print(this);
+    return p.get_output();
 }

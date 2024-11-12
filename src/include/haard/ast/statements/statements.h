@@ -1,5 +1,5 @@
-#ifndef HAARD_AST_COMPOUND_STATEMENT_H
-#define HAARD_AST_COMPOUND_STATEMENT_H
+#ifndef HAARD_AST_STATEMENTS_H
+#define HAARD_AST_STATEMENTS_H
 
 #include <vector>
 
@@ -13,9 +13,6 @@ namespace haard {
 
     public:
         void add_statement(Statement* statement);
-
-        virtual std::string to_json();
-        virtual std::string to_str();
 
     private:
         std::vector<Statement*> statements;

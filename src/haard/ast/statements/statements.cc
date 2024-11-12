@@ -20,7 +20,7 @@ void Statements::add_statement(Statement* statement) {
         statement->set_parent(this);
     }
 }
-
+/*
 std::string Statements::to_json() {
     return "compound statement json";
 }
@@ -40,4 +40,4 @@ std::string Statements::to_str() {
     }
 
     return ss.str();
-}
+}*/

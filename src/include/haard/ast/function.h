@@ -27,9 +27,6 @@ namespace haard {
         const Generics* get_generics() const;
         void set_generics(Generics* generics);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
         Statements* get_statements() const;
         void set_statements(Statements *statements);
 

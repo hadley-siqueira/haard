@@ -63,36 +63,3 @@ void Function::add_parameter(Variable* parameter) {
     parameters.push_back(parameter);
     parameter->set_parent(this);
 }
-
-std::string Function::to_json() {
-    return "function json";
-}
-
-std::string Function::to_str() {
-    std::stringstream ss;
-
-    ss << "def " << name.get_value();
-
-    if (generics) {
-        ss << generics->to_str();
-    }
-
-    ss << " : " << return_type->to_str() << "\n";
-
-    if (parameters.size() > 0) {
-        for (auto p : parameters) {
-            ss << "    " << p->to_str();
-            ss << "\n";
-        }
-
-        ss << "\n";
-    }
-
-    if (statements) {
-        ss << indent(statements->to_str());
-    } else {
-        ss << "    pass";
-    }
-
-    return ss.str();
-}
