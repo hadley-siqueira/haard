@@ -6,6 +6,33 @@
 #include "haard/ast/ast.h"
 #include "haard/ast/module.h"
 #include "haard/ast/import.h"
+#include "haard/ast/function.h"
+#include "haard/ast/variable.h"
+
+#include "haard/ast/types/type.h"
+#include "haard/ast/types/primitive_type.h"
+#include "haard/ast/types/pointer_type.h"
+#include "haard/ast/types/reference_type.h"
+#include "haard/ast/types/list_type.h"
+#include "haard/ast/types/array_type.h"
+#include "haard/ast/types/tuple_type.h"
+#include "haard/ast/types/function_type.h"
+#include "haard/ast/types/named_type.h"
+
+#include "haard/ast/statements/statement.h"
+#include "haard/ast/statements/statements.h"
+#include "haard/ast/statements/while_statement.h"
+#include "haard/ast/statements/expression_statement.h"
+
+#include "haard/ast/expressions/expression.h"
+
+#include "haard/ast/expressions/operators/binary/binary_operator.h"
+#include "haard/ast/expressions/operators/binary/generics_application.h"
+#include "haard/ast/expressions/operators/binary/scope.h"
+
+#include "haard/ast/expressions/identifier.h"
+
+#include "haard/ast/generics.h"
 
 namespace haard {
     class PrettyPrinter {
@@ -26,7 +53,7 @@ namespace haard {
         void print_super_type(Ast* node);
 
         void print_function(Function* function);
-        void print_variable(Variable* parameter);
+        void print_variable(Variable* var);
 
         void print_lambda(Ast* node);
         void print_lambda_return_type(Ast* node);
@@ -54,6 +81,8 @@ namespace haard {
         void print_expression_statement(Ast* stmt, bool has_semicolon=false);
 
         /* types */
+        void print_pointer_type(PointerType* node);
+        void print_reference_type(ReferenceType* node);
         void print_list_type(Ast* node);
 
         /* Expressions */

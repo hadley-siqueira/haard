@@ -5,6 +5,7 @@
 using namespace haard;
 
 Variable::Variable() {
+    set_kind(AST_VARIABLE);
     set_type(nullptr);
     set_expression(nullptr);
 }

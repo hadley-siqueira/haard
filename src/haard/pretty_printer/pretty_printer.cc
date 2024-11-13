@@ -499,13 +499,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_TYPE_POINTER:
-        print(node->get_child(0));
-        out << '*';
+        print_pointer_type((PointerType*) node);
         break;
 
     case AST_TYPE_REFERENCE:
-        print(node->get_child(0));
-        out << '&';
+        print_reference_type((ReferenceType*) node);
         break;
 
     case AST_TYPE_LIST:
@@ -540,8 +538,18 @@ void PrettyPrinter::print(Ast* node) {
 }
 
 void PrettyPrinter::print_module(Module* module) {
+    AstKind last_kind;
+    bool first = true;
+    bool needs_extra_newline = false;
+
     for (auto child : module->get_children()) {
-        out << child->to_str();
+        if (!first) {
+            if (last_kind != child->get_kind() || needs_extra_newline) {
+                out << "\n";
+            }
+        }
+
+        print(child);
         out << "\n";
 
         switch (child->get_kind()) {
@@ -550,12 +558,16 @@ void PrettyPrinter::print_module(Module* module) {
         case AST_STRUCT:
         case AST_ENUM:
         case AST_UNION:
-            out << "\n";
+            needs_extra_newline = true;
             break;
 
         default:
+            needs_extra_newline = false;
             break;
         }
+
+        first = false;
+        last_kind = child->get_kind();
     }
 }
 
@@ -616,6 +628,16 @@ void PrettyPrinter::print_super_type(Ast* node) {
     out << "(";
     print(node->get_child());
     out << ")";
+}
+
+void PrettyPrinter::print_pointer_type(PointerType* node) {
+    print(node->get_subtype());
+    out << "*";
+}
+
+void PrettyPrinter::print_reference_type(ReferenceType* node) {
+    print(node->get_subtype());
+    out << "&";
 }
 
 void PrettyPrinter::print_list_type(Ast* node) {
@@ -836,14 +858,14 @@ void PrettyPrinter::print_function(Function* function) {
     print_indentation();
     out << "def " << function->get_name().get_value();
 
-    print_generics(function->get_generics());
+    print(function->get_generics());
 
     out << " : ";
     print(function->get_return_type());
     out << '\n';
     indent();
 
-    for (auto p : function->get_children(AST_VARIABLE)) {
+    for (auto p : function->get_parameters()) {
         print_indentation();
         print(p);
         out << "\n";
@@ -854,14 +876,12 @@ void PrettyPrinter::print_function(Function* function) {
         out << "\n";
     }
 
-    print_statements(function->get_statements());
+    print(function->get_statements());
     dedent();
 }
 
-void PrettyPrinter::print_variable(Variable* parameter) {
-    Ast* type = parameter->get_child(AST_TYPE);
-    Ast* expr = parameter->get_child(AST_EXPRESSION);
-    AstKind kind = parameter->get_parent()->get_kind();
+void PrettyPrinter::print_variable(Variable* var) {
+    AstKind kind = var->get_parent()->get_kind();
 
     if (kind == AST_FUNCTION) {
         out << "@";
@@ -869,16 +889,16 @@ void PrettyPrinter::print_variable(Variable* parameter) {
         out << "var ";
     }
 
-    out << parameter->get_value();
+    out << var->get_name().get_value();
 
-    if (type) {
+    if (var->get_type()) {
         out << " : ";
-        print(type->get_child());
+        print(var->get_type());
     }
 
-    if (expr) {
+    if (var->get_expression()) {
         out << " = ";
-        print(expr->get_child());
+        print(var->get_expression());
     }
 }
 
@@ -995,18 +1015,18 @@ void PrettyPrinter::print_else(Ast* node) {
 
 /* Statements */
 void PrettyPrinter::print_statements(Statements* stmts) {
-    /*auto s = stmts->get_st
-    if (stmts->children_count() == 0) {
+    bool no_statements = true;
+
+    for (auto stmt : stmts->get_statements()) {
         print_indentation();
-        out << "pass";
-        return;
+        print(stmt);
+        no_statements = false;
     }
 
-    for (int i = 0; i < stmts->children_count(); ++i) {
+    if (no_statements) {
         print_indentation();
-        print(stmts->get_child(i));
-        out << "\n";
-    }*/
+        out << "pass";
+    }
 }
 
 void PrettyPrinter::print_return(Ast* node) {

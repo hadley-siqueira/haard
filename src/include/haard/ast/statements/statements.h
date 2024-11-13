@@ -14,6 +14,8 @@ namespace haard {
     public:
         void add_statement(Statement* statement);
 
+        std::vector<Statement*>& get_statements();
+
     private:
         std::vector<Statement*> statements;
     };

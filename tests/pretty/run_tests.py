@@ -21,4 +21,3 @@ for i in inputs:
 
     os.system("rm " + i + ".out")
 
-    

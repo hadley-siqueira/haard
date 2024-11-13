@@ -24,7 +24,7 @@ namespace haard {
         const std::vector<Variable*>& get_parameters() const;
         void set_parameters(const std::vector<Variable* >& parameters);
 
-        const Generics* get_generics() const;
+        Generics* get_generics() const;
         void set_generics(Generics* generics);
 
         Statements* get_statements() const;

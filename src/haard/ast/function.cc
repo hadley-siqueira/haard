@@ -43,7 +43,7 @@ void Function::set_parameters(const std::vector<Variable* >& parameters) {
     this->parameters = parameters;
 }
 
-const Generics* Function::get_generics() const {
+Generics* Function::get_generics() const {
     return generics;
 }
 
