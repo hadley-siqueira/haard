@@ -21,9 +21,6 @@ namespace haard {
         const std::vector<Token>& get_path() const;
         void set_path(const std::vector<Token>& path);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
     private:
         std::vector<Token> path;
         Token alias;

@@ -27,11 +27,3 @@ void ExpressionStatement::set_expression(Expression* expression) {
         expression->set_parent(this);
     }
 }
-
-std::string ExpressionStatement::to_json() {
-    return "expression statement json";
-}
-
-std::string ExpressionStatement::to_str() {
-    return expression->to_str();
-}

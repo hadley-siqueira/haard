@@ -15,9 +15,6 @@ namespace haard {
         Expression* get_expression() const;
         void set_expression(Expression* expression);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
     private:
         Expression* expression;
     };

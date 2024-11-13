@@ -18,14 +18,6 @@ NamedType::~NamedType() {
     delete name_expression;
 }
 
-std::string NamedType::to_json() {
-    return "named type json";
-}
-
-std::string NamedType::to_str() {
-    return name_expression->to_str();
-}
-
 Expression* NamedType::get_name_expression() const {
     return name_expression;
 }

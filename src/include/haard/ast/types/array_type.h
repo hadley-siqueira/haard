@@ -19,9 +19,6 @@ namespace haard {
         const Token& get_token() const;
         void set_token(const Token& token);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
     private:
         Token token;
         Type* subtype;

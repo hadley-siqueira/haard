@@ -11,10 +11,6 @@ namespace haard {
         Scope(Token& token);
 
     public:
-        virtual std::string to_json();
-        virtual std::string to_str();
-
-    public:
         void set_alias(Identifier* alias);
         Identifier* get_alias();
 

@@ -14,8 +14,6 @@ namespace haard {
         Module* get_module_by_path(std::string& path);
         std::map<std::string, Module*>& get_modules();
 
-        virtual std::string to_json();
-
     private:
         std::map<std::string, Module*> modules;
     };

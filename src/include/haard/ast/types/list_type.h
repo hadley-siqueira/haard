@@ -14,9 +14,6 @@ namespace haard {
         Type* get_subtype() const;
         void set_subtype(Type* type);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
     private:
         Type* subtype;
     };

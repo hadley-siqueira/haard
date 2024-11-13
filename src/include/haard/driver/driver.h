@@ -44,6 +44,7 @@ namespace haard {
     public:
         void pretty_print();
         void print_json();
+        void print_logs();
 
     private:
         bool file_exists(std::string path);
@@ -60,6 +61,10 @@ namespace haard {
         std::string main_path;
         std::string root_path;
         char path_delimiter;
+
+    // flags
+    private:
+        bool show_logs_flag;
     };
 }
 

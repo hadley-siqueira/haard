@@ -18,11 +18,3 @@ Type* Expression::get_type() const {
 void Expression::set_type(Type* type) {
     this->type = type;
 }
-
-std::string Expression::to_json() {
-    return "unknown expression json";
-}
-
-std::string Expression::to_str() {
-    return "unknown expression";
-}

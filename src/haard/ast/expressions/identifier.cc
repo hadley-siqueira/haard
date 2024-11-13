@@ -21,11 +21,3 @@ const Token& Identifier::get_token() const {
 void Identifier::set_token(const Token& token) {
     this->token = token;
 }
-
-std::string Identifier::to_json() {
-    return "identifier json";
-}
-
-std::string Identifier::to_str() {
-    return token.get_value();
-}

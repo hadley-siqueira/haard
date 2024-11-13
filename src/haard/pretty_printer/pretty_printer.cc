@@ -47,7 +47,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_VARIABLE:
-        print_variable(node);
+        print_variable((Variable*) node);
         break;
 
     case AST_LAMBDA:
@@ -858,7 +858,7 @@ void PrettyPrinter::print_function(Function* function) {
     dedent();
 }
 
-void PrettyPrinter::print_variable(Ast* parameter) {
+void PrettyPrinter::print_variable(Variable* parameter) {
     Ast* type = parameter->get_child(AST_TYPE);
     Ast* expr = parameter->get_child(AST_EXPRESSION);
     AstKind kind = parameter->get_parent()->get_kind();
@@ -891,11 +891,11 @@ void PrettyPrinter::print_lambda(Ast* node) {
         int i = 0;
 
         for (i = 0; i < params.size() - 1; ++i) {
-            print_variable(params[i]);
+            //print_variable(params[i]);
             out << ", ";
         }
 
-        print_variable(params[i]);
+        //print_variable(params[i]);
     }
 
     out << "|";

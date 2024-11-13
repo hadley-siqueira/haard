@@ -14,9 +14,6 @@ namespace haard {
         ~NamedType();
 
     public:
-        virtual std::string to_json();
-        virtual std::string to_str();
-
         Expression* get_name_expression() const;
         void set_name_expression(Expression* expression);
 

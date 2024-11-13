@@ -29,11 +29,3 @@ Generics* GenericsApplication::get_generics() const {
 void GenericsApplication::set_generics(Generics* generics) {
     set_right(generics);
 }
-
-std::string GenericsApplication::to_json() {
-    return "generics application json";
-}
-
-std::string GenericsApplication::to_str() {
-    return get_left()->to_str() + get_right()->to_str();
-}

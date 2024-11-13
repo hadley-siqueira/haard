@@ -26,23 +26,3 @@ const std::vector<Type*>& TupleType::get_types() const {
 void TupleType::set_types(const std::vector<Type*>& types) {
     this->types = types;
 }
-
-std::string TupleType::to_json() {
-    return "json tuple";
-}
-
-std::string TupleType::to_str() {
-    std::stringstream ss;
-
-    ss << "(";
-
-    bool first = true;
-    for (auto t : types) {
-        if (!first) ss << ", ";
-        ss << t->to_str();
-        first = false;
-    }
-
-    ss << ")";
-    return ss.str();
-}

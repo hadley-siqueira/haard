@@ -40,19 +40,6 @@ void WhileStatement::set_expression(Expression* expression) {
     }
 }
 
-std::string WhileStatement::to_json() {
-    return "while json";
-}
-
-std::string WhileStatement::to_str() {
-    std::stringstream ss;
-
-    ss << "while " << expression->to_str() << ":\n";
-    ss << indent(statements->to_str());
-
-    return ss.str();
-}
-
 const Token& WhileStatement::get_token() const {
     return token;
 }

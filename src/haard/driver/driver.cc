@@ -14,6 +14,8 @@ using namespace haard;
 Driver::Driver() {
     path_delimiter = '/';
     configuration_file_path = "...";
+
+    show_logs_flag = true;
 }
 
 Driver::~Driver() {
@@ -30,6 +32,8 @@ void Driver::parse_args(int argc, char** argv) {
             commands.push_back(DRIVER_CMD_PRETTY_PRINT);
         } else if (strcmp(argv[i], "--json") == 0) {
             commands.push_back(DRIVER_CMD_JSON);
+        } else if (strcmp(argv[i], "--no-logs") == 0) {
+            show_logs_flag = false;
         }
     }
 }
@@ -73,7 +77,7 @@ void Driver::configure() {
 }
 
 void Driver::exit() {
-    show_logs();
+    print_logs();
     ::exit(0);
 }
 
@@ -81,9 +85,9 @@ void Driver::read_configuration(std::string path) {
     std::ifstream config_file(path);
 
     if (config_file.good()) {
-        std::cout << "configuration file opened\n";
+        log_info("configuration file opened");
     } else {
-        std::cout << "failed config\n";
+        log_info("failed config\n");
     }
 }
 
@@ -220,15 +224,10 @@ void Driver::set_root_path_from_main_file() {
 }
 
 void Driver::pretty_print() {
-    show_logs();
+    print_logs();
 
     for (auto it : modules.get_modules()) {
-        /*std::cout << "printing " << it.first << "...\n";
-        PrettyPrinter printer;
-        printer.print(it.second);
-        std::cout << printer.get_output() << '\n';*/
-
-        std::cout << "to_str() = \n" << it.second->to_str() << "\n";
+        std::cout << it.second->to_str();
         exit();
     }
 }
@@ -236,6 +235,12 @@ void Driver::pretty_print() {
 void Driver::print_json() {
     std::cout << module->to_json() << "\n";
     exit();
+}
+
+void Driver::print_logs() {
+    if (show_logs_flag) {
+        show_logs();
+    }
 }
 
 bool Driver::file_exists(std::string path) {

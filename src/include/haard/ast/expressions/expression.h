@@ -14,9 +14,6 @@ namespace haard {
         Type* get_type() const;
         void set_type(Type* type);
 
-        virtual std::string to_json();
-        virtual std::string to_str();
-
     private:
         Type* type;
     };
