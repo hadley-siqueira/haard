@@ -195,7 +195,7 @@ Function* Parser::parse_function() {
     expect(TK_DEF);
     expect(TK_ID);
     function->set_name(matched);
-    function->add_child(parse_generics());
+    function->set_generics(parse_generics());
 
     expect(TK_COLON);
     indent();

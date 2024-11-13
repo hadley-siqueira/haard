@@ -10,7 +10,7 @@ def main : void
 
     pass
 
-def main2 : void
+def main2<T, K> : void
     @a : u8*
     @b : u16**
     @c : u32***
@@ -30,7 +30,12 @@ def main3 : void
     @e : f64
     @f : sym
     @g : str
-#     @h : i32[10]
+    @h : i32[]
+    @h : i32[std::MAX_VALUE]
+    @i : std::Map<str, i32>
+    @j : ::Map<str, i32>
+    @k : Map<str, std::Array<i32>>&
+    @l : AType
 #     @i : (i32, i32)
 #     @i : (i32, i32) -> void
 # 

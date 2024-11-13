@@ -7,6 +7,7 @@ Identifier::Identifier() {
 }
 
 Identifier::Identifier(Token& token) {
+    set_kind(AST_IDENTIFIER);
     set_token(token);
 }
 

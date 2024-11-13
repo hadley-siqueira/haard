@@ -84,6 +84,12 @@ namespace haard {
         void print_pointer_type(PointerType* node);
         void print_reference_type(ReferenceType* node);
         void print_list_type(Ast* node);
+        void print_array_type(ArrayType* type);
+        void print_tuple_type(Ast *tuple);
+        void print_function_type(Ast *type);
+        void print_named_type(NamedType* type);
+
+        void print_type_list(Ast *tlist, const char* begin, const char* end);
 
         /* Expressions */
         void print_assignment(Ast* node);
@@ -149,9 +155,9 @@ namespace haard {
         void print_sizeof(Ast* node);
 
         void print_parenthesis(Ast* node);
-        void print_generic_application(Ast* node);
-        void print_scope(Ast* scope);
-        void print_identifier(Ast* id);
+        void print_generic_application(GenericsApplication* node);
+        void print_scope(Scope* scope);
+        void print_identifier(Identifier* id);
 
 //        void print_class(Class* klass);
 //        void print_struct(Struct* st);
@@ -193,11 +199,6 @@ namespace haard {
 //        void print_delete_array_expression(DeleteArray* expr);
 //        void print_parenthesis_expression(Parenthesis* expr);
 
-        void print_tuple_type(Ast *tuple);
-        void print_function_type(Ast *type);
-        void print_named_type(Ast *type);
-        void print_array_type(Ast* type);
-        void print_type_list(Ast *tlist, const char* begin, const char* end);
 
 //        void print_identifier(Identifier* id);
         void print_generics(const Generics *g);

@@ -389,15 +389,15 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_GENERIC_APPLICATION:
-        print_generic_application(node);
+        print_generic_application((GenericsApplication*) node);
         break;
 
     case AST_SCOPE:
-        print_scope(node);
+        print_scope((Scope*) node);
         break;
 
     case AST_IDENTIFIER:
-        print_identifier(node);
+        print_identifier((Identifier*) node);
         break;
 
     /* Literals */
@@ -511,7 +511,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_TYPE_ARRAY:
-        print_array_type(node);
+        print_array_type((ArrayType*) node);
         break;
 
     case AST_TYPE_TUPLE:
@@ -523,7 +523,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_TYPE_NAMED:
-        print_named_type(node);
+        print_named_type((NamedType*) node);
         break;
 
     /* Others */
@@ -644,6 +644,27 @@ void PrettyPrinter::print_list_type(Ast* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
+}
+
+void PrettyPrinter::print_array_type(ArrayType* type) {
+    print(type->get_subtype());
+    out << "[";
+    print(type->get_expression());
+    out << "]";
+}
+
+void PrettyPrinter::print_tuple_type(Ast* tuple) {
+    print_type_list(tuple, "(", ")");
+}
+
+void PrettyPrinter::print_function_type(Ast* type) {
+    print_type_list(type->get_child(0), "(", ")");
+    out << " -> ";
+    print(type->get_child(1));
+}
+
+void PrettyPrinter::print_named_type(NamedType* type) {
+    print(type->get_name_expression());
 }
 
 void PrettyPrinter::print_assignment(Ast* node) {
@@ -832,24 +853,19 @@ void PrettyPrinter::print_parenthesis(Ast* node) {
     out << ")";
 }
 
-void PrettyPrinter::print_generic_application(Ast* node) {
-    print(node->get_child(0));
-    print(node->get_child(1));
+void PrettyPrinter::print_generic_application(GenericsApplication* node) {
+    print(node->get_expression());
+    print(node->get_generics());
 }
 
-void PrettyPrinter::print_scope(Ast* scope) {
-    if (scope->children_count() == 1) {
-        out << "::";
-        print(scope->get_child(0));
-    } else {
-        print(scope->get_child(0));
-        out << "::";
-        print(scope->get_child(1));
-    }
+void PrettyPrinter::print_scope(Scope* scope) {
+    print(scope->get_alias());
+    out << "::";
+    print(scope->get_name());
 }
 
-void PrettyPrinter::print_identifier(Ast* id) {
-    out << id->get_value();
+void PrettyPrinter::print_identifier(Identifier* id) {
+    out << id->get_token().get_value();
 }
 
 void PrettyPrinter::print_function(Function* function) {
@@ -1180,27 +1196,6 @@ void PrettyPrinter::print_sizeof(Ast* node) {
     out << "sizeof(";
     print(node->get_child());
     out << ")";
-}
-
-void PrettyPrinter::print_tuple_type(Ast* tuple) {
-    print_type_list(tuple, "(", ")");
-}
-
-void PrettyPrinter::print_function_type(Ast* type) {
-    print_type_list(type->get_child(0), "(", ")");
-    out << " -> ";
-    print(type->get_child(1));
-}
-
-void PrettyPrinter::print_named_type(Ast* type) {
-    print(type->get_child(0));
-}
-
-void PrettyPrinter::print_array_type(Ast* type) {
-    print(type->get_child(0));
-    out << "[";
-    print(type->get_child(1));
-    out << "]";
 }
 
 void PrettyPrinter::print_type_list(Ast* tlist, const char* begin, const char* end) {

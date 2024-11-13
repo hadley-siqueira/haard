@@ -35,9 +35,8 @@ Type* ArrayType::get_subtype() const {
 }
 
 void ArrayType::set_subtype(Type* type) {
-    this->subtype = type;
-
     if (type != nullptr) {
+        this->subtype = type;
         type->set_parent(this);
     }
 }
