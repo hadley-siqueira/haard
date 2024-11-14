@@ -4,3 +4,9 @@ def power : i32
 
     return a ** b ** b
 
+def bitwise_or : i32
+    @a : i32
+    @b : i32
+
+    return a | b
+

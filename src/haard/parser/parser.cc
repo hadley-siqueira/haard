@@ -932,7 +932,7 @@ Expression* Parser::parse_term_expression() {
 }
 
 Expression* Parser::parse_power_expression() {
-    Expression* expr = (Expression*) parse_bitwise_or_expression();
+    Expression* expr = parse_bitwise_or_expression();
 
     if (match(TK_POWER)) {
         Power* oper = new Power(matched, expr);
@@ -950,12 +950,21 @@ Expression* Parser::parse_power_expression() {
     return expr;
 }
 
-Ast* Parser::parse_bitwise_or_expression() {
-    Ast* expr = parse_bitwise_xor_expression();
+Expression* Parser::parse_bitwise_or_expression() {
+    Expression* expr = parse_bitwise_xor_expression();
 
     while (true) {
         if (match(TK_BITWISE_OR)) {
-            expr = parse_binary_operator(AST_BITWISE_OR, "|", expr, &Parser::parse_bitwise_xor_expression);
+            BitwiseOr* oper = new BitwiseOr(matched, expr);
+            expr = parse_bitwise_xor_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on | operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -964,7 +973,7 @@ Ast* Parser::parse_bitwise_or_expression() {
     return expr;
 }
 
-Ast* Parser::parse_bitwise_xor_expression() {
+Expression* Parser::parse_bitwise_xor_expression() {
     Token oper;
     Ast* expr = parse_bitwise_and_expression();
 
@@ -976,7 +985,7 @@ Ast* Parser::parse_bitwise_xor_expression() {
         }
     }
 
-    return expr;
+    return (Expression*) expr;
 }
 
 Ast* Parser::parse_bitwise_and_expression() {

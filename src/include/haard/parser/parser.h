@@ -131,8 +131,8 @@ namespace haard {
         Expression* parse_term_expression();
         Expression* parse_power_expression();
 
-        Ast* parse_bitwise_or_expression();
-        Ast* parse_bitwise_xor_expression();
+        Expression* parse_bitwise_or_expression();
+        Expression* parse_bitwise_xor_expression();
         Ast* parse_bitwise_and_expression();
 
         Ast* parse_shift_expression();

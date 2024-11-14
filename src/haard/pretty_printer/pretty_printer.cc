@@ -265,7 +265,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_BITWISE_OR:
-        print_bitwise_or(node);
+        print_bitwise_or((BitwiseOr*) node);
         break;
 
     case AST_BITWISE_XOR:
@@ -840,8 +840,10 @@ void PrettyPrinter::print_power(Power* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_or(Ast* node) {
-    print_binop(node, "|");
+void PrettyPrinter::print_bitwise_or(BitwiseOr* node) {
+    print(node->get_left());
+    out << " | ";
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_bitwise_xor(Ast* node) {
