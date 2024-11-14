@@ -685,7 +685,7 @@ Type* Parser::parse_named_type() {
 
 Expression* Parser::parse_expression() {
     //return parse_assignment_expression();
-    return (Expression*) parse_primary_expression();
+    return (Expression*) parse_postfix_expression();
 }
 
 Ast* Parser::parse_assignment_expression() {
@@ -1119,25 +1119,27 @@ Ast* Parser::parse_binary_operator(AstKind kind, const char* oper, Ast* left, As
 }
 
 Ast* Parser::parse_postfix_expression() {
-    Ast* left = nullptr;
-    Ast* right = nullptr;
-    Ast* expr = parse_primary_expression();
+    Expression* left = nullptr;
+    Expression* right = nullptr;
+    Expression* expr = (Expression*) parse_primary_expression();
 
     while (true) {
         if (match(TK_DOT)) {
             left = expr;
-            expr = new Ast(AST_DOT, matched);
+            Dot* dot = new Dot(matched);
             right = parse_generic_application();
 
             if (right == nullptr) {
                 log_error("missing member field in member access");
             } else {
-                expr->add_child(left);
-                expr->add_child(right);
+                dot->set_left(left);
+                dot->set_right(right);
             }
+
+            expr = dot;
         } else if (match(TK_ARROW)) {
             left = expr;
-            expr = new Ast(AST_ARROW, matched);
+            //expr = new Ast(AST_ARROW, matched);
             right = parse_generic_application();
 
             if (right == nullptr) {
@@ -1148,7 +1150,7 @@ Ast* Parser::parse_postfix_expression() {
             }
         } else if (match_same_line(TK_LEFT_SQUARE_BRACKET)) {
             left = expr;
-            expr = new Ast(AST_INDEX, matched);
+            //expr = new Ast(AST_INDEX, matched);
             right = parse_expression();
 
             if (right == nullptr) {
@@ -1161,17 +1163,17 @@ Ast* Parser::parse_postfix_expression() {
             expect(TK_RIGHT_SQUARE_BRACKET);
         } else if (match_same_line(TK_LEFT_PARENTHESIS)) {
             left = expr;
-            expr = new Ast(AST_CALL, matched);
+            //expr = new Ast(AST_CALL, matched);
             expr->add_child(left);
             expr->add_child(parse_argument_list());
             expect(TK_RIGHT_PARENTHESIS);
         } else if (match_same_line(TK_INC)) {
             left = expr;
-            expr = new Ast(AST_POS_INCREMENT, matched);
+           // expr = new Ast(AST_POS_INCREMENT, matched);
             expr->add_child(left);
         } else if (match_same_line(TK_DEC)) {
             left = expr;
-            expr = new Ast(AST_POS_DECREMENT, matched);
+           // expr = new Ast(AST_POS_DECREMENT, matched);
             expr->add_child(left);
         } else {
             break;

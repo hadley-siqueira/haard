@@ -1,0 +1,19 @@
+def do_stuff : str
+    @a : AType
+
+    return a.b
+
+def do_stuff2 : str
+    @a : AType
+
+    return a.b<i32, f32>
+
+def do_stuff3 : str
+    @a : AType
+
+    return a::b.c<i32, f32>
+
+def do_stuff4 : str
+    @a : AType
+
+    return alia::obj.Interface::method<i32, f32>

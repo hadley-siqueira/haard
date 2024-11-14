@@ -41,6 +41,7 @@ set(AST_SRC
     src/haard/ast/expressions/expression.cc
 
     src/haard/ast/expressions/operators/binary/binary_operator.cc
+    src/haard/ast/expressions/operators/binary/dot.cc
     src/haard/ast/expressions/operators/binary/generics_application.cc
     src/haard/ast/expressions/operators/binary/scope.cc
     src/haard/ast/expressions/identifier.cc

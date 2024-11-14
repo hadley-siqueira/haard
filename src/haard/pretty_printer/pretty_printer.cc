@@ -329,7 +329,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_DOT:
-        print_dot(node);
+        print_dot((Dot*) node);
         break;
 
     case AST_ARROW:
@@ -850,10 +850,10 @@ void PrettyPrinter::print_shift_right_arithmetic(Ast* node) {
     print_binop(node, ">>");
 }
 
-void PrettyPrinter::print_dot(Ast* node) {
-    print(node->get_child(0));
+void PrettyPrinter::print_dot(Dot* node) {
+    print(node->get_left());
     out << ".";
-    print(node->get_child(1));
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_arrow(Ast* node) {
