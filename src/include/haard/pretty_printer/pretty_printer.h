@@ -34,6 +34,7 @@
 #include "haard/ast/expressions/identifier.h"
 
 #include "haard/ast/expressions/literals/literal.h"
+#include "haard/ast/expressions/literals/boolean_literal.h"
 #include "haard/ast/expressions/literals/char_literal.h"
 #include "haard/ast/expressions/literals/integer_literal.h"
 
@@ -164,6 +165,7 @@ namespace haard {
         void print_scope(Scope* scope);
         void print_identifier(Identifier* id);
 
+        void print_boolean_literal(BooleanLiteral* node);
         void print_char_literal(CharLiteral* node);
         void print_integer_literal(IntegerLiteral* node);
 

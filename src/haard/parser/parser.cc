@@ -1189,7 +1189,7 @@ Ast* Parser::parse_primary_expression() {
     } else if (match(TK_THIS)) {
         expr = new Ast(AST_THIS, matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
-        expr = new Ast(AST_LITERAL_BOOLEAN, matched);
+        expr = new BooleanLiteral(matched);
     } else if (match(TK_LITERAL_INTEGER)) {
         expr = new IntegerLiteral(matched);
     } else if (match(TK_LITERAL_FLOAT)) {

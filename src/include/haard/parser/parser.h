@@ -37,6 +37,7 @@
 #include "haard/ast/expressions/identifier.h"
 
 #include "haard/ast/expressions/literals/literal.h"
+#include "haard/ast/expressions/literals/boolean_literal.h"
 #include "haard/ast/expressions/literals/char_literal.h"
 #include "haard/ast/expressions/literals/integer_literal.h"
 

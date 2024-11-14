@@ -1,0 +1,4 @@
+def do_stuff : bool
+    @a : bool = true
+
+    return false
