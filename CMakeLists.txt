@@ -42,8 +42,31 @@ set(AST_SRC
 
     src/haard/ast/expressions/operators/binary/binary_operator.cc
     src/haard/ast/expressions/operators/binary/assignment.cc
+    src/haard/ast/expressions/operators/binary/equal.cc
+    src/haard/ast/expressions/operators/binary/not_equal.cc
+    src/haard/ast/expressions/operators/binary/less_than.cc
+    src/haard/ast/expressions/operators/binary/greater_than.cc
+    src/haard/ast/expressions/operators/binary/less_than_or_equal.cc
+    src/haard/ast/expressions/operators/binary/greater_than_or_equal.cc
+    src/haard/ast/expressions/operators/binary/inclusive_range.cc
+    src/haard/ast/expressions/operators/binary/exclusive_range.cc
+    src/haard/ast/expressions/operators/binary/plus.cc
+    src/haard/ast/expressions/operators/binary/minus.cc
+    src/haard/ast/expressions/operators/binary/times.cc
+    src/haard/ast/expressions/operators/binary/division.cc
+    src/haard/ast/expressions/operators/binary/modulo.cc
+    src/haard/ast/expressions/operators/binary/integer_division.cc
+    src/haard/ast/expressions/operators/binary/power.cc
+    src/haard/ast/expressions/operators/binary/shift_left_logical.cc
+    src/haard/ast/expressions/operators/binary/shift_right_logical.cc
+    src/haard/ast/expressions/operators/binary/shift_right_arithmetic.cc
+    src/haard/ast/expressions/operators/binary/bitwise_and.cc
+    src/haard/ast/expressions/operators/binary/bitwise_or.cc
+    src/haard/ast/expressions/operators/binary/bitwise_xor.cc
+    src/haard/ast/expressions/operators/binary/index.cc
     src/haard/ast/expressions/operators/binary/dot.cc
     src/haard/ast/expressions/operators/binary/arrow.cc
+
     src/haard/ast/expressions/operators/binary/generics_application.cc
     src/haard/ast/expressions/operators/binary/scope.cc
     src/haard/ast/expressions/identifier.cc

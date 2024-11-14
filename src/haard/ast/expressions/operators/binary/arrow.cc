@@ -10,5 +10,5 @@ Arrow::Arrow(Token& token, Expression* left, Expression* right) {
     set_kind(AST_ARROW);
     set_token(token);
     set_left(left);
-    set_right(right);
+    set_left(right);
 }

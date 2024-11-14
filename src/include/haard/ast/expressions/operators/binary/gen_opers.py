@@ -1,20 +1,21 @@
 import re
 
 header = '#include "haard/ast/expressions/operators/binary/OPER_H.h"'
-template = """#include "haard/ast/expressions/operators/binary/OPER_H.h"
 
-using namespace haard;
+template = """#ifndef HAARD_AST_HOPER_H
+#define HAARD_AST_HOPER_H
 
-Oper::Oper() {
-    set_kind(AST_MOPER);
+#include "haard/ast/expressions/operators/binary/binary_operator.h"
+
+namespace haard {
+    class OPer : public BinaryOperator {
+    public:
+        OPer();
+        OPer(Token& token, Expression* left=nullptr, Expression* right=nullptr);
+    };
 }
 
-Oper::Oper(Token& token, Expression* left, Expression* right) {
-    set_kind(AST_MOPER);
-    set_token(token);
-    set_left(left);
-    set_left(right);
-}"""
+#endif"""
 
 opers = [
     'assignment', 
@@ -38,10 +39,10 @@ def get_name(n):
     return tmp
 
 for oper in opers:
-    content = re.sub("OPER_H", oper, template)
-    content = re.sub("Oper", get_name(oper), content)
+    content = re.sub("HOPER", oper.upper(), template)
+    content = re.sub("OPer", get_name(oper), content)
     content = re.sub("AST_MOPER", "AST_" + oper.upper(), content)
-    f = open(oper + ".cc", "w")
+    f = open(oper + ".h", "w")
     f.write(content)
     f.close()
     print(re.sub("OPER_H", oper, header))

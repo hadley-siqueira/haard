@@ -684,8 +684,7 @@ Type* Parser::parse_named_type() {
 }
 
 Expression* Parser::parse_expression() {
-    //return parse_assignment_expression();
-    return (Expression*) parse_postfix_expression();
+    return (Expression*) parse_assignment_expression();
 }
 
 Ast* Parser::parse_assignment_expression() {
