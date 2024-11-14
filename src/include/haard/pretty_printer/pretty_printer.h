@@ -29,6 +29,7 @@
 
 #include "haard/ast/expressions/operators/binary/binary_operator.h"
 #include "haard/ast/expressions/operators/binary/dot.h"
+#include "haard/ast/expressions/operators/binary/arrow.h"
 #include "haard/ast/expressions/operators/binary/generics_application.h"
 #include "haard/ast/expressions/operators/binary/scope.h"
 
@@ -155,7 +156,7 @@ namespace haard {
         void print_shift_right_arithmetic(Ast* node);
 
         void print_dot(Dot* node);
-        void print_arrow(Ast* node);
+        void print_arrow(Arrow* node);
         void print_call(Ast* expr);
         void print_arguments(Ast* args);
         void print_argument_name(Ast* node);

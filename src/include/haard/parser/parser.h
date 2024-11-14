@@ -32,6 +32,7 @@
 
 #include "haard/ast/expressions/operators/binary/binary_operator.h"
 #include "haard/ast/expressions/operators/binary/dot.h"
+#include "haard/ast/expressions/operators/binary/arrow.h"
 #include "haard/ast/expressions/operators/binary/generics_application.h"
 #include "haard/ast/expressions/operators/binary/scope.h"
 

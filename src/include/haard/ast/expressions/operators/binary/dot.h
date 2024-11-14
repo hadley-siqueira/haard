@@ -7,7 +7,7 @@ namespace haard {
     class Dot : public BinaryOperator {
     public:
         Dot();
-        Dot(Token& token);
+        Dot(Token& token, Expression* left=nullptr, Expression* right=nullptr);
     };
 }
 

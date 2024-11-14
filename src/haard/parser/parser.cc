@@ -1126,28 +1126,28 @@ Ast* Parser::parse_postfix_expression() {
     while (true) {
         if (match(TK_DOT)) {
             left = expr;
-            Dot* dot = new Dot(matched);
+            Dot* dot = new Dot(matched, left);
             right = parse_generic_application();
 
             if (right == nullptr) {
                 log_error("missing member field in member access");
             } else {
-                dot->set_left(left);
                 dot->set_right(right);
             }
 
             expr = dot;
         } else if (match(TK_ARROW)) {
             left = expr;
-            //expr = new Ast(AST_ARROW, matched);
+            Arrow* arrow = new Arrow(matched, left);
             right = parse_generic_application();
 
             if (right == nullptr) {
                 log_error("missing member field in arrow member access");
             } else {
-                expr->add_child(left);
-                expr->add_child(right);
+                arrow->set_right(right);
             }
+
+            expr = arrow;
         } else if (match_same_line(TK_LEFT_SQUARE_BRACKET)) {
             left = expr;
             //expr = new Ast(AST_INDEX, matched);

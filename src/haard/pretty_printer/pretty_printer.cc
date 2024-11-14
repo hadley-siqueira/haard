@@ -333,7 +333,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_ARROW:
-        print_arrow(node);
+        print_arrow((Arrow*) node);
         break;
 
     case AST_INDEX:
@@ -856,10 +856,10 @@ void PrettyPrinter::print_dot(Dot* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_arrow(Ast* node) {
-    print(node->get_child(0));
+void PrettyPrinter::print_arrow(Arrow* node) {
+    print(node->get_left());
     out << "->";
-    print(node->get_child(1));
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_parenthesis(Ast* node) {
