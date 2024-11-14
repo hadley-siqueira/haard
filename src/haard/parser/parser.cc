@@ -881,7 +881,7 @@ Expression* Parser::parse_term_expression() {
     while (true) {
         if (match_same_line(TK_TIMES)) {
             Times* oper = new Times(matched, expr);
-            expr = (Expression*) parse_power_expression();
+            expr = parse_power_expression();
 
             if (expr == nullptr) {
                 log_error("missing rhs on * operator");
@@ -892,7 +892,7 @@ Expression* Parser::parse_term_expression() {
             expr = oper;
         } else if (match_same_line(TK_DIVISION)) {
             Division* oper = new Division(matched, expr);
-            expr = (Expression*) parse_power_expression();
+            expr = parse_power_expression();
 
             if (expr == nullptr) {
                 log_error("missing rhs on / operator");
@@ -903,7 +903,7 @@ Expression* Parser::parse_term_expression() {
             expr = oper;
         } else if (match_same_line(TK_MODULO)) {
             Modulo* oper = new Modulo(matched, expr);
-            expr = (Expression*) parse_power_expression();
+            expr = parse_power_expression();
 
             if (expr == nullptr) {
                 log_error("missing rhs on % operator");
@@ -914,7 +914,7 @@ Expression* Parser::parse_term_expression() {
             expr = oper;
         } else if (match_same_line(TK_INTEGER_DIVISION)) {
             IntegerDivision* oper = new IntegerDivision(matched, expr);
-            expr = (Expression*) parse_power_expression();
+            expr = parse_power_expression();
 
             if (expr == nullptr) {
                 log_error("missing rhs on // operator");
@@ -1016,30 +1016,55 @@ Expression* Parser::parse_bitwise_and_expression() {
         }
     }
 
-    return (Expression*) expr;
+    return expr;
 }
 
 Expression* Parser::parse_shift_expression() {
-    Ast* expr = parse_unary_expression();
-    Ast* left;
-    Ast* right;
+    Expression* expr = parse_unary_expression();
 
     while (true) {
         if (match(TK_SLL)) {
-            expr = parse_binary_operator(AST_SHIFT_LEFT_LOGICAL, "sll", expr, &Parser::parse_unary_expression);
+            ShiftLeftLogical* oper = new ShiftLeftLogical(matched, expr);
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on << operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_SRL)) {
-            expr = parse_binary_operator(AST_SHIFT_RIGHT_LOGICAL, "srl", expr, &Parser::parse_unary_expression);
+            ShiftRightLogical* oper = new ShiftRightLogical(matched, expr);
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on >>> operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_SRA)) {
-            expr = parse_binary_operator(AST_SHIFT_RIGHT_ARITHMETIC, "sra", expr, &Parser::parse_unary_expression);
+            ShiftRightArithmetic* oper = new ShiftRightArithmetic(matched, expr);
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on >> operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
     }
 
-    return (Expression*) expr;
+    return expr;
 }
 
-Ast* Parser::parse_unary_expression() {
+Expression* Parser::parse_unary_expression() {
     Token oper;
     Ast* subexpr;
     Ast* expr = nullptr;
@@ -1075,7 +1100,7 @@ Ast* Parser::parse_unary_expression() {
         expr = parse_postfix_expression();
     }
 
-    return expr;
+    return (Expression*) expr;
 }
 
 Ast* Parser::parse_logical_not() {

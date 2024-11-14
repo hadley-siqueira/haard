@@ -175,9 +175,9 @@ namespace haard {
         void print_bitwise_xor(BitwiseXor* node);
         void print_bitwise_and(BitwiseAnd* node);
 
-        void print_shift_left_logical(Ast* node);
-        void print_shift_right_logical(Ast* node);
-        void print_shift_right_arithmetic(Ast* node);
+        void print_shift_left_logical(ShiftLeftLogical* node);
+        void print_shift_right_logical(ShiftRightLogical* node);
+        void print_shift_right_arithmetic(ShiftRightArithmetic* node);
 
         void print_dot(Dot* node);
         void print_arrow(Arrow* node);
@@ -241,7 +241,7 @@ namespace haard {
 
 
 //        void print_identifier(Identifier* id);
-        void print_generics(const Generics *g);
+        void print_generics(const Generics* g);
 
 //        void print_char_literal(CharLiteral* ch);
 //        void print_string_literal(StringLiteral* str);

@@ -137,7 +137,7 @@ namespace haard {
 
         Expression* parse_shift_expression();
 
-        Ast* parse_unary_expression();
+        Expression* parse_unary_expression();
         Ast* parse_logical_not();
         Ast* parse_not();
         Ast* parse_address_of();

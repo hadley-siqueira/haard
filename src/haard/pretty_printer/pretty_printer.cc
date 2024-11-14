@@ -269,23 +269,23 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_BITWISE_XOR:
-        print_bitwise_xor(node);
+        print_bitwise_xor((BitwiseXor*) node);
         break;
 
     case AST_BITWISE_AND:
-        print_bitwise_and(node);
+        print_bitwise_and((BitwiseAnd*) node);
         break;
 
     case AST_SHIFT_LEFT_LOGICAL:
-        print_shift_left_logical(node);
+        print_shift_left_logical((ShiftLeftLogical*) node);
         break;
 
     case AST_SHIFT_RIGHT_LOGICAL:
-        print_shift_right_logical(node);
+        print_shift_right_logical((ShiftRightLogical*) node);
         break;
 
     case AST_SHIFT_RIGHT_ARITHMETIC:
-        print_shift_right_arithmetic(node);
+        print_shift_right_arithmetic((ShiftRightArithmetic*) node);
         break;
 
     case AST_LOGICAL_NOT:
@@ -858,16 +858,22 @@ void PrettyPrinter::print_bitwise_and(BitwiseAnd* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_shift_left_logical(Ast* node) {
-    print_binop(node, "<<");
+void PrettyPrinter::print_shift_left_logical(ShiftLeftLogical* node) {
+    print(node->get_left());
+    out << " << ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_shift_right_logical(Ast* node) {
-    print_binop(node, ">>>");
+void PrettyPrinter::print_shift_right_logical(ShiftRightLogical* node) {
+    print(node->get_left());
+    out << " >>> ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_shift_right_arithmetic(Ast* node) {
-    print_binop(node, ">>");
+void PrettyPrinter::print_shift_right_arithmetic(ShiftRightArithmetic* node) {
+    print(node->get_left());
+    out << " >> ";
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_dot(Dot* node) {

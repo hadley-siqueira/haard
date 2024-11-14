@@ -22,3 +22,21 @@ def bitwise_and : i32
 
     return a & b
 
+def sll : i32
+    @a : i32
+    @b : i32
+
+    return a << b
+
+def srl : i32
+    @a : i32
+    @b : i32
+
+    return a >>> b
+
+def sra : i32
+    @a : i32
+    @b : i32
+
+    return a >> b
+
