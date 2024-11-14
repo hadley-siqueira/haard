@@ -1193,9 +1193,7 @@ Ast* Parser::parse_primary_expression() {
     } else if (match(TK_LITERAL_INTEGER)) {
         expr = new IntegerLiteral(matched);
     } else if (match(TK_LITERAL_FLOAT)) {
-        expr = new Ast(AST_LITERAL_FLOAT, matched);
-    } else if (match(TK_LITERAL_DOUBLE)) {
-        expr = new Ast(AST_LITERAL_DOUBLE, matched);
+        expr = new FloatLiteral(matched);
     } else if (match(TK_LITERAL_CHAR)) {
         expr = new CharLiteral(matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING)) {

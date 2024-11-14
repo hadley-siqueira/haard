@@ -49,6 +49,7 @@ set(AST_SRC
     src/haard/ast/expressions/literals/boolean_literal.cc
     src/haard/ast/expressions/literals/char_literal.cc
     src/haard/ast/expressions/literals/integer_literal.cc
+    src/haard/ast/expressions/literals/float_literal.cc
 
 )
 

@@ -422,7 +422,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_LITERAL_FLOAT:
-        out << node->get_value();
+        print_float_literal((FloatLiteral*) node);
         break;
 
     case AST_LITERAL_DOUBLE:
@@ -896,6 +896,10 @@ void PrettyPrinter::print_char_literal(CharLiteral* node) {
 }
 
 void PrettyPrinter::print_integer_literal(IntegerLiteral* node) {
+    out << node->get_token().get_value();
+}
+
+void PrettyPrinter::print_float_literal(FloatLiteral* node) {
     out << node->get_token().get_value();
 }
 

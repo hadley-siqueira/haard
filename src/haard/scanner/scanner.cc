@@ -120,22 +120,22 @@ void Scanner::get_number() {
 
         if (lookahead('.') && !lookahead('.', 1)) {
             advance();
-            kind = TK_LITERAL_DOUBLE;
+            kind = TK_LITERAL_FLOAT;
 
-            while (is_digit()) {
+            while (is_digit() || lookahead('_')) {
                 advance();
             }
         }
 
         if (lookahead('e') || lookahead('E')) {
-            kind = TK_LITERAL_DOUBLE;
+            kind = TK_LITERAL_FLOAT;
             advance();
 
             if (lookahead('-') || lookahead('+')) {
                 advance();
             }
 
-            while (is_digit()) {
+            while (is_digit() || lookahead('_')) {
                 advance();
             }
         }

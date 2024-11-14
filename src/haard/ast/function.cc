@@ -13,6 +13,7 @@ Function::Function() {
 Function::~Function() {
     delete return_type;
     delete generics;
+    delete statements;
 
     for (auto p : parameters) {
         delete p;

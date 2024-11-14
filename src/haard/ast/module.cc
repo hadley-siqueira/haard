@@ -9,9 +9,9 @@ Module::Module() {
 }
 
 Module::~Module() {
-    for (auto c : children) {
+    /*for (auto c : children) {
         delete c;
-    }
+    }*/
 }
 
 void Module::add_import(Import* import) {

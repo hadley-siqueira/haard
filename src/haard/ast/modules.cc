@@ -4,6 +4,12 @@
 
 using namespace haard;
 
+Modules::~Modules() {
+    for (auto m : modules) {
+        delete m.second;
+    }
+}
+
 void Modules::add_module(std::string& path, Module* module) {
     modules[path] = module;
 }
