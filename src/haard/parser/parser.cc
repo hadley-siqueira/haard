@@ -841,13 +841,33 @@ Ast* Parser::parse_range_expression() {
 }
 
 Ast* Parser::parse_arith_expression() {
-    Ast* expr = parse_term_expression();
+    Expression* expr = (Expression*) parse_term_expression();
 
     while (true) {
         if (match_same_line(TK_PLUS)) {
-            expr = parse_binary_operator(AST_PLUS, "+", expr, &Parser::parse_term_expression);
+            Plus* oper = new Plus(matched, expr);
+
+            expr = (Expression*) parse_term_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on + operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match_same_line(TK_MINUS)) {
-            expr = parse_binary_operator(AST_MINUS, "-", expr, &Parser::parse_term_expression);
+            Minus* oper = new Minus(matched, expr);
+
+            expr = (Expression*) parse_term_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on - operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }

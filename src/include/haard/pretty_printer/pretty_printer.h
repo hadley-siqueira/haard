@@ -161,8 +161,8 @@ namespace haard {
         void print_inclusive_range(Ast* node);
         void print_exclusive_range(Ast* node);
 
-        void print_plus(Ast* node);
-        void print_minus(Ast* node);
+        void print_plus(Plus* node);
+        void print_minus(Minus* node);
 
         void print_times(Ast* node);
         void print_division(Ast* node);
