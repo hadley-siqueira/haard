@@ -33,6 +33,10 @@
 
 #include "haard/ast/expressions/identifier.h"
 
+#include "haard/ast/expressions/literals/literal.h"
+#include "haard/ast/expressions/literals/char_literal.h"
+#include "haard/ast/expressions/literals/integer_literal.h"
+
 #include "haard/ast/generics.h"
 
 namespace haard {
@@ -159,6 +163,9 @@ namespace haard {
         void print_generic_application(GenericsApplication* node);
         void print_scope(Scope* scope);
         void print_identifier(Identifier* id);
+
+        void print_char_literal(CharLiteral* node);
+        void print_integer_literal(IntegerLiteral* node);
 
 //        void print_class(Class* klass);
 //        void print_struct(Struct* st);

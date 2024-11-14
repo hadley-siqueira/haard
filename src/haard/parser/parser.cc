@@ -685,7 +685,7 @@ Type* Parser::parse_named_type() {
 
 Expression* Parser::parse_expression() {
     //return parse_assignment_expression();
-    return parse_generic_application();
+    return (Expression*) parse_primary_expression();
 }
 
 Ast* Parser::parse_assignment_expression() {
@@ -1191,13 +1191,13 @@ Ast* Parser::parse_primary_expression() {
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
         expr = new Ast(AST_LITERAL_BOOLEAN, matched);
     } else if (match(TK_LITERAL_INTEGER)) {
-        expr = new Ast(AST_LITERAL_INTEGER, matched);
+        expr = new IntegerLiteral(matched);
     } else if (match(TK_LITERAL_FLOAT)) {
         expr = new Ast(AST_LITERAL_FLOAT, matched);
     } else if (match(TK_LITERAL_DOUBLE)) {
         expr = new Ast(AST_LITERAL_DOUBLE, matched);
     } else if (match(TK_LITERAL_CHAR)) {
-        expr = new Ast(AST_LITERAL_CHAR, matched);
+        expr = new CharLiteral(matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING)) {
         expr = new Ast(AST_LITERAL_STRING, matched);
     } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {

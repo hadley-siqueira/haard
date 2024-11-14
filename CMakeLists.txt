@@ -44,6 +44,10 @@ set(AST_SRC
     src/haard/ast/expressions/operators/binary/generics_application.cc
     src/haard/ast/expressions/operators/binary/scope.cc
     src/haard/ast/expressions/identifier.cc
+
+    src/haard/ast/expressions/literals/literal.cc
+    src/haard/ast/expressions/literals/integer_literal.cc
+    src/haard/ast/expressions/literals/char_literal.cc
 )
 
 set(IR_SRC

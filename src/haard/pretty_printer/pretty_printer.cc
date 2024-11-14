@@ -414,11 +414,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_LITERAL_CHAR:
-        out << "'" << node->get_value() << "'";
+        print_char_literal((CharLiteral*) node);
         break;
 
     case AST_LITERAL_INTEGER:
-        out << node->get_value();
+        print_integer_literal((IntegerLiteral*) node);
         break;
 
     case AST_LITERAL_FLOAT:
@@ -885,6 +885,14 @@ void PrettyPrinter::print_scope(Scope* scope) {
 
 void PrettyPrinter::print_identifier(Identifier* id) {
     out << id->get_token().get_value();
+}
+
+void PrettyPrinter::print_char_literal(CharLiteral* node) {
+    out << "'" << node->get_token().get_value() << "'";
+}
+
+void PrettyPrinter::print_integer_literal(IntegerLiteral* node) {
+    out << node->get_token().get_value();
 }
 
 void PrettyPrinter::print_function(Function* function) {
