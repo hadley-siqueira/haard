@@ -9,3 +9,15 @@ def bitwise_or : i32
     @b : i32
 
     return a | b
+
+def bitwise_xor : i32
+    @a : i32
+    @b : i32
+
+    return a ^ b
+
+def bitwise_and : i32
+    @a : i32
+    @b : i32
+
+    return a & b

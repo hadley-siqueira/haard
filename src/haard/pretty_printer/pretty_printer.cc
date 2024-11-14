@@ -846,12 +846,16 @@ void PrettyPrinter::print_bitwise_or(BitwiseOr* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_xor(Ast* node) {
-    print_binop(node, "^");
+void PrettyPrinter::print_bitwise_xor(BitwiseXor* node) {
+    print(node->get_left());
+    out << " ^ ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_and(Ast* node) {
-    print_binop(node, "&");
+void PrettyPrinter::print_bitwise_and(BitwiseAnd* node) {
+    print(node->get_left());
+    out << " & ";
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_shift_left_logical(Ast* node) {

@@ -172,8 +172,8 @@ namespace haard {
         void print_power(Power* node);
 
         void print_bitwise_or(BitwiseOr* node);
-        void print_bitwise_xor(Ast* node);
-        void print_bitwise_and(Ast* node);
+        void print_bitwise_xor(BitwiseXor* node);
+        void print_bitwise_and(BitwiseAnd* node);
 
         void print_shift_left_logical(Ast* node);
         void print_shift_right_logical(Ast* node);

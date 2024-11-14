@@ -974,27 +974,20 @@ Expression* Parser::parse_bitwise_or_expression() {
 }
 
 Expression* Parser::parse_bitwise_xor_expression() {
-    Token oper;
-    Ast* expr = parse_bitwise_and_expression();
+    Expression* expr = parse_bitwise_and_expression();
 
     while (true) {
         if (match(TK_BITWISE_XOR)) {
-            expr = parse_binary_operator(AST_BITWISE_XOR, "^", expr, &Parser::parse_bitwise_and_expression);
-        } else {
-            break;
-        }
-    }
+            BitwiseXor* oper = new BitwiseXor(matched, expr);
+            expr = parse_bitwise_and_expression();
 
-    return (Expression*) expr;
-}
+            if (expr == nullptr) {
+                log_error("missing rhs on ^ operator");
+            } else {
+                oper->set_right(expr);
+            }
 
-Ast* Parser::parse_bitwise_and_expression() {
-    Token oper;
-    Ast* expr = parse_shift_expression();
-
-    while (true) {
-        if (match_same_line(TK_BITWISE_AND)) {
-            expr = parse_binary_operator(AST_BITWISE_AND, "&", expr, &Parser::parse_shift_expression);
+            expr = oper;
         } else {
             break;
         }
@@ -1003,7 +996,30 @@ Ast* Parser::parse_bitwise_and_expression() {
     return expr;
 }
 
-Ast* Parser::parse_shift_expression() {
+Expression* Parser::parse_bitwise_and_expression() {
+    Expression* expr = parse_shift_expression();
+
+    while (true) {
+        if (match_same_line(TK_BITWISE_AND)) {
+            BitwiseAnd* oper = new BitwiseAnd(matched, expr);
+            expr = parse_shift_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on & operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
+        } else {
+            break;
+        }
+    }
+
+    return (Expression*) expr;
+}
+
+Expression* Parser::parse_shift_expression() {
     Ast* expr = parse_unary_expression();
     Ast* left;
     Ast* right;
@@ -1020,7 +1036,7 @@ Ast* Parser::parse_shift_expression() {
         }
     }
 
-    return expr;
+    return (Expression*) expr;
 }
 
 Ast* Parser::parse_unary_expression() {
