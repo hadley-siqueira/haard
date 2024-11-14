@@ -149,7 +149,6 @@ namespace haard {
         AST_LITERAL_BOOLEAN,
         AST_LITERAL_INTEGER,
         AST_LITERAL_FLOAT,
-        AST_LITERAL_DOUBLE,
         AST_LITERAL_CHAR,
         AST_LITERAL_STRING,
         AST_LITERAL_SYMBOL,

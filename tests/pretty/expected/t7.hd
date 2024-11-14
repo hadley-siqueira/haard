@@ -1,0 +1,6 @@
+def do_stuff : str
+    @a : str = 'Hello, world'
+    @b : str = "Hello, world $a"
+    @c : char = 'a'
+
+    return "$a + $b = $c or ${a + b}"

@@ -50,7 +50,7 @@ set(AST_SRC
     src/haard/ast/expressions/literals/char_literal.cc
     src/haard/ast/expressions/literals/integer_literal.cc
     src/haard/ast/expressions/literals/float_literal.cc
-
+    src/haard/ast/expressions/literals/string_literal.cc
 )
 
 set(IR_SRC
@@ -65,18 +65,6 @@ set(SCANNER_SRC
 
 set(PARSER_SRC
     src/haard/parser/parser.cc
-)
-
-set(SEMANTIC_SRC
-    src/haard/semantic/semantic_analyzer.cc
-)
-
-set(SCOPE_SRC
-    src/haard/scope/scope.cc
-)
-
-set(SYMBOL_SRC
-    src/haard/symbol/symbol.cc
 )
 
 set(DRIVER_SRC
@@ -100,9 +88,6 @@ set(SOURCES
     ${IR_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
-    ${SYMBOL_SRC}
-    ${SCOPE_SRC}
-    ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}

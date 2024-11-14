@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include "haard/ast/ast.h"
-#include "haard/scope/scope.h"
 #include "haard/pretty_printer/pretty_printer.h"
 
 using namespace haard;

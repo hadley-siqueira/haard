@@ -425,12 +425,8 @@ void PrettyPrinter::print(Ast* node) {
         print_float_literal((FloatLiteral*) node);
         break;
 
-    case AST_LITERAL_DOUBLE:
-        out << node->get_value();
-        break;
-
     case AST_LITERAL_STRING:
-        out << "\"" << node->get_value() << "\"";
+        print_string_literal((StringLiteral*) node);
         break;
 
     case AST_LITERAL_SYMBOL:
@@ -892,7 +888,7 @@ void PrettyPrinter::print_boolean_literal(BooleanLiteral* node) {
 }
 
 void PrettyPrinter::print_char_literal(CharLiteral* node) {
-    out << "'" << node->get_token().get_value() << "'";
+    out << node->get_token().get_value();
 }
 
 void PrettyPrinter::print_integer_literal(IntegerLiteral* node) {
@@ -900,6 +896,10 @@ void PrettyPrinter::print_integer_literal(IntegerLiteral* node) {
 }
 
 void PrettyPrinter::print_float_literal(FloatLiteral* node) {
+    out << node->get_token().get_value();
+}
+
+void PrettyPrinter::print_string_literal(StringLiteral* node) {
     out << node->get_token().get_value();
 }
 

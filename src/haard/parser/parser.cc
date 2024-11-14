@@ -1196,10 +1196,8 @@ Ast* Parser::parse_primary_expression() {
         expr = new FloatLiteral(matched);
     } else if (match(TK_LITERAL_CHAR)) {
         expr = new CharLiteral(matched);
-    } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING)) {
-        expr = new Ast(AST_LITERAL_STRING, matched);
-    } else if (match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
-        expr = new Ast(AST_LITERAL_STRING, matched);
+    } else if (match(TK_LITERAL_STRING)) {
+        expr = new StringLiteral(matched);
     } else if (match(TK_LITERAL_SYMBOL)) {
         expr = new Ast(AST_LITERAL_SYMBOL, matched);
     } else if (match(TK_NULL)) {

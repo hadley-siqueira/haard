@@ -41,6 +41,7 @@
 #include "haard/ast/expressions/literals/char_literal.h"
 #include "haard/ast/expressions/literals/integer_literal.h"
 #include "haard/ast/expressions/literals/float_literal.h"
+#include "haard/ast/expressions/literals/string_literal.h"
 
 #include "haard/ast/generics.h"
 
