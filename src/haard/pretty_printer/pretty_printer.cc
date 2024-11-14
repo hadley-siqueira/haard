@@ -245,23 +245,23 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_TIMES:
-        print_times(node);
+        print_times((Times*) node);
         break;
 
     case AST_DIVISION:
-        print_division(node);
+        print_division((Division*) node);
         break;
 
     case AST_MODULO:
-        print_modulo(node);
+        print_modulo((Modulo*) node);
         break;
 
     case AST_INTEGER_DIVISION:
-        print_integer_division(node);
+        print_integer_division((IntegerDivision*) node);
         break;
 
     case AST_POWER:
-        print_power(node);
+        print_power((Power*) node);
         break;
 
     case AST_BITWISE_OR:
@@ -810,24 +810,34 @@ void PrettyPrinter::print_minus(Minus* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_times(Ast* node) {
-    print_binop(node, "*");
+void PrettyPrinter::print_times(Times* node) {
+    print(node->get_left());
+    out << " * ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_division(Ast* node) {
-    print_binop(node, "/");
+void PrettyPrinter::print_division(Division* node) {
+    print(node->get_left());
+    out << " / ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_modulo(Ast* node) {
-    print_binop(node, "%");
+void PrettyPrinter::print_modulo(Modulo *node) {
+    print(node->get_left());
+    out << " % ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_integer_division(Ast* node) {
-    print_binop(node, "//");
+void PrettyPrinter::print_integer_division(IntegerDivision *node) {
+    print(node->get_left());
+    out << " // ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_power(Ast* node) {
-    print_binop(node, "**");
+void PrettyPrinter::print_power(Power* node) {
+    print(node->get_left());
+    out << " ** ";
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_bitwise_or(Ast* node) {

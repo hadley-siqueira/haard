@@ -164,12 +164,13 @@ namespace haard {
         void print_plus(Plus* node);
         void print_minus(Minus* node);
 
-        void print_times(Ast* node);
-        void print_division(Ast* node);
-        void print_modulo(Ast* node);
-        void print_integer_division(Ast* node);
+        void print_times(Times* node);
+        void print_division(Division* node);
+        void print_modulo(Modulo* node);
+        void print_integer_division(IntegerDivision* node);
 
-        void print_power(Ast* node);
+        void print_power(Power* node);
+
         void print_bitwise_or(Ast* node);
         void print_bitwise_xor(Ast* node);
         void print_bitwise_and(Ast* node);

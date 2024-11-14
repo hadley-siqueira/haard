@@ -128,8 +128,8 @@ namespace haard {
         Ast* parse_range_expression();
 
         Ast* parse_arith_expression();
-        Ast* parse_term_expression();
-        Ast* parse_power_expression();
+        Expression* parse_term_expression();
+        Expression* parse_power_expression();
 
         Ast* parse_bitwise_or_expression();
         Ast* parse_bitwise_xor_expression();

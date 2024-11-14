@@ -841,13 +841,12 @@ Ast* Parser::parse_range_expression() {
 }
 
 Ast* Parser::parse_arith_expression() {
-    Expression* expr = (Expression*) parse_term_expression();
+    Expression* expr = parse_term_expression();
 
     while (true) {
         if (match_same_line(TK_PLUS)) {
             Plus* oper = new Plus(matched, expr);
-
-            expr = (Expression*) parse_term_expression();
+            expr = parse_term_expression();
 
             if (expr == nullptr) {
                 log_error("missing rhs on + operator");
@@ -859,7 +858,7 @@ Ast* Parser::parse_arith_expression() {
         } else if (match_same_line(TK_MINUS)) {
             Minus* oper = new Minus(matched, expr);
 
-            expr = (Expression*) parse_term_expression();
+            expr = parse_term_expression();
 
             if (expr == nullptr) {
                 log_error("missing rhs on - operator");
@@ -876,18 +875,54 @@ Ast* Parser::parse_arith_expression() {
     return expr;
 }
 
-Ast* Parser::parse_term_expression() {
-    Ast* expr = parse_power_expression();
+Expression* Parser::parse_term_expression() {
+    Expression* expr = parse_power_expression();
 
     while (true) {
         if (match_same_line(TK_TIMES)) {
-            expr = parse_binary_operator(AST_TIMES, "*", expr, &Parser::parse_power_expression);
+            Times* oper = new Times(matched, expr);
+            expr = (Expression*) parse_power_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on * operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match_same_line(TK_DIVISION)) {
-            expr = parse_binary_operator(AST_DIVISION, "/", expr, &Parser::parse_power_expression);
+            Division* oper = new Division(matched, expr);
+            expr = (Expression*) parse_power_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on / operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match_same_line(TK_MODULO)) {
-            expr = parse_binary_operator(AST_MODULO, "%", expr, &Parser::parse_power_expression);
+            Modulo* oper = new Modulo(matched, expr);
+            expr = (Expression*) parse_power_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on % operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match_same_line(TK_INTEGER_DIVISION)) {
-            expr = parse_binary_operator(AST_INTEGER_DIVISION, "//", expr, &Parser::parse_power_expression);
+            IntegerDivision* oper = new IntegerDivision(matched, expr);
+            expr = (Expression*) parse_power_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on // operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -896,11 +931,20 @@ Ast* Parser::parse_term_expression() {
     return expr;
 }
 
-Ast* Parser::parse_power_expression() {
-    Ast* expr = parse_bitwise_or_expression();
+Expression* Parser::parse_power_expression() {
+    Expression* expr = (Expression*) parse_bitwise_or_expression();
 
     if (match(TK_POWER)) {
-        expr = parse_binary_operator(AST_POWER, "**", expr, &Parser::parse_power_expression);
+        Power* oper = new Power(matched, expr);
+        expr = parse_power_expression();
+
+        if (expr == nullptr) {
+            log_error("missing rhs on ** operator");
+        } else {
+            oper->set_right(expr);
+        }
+
+        expr = oper;
     }
 
     return expr;
