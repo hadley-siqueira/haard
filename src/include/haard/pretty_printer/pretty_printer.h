@@ -85,8 +85,8 @@ namespace haard {
         void print_reference_type(ReferenceType* node);
         void print_list_type(Ast* node);
         void print_array_type(ArrayType* type);
-        void print_tuple_type(Ast *tuple);
-        void print_function_type(Ast *type);
+        void print_tuple_type(TupleType* tuple);
+        void print_function_type(FunctionType* ftype);
         void print_named_type(NamedType* type);
 
         void print_type_list(Ast *tlist, const char* begin, const char* end);

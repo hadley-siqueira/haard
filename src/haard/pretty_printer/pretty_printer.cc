@@ -515,11 +515,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_TYPE_TUPLE:
-        print_tuple_type(node);
+        print_tuple_type((TupleType*) node);
         break;
 
     case AST_TYPE_FUNCTION:
-        print_function_type(node);
+        print_function_type((FunctionType*) node);
         break;
 
     case AST_TYPE_NAMED:
@@ -653,14 +653,33 @@ void PrettyPrinter::print_array_type(ArrayType* type) {
     out << "]";
 }
 
-void PrettyPrinter::print_tuple_type(Ast* tuple) {
-    print_type_list(tuple, "(", ")");
+void PrettyPrinter::print_tuple_type(TupleType* tuple) {
+    bool first = true;
+
+    out << "(";
+
+    for (auto type : tuple->get_types()) {
+        if (!first) out << ", ";
+        print(type);
+        first = false;
+    }
+
+    out << ")";
 }
 
-void PrettyPrinter::print_function_type(Ast* type) {
-    print_type_list(type->get_child(0), "(", ")");
-    out << " -> ";
-    print(type->get_child(1));
+void PrettyPrinter::print_function_type(FunctionType* ftype) {
+    bool first = true;
+
+    out << "(";
+
+    for (auto type : ftype->get_parameters_type()) {
+        if (!first) out << ", ";
+        print(type);
+        first = false;
+    }
+
+    out << ") -> ";
+    print(ftype->get_return_type());
 }
 
 void PrettyPrinter::print_named_type(NamedType* type) {

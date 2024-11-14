@@ -561,21 +561,16 @@ Type* Parser::parse_tuple_or_function_type() {
     }
 
     expect(TK_LEFT_PARENTHESIS);
-    type = parse_type();
 
-    if (type == nullptr) {
-        log_error("type can't be null on tuple or function type");
-    } else {
-        types.push_back(type);
-    }
+    do {
+        type = parse_type();
 
-    while (match(TK_COMMA)) {
         if (type == nullptr) {
             log_error("type can't be null on tuple or function type");
         } else {
             types.push_back(type);
         }
-    }
+    } while (match(TK_COMMA));
 
     expect(TK_RIGHT_PARENTHESIS);
 
