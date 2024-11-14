@@ -258,7 +258,7 @@ Statement* Parser::parse_statement() {
     } else if (lookahead(TK_IF)) {
         //stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
-        //stmt = parse_return_statement();
+        stmt = parse_return_statement();
     } else if (lookahead(TK_SWITCH)) {
         //stmt = parse_switch_statement();
     } else if (lookahead(TK_VAR)) {
@@ -452,20 +452,24 @@ Ast* Parser::parse_else_statement() {/*
 }
 
 
-Ast* Parser::parse_return_statement() {
-    Ast* stmt = new Ast(AST_RETURN);
-    Ast* expr = nullptr;
+ReturnStatement* Parser::parse_return_statement() {
+    ReturnStatement* stmt = nullptr;
+    Expression* expression = nullptr;
 
-    expect(TK_RETURN);
+    if (!match(TK_RETURN)) {
+        return nullptr;
+    }
+
+    stmt = new ReturnStatement(matched);
 
     if (next_token_on_same_line()) {
-        expr = parse_expression();
+        expression = parse_expression();
 
-        if (expr == nullptr) {
-            log_error("expected an expression on return statement but got an invalid token");
+        if (expression == nullptr) {
+            log_error("expected an expression in return statement, but got something else");
+        } else {
+            stmt->set_expression(expression);
         }
-
-        stmt->add_child(expr);
     }
 
     return stmt;

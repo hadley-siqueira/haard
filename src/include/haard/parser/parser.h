@@ -25,6 +25,7 @@
 #include "haard/ast/statements/statement.h"
 #include "haard/ast/statements/statements.h"
 #include "haard/ast/statements/while_statement.h"
+#include "haard/ast/statements/return_statement.h"
 #include "haard/ast/statements/expression_statement.h"
 
 #include "haard/ast/expressions/expression.h"
@@ -69,7 +70,7 @@ namespace haard {
         Ast* parse_elif_statement();
         Ast* parse_else_statement();
 
-        Ast* parse_return_statement();
+        ReturnStatement* parse_return_statement();
 
         Ast* parse_switch_statement();
         Ast* parse_switch_cases();

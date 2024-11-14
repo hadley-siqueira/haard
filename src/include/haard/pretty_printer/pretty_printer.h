@@ -22,6 +22,7 @@
 #include "haard/ast/statements/statement.h"
 #include "haard/ast/statements/statements.h"
 #include "haard/ast/statements/while_statement.h"
+#include "haard/ast/statements/return_statement.h"
 #include "haard/ast/statements/expression_statement.h"
 
 #include "haard/ast/expressions/expression.h"
@@ -72,7 +73,7 @@ namespace haard {
         void print_if(Ast* node);
         void print_elif(Ast* node);
         void print_else(Ast* node);
-        void print_return(Ast* node);
+        void print_return(ReturnStatement* node);
         void print_switch(Ast* node);
         void print_switch_brace(Ast* node);
         void print_switch_cases(Ast* node);

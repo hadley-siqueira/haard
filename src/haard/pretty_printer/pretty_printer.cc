@@ -88,7 +88,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_RETURN:
-        print_return(node);
+        print_return((ReturnStatement*) node);
         break;
 
     case AST_SWITCH:
@@ -1064,14 +1064,12 @@ void PrettyPrinter::print_statements(Statements* stmts) {
     }
 }
 
-void PrettyPrinter::print_return(Ast* node) {
+void PrettyPrinter::print_return(ReturnStatement* node) {
     out << "return";
 
-    Ast* expr = node->get_child();
-
-    if (expr) {
+    if (node->get_expression()) {
         out << " ";
-        print(expr);
+        print(node->get_expression());
     }
 }
 
