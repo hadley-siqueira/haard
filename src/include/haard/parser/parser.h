@@ -32,12 +32,29 @@
 
 #include "haard/ast/expressions/operators/binary/binary_operator.h"
 #include "haard/ast/expressions/operators/binary/assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_and_assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_or_assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_xor_assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_not_assignment.h"
+#include "haard/ast/expressions/operators/binary/division_assignment.h"
+#include "haard/ast/expressions/operators/binary/integer_division_assignment.h"
+#include "haard/ast/expressions/operators/binary/minus_assignment.h"
+#include "haard/ast/expressions/operators/binary/modulo_assignment.h"
+#include "haard/ast/expressions/operators/binary/plus_assignment.h"
+#include "haard/ast/expressions/operators/binary/times_assignment.h"
+#include "haard/ast/expressions/operators/binary/shift_left_logical_assignment.h"
+#include "haard/ast/expressions/operators/binary/shift_right_logical_assignment.h"
+#include "haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.h"
+#include "haard/ast/expressions/operators/binary/logical_and.h"
+#include "haard/ast/expressions/operators/binary/logical_or.h"
 #include "haard/ast/expressions/operators/binary/equal.h"
 #include "haard/ast/expressions/operators/binary/not_equal.h"
 #include "haard/ast/expressions/operators/binary/less_than.h"
 #include "haard/ast/expressions/operators/binary/greater_than.h"
 #include "haard/ast/expressions/operators/binary/less_than_or_equal.h"
 #include "haard/ast/expressions/operators/binary/greater_than_or_equal.h"
+#include "haard/ast/expressions/operators/binary/in.h"
+#include "haard/ast/expressions/operators/binary/not_in.h"
 #include "haard/ast/expressions/operators/binary/inclusive_range.h"
 #include "haard/ast/expressions/operators/binary/exclusive_range.h"
 #include "haard/ast/expressions/operators/binary/plus.h"
@@ -116,18 +133,18 @@ namespace haard {
         Type* parse_named_type();
 
         Expression* parse_expression();
-        Ast* parse_assignment_expression();
-        Ast* parse_cast_expression();
+        Expression* parse_assignment_expression();
+        Expression* parse_cast_expression();
 
-        Ast* parse_logical_or_expression();
-        Ast* parse_logical_and_expression();
+        Expression* parse_logical_or_expression();
+        Expression* parse_logical_and_expression();
 
-        Ast* parse_equality_expression();
-        Ast* parse_relational_expression();
+        Expression* parse_equality_expression();
+        Expression* parse_relational_expression();
 
-        Ast* parse_range_expression();
+        Expression* parse_range_expression();
 
-        Ast* parse_arith_expression();
+        Expression* parse_arith_expression();
         Expression* parse_term_expression();
         Expression* parse_power_expression();
 
@@ -149,7 +166,6 @@ namespace haard {
         Ast* parse_pre_decrement();
         Ast* parse_sizeof();
         Ast* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
-        Ast* parse_binary_operator(AstKind kind, const char* oper, Ast* left, Ast* (Parser::*function)(void));
 
         Ast* parse_postfix_expression();
 

@@ -121,59 +121,59 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_ASSIGNMENT:
-        print_assignment(node);
+        print_assignment((Assignment*) node);
         break;
 
     case AST_DIVISION_ASSIGNMENT:
-        print_division_assignment(node);
+        print_division_assignment((DivisionAssignment*) node);
         break;
 
     case AST_TIMES_ASSIGNMENT:
-        print_times_assignment(node);
+        print_times_assignment((TimesAssignment*) node);
         break;
 
     case AST_INTEGER_DIVISION_ASSIGNMENT:
-        print_integer_division_assignment(node);
+        print_integer_division_assignment((IntegerDivisionAssignment*) node);
         break;
 
     case AST_MODULO_ASSIGNMENT:
-        print_modulo_assignment(node);
+        print_modulo_assignment((ModuloAssignment*) node);
         break;
 
     case AST_MINUS_ASSIGNMENT:
-        print_minus_assignment(node);
+        print_minus_assignment((MinusAssignment*) node);
         break;
 
     case AST_PLUS_ASSIGNMENT:
-        print_plus_assignment(node);
+        print_plus_assignment((PlusAssignment*) node);
         break;
 
     case AST_SHIFT_LEFT_LOGICAL_ASSIGNMENT:
-        print_shift_left_logical_assignment(node);
+        print_shift_left_logical_assignment((ShiftLeftLogicalAssignment*) node);
         break;
 
     case AST_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT:
-        print_shift_right_arithmetic_assignment(node);
+        print_shift_right_arithmetic_assignment((ShiftRightArithmeticAssignment*) node);
         break;
 
     case AST_SHIFT_RIGHT_LOGICAL_ASSIGNMENT:
-        print_shift_right_logical_assignment(node);
+        print_shift_right_logical_assignment((ShiftRightLogicalAssignment*) node);
         break;
 
     case AST_BITWISE_AND_ASSIGNMENT:
-        print_bitwise_and_assignment(node);
+        print_bitwise_and_assignment((BitwiseAndAssignment*) node);
         break;
 
     case AST_BITWISE_XOR_ASSIGNMENT:
-        print_bitwise_xor_assignment(node);
+        print_bitwise_xor_assignment((BitwiseXorAssignment*) node);
         break;
 
     case AST_BITWISE_OR_ASSIGNMENT:
-        print_bitwise_or_assignment(node);
+        print_bitwise_or_assignment((BitwiseOrAssignment*) node);
         break;
 
     case AST_BITWISE_NOT_ASSIGNMENT:
-        print_bitwise_not_assignment(node);
+        print_bitwise_not_assignment((BitwiseNotAssignment*) node);
         break;
 
     case AST_CAST:
@@ -181,59 +181,51 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_LOGICAL_OR:
-        print_logical_or(node);
-        break;
-
-    case AST_OR:
-        print_or(node);
+        print_logical_or((LogicalOr*) node);
         break;
 
     case AST_LOGICAL_AND:
-        print_logical_and(node);
-        break;
-
-    case AST_AND:
-        print_and(node);
+        print_logical_and((LogicalAnd*) node);
         break;
 
     case AST_EQUAL:
-        print_equal(node);
+        print_equal((Equal*) node);
         break;
 
     case AST_NOT_EQUAL:
-        print_not_equal(node);
+        print_not_equal((NotEqual*) node);
         break;
 
     case AST_LESS_THAN:
-        print_less_than(node);
+        print_less_than((LessThan*) node);
         break;
 
     case AST_LESS_THAN_OR_EQUAL:
-        print_less_than_or_equal(node);
+        print_less_than_or_equal((LessThanOrEqual*) node);
         break;
 
     case AST_GREATER_THAN:
-        print_greater_than(node);
+        print_greater_than((GreaterThan*) node);
         break;
 
     case AST_GREATER_THAN_OR_EQUAL:
-        print_greater_than_or_equal(node);
+        print_greater_than_or_equal((GreaterThanOrEqual*) node);
         break;
 
     case AST_IN:
-        print_in(node);
+        print_in((In*) node);
         break;
 
     case AST_NOT_IN:
-        print_not_in(node);
+        print_not_in((NotIn*) node);
         break;
 
     case AST_INCLUSIVE_RANGE:
-        print_inclusive_range(node);
+        print_inclusive_range((InclusiveRange*) node);
         break;
 
     case AST_EXCLUSIVE_RANGE:
-        print_exclusive_range(node);
+        print_exclusive_range((ExclusiveRange*) node);
         break;
 
     case AST_PLUS:
@@ -682,120 +674,164 @@ void PrettyPrinter::print_named_type(NamedType* type) {
     print(type->get_name_expression());
 }
 
-void PrettyPrinter::print_assignment(Ast* node) {
-    print_binop(node, "=");
+void PrettyPrinter::print_assignment(Assignment* node) {
+    print(node->get_left());
+    out << " = ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_times_assignment(Ast* node) {
-    print_binop(node, "*=");
+void PrettyPrinter::print_times_assignment(TimesAssignment* node) {
+    print(node->get_left());
+    out << " *= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_division_assignment(Ast* node) {
-    print_binop(node, "/=");
+void PrettyPrinter::print_division_assignment(DivisionAssignment* node) {
+    print(node->get_left());
+    out << " / ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_integer_division_assignment(Ast* node) {
-    print_binop(node, "//=");
+void PrettyPrinter::print_integer_division_assignment(IntegerDivisionAssignment* node) {
+    print(node->get_left());
+    out << " // ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_modulo_assignment(Ast* node) {
-    print_binop(node, "%=");
+void PrettyPrinter::print_modulo_assignment(ModuloAssignment* node) {
+    print(node->get_left());
+    out << " %= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_minus_assignment(Ast* node) {
-    print_binop(node, "-=");
+void PrettyPrinter::print_minus_assignment(MinusAssignment* node) {
+    print(node->get_left());
+    out << " -= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_plus_assignment(Ast* node) {
-    print_binop(node, "+=");
+void PrettyPrinter::print_plus_assignment(PlusAssignment* node) {
+    print(node->get_left());
+    out << " += ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_shift_left_logical_assignment(Ast* node) {
-    print_binop(node, "<<=");
+void PrettyPrinter::print_shift_left_logical_assignment(ShiftLeftLogicalAssignment* node) {
+    print(node->get_left());
+    out << " <<= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_shift_right_arithmetic_assignment(Ast* node){
-    print_binop(node, ">>=");
+void PrettyPrinter::print_shift_right_arithmetic_assignment(ShiftRightArithmeticAssignment* node){
+    print(node->get_left());
+    out << " >>= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_shift_right_logical_assignment(Ast* node) {
-    print_binop(node, ">>>=");
+void PrettyPrinter::print_shift_right_logical_assignment(ShiftRightLogicalAssignment* node) {
+    print(node->get_left());
+    out << " >>>= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_and_assignment(Ast* node) {
-    print_binop(node, "&=");
+void PrettyPrinter::print_bitwise_and_assignment(BitwiseAndAssignment* node) {
+    print(node->get_left());
+    out << " &= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_xor_assignment(Ast* node) {
-    print_binop(node, "^=");
+void PrettyPrinter::print_bitwise_xor_assignment(BitwiseXorAssignment* node) {
+    print(node->get_left());
+    out << " ^= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_or_assignment(Ast* node) {
-    print_binop(node, "|=");
+void PrettyPrinter::print_bitwise_or_assignment(BitwiseOrAssignment* node) {
+    print(node->get_left());
+    out << " |= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_bitwise_not_assignment(Ast* node) {
-    print_binop(node, "~=");
+void PrettyPrinter::print_bitwise_not_assignment(BitwiseNotAssignment* node) {
+    print(node->get_left());
+    out << " ~= ";
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_cast(Ast* node) {
     print_binop(node, "as");
 }
 
-void PrettyPrinter::print_logical_or(Ast* node) {
-    print_binop(node, "||");
+void PrettyPrinter::print_logical_or(LogicalOr* node) {
+    print(node->get_left());
+    out << " " << node->get_token().get_value() << " ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_or(Ast* node) {
-    print_binop(node, "or");
+void PrettyPrinter::print_logical_and(LogicalAnd* node) {
+    print(node->get_left());
+    out << " " << node->get_token().get_value() << " ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_logical_and(Ast* node) {
-    print_binop(node, "&&");
+void PrettyPrinter::print_equal(Equal* node) {
+    print(node->get_left());
+    out << " == ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_and(Ast* node) {
-    print_binop(node, "and");
+void PrettyPrinter::print_not_equal(NotEqual* node) {
+    print(node->get_left());
+    out << " != ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_equal(Ast* node) {
-    print_binop(node, "==");
+void PrettyPrinter::print_less_than(LessThan* node) {
+    print(node->get_left());
+    out << " < ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_not_equal(Ast* node) {
-    print_binop(node, "!=");
+void PrettyPrinter::print_less_than_or_equal(LessThanOrEqual* node) {
+    print(node->get_left());
+    out << " <= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_less_than(Ast* node) {
-    print_binop(node, "<");
+void PrettyPrinter::print_greater_than(GreaterThan* node) {
+    print(node->get_left());
+    out << " > ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_less_than_or_equal(Ast* node) {
-    print_binop(node, "<=");
+void PrettyPrinter::print_greater_than_or_equal(GreaterThanOrEqual* node) {
+    print(node->get_left());
+    out << " >= ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_greater_than(Ast* node) {
-    print_binop(node, ">");
+void PrettyPrinter::print_in(In* node) {
+    print(node->get_left());
+    out << " in ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_greater_than_or_equal(Ast* node) {
-    print_binop(node, ">=");
+void PrettyPrinter::print_not_in(NotIn* node) {
+    print(node->get_left());
+    out << " not in ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_in(Ast* node) {
-    print_binop(node, "in");
+void PrettyPrinter::print_inclusive_range(InclusiveRange* node) {
+    print(node->get_left());
+    out << " .. ";
+    print(node->get_right());
 }
 
-void PrettyPrinter::print_not_in(Ast* node) {
-    print_binop(node, "not in");
-}
-
-void PrettyPrinter::print_inclusive_range(Ast* node) {
-    print_binop(node, "..");
-}
-
-void PrettyPrinter::print_exclusive_range(Ast* node) {
-    print_binop(node, "...");
+void PrettyPrinter::print_exclusive_range(ExclusiveRange* node) {
+    print(node->get_left());
+    out << " ... ";
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_plus(Plus* node) {
@@ -822,13 +858,13 @@ void PrettyPrinter::print_division(Division* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_modulo(Modulo *node) {
+void PrettyPrinter::print_modulo(Modulo* node) {
     print(node->get_left());
     out << " % ";
     print(node->get_right());
 }
 
-void PrettyPrinter::print_integer_division(IntegerDivision *node) {
+void PrettyPrinter::print_integer_division(IntegerDivision* node) {
     print(node->get_left());
     out << " // ";
     print(node->get_right());

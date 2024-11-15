@@ -29,12 +29,29 @@
 
 #include "haard/ast/expressions/operators/binary/binary_operator.h"
 #include "haard/ast/expressions/operators/binary/assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_and_assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_or_assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_xor_assignment.h"
+#include "haard/ast/expressions/operators/binary/bitwise_not_assignment.h"
+#include "haard/ast/expressions/operators/binary/division_assignment.h"
+#include "haard/ast/expressions/operators/binary/integer_division_assignment.h"
+#include "haard/ast/expressions/operators/binary/minus_assignment.h"
+#include "haard/ast/expressions/operators/binary/modulo_assignment.h"
+#include "haard/ast/expressions/operators/binary/plus_assignment.h"
+#include "haard/ast/expressions/operators/binary/times_assignment.h"
+#include "haard/ast/expressions/operators/binary/shift_left_logical_assignment.h"
+#include "haard/ast/expressions/operators/binary/shift_right_logical_assignment.h"
+#include "haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.h"
+#include "haard/ast/expressions/operators/binary/logical_and.h"
+#include "haard/ast/expressions/operators/binary/logical_or.h"
 #include "haard/ast/expressions/operators/binary/equal.h"
 #include "haard/ast/expressions/operators/binary/not_equal.h"
 #include "haard/ast/expressions/operators/binary/less_than.h"
 #include "haard/ast/expressions/operators/binary/greater_than.h"
 #include "haard/ast/expressions/operators/binary/less_than_or_equal.h"
 #include "haard/ast/expressions/operators/binary/greater_than_or_equal.h"
+#include "haard/ast/expressions/operators/binary/in.h"
+#include "haard/ast/expressions/operators/binary/not_in.h"
 #include "haard/ast/expressions/operators/binary/inclusive_range.h"
 #include "haard/ast/expressions/operators/binary/exclusive_range.h"
 #include "haard/ast/expressions/operators/binary/plus.h"
@@ -125,41 +142,38 @@ namespace haard {
         void print_type_list(Ast *tlist, const char* begin, const char* end);
 
         /* Expressions */
-        void print_assignment(Ast* node);
-        void print_times_assignment(Ast* node);
-        void print_division_assignment(Ast* node);
-        void print_integer_division_assignment(Ast* node);
-        void print_modulo_assignment(Ast* node);
-        void print_minus_assignment(Ast* node);
-        void print_plus_assignment(Ast* node);
-        void print_shift_left_logical_assignment(Ast* node);
-        void print_shift_right_arithmetic_assignment(Ast* node);
-        void print_shift_right_logical_assignment(Ast* node);
-        void print_bitwise_and_assignment(Ast* node);
-        void print_bitwise_xor_assignment(Ast* node);
-        void print_bitwise_or_assignment(Ast* node);
-        void print_bitwise_not_assignment(Ast* node);
+        void print_assignment(Assignment* node);
+        void print_times_assignment(TimesAssignment* node);
+        void print_division_assignment(DivisionAssignment* node);
+        void print_integer_division_assignment(IntegerDivisionAssignment* node);
+        void print_modulo_assignment(ModuloAssignment* node);
+        void print_minus_assignment(MinusAssignment* node);
+        void print_plus_assignment(PlusAssignment* node);
+        void print_shift_left_logical_assignment(ShiftLeftLogicalAssignment* node);
+        void print_shift_right_arithmetic_assignment(ShiftRightArithmeticAssignment* node);
+        void print_shift_right_logical_assignment(ShiftRightLogicalAssignment* node);
+        void print_bitwise_and_assignment(BitwiseAndAssignment* node);
+        void print_bitwise_xor_assignment(BitwiseXorAssignment* node);
+        void print_bitwise_or_assignment(BitwiseOrAssignment* node);
+        void print_bitwise_not_assignment(BitwiseNotAssignment* node);
 
         void print_cast(Ast* node);
 
-        void print_logical_or(Ast* node);
-        void print_or(Ast* node);
+        void print_logical_or(LogicalOr* node);
+        void print_logical_and(LogicalAnd* node);
 
-        void print_logical_and(Ast* node);
-        void print_and(Ast* node);
+        void print_equal(Equal* node);
+        void print_not_equal(NotEqual* node);
 
-        void print_equal(Ast* node);
-        void print_not_equal(Ast* node);
+        void print_less_than(LessThan* node);
+        void print_less_than_or_equal(LessThanOrEqual* node);
+        void print_greater_than(GreaterThan* node);
+        void print_greater_than_or_equal(GreaterThanOrEqual* node);
+        void print_in(In* node);
+        void print_not_in(NotIn* node);
 
-        void print_less_than(Ast* node);
-        void print_less_than_or_equal(Ast* node);
-        void print_greater_than(Ast* node);
-        void print_greater_than_or_equal(Ast* node);
-        void print_in(Ast* node);
-        void print_not_in(Ast* node);
-
-        void print_inclusive_range(Ast* node);
-        void print_exclusive_range(Ast* node);
+        void print_inclusive_range(InclusiveRange* node);
+        void print_exclusive_range(ExclusiveRange* node);
 
         void print_plus(Plus* node);
         void print_minus(Minus* node);

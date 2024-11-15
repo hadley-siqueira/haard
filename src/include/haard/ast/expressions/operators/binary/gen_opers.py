@@ -18,9 +18,14 @@ namespace haard {
 #endif"""
 
 opers = [
-    'assignment', 
+    'assignment', 'bitwise_and_assignment', 'bitwise_or_assignment', 'bitwise_xor_assignment',
+    'bitwise_not_assignment', 'division_assignment', 'integer_division_assignment', 
+    'minus_assignment', 'modulo_assignment', 'plus_assignment', 'times_assignment',
+    'shift_left_logical_assignment',
+    'shift_right_logical_assignment', 'shift_right_arithmetic_assignment',
+    'logical_and', 'logical_or',
     'equal', 'not_equal', 
-    'less_than', 'greater_than', 'less_than_or_equal', 'greater_than_or_equal',
+    'less_than', 'greater_than', 'less_than_or_equal', 'greater_than_or_equal', 'in', 'not_in',
     'inclusive_range', 'exclusive_range', 
     'plus', 'minus', 
     'times', 'division', 'modulo', 'integer_division', 'power', 

@@ -687,38 +687,164 @@ Expression* Parser::parse_expression() {
     return (Expression*) parse_assignment_expression();
 }
 
-Ast* Parser::parse_assignment_expression() {
-    Ast* expr = parse_cast_expression();
+Expression* Parser::parse_assignment_expression() {
+    Expression* expr = parse_cast_expression();
 
     while (true) {
         if (match(TK_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_ASSIGNMENT, "=", expr, &Parser::parse_cast_expression);
+            Assignment* oper = new Assignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on = operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_BITWISE_AND_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_BITWISE_AND_ASSIGNMENT, "&=", expr, &Parser::parse_cast_expression);
+            BitwiseAndAssignment* oper = new BitwiseAndAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on &= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_BITWISE_XOR_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_BITWISE_XOR_ASSIGNMENT, "^=", expr, &Parser::parse_cast_expression);
+            BitwiseXorAssignment* oper = new BitwiseXorAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on ^= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_BITWISE_OR_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_BITWISE_OR_ASSIGNMENT, "|=", expr, &Parser::parse_cast_expression);
+            BitwiseOrAssignment* oper = new BitwiseOrAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on |= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_BITWISE_NOT_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_BITWISE_NOT_ASSIGNMENT, "~=", expr, &Parser::parse_cast_expression);
+            BitwiseNotAssignment* oper = new BitwiseNotAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on ~= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_DIVISION_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_DIVISION_ASSIGNMENT, "/=", expr, &Parser::parse_cast_expression);
+            DivisionAssignment* oper = new DivisionAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on /= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_INTEGER_DIVISION_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_INTEGER_DIVISION_ASSIGNMENT, "//=", expr, &Parser::parse_cast_expression);
+            IntegerDivisionAssignment* oper = new IntegerDivisionAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on //= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_MINUS_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_MINUS_ASSIGNMENT, "-=", expr, &Parser::parse_cast_expression);
+            Minus* oper = new Minus(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on -= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_MODULO_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_MODULO_ASSIGNMENT, "%=", expr, &Parser::parse_cast_expression);
+            Modulo* oper = new Modulo(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on %= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_PLUS_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_PLUS_ASSIGNMENT, "+=", expr, &Parser::parse_cast_expression);
+            Plus* oper = new Plus(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on += operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_TIMES_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_TIMES_ASSIGNMENT, "*=", expr, &Parser::parse_cast_expression);
+            Times* oper = new Times(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on *= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_SLL_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_SHIFT_LEFT_LOGICAL_ASSIGNMENT, "<<=", expr, &Parser::parse_cast_expression);
+            ShiftLeftLogicalAssignment* oper = new ShiftLeftLogicalAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on <<= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_SRA_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT, ">>=", expr, &Parser::parse_cast_expression);
+            ShiftRightArithmeticAssignment* oper = new ShiftRightArithmeticAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on >>= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_SRL_ASSIGNMENT)) {
-            expr = parse_binary_operator(AST_SHIFT_RIGHT_LOGICAL_ASSIGNMENT, ">>>=", expr, &Parser::parse_cast_expression);
+            ShiftRightLogicalAssignment* oper = new ShiftRightLogicalAssignment(matched, expr);
+            expr = parse_assignment_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on >>>= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -727,7 +853,7 @@ Ast* Parser::parse_assignment_expression() {
     return expr;
 }
 
-Ast* Parser::parse_cast_expression() {
+Expression* Parser::parse_cast_expression() {
     Ast* type = nullptr;
     Ast* subexpr;
     Ast* expr = parse_logical_or_expression();
@@ -748,17 +874,35 @@ Ast* Parser::parse_cast_expression() {
         expr->add_child(type);
     }
 
-    return expr;
+    return (Expression*) expr;
 }
 
-Ast* Parser::parse_logical_or_expression() {
-    Ast* expr = parse_logical_and_expression();
+Expression* Parser::parse_logical_or_expression() {
+    Expression* expr = parse_logical_and_expression();
 
     while (true) {
         if (match(TK_LOGICAL_OR)) {
-            expr = parse_binary_operator(AST_LOGICAL_OR, "||", expr, &Parser::parse_logical_and_expression);
+            auto* oper = new LogicalOr(matched, expr);
+            expr = parse_logical_and_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on 'or' operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_OR)) {
-            expr = parse_binary_operator(AST_OR, "or", expr, &Parser::parse_logical_and_expression);
+            auto* oper = new LogicalOr(matched, expr);
+            expr = parse_logical_and_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on || operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -767,14 +911,32 @@ Ast* Parser::parse_logical_or_expression() {
     return expr;
 }
 
-Ast* Parser::parse_logical_and_expression() {
-    Ast* expr = parse_equality_expression();
+Expression* Parser::parse_logical_and_expression() {
+    Expression* expr = parse_equality_expression();
 
     while (true) {
-        if (match(TK_AND) || match(TK_LOGICAL_AND)) {
-            expr = parse_binary_operator(AST_LOGICAL_AND, "&&", expr, &Parser::parse_equality_expression);
+        if (match(TK_LOGICAL_AND)) {
+            auto* oper = new LogicalAnd(matched, expr);
+            expr = parse_equality_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on 'and' operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_AND)) {
-            expr = parse_binary_operator(AST_AND, "and", expr, &Parser::parse_equality_expression);
+            auto* oper = new LogicalAnd(matched, expr);
+            expr = parse_equality_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on && operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -783,14 +945,32 @@ Ast* Parser::parse_logical_and_expression() {
     return expr;
 }
 
-Ast* Parser::parse_equality_expression() {
-    Ast* expr = parse_relational_expression();
+Expression* Parser::parse_equality_expression() {
+    Expression* expr = parse_relational_expression();
 
     while (true) {
         if (match(TK_EQ)) {
-            expr = parse_binary_operator(AST_EQUAL, "==", expr, &Parser::parse_relational_expression);
+            auto* oper = new Equal(matched, expr);
+            expr = parse_relational_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on == operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_NE)) {
-            expr = parse_binary_operator(AST_NOT_EQUAL, "!=", expr, &Parser::parse_relational_expression);
+            auto* oper = new NotEqual(matched, expr);
+            expr = parse_relational_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on != operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -799,23 +979,77 @@ Ast* Parser::parse_equality_expression() {
     return expr;
 }
 
-Ast* Parser::parse_relational_expression() {
-    Ast* expr = parse_range_expression();
+Expression* Parser::parse_relational_expression() {
+    Expression* expr = parse_range_expression();
 
     while (true) {
         if (match(TK_LT)) {
-            expr = parse_binary_operator(AST_LESS_THAN, "<", expr, &Parser::parse_range_expression);
+            auto* oper = new LessThan(matched, expr);
+            expr = parse_range_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on < operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_GT)) {
-            expr = parse_binary_operator(AST_GREATER_THAN, ">", expr, &Parser::parse_range_expression);
+            auto* oper = new GreaterThan(matched, expr);
+            expr = parse_range_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on > operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_LE)) {
-            expr = parse_binary_operator(AST_LESS_THAN_OR_EQUAL, "<=", expr, &Parser::parse_range_expression);
+            auto* oper = new LessThanOrEqual(matched, expr);
+            expr = parse_range_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on <= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_GE)) {
-            expr = parse_binary_operator(AST_GREATER_THAN_OR_EQUAL, ">=", expr, &Parser::parse_range_expression);
+            auto* oper = new GreaterThanOrEqual(matched, expr);
+            expr = parse_range_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on >= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_IN)) {
-            expr = parse_binary_operator(AST_IN, "in", expr, &Parser::parse_range_expression);
+            auto* oper = new In(matched, expr);
+            expr = parse_range_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on 'in' operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_NOT)) {
             expect(TK_IN);
-            expr = parse_binary_operator(AST_NOT_IN, "not in", expr, &Parser::parse_range_expression);
+            auto* oper = new NotIn(matched, expr);
+            expr = parse_range_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on >= operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -824,14 +1058,32 @@ Ast* Parser::parse_relational_expression() {
     return expr;
 }
 
-Ast* Parser::parse_range_expression() {
-    Ast* expr = parse_arith_expression();
+Expression* Parser::parse_range_expression() {
+    Expression* expr = parse_arith_expression();
 
     while (true) {
         if (match(TK_INCLUSIVE_RANGE)) {
-            expr = parse_binary_operator(AST_INCLUSIVE_RANGE, "..", expr, &Parser::parse_arith_expression);
+            auto* oper = new InclusiveRange(matched, expr);
+            expr = parse_arith_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on .. operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else if (match(TK_EXCLUSIVE_RANGE)) {
-            expr = parse_binary_operator(AST_EXCLUSIVE_RANGE, "...", expr, &Parser::parse_arith_expression);
+            auto* oper = new ExclusiveRange(matched, expr);
+            expr = parse_arith_expression();
+
+            if (expr == nullptr) {
+                log_error("missing rhs on ... operator");
+            } else {
+                oper->set_right(expr);
+            }
+
+            expr = oper;
         } else {
             break;
         }
@@ -840,7 +1092,7 @@ Ast* Parser::parse_range_expression() {
     return expr;
 }
 
-Ast* Parser::parse_arith_expression() {
+Expression* Parser::parse_arith_expression() {
     Expression* expr = parse_term_expression();
 
     while (true) {
@@ -1211,23 +1463,6 @@ Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type,
         expr->add_child(subexpr);
     }
 
-    return expr;
-}
-
-Ast* Parser::parse_binary_operator(AstKind kind, const char* oper, Ast* left, Ast* (Parser::*function)()) {
-    std::stringstream ss;
-    Ast* expr = new Ast(kind, matched);
-    Ast* right = (this->*function)();
-
-    if (right == nullptr) {
-        ss << "expected an rhs for operator <white>";
-        ss << oper;
-        ss << "<normal>";
-        log_error(ss.str());
-    }
-
-    expr->add_child(left);
-    expr->add_child(right);
     return expr;
 }
 
