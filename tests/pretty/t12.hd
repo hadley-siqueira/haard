@@ -45,5 +45,7 @@ def logical_not : i32
 
 def address_of : i32
     v = 0x12
+    v = 0x12
+    v = 0x12
     return &v
 

@@ -1121,12 +1121,17 @@ void PrettyPrinter::print_else(Ast* node) {
 /* Statements */
 void PrettyPrinter::print_statements(Statements* stmts) {
     bool no_statements = true;
+    bool first = true;
 
     for (auto stmt : stmts->get_statements()) {
+        if (!first) {
+            out << "\n";
+        }
+
         print_indentation();
         print(stmt);
-        out << "\n";
         no_statements = false;
+        first = false;
     }
 
     if (no_statements) {
