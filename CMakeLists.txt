@@ -88,6 +88,20 @@ set(AST_SRC
 
     src/haard/ast/expressions/operators/binary/generics_application.cc
     src/haard/ast/expressions/operators/binary/scope.cc
+
+    src/haard/ast/expressions/operators/unary/unary_operator.cc
+    src/haard/ast/expressions/operators/unary/unary_plus.cc
+    src/haard/ast/expressions/operators/unary/unary_minus.cc
+    src/haard/ast/expressions/operators/unary/address_of.cc
+    src/haard/ast/expressions/operators/unary/dereference.cc
+    src/haard/ast/expressions/operators/unary/bitwise_not.cc
+    src/haard/ast/expressions/operators/unary/logical_not.cc
+    src/haard/ast/expressions/operators/unary/pre_increment.cc
+    src/haard/ast/expressions/operators/unary/pre_decrement.cc
+    src/haard/ast/expressions/operators/unary/pos_increment.cc
+    src/haard/ast/expressions/operators/unary/pos_decrement.cc
+
+
     src/haard/ast/expressions/identifier.cc
 
     src/haard/ast/expressions/literals/literal.cc

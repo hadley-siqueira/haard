@@ -73,6 +73,18 @@
 #include "haard/ast/expressions/operators/binary/generics_application.h"
 #include "haard/ast/expressions/operators/binary/scope.h"
 
+#include "haard/ast/expressions/operators/unary/unary_operator.h"
+#include "haard/ast/expressions/operators/unary/unary_plus.h"
+#include "haard/ast/expressions/operators/unary/unary_minus.h"
+#include "haard/ast/expressions/operators/unary/address_of.h"
+#include "haard/ast/expressions/operators/unary/dereference.h"
+#include "haard/ast/expressions/operators/unary/bitwise_not.h"
+#include "haard/ast/expressions/operators/unary/logical_not.h"
+#include "haard/ast/expressions/operators/unary/pre_increment.h"
+#include "haard/ast/expressions/operators/unary/pre_decrement.h"
+#include "haard/ast/expressions/operators/unary/pos_increment.h"
+#include "haard/ast/expressions/operators/unary/pos_decrement.h"
+
 #include "haard/ast/expressions/identifier.h"
 
 #include "haard/ast/expressions/literals/literal.h"
@@ -128,7 +140,7 @@ namespace haard {
         void print_switch_cases(Ast* node);
         void print_switch_case(Ast* node);
         void print_switch_default(Ast* node);
-        void print_expression_statement(Ast* stmt, bool has_semicolon=false);
+        void print_expression_statement(ExpressionStatement* stmt);
 
         /* types */
         void print_pointer_type(PointerType* node);
@@ -234,12 +246,9 @@ namespace haard {
         void print_index(Ast* node);
         void print_hash_pair(Ast* pair);
 
-//        void print_binary_operator(BinaryOperator* bin, bool no_space=false);
 
-//        void print_unary_operator(UnaryOperator* un, bool last=false);
-        void print_logical_not(Ast* un);
-        void print_not(Ast* un);
-        void print_address_of(Ast* node);
+        void print_logical_not(LogicalNot* un);
+        void print_address_of(AddressOf* node);
         void print_dereference(Ast* node);
         void print_bitwise_not(Ast* node);
         void print_unary_minus(Ast* node);

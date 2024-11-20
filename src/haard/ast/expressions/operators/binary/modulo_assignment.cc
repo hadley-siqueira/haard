@@ -10,5 +10,5 @@ ModuloAssignment::ModuloAssignment(Token& token, Expression* left, Expression* r
     set_kind(AST_MODULO_ASSIGNMENT);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

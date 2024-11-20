@@ -111,15 +111,11 @@ void PrettyPrinter::print(Ast* node) {
         print_switch_default(node);
         break;
 
+    case AST_STATEMENT_EXPRESSION:
+        print_expression_statement((ExpressionStatement*) node);
+        break;
+
     /* Expressions */
-    case AST_EXPRESSION:
-        print_expression_statement(node);
-        break;
-
-    case AST_EXPRESSION_WITH_SEMICOLON:
-        print_expression_statement(node, true);
-        break;
-
     case AST_ASSIGNMENT:
         print_assignment((Assignment*) node);
         break;
@@ -281,15 +277,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_LOGICAL_NOT:
-        print_logical_not(node);
-        break;
-
-    case AST_NOT:
-        print_not(node);
+        print_logical_not((LogicalNot*) node);
         break;
 
     case AST_ADDRESS_OF:
-        print_address_of(node);
+        print_address_of((AddressOf*) node);
         break;
 
     case AST_DEREFERENCE:
@@ -1133,6 +1125,7 @@ void PrettyPrinter::print_statements(Statements* stmts) {
     for (auto stmt : stmts->get_statements()) {
         print_indentation();
         print(stmt);
+        out << "\n";
         no_statements = false;
     }
 
@@ -1196,12 +1189,8 @@ void PrettyPrinter::print_switch_default(Ast* node) {
     out << "\n";
 }
 
-void PrettyPrinter::print_expression_statement(Ast* stmt, bool has_semicolon) {
-    print(stmt->get_child(0));
-
-    if (has_semicolon) {
-        out << ";";
-    }
+void PrettyPrinter::print_expression_statement(ExpressionStatement* stmt) {
+    print(stmt->get_expression());
 }
 
 void PrettyPrinter::print_index(Ast* node) {
@@ -1218,19 +1207,19 @@ void PrettyPrinter::print_hash_pair(Ast* pair) {
     print(pair->get_child(1));
 }
 
-void PrettyPrinter::print_logical_not(Ast* un) {
-    out << "!";
-    print(un->get_child(0));
+void PrettyPrinter::print_logical_not(LogicalNot* un) {
+    if (un->get_token().get_kind() == TK_LOGICAL_NOT) {
+        out << "!";
+    } else {
+        out << "not ";
+    }
+
+    print(un->get_expression());
 }
 
-void PrettyPrinter::print_not(Ast* un) {
-    out << "not ";
-    print(un->get_child(0));
-}
-
-void PrettyPrinter::print_address_of(Ast* node) {
+void PrettyPrinter::print_address_of(AddressOf* node) {
     out << "&";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
 void PrettyPrinter::print_dereference(Ast* node) {

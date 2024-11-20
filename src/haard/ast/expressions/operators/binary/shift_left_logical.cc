@@ -10,5 +10,5 @@ ShiftLeftLogical::ShiftLeftLogical(Token& token, Expression* left, Expression* r
     set_kind(AST_SHIFT_LEFT_LOGICAL);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

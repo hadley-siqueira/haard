@@ -10,5 +10,5 @@ BitwiseXor::BitwiseXor(Token& token, Expression* left, Expression* right) {
     set_kind(AST_BITWISE_XOR);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

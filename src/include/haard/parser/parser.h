@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <stack>
-#include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
 #include "haard/ast/module.h"
@@ -13,77 +12,20 @@
 #include "haard/ast/variable.h"
 
 #include "haard/ast/types/type.h"
-#include "haard/ast/types/primitive_type.h"
-#include "haard/ast/types/pointer_type.h"
-#include "haard/ast/types/reference_type.h"
-#include "haard/ast/types/list_type.h"
-#include "haard/ast/types/array_type.h"
-#include "haard/ast/types/tuple_type.h"
-#include "haard/ast/types/function_type.h"
-#include "haard/ast/types/named_type.h"
+
 
 #include "haard/ast/statements/statement.h"
 #include "haard/ast/statements/statements.h"
 #include "haard/ast/statements/while_statement.h"
 #include "haard/ast/statements/return_statement.h"
-#include "haard/ast/statements/expression_statement.h"
 
 #include "haard/ast/expressions/expression.h"
 
-#include "haard/ast/expressions/operators/binary/binary_operator.h"
-#include "haard/ast/expressions/operators/binary/assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_and_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_or_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_xor_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_not_assignment.h"
-#include "haard/ast/expressions/operators/binary/division_assignment.h"
-#include "haard/ast/expressions/operators/binary/integer_division_assignment.h"
-#include "haard/ast/expressions/operators/binary/minus_assignment.h"
-#include "haard/ast/expressions/operators/binary/modulo_assignment.h"
-#include "haard/ast/expressions/operators/binary/plus_assignment.h"
-#include "haard/ast/expressions/operators/binary/times_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_left_logical_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_right_logical_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.h"
-#include "haard/ast/expressions/operators/binary/logical_and.h"
-#include "haard/ast/expressions/operators/binary/logical_or.h"
-#include "haard/ast/expressions/operators/binary/equal.h"
-#include "haard/ast/expressions/operators/binary/not_equal.h"
-#include "haard/ast/expressions/operators/binary/less_than.h"
-#include "haard/ast/expressions/operators/binary/greater_than.h"
-#include "haard/ast/expressions/operators/binary/less_than_or_equal.h"
-#include "haard/ast/expressions/operators/binary/greater_than_or_equal.h"
-#include "haard/ast/expressions/operators/binary/in.h"
-#include "haard/ast/expressions/operators/binary/not_in.h"
-#include "haard/ast/expressions/operators/binary/inclusive_range.h"
-#include "haard/ast/expressions/operators/binary/exclusive_range.h"
-#include "haard/ast/expressions/operators/binary/plus.h"
-#include "haard/ast/expressions/operators/binary/minus.h"
-#include "haard/ast/expressions/operators/binary/times.h"
-#include "haard/ast/expressions/operators/binary/division.h"
-#include "haard/ast/expressions/operators/binary/modulo.h"
-#include "haard/ast/expressions/operators/binary/integer_division.h"
-#include "haard/ast/expressions/operators/binary/power.h"
-#include "haard/ast/expressions/operators/binary/shift_left_logical.h"
-#include "haard/ast/expressions/operators/binary/shift_right_logical.h"
-#include "haard/ast/expressions/operators/binary/shift_right_arithmetic.h"
-#include "haard/ast/expressions/operators/binary/bitwise_and.h"
-#include "haard/ast/expressions/operators/binary/bitwise_or.h"
-#include "haard/ast/expressions/operators/binary/bitwise_xor.h"
-#include "haard/ast/expressions/operators/binary/index.h"
-#include "haard/ast/expressions/operators/binary/dot.h"
-#include "haard/ast/expressions/operators/binary/arrow.h"
-#include "haard/ast/expressions/operators/binary/generics_application.h"
-#include "haard/ast/expressions/operators/binary/scope.h"
+
 
 #include "haard/ast/expressions/identifier.h"
 
-#include "haard/ast/expressions/literals/literal.h"
-#include "haard/ast/expressions/literals/boolean_literal.h"
-#include "haard/ast/expressions/literals/char_literal.h"
-#include "haard/ast/expressions/literals/integer_literal.h"
-#include "haard/ast/expressions/literals/float_literal.h"
-#include "haard/ast/expressions/literals/string_literal.h"
+
 
 #include "haard/ast/generics.h"
 
@@ -155,9 +97,8 @@ namespace haard {
         Expression* parse_shift_expression();
 
         Expression* parse_unary_expression();
-        Ast* parse_logical_not();
-        Ast* parse_not();
-        Ast* parse_address_of();
+        Expression* parse_logical_not();
+        Expression* parse_address_of();
         Ast* parse_dereference();
         Ast* parse_bitwise_not();
         Ast* parse_unary_minus();

@@ -10,5 +10,5 @@ ShiftRightArithmeticAssignment::ShiftRightArithmeticAssignment(Token& token, Exp
     set_kind(AST_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

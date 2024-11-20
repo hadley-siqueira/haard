@@ -10,5 +10,5 @@ ShiftLeftLogicalAssignment::ShiftLeftLogicalAssignment(Token& token, Expression*
     set_kind(AST_SHIFT_LEFT_LOGICAL_ASSIGNMENT);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

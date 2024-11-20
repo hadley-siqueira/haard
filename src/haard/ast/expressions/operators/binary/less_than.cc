@@ -10,5 +10,5 @@ LessThan::LessThan(Token& token, Expression* left, Expression* right) {
     set_kind(AST_LESS_THAN);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

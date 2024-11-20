@@ -38,5 +38,12 @@ def sra : i32
     @a : i32
     @b : i32
 
-    return a >> b
+    return a >> b >> c
+
+def logical_not : i32
+    return not 0 and !0
+
+def address_of : i32
+    v = 0x12
+    return &v
 

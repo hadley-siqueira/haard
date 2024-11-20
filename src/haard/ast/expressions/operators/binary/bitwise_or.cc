@@ -10,5 +10,5 @@ BitwiseOr::BitwiseOr(Token& token, Expression* left, Expression* right) {
     set_kind(AST_BITWISE_OR);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

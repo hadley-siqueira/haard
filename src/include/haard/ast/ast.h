@@ -127,7 +127,6 @@ namespace haard {
         AST_UNARY_PLUS,
         AST_UNARY_MINUS,
         AST_LOGICAL_NOT,
-        AST_NOT,
         AST_BITWISE_NOT,
         AST_SIZEOF,
         AST_NEW,

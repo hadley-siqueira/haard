@@ -10,5 +10,5 @@ Power::Power(Token& token, Expression* left, Expression* right) {
     set_kind(AST_POWER);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

@@ -10,5 +10,5 @@ BitwiseOrAssignment::BitwiseOrAssignment(Token& token, Expression* left, Express
     set_kind(AST_BITWISE_OR_ASSIGNMENT);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

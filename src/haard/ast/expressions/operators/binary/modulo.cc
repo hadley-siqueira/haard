@@ -10,5 +10,5 @@ Modulo::Modulo(Token& token, Expression* left, Expression* right) {
     set_kind(AST_MODULO);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

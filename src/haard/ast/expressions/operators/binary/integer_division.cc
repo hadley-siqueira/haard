@@ -10,5 +10,5 @@ IntegerDivision::IntegerDivision(Token& token, Expression* left, Expression* rig
     set_kind(AST_INTEGER_DIVISION);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

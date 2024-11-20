@@ -10,5 +10,5 @@ ShiftRightArithmetic::ShiftRightArithmetic(Token& token, Expression* left, Expre
     set_kind(AST_SHIFT_RIGHT_ARITHMETIC);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

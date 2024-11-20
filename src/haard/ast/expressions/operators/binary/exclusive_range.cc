@@ -10,5 +10,5 @@ ExclusiveRange::ExclusiveRange(Token& token, Expression* left, Expression* right
     set_kind(AST_EXCLUSIVE_RANGE);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }

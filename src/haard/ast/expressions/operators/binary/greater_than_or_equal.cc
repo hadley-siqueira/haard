@@ -10,5 +10,5 @@ GreaterThanOrEqual::GreaterThanOrEqual(Token& token, Expression* left, Expressio
     set_kind(AST_GREATER_THAN_OR_EQUAL);
     set_token(token);
     set_left(left);
-    set_left(right);
+    set_right(right);
 }
