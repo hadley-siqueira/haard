@@ -285,7 +285,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_DEREFERENCE:
-        print_dereference(node);
+        print_dereference((Dereference*) node);
         break;
 
     case AST_BITWISE_NOT:
@@ -1227,9 +1227,9 @@ void PrettyPrinter::print_address_of(AddressOf* node) {
     print(node->get_expression());
 }
 
-void PrettyPrinter::print_dereference(Ast* node) {
+void PrettyPrinter::print_dereference(Dereference* node) {
     out << "*";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
 void PrettyPrinter::print_bitwise_not(Ast* node) {

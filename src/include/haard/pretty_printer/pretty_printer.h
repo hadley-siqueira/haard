@@ -249,7 +249,7 @@ namespace haard {
 
         void print_logical_not(LogicalNot* un);
         void print_address_of(AddressOf* node);
-        void print_dereference(Ast* node);
+        void print_dereference(Dereference *node);
         void print_bitwise_not(Ast* node);
         void print_unary_minus(Ast* node);
         void print_unary_plus(Ast* node);

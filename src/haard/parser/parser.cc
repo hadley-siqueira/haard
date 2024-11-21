@@ -1475,15 +1475,21 @@ Expression* Parser::parse_address_of() {
     return expr;
 }
 
-Ast* Parser::parse_dereference() {
-    Ast* expr = new Ast(AST_DEREFERENCE, matched);
-    Ast* subexpr;
+Expression* Parser::parse_dereference() {
+    Expression* expr = nullptr;
+    Expression* subexpr = nullptr;
+    Dereference* oper = nullptr;
+    Token token;
     bool power = false;
 
     if (match(TK_TIMES)) {
         power = false;
+        oper = new Dereference(matched);
+        token = matched;
     } else if (match(TK_POWER)) {
         power = true;
+        oper = new Dereference(matched);
+        token = matched;
     } else {
         log_error("error while parsing dereference");
     }
@@ -1497,13 +1503,13 @@ Ast* Parser::parse_dereference() {
             log_error("expected an expression for '*' operator");
         }
 
-        expr->add_child(subexpr);
+        oper->set_expression(subexpr);
 
         if (power) {
-            subexpr = expr;
-            expr = new Ast(AST_DEREFERENCE, matched);
-            expr->add_child(subexpr);
+            oper = new Dereference(token, oper);
         }
+
+        expr = oper;
     }
 
     return expr;
