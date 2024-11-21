@@ -1540,11 +1540,51 @@ Expression* Parser::parse_bitwise_not() {
 }
 
 Ast* Parser::parse_unary_minus() {
-    return parse_simple_unary_operator(AST_UNARY_MINUS, TK_MINUS, "-");
+    Expression* expr = nullptr;
+
+    if (match(TK_MINUS)) {
+        auto* oper = new UnaryMinus(matched);
+
+        if (!next_token_on_same_line()) {
+            log_error("missing expression for 'unary -' operator");
+        } else {
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing expression for 'unary -' operator");
+            } else {
+                oper->set_expression(expr);
+            }
+        }
+
+        expr = oper;
+    }
+
+    return expr;
 }
 
 Ast* Parser::parse_unary_plus() {
-    return parse_simple_unary_operator(AST_UNARY_PLUS, TK_PLUS, "+");
+    Expression* expr = nullptr;
+
+    if (match(TK_PLUS)) {
+        auto* oper = new UnaryPlus(matched);
+
+        if (!next_token_on_same_line()) {
+            log_error("missing expression for 'unary +' operator");
+        } else {
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing expression for 'unary +' operator");
+            } else {
+                oper->set_expression(expr);
+            }
+        }
+
+        expr = oper;
+    }
+
+    return expr;
 }
 
 Ast* Parser::parse_pre_increment() {

@@ -293,11 +293,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_UNARY_MINUS:
-        print_unary_minus(node);
+        print_unary_minus((UnaryMinus*) node);
         break;
 
     case AST_UNARY_PLUS:
-        print_unary_plus(node);
+        print_unary_plus((UnaryPlus*) node);
         break;
 
     case AST_PRE_INCREMENT:
@@ -1237,14 +1237,14 @@ void PrettyPrinter::print_bitwise_not(BitwiseNot* node) {
     print(node->get_expression());
 }
 
-void PrettyPrinter::print_unary_minus(Ast* node) {
+void PrettyPrinter::print_unary_minus(UnaryMinus* node) {
     out << "-";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
-void PrettyPrinter::print_unary_plus(Ast* node) {
+void PrettyPrinter::print_unary_plus(UnaryPlus* node) {
     out << "+";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
 void PrettyPrinter::print_pre_increment(Ast* node) {
