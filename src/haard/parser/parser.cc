@@ -509,6 +509,7 @@ Ast* Parser::parse_elif_statement() {/*
     }
 
     return stmt;*/
+    return nullptr;
 }
 
 Ast* Parser::parse_else_statement() {/*
@@ -523,6 +524,7 @@ Ast* Parser::parse_else_statement() {/*
     dedent();
 
     return stmt;*/
+    return nullptr;
 }
 
 
@@ -1754,6 +1756,7 @@ Ast* Parser::parse_delete_expression() {/*
     }
 
     return expr;*/
+    return nullptr;
 }
 
 Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
@@ -2027,6 +2030,7 @@ Ast* Parser::parse_new_expression() {/*
     }
 
     return expr;*/
+    return nullptr;
 }
 
 Expression* Parser::parse_generic_application() {
@@ -2162,6 +2166,7 @@ bool Parser::expect(int kind) {
               << " but got a " << token_kind_to_str_map.at(matched.get_kind());
 
     log_error(ss.str());
+    return false;
 }
 
 bool Parser::has_next(int offset) {
