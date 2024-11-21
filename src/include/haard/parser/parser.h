@@ -99,8 +99,8 @@ namespace haard {
         Expression* parse_unary_expression();
         Expression* parse_logical_not();
         Expression* parse_address_of();
-        Expression *parse_dereference();
-        Ast* parse_bitwise_not();
+        Expression* parse_dereference();
+        Expression* parse_bitwise_not();
         Ast* parse_unary_minus();
         Ast* parse_unary_plus();
         Ast* parse_pre_increment();

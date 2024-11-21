@@ -1515,8 +1515,28 @@ Expression* Parser::parse_dereference() {
     return expr;
 }
 
-Ast* Parser::parse_bitwise_not() {
-    return parse_simple_unary_operator(AST_BITWISE_NOT, TK_BITWISE_NOT, "~");
+Expression* Parser::parse_bitwise_not() {
+    Expression* expr = nullptr;
+
+    if (match(TK_BITWISE_NOT)) {
+        auto* oper = new BitwiseNot(matched);
+
+        if (!next_token_on_same_line()) {
+            log_error("missing expression for '~' operator");
+        } else {
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing expression for '~' operator");
+            } else {
+                oper->set_expression(expr);
+            }
+        }
+
+        expr = oper;
+    }
+
+    return expr;
 }
 
 Ast* Parser::parse_unary_minus() {

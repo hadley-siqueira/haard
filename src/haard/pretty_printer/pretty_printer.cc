@@ -289,7 +289,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_BITWISE_NOT:
-        print_bitwise_not(node);
+        print_bitwise_not((BitwiseNot*) node);
         break;
 
     case AST_UNARY_MINUS:
@@ -1232,9 +1232,9 @@ void PrettyPrinter::print_dereference(Dereference* node) {
     print(node->get_expression());
 }
 
-void PrettyPrinter::print_bitwise_not(Ast* node) {
+void PrettyPrinter::print_bitwise_not(BitwiseNot* node) {
     out << "~";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
 void PrettyPrinter::print_unary_minus(Ast* node) {

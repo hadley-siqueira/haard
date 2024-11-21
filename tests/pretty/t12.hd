@@ -55,3 +55,7 @@ def dereference : i32
     p = **v
     p = * * v
     return ***p
+
+def bitwise_not : i32
+    v = ~0 & ~1
+    return ~v
