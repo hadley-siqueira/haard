@@ -101,10 +101,10 @@ namespace haard {
         Expression* parse_address_of();
         Expression* parse_dereference();
         Expression* parse_bitwise_not();
-        Ast* parse_unary_minus();
-        Ast* parse_unary_plus();
-        Ast* parse_pre_increment();
-        Ast* parse_pre_decrement();
+        Expression* parse_unary_minus();
+        Expression* parse_unary_plus();
+        Expression* parse_pre_increment();
+        Expression* parse_pre_decrement();
         Ast* parse_sizeof();
         Ast* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
 

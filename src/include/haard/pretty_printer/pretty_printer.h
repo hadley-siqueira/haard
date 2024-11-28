@@ -253,8 +253,8 @@ namespace haard {
         void print_bitwise_not(BitwiseNot* node);
         void print_unary_minus(UnaryMinus* node);
         void print_unary_plus(UnaryPlus* node);
-        void print_pre_increment(Ast* node);
-        void print_pre_decrement(Ast* node);
+        void print_pre_increment(PreIncrement* node);
+        void print_pre_decrement(PreDecrement* node);
 
 //        void print_sizeof_expression(UnaryOperator* un);
 //        void print_new_expression(New* expr);

@@ -65,3 +65,9 @@ def unary_plus_minus : i32
     b = -1
     c = +0 + -1
     return +a + -b - -c
+
+def unaries : void
+    a = 0
+    ++a
+    --a
+    return

@@ -1541,7 +1541,7 @@ Expression* Parser::parse_bitwise_not() {
     return expr;
 }
 
-Ast* Parser::parse_unary_minus() {
+Expression* Parser::parse_unary_minus() {
     Expression* expr = nullptr;
 
     if (match(TK_MINUS)) {
@@ -1565,7 +1565,7 @@ Ast* Parser::parse_unary_minus() {
     return expr;
 }
 
-Ast* Parser::parse_unary_plus() {
+Expression* Parser::parse_unary_plus() {
     Expression* expr = nullptr;
 
     if (match(TK_PLUS)) {
@@ -1588,13 +1588,52 @@ Ast* Parser::parse_unary_plus() {
 
     return expr;
 }
+Expression* Parser::parse_pre_increment() {
+    Expression* expr = nullptr;
 
-Ast* Parser::parse_pre_increment() {
-    return parse_simple_unary_operator(AST_PRE_INCREMENT, TK_INC, "++");
+    if (match(TK_INC)) {
+        auto* oper = new PreIncrement(matched);
+
+        if (!next_token_on_same_line()) {
+            log_error("missing expression for 'pre increment ++' operator");
+        } else {
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing expression for 'pre increment ++' operator");
+            } else {
+                oper->set_expression(expr);
+            }
+        }
+
+        expr = oper;
+    }
+
+    return expr;
 }
 
-Ast* Parser::parse_pre_decrement() {
-    return parse_simple_unary_operator(AST_PRE_DECREMENT, TK_DEC, "--");
+Expression* Parser::parse_pre_decrement() {
+    Expression* expr = nullptr;
+
+    if (match(TK_DEC)) {
+        auto* oper = new PreDecrement(matched);
+
+        if (!next_token_on_same_line()) {
+            log_error("missing expression for 'pre decrement --' operator");
+        } else {
+            expr = parse_unary_expression();
+
+            if (expr == nullptr) {
+                log_error("missing expression for 'pre decrement --' operator");
+            } else {
+                oper->set_expression(expr);
+            }
+        }
+
+        expr = oper;
+    }
+
+    return expr;
 }
 
 Ast* Parser::parse_sizeof() {

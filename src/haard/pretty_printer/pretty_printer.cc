@@ -301,11 +301,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_PRE_INCREMENT:
-        print_pre_increment(node);
+        print_pre_increment((PreIncrement*) node);
         break;
 
     case AST_PRE_DECREMENT:
-        print_pre_decrement(node);
+        print_pre_decrement((PreDecrement*) node);
         break;
 
     case AST_SIZEOF:
@@ -1247,14 +1247,14 @@ void PrettyPrinter::print_unary_plus(UnaryPlus* node) {
     print(node->get_expression());
 }
 
-void PrettyPrinter::print_pre_increment(Ast* node) {
+void PrettyPrinter::print_pre_increment(PreIncrement* node) {
     out << "++";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
-void PrettyPrinter::print_pre_decrement(Ast* node) {
+void PrettyPrinter::print_pre_decrement(PreDecrement* node) {
     out << "--";
-    print(node->get_child());
+    print(node->get_expression());
 }
 
 void PrettyPrinter::print_call(Ast* expr) {
