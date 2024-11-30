@@ -79,6 +79,10 @@
 #include "haard/ast/expressions/literals/integer_literal.h"
 #include "haard/ast/expressions/literals/float_literal.h"
 #include "haard/ast/expressions/literals/string_literal.h"
+#include "haard/ast/expressions/literals/symbol_literal.h"
+
+#include "haard/ast/expressions/this.h"
+#include "haard/ast/expressions/null.h"
 
 using namespace haard;
 
@@ -1746,13 +1750,13 @@ Ast* Parser::parse_postfix_expression() {
     return expr;
 }
 
-Ast* Parser::parse_primary_expression() {
-    Ast* expr = nullptr;
+Expression* Parser::parse_primary_expression() {
+    Expression* expr = nullptr;
 
     if (lookahead(TK_ID) || lookahead(TK_SCOPE)) {
         expr = parse_generic_application();
     } else if (match(TK_THIS)) {
-        expr = new Ast(AST_THIS, matched);
+        expr = new This(matched);
     } else if (match(TK_TRUE) || match(TK_FALSE)) {
         expr = new BooleanLiteral(matched);
     } else if (match(TK_LITERAL_INTEGER)) {
@@ -1764,17 +1768,17 @@ Ast* Parser::parse_primary_expression() {
     } else if (match(TK_LITERAL_STRING)) {
         expr = new StringLiteral(matched);
     } else if (match(TK_LITERAL_SYMBOL)) {
-        expr = new Ast(AST_LITERAL_SYMBOL, matched);
+        expr = new SymbolLiteral(matched);
     } else if (match(TK_NULL)) {
-        expr = new Ast(AST_NULL, matched);
+        expr = new Null(matched);
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
         expr = parse_parenthesis_or_tuple_or_sequence();
     } else if (lookahead(TK_LEFT_SQUARE_BRACKET)) {
-        expr = parse_list_expression();
+        expr = (Expression*) parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
-        expr = parse_array_or_hash_expression();
+        expr = (Expression*) parse_array_or_hash_expression();
     } else if (lookahead(TK_BITWISE_OR)) {
-        expr = parse_lambda();
+        expr = (Expression*) parse_lambda();
     }
 
     return expr;
@@ -1798,7 +1802,7 @@ Ast* Parser::parse_delete_expression() {/*
     return nullptr;
 }
 
-Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
+Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
     Token oper;
     Ast* expr = nullptr;
     Ast* subexpr = nullptr;
@@ -1845,7 +1849,7 @@ Ast* Parser::parse_parenthesis_or_tuple_or_sequence() {
     }
 
     expect(TK_RIGHT_PARENTHESIS);
-    return expr;
+    return (Expression*) expr;
 }
 
 Ast* Parser::parse_list_expression() {

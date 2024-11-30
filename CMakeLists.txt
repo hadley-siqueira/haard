@@ -101,8 +101,9 @@ set(AST_SRC
     src/haard/ast/expressions/operators/unary/pos_increment.cc
     src/haard/ast/expressions/operators/unary/pos_decrement.cc
 
-
     src/haard/ast/expressions/identifier.cc
+    src/haard/ast/expressions/this.cc
+    src/haard/ast/expressions/null.cc
 
     src/haard/ast/expressions/literals/literal.cc
     src/haard/ast/expressions/literals/boolean_literal.cc
@@ -110,6 +111,7 @@ set(AST_SRC
     src/haard/ast/expressions/literals/integer_literal.cc
     src/haard/ast/expressions/literals/float_literal.cc
     src/haard/ast/expressions/literals/string_literal.cc
+    src/haard/ast/expressions/literals/symbol_literal.cc
 )
 
 set(IR_SRC

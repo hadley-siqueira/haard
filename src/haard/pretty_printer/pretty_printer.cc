@@ -386,11 +386,11 @@ void PrettyPrinter::print(Ast* node) {
 
     /* Literals */
     case AST_THIS:
-        out << "this";
+        print_this((This*) node);
         break;
 
     case AST_NULL:
-        out << "null";
+        print_null((Null*) node);
         break;
 
     case AST_LITERAL_BOOLEAN:
@@ -935,6 +935,14 @@ void PrettyPrinter::print_scope(Scope* scope) {
 
 void PrettyPrinter::print_identifier(Identifier* id) {
     out << id->get_token().get_value();
+}
+
+void PrettyPrinter::print_this(This* node) {
+    out << "this";
+}
+
+void PrettyPrinter::print_null(Null* node) {
+    out << "null";
 }
 
 void PrettyPrinter::print_boolean_literal(BooleanLiteral* node) {

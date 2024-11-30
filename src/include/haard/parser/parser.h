@@ -110,11 +110,11 @@ namespace haard {
 
         Ast* parse_postfix_expression();
 
-        Ast* parse_primary_expression();
+        Expression* parse_primary_expression();
 
         Ast* parse_new_expression();
         Ast* parse_delete_expression();
-        Ast* parse_parenthesis_or_tuple_or_sequence();
+        Expression *parse_parenthesis_or_tuple_or_sequence();
         Ast* parse_list_expression();
         Ast* parse_array_or_hash_expression();
         Ast* parse_hash(Ast* key);

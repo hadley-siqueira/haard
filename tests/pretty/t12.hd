@@ -70,4 +70,6 @@ def unaries : void
     a = 0
     ++a
     --a
+    this.a = 0
+    a = null
     return

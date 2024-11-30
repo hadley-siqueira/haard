@@ -86,6 +86,8 @@
 #include "haard/ast/expressions/operators/unary/pos_decrement.h"
 
 #include "haard/ast/expressions/identifier.h"
+#include "haard/ast/expressions/this.h"
+#include "haard/ast/expressions/null.h"
 
 #include "haard/ast/expressions/literals/literal.h"
 #include "haard/ast/expressions/literals/boolean_literal.h"
@@ -218,6 +220,8 @@ namespace haard {
         void print_generic_application(GenericsApplication* node);
         void print_scope(Scope* scope);
         void print_identifier(Identifier* id);
+        void print_this(This* node);
+        void print_null(Null* node);
 
         void print_boolean_literal(BooleanLiteral* node);
         void print_char_literal(CharLiteral* node);
