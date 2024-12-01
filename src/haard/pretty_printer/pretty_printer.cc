@@ -349,11 +349,11 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_TUPLE:
-        print_tuple(node);
+        print_tuple((Tuple*) node);
         break;
 
     case AST_SEQUENCE:
-        print_sequence(node);
+        print_sequence((Sequence*) node);
         break;
 
     case AST_LIST:
@@ -1326,12 +1326,32 @@ void PrettyPrinter::print_generics(const Generics* g) {
     out << ">";
 }
 
-void PrettyPrinter::print_tuple(Ast* expr) {
-    print_expression_list(expr, "(", ")");
+void PrettyPrinter::print_tuple(Tuple* node) {
+    bool first = true;
+
+    out << "(";
+
+    for (auto expr : node->get_expressions()) {
+        if (!first) out << ", ";
+        print(expr);
+        first = false;
+    }
+
+    out << ")";
 }
 
-void PrettyPrinter::print_sequence(Ast* expr) {
-    print_expression_list(expr, "(", ")", ";");
+void PrettyPrinter::print_sequence(Sequence* node) {
+    bool first = true;
+
+    out << "(";
+
+    for (auto expr : node->get_expressions()) {
+        if (!first) out << "; ";
+        print(expr);
+        first = false;
+    }
+
+    out << ")";
 }
 
 void PrettyPrinter::print_list(Ast* expr) {

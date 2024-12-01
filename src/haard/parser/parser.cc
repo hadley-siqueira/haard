@@ -73,6 +73,7 @@
 #include "haard/ast/expressions/operators/unary/pre_decrement.h"
 #include "haard/ast/expressions/operators/unary/pos_increment.h"
 #include "haard/ast/expressions/operators/unary/pos_decrement.h"
+#include "haard/ast/expressions/operators/unary/parenthesis.h"
 
 #include "haard/ast/expressions/literals/boolean_literal.h"
 #include "haard/ast/expressions/literals/char_literal.h"
@@ -83,6 +84,8 @@
 
 #include "haard/ast/expressions/this.h"
 #include "haard/ast/expressions/null.h"
+#include "haard/ast/expressions/tuple.h"
+#include "haard/ast/expressions/sequence.h"
 
 using namespace haard;
 
@@ -1803,11 +1806,12 @@ Ast* Parser::parse_delete_expression() {/*
 }
 
 Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
-    Token oper;
-    Ast* expr = nullptr;
-    Ast* subexpr = nullptr;
+    Token token;
+    Expression* expr = nullptr;
+    Expression* subexpr = nullptr;
 
     expect(TK_LEFT_PARENTHESIS);
+    token = matched;
     subexpr = parse_expression();
 
     if (subexpr == nullptr) {
@@ -1815,11 +1819,10 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
         return nullptr;
     }
 
-    expr = new Ast(AST_PARENTHESIS);
-    expr->add_child(subexpr);
-
     if (lookahead(TK_COMMA)) {
-        expr->set_kind(AST_TUPLE);
+        auto oper = new Tuple();
+        oper->set_token(token);
+        oper->add_expression(subexpr);
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
@@ -1827,13 +1830,17 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
 
                 if (subexpr == nullptr) {
                     log_error("missing expression inside tuple");
+                } else {
+                    oper->add_expression(subexpr);
                 }
-
-                expr->add_child(subexpr);
             }
         }
+
+        expr = oper;
     } else if (lookahead(TK_SEMICOLON)) {
-        expr->set_kind(AST_SEQUENCE);
+        auto oper = new Sequence();
+        oper->set_token(token);
+        oper->add_expression(subexpr);
 
         while (match(TK_SEMICOLON)) {
             if (!lookahead(TK_RIGHT_PARENTHESIS)) {
@@ -1841,15 +1848,21 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
 
                 if (subexpr == nullptr) {
                     log_error("expression can't be null on sequence");
+                } else {
+                    oper->add_expression(subexpr);
                 }
-
-                expr->add_child(subexpr);
             }
         }
+
+        expr = oper;
+    } else {
+        auto oper = new Parenthesis(token);
+        oper->set_expression(subexpr);
+        expr = oper;
     }
 
     expect(TK_RIGHT_PARENTHESIS);
-    return (Expression*) expr;
+    return expr;
 }
 
 Ast* Parser::parse_list_expression() {

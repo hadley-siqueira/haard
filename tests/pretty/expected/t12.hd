@@ -72,4 +72,6 @@ def unaries : void
     --a
     this.a = 0
     a = null
+    v = (1, 2, 3)
+    v = (1; 2; 3)
     return
