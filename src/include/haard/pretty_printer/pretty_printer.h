@@ -90,6 +90,7 @@
 #include "haard/ast/expressions/null.h"
 #include "haard/ast/expressions/tuple.h"
 #include "haard/ast/expressions/sequence.h"
+#include "haard/ast/expressions/list.h"
 
 #include "haard/ast/expressions/literals/literal.h"
 #include "haard/ast/expressions/literals/boolean_literal.h"
@@ -272,11 +273,9 @@ namespace haard {
 //        void print_identifier(Identifier* id);
         void print_generics(const Generics* g);
 
-//        void print_char_literal(CharLiteral* ch);
-//        void print_string_literal(StringLiteral* str);
         void print_tuple(Tuple* node);
         void print_sequence(Sequence* node);
-        void print_list(Ast* expr);
+        void print_list(List* node);
         void print_array(Ast* expr);
         void print_hash(Ast* expr);
 

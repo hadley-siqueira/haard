@@ -107,6 +107,7 @@ set(AST_SRC
     src/haard/ast/expressions/null.cc
     src/haard/ast/expressions/tuple.cc
     src/haard/ast/expressions/sequence.cc
+    src/haard/ast/expressions/list.cc
 
     src/haard/ast/expressions/literals/literal.cc
     src/haard/ast/expressions/literals/boolean_literal.cc

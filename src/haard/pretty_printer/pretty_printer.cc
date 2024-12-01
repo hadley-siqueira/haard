@@ -357,7 +357,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_LIST:
-        print_list(node);
+        print_list((List*) node);
         break;
 
     case AST_ARRAY:
@@ -1354,8 +1354,18 @@ void PrettyPrinter::print_sequence(Sequence* node) {
     out << ")";
 }
 
-void PrettyPrinter::print_list(Ast* expr) {
-    print_expression_list(expr, "[", "]");
+void PrettyPrinter::print_list(List* node) {
+    bool first = true;
+
+    out << "[";
+
+    for (auto expr : node->get_expressions()) {
+        if (!first) out << ", ";
+        print(expr);
+        first = false;
+    }
+
+    out << "]";
 }
 
 void PrettyPrinter::print_array(Ast* expr) {

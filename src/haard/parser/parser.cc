@@ -86,6 +86,7 @@
 #include "haard/ast/expressions/null.h"
 #include "haard/ast/expressions/tuple.h"
 #include "haard/ast/expressions/sequence.h"
+#include "haard/ast/expressions/list.h"
 
 using namespace haard;
 
@@ -1777,7 +1778,7 @@ Expression* Parser::parse_primary_expression() {
     } else if (lookahead(TK_LEFT_PARENTHESIS)) {
         expr = parse_parenthesis_or_tuple_or_sequence();
     } else if (lookahead(TK_LEFT_SQUARE_BRACKET)) {
-        expr = (Expression*) parse_list_expression();
+        expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
         expr = (Expression*) parse_array_or_hash_expression();
     } else if (lookahead(TK_BITWISE_OR)) {
@@ -1865,20 +1866,28 @@ Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {
     return expr;
 }
 
-Ast* Parser::parse_list_expression() {
-    Ast* expr = nullptr;
-    Ast* list = new Ast(AST_LIST);
+Expression* Parser::parse_list_expression() {
+    Token token;
+    Expression* expr = nullptr;
+
+    if (!lookahead(TK_LEFT_SQUARE_BRACKET)) {
+        return nullptr;
+    }
 
     expect(TK_LEFT_SQUARE_BRACKET);
+    token = matched;
 
     if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
         expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("expected expression on list literal");
+            return nullptr;
         }
 
-        list->add_child(expr);
+        auto list = new List();
+        list->set_token(token);
+        list->add_expression(expr);
 
         while (match(TK_COMMA)) {
             if (!lookahead(TK_RIGHT_SQUARE_BRACKET)) {
@@ -1886,15 +1895,17 @@ Ast* Parser::parse_list_expression() {
 
                 if (expr == nullptr) {
                     log_error("expected expression on list literal");
+                } else {
+                    list->add_expression(expr);
                 }
-
-                list->add_child(expr);
             }
         }
+
+        expr = list;
     }
 
     expect(TK_RIGHT_SQUARE_BRACKET);
-    return list;
+    return expr;
 }
 
 Ast* Parser::parse_array_or_hash_expression() {

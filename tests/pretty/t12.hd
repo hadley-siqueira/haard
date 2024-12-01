@@ -75,4 +75,5 @@ def unaries : void
 
     v = (1, 2, 3)
     v = (1; 2; 3)
+    v = [1, 2, 3]
     return
