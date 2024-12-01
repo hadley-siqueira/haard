@@ -19,7 +19,8 @@ namespace haard {
 
 opers = [
     'unary_plus', 'unary_minus', 'address_of', 'dereference', 'bitwise_not', 'logical_not',
-    'pre_increment', 'pre_decrement', 'pos_increment', 'pos_decrement', 'parenthesis'
+    'pre_increment', 'pre_decrement', 'pos_increment', 'pos_decrement', 'parenthesis', 
+    'delete', 'delete_array'
 ]
 
 def get_name(n):

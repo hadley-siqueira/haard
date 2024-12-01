@@ -345,7 +345,15 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_PARENTHESIS:
-        print_parenthesis(node);
+        print_parenthesis((Parenthesis*) node);
+        break;
+
+    case AST_DELETE:
+        print_delete((Delete*) node);
+        break;
+
+    case AST_DELETE_ARRAY:
+        print_delete_array((DeleteArray*) node);
         break;
 
     case AST_TUPLE:
@@ -916,9 +924,9 @@ void PrettyPrinter::print_arrow(Arrow* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_parenthesis(Ast* node) {
+void PrettyPrinter::print_parenthesis(Parenthesis* node) {
     out << "(";
-    print(node->get_child(0));
+    print(node->get_expression());
     out << ")";
 }
 
@@ -1293,6 +1301,16 @@ void PrettyPrinter::print_sizeof(Ast* node) {
     out << "sizeof(";
     print(node->get_child());
     out << ")";
+}
+
+void PrettyPrinter::print_delete(Delete* node) {
+    out << "delete ";
+    print(node->get_expression());
+}
+
+void PrettyPrinter::print_delete_array(DeleteArray* node) {
+    out << "delete[] ";
+    print(node->get_expression());
 }
 
 void PrettyPrinter::print_type_list(Ast* tlist, const char* begin, const char* end) {

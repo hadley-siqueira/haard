@@ -113,7 +113,7 @@ namespace haard {
         Expression* parse_primary_expression();
 
         Ast* parse_new_expression();
-        Ast* parse_delete_expression();
+        Expression* parse_delete_expression();
         Expression* parse_parenthesis_or_tuple_or_sequence();
         Expression* parse_list_expression();
         Ast* parse_array_or_hash_expression();

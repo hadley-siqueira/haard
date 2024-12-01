@@ -74,6 +74,8 @@
 #include "haard/ast/expressions/operators/unary/pos_increment.h"
 #include "haard/ast/expressions/operators/unary/pos_decrement.h"
 #include "haard/ast/expressions/operators/unary/parenthesis.h"
+#include "haard/ast/expressions/operators/unary/delete.h"
+#include "haard/ast/expressions/operators/unary/delete_array.h"
 
 #include "haard/ast/expressions/literals/boolean_literal.h"
 #include "haard/ast/expressions/literals/char_literal.h"
@@ -1429,7 +1431,7 @@ Expression* Parser::parse_unary_expression() {
     } else if (lookahead(TK_NEW)) {
         //expr = parse_new_expression();
     } else if (lookahead(TK_DELETE)) {
-        //expr = parse_delete_expression();
+        expr = parse_delete_expression();
     } else {
         expr = parse_postfix_expression();
     }
@@ -1692,7 +1694,7 @@ Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type,
 Ast* Parser::parse_postfix_expression() {
     Expression* left = nullptr;
     Expression* right = nullptr;
-    Expression* expr = (Expression*) parse_primary_expression();
+    Expression* expr = parse_primary_expression();
 
     while (true) {
         if (match(TK_DOT)) {
@@ -1788,22 +1790,38 @@ Expression* Parser::parse_primary_expression() {
     return expr;
 }
 
-Ast* Parser::parse_delete_expression() {/*
-    Token oper;
+Expression* Parser::parse_delete_expression() {
+    Token token;
     Expression* expr = nullptr;
 
     expect(TK_DELETE);
-    oper = matched;
+    token = matched;
 
     if (match(TK_LEFT_SQUARE_BRACKET)) {
         expect(TK_RIGHT_SQUARE_BRACKET);
-        //expr = new DeleteArray(oper, parse_expression());
+
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("missing expression on delete[] operator");
+        } else {
+            auto oper = new DeleteArray(token);
+            oper->set_expression(expr);
+            expr = oper;
+        }
     } else {
-        //expr = new Delete(oper, parse_expression());
+        expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("missing expression on delete operator");
+        } else {
+            auto oper = new Delete(token);
+            oper->set_expression(expr);
+            expr = oper;
+        }
     }
 
-    return expr;*/
-    return nullptr;
+    return expr;
 }
 
 Expression* Parser::parse_parenthesis_or_tuple_or_sequence() {

@@ -84,6 +84,9 @@
 #include "haard/ast/expressions/operators/unary/pre_decrement.h"
 #include "haard/ast/expressions/operators/unary/pos_increment.h"
 #include "haard/ast/expressions/operators/unary/pos_decrement.h"
+#include "haard/ast/expressions/operators/unary/parenthesis.h"
+#include "haard/ast/expressions/operators/unary/delete.h"
+#include "haard/ast/expressions/operators/unary/delete_array.h"
 
 #include "haard/ast/expressions/identifier.h"
 #include "haard/ast/expressions/this.h"
@@ -218,8 +221,10 @@ namespace haard {
         void print_pos_increment(Ast* node);
         void print_pos_decrement(Ast* node);
         void print_sizeof(Ast* node);
+        void print_delete(Delete* node);
+        void print_delete_array(DeleteArray* node);
 
-        void print_parenthesis(Ast* node);
+        void print_parenthesis(Parenthesis* node);
         void print_generic_application(GenericsApplication* node);
         void print_scope(Scope* scope);
         void print_identifier(Identifier* id);
