@@ -18,6 +18,7 @@
 #include "haard/ast/statements/statements.h"
 #include "haard/ast/statements/while_statement.h"
 #include "haard/ast/statements/for_statement.h"
+#include "haard/ast/statements/foreach_statement.h"
 #include "haard/ast/statements/return_statement.h"
 
 #include "haard/ast/expressions/expression.h"

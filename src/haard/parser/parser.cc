@@ -454,8 +454,15 @@ Statement* Parser::parse_for_statement() {
     stmts = parse_statements();
     dedent();
 
-    if (!is_range) {
+    if (is_range) {
+        auto stmt = new ForeachStatement();
+        stmt->set_token(token);
+        stmt->set_expression(range);
+        stmt->set_statements(stmts);
+        return stmt;
+    } else {
         auto stmt = new ForStatement();
+        stmt->set_token(token);
         stmt->set_initialization(initialization);
         stmt->set_test(test);
         stmt->set_update(update);

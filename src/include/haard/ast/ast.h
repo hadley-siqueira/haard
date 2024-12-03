@@ -41,10 +41,7 @@ namespace haard {
         AST_STATEMENT_EXPRESSION,
 
         AST_FOR,
-        AST_FOR_RANGE,
-        AST_FOR_INIT,
-        AST_FOR_TEST,
-        AST_FOR_UPDATE,
+        AST_FOREACH,
 
         AST_IF,
         AST_ELIF,

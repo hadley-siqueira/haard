@@ -60,19 +60,15 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_WHILE:
-        print_while(node);
+        print_while((WhileStatement*) node);
         break;
 
     case AST_FOR:
         print_for((ForStatement*) node);
         break;
 
-    case AST_FOR_INIT:
-        print_for_init(node);
-        break;
-
-    case AST_FOR_UPDATE:
-        print_for_update(node);
+    case AST_FOREACH:
+        print_foreach((ForeachStatement*) node);
         break;
 
     case AST_IF:
@@ -1056,12 +1052,12 @@ void PrettyPrinter::print_lambda(Ast* node) {
     out << "}";
 }
 
-void PrettyPrinter::print_while(Ast* stmt) {
+void PrettyPrinter::print_while(WhileStatement* stmt) {
     out << "while ";
-    print(stmt->get_child(0));
+    print(stmt->get_expression());
     out << ":\n";
     indent();
-    print(stmt->get_child(1));
+    print(stmt->get_statements());
     dedent();
 }
 
@@ -1093,12 +1089,13 @@ void PrettyPrinter::print_for(ForStatement* stmt) {
     dedent();
 }
 
-void PrettyPrinter::print_for_init(Ast* node) {
-    print_expression_list(node, "", "");
-}
-
-void PrettyPrinter::print_for_update(Ast* node) {
-    print_expression_list(node, "", "");
+void PrettyPrinter::print_foreach(ForeachStatement* stmt) {
+    out << "for ";
+    print(stmt->get_expression());
+    out << ":\n";
+    indent();
+    print(stmt->get_statements());
+    dedent();
 }
 
 void PrettyPrinter::print_if(Ast* node) {
