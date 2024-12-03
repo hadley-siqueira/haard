@@ -1,7 +1,6 @@
 #include <sstream>
 
 #include "haard/ast/statements/while_statement.h"
-#include "haard/utils/utils.h"
 
 using namespace haard;
 

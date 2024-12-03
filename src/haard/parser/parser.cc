@@ -319,7 +319,7 @@ Variable* Parser::parse_parameter() {
     }
 
     if (match(TK_ASSIGNMENT)) {
-        Ast* expr = parse_expression();
+        Expression* expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("missing expression on default parameter value");
@@ -338,7 +338,7 @@ Statement* Parser::parse_statement() {
     if (lookahead(TK_WHILE)) {
         stmt = parse_while_statement();
     } else if (lookahead(TK_FOR)) {
-        //stmt = parse_for_statement();
+        stmt = parse_for_statement();
     } else if (lookahead(TK_IF)) {
         //stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
@@ -384,12 +384,19 @@ WhileStatement* Parser::parse_while_statement() {
     return stmt;
 }
 
-Ast* Parser::parse_for_statement() {
-    Ast* stmt = new Ast(AST_FOR);
-    Ast* expr = nullptr;
+Statement* Parser::parse_for_statement() {
+    Token token;
     bool is_range = false;
+    Expression* expr = nullptr;
+    Expression* test = nullptr;
+    Expression* range = nullptr;
+    Statements* stmts = nullptr;
+    std::vector<Expression*> initialization;
+    std::vector<Expression*> update;
+
 
     expect(TK_FOR);
+    token = matched;
 
     if (!match(TK_SEMICOLON)) {
         expr = parse_expression();
@@ -400,23 +407,21 @@ Ast* Parser::parse_for_statement() {
     }
 
     if (expr != nullptr && expr->get_kind() == AST_IN) {
-        stmt->add_child(AST_FOR_RANGE, expr);
         is_range = true;
+        range = expr;
     } else if (expr != nullptr) {
-        Ast* init = new Ast(AST_FOR_INIT);
-        init->add_child(expr);
+        initialization.push_back(expr);
 
         while (match(TK_COMMA)) {
             expr = parse_expression();
 
             if (expr == nullptr) {
-                log_error("missing expression in for init list");
+                log_error("missing expression in for init list after comma");
+            } else {
+                initialization.push_back(expr);
             }
-
-            init->add_child(expr);
         }
 
-        stmt->add_child(init);
         expect(TK_SEMICOLON);
     }
 
@@ -425,34 +430,40 @@ Ast* Parser::parse_for_statement() {
 
         if (expr == nullptr) {
             log_error("missing test expression in for loop");
+        } else {
+            test = expr;
         }
 
-        stmt->add_child(AST_FOR_TEST, expr);
         expect(TK_SEMICOLON);
     }
 
     if (!is_range && !lookahead(TK_COLON)) {
-        Ast* update = new Ast(AST_FOR_UPDATE);
-
         do {
             expr = parse_expression();
 
             if (expr == nullptr) {
                 log_error("missing expression in for update expression");
+            } else {
+                update.push_back(expr);
             }
-
-            update->add_child(expr);
         } while (match(TK_COMMA));
-
-        stmt->add_child(update);
     }
 
     expect(TK_COLON);
     indent();
-    stmt->add_child(parse_statements());
+    stmts = parse_statements();
     dedent();
 
-    return stmt;
+    if (!is_range) {
+        auto stmt = new ForStatement();
+        stmt->set_initialization(initialization);
+        stmt->set_test(test);
+        stmt->set_update(update);
+        stmt->set_statements(stmts);
+        return stmt;
+    }
+
+    return nullptr;
 }
 
 Ast* Parser::parse_if_statement() {

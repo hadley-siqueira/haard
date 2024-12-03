@@ -64,7 +64,7 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_FOR:
-        print_for(node);
+        print_for((ForStatement*) node);
         break;
 
     case AST_FOR_INIT:
@@ -1065,29 +1065,31 @@ void PrettyPrinter::print_while(Ast* stmt) {
     dedent();
 }
 
-void PrettyPrinter::print_for(Ast* stmt) {
-    Ast* tmp;
+void PrettyPrinter::print_for(ForStatement* stmt) {
+    bool first = true;
 
     out << "for ";
 
-    tmp = stmt->get_child(AST_FOR_RANGE);
+    for (auto e : stmt->get_initialization()) {
+        if (!first) out << ", ";
+        print(e);
+        first = false;
+    }
 
-    if (tmp) {
-        print(tmp->get_child());
-    } else {
-        print(stmt->get_child(AST_FOR_INIT));
-        out << "; ";
+    out << "; ";
+    print(stmt->get_test());
+    out << "; ";
 
-        tmp = stmt->get_child(AST_FOR_TEST);
-        print(tmp->get_child());
-        out << "; ";
-
-        print(stmt->get_child(AST_FOR_UPDATE));
+    first = true;
+    for (auto e : stmt->get_update()) {
+        if (!first) out << ", ";
+        print(e);
+        first = false;
     }
 
     out << ":\n";
     indent();
-    print(stmt->get_child(AST_STATEMENTS));
+    print(stmt->get_statements());
     dedent();
 }
 

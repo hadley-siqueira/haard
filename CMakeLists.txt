@@ -35,6 +35,7 @@ set(AST_SRC
     src/haard/ast/statements/statement.cc
     src/haard/ast/statements/statements.cc
     src/haard/ast/statements/while_statement.cc
+    src/haard/ast/statements/for_statement.cc
     src/haard/ast/statements/return_statement.cc
     src/haard/ast/statements/expression_statement.cc
 

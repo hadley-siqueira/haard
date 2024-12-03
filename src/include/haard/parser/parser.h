@@ -17,6 +17,7 @@
 #include "haard/ast/statements/statement.h"
 #include "haard/ast/statements/statements.h"
 #include "haard/ast/statements/while_statement.h"
+#include "haard/ast/statements/for_statement.h"
 #include "haard/ast/statements/return_statement.h"
 
 #include "haard/ast/expressions/expression.h"
@@ -55,7 +56,7 @@ namespace haard {
 
         Statement* parse_statement();
         WhileStatement* parse_while_statement();
-        Ast* parse_for_statement();
+        Statement* parse_for_statement();
 
         Ast* parse_if_statement();
         Ast* parse_elif_statement();
