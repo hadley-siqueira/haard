@@ -19,6 +19,9 @@
 #include "haard/ast/statements/while_statement.h"
 #include "haard/ast/statements/for_statement.h"
 #include "haard/ast/statements/foreach_statement.h"
+#include "haard/ast/statements/if_statement.h"
+#include "haard/ast/statements/elif_statement.h"
+#include "haard/ast/statements/else_statement.h"
 #include "haard/ast/statements/return_statement.h"
 
 #include "haard/ast/expressions/expression.h"
@@ -59,9 +62,9 @@ namespace haard {
         WhileStatement* parse_while_statement();
         Statement* parse_for_statement();
 
-        Ast* parse_if_statement();
-        Ast* parse_elif_statement();
-        Ast* parse_else_statement();
+        IfStatement* parse_if_statement();
+        ElifStatement* parse_elif_statement();
+        ElseStatement *parse_else_statement();
 
         ReturnStatement* parse_return_statement();
 

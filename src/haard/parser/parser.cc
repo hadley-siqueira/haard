@@ -340,7 +340,7 @@ Statement* Parser::parse_statement() {
     } else if (lookahead(TK_FOR)) {
         stmt = parse_for_statement();
     } else if (lookahead(TK_IF)) {
-        //stmt = parse_if_statement();
+        stmt = parse_if_statement();
     } else if (lookahead(TK_RETURN)) {
         stmt = parse_return_statement();
     } else if (lookahead(TK_SWITCH)) {
@@ -473,61 +473,25 @@ Statement* Parser::parse_for_statement() {
     return nullptr;
 }
 
-Ast* Parser::parse_if_statement() {
-    Ast* stmt;
-    Ast* expr;
-    bool has_expr = true;
-
-    if (match(TK_IF)) {
-        stmt = new Ast(AST_IF, matched);
-    } else if (match(TK_ELIF)) {
-        stmt = new Ast(AST_ELIF, matched);
-    } else if (match(TK_ELSE)) {
-        stmt = new Ast(AST_ELSE, matched);
-        has_expr = false;
+IfStatement* Parser::parse_if_statement() {
+    if (!match(TK_IF)) {
+        return nullptr;
     }
 
-    if (has_expr) {
-        expr = parse_expression();
-
-        if (expr == nullptr) {
-            log_error("missing condition in if statement");
-        }
-
-        stmt->add_child(expr);
-    }
-
-    expect(TK_COLON);
-    indent();
-    stmt->add_child(parse_statements());
-    dedent();
-
-    if (lookahead(TK_ELIF) && is_indented()) {
-        stmt->add_child(parse_if_statement());
-    } else if (lookahead(TK_ELSE) && is_indented() && stmt->get_kind() != AST_ELSE) {
-        stmt->add_child(parse_if_statement());
-    }
-
-    return stmt;
-}
-
-Ast* Parser::parse_elif_statement() {/*
-    Expression* condition;
-    BranchStatement* stmt = new BranchStatement(STMT_ELIF);
-
-    expect(TK_ELIF);
+    IfStatement* stmt = new IfStatement();
     stmt->set_token(matched);
-    condition = parse_expression();
 
-    if (condition == nullptr) {
-        log_error("missing condition in elif");
+    Expression* expr = parse_expression();
+
+    if (expr == nullptr) {
+        log_error("missing expression on if statement");
+    } else {
+        stmt->set_expression(expr);
     }
-
-    stmt->set_condition(condition);
 
     expect(TK_COLON);
     indent();
-    stmt->set_true_statements(parse_compound_statement());
+    stmt->set_true_statements(parse_statements());
     dedent();
 
     if (lookahead(TK_ELIF) && is_indented()) {
@@ -536,23 +500,53 @@ Ast* Parser::parse_elif_statement() {/*
         stmt->set_false_statements(parse_else_statement());
     }
 
-    return stmt;*/
-    return nullptr;
+    return stmt;
 }
 
-Ast* Parser::parse_else_statement() {/*
-    BranchStatement* stmt = new BranchStatement(STMT_ELSE);
+ElifStatement* Parser::parse_elif_statement() {
+    if (!match(TK_ELIF)) {
+        return nullptr;
+    }
 
-    expect(TK_ELSE);
+    ElifStatement* stmt = new ElifStatement();
+    stmt->set_token(matched);
+
+    Expression* expr = parse_expression();
+
+    if (expr == nullptr) {
+        log_error("missing expression on elif statement");
+    } else {
+        stmt->set_expression(expr);
+    }
+
+    expect(TK_COLON);
+    indent();
+    stmt->set_true_statements(parse_statements());
+    dedent();
+
+    if (lookahead(TK_ELIF) && is_indented()) {
+        stmt->set_false_statements(parse_elif_statement());
+    } else if (lookahead(TK_ELSE) && is_indented()) {
+        stmt->set_false_statements(parse_else_statement());
+    }
+
+    return stmt;
+}
+
+ElseStatement* Parser::parse_else_statement() {
+    if (!match(TK_ELSE)) {
+        return nullptr;
+    }
+
+    ElseStatement* stmt = new ElseStatement();
     stmt->set_token(matched);
 
     expect(TK_COLON);
     indent();
-    stmt->set_true_statements(parse_compound_statement());
+    stmt->set_statements(parse_statements());
     dedent();
 
-    return stmt;*/
-    return nullptr;
+    return stmt;
 }
 
 

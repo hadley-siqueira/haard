@@ -72,15 +72,15 @@ void PrettyPrinter::print(Ast* node) {
         break;
 
     case AST_IF:
-        print_if(node);
+        print_if((IfStatement*) node);
         break;
 
     case AST_ELIF:
-        print_elif(node);
+        print_elif((ElifStatement*) node);
         break;
 
     case AST_ELSE:
-        print_else(node);
+        print_else((ElseStatement*) node);
         break;
 
     case AST_RETURN:
@@ -1098,38 +1098,34 @@ void PrettyPrinter::print_foreach(ForeachStatement* stmt) {
     dedent();
 }
 
-void PrettyPrinter::print_if(Ast* node) {
-    print_indentation();
+void PrettyPrinter::print_if(IfStatement* node) {
     out << "if ";
-    print(node->get_child(0));
+    print(node->get_expression());
     out << ":\n";
     indent();
-    print(node->get_child(1));
+    print(node->get_true_statements());
     dedent();
-
-    print(node->get_child(2));
-    /*if (node->get_child(2)) {
-
-    }*/
+    print(node->get_false_statements());
 }
 
-void PrettyPrinter::print_elif(Ast* node) {
+void PrettyPrinter::print_elif(ElifStatement* node) {
+    out << "\n";
     print_indentation();
     out << "elif ";
-    print(node->get_child(0));
+    print(node->get_expression());
     out << ":\n";
     indent();
-    print(node->get_child(1));
+    print(node->get_true_statements());
     dedent();
-
-    print(node->get_child(2));
+    print(node->get_false_statements());
 }
 
-void PrettyPrinter::print_else(Ast* node) {
+void PrettyPrinter::print_else(ElseStatement* node) {
+    out << "\n";
     print_indentation();
     out << "else:\n";
     indent();
-    print(node->get_child());
+    print(node->get_statements());
     dedent();
 }
 

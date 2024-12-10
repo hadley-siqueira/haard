@@ -37,6 +37,9 @@ set(AST_SRC
     src/haard/ast/statements/while_statement.cc
     src/haard/ast/statements/for_statement.cc
     src/haard/ast/statements/foreach_statement.cc
+    src/haard/ast/statements/if_statement.cc
+    src/haard/ast/statements/elif_statement.cc
+    src/haard/ast/statements/else_statement.cc
     src/haard/ast/statements/return_statement.cc
     src/haard/ast/statements/expression_statement.cc
 

@@ -24,6 +24,9 @@
 #include "haard/ast/statements/while_statement.h"
 #include "haard/ast/statements/for_statement.h"
 #include "haard/ast/statements/foreach_statement.h"
+#include "haard/ast/statements/if_statement.h"
+#include "haard/ast/statements/elif_statement.h"
+#include "haard/ast/statements/else_statement.h"
 #include "haard/ast/statements/return_statement.h"
 #include "haard/ast/statements/expression_statement.h"
 
@@ -140,9 +143,9 @@ namespace haard {
         void print_while(WhileStatement* stmt);
         void print_for(ForStatement* stmt);
         void print_foreach(ForeachStatement* stmt);
-        void print_if(Ast* node);
-        void print_elif(Ast* node);
-        void print_else(Ast* node);
+        void print_if(IfStatement* node);
+        void print_elif(ElifStatement* node);
+        void print_else(ElseStatement* node);
         void print_return(ReturnStatement* node);
         void print_switch(Ast* node);
         void print_switch_brace(Ast* node);
