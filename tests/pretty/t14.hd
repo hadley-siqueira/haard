@@ -1,0 +1,10 @@
+def sum : i32
+    @a : i32
+    @b : i32
+
+    return a + b
+
+def main : i32
+    a = sum(2, 3)
+    b = sum(a: a, b: 5)
+    return sum(a, b)

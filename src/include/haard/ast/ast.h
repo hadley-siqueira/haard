@@ -73,6 +73,8 @@
 #include "haard/ast/expressions/operators/binary/arrow.h"
 #include "haard/ast/expressions/operators/binary/generics_application.h"
 #include "haard/ast/expressions/operators/binary/scope.h"
+#include "haard/ast/expressions/operators/binary/call.h"
+#include "haard/ast/expressions/operators/binary/named_argument.h"
 
 #include "haard/ast/expressions/operators/unary/unary_operator.h"
 #include "haard/ast/expressions/operators/unary/unary_plus.h"

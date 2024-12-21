@@ -114,6 +114,8 @@ namespace haard {
         AstNode* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
 
         AstNode* parse_postfix_expression();
+        Call* parse_call_expression(Expression* obj);
+        void parse_call_arguments(Call* call);
 
         Expression* parse_primary_expression();
 
@@ -126,8 +128,6 @@ namespace haard {
 
         AstNode* parse_lambda();
 
-        AstNode* parse_argument_list();
-
         Expression* parse_generic_application();
         Expression* parse_scope();
         Identifier* parse_identifier();
@@ -137,6 +137,7 @@ namespace haard {
     private:
         void advance();
         bool lookahead(int kind, int offset=0);
+        bool lookahead_same_line(int kind, int offset=0);
         bool match(int kind);
         bool match_same_line(int kind);
         bool match();

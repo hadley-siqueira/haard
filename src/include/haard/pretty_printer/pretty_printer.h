@@ -114,9 +114,9 @@ namespace haard {
 
         void print_dot(Dot* node);
         void print_arrow(Arrow* node);
-        void print_call(AstNode* expr);
+        void print_call(Call* node);
         void print_arguments(AstNode* args);
-        void print_argument_name(AstNode* node);
+        void print_named_argument(NamedArgument *node);
         void print_pos_increment(AstNode* node);
         void print_pos_decrement(AstNode* node);
         void print_sizeof(AstNode* node);

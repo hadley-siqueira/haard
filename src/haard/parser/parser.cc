@@ -1663,12 +1663,8 @@ AstNode* Parser::parse_postfix_expression() {
             }
 
             expect(TK_RIGHT_SQUARE_BRACKET);
-        } else if (match_same_line(TK_LEFT_PARENTHESIS)) {
-            left = expr;
-            //expr = new Ast(AST_CALL, matched);
-            expr->add_child(left);
-            expr->add_child(parse_argument_list());
-            expect(TK_RIGHT_PARENTHESIS);
+        } else if (lookahead_same_line(TK_LEFT_PARENTHESIS)) {
+            expr = parse_call_expression(expr);
         } else if (match_same_line(TK_INC)) {
             left = expr;
            // expr = new Ast(AST_POS_INCREMENT, matched);
@@ -1683,6 +1679,62 @@ AstNode* Parser::parse_postfix_expression() {
     }
 
     return expr;
+}
+
+Call* Parser::parse_call_expression(Expression* obj) {
+    if (!match_same_line(TK_LEFT_PARENTHESIS)) {
+        return nullptr;
+    }
+
+    auto expr = new Call();
+    expr->set_expression(obj);
+
+    if (!lookahead(TK_RIGHT_PARENTHESIS)) {
+        parse_call_arguments(expr);
+    }
+
+    expect(TK_RIGHT_PARENTHESIS);
+    return expr;
+}
+
+void Parser::parse_call_arguments(Call* call) {
+    bool has_named_arguments = false;
+    bool has_name = false;
+    Token name;
+
+    do {
+        has_name = false;
+
+        if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
+            expect(TK_ID);
+            name = matched;
+            expect(TK_COLON);
+            has_named_arguments = true;
+            has_name = true;
+        } else if (has_named_arguments) {
+            if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
+                expect(TK_ID);
+                name = matched;
+                expect(TK_COLON);
+                has_name = true;
+            } else {
+                log_error("Missing named argument. You're using named arguments, but now is trying to type an unamed argument");
+            }
+        }
+
+        auto expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("Expected an expression as argument of call expression, but got something else");
+        } else if (has_name) {
+            auto named = new NamedArgument();
+            named->set_name(name);
+            named->set_expression(expr);
+            call->add_argument(named);
+        } else {
+            call->add_argument(expr);
+        }
+    } while (match(TK_COMMA));
 }
 
 Expression* Parser::parse_primary_expression() {
@@ -1979,50 +2031,6 @@ AstNode* Parser::parse_lambda() {
     return lambda;
 }
 
-AstNode* Parser::parse_argument_list() {
-    bool has_named_arguments = false;
-    AstNode* expr;
-    AstNode* name;
-    AstNode* arguments = new AstNode(AST_ARGUMENTS);
-
-    if (!lookahead(TK_RIGHT_PARENTHESIS)) {
-        do {
-            name = nullptr;
-
-            if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
-                expect(TK_ID);
-                name = new AstNode(AST_NAMED_ARGUMENT, matched);
-                expect(TK_COLON);
-                has_named_arguments = true;
-            } else if (has_named_arguments) {
-                if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
-                    expect(TK_ID);
-                    name = new AstNode(AST_NAMED_ARGUMENT, matched);
-                    expect(TK_COLON);
-                } else {
-                    log_error("Missing named argument. You're using named arguments, but now is trying to type an unamed argument");
-                }
-            }
-
-            expr = parse_expression();
-
-            if (expr == nullptr) {
-                log_error("Expected an expression, but got something else");
-            }
-
-            if (name) {
-                name->add_child(expr);
-                arguments->add_child(name);
-            } else {
-                arguments->add_child(expr);
-            }
-        } while (match(TK_COMMA));
-    }
-
-    return arguments;
-}
-
-
 AstNode* Parser::parse_new_expression() {/*
     Ast* type;
     New* expr = new New();
@@ -2144,6 +2152,10 @@ bool Parser::lookahead(int kind, int offset) {
     }
 
     return false;
+}
+
+bool Parser::lookahead_same_line(int kind, int offset) {
+    return next_token_on_same_line() && lookahead(kind, offset);
 }
 
 bool Parser::match(int kind) {
