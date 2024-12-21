@@ -32,11 +32,11 @@ namespace haard {
         void semantic_analysis();
 
     public:
-        Ast* parse_file(std::string path);
-        void parse_module_imports(Ast* module);
-        void parse_import(Ast* import);
-        void parse_simple_import(Ast* import);
-        std::string build_import_path(Ast* import);
+        AstNode* parse_file(std::string path);
+        void parse_module_imports(AstNode* module);
+        void parse_import(AstNode* import);
+        void parse_simple_import(AstNode* import);
+        std::string build_import_path(AstNode* import);
         std::string build_relative_path(std::string path);
         void configure_search_path();
         void set_root_path_from_main_file();

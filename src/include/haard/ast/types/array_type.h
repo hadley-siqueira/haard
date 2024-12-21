@@ -13,8 +13,8 @@ namespace haard {
         Type* get_subtype() const;
         void set_subtype(Type* type);
 
-        Ast* get_expression() const;
-        void set_expression(Ast* expression);
+        AstNode* get_expression() const;
+        void set_expression(AstNode* expression);
 
         const Token& get_token() const;
         void set_token(const Token& token);
@@ -22,7 +22,7 @@ namespace haard {
     private:
         Token token;
         Type* subtype;
-        Ast* expression;
+        AstNode* expression;
     };
 }
 

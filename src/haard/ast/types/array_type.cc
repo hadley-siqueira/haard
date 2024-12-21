@@ -41,10 +41,10 @@ void ArrayType::set_subtype(Type* type) {
     }
 }
 
-Ast* ArrayType::get_expression() const {
+AstNode* ArrayType::get_expression() const {
     return expression;
 }
 
-void ArrayType::set_expression(Ast* expression) {
+void ArrayType::set_expression(AstNode* expression) {
     this->expression = expression;
 }

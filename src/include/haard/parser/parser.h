@@ -46,14 +46,14 @@ namespace haard {
         Module* parse_module();
         Import* parse_import();
 
-        Ast* parse_definitions();
+        AstNode* parse_definitions();
 
-        Ast* parse_user_type();
+        AstNode* parse_user_type();
 
-        Ast* parse_variable();
-        Ast* parse_field();
+        AstNode* parse_variable();
+        AstNode* parse_field();
 
-        Ast* parse_variable_definition();
+        AstNode* parse_variable_definition();
 
         Function* parse_function();
         Variable* parse_parameter();
@@ -68,8 +68,8 @@ namespace haard {
 
         ReturnStatement* parse_return_statement();
 
-        Ast* parse_switch_statement();
-        Ast* parse_switch_cases();
+        AstNode* parse_switch_statement();
+        AstNode* parse_switch_cases();
 
         Statements* parse_statements();
 
@@ -110,23 +110,23 @@ namespace haard {
         Expression* parse_unary_plus();
         Expression* parse_pre_increment();
         Expression* parse_pre_decrement();
-        Ast* parse_sizeof();
-        Ast* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
+        AstNode* parse_sizeof();
+        AstNode* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
 
-        Ast* parse_postfix_expression();
+        AstNode* parse_postfix_expression();
 
         Expression* parse_primary_expression();
 
-        Ast* parse_new_expression();
+        AstNode* parse_new_expression();
         Expression* parse_delete_expression();
         Expression* parse_parenthesis_or_tuple_or_sequence();
         Expression* parse_list_expression();
-        Ast* parse_array_or_hash_expression();
-        Ast* parse_hash(Ast* key);
+        AstNode* parse_array_or_hash_expression();
+        AstNode* parse_hash(AstNode* key);
 
-        Ast* parse_lambda();
+        AstNode* parse_lambda();
 
-        Ast* parse_argument_list();
+        AstNode* parse_argument_list();
 
         Expression* parse_generic_application();
         Expression* parse_scope();

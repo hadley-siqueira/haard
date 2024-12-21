@@ -31,10 +31,10 @@ void Variable::set_type(Type* type) {
     this->type = type;
 }
 
-Ast* Variable::get_expression() const {
+AstNode* Variable::get_expression() const {
     return expression;
 }
 
-void Variable::set_expression(Ast* expression) {
+void Variable::set_expression(AstNode* expression) {
     this->expression = expression;
 }

@@ -8,7 +8,7 @@
 #include "haard/ast/module.h"
 
 namespace haard {
-    class Modules : public Ast {
+    class Modules : public AstNode {
     public:
         ~Modules();
 

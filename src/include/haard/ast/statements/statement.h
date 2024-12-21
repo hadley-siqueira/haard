@@ -1,10 +1,10 @@
 #ifndef HAARD_AST_STATEMENT_H
 #define HAARD_AST_STATEMENT_H
 
-#include "haard/ast/ast.h"
+#include "haard/ast/ast_node.h"
 
 namespace haard {
-    class Statement : public Ast {
+    class Statement : public AstNode {
     public:
         Statement();
         ~Statement();

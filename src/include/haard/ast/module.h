@@ -3,12 +3,12 @@
 
 #include <vector>
 
-#include "haard/ast/ast.h"
+#include "haard/ast/ast_node.h"
 #include "haard/ast/import.h"
 #include "haard/ast/function.h"
 
 namespace haard {
-    class Module : public Ast {
+    class Module : public AstNode {
     public:
         Module();
         ~Module();

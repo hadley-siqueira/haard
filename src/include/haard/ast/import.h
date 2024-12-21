@@ -4,10 +4,10 @@
 #include <vector>
 
 #include "haard/token/token.h"
-#include "haard/ast/ast.h"
+#include "haard/ast/ast_node.h"
 
 namespace haard {
-    class Import : public Ast {
+    class Import : public AstNode {
     public:
         Import();
 

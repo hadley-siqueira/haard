@@ -12,7 +12,7 @@ std::string PrettyPrinter::get_output() {
     return out.str();
 }
 
-void PrettyPrinter::print(Ast* node) {
+void PrettyPrinter::print(AstNode* node) {
     if (node == nullptr) {
         return;
     }
@@ -574,7 +574,7 @@ void PrettyPrinter::print_import(Import* import) {
     }
 }
 
-void PrettyPrinter::print_user_type(Ast* node) {
+void PrettyPrinter::print_user_type(AstNode* node) {
     if (node->get_kind() == AST_CLASS) {
         out << "class ";
     } else if (node->get_kind() == AST_ENUM) {
@@ -608,7 +608,7 @@ void PrettyPrinter::print_user_type(Ast* node) {
     dedent();
 }
 
-void PrettyPrinter::print_super_type(Ast* node) {
+void PrettyPrinter::print_super_type(AstNode* node) {
     out << "(";
     print(node->get_child());
     out << ")";
@@ -624,7 +624,7 @@ void PrettyPrinter::print_reference_type(ReferenceType* node) {
     out << "&";
 }
 
-void PrettyPrinter::print_list_type(Ast* node) {
+void PrettyPrinter::print_list_type(AstNode* node) {
     out << '[';
     print(node->get_child(0));
     out << ']';
@@ -754,7 +754,7 @@ void PrettyPrinter::print_bitwise_not_assignment(BitwiseNotAssignment* node) {
     print(node->get_right());
 }
 
-void PrettyPrinter::print_cast(Ast* node) {
+void PrettyPrinter::print_cast(AstNode* node) {
     print_binop(node, "as");
 }
 
@@ -1019,7 +1019,7 @@ void PrettyPrinter::print_variable(Variable* var) {
     }
 }
 
-void PrettyPrinter::print_lambda(Ast* node) {
+void PrettyPrinter::print_lambda(AstNode* node) {
     out << "|";
 
     auto params = node->get_children(AST_VARIABLE);
@@ -1160,7 +1160,7 @@ void PrettyPrinter::print_return(ReturnStatement* node) {
     }
 }
 
-void PrettyPrinter::print_switch(Ast* node) {
+void PrettyPrinter::print_switch(AstNode* node) {
     out << "switch ";
     print(node->get_child(0));
     out << ":\n";
@@ -1173,7 +1173,7 @@ void PrettyPrinter::print_switch(Ast* node) {
     dedent();
 }
 
-void PrettyPrinter::print_switch_brace(Ast* node) {
+void PrettyPrinter::print_switch_brace(AstNode* node) {
     print(node->get_child(0));
 
     indent();
@@ -1182,21 +1182,21 @@ void PrettyPrinter::print_switch_brace(Ast* node) {
     out << "\n";
 }
 
-void PrettyPrinter::print_switch_cases(Ast* node) {
+void PrettyPrinter::print_switch_cases(AstNode* node) {
     for (int i = 0; i < node->children_count(); ++i) {
         print(node->get_child(i));
         out << "\n";
     }
 }
 
-void PrettyPrinter::print_switch_case(Ast* node) {
+void PrettyPrinter::print_switch_case(AstNode* node) {
     print_indentation();
     out << "case ";
     print(node->get_child());
     out << ":";
 }
 
-void PrettyPrinter::print_switch_default(Ast* node) {
+void PrettyPrinter::print_switch_default(AstNode* node) {
     print_indentation();
     out << "default:\n";
     indent();
@@ -1209,7 +1209,7 @@ void PrettyPrinter::print_expression_statement(ExpressionStatement* stmt) {
     print(stmt->get_expression());
 }
 
-void PrettyPrinter::print_index(Ast* node) {
+void PrettyPrinter::print_index(AstNode* node) {
     print(node->get_child(0));
     out << '[';
 
@@ -1217,7 +1217,7 @@ void PrettyPrinter::print_index(Ast* node) {
     out << ']';
 }
 
-void PrettyPrinter::print_hash_pair(Ast* pair) {
+void PrettyPrinter::print_hash_pair(AstNode* pair) {
     print(pair->get_child(0));
     out << ": ";
     print(pair->get_child(1));
@@ -1268,31 +1268,31 @@ void PrettyPrinter::print_pre_decrement(PreDecrement* node) {
     print(node->get_expression());
 }
 
-void PrettyPrinter::print_call(Ast* expr) {
+void PrettyPrinter::print_call(AstNode* expr) {
     print(expr->get_child(0));
     print(expr->get_child(1));
 }
 
-void PrettyPrinter::print_arguments(Ast* args) {
+void PrettyPrinter::print_arguments(AstNode* args) {
     print_expression_list(args, "(", ")");
 }
 
-void PrettyPrinter::print_argument_name(Ast* node) {
+void PrettyPrinter::print_argument_name(AstNode* node) {
     out << node->get_value() << ": ";
     print(node->get_child());
 }
 
-void PrettyPrinter::print_pos_increment(Ast* node) {
+void PrettyPrinter::print_pos_increment(AstNode* node) {
     print(node->get_child(0));
     out << "++";
 }
 
-void PrettyPrinter::print_pos_decrement(Ast* node) {
+void PrettyPrinter::print_pos_decrement(AstNode* node) {
     print(node->get_child(0));
     out << "--";
 }
 
-void PrettyPrinter::print_sizeof(Ast* node) {
+void PrettyPrinter::print_sizeof(AstNode* node) {
     out << "sizeof(";
     print(node->get_child());
     out << ")";
@@ -1308,7 +1308,7 @@ void PrettyPrinter::print_delete_array(DeleteArray* node) {
     print(node->get_expression());
 }
 
-void PrettyPrinter::print_type_list(Ast* tlist, const char* begin, const char* end) {
+void PrettyPrinter::print_type_list(AstNode* tlist, const char* begin, const char* end) {
     if (tlist == nullptr) {
         return;
     }
@@ -1381,15 +1381,15 @@ void PrettyPrinter::print_list(List* node) {
     out << "]";
 }
 
-void PrettyPrinter::print_array(Ast* expr) {
+void PrettyPrinter::print_array(AstNode* expr) {
     print_expression_list(expr, "{", "}");
 }
 
-void PrettyPrinter::print_hash(Ast* expr) {
+void PrettyPrinter::print_hash(AstNode* expr) {
     print_expression_list(expr, "{", "}");
 }
 
-void PrettyPrinter::print_expression_list(Ast* list, const char* begin, const char* end, const char* sep) {
+void PrettyPrinter::print_expression_list(AstNode* list, const char* begin, const char* end, const char* sep) {
     if (list == nullptr) {
         return;
     }
@@ -1423,7 +1423,7 @@ void PrettyPrinter::print_indentation() {
     }
 }
 
-void PrettyPrinter::print_binop(Ast* node, const char* oper, bool no_space) {
+void PrettyPrinter::print_binop(AstNode* node, const char* oper, bool no_space) {
     //out << "(";
     print(node->get_child(0));
 

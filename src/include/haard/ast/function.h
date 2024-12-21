@@ -3,14 +3,14 @@
 
 #include <vector>
 
-#include "haard/ast/ast.h"
+#include "haard/ast/ast_node.h"
 #include "haard/ast/types/type.h"
 #include "haard/ast/variable.h"
 #include "haard/ast/generics.h"
 #include "haard/ast/statements/statements.h"
 
 namespace haard {
-    class Function : public Ast {
+    class Function : public AstNode {
     public:
         Function();
         ~Function();

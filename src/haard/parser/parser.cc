@@ -5,90 +5,7 @@
 #include "haard/parser/parser.h"
 #include "haard/scanner/scanner.h"
 #include "haard/log/logs.h"
-
-#include "haard/ast/types/primitive_type.h"
-#include "haard/ast/types/pointer_type.h"
-#include "haard/ast/types/reference_type.h"
-#include "haard/ast/types/list_type.h"
-#include "haard/ast/types/array_type.h"
-#include "haard/ast/types/tuple_type.h"
-#include "haard/ast/types/function_type.h"
-#include "haard/ast/types/named_type.h"
-
-#include "haard/ast/statements/expression_statement.h"
-#include "haard/ast/expressions/operators/binary/binary_operator.h"
-#include "haard/ast/expressions/operators/binary/assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_and_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_or_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_xor_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_not_assignment.h"
-#include "haard/ast/expressions/operators/binary/division_assignment.h"
-#include "haard/ast/expressions/operators/binary/integer_division_assignment.h"
-#include "haard/ast/expressions/operators/binary/minus_assignment.h"
-#include "haard/ast/expressions/operators/binary/modulo_assignment.h"
-#include "haard/ast/expressions/operators/binary/plus_assignment.h"
-#include "haard/ast/expressions/operators/binary/times_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_left_logical_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_right_logical_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.h"
-#include "haard/ast/expressions/operators/binary/logical_and.h"
-#include "haard/ast/expressions/operators/binary/logical_or.h"
-#include "haard/ast/expressions/operators/binary/equal.h"
-#include "haard/ast/expressions/operators/binary/not_equal.h"
-#include "haard/ast/expressions/operators/binary/less_than.h"
-#include "haard/ast/expressions/operators/binary/greater_than.h"
-#include "haard/ast/expressions/operators/binary/less_than_or_equal.h"
-#include "haard/ast/expressions/operators/binary/greater_than_or_equal.h"
-#include "haard/ast/expressions/operators/binary/in.h"
-#include "haard/ast/expressions/operators/binary/not_in.h"
-#include "haard/ast/expressions/operators/binary/inclusive_range.h"
-#include "haard/ast/expressions/operators/binary/exclusive_range.h"
-#include "haard/ast/expressions/operators/binary/plus.h"
-#include "haard/ast/expressions/operators/binary/minus.h"
-#include "haard/ast/expressions/operators/binary/times.h"
-#include "haard/ast/expressions/operators/binary/division.h"
-#include "haard/ast/expressions/operators/binary/modulo.h"
-#include "haard/ast/expressions/operators/binary/integer_division.h"
-#include "haard/ast/expressions/operators/binary/power.h"
-#include "haard/ast/expressions/operators/binary/shift_left_logical.h"
-#include "haard/ast/expressions/operators/binary/shift_right_logical.h"
-#include "haard/ast/expressions/operators/binary/shift_right_arithmetic.h"
-#include "haard/ast/expressions/operators/binary/bitwise_and.h"
-#include "haard/ast/expressions/operators/binary/bitwise_or.h"
-#include "haard/ast/expressions/operators/binary/bitwise_xor.h"
-#include "haard/ast/expressions/operators/binary/index.h"
-#include "haard/ast/expressions/operators/binary/dot.h"
-#include "haard/ast/expressions/operators/binary/arrow.h"
-#include "haard/ast/expressions/operators/binary/generics_application.h"
-#include "haard/ast/expressions/operators/binary/scope.h"
-
-#include "haard/ast/expressions/operators/unary/unary_operator.h"
-#include "haard/ast/expressions/operators/unary/unary_plus.h"
-#include "haard/ast/expressions/operators/unary/unary_minus.h"
-#include "haard/ast/expressions/operators/unary/address_of.h"
-#include "haard/ast/expressions/operators/unary/dereference.h"
-#include "haard/ast/expressions/operators/unary/bitwise_not.h"
-#include "haard/ast/expressions/operators/unary/logical_not.h"
-#include "haard/ast/expressions/operators/unary/pre_increment.h"
-#include "haard/ast/expressions/operators/unary/pre_decrement.h"
-#include "haard/ast/expressions/operators/unary/pos_increment.h"
-#include "haard/ast/expressions/operators/unary/pos_decrement.h"
-#include "haard/ast/expressions/operators/unary/parenthesis.h"
-#include "haard/ast/expressions/operators/unary/delete.h"
-#include "haard/ast/expressions/operators/unary/delete_array.h"
-
-#include "haard/ast/expressions/literals/boolean_literal.h"
-#include "haard/ast/expressions/literals/char_literal.h"
-#include "haard/ast/expressions/literals/integer_literal.h"
-#include "haard/ast/expressions/literals/float_literal.h"
-#include "haard/ast/expressions/literals/string_literal.h"
-#include "haard/ast/expressions/literals/symbol_literal.h"
-
-#include "haard/ast/expressions/this.h"
-#include "haard/ast/expressions/null.h"
-#include "haard/ast/expressions/tuple.h"
-#include "haard/ast/expressions/sequence.h"
-#include "haard/ast/expressions/list.h"
+#include "haard/ast/ast.h"
 
 using namespace haard;
 
@@ -152,18 +69,18 @@ Import* Parser::parse_import() {
     return import;
 }
 
-Ast* Parser::parse_user_type() {
+AstNode* Parser::parse_user_type() {
     bool has_children = false;
-    Ast* user_type = nullptr;
+    AstNode* user_type = nullptr;
 
     if (match(TK_CLASS)) {
-        user_type = new Ast(AST_CLASS);
+        user_type = new AstNode(AST_CLASS);
     } else if (match(TK_STRUCT)) {
-        user_type = new Ast(AST_STRUCT);
+        user_type = new AstNode(AST_STRUCT);
     } else if (match(TK_UNION)) {
-        user_type = new Ast(AST_UNION);
+        user_type = new AstNode(AST_UNION);
     } else if (match(TK_ENUM)) {
-        user_type = new Ast(AST_ENUM);
+        user_type = new AstNode(AST_ENUM);
     } else {
         log_error("missing user type builder");
         return nullptr;
@@ -174,7 +91,7 @@ Ast* Parser::parse_user_type() {
     user_type->add_child(parse_generics());
 
     if (match(TK_LEFT_PARENTHESIS)) {
-        Ast* type = parse_type();
+        AstNode* type = parse_type();
 
         if (type == nullptr) {
             log_error("missing super type on type definition");
@@ -210,8 +127,8 @@ Ast* Parser::parse_user_type() {
     return user_type;
 }
 
-Ast* Parser::parse_field() {
-    Ast* var = new Ast(AST_VARIABLE);
+AstNode* Parser::parse_field() {
+    AstNode* var = new AstNode(AST_VARIABLE);
 
     expect(TK_ID);
     var->set_from_token(matched);
@@ -221,7 +138,7 @@ Ast* Parser::parse_field() {
     }
 
     if (match(TK_ASSIGNMENT)) {
-        Ast* expr = parse_expression();
+        AstNode* expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("missing field");
@@ -233,16 +150,16 @@ Ast* Parser::parse_field() {
     return var;
 }
 
-Ast* Parser::parse_variable_definition() {
+AstNode* Parser::parse_variable_definition() {
     bool need_expression = true;
-    Ast* var = new Ast(AST_VARIABLE);
+    AstNode* var = new AstNode(AST_VARIABLE);
 
     expect(TK_VAR);
     expect(TK_ID);
     var->set_from_token(matched);
 
     if (match(TK_COLON)) {
-        Ast* type = parse_type();
+        AstNode* type = parse_type();
         need_expression = false;
 
         if (type == nullptr) {
@@ -261,7 +178,7 @@ Ast* Parser::parse_variable_definition() {
     }
 
     if (need_expression) {
-        Ast* expr = parse_expression();
+        AstNode* expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("missing expression on variable definition");
@@ -573,9 +490,9 @@ ReturnStatement* Parser::parse_return_statement() {
     return stmt;
 }
 
-Ast* Parser::parse_switch_statement() {
-    Ast* stmt = new Ast(AST_SWITCH);
-    Ast* expr;
+AstNode* Parser::parse_switch_statement() {
+    AstNode* stmt = new AstNode(AST_SWITCH);
+    AstNode* expr;
 
     expect(TK_SWITCH);
     stmt->set_from_token(matched);
@@ -592,8 +509,8 @@ Ast* Parser::parse_switch_statement() {
 
     while (true) {
         if (lookahead(TK_CASE)) {
-            Ast* cases = parse_switch_cases();
-            Ast* brace = new Ast(AST_SWITCH_BRACE);
+            AstNode* cases = parse_switch_cases();
+            AstNode* brace = new AstNode(AST_SWITCH_BRACE);
 
             brace->add_child(cases);
             indent();
@@ -601,7 +518,7 @@ Ast* Parser::parse_switch_statement() {
             dedent();
             stmt->add_child(brace);
         } else if (match(TK_DEFAULT)) {
-            Ast* cs = new Ast(AST_SWITCH_DEFAULT);
+            AstNode* cs = new AstNode(AST_SWITCH_DEFAULT);
             expect(TK_COLON);
             indent();
             cs->add_child(parse_statements());
@@ -617,12 +534,12 @@ Ast* Parser::parse_switch_statement() {
     return stmt;
 }
 
-Ast* Parser::parse_switch_cases() {
-    Ast* node = new Ast(AST_SWITCH_CASES);
+AstNode* Parser::parse_switch_cases() {
+    AstNode* node = new AstNode(AST_SWITCH_CASES);
 
     while (match(TK_CASE)) {
-        Ast* cs = new Ast(AST_SWITCH_CASE, matched);
-        Ast* expr = parse_expression();
+        AstNode* cs = new AstNode(AST_SWITCH_CASE, matched);
+        AstNode* expr = parse_expression();
 
         if (expr == nullptr) {
             log_error("missing expression on case");
@@ -952,13 +869,13 @@ Expression* Parser::parse_assignment_expression() {
 }
 
 Expression* Parser::parse_cast_expression() {
-    Ast* type = nullptr;
-    Ast* subexpr;
-    Ast* expr = parse_logical_or_expression();
+    AstNode* type = nullptr;
+    AstNode* subexpr;
+    AstNode* expr = parse_logical_or_expression();
 
     if (expr != nullptr && match(TK_AS)) {
         subexpr = expr;
-        expr = new Ast(AST_CAST, matched);
+        expr = new AstNode(AST_CAST, matched);
 
         if (next_token_on_same_line()) {
             type = parse_type();
@@ -1416,8 +1333,8 @@ Expression* Parser::parse_shift_expression() {
 
 Expression* Parser::parse_unary_expression() {
     Token oper;
-    Ast* subexpr;
-    Ast* expr = nullptr;
+    AstNode* subexpr;
+    AstNode* expr = nullptr;
 
     if (lookahead(TK_LOGICAL_NOT) || lookahead(TK_NOT)) {
         expr = parse_logical_not();
@@ -1658,13 +1575,13 @@ Expression* Parser::parse_pre_decrement() {
     return expr;
 }
 
-Ast* Parser::parse_sizeof() {
+AstNode* Parser::parse_sizeof() {
     expect(TK_SIZEOF);
 
-    Ast* expr = new Ast(AST_SIZEOF, matched);
+    AstNode* expr = new AstNode(AST_SIZEOF, matched);
 
     expect(TK_LEFT_PARENTHESIS);
-    Ast* subexpr = parse_expression();
+    AstNode* subexpr = parse_expression();
 
     if (subexpr) {
         expr->add_child(subexpr);
@@ -1676,13 +1593,13 @@ Ast* Parser::parse_sizeof() {
     return expr;
 }
 
-Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper) {
+AstNode* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper) {
     std::stringstream ss;
-    Ast* expr;
-    Ast* subexpr;
+    AstNode* expr;
+    AstNode* subexpr;
 
     expect(token_type);
-    expr = new Ast(ast_type, matched);
+    expr = new AstNode(ast_type, matched);
 
     if (!next_token_on_same_line()) {
         ss << "expected an expression for unary '";
@@ -1703,7 +1620,7 @@ Ast* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type,
     return expr;
 }
 
-Ast* Parser::parse_postfix_expression() {
+AstNode* Parser::parse_postfix_expression() {
     Expression* left = nullptr;
     Expression* right = nullptr;
     Expression* expr = parse_primary_expression();
@@ -1938,9 +1855,9 @@ Expression* Parser::parse_list_expression() {
     return expr;
 }
 
-Ast* Parser::parse_array_or_hash_expression() {
-    Ast* expr;
-    Ast* array_or_hash = nullptr;
+AstNode* Parser::parse_array_or_hash_expression() {
+    AstNode* expr;
+    AstNode* array_or_hash = nullptr;
 
     expect(TK_LEFT_CURLY_BRACKET);
 
@@ -1954,7 +1871,7 @@ Ast* Parser::parse_array_or_hash_expression() {
         if (lookahead(TK_COLON)) {
             array_or_hash = parse_hash(expr);
         } else {
-            array_or_hash = new Ast(AST_ARRAY);
+            array_or_hash = new AstNode(AST_ARRAY);
             array_or_hash->add_child(expr);
 
             while (match(TK_COMMA)) {
@@ -1975,10 +1892,10 @@ Ast* Parser::parse_array_or_hash_expression() {
     return array_or_hash;
 }
 
-Ast* Parser::parse_hash(Ast* key) {
-    Ast* value = nullptr;
-    Ast* pair = nullptr;
-    Ast* hash = new Ast(AST_HASH);
+AstNode* Parser::parse_hash(AstNode* key) {
+    AstNode* value = nullptr;
+    AstNode* pair = nullptr;
+    AstNode* hash = new AstNode(AST_HASH);
 
     expect(TK_COLON);
     value = parse_expression();
@@ -1987,7 +1904,7 @@ Ast* Parser::parse_hash(Ast* key) {
         log_error("missing value on hash pair");
     }
 
-    pair = new Ast(AST_HASH_PAIR);
+    pair = new AstNode(AST_HASH_PAIR);
     pair->add_child(key);
     pair->add_child(value);
 
@@ -1998,7 +1915,7 @@ Ast* Parser::parse_hash(Ast* key) {
             key = parse_expression();
             expect(TK_COLON);
             value = parse_expression();
-            pair = new Ast(AST_HASH_PAIR);
+            pair = new AstNode(AST_HASH_PAIR);
             pair->add_child(key);
             pair->add_child(value);
             hash->add_child(pair);
@@ -2008,19 +1925,19 @@ Ast* Parser::parse_hash(Ast* key) {
     return hash;
 }
 
-Ast* Parser::parse_lambda() {
-    Ast* parameters = nullptr;
+AstNode* Parser::parse_lambda() {
+    AstNode* parameters = nullptr;
 
     expect(TK_BITWISE_OR);
-    Ast* lambda = new Ast(AST_LAMBDA);
+    AstNode* lambda = new AstNode(AST_LAMBDA);
 
     if (!lookahead(TK_BITWISE_OR)) {
         do {
             expect(TK_ID);
-            Ast* parameter = new Ast(AST_VARIABLE, matched);
+            AstNode* parameter = new AstNode(AST_VARIABLE, matched);
 
             if (match(TK_COLON)) {
-                Ast* type = parse_type();
+                AstNode* type = parse_type();
 
                 if (type == nullptr) {
                     log_error("missing type on lambda parameter");
@@ -2030,7 +1947,7 @@ Ast* Parser::parse_lambda() {
             }
 
             if (match(TK_ASSIGNMENT)) {
-                Ast* expr = parse_expression();
+                AstNode* expr = parse_expression();
 
                 if (expr == nullptr) {
                     log_error("missing expression on lambda parameter");
@@ -2046,7 +1963,7 @@ Ast* Parser::parse_lambda() {
     expect(TK_BITWISE_OR);
 
     if (match(TK_ARROW)) {
-        Ast* type = parse_type();
+        AstNode* type = parse_type();
 
         if (type == nullptr) {
             log_error("missing return type on lambda definition");
@@ -2062,11 +1979,11 @@ Ast* Parser::parse_lambda() {
     return lambda;
 }
 
-Ast* Parser::parse_argument_list() {
+AstNode* Parser::parse_argument_list() {
     bool has_named_arguments = false;
-    Ast* expr;
-    Ast* name;
-    Ast* arguments = new Ast(AST_ARGUMENTS);
+    AstNode* expr;
+    AstNode* name;
+    AstNode* arguments = new AstNode(AST_ARGUMENTS);
 
     if (!lookahead(TK_RIGHT_PARENTHESIS)) {
         do {
@@ -2074,13 +1991,13 @@ Ast* Parser::parse_argument_list() {
 
             if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
                 expect(TK_ID);
-                name = new Ast(AST_NAMED_ARGUMENT, matched);
+                name = new AstNode(AST_NAMED_ARGUMENT, matched);
                 expect(TK_COLON);
                 has_named_arguments = true;
             } else if (has_named_arguments) {
                 if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
                     expect(TK_ID);
-                    name = new Ast(AST_NAMED_ARGUMENT, matched);
+                    name = new AstNode(AST_NAMED_ARGUMENT, matched);
                     expect(TK_COLON);
                 } else {
                     log_error("Missing named argument. You're using named arguments, but now is trying to type an unamed argument");
@@ -2106,7 +2023,7 @@ Ast* Parser::parse_argument_list() {
 }
 
 
-Ast* Parser::parse_new_expression() {/*
+AstNode* Parser::parse_new_expression() {/*
     Ast* type;
     New* expr = new New();
 

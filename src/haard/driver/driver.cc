@@ -93,7 +93,7 @@ void Driver::semantic_analysis() {
 
 }
 
-Ast* Driver::parse_file(std::string path) {
+AstNode* Driver::parse_file(std::string path) {
     if (!file_exists(path)) {
         log_error("file '" + path + "' couldn't be opened");
         exit();
@@ -113,24 +113,24 @@ Ast* Driver::parse_file(std::string path) {
     return module;
 }
 
-void Driver::parse_module_imports(Ast* module) {
+void Driver::parse_module_imports(AstNode* module) {
     if (module == nullptr) {
         return;
     }
 
-    std::vector<Ast*> imports = module->get_children(AST_IMPORT);
+    std::vector<AstNode*> imports = module->get_children(AST_IMPORT);
 
     for (int i = 0; i < imports.size(); ++i) {
         parse_import(imports[i]);
     }
 }
 
-void Driver::parse_import(Ast* import) {
+void Driver::parse_import(AstNode* import) {
     parse_simple_import(import);
 }
 
-void Driver::parse_simple_import(Ast* import) {
-    Ast* module = nullptr;
+void Driver::parse_simple_import(AstNode* import) {
+    AstNode* module = nullptr;
     std::string path = build_import_path(import);
 
     module = modules.get_module_by_path(path);
@@ -141,9 +141,9 @@ void Driver::parse_simple_import(Ast* import) {
     }
 }
 
-std::string Driver::build_import_path(Ast* import) {
+std::string Driver::build_import_path(AstNode* import) {
     std::string str;
-    std::vector<Ast*> path = import->get_child(AST_IMPORT_PATH)->get_children(AST_IMPORT_PATH_MEMBER);
+    std::vector<AstNode*> path = import->get_child(AST_IMPORT_PATH)->get_children(AST_IMPORT_PATH_MEMBER);
 
     for (int i = 0; i < path.size(); ++i) {
         str += path_delimiter;

@@ -1,80 +1,80 @@
 #include <sstream>
 
-#include "haard/ast/ast.h"
+#include "haard/ast/ast_node.h"
 #include "haard/pretty_printer/pretty_printer.h"
 
 using namespace haard;
 
-Ast::Ast() {
+AstNode::AstNode() {
     set_kind(AST_UNKNOWN);
 }
 
-Ast::Ast(AstKind type) {
+AstNode::AstNode(AstKind type) {
     set_kind(type);
 }
 
-Ast::Ast(AstKind type, Token& token) {
+AstNode::AstNode(AstKind type, Token& token) {
     set_kind(type);
     set_from_token(token);
 }
 
-Ast::~Ast() {
+AstNode::~AstNode() {
     for (auto child : children) {
         delete child;
     }
 }
 
-AstKind Ast::get_kind() const {
+AstKind AstNode::get_kind() const {
     return kind;
 }
 
-int Ast::get_line() const {
+int AstNode::get_line() const {
     return line;
 }
 
-int Ast::get_column() const {
+int AstNode::get_column() const {
     return column;
 }
 
-const std::string& Ast::get_value() const {
+const std::string& AstNode::get_value() const {
     return value;
 }
 
-void Ast::set_kind(AstKind kind) {
+void AstNode::set_kind(AstKind kind) {
     this->kind = kind;
 }
 
-void Ast::set_line(int line) {
+void AstNode::set_line(int line) {
     this->line = line;
 }
 
-void Ast::set_column(int column) {
+void AstNode::set_column(int column) {
     this->column = column;
 }
 
-void Ast::set_value(const std::string& value) {
+void AstNode::set_value(const std::string& value) {
     this->value = value;
 }
 
-void Ast::add_child(Ast* child) {
+void AstNode::add_child(AstNode* child) {
     if (child != nullptr) {
         children.push_back(child);
         child->set_parent(this);
     }
 }
 
-void Ast::add_child(AstKind kind, Token& token) {
-    Ast* child = new Ast(kind, token);
+void AstNode::add_child(AstKind kind, Token& token) {
+    AstNode* child = new AstNode(kind, token);
     add_child(child);
 }
 
-void Ast::add_child(AstKind kind, Ast* subchild) {
-    Ast* child = new Ast(kind);
+void AstNode::add_child(AstKind kind, AstNode* subchild) {
+    AstNode* child = new AstNode(kind);
     child->add_child(subchild);
     add_child(child);
 }
 
-Ast* Ast::get_child(size_t index) {
+AstNode* AstNode::get_child(size_t index) {
     if (index < children_count()) {
         return children[index];
     }
@@ -82,7 +82,7 @@ Ast* Ast::get_child(size_t index) {
     return nullptr;
 }
 
-Ast* Ast::get_child(AstKind type) {
+AstNode* AstNode::get_child(AstKind type) {
     for (auto child : children) {
         if (child->get_kind() == type) {
             return child;
@@ -92,8 +92,8 @@ Ast* Ast::get_child(AstKind type) {
     return nullptr;
 }
 
-std::vector<Ast*> Ast::get_children(AstKind kind) {
-    std::vector<Ast*> r;
+std::vector<AstNode*> AstNode::get_children(AstKind kind) {
+    std::vector<AstNode*> r;
 
     for (int i = 0; i < children_count(); ++i) {
         if (children[i]->get_kind() == kind) {
@@ -104,30 +104,30 @@ std::vector<Ast*> Ast::get_children(AstKind kind) {
     return r;
 }
 
-const std::vector<Ast*>& Ast::get_children() const {
+const std::vector<AstNode*>& AstNode::get_children() const {
     return children;
 }
 
-size_t Ast::children_count() {
+size_t AstNode::children_count() {
     return children.size();
 }
 
-void Ast::set_from_token(Token& token) {
+void AstNode::set_from_token(Token& token) {
     set_line(token.get_line());
     set_column(token.get_column());
     set_value(token.get_value());
 }
 
-Ast* Ast::get_parent() const {
+AstNode* AstNode::get_parent() const {
     return parent;
 }
 
-void Ast::set_parent(Ast* parent) {
+void AstNode::set_parent(AstNode* parent) {
     this->parent = parent;
 }
 
-Ast* Ast::clone() {
-    Ast* tmp = new Ast(get_kind());
+AstNode* AstNode::clone() {
+    AstNode* tmp = new AstNode(get_kind());
 
     tmp->set_line(get_line());
     tmp->set_column(get_column());
@@ -140,7 +140,7 @@ Ast* Ast::clone() {
     return tmp;
 }
 
-std::string Ast::to_json() {
+std::string AstNode::to_json() {
     int i;
     std::stringstream ss;
 
@@ -165,7 +165,7 @@ std::string Ast::to_json() {
     return ss.str();
 }
 
-std::string Ast::to_str() {
+std::string AstNode::to_str() {
     PrettyPrinter p;
 
     p.print(this);

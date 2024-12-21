@@ -15,7 +15,7 @@ set(TOKEN_SRC
 )
 
 set(AST_SRC
-    src/haard/ast/ast.cc
+    src/haard/ast/ast_node.cc
     src/haard/ast/modules.cc
     src/haard/ast/module.cc
     src/haard/ast/import.cc

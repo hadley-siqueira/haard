@@ -1,11 +1,11 @@
 #ifndef HAARD_AST_VARIABLE_H
 #define HAARD_AST_VARIABLE_H
 
-#include "haard/ast/ast.h"
+#include "haard/ast/ast_node.h"
 #include "haard/ast/types/type.h"
 
 namespace haard {
-    class Variable : public Ast {
+    class Variable : public AstNode {
     public:
         Variable();
         ~Variable();
@@ -17,13 +17,13 @@ namespace haard {
         Type* get_type() const;
         void set_type(Type* type);
 
-        Ast* get_expression() const;
-        void set_expression(Ast* expression);
+        AstNode* get_expression() const;
+        void set_expression(AstNode* expression);
 
     private:
         Token name;
         Type* type;
-        Ast* expression;
+        AstNode* expression;
     };
 }
 
