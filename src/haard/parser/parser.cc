@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include "haard/parser/parser.h"
+#include "haard/ast/expressions/operators/unary/new.h"
 #include "haard/scanner/scanner.h"
 #include "haard/log/logs.h"
 #include "haard/ast/ast.h"
@@ -311,7 +312,6 @@ Statement* Parser::parse_for_statement() {
     std::vector<Expression*> initialization;
     std::vector<Expression*> update;
 
-
     expect(TK_FOR);
     token = matched;
 
@@ -614,7 +614,6 @@ Type* Parser::parse_tuple_or_function_type() {
 
 Type* Parser::parse_primary_type() {
     Type* type = nullptr;
-    //Type* subtype = nullptr;
 
     if (match(TK_CHAR)) {
        type = new PrimitiveType(AST_TYPE_CHAR, matched);
@@ -1358,7 +1357,7 @@ Expression* Parser::parse_unary_expression() {
     } else if (lookahead(TK_SIZEOF)) {
         expr = parse_sizeof();
     } else if (lookahead(TK_NEW)) {
-        //expr = parse_new_expression();
+        expr = parse_new_expression();
     } else if (lookahead(TK_DELETE)) {
         expr = parse_delete_expression();
     } else {
@@ -2031,28 +2030,74 @@ AstNode* Parser::parse_lambda() {
     return lambda;
 }
 
-AstNode* Parser::parse_new_expression() {/*
-    Ast* type;
-    New* expr = new New();
+New* Parser::parse_new_expression() {
+    Token token;
 
-    expect(TK_NEW);
-    expr->set_token(matched);
-
-    type = parse_type();
-
-    if (type == nullptr) {
-        assert(false && "missing type on new");
+    if (!match(TK_NEW)) {
+        return nullptr;
     }
 
-    //expr->set_type(type);
+    token = matched;
+    auto type = parse_type();
+
+    if (type == nullptr) {
+        log_error("Expected type in new expression");
+        return nullptr;
+    }
+
+    auto expr = new New();
+    expr->set_token(token);
+    expr->set_type(type);
 
     if (match(TK_LEFT_PARENTHESIS)) {
-        //expr->set_arguments(parse_argument_list());
+        if (!lookahead(TK_RIGHT_PARENTHESIS)) {
+            parse_new_arguments(expr);
+        }
+
         expect(TK_RIGHT_PARENTHESIS);
     }
 
-    return expr;*/
-    return nullptr;
+    return expr;
+}
+
+void Parser::parse_new_arguments(New* obj) {
+    bool has_named_arguments = false;
+    bool has_name = false;
+    Token name;
+
+    do {
+        has_name = false;
+
+        if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
+            expect(TK_ID);
+            name = matched;
+            expect(TK_COLON);
+            has_named_arguments = true;
+            has_name = true;
+        } else if (has_named_arguments) {
+            if (lookahead(TK_ID) && lookahead(TK_COLON, 1)) {
+                expect(TK_ID);
+                name = matched;
+                expect(TK_COLON);
+                has_name = true;
+            } else {
+                log_error("Missing named argument on new expression. You're using named arguments, but now is trying to type an unamed argument");
+            }
+        }
+
+        auto expr = parse_expression();
+
+        if (expr == nullptr) {
+            log_error("Expected an expression as argument for new expression, but got something else");
+        } else if (has_name) {
+            auto named = new NamedArgument();
+            named->set_name(name);
+            named->set_expression(expr);
+            obj->add_argument(named);
+        } else {
+            obj->add_argument(expr);
+        }
+    } while (match(TK_COMMA));
 }
 
 Expression* Parser::parse_generic_application() {

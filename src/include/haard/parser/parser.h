@@ -6,33 +6,6 @@
 #include <stack>
 
 #include "haard/ast/ast.h"
-#include "haard/ast/module.h"
-#include "haard/ast/import.h"
-#include "haard/ast/function.h"
-#include "haard/ast/variable.h"
-
-#include "haard/ast/types/type.h"
-
-
-#include "haard/ast/statements/statement.h"
-#include "haard/ast/statements/statements.h"
-#include "haard/ast/statements/while_statement.h"
-#include "haard/ast/statements/for_statement.h"
-#include "haard/ast/statements/foreach_statement.h"
-#include "haard/ast/statements/if_statement.h"
-#include "haard/ast/statements/elif_statement.h"
-#include "haard/ast/statements/else_statement.h"
-#include "haard/ast/statements/return_statement.h"
-
-#include "haard/ast/expressions/expression.h"
-
-
-
-#include "haard/ast/expressions/identifier.h"
-
-
-
-#include "haard/ast/generics.h"
 
 namespace haard {
     class Parser {
@@ -119,7 +92,9 @@ namespace haard {
 
         Expression* parse_primary_expression();
 
-        AstNode* parse_new_expression();
+        New* parse_new_expression();
+        void parse_new_arguments(New* obj);
+
         Expression* parse_delete_expression();
         Expression* parse_parenthesis_or_tuple_or_sequence();
         Expression* parse_list_expression();

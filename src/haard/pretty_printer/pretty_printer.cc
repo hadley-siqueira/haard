@@ -344,6 +344,10 @@ void PrettyPrinter::print(AstNode* node) {
         print_parenthesis((Parenthesis*) node);
         break;
 
+    case AST_NEW:
+        print_new((New*) node);
+        break;
+
     case AST_DELETE:
         print_delete((Delete*) node);
         break;
@@ -1306,6 +1310,24 @@ void PrettyPrinter::print_sizeof(AstNode* node) {
     out << "sizeof(";
     print(node->get_child());
     out << ")";
+}
+
+void PrettyPrinter::print_new(New* node) {
+    out << "new ";
+    print(node->get_type());
+
+    bool first = true;
+
+    for (auto expr : node->get_arguments()) {
+        if (first) out << "(";
+        if (!first) out << ", ";
+        print(expr);
+        first = false;
+    }
+
+    if (!first) {
+        out << ")";
+    }
 }
 
 void PrettyPrinter::print_delete(Delete* node) {

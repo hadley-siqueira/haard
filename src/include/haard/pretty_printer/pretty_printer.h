@@ -120,6 +120,8 @@ namespace haard {
         void print_pos_increment(AstNode* node);
         void print_pos_decrement(AstNode* node);
         void print_sizeof(AstNode* node);
+
+        void print_new(New* node);
         void print_delete(Delete* node);
         void print_delete_array(DeleteArray* node);
 

@@ -88,6 +88,7 @@
 #include "haard/ast/expressions/operators/unary/pos_increment.h"
 #include "haard/ast/expressions/operators/unary/pos_decrement.h"
 #include "haard/ast/expressions/operators/unary/parenthesis.h"
+#include "haard/ast/expressions/operators/unary/new.h"
 #include "haard/ast/expressions/operators/unary/delete.h"
 #include "haard/ast/expressions/operators/unary/delete_array.h"
 

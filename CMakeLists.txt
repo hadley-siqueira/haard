@@ -108,6 +108,7 @@ set(AST_SRC
     src/haard/ast/expressions/operators/unary/pos_increment.cc
     src/haard/ast/expressions/operators/unary/pos_decrement.cc
     src/haard/ast/expressions/operators/unary/parenthesis.cc
+    src/haard/ast/expressions/operators/unary/new.cc
     src/haard/ast/expressions/operators/unary/delete.cc
     src/haard/ast/expressions/operators/unary/delete_array.cc
 
