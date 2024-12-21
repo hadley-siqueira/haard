@@ -324,10 +324,6 @@ void PrettyPrinter::print(AstNode* node) {
         print_call((Call*) node);
         break;
 
-    case AST_ARGUMENTS:
-        print_arguments(node);
-        break;
-
     case AST_NAMED_ARGUMENT:
         print_named_argument((NamedArgument*) node);
         break;
@@ -1287,10 +1283,6 @@ void PrettyPrinter::print_call(Call* node) {
     out << ')';
 }
 
-void PrettyPrinter::print_arguments(AstNode* args) {
-    print_expression_list(args, "(", ")");
-}
-
 void PrettyPrinter::print_named_argument(NamedArgument* node) {
     out << node->get_name().get_value() << ": ";
     print(node->get_expression());
@@ -1439,26 +1431,6 @@ void PrettyPrinter::print_hash(Hash* node) {
     }
 
     out << "}";
-}
-
-void PrettyPrinter::print_expression_list(AstNode* list, const char* begin, const char* end, const char* sep) {
-    if (list == nullptr) {
-        return;
-    }
-
-    int i;
-    out << begin;
-
-    if (list->children_count() > 0) {
-        for (i = 0; i < list->children_count() - 1; ++i) {
-            print(list->get_child(i));
-            out << sep << " ";
-        }
-
-        print(list->get_child(i));
-    }
-
-    out << end;
 }
 
 void PrettyPrinter::indent() {

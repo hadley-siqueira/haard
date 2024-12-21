@@ -115,7 +115,6 @@ namespace haard {
         void print_dot(Dot* node);
         void print_arrow(Arrow* node);
         void print_call(Call* node);
-        void print_arguments(AstNode* args);
         void print_named_argument(NamedArgument *node);
         void print_pos_increment(AstNode* node);
         void print_pos_decrement(AstNode* node);
@@ -138,24 +137,6 @@ namespace haard {
         void print_float_literal(FloatLiteral* node);
         void print_string_literal(StringLiteral* node);
 
-//        void print_class(Class* klass);
-//        void print_struct(Struct* st);
-//        void print_union(Union* u);
-
-
-
-
-//        void print_for_statement(ForStatement* stmt);
-
-//        void print_if_statement(BranchStatement* stmt);
-//        void print_elif_statement(BranchStatement* stmt);
-//        void print_else_statement(BranchStatement* stmt);
-
-//        void print_return_statement(ReturnStatement* stmt);
-
-//        void print_expression(Expression* expr);
-//        void print_cast_expression(Cast* expr);
-//        void print_not_in_expression(NotIn* expr);
         void print_index(AstNode* node);
         void print_hash_pair(HashPair *pair);
 
@@ -169,14 +150,6 @@ namespace haard {
         void print_pre_increment(PreIncrement* node);
         void print_pre_decrement(PreDecrement* node);
 
-//        void print_sizeof_expression(UnaryOperator* un);
-//        void print_new_expression(New* expr);
-//        void print_delete_expression(Delete* expr);
-//        void print_delete_array_expression(DeleteArray* expr);
-//        void print_parenthesis_expression(Parenthesis* expr);
-
-
-//        void print_identifier(Identifier* id);
         void print_generics(const Generics* g);
 
         void print_tuple(Tuple* node);
@@ -184,9 +157,6 @@ namespace haard {
         void print_list(List* node);
         void print_array(Array* node);
         void print_hash(Hash *node);
-
-
-        void print_expression_list(AstNode* list, const char* begin, const char* end, const char* sep=",");
 
     private:
         void indent();
