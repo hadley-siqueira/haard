@@ -27,7 +27,6 @@ namespace haard {
         AST_IMPORT,
         AST_IMPORT_PATH,
         AST_IMPORT_PATH_MEMBER,
-        AST_IMPORT_ALIAS,
 
         AST_GENERIC_APPLICATION,
         AST_SCOPE,
