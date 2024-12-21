@@ -157,7 +157,7 @@ namespace haard {
 //        void print_cast_expression(Cast* expr);
 //        void print_not_in_expression(NotIn* expr);
         void print_index(AstNode* node);
-        void print_hash_pair(AstNode* pair);
+        void print_hash_pair(HashPair *pair);
 
 
         void print_logical_not(LogicalNot* un);
@@ -182,8 +182,8 @@ namespace haard {
         void print_tuple(Tuple* node);
         void print_sequence(Sequence* node);
         void print_list(List* node);
-        void print_array(AstNode* expr);
-        void print_hash(AstNode* expr);
+        void print_array(Array* node);
+        void print_hash(Hash *node);
 
 
         void print_expression_list(AstNode* list, const char* begin, const char* end, const char* sep=",");

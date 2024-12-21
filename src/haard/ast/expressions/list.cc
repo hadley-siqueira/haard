@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include "haard/ast/expressions/list.h"
 
 using namespace haard;

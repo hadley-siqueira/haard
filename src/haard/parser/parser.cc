@@ -1762,7 +1762,7 @@ Expression* Parser::parse_primary_expression() {
     } else if (lookahead(TK_LEFT_SQUARE_BRACKET)) {
         expr = parse_list_expression();
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
-        expr = (Expression*) parse_array_or_hash_expression();
+        expr = parse_array_or_hash_expression();
     } else if (lookahead(TK_BITWISE_OR)) {
         expr = (Expression*) parse_lambda();
     }
@@ -1906,70 +1906,91 @@ Expression* Parser::parse_list_expression() {
     return expr;
 }
 
-AstNode* Parser::parse_array_or_hash_expression() {
+Expression* Parser::parse_array_or_hash_expression() {
     AstNode* expr;
     AstNode* array_or_hash = nullptr;
 
-    expect(TK_LEFT_CURLY_BRACKET);
+    if (!match(TK_LEFT_CURLY_BRACKET)) {
+        return nullptr;
+    }
 
-    if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-        expr = parse_expression();
+    if (match(TK_RIGHT_CURLY_BRACKET)) {
+        return new Array();
+    }
 
-        if (expr == nullptr) {
-            log_error("missing expression on array or hash literal");
-        }
+    auto expression = parse_expression();
 
+    if (expression == nullptr) {
+        log_error("Error while parsing array or hash: missing expression after {");
+    } else {
         if (lookahead(TK_COLON)) {
-            array_or_hash = parse_hash(expr);
+            expression = parse_hash_expression(expression);
         } else {
-            array_or_hash = new AstNode(AST_ARRAY);
-            array_or_hash->add_child(expr);
-
-            while (match(TK_COMMA)) {
-                if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
-                    expr = parse_expression();
-
-                    if (expr == nullptr) {
-                        log_error("missing expression on array literal");
-                    }
-
-                    array_or_hash->add_child(expr);
-                }
-            }
+            expression = parse_array_expression(expression);
         }
     }
 
     expect(TK_RIGHT_CURLY_BRACKET);
-    return array_or_hash;
+    return expression;
 }
 
-AstNode* Parser::parse_hash(AstNode* key) {
-    AstNode* value = nullptr;
-    AstNode* pair = nullptr;
-    AstNode* hash = new AstNode(AST_HASH);
+Expression* Parser::parse_array_expression(Expression* expression) {
+    Array* array = new Array();
+
+    array->add_expression(expression);
+
+    while (match(TK_COMMA)) {
+        expression = parse_expression();
+
+        if (expression == nullptr) {
+            log_error("missing expression after comma in array");
+        } else {
+            array->add_expression(expression);
+        }
+    }
+
+    return array;
+}
+
+Expression* Parser::parse_hash_expression(Expression* key) {
+    Token token;
+    Expression* value = nullptr;
+    HashPair* pair = nullptr;
+    Hash* hash = new Hash();
 
     expect(TK_COLON);
+    token = matched;
     value = parse_expression();
 
     if (value == nullptr) {
         log_error("missing value on hash pair");
+    } else {
+        pair = new HashPair();
+        pair->set_left(key);
+        pair->set_right(value);
+        hash->add_expression(pair);
     }
-
-    pair = new AstNode(AST_HASH_PAIR);
-    pair->add_child(key);
-    pair->add_child(value);
-
-    hash->add_child(pair);
 
     while (match(TK_COMMA)) {
         if (!lookahead(TK_RIGHT_CURLY_BRACKET)) {
             key = parse_expression();
+
+            if (key == nullptr) {
+                log_error("Missing key on hash pair");
+            }
+
             expect(TK_COLON);
+
             value = parse_expression();
-            pair = new AstNode(AST_HASH_PAIR);
-            pair->add_child(key);
-            pair->add_child(value);
-            hash->add_child(pair);
+
+            if (value == nullptr) {
+                log_error("Missing value on hash pair");
+            }
+
+            pair = new HashPair();
+            pair->set_left(key);
+            pair->set_right(value);
+            hash->add_expression(pair);
         }
     }
 

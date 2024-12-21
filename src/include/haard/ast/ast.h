@@ -75,6 +75,7 @@
 #include "haard/ast/expressions/operators/binary/scope.h"
 #include "haard/ast/expressions/operators/binary/call.h"
 #include "haard/ast/expressions/operators/binary/named_argument.h"
+#include "haard/ast/expressions/operators/binary/hash_pair.h"
 
 #include "haard/ast/expressions/operators/unary/unary_operator.h"
 #include "haard/ast/expressions/operators/unary/unary_plus.h"
@@ -104,5 +105,7 @@
 #include "haard/ast/expressions/tuple.h"
 #include "haard/ast/expressions/sequence.h"
 #include "haard/ast/expressions/list.h"
+#include "haard/ast/expressions/array.h"
+#include "haard/ast/expressions/hash.h"
 
 #endif

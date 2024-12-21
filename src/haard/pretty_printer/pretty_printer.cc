@@ -369,15 +369,15 @@ void PrettyPrinter::print(AstNode* node) {
         break;
 
     case AST_ARRAY:
-        print_array(node);
+        print_array((Array*) node);
         break;
 
     case AST_HASH:
-        print_hash(node);
+        print_hash((Hash*) node);
         break;
 
     case AST_HASH_PAIR:
-        print_hash_pair(node);
+        print_hash_pair((HashPair*) node);
         break;
 
     case AST_GENERIC_APPLICATION:
@@ -1221,10 +1221,10 @@ void PrettyPrinter::print_index(AstNode* node) {
     out << ']';
 }
 
-void PrettyPrinter::print_hash_pair(AstNode* pair) {
-    print(pair->get_child(0));
+void PrettyPrinter::print_hash_pair(HashPair* pair) {
+    print(pair->get_left());
     out << ": ";
-    print(pair->get_child(1));
+    print(pair->get_right());
 }
 
 void PrettyPrinter::print_logical_not(LogicalNot* un) {
@@ -1413,12 +1413,32 @@ void PrettyPrinter::print_list(List* node) {
     out << "]";
 }
 
-void PrettyPrinter::print_array(AstNode* expr) {
-    print_expression_list(expr, "{", "}");
+void PrettyPrinter::print_array(Array* node) {
+    bool first = true;
+
+    out << "{";
+
+    for (auto expr : node->get_expressions()) {
+        if (!first) out << ", ";
+        print(expr);
+        first = false;
+    }
+
+    out << "}";
 }
 
-void PrettyPrinter::print_hash(AstNode* expr) {
-    print_expression_list(expr, "{", "}");
+void PrettyPrinter::print_hash(Hash* node) {
+    bool first = true;
+
+    out << "{";
+
+    for (auto expr : node->get_expressions()) {
+        if (!first) out << ", ";
+        print(expr);
+        first = false;
+    }
+
+    out << "}";
 }
 
 void PrettyPrinter::print_expression_list(AstNode* list, const char* begin, const char* end, const char* sep) {

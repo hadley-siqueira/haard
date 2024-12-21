@@ -92,6 +92,7 @@ set(AST_SRC
     src/haard/ast/expressions/operators/binary/index.cc
     src/haard/ast/expressions/operators/binary/dot.cc
     src/haard/ast/expressions/operators/binary/arrow.cc
+    src/haard/ast/expressions/operators/binary/hash_pair.cc
 
     src/haard/ast/expressions/operators/binary/generics_application.cc
     src/haard/ast/expressions/operators/binary/scope.cc
@@ -118,6 +119,8 @@ set(AST_SRC
     src/haard/ast/expressions/tuple.cc
     src/haard/ast/expressions/sequence.cc
     src/haard/ast/expressions/list.cc
+    src/haard/ast/expressions/array.cc
+    src/haard/ast/expressions/hash.cc
 
     src/haard/ast/expressions/literals/literal.cc
     src/haard/ast/expressions/literals/boolean_literal.cc
