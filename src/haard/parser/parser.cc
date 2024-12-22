@@ -1592,33 +1592,6 @@ AstNode* Parser::parse_sizeof() {
     return expr;
 }
 
-AstNode* Parser::parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper) {
-    std::stringstream ss;
-    AstNode* expr;
-    AstNode* subexpr;
-
-    expect(token_type);
-    expr = new AstNode(ast_type, matched);
-
-    if (!next_token_on_same_line()) {
-        ss << "expected an expression for unary '";
-        ss << oper << "' operator";
-        log_error(ss.str());
-    } else {
-        subexpr = parse_unary_expression();
-
-        if (subexpr == nullptr) {
-            ss << "expected an expression for unary '";
-            ss << oper << "' operator";
-            log_error(ss.str());
-        }
-
-        expr->add_child(subexpr);
-    }
-
-    return expr;
-}
-
 AstNode* Parser::parse_postfix_expression() {
     Expression* left = nullptr;
     Expression* right = nullptr;

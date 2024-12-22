@@ -84,7 +84,6 @@ namespace haard {
         Expression* parse_pre_increment();
         Expression* parse_pre_decrement();
         AstNode* parse_sizeof();
-        AstNode* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
 
         AstNode* parse_postfix_expression();
         Call* parse_call_expression(Expression* obj);
