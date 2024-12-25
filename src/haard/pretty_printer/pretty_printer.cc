@@ -32,10 +32,13 @@ void PrettyPrinter::print(AstNode* node) {
 
     /* Definitions */
     case AST_CLASS:
+        print_class((Class*) node);
+        break;
+
     case AST_ENUM:
     case AST_STRUCT:
     case AST_UNION:
-        print_user_type(node);
+        print_user_type((UserType*) node);
         break;
 
     case AST_SUPER:
@@ -555,6 +558,10 @@ void PrettyPrinter::print_module(Module* module) {
     }
 }
 
+void PrettyPrinter::print_class(Class* node) {
+    print_user_type(node);
+}
+
 void PrettyPrinter::print_import(Import* import) {
     size_t i;
 
@@ -574,7 +581,7 @@ void PrettyPrinter::print_import(Import* import) {
     }
 }
 
-void PrettyPrinter::print_user_type(AstNode* node) {
+void PrettyPrinter::print_user_type(UserType* node) {
     if (node->get_kind() == AST_CLASS) {
         out << "class ";
     } else if (node->get_kind() == AST_ENUM) {
@@ -585,21 +592,26 @@ void PrettyPrinter::print_user_type(AstNode* node) {
         out << "union ";
     }
 
-    out << node->get_value();
+    out << node->get_name().get_value();
 
-    print(node->get_child(AST_SUPER));
-    print(node->get_child(AST_GENERICS));
+    if (node->get_base_type()) {
+        out << "(";
+        print(node->get_base_type());
+        out << ")";
+    }
+
+    print(node->get_generics());
 
     out << ":\n";
     indent();
 
-    for (auto v : node->get_children(AST_VARIABLE)) {
+    for (auto v : node->get_variables()) {
         print_indentation();
         print(v);
         out << "\n";
     }
 
-    for (auto f : node->get_children(AST_FUNCTION)) {
+    for (auto f : node->get_functions()) {
         print_indentation();
         print(f);
         out << "\n";

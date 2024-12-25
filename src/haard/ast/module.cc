@@ -21,9 +21,19 @@ void Module::add_import(Import* import) {
 }
 
 void Module::add_function(Function* function) {
-    functions.push_back(function);
-    children.push_back(function);
-    function->set_parent(this);
+    if (function) {
+        functions.push_back(function);
+        children.push_back(function);
+        function->set_parent(this);
+    }
+}
+
+void Module::add_class(Class* klass) {
+    if (klass) {
+        classes.push_back(klass);
+        children.push_back(klass);
+        klass->set_parent(this);
+    }
 }
 
 const std::string& Module::get_path() const {

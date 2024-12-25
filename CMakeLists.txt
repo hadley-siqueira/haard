@@ -19,6 +19,8 @@ set(AST_SRC
     src/haard/ast/modules.cc
     src/haard/ast/module.cc
     src/haard/ast/import.cc
+    src/haard/ast/user_type.cc
+    src/haard/ast/class.cc
     src/haard/ast/function.cc
     src/haard/ast/variable.cc
     src/haard/ast/generics.cc

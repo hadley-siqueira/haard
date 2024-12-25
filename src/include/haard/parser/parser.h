@@ -21,10 +21,10 @@ namespace haard {
 
         AstNode* parse_definitions();
 
-        AstNode* parse_user_type();
+        UserType *parse_user_type();
 
         AstNode* parse_variable();
-        AstNode* parse_field();
+        Variable *parse_field();
 
         AstNode* parse_variable_definition();
 

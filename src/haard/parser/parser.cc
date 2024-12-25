@@ -34,7 +34,7 @@ Module* Parser::parse_module() {
         } else if (lookahead(TK_DEF)) {
             module->add_function(parse_function());
         } else if (lookahead(TK_CLASS)) {
-            module->add_child(parse_user_type());
+            module->add_class((Class*) parse_user_type());
         } else if (lookahead(TK_STRUCT)) {
             module->add_child(parse_user_type());
         } else if (lookahead(TK_UNION)) {
@@ -70,34 +70,34 @@ Import* Parser::parse_import() {
     return import;
 }
 
-AstNode* Parser::parse_user_type() {
+UserType* Parser::parse_user_type() {
     bool has_children = false;
-    AstNode* user_type = nullptr;
+    UserType* user_type = nullptr;
 
     if (match(TK_CLASS)) {
-        user_type = new AstNode(AST_CLASS);
+        user_type = new Class();
     } else if (match(TK_STRUCT)) {
-        user_type = new AstNode(AST_STRUCT);
+        //user_type = new AstNode(AST_STRUCT);
     } else if (match(TK_UNION)) {
-        user_type = new AstNode(AST_UNION);
+        //user_type = new AstNode(AST_UNION);
     } else if (match(TK_ENUM)) {
-        user_type = new AstNode(AST_ENUM);
+        //user_type = new AstNode(AST_ENUM);
     } else {
         log_error("missing user type builder");
         return nullptr;
     }
 
     expect(TK_ID);
-    user_type->set_from_token(matched);
-    user_type->add_child(parse_generics());
+    user_type->set_name(matched);
+    user_type->set_generics(parse_generics());
 
     if (match(TK_LEFT_PARENTHESIS)) {
-        AstNode* type = parse_type();
+        Type* type = parse_type();
 
         if (type == nullptr) {
             log_error("missing super type on type definition");
         } else {
-            user_type->add_child(AST_SUPER, type);
+            user_type->set_base_type(type);
         }
 
         expect(TK_RIGHT_PARENTHESIS);
@@ -109,10 +109,10 @@ AstNode* Parser::parse_user_type() {
     while (is_indented()) {
         if (lookahead(TK_DEF)) {
             has_children = true;
-            user_type->add_child(parse_function());
+            user_type->add_function(parse_function());
         } else if (lookahead(TK_ID)) {
             has_children = true;
-            user_type->add_child(parse_field());
+            user_type->add_variable(parse_field());
         } else if (match(TK_PASS)) {
             if (has_children) {
                 log_error("unexpected pass because fields were already declared");
@@ -128,23 +128,29 @@ AstNode* Parser::parse_user_type() {
     return user_type;
 }
 
-AstNode* Parser::parse_field() {
-    AstNode* var = new AstNode(AST_VARIABLE);
+Variable* Parser::parse_field() {
+    Variable* var = new Variable();
 
     expect(TK_ID);
-    var->set_from_token(matched);
+    var->set_name(matched);
 
     if (match(TK_COLON)) {
-        var->add_child(AST_TYPE, parse_type());
+        Type* type = parse_type();
+
+        if (type == nullptr) {
+            log_error("missing type after colon on field declaration");
+        } else {
+            var->set_type(type);
+        }
     }
 
     if (match(TK_ASSIGNMENT)) {
-        AstNode* expr = parse_expression();
+        Expression* expr = parse_expression();
 
         if (expr == nullptr) {
-            log_error("missing field");
+            log_error("missing expression on field declaration");
         } else {
-            var->add_child(AST_EXPRESSION, expr);
+            var->set_expression(expr);
         }
     }
 

@@ -5,6 +5,10 @@
 
 #include "haard/ast/module.h"
 #include "haard/ast/import.h"
+
+#include "haard/ast/user_type.h"
+#include "haard/ast/class.h"
+
 #include "haard/ast/function.h"
 
 #include "haard/ast/statements/statement.h"

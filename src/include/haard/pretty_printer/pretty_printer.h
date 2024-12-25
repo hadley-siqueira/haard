@@ -15,10 +15,11 @@ namespace haard {
         void print(AstNode* node);
 
         void print_module(Module* module);
+        void print_class(Class* node);
 
         void print_import(Import* import);
 
-        void print_user_type(AstNode* node);
+        void print_user_type(UserType* node);
 
         void print_super_type(AstNode* node);
 
