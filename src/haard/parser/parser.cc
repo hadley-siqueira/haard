@@ -1743,7 +1743,7 @@ Expression* Parser::parse_primary_expression() {
     } else if (lookahead(TK_LEFT_CURLY_BRACKET)) {
         expr = parse_array_or_hash_expression();
     } else if (lookahead(TK_BITWISE_OR)) {
-        expr = (Expression*) parse_lambda();
+        expr = parse_lambda();
     }
 
     return expr;
@@ -1976,55 +1976,54 @@ Expression* Parser::parse_hash_expression(Expression* key) {
     return hash;
 }
 
-AstNode* Parser::parse_lambda() {
-    AstNode* parameters = nullptr;
-
+Expression* Parser::parse_lambda() {
     expect(TK_BITWISE_OR);
-    AstNode* lambda = new AstNode(AST_LAMBDA);
+    Lambda* lambda = new Lambda();
 
     if (!lookahead(TK_BITWISE_OR)) {
         do {
             expect(TK_ID);
-            AstNode* parameter = new AstNode(AST_VARIABLE, matched);
+            auto parameter = new Variable();
+            parameter->set_name(matched);
 
             if (match(TK_COLON)) {
-                AstNode* type = parse_type();
+                Type* type = parse_type();
 
                 if (type == nullptr) {
                     log_error("missing type on lambda parameter");
                 } else {
-                    parameter->add_child(AST_TYPE, type);
+                    parameter->set_type(type);
                 }
             }
 
             if (match(TK_ASSIGNMENT)) {
-                AstNode* expr = parse_expression();
+                Expression* expr = parse_expression();
 
                 if (expr == nullptr) {
                     log_error("missing expression on lambda parameter");
                 } else {
-                    parameter->add_child(AST_EXPRESSION, expr);
+                    parameter->set_expression(expr);
                 }
             }
 
-            lambda->add_child(parameter);
+            lambda->add_parameter(parameter);
         } while (match(TK_COMMA));
     }
 
     expect(TK_BITWISE_OR);
 
     if (match(TK_ARROW)) {
-        AstNode* type = parse_type();
+        Type* type = parse_type();
 
         if (type == nullptr) {
             log_error("missing return type on lambda definition");
         } else {
-            lambda->add_child(AST_TYPE, type);
+            lambda->set_return_type(type);
         }
     }
 
     expect(TK_LEFT_CURLY_BRACKET);
-    lambda->add_child(parse_statements());
+    lambda->set_statements(parse_statements());
     expect(TK_RIGHT_CURLY_BRACKET);
 
     return lambda;

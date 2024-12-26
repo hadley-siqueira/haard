@@ -101,7 +101,7 @@ namespace haard {
         Expression* parse_array_expression(Expression* expression);
         Expression *parse_hash_expression(Expression *key);
 
-        AstNode* parse_lambda();
+        Expression *parse_lambda();
 
         Expression* parse_generic_application();
         Expression* parse_scope();

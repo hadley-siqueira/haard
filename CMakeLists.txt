@@ -64,6 +64,7 @@ set(AST_SRC
     src/haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.cc
     src/haard/ast/expressions/operators/binary/call.cc
     src/haard/ast/expressions/operators/binary/named_argument.cc
+    src/haard/ast/expressions/lambda.cc
 
     src/haard/ast/expressions/operators/binary/logical_and.cc
     src/haard/ast/expressions/operators/binary/logical_or.cc

@@ -26,13 +26,7 @@ namespace haard {
         void print_function(Function* function);
         void print_variable(Variable* var);
 
-        void print_lambda(AstNode* node);
-        void print_lambda_return_type(AstNode* node);
-        void print_lambda_parameters(AstNode* node);
-        void print_lambda_parameter(AstNode* node);
-        void print_lambda_parameter_type(AstNode* node);
-        void print_lambda_parameter_expression(AstNode* node);
-        void print_lambda_statements(AstNode* node);
+        void print_lambda(Lambda *node);
 
         /* Statements */
         void print_statements(Statements* stmts);

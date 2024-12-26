@@ -111,5 +111,6 @@
 #include "haard/ast/expressions/list.h"
 #include "haard/ast/expressions/array.h"
 #include "haard/ast/expressions/hash.h"
+#include "haard/ast/expressions/lambda.h"
 
 #endif
