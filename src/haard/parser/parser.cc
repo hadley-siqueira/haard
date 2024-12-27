@@ -95,7 +95,7 @@ UserType* Parser::parse_user_type() {
         Type* type = parse_type();
 
         if (type == nullptr) {
-            log_error("missing super type on type definition");
+            log_error("missing base type on type definition");
         } else {
             user_type->set_base_type(type);
         }

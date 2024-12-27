@@ -5,6 +5,7 @@ using namespace haard;
 Function::Function() {
     set_kind(AST_FUNCTION);
     set_generics(nullptr);
+    set_statements(nullptr);
 }
 
 Function::~Function() {
@@ -46,8 +47,9 @@ Generics* Function::get_generics() const {
 }
 
 void Function::set_generics(Generics* generics) {
+    this->generics = generics;
+
     if (generics) {
-        this->generics = generics;
         generics->set_parent(this);
     }
 }
@@ -57,8 +59,9 @@ Statements* Function::get_statements() const {
 }
 
 void Function::set_statements(Statements* statements) {
+    this->statements = statements;
+
     if (statements) {
-        this->statements = statements;
         statements->set_parent(this);
     }
 }

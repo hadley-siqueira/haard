@@ -18,8 +18,9 @@ Expression* BinaryOperator::get_left() const {
 }
 
 void BinaryOperator::set_left(Expression* expression) {
+    this->left = expression;
+
     if (expression) {
-        this->left = expression;
         expression->set_parent(this);
     }
 }
@@ -29,8 +30,9 @@ Expression* BinaryOperator::get_right() const {
 }
 
 void BinaryOperator::set_right(Expression* expression) {
+    this->right = expression;
+
     if (expression) {
-        this->right = expression;
         expression->set_parent(this);
     }
 }

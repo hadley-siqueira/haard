@@ -39,8 +39,9 @@ Generics *UserType::get_generics() const {
 }
 
 void UserType::set_generics(Generics* generics) {
+    this->generics = generics;
+
     if (generics) {
-        this->generics = generics;
         generics->set_parent(this);
     }
 }
@@ -83,8 +84,9 @@ Type* UserType::get_base_type() const {
 }
 
 void UserType::set_base_type(Type* base_type) {
+    this->base_type = base_type;
+
     if (base_type) {
-        this->base_type = base_type;
         base_type->set_parent(this);
     }
 }

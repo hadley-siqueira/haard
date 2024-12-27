@@ -1,0 +1,8 @@
+class Pixel:
+    r : u8
+    g : u8
+    b : u8
+
+
+def main : i32
+    return 0

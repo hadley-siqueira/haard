@@ -28,8 +28,9 @@ Type* Lambda::get_return_type() const {
 }
 
 void Lambda::set_return_type(Type* return_type) {
+    this->return_type = return_type;
+
     if (return_type) {
-        this->return_type = return_type;
         return_type->set_parent(this);
     }
 }
@@ -51,8 +52,9 @@ Statements* Lambda::get_statements() const {
 }
 
 void Lambda::set_statements(Statements* statements) {
+    this->statements = statements;
+
     if (statements) {
-        this->statements = statements;
         statements->set_parent(this);
     }
 }
