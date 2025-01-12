@@ -1,14 +1,15 @@
-#include <sstream>
-
 #include "haard/ast/module.h"
 
 using namespace haard;
 
 Module::Module() {
     set_kind(AST_MODULE);
+    set_symbol_table(new SymbolTable());
 }
 
 Module::~Module() {
+    delete symbol_table;
+
     /*for (auto c : children) {
         delete c;
     }*/
@@ -42,4 +43,12 @@ const std::string& Module::get_path() const {
 
 void Module::set_path(const std::string &path) {
     this->path = path;
+}
+
+SymbolTable* Module::get_symbol_table() const {
+    return symbol_table;
+}
+
+void Module::set_symbol_table(SymbolTable* symbol_table) {
+    this->symbol_table = symbol_table;
 }

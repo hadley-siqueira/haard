@@ -148,6 +148,12 @@ set(PARSER_SRC
     src/haard/parser/parser.cc
 )
 
+set(SEMANTIC_SRC
+    src/haard/semantic/semantic_analyzer.cc
+    src/haard/semantic/symbol_table.cc
+    src/haard/semantic/symbol.cc
+)
+
 set(DRIVER_SRC
     src/haard/driver/driver.cc
 )
@@ -169,6 +175,7 @@ set(SOURCES
     ${IR_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_PRINTER_SRC}
