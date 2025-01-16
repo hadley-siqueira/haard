@@ -20,11 +20,16 @@ namespace haard {
         void add_function(Function* function);
         void add_class(Class* klass);
 
+
+
         const std::string& get_path() const;
         void set_path(const std::string& path);
 
-        SymbolTable *get_symbol_table() const;
-        void set_symbol_table(SymbolTable *symbol_table);
+        SymbolTable* get_symbol_table() const;
+        void set_symbol_table(SymbolTable* symbol_table);
+
+        const std::vector<Class*>& get_classes() const;
+        void set_classes(const std::vector<Class*>& classes);
 
     private:
         std::string path;

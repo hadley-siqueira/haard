@@ -52,3 +52,11 @@ SymbolTable* Module::get_symbol_table() const {
 void Module::set_symbol_table(SymbolTable* symbol_table) {
     this->symbol_table = symbol_table;
 }
+
+const std::vector<Class*>& Module::get_classes() const {
+    return classes;
+}
+
+void Module::set_classes(const std::vector<Class*>& classes) {
+    this->classes = classes;
+}

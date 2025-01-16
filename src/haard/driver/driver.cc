@@ -5,6 +5,7 @@
 #include "haard/driver/driver.h"
 #include "haard/parser/parser.h"
 #include "haard/pretty_printer/pretty_printer.h"
+#include "haard/semantic/semantic_analyzer.h"
 #include "haard/log/logs.h"
 
 using namespace haard;
@@ -90,7 +91,9 @@ void Driver::read_configuration(std::string path) {
 }
 
 void Driver::semantic_analysis() {
+    SemanticAnalyzer analyzer;
 
+    analyzer.analyze_module(module);
 }
 
 AstNode* Driver::parse_file(std::string path) {
