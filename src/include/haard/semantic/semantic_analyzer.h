@@ -14,9 +14,10 @@ namespace haard {
         void analyze_module(Module* module);
 
         void define_module_classes(Module* module);
-        void define_class(Class* klass);
+        void define_module_functions(Module* module);
 
-        std::string get_name(AstNode* node);
+        void define_class(Class* klass);
+        void define_function(Function* function);
 
     private:
         Module* current_module;

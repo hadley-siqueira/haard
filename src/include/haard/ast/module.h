@@ -31,6 +31,9 @@ namespace haard {
         const std::vector<Class*>& get_classes() const;
         void set_classes(const std::vector<Class*>& classes);
 
+        const std::vector<Function *> &get_functions() const;
+        void set_functions(const std::vector<Function *> &functions);
+
     private:
         std::string path;
         std::vector<Import*> imports;

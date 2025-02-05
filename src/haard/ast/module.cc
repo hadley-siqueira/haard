@@ -60,3 +60,11 @@ const std::vector<Class*>& Module::get_classes() const {
 void Module::set_classes(const std::vector<Class*>& classes) {
     this->classes = classes;
 }
+
+const std::vector<Function*>& Module::get_functions() const {
+    return functions;
+}
+
+void Module::set_functions(const std::vector<Function*>& functions) {
+    this->functions = functions;
+}

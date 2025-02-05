@@ -1,0 +1,10 @@
+class Pixel:
+    r : u8
+    g : u8
+    b : u8
+
+def sum : i32
+    @a : i32
+    @b : i32
+
+    return a + b
