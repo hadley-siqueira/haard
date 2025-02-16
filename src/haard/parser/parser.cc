@@ -21,6 +21,7 @@ Module* Parser::read(std::string path, std::string relative_path) {
     idx = 0;
     tokens = sc.read(path);
     module = parse_module();
+    module->set_path(path);
 
     return module;
 }

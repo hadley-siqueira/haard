@@ -7,15 +7,18 @@ using namespace haard;
 
 AstNode::AstNode() {
     set_kind(AST_UNKNOWN);
+    set_parent(nullptr);
 }
 
 AstNode::AstNode(AstKind type) {
     set_kind(type);
+    set_parent(nullptr);
 }
 
 AstNode::AstNode(AstKind type, Token& token) {
     set_kind(type);
     set_from_token(token);
+    set_parent(nullptr);
 }
 
 AstNode::~AstNode() {
@@ -170,4 +173,12 @@ std::string AstNode::to_str() {
 
     p.print(this);
     return p.get_output();
+}
+
+std::string AstNode::get_path() {
+    if (get_parent()) {
+        return get_parent()->get_path();
+    }
+
+    return "";
 }

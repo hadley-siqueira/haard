@@ -28,7 +28,7 @@ namespace haard {
         void set_generics(Generics* generics);
 
         Statements* get_statements() const;
-        void set_statements(Statements *statements);
+        void set_statements(Statements* statements);
 
         void add_parameter(Variable* parameter);
 

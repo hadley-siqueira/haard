@@ -20,9 +20,7 @@ namespace haard {
         void add_function(Function* function);
         void add_class(Class* klass);
 
-
-
-        const std::string& get_path() const;
+        std::string get_path();
         void set_path(const std::string& path);
 
         SymbolTable* get_symbol_table() const;

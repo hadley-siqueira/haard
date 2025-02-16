@@ -37,11 +37,11 @@ void Module::add_class(Class* klass) {
     }
 }
 
-const std::string& Module::get_path() const {
+std::string Module::get_path() {
     return path;
 }
 
-void Module::set_path(const std::string &path) {
+void Module::set_path(const std::string& path) {
     this->path = path;
 }
 

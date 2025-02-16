@@ -72,7 +72,7 @@ void SemanticAnalyzer::define_class(Class* klass) {
             ut = (UserType*) symbols[0]->get_descriptor();
             ss << "<white>'" + name + "'<normal> already defined\n";
             ss << "    other occurence here:\n";
-            auto line = get_line_from_file("/home/hadley/Projects/haard/tests/semantic/t1.hd", ut->get_name().get_line());
+            auto line = get_line_from_file(ut->get_path(), ut->get_name().get_line());
 
             ss << "    ";
             ss << line;
@@ -104,7 +104,7 @@ void SemanticAnalyzer::define_function(Function* function) {
                 f = (Function*) symbols[0]->get_descriptor();
                 ss << "<white>'" + name + "'<normal> already defined\n";
                 ss << "    other occurence here:\n"; // TODO: fix path with implementation, refactor redefinition
-                line = get_line_from_file("/home/hadley/Projects/haard/tests/semantic/t3.hd", f->get_name().get_line());
+                line = get_line_from_file(f->get_path(), f->get_name().get_line());
 
                 ss << "    ";
                 ss << line;
@@ -119,7 +119,7 @@ void SemanticAnalyzer::define_function(Function* function) {
                 ut = (UserType*) symbols[0]->get_descriptor();
                 ss << "<white>'" + name + "'<normal> already defined\n";
                 ss << "    other occurence here:\n";
-                line = get_line_from_file("/home/hadley/Projects/haard/tests/semantic/t3.hd", ut->get_name().get_line());
+                line = get_line_from_file(ut->get_path(), ut->get_name().get_line());
 
                 ss << "    ";
                 ss << line;

@@ -215,6 +215,8 @@ namespace haard {
         virtual std::string to_json();
         std::string to_str();
 
+        virtual std::string get_path();
+
     protected:
         AstKind kind;
         int line;
