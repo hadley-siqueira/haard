@@ -26,3 +26,26 @@ const std::vector<Type*>& TupleType::get_types() const {
 void TupleType::set_types(const std::vector<Type*>& types) {
     this->types = types;
 }
+
+bool TupleType::equals(Type* other) {
+    if (other->get_kind() != get_kind()) {
+        return false;
+    }
+
+    TupleType* t_other = (TupleType*) other;
+
+    if (types.size() != t_other->types.size()) {
+        return false;
+    }
+
+    for (int i = 0; i < types.size(); ++i) {
+        Type* t1 = types[i];
+        Type* t2 = t_other->types[i];
+
+        if (!t1->equals(t2)) {
+            return false;
+        }
+    }
+
+    return true;
+}

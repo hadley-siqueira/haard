@@ -16,6 +16,8 @@ namespace haard {
         const std::vector<Type*>& get_types() const;
         void set_types(const std::vector<Type*>& types);
 
+        bool equals(Type* other);
+
     private:
         std::vector<Type*> types;
     };

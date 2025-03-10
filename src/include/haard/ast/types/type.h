@@ -5,7 +5,8 @@
 
 namespace haard {
     class Type : public AstNode {
-
+    public:
+        virtual bool equals(Type* other);
     };
 }
 
