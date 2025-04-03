@@ -30,6 +30,20 @@ void ArrayType::set_token(const Token& token) {
     this->token = token;
 }
 
+bool ArrayType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    if (get_kind() != other->get_kind()) {
+        return false;
+    }
+
+    ArrayType* o2 = (ArrayType*) other;
+
+    return o2->get_subtype()->equals(get_subtype());
+}
+
 Type* ArrayType::get_subtype() const {
     return subtype;
 }

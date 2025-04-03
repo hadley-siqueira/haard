@@ -9,7 +9,7 @@ FunctionType::FunctionType() {
     set_return_type(nullptr);
 }
 
-FunctionType::FunctionType(std::vector<Type* >& parameters_type, Type* return_type) {
+FunctionType::FunctionType(std::vector<Type*>& parameters_type, Type* return_type) {
     set_kind(AST_TYPE_FUNCTION);
     set_return_type(return_type);
     set_parameters_type(parameters_type);
@@ -57,4 +57,37 @@ std::string FunctionType::to_str() {
 
     ss << ") -> " << return_type->to_str();
     return ss.str();
+}
+
+bool FunctionType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    if (get_kind() != other->get_kind()) {
+        return false;
+    }
+
+    FunctionType* o2 = (FunctionType*) other;
+
+    if (!o2->get_return_type()->equals(get_return_type())) {
+        return false;
+    }
+
+    if (get_parameters_type().size() != o2->get_parameters_type().size()) {
+        return false;
+    }
+
+    int n = get_parameters_type().size();
+
+    for (int i = 0; i < n; ++i) {
+        Type* t1 = get_parameters_type()[i];
+        Type* t2 = o2->get_parameters_type()[i];
+
+        if (!t1->equals(t2)) {
+            return false;
+        }
+    }
+
+    return true;
 }

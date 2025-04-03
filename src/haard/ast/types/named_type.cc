@@ -28,3 +28,17 @@ void NamedType::set_name_expression(Expression* expression) {
         expression->set_parent(this);
     }
 }
+
+bool NamedType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    if (other->get_kind() != get_kind()) {
+        return false;
+    }
+
+    NamedType* o2 = (NamedType*) other;
+
+    return false;
+}

@@ -17,6 +17,8 @@ namespace haard {
         Type* get_subtype() const;
         void set_subtype(Type* subtype);
 
+        bool equals(Type* other);
+
     private:
         Token token;
         Type* subtype;

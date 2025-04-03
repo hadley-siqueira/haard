@@ -23,3 +23,17 @@ Type *ListType::get_subtype() const {
 void ListType::set_subtype(Type* type) {
     this->subtype = type;
 }
+
+bool ListType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    if (get_kind() != other->get_kind()) {
+        return false;
+    }
+
+    ListType* o2 = (ListType*) other;
+
+    return o2->get_subtype()->equals(get_subtype());
+}

@@ -24,3 +24,11 @@ const Token& PrimitiveType::get_token() const {
 void PrimitiveType::set_token(const Token& token) {
     this->token = token;
 }
+
+bool PrimitiveType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    return get_kind() == other->get_kind();
+}

@@ -23,6 +23,8 @@ namespace haard {
         virtual std::string to_json();
         virtual std::string to_str();
 
+        bool equals(Type* other);
+
     private:
         std::vector<Type*> parameters_type;
         Type* return_type;

@@ -17,6 +17,8 @@ namespace haard {
         Expression* get_name_expression() const;
         void set_name_expression(Expression* expression);
 
+        bool equals(Type* other);
+
     private:
         Expression* name_expression;
     };

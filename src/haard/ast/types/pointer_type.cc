@@ -32,3 +32,17 @@ Type* PointerType::get_subtype() const {
 void PointerType::set_subtype(Type* subtype) {
     this->subtype = subtype;
 }
+
+bool PointerType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    if (get_kind() != other->get_kind()) {
+        return false;
+    }
+
+    PointerType* o2 = (PointerType*) other;
+
+    return get_subtype()->equals(o2->get_subtype());
+}

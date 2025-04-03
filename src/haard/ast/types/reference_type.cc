@@ -32,3 +32,17 @@ Type* ReferenceType::get_subtype() const {
 void ReferenceType::set_subtype(Type* subtype) {
     this->subtype = subtype;
 }
+
+bool ReferenceType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
+    if (get_kind() != other->get_kind()) {
+        return false;
+    }
+
+    ReferenceType* o2 = (ReferenceType*) other;
+
+    return get_subtype()->equals(o2->get_subtype());
+}

@@ -28,6 +28,10 @@ void TupleType::set_types(const std::vector<Type*>& types) {
 }
 
 bool TupleType::equals(Type* other) {
+    if (other == nullptr) {
+        return false;
+    }
+
     if (other->get_kind() != get_kind()) {
         return false;
     }

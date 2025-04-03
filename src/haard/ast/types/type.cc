@@ -2,7 +2,10 @@
 
 using namespace haard;
 
-
 bool Type::equals(Type* other) {
-    return get_kind() == other->get_kind();
+    if (other) {
+        return get_kind() == other->get_kind();
+    }
+
+    return false;
 }
