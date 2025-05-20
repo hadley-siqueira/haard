@@ -6,6 +6,7 @@
 #include "haard/parser/parser.h"
 #include "haard/pretty_printer/pretty_printer.h"
 #include "haard/semantic/semantic_analyzer.h"
+
 #include "haard/log/logs.h"
 
 using namespace haard;
@@ -13,8 +14,6 @@ using namespace haard;
 Driver::Driver() {
     path_delimiter = '/';
     configuration_file_path = "...";
-
-    show_logs_flag = true;
 }
 
 Driver::~Driver() {
@@ -31,8 +30,6 @@ void Driver::parse_args(int argc, char** argv) {
             commands.push_back(DRIVER_CMD_PRETTY_PRINT);
         } else if (strcmp(argv[i], "--json") == 0) {
             commands.push_back(DRIVER_CMD_JSON);
-        } else if (strcmp(argv[i], "--no-logs") == 0) {
-            show_logs_flag = false;
         }
     }
 }
@@ -49,8 +46,7 @@ void Driver::run(int argc, char** argv) {
         exit();
     }
 
-    //parse_module_imports(parse_file(main_path));
-    parse_file(main_path);
+    parse_module_imports(parse_file(main_path));
     exec_commands();
     semantic_analysis();
     exit();
@@ -76,7 +72,7 @@ void Driver::configure() {
 }
 
 void Driver::exit() {
-    print_logs();
+    show_logs();
     ::exit(0);
 }
 
@@ -84,19 +80,19 @@ void Driver::read_configuration(std::string path) {
     std::ifstream config_file(path);
 
     if (config_file.good()) {
-        log_info("configuration file opened");
+        std::cout << "configuration file opened\n";
     } else {
-        log_info("failed config\n");
+        std::cout << "failed config\n";
     }
 }
 
 void Driver::semantic_analysis() {
     SemanticAnalyzer analyzer;
 
-    analyzer.analyze_module(module);
+    analyzer.process_module(module);
 }
 
-AstNode* Driver::parse_file(std::string path) {
+Ast* Driver::parse_file(std::string path) {
     if (!file_exists(path)) {
         log_error("file '" + path + "' couldn't be opened");
         exit();
@@ -116,24 +112,24 @@ AstNode* Driver::parse_file(std::string path) {
     return module;
 }
 
-void Driver::parse_module_imports(AstNode* module) {
+void Driver::parse_module_imports(Ast* module) {
     if (module == nullptr) {
         return;
     }
 
-    std::vector<AstNode*> imports = module->get_children(AST_IMPORT);
+    std::vector<Ast*> imports = module->get_children(AST_IMPORT);
 
     for (int i = 0; i < imports.size(); ++i) {
         parse_import(imports[i]);
     }
 }
 
-void Driver::parse_import(AstNode* import) {
+void Driver::parse_import(Ast* import) {
     parse_simple_import(import);
 }
 
-void Driver::parse_simple_import(AstNode* import) {
-    AstNode* module = nullptr;
+void Driver::parse_simple_import(Ast* import) {
+    Ast* module = nullptr;
     std::string path = build_import_path(import);
 
     module = modules.get_module_by_path(path);
@@ -144,9 +140,9 @@ void Driver::parse_simple_import(AstNode* import) {
     }
 }
 
-std::string Driver::build_import_path(AstNode* import) {
+std::string Driver::build_import_path(Ast* import) {
     std::string str;
-    std::vector<AstNode*> path = import->get_child(AST_IMPORT_PATH)->get_children(AST_IMPORT_PATH_MEMBER);
+    std::vector<Ast*> path = import->get_child(AST_IMPORT_PATH)->get_children(AST_IMPORT_PATH_MEMBER);
 
     for (int i = 0; i < path.size(); ++i) {
         str += path_delimiter;
@@ -223,23 +219,19 @@ void Driver::set_root_path_from_main_file() {
 }
 
 void Driver::pretty_print() {
-    print_logs();
+    show_logs();
 
     for (auto it : modules.get_modules()) {
-        std::cout << it.second->to_str();
-        exit();
+        std::cout << "printing " << it.first << "...\n";
+        PrettyPrinter printer;
+        printer.print(it.second);
+        std::cout << printer.get_output() << '\n';
     }
 }
 
 void Driver::print_json() {
     std::cout << module->to_json() << "\n";
     exit();
-}
-
-void Driver::print_logs() {
-    if (show_logs_flag) {
-        show_logs();
-    }
 }
 
 bool Driver::file_exists(std::string path) {

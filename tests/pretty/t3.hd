@@ -1,9 +1,0 @@
-def sum : i32
-    @a : i32
-    @b : i32
-
-    return a
-
-
-def no_op : void
-    return

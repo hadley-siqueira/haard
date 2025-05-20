@@ -15,123 +15,7 @@ set(TOKEN_SRC
 )
 
 set(AST_SRC
-    src/haard/ast/ast_node.cc
-    src/haard/ast/modules.cc
-    src/haard/ast/module.cc
-    src/haard/ast/import.cc
-    src/haard/ast/user_type.cc
-    src/haard/ast/class.cc
-    src/haard/ast/function.cc
-    src/haard/ast/variable.cc
-    src/haard/ast/generics.cc
-    src/haard/ast/types/type.cc
-    src/haard/ast/types/primitive_type.cc
-    src/haard/ast/types/pointer_type.cc
-    src/haard/ast/types/reference_type.cc
-    src/haard/ast/types/list_type.cc
-    src/haard/ast/types/array_type.cc
-    src/haard/ast/types/tuple_type.cc
-    src/haard/ast/types/function_type.cc
-    src/haard/ast/types/named_type.cc
-
-    src/haard/ast/statements/statement.cc
-    src/haard/ast/statements/statements.cc
-    src/haard/ast/statements/while_statement.cc
-    src/haard/ast/statements/for_statement.cc
-    src/haard/ast/statements/foreach_statement.cc
-    src/haard/ast/statements/if_statement.cc
-    src/haard/ast/statements/elif_statement.cc
-    src/haard/ast/statements/else_statement.cc
-    src/haard/ast/statements/return_statement.cc
-    src/haard/ast/statements/expression_statement.cc
-
-    src/haard/ast/expressions/expression.cc
-
-    src/haard/ast/expressions/operators/binary/binary_operator.cc
-    src/haard/ast/expressions/operators/binary/assignment.cc
-    src/haard/ast/expressions/operators/binary/bitwise_and_assignment.cc
-    src/haard/ast/expressions/operators/binary/bitwise_or_assignment.cc
-    src/haard/ast/expressions/operators/binary/bitwise_xor_assignment.cc
-    src/haard/ast/expressions/operators/binary/bitwise_not_assignment.cc
-    src/haard/ast/expressions/operators/binary/division_assignment.cc
-    src/haard/ast/expressions/operators/binary/integer_division_assignment.cc
-    src/haard/ast/expressions/operators/binary/minus_assignment.cc
-    src/haard/ast/expressions/operators/binary/modulo_assignment.cc
-    src/haard/ast/expressions/operators/binary/plus_assignment.cc
-    src/haard/ast/expressions/operators/binary/times_assignment.cc
-    src/haard/ast/expressions/operators/binary/shift_left_logical_assignment.cc
-    src/haard/ast/expressions/operators/binary/shift_right_logical_assignment.cc
-    src/haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.cc
-    src/haard/ast/expressions/operators/binary/call.cc
-    src/haard/ast/expressions/operators/binary/named_argument.cc
-    src/haard/ast/expressions/lambda.cc
-
-    src/haard/ast/expressions/operators/binary/logical_and.cc
-    src/haard/ast/expressions/operators/binary/logical_or.cc
-    src/haard/ast/expressions/operators/binary/equal.cc
-    src/haard/ast/expressions/operators/binary/not_equal.cc
-    src/haard/ast/expressions/operators/binary/less_than.cc
-    src/haard/ast/expressions/operators/binary/greater_than.cc
-    src/haard/ast/expressions/operators/binary/less_than_or_equal.cc
-    src/haard/ast/expressions/operators/binary/greater_than_or_equal.cc
-    src/haard/ast/expressions/operators/binary/in.cc
-    src/haard/ast/expressions/operators/binary/not_in.cc
-
-    src/haard/ast/expressions/operators/binary/inclusive_range.cc
-    src/haard/ast/expressions/operators/binary/exclusive_range.cc
-    src/haard/ast/expressions/operators/binary/plus.cc
-    src/haard/ast/expressions/operators/binary/minus.cc
-    src/haard/ast/expressions/operators/binary/times.cc
-    src/haard/ast/expressions/operators/binary/division.cc
-    src/haard/ast/expressions/operators/binary/modulo.cc
-    src/haard/ast/expressions/operators/binary/integer_division.cc
-    src/haard/ast/expressions/operators/binary/power.cc
-    src/haard/ast/expressions/operators/binary/shift_left_logical.cc
-    src/haard/ast/expressions/operators/binary/shift_right_logical.cc
-    src/haard/ast/expressions/operators/binary/shift_right_arithmetic.cc
-    src/haard/ast/expressions/operators/binary/bitwise_and.cc
-    src/haard/ast/expressions/operators/binary/bitwise_or.cc
-    src/haard/ast/expressions/operators/binary/bitwise_xor.cc
-    src/haard/ast/expressions/operators/binary/index.cc
-    src/haard/ast/expressions/operators/binary/dot.cc
-    src/haard/ast/expressions/operators/binary/arrow.cc
-    src/haard/ast/expressions/operators/binary/hash_pair.cc
-
-    src/haard/ast/expressions/operators/binary/generics_application.cc
-    src/haard/ast/expressions/operators/binary/scope.cc
-
-    src/haard/ast/expressions/operators/unary/unary_operator.cc
-    src/haard/ast/expressions/operators/unary/unary_plus.cc
-    src/haard/ast/expressions/operators/unary/unary_minus.cc
-    src/haard/ast/expressions/operators/unary/address_of.cc
-    src/haard/ast/expressions/operators/unary/dereference.cc
-    src/haard/ast/expressions/operators/unary/bitwise_not.cc
-    src/haard/ast/expressions/operators/unary/logical_not.cc
-    src/haard/ast/expressions/operators/unary/pre_increment.cc
-    src/haard/ast/expressions/operators/unary/pre_decrement.cc
-    src/haard/ast/expressions/operators/unary/pos_increment.cc
-    src/haard/ast/expressions/operators/unary/pos_decrement.cc
-    src/haard/ast/expressions/operators/unary/parenthesis.cc
-    src/haard/ast/expressions/operators/unary/new.cc
-    src/haard/ast/expressions/operators/unary/delete.cc
-    src/haard/ast/expressions/operators/unary/delete_array.cc
-
-    src/haard/ast/expressions/identifier.cc
-    src/haard/ast/expressions/this.cc
-    src/haard/ast/expressions/null.cc
-    src/haard/ast/expressions/tuple.cc
-    src/haard/ast/expressions/sequence.cc
-    src/haard/ast/expressions/list.cc
-    src/haard/ast/expressions/array.cc
-    src/haard/ast/expressions/hash.cc
-
-    src/haard/ast/expressions/literals/literal.cc
-    src/haard/ast/expressions/literals/boolean_literal.cc
-    src/haard/ast/expressions/literals/char_literal.cc
-    src/haard/ast/expressions/literals/integer_literal.cc
-    src/haard/ast/expressions/literals/float_literal.cc
-    src/haard/ast/expressions/literals/string_literal.cc
-    src/haard/ast/expressions/literals/symbol_literal.cc
+    src/haard/ast/ast.cc
 )
 
 set(IR_SRC
@@ -148,10 +32,20 @@ set(PARSER_SRC
     src/haard/parser/parser.cc
 )
 
+set(MODULES_MANAGER_SRC
+    src/haard/modules_manager/modules_manager.cc
+)
+
 set(SEMANTIC_SRC
     src/haard/semantic/semantic_analyzer.cc
-    src/haard/semantic/symbol_table.cc
-    src/haard/semantic/symbol.cc
+)
+
+set(SCOPE_SRC
+    src/haard/scope/scope.cc
+)
+
+set(SYMBOL_SRC
+    src/haard/symbol/symbol.cc
 )
 
 set(DRIVER_SRC
@@ -175,6 +69,9 @@ set(SOURCES
     ${IR_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${MODULES_MANAGER_SRC}
+    ${SYMBOL_SRC}
+    ${SCOPE_SRC}
     ${SEMANTIC_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}

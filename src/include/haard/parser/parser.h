@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
 
@@ -13,106 +14,105 @@ namespace haard {
         Parser();
 
     public:
-        Module* read(std::string path, std::string relative_path = "");
+        Ast* read(std::string path, std::string relative_path = "");
 
     public:
-        Module* parse_module();
-        Import* parse_import();
+        Ast* parse_module();
+        Ast* parse_import();
 
-        AstNode* parse_definitions();
+        Ast* parse_definitions();
 
-        UserType *parse_user_type();
+        Ast* parse_user_type();
 
-        AstNode* parse_variable();
-        Variable *parse_field();
+        Ast* parse_variable();
+        Ast* parse_field();
 
-        AstNode* parse_variable_definition();
+        Ast* parse_variable_definition();
 
-        Function* parse_function();
-        Variable* parse_parameter();
+        Ast* parse_function();
+        Ast* parse_parameter();
 
-        Statement* parse_statement();
-        WhileStatement* parse_while_statement();
-        Statement* parse_for_statement();
+        Ast* parse_statement();
+        Ast* parse_while_statement();
+        Ast* parse_for_statement();
 
-        IfStatement* parse_if_statement();
-        ElifStatement* parse_elif_statement();
-        ElseStatement *parse_else_statement();
+        Ast* parse_if_statement();
+        Ast* parse_elif_statement();
+        Ast* parse_else_statement();
 
-        ReturnStatement* parse_return_statement();
+        Ast* parse_return_statement();
 
-        AstNode* parse_switch_statement();
-        AstNode* parse_switch_cases();
+        Ast* parse_switch_statement();
+        Ast* parse_switch_cases();
 
-        Statements* parse_statements();
+        Ast* parse_statements();
 
-        Type* parse_type();
-        Type* parse_function_type();
-        Type* parse_tuple_or_function_type();
-        Type* parse_primary_type();
-        Type* parse_named_type();
+        Ast* parse_type();
+        Ast* parse_function_type();
+        Ast* parse_tuple_or_function_type();
+        Ast* parse_primary_type();
 
-        Expression* parse_expression();
-        Expression* parse_assignment_expression();
-        Expression* parse_cast_expression();
+        Ast* parse_expression();
+        Ast* parse_assignment_expression();
+        Ast* parse_cast_expression();
 
-        Expression* parse_logical_or_expression();
-        Expression* parse_logical_and_expression();
+        Ast* parse_logical_or_expression();
+        Ast* parse_logical_and_expression();
 
-        Expression* parse_equality_expression();
-        Expression* parse_relational_expression();
+        Ast* parse_equality_expression();
+        Ast* parse_relational_expression();
 
-        Expression* parse_range_expression();
+        Ast* parse_range_expression();
 
-        Expression* parse_arith_expression();
-        Expression* parse_term_expression();
-        Expression* parse_power_expression();
+        Ast* parse_arith_expression();
+        Ast* parse_term_expression();
+        Ast* parse_power_expression();
 
-        Expression* parse_bitwise_or_expression();
-        Expression* parse_bitwise_xor_expression();
-        Expression* parse_bitwise_and_expression();
+        Ast* parse_bitwise_or_expression();
+        Ast* parse_bitwise_xor_expression();
+        Ast* parse_bitwise_and_expression();
 
-        Expression* parse_shift_expression();
+        Ast* parse_shift_expression();
 
-        Expression* parse_unary_expression();
-        Expression* parse_logical_not();
-        Expression* parse_address_of();
-        Expression* parse_dereference();
-        Expression* parse_bitwise_not();
-        Expression* parse_unary_minus();
-        Expression* parse_unary_plus();
-        Expression* parse_pre_increment();
-        Expression* parse_pre_decrement();
-        AstNode* parse_sizeof();
+        Ast* parse_unary_expression();
+        Ast* parse_logical_not();
+        Ast* parse_not();
+        Ast* parse_address_of();
+        Ast* parse_dereference();
+        Ast* parse_bitwise_not();
+        Ast* parse_unary_minus();
+        Ast* parse_unary_plus();
+        Ast* parse_pre_increment();
+        Ast* parse_pre_decrement();
+        Ast* parse_sizeof();
+        Ast* parse_simple_unary_operator(AstKind ast_type, TokenKind token_type, const char* oper);
+        Ast* parse_binary_operator(AstKind kind, const char* oper, Ast* left, Ast* (Parser::*function)(void));
 
-        AstNode* parse_postfix_expression();
-        Call* parse_call_expression(Expression* obj);
-        void parse_call_arguments(Call* call);
+        Ast* parse_postfix_expression();
 
-        Expression* parse_primary_expression();
+        Ast* parse_primary_expression();
 
-        New* parse_new_expression();
-        void parse_new_arguments(New* obj);
+        Ast* parse_new_expression();
+        Ast* parse_delete_expression();
+        Ast* parse_parenthesis_or_tuple_or_sequence();
+        Ast* parse_list_expression();
+        Ast* parse_array_or_hash_expression();
+        Ast* parse_hash(Ast* key);
 
-        Expression* parse_delete_expression();
-        Expression* parse_parenthesis_or_tuple_or_sequence();
-        Expression* parse_list_expression();
-        Expression* parse_array_or_hash_expression();
-        Expression* parse_array_expression(Expression* expression);
-        Expression *parse_hash_expression(Expression *key);
+        Ast* parse_lambda();
 
-        Expression *parse_lambda();
+        Ast* parse_argument_list();
 
-        Expression* parse_generic_application();
-        Expression* parse_scope();
-        Identifier* parse_identifier();
+        Ast* parse_generic_instantiation();
+        Ast* parse_scope();
+        Ast* parse_identifier();
 
-        Generics* parse_generics();
+        Ast* parse_generics();
+        Ast* parse_type_list(AstKind kind);
 
     private:
         void advance();
         bool lookahead(int kind, int offset=0);
-        bool lookahead_same_line(int kind, int offset=0);
         bool match(int kind);
         bool match_same_line(int kind);
         bool match();

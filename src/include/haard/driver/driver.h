@@ -7,8 +7,7 @@
 #include "haard/log/logger.h"
 
 #include "haard/ast/ast.h"
-#include "haard/ast/modules.h"
-#include "haard/ast/module.h"
+#include "haard/modules_manager/modules_manager.h"
 
 namespace haard {
     enum DriverCommands {
@@ -32,11 +31,11 @@ namespace haard {
         void semantic_analysis();
 
     public:
-        AstNode* parse_file(std::string path);
-        void parse_module_imports(AstNode* module);
-        void parse_import(AstNode* import);
-        void parse_simple_import(AstNode* import);
-        std::string build_import_path(AstNode* import);
+        Ast* parse_file(std::string path);
+        void parse_module_imports(Ast* module);
+        void parse_import(Ast* import);
+        void parse_simple_import(Ast* import);
+        std::string build_import_path(Ast* import);
         std::string build_relative_path(std::string path);
         void configure_search_path();
         void set_root_path_from_main_file();
@@ -44,14 +43,13 @@ namespace haard {
     public:
         void pretty_print();
         void print_json();
-        void print_logs();
 
     private:
         bool file_exists(std::string path);
 
     private:
-        Modules modules;
-        Module* module;
+        ModulesManager modules;
+        Ast* module;
 
     // system related stuff
     private:
@@ -61,10 +59,6 @@ namespace haard {
         std::string main_path;
         std::string root_path;
         char path_delimiter;
-
-    // flags
-    private:
-        bool show_logs_flag;
     };
 }
 

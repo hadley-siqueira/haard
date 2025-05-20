@@ -1,116 +1,234 @@
 #ifndef HAARD_AST_H
 #define HAARD_AST_H
 
-#include "haard/ast/ast_node.h"
+#include <vector>
+#include <string>
 
-#include "haard/ast/module.h"
-#include "haard/ast/import.h"
+#include "haard/token/token.h"
 
-#include "haard/ast/user_type.h"
-#include "haard/ast/class.h"
+namespace haard {
+    typedef enum AstKind {
+        AST_UNKNOWN,
 
-#include "haard/ast/function.h"
+        AST_MODULE,
 
-#include "haard/ast/statements/statement.h"
-#include "haard/ast/statements/statements.h"
-#include "haard/ast/statements/while_statement.h"
-#include "haard/ast/statements/for_statement.h"
-#include "haard/ast/statements/foreach_statement.h"
-#include "haard/ast/statements/if_statement.h"
-#include "haard/ast/statements/elif_statement.h"
-#include "haard/ast/statements/else_statement.h"
-#include "haard/ast/statements/return_statement.h"
-#include "haard/ast/statements/expression_statement.h"
+        AST_CLASS,
+        AST_STRUCT,
+        AST_ENUM,
+        AST_UNION,
+        AST_SUPER,
 
-#include "haard/ast/types/primitive_type.h"
-#include "haard/ast/types/pointer_type.h"
-#include "haard/ast/types/reference_type.h"
-#include "haard/ast/types/list_type.h"
-#include "haard/ast/types/array_type.h"
-#include "haard/ast/types/tuple_type.h"
-#include "haard/ast/types/function_type.h"
-#include "haard/ast/types/named_type.h"
+        AST_FUNCTION,
+        AST_VARIABLE,
 
-#include "haard/ast/statements/expression_statement.h"
-#include "haard/ast/expressions/operators/binary/binary_operator.h"
-#include "haard/ast/expressions/operators/binary/assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_and_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_or_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_xor_assignment.h"
-#include "haard/ast/expressions/operators/binary/bitwise_not_assignment.h"
-#include "haard/ast/expressions/operators/binary/division_assignment.h"
-#include "haard/ast/expressions/operators/binary/integer_division_assignment.h"
-#include "haard/ast/expressions/operators/binary/minus_assignment.h"
-#include "haard/ast/expressions/operators/binary/modulo_assignment.h"
-#include "haard/ast/expressions/operators/binary/plus_assignment.h"
-#include "haard/ast/expressions/operators/binary/times_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_left_logical_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_right_logical_assignment.h"
-#include "haard/ast/expressions/operators/binary/shift_right_arithmetic_assignment.h"
-#include "haard/ast/expressions/operators/binary/logical_and.h"
-#include "haard/ast/expressions/operators/binary/logical_or.h"
-#include "haard/ast/expressions/operators/binary/equal.h"
-#include "haard/ast/expressions/operators/binary/not_equal.h"
-#include "haard/ast/expressions/operators/binary/less_than.h"
-#include "haard/ast/expressions/operators/binary/greater_than.h"
-#include "haard/ast/expressions/operators/binary/less_than_or_equal.h"
-#include "haard/ast/expressions/operators/binary/greater_than_or_equal.h"
-#include "haard/ast/expressions/operators/binary/in.h"
-#include "haard/ast/expressions/operators/binary/not_in.h"
-#include "haard/ast/expressions/operators/binary/inclusive_range.h"
-#include "haard/ast/expressions/operators/binary/exclusive_range.h"
-#include "haard/ast/expressions/operators/binary/plus.h"
-#include "haard/ast/expressions/operators/binary/minus.h"
-#include "haard/ast/expressions/operators/binary/times.h"
-#include "haard/ast/expressions/operators/binary/division.h"
-#include "haard/ast/expressions/operators/binary/modulo.h"
-#include "haard/ast/expressions/operators/binary/integer_division.h"
-#include "haard/ast/expressions/operators/binary/power.h"
-#include "haard/ast/expressions/operators/binary/shift_left_logical.h"
-#include "haard/ast/expressions/operators/binary/shift_right_logical.h"
-#include "haard/ast/expressions/operators/binary/shift_right_arithmetic.h"
-#include "haard/ast/expressions/operators/binary/bitwise_and.h"
-#include "haard/ast/expressions/operators/binary/bitwise_or.h"
-#include "haard/ast/expressions/operators/binary/bitwise_xor.h"
-#include "haard/ast/expressions/operators/binary/index.h"
-#include "haard/ast/expressions/operators/binary/dot.h"
-#include "haard/ast/expressions/operators/binary/arrow.h"
-#include "haard/ast/expressions/operators/binary/generics_application.h"
-#include "haard/ast/expressions/operators/binary/scope.h"
-#include "haard/ast/expressions/operators/binary/call.h"
-#include "haard/ast/expressions/operators/binary/named_argument.h"
-#include "haard/ast/expressions/operators/binary/hash_pair.h"
+        AST_LAMBDA,
 
-#include "haard/ast/expressions/operators/unary/unary_operator.h"
-#include "haard/ast/expressions/operators/unary/unary_plus.h"
-#include "haard/ast/expressions/operators/unary/unary_minus.h"
-#include "haard/ast/expressions/operators/unary/address_of.h"
-#include "haard/ast/expressions/operators/unary/dereference.h"
-#include "haard/ast/expressions/operators/unary/bitwise_not.h"
-#include "haard/ast/expressions/operators/unary/logical_not.h"
-#include "haard/ast/expressions/operators/unary/pre_increment.h"
-#include "haard/ast/expressions/operators/unary/pre_decrement.h"
-#include "haard/ast/expressions/operators/unary/pos_increment.h"
-#include "haard/ast/expressions/operators/unary/pos_decrement.h"
-#include "haard/ast/expressions/operators/unary/parenthesis.h"
-#include "haard/ast/expressions/operators/unary/new.h"
-#include "haard/ast/expressions/operators/unary/delete.h"
-#include "haard/ast/expressions/operators/unary/delete_array.h"
+        AST_IMPORT,
+        AST_IMPORT_PATH,
+        AST_IMPORT_PATH_MEMBER,
+        AST_IMPORT_ALIAS,
 
-#include "haard/ast/expressions/literals/boolean_literal.h"
-#include "haard/ast/expressions/literals/char_literal.h"
-#include "haard/ast/expressions/literals/integer_literal.h"
-#include "haard/ast/expressions/literals/float_literal.h"
-#include "haard/ast/expressions/literals/string_literal.h"
-#include "haard/ast/expressions/literals/symbol_literal.h"
+        AST_GENERIC_APPLICATION,
+        AST_SCOPE,
+        AST_ID,
 
-#include "haard/ast/expressions/this.h"
-#include "haard/ast/expressions/null.h"
-#include "haard/ast/expressions/tuple.h"
-#include "haard/ast/expressions/sequence.h"
-#include "haard/ast/expressions/list.h"
-#include "haard/ast/expressions/array.h"
-#include "haard/ast/expressions/hash.h"
-#include "haard/ast/expressions/lambda.h"
+        // statements
+        AST_STATEMENT,
+        AST_COMPOUND_STATEMENT,
+        AST_EXPRESSION_WITH_SEMICOLON,
+        AST_WHILE,
+
+        AST_FOR,
+        AST_FOR_RANGE,
+        AST_FOR_INIT,
+        AST_FOR_TEST,
+        AST_FOR_UPDATE,
+
+        AST_IF,
+        AST_ELIF,
+        AST_ELSE,
+        AST_RETURN,
+
+        AST_SWITCH,
+        AST_SWITCH_BRACE,
+        AST_SWITCH_CASES,
+        AST_SWITCH_CASE,
+        AST_SWITCH_DEFAULT,
+
+        // Expressions
+        AST_EXPRESSION,
+
+        // Binary operators
+        AST_ASSIGNMENT,
+        AST_BITWISE_AND_ASSIGNMENT,
+        AST_BITWISE_XOR_ASSIGNMENT,
+        AST_BITWISE_OR_ASSIGNMENT,
+        AST_BITWISE_NOT_ASSIGNMENT,
+        AST_DIVISION_ASSIGNMENT,
+        AST_INTEGER_DIVISION_ASSIGNMENT,
+        AST_MINUS_ASSIGNMENT,
+        AST_MODULO_ASSIGNMENT,
+        AST_PLUS_ASSIGNMENT,
+        AST_TIMES_ASSIGNMENT,
+        AST_SHIFT_LEFT_LOGICAL_ASSIGNMENT,
+        AST_SHIFT_RIGHT_ARITHMETIC_ASSIGNMENT,
+        AST_SHIFT_RIGHT_LOGICAL_ASSIGNMENT,
+
+        AST_CAST,
+
+        AST_LOGICAL_OR,
+        AST_OR,
+        AST_LOGICAL_AND,
+        AST_AND,
+
+        AST_EQUAL,
+        AST_NOT_EQUAL,
+
+        AST_LESS_THAN,
+        AST_GREATER_THAN,
+        AST_LESS_THAN_OR_EQUAL,
+        AST_GREATER_THAN_OR_EQUAL,
+
+        AST_IN,
+        AST_NOT_IN,
+
+        AST_INCLUSIVE_RANGE,
+        AST_EXCLUSIVE_RANGE,
+
+        AST_PLUS,
+        AST_MINUS,
+
+        AST_TIMES,
+        AST_DIVISION,
+        AST_MODULO,
+        AST_INTEGER_DIVISION,
+
+        AST_POWER,
+
+        AST_BITWISE_OR,
+        AST_BITWISE_XOR,
+        AST_BITWISE_AND,
+
+        AST_SHIFT_LEFT_LOGICAL,
+        AST_SHIFT_RIGHT_ARITHMETIC,
+        AST_SHIFT_RIGHT_LOGICAL,
+
+        AST_DOT,
+        AST_ARROW,
+        AST_INDEX,
+        AST_CALL,
+        AST_ARGUMENTS,
+        AST_NAMED_ARGUMENT,
+        AST_HASH_PAIR,
+
+        // Unary operators
+        AST_ADDRESS_OF,
+        AST_DEREFERENCE,
+        AST_UNARY_PLUS,
+        AST_UNARY_MINUS,
+        AST_LOGICAL_NOT,
+        AST_NOT,
+        AST_BITWISE_NOT,
+        AST_SIZEOF,
+        AST_NEW,
+        AST_DELETE,
+        AST_DELETE_ARRAY,
+        AST_PARENTHESIS,
+        AST_DOUBLE_DOLAR,
+
+        AST_PRE_INCREMENT,
+        AST_PRE_DECREMENT,
+        AST_POS_INCREMENT,
+        AST_POS_DECREMENT,
+
+        // Literals
+        AST_THIS,
+        AST_NULL,
+        AST_LITERAL_BOOLEAN,
+        AST_LITERAL_INTEGER,
+        AST_LITERAL_FLOAT,
+        AST_LITERAL_DOUBLE,
+        AST_LITERAL_CHAR,
+        AST_LITERAL_STRING,
+        AST_LITERAL_SYMBOL,
+        AST_LIST,
+        AST_ARRAY,
+        AST_HASH,
+        AST_TUPLE,
+
+        AST_SEQUENCE,
+
+        // Types
+        AST_TYPE,
+        AST_TYPE_BOOL,
+        AST_TYPE_CHAR,
+        AST_TYPE_I8,
+        AST_TYPE_U8,
+        AST_TYPE_I16,
+        AST_TYPE_U16,
+        AST_TYPE_I32,
+        AST_TYPE_U32,
+        AST_TYPE_I64,
+        AST_TYPE_U64,
+        AST_TYPE_F32,
+        AST_TYPE_F64,
+        AST_TYPE_SYMBOL,
+        AST_TYPE_VOID,
+        AST_TYPE_POINTER,
+        AST_TYPE_REFERENCE,
+        AST_TYPE_LIST,
+        AST_TYPE_ARRAY,
+        AST_TYPE_STR,
+        AST_TYPE_NAMED,
+        AST_TYPE_TUPLE,
+        AST_TYPE_FUNCTION,
+        AST_GENERICS
+    } AstKind;
+
+    class Ast {
+    public:
+        Ast();
+        Ast(AstKind type);
+        Ast(AstKind type, Token& token);
+        virtual ~Ast();
+
+    public:
+        AstKind get_kind() const;
+        int get_line() const;
+        int get_column() const;
+        const std::string& get_value() const;
+
+        void set_kind(AstKind kind);
+        void set_line(int line);
+        void set_column(int column);
+        void set_value(const std::string& value);
+
+        void add_child(Ast* child);
+        void add_child(AstKind kind, Token& token);
+        void add_child(AstKind kind, Ast* subchild);
+        Ast* get_child(size_t index=0);
+        Ast* get_child(AstKind type);
+        std::vector<Ast*> get_children(AstKind kind);
+        const std::vector<Ast*>& get_children() const;
+        size_t children_count();
+
+        void set_from_token(Token& token);
+
+        Ast* get_parent() const;
+        void set_parent(Ast* parent);
+
+        Ast* clone();
+
+        std::string to_json();
+
+    private:
+        AstKind kind;
+        int line;
+        int column;
+        std::string value;
+        Ast* parent;
+        std::vector<Ast*> children;
+    };
+}
 
 #endif

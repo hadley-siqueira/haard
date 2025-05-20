@@ -2,7 +2,7 @@
 #define HAARD_SEMANTIC_ANALYZER_H
 
 #include "haard/ast/ast.h"
-#include "haard/semantic/symbol_table.h"
+#include "haard/scope/scope.h"
 
 namespace haard {
     class SemanticAnalyzer {
@@ -11,17 +11,33 @@ namespace haard {
         ~SemanticAnalyzer();
 
     public:
-        void analyze_module(Module* module);
+        void process_module(Ast* mod);
 
-        void define_module_classes(Module* module);
-        void define_module_functions(Module* module);
+    public:
+        void declare_module_user_types(Ast* mod);
+        void declare_user_type(Ast* type);
+        void declare_module_functions(Ast* mod);
+        void declare_function(Ast* function);
 
-        void define_class(Class* klass);
-        void define_function(Function* function);
+        void analyze_module_functions(Ast* mod);
+        void analyze_function(Ast* function);
+
+        void analyze_statement(Ast* stmt);
+        void analyze_compound_statement(Ast* stmts);
+        void analyze_while_statement(Ast* stmt);
+
+        void analyze_expression(Ast* expr);
+        void analyze_assignment(Ast* expr);
+        void analyze_identifier(Ast* expr);
+
+        bool equal_types(Ast* t1, Ast* t2);
+        bool compatible_types(Ast* t1, Ast* t2);
+
+        Ast* get_expression_type(Ast* expr, Scope* scope);
+        Ast* get_identifier_type(Ast* expr, Scope* scope);
 
     private:
-        Module* current_module;
-        SymbolTable* current_symbol_table;
+        Scope* current_scope;
     };
 }
 

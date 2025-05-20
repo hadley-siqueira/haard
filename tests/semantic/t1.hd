@@ -1,9 +1,0 @@
-class Pixel:
-    r : u8
-    g : u8
-    b : u8
-
-class Pixel:
-    r : u8
-    g : u8
-    b : u8

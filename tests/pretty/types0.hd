@@ -1,0 +1,35 @@
+def main : void
+    @a : u8
+    @b : u16
+    @c : u32
+    @d : u64
+    @e : i8
+    @f : i16
+    @g : i32
+    @h : i64
+
+    return
+
+def main2 : void
+    @a : u8*
+    @b : u16**
+    @c : u32***
+    @d : u64*
+    @e : i8**
+    @f : i16***
+    @g : i32&
+    @h : i64&
+
+    return
+
+def main3 : void
+    @a : void*
+    @b : char
+    @c : bool
+    @d : f32
+    @e : f64
+    @f : sym
+    @g : str
+    @h : i32[10]
+    @i : (i32, i32)
+    @i : (i32, i32) -> void

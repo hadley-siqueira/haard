@@ -1,9 +1,0 @@
-def sum : i32
-    @a : i32 = 10
-    @b : i32 = 100
-    @c : char = 'a'
-    @d : char = '\n'
-    @e : char = '\t'
-
-    return 0
-

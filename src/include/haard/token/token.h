@@ -63,7 +63,9 @@ namespace haard {
         TK_LITERAL_CHAR,
         TK_LITERAL_INTEGER,
         TK_LITERAL_FLOAT,
-        TK_LITERAL_STRING,
+        TK_LITERAL_DOUBLE,
+        TK_LITERAL_SINGLE_QUOTE_STRING,
+        TK_LITERAL_DOUBLE_QUOTE_STRING,
         TK_LITERAL_SYMBOL,
         TK_PLUS,
         TK_MINUS,
@@ -191,7 +193,9 @@ namespace haard {
         {"@lchar", TK_LITERAL_CHAR},
         {"@lint", TK_LITERAL_INTEGER},
         {"@lfloat", TK_LITERAL_FLOAT},
-        {"@lstr", TK_LITERAL_STRING},
+        {"@ldouble", TK_LITERAL_DOUBLE},
+        {"@lstr", TK_LITERAL_SINGLE_QUOTE_STRING},
+        {"@lstr", TK_LITERAL_DOUBLE_QUOTE_STRING},
         {"@lsym", TK_LITERAL_SYMBOL},
         {"+", TK_PLUS},
         {"-", TK_MINUS},
@@ -319,7 +323,9 @@ namespace haard {
         {TK_LITERAL_CHAR, "TK_LITERAL_CHAR"},
         {TK_LITERAL_INTEGER, "TK_LITERAL_INTEGER"},
         {TK_LITERAL_FLOAT, "TK_LITERAL_FLOAT"},
-        {TK_LITERAL_STRING, "TK_LITERAL_STRING"},
+        {TK_LITERAL_DOUBLE, "TK_LITERAL_DOUBLE"},
+        {TK_LITERAL_SINGLE_QUOTE_STRING, "TK_LITERAL_STRING"},
+        {TK_LITERAL_DOUBLE_QUOTE_STRING, "TK_LITERAL_STRING"},
         {TK_LITERAL_SYMBOL, "TK_LITERAL_SYMBOL"},
         {TK_PLUS, "TK_PLUS"},
         {TK_MINUS, "TK_MINUS"},
@@ -407,8 +413,6 @@ namespace haard {
 
         const std::string& get_value() const;
         void set_value(const std::string& value);
-
-        std::string to_json();
 
     private:
         int kind;

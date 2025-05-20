@@ -55,13 +55,3 @@ const std::string& Token::get_value() const {
 void Token::set_value(const std::string& value) {
     this->value = value;
 }
-
-std::string Token::to_json() {
-    std::stringstream ss;
-
-    ss << "{\"kind\": \"" << token_kind_to_str_map.at(get_kind()) << "\", \"line\": "
-       << line << ", \"column\": " << column << ", \"whitespace\": " << whitespace
-       << ", \"value\": \"" << value << "\"}";
-
-    return ss.str();
-}
