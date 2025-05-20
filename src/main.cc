@@ -1,13 +1,13 @@
 #include <iostream>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "haard/token/token.h"
 #include "haard/scanner/scanner.h"
 #include "haard/parser/parser.h"
 
 #include "haard/driver/driver.h"
 #include "haard/utils/utils.h"
-
-#include <sys/types.h>
-#include <unistd.h>
 
 using namespace haard;
 
