@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -8,6 +9,7 @@
 
 #include "haard/driver/driver.h"
 #include "haard/utils/utils.h"
+#include "haard/string_pool/string_pool.h"
 
 using namespace haard;
 
@@ -35,8 +37,27 @@ void test_driver(int argc, char** argv) {
     driver.exit();
 }
 
+void test_string_pool(int argc, char** argv) {
+    char* v = StringPool::get(argv[1]);
+
+    for (int i = 0; i < 10000000; ++i) {
+        std::stringstream ss;
+        ss << argv[1];
+        ss << i;
+        StringPool::get(ss.str().c_str());
+    }
+
+    char* k = StringPool::get(argv[1]);
+
+    if (k == v) {
+        std::cout << "Ok!\n";
+    } else {
+        std::cout << "Fail!\n";
+    }
+}
+
 int main(int argc, char** argv) {
-    test_driver(argc, argv);
+    test_string_pool(argc, argv);
 
     return 0;
 }
