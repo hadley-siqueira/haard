@@ -411,15 +411,15 @@ namespace haard {
 
         std::string to_str();
 
-        const std::string& get_value() const;
-        void set_value(const std::string& value);
+        const char* get_value() const;
+        void set_value(const char* value);
 
     private:
         int kind;
         int line;
         int column;
         int whitespace;
-        std::string value;
+        const char* value;
     };
 }
 

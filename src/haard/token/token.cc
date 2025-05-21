@@ -1,5 +1,6 @@
 #include <sstream>
 #include "haard/token/token.h"
+#include "haard/string_pool/string_pool.h"
 
 using namespace haard;
 
@@ -48,10 +49,10 @@ std::string Token::to_str() {
     return ss.str();
 }
 
-const std::string& Token::get_value() const {
+const char* Token::get_value() const {
     return value;
 }
 
-void Token::set_value(const std::string& value) {
-    this->value = value;
+void Token::set_value(const char* value) {
+    this->value = StringPool::get(value);
 }

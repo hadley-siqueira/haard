@@ -403,7 +403,7 @@ void Scanner::create_token(int kind) {
     Token token;
 
     token.set_kind(kind);
-    token.set_value(value);
+    token.set_value(value.c_str());
     token.set_line(token_line);
     token.set_column(token_column);
     token.set_whitespace(whitespace_counter);

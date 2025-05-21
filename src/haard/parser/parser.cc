@@ -209,7 +209,7 @@ Ast* Parser::parse_function() {
     if (return_type) {
         function->add_child(AST_TYPE, return_type);
     } else {
-        log_error("Expected return type in function " + function->get_value());
+        log_error("Expected return type in function method parse_function() need to put function name");
     }
 
     while (has_parameters()) {

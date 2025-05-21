@@ -2,6 +2,7 @@
 
 #include "haard/ast/ast.h"
 #include "haard/scope/scope.h"
+#include "haard/string_pool/string_pool.h"
 
 using namespace haard;
 
@@ -36,7 +37,7 @@ int Ast::get_column() const {
     return column;
 }
 
-const std::string& Ast::get_value() const {
+const char* Ast::get_value() const {
     return value;
 }
 
@@ -52,8 +53,8 @@ void Ast::set_column(int column) {
     this->column = column;
 }
 
-void Ast::set_value(const std::string& value) {
-    this->value = value;
+void Ast::set_value(const char* value) {
+    this->value = StringPool::get(value);
 }
 
 void Ast::add_child(Ast* child) {
