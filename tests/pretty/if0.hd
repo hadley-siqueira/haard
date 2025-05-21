@@ -1,0 +1,3 @@
+def main : void
+    if true:
+        a = 0

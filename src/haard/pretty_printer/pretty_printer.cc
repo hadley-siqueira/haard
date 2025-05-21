@@ -973,7 +973,6 @@ void PrettyPrinter::print_for_update(Ast* node) {
 }
 
 void PrettyPrinter::print_if(Ast* node) {
-    print_indentation();
     out << "if ";
     print(node->get_child(0));
     out << ":\n";
@@ -982,9 +981,6 @@ void PrettyPrinter::print_if(Ast* node) {
     dedent();
 
     print(node->get_child(2));
-    /*if (node->get_child(2)) {
-
-    }*/
 }
 
 void PrettyPrinter::print_elif(Ast* node) {

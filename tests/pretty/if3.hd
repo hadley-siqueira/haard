@@ -1,0 +1,14 @@
+def main : void
+    if true:
+        a = 0
+    elif true:
+        a = 0
+    else:
+        a = 0
+
+        if a > 0:
+            a = 0
+        elif true:
+            a = 0
+        else:
+            a = 0
