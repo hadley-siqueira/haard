@@ -2,7 +2,7 @@
 #define HAARD_SCOPE_H
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "haard/symbol/symbol.h"
@@ -24,7 +24,7 @@ namespace haard {
 
     private:
         Scope* parent;
-        std::map<std::string, std::vector<Symbol*>> symbols;
+        std::unordered_map<std::string, std::vector<Symbol*>> symbols;
     };
 }
 

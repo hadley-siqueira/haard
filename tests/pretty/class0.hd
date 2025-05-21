@@ -1,0 +1,6 @@
+import std.io as io
+
+class Pixel:
+    r : u8
+    g : u8
+    b : u8

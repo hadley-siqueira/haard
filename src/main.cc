@@ -57,7 +57,7 @@ void test_string_pool(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-    test_string_pool(argc, argv);
+    test_driver(argc, argv);
 
     return 0;
 }
