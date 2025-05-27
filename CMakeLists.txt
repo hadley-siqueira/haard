@@ -10,8 +10,13 @@ set(STRING_POOL_SRC
     src/haard/string_pool/string_pool.cc
 )
 
+set(TOKEN_SRC
+    src/haard/token/token.cc
+)
+
 set(SOURCES
     ${STRING_POOL_SRC}
+    ${TOKEN_SRC}
     src/main.cc
 )
 
