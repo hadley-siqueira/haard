@@ -16,7 +16,7 @@ namespace haard {
         ~Parser();
 
     public:
-        Module* read(std::string path);
+        Module* read(const std::string& path);
         void set_logger(Logger* logger);
 
     public:
@@ -37,8 +37,12 @@ namespace haard {
         bool next_token_on_same_line();
 
     private:
+        void log_error_missing_import_path();
+
+    private:
         unsigned idx;
         Token matched;
+        std::string path;
         std::vector<Token> tokens;
         std::stack<unsigned> indent_stack;
         Logger* logger;

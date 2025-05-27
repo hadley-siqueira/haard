@@ -13,6 +13,7 @@ namespace haard {
 
     public:
         const std::vector<Log>& get_logs();
+        void print_logs();
 
     private:
         std::vector<Log> logs;

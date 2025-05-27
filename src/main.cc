@@ -21,10 +21,7 @@ void test_parser(int argc, char* argv[]) {
 
     p.set_logger(&logger);
     auto mod = p.read(argv[1]);
-
-    for (auto log : logger.get_logs()) {
-        std::cout << log.get_message() << std::endl;
-    }
+    logger.print_logs();
 
     delete mod;
 }

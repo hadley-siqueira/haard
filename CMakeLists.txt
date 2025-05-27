@@ -10,6 +10,10 @@ set(STRING_POOL_SRC
     src/haard/string_pool/string_pool.cc
 )
 
+set(UTILS_SRC
+    src/haard/utils/utils.cc
+)
+
 set(LOG_SRC
     src/haard/log/log.cc
     src/haard/log/logger.cc
@@ -35,6 +39,7 @@ set(PARSER_SRC
 
 set(SOURCES
     ${STRING_POOL_SRC}
+    ${UTILS_SRC}
     ${LOG_SRC}
     ${TOKEN_SRC}
     ${SCANNER_SRC}

@@ -1,24 +1,29 @@
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 #include <haard/parser/parser.h>
+#include <haard/utils/utils.h>
 #include <haard/scanner/scanner.h>
 
 using namespace haard;
 
 Parser::Parser() {
-
+    logger = nullptr;
+    idx = 0;
 }
 
 Parser::~Parser() {
 
 }
 
-Module* Parser::read(std::string path) {
+Module* Parser::read(const std::string& path) {
     Scanner sc;
     Module* mod;
 
     idx = 0;
     tokens = sc.read(path);
+    this->path = path;
     mod = parse_module();
 
     return mod;
@@ -54,7 +59,7 @@ Import* Parser::parse_import() {
     auto imp = new Import();
 
     if (!lookahead(TK_ID)) {
-        logger->error("missing path in import");
+        log_error_missing_import_path();
         delete imp;
         return nullptr;
     }
@@ -140,4 +145,47 @@ bool Parser::next_token_on_same_line() {
     return false;
 }
 
+std::string get_line_from_file(std::string path, unsigned line) {
+    char c;
+    unsigned count = 1;
+    std::ifstream file;
+    std::string buffer;
 
+    file.open(path);
+
+    while (count != line && file.get(c)) {
+        if (c == '\n') {
+            ++count;
+        }
+    }
+
+    while (file.get(c)) {
+        if (c == '\n') {
+            break;
+        } else {
+            buffer += c;
+        }
+    }
+
+    file.close();
+    return buffer;
+}
+
+
+void Parser::log_error_missing_import_path() {
+    unsigned line = matched.get_line();
+    unsigned column = matched.get_column();
+
+    if (logger == nullptr) {
+        return;
+    }
+
+    std::stringstream ss;
+    ss << "missing path while parsing import:\n";
+    ss << "--> " << path << ":" << line << ":" << column << '\n';
+    auto lin = get_line_from_file(path, matched.get_line());
+    auto exp = add_explanation(lin, "expected a path to import", column + 7);
+    ss << exp;
+
+    logger->error(ss.str());
+}
