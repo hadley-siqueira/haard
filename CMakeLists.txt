@@ -18,10 +18,16 @@ set(SCANNER_SRC
     src/haard/scanner/scanner.cc
 )
 
+set(AST_SRC
+    src/haard/ast/ast.cc
+    src/haard/ast/import.cc
+)
+
 set(SOURCES
     ${STRING_POOL_SRC}
     ${TOKEN_SRC}
     ${SCANNER_SRC}
+    ${AST_SRC}
     src/main.cc
 )
 
