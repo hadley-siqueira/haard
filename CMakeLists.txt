@@ -14,9 +14,14 @@ set(TOKEN_SRC
     src/haard/token/token.cc
 )
 
+set(SCANNER_SRC
+    src/haard/scanner/scanner.cc
+)
+
 set(SOURCES
     ${STRING_POOL_SRC}
     ${TOKEN_SRC}
+    ${SCANNER_SRC}
     src/main.cc
 )
 

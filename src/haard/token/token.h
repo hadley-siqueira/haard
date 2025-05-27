@@ -208,6 +208,7 @@ namespace haard {
         {">>", TK_SRA},
         {"->", TK_ARROW},
         {".", TK_DOT},
+        {"@", TK_AT},
         {"$", TK_DOLAR},
         {"$$", TK_DOUBLE_DOLAR},
         {"::", TK_SCOPE},
@@ -391,18 +392,24 @@ namespace haard {
         unsigned get_column() const;
         void set_column(unsigned column);
 
+        unsigned get_offset();
+        void set_offset(unsigned offset);
+
         unsigned get_whitespace() const;
         void set_whitespace(unsigned whitespace);
 
         const char* get_value() const;
         void set_value(const char* value);
+
         std::string to_str();
+        std::string to_json();
 
     private:
         TokenKind kind;
         unsigned line;
         unsigned column;
         unsigned whitespace;
+        unsigned offset;
         const char* value;
     };
 }

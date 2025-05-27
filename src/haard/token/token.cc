@@ -28,6 +28,14 @@ void Token::set_column(unsigned column) {
     this->column = column;
 }
 
+unsigned Token::get_offset() {
+    return offset;
+}
+
+void Token::set_offset(unsigned offset) {
+    this->offset = offset;
+}
+
 unsigned Token::get_whitespace() const {
     return whitespace;
 }
@@ -53,6 +61,25 @@ std::string Token::to_str() {
     ss << get_line() << ", ";
     ss << get_column() << ", ";
     ss << get_whitespace() << ")";
+
+    return ss.str();
+}
+
+std::string Token::to_json() {
+    std::stringstream ss;
+
+    ss << "{\n";
+    ss << "    \"kind\": \"" << token_kind_to_str_map.at(get_kind()) << "\",\n";
+    ss << "    \"line\": " << get_line() << ",\n";
+    ss << "    \"column\": " << get_column() << ",\n";
+    ss << "    \"whitespace\": " << get_whitespace() << ",\n";
+    ss << "    \"offset\": " << get_offset() << ",\n";
+
+    if (get_value()) {
+        ss << "    \"value\": \"" << get_value() << "\"\n";
+    }
+
+    ss << "}";
 
     return ss.str();
 }
