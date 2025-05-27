@@ -13,13 +13,13 @@ namespace haard{
 
     std::string make_purple(const std::string& msg) {
         std::string out;
-        out = "\033[31m" + msg + "\033[0m";
+        out = "\033[35m" + msg + "\033[0m";
         return out;
     }
 
     std::string make_blue(const std::string& msg) {
         std::string out;
-        out = "\033[31m" + msg + "\033[0m";
+        out = "\033[34m" + msg + "\033[0m";
         return out;
     }
 
