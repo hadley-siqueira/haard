@@ -42,8 +42,10 @@ Module* Parser::parse_module() {
         } else if (match(TK_EOF)) {
             break;
         } else {
-            std::cout << "Unexpected token\n";
-            exit(0);
+            match();
+            log_error_unexpected_token();
+            delete mod;
+            return nullptr;
         }
     }
 
@@ -171,6 +173,24 @@ std::string get_line_from_file(std::string path, unsigned line) {
     return buffer;
 }
 
+void Parser::log_error_unexpected_token() {
+    unsigned line = matched.get_line();
+    unsigned column = matched.get_column();
+
+    if (logger == nullptr) {
+        return;
+    }
+
+    std::stringstream ss;
+    ss << "unexpected token while parsing a module\n";
+    ss << "--> " << path << ":" << line << ":" << column << '\n';
+    auto lin = get_line_from_file(path, matched.get_line());
+    auto exp = add_explanation(lin, "expected a function, class etc. But got something else", column);
+    ss << exp;
+
+    logger->error(ss.str());
+ 
+}
 
 void Parser::log_error_missing_import_path() {
     unsigned line = matched.get_line();

@@ -37,6 +37,7 @@ namespace haard {
         bool next_token_on_same_line();
 
     private:
+        void log_error_unexpected_token();
         void log_error_missing_import_path();
         void log_error_missing_import_alias();
 
