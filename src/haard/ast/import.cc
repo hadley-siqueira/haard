@@ -17,3 +17,7 @@ void Import::add_to_path(Token& token) {
 void Import::set_alias(Token& token) {
     this->alias = token;
 }
+
+void Import::set_token(Token& token) {
+    this->token = token;
+}

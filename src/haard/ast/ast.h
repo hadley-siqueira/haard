@@ -3,7 +3,8 @@
 
 namespace haard {
     typedef enum AstKind {
-        AST_IMPORT
+        AST_IMPORT,
+        AST_MODULE,
     } AstKind;
 
     class Ast {
