@@ -38,6 +38,7 @@ namespace haard {
 
     private:
         void log_error_missing_import_path();
+        void log_error_missing_import_alias();
 
     private:
         unsigned idx;

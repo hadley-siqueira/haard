@@ -73,7 +73,7 @@ Import* Parser::parse_import() {
         if (match(TK_ID)) {
             imp->set_alias(matched);
         } else {
-            std::cout << "Error on parsing import: missing import's alias after 'as' token";
+            log_error_missing_import_alias();
             delete imp;
             return nullptr;
         }
@@ -184,7 +184,26 @@ void Parser::log_error_missing_import_path() {
     ss << "missing path while parsing import:\n";
     ss << "--> " << path << ":" << line << ":" << column << '\n';
     auto lin = get_line_from_file(path, matched.get_line());
-    auto exp = add_explanation(lin, "expected a path to import", column + 7);
+    auto exp = add_explanation(lin, "expected a path here", column + 7);
+    ss << exp;
+
+    logger->error(ss.str());
+}
+
+
+void Parser::log_error_missing_import_alias() {
+    unsigned line = matched.get_line();
+    unsigned column = matched.get_column();
+
+    if (logger == nullptr) {
+        return;
+    }
+
+    std::stringstream ss;
+    ss << "expected an alias after token 'as' while parsing import:\n";
+    ss << "--> " << path << ":" << line << ":" << column << '\n';
+    auto lin = get_line_from_file(path, matched.get_line());
+    auto exp = add_explanation(lin, "expected an alias here", column + 3);
     ss << exp;
 
     logger->error(ss.str());

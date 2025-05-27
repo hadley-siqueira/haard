@@ -21,5 +21,6 @@ const std::vector<Log>& Logger::get_logs() {
 void Logger::print_logs() {
     for (auto& log : logs) {
         std::cerr << log.to_str() << '\n';
+        std::cerr << '\n';
     }
 }
