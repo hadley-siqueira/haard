@@ -38,9 +38,21 @@ Module* Parser::parse_module() {
 
     while (true) {
         if (lookahead(TK_IMPORT)) {
-            mod->add_import(parse_import());
+            auto imp = parse_import();
+
+            if (imp) {
+                mod->add_import(parse_import());
+            } else {
+                recover();
+            }
         } else if (lookahead(TK_LET) || lookahead(TK_CONST)) {
-            mod->add_variable(parse_variable());
+            auto var = parse_variable();
+
+            if (var) {
+                mod->add_variable(var);
+            } else {
+                recover();
+            }
         } else if (match(TK_EOF)) {
             break;
         } else {
@@ -172,6 +184,30 @@ Expression* Parser::parse_expression() {
     } 
 
     return nullptr;
+}
+
+void Parser::recover() {
+    bool flag = true;
+    bool found = false;
+
+    while (flag) {
+        found = false;
+        found = found || lookahead(TK_DEF);
+        found = found || lookahead(TK_LET);
+        found = found || lookahead(TK_CONST);
+        found = found || lookahead(TK_IMPORT);
+        found = found || lookahead(TK_CLASS);
+        found = found || lookahead(TK_UNION);
+        found = found || lookahead(TK_STRUCT);
+        found = found || lookahead(TK_ENUM);
+        found = found || lookahead(TK_EOF);
+
+        if (found) {
+            flag = false;
+        } else {
+            advance();
+        }
+    }
 }
 
 void Parser::advance() {

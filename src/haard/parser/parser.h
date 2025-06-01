@@ -32,6 +32,7 @@ namespace haard {
         Expression* parse_expression();
 
     private:
+        void recover();
         void advance();
         bool lookahead(TokenKind kind, int offset=0);
         bool match(TokenKind kind);
