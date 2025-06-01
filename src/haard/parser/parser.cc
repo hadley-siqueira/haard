@@ -39,6 +39,8 @@ Module* Parser::parse_module() {
     while (true) {
         if (lookahead(TK_IMPORT)) {
             mod->add_import(parse_import());
+        } else if (lookahead(TK_LET) || lookahead(TK_CONST)) {
+            mod->add_variable(parse_variable());
         } else if (match(TK_EOF)) {
             break;
         } else {
@@ -82,6 +84,94 @@ Import* Parser::parse_import() {
     }
 
     return imp;
+}
+
+Variable* Parser::parse_variable() {
+    Variable* var = nullptr;
+    Type* type = nullptr;
+    Expression* expression = nullptr;
+    bool const_flag = false;
+    Token name;
+
+    if (!(lookahead(TK_LET) || lookahead(TK_CONST))) {
+        return nullptr;
+    }
+
+    if (match(TK_LET)) {
+        const_flag = false;
+    } else if (match(TK_CONST)) {
+        const_flag = true;
+    }
+
+    if (match(TK_ID)) {
+        name = matched;
+    } else {
+        if (const_flag) {
+            std::cout << "Error: expected constant name\n";
+        } else {
+            std::cout << "error: expected variable name\n";
+        }
+
+        return nullptr;
+    }
+
+    if (match(TK_COLON)) {
+        type = parse_type();
+
+        if (type == nullptr) {
+            if (const_flag) {
+                std::cout << "error: missing type after colon on constant\n";
+            } else {
+                std::cout << "error: missing type after colon on variable\n";
+            }
+
+            return nullptr;
+        }
+    }
+
+    if (match(TK_ASSIGNMENT)) {
+        expression = parse_expression();
+
+        if (expression == nullptr) {
+            if (const_flag) {
+                std::cout << "error: missing expression on constant\n";
+            } else {
+                std::cout << "error: missing expression on variable\n";
+            }
+        }
+
+        delete type;
+        return nullptr;
+    }
+
+    if (type == nullptr && expression == nullptr) {
+        std::cout << "error: expected at least a type or expression on declaration\n";
+        return nullptr;
+    }
+
+    var = new Variable();
+    var->set_name(name);
+    var->set_type(type);
+    var->set_expression(expression);
+    var->set_const(const_flag);
+
+    return var;
+}
+
+Type* Parser::parse_type() {
+    if (match(TK_I32)) {
+        return new Type();
+    } 
+
+    return nullptr;
+}
+
+Expression* Parser::parse_expression() {
+    if (match(TK_LITERAL_INTEGER)) {
+        return new Expression();
+    } 
+
+    return nullptr;
 }
 
 void Parser::advance() {

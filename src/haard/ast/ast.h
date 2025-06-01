@@ -5,6 +5,7 @@ namespace haard {
     typedef enum AstKind {
         AST_IMPORT,
         AST_MODULE,
+        AST_VAR,
     } AstKind;
 
     class Ast {

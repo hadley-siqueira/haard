@@ -31,6 +31,9 @@ set(AST_SRC
     src/haard/ast/ast.cc
     src/haard/ast/import.cc
     src/haard/ast/module.cc
+    src/haard/ast/variable.cc
+    src/haard/ast/type.cc
+    src/haard/ast/expression.cc
 )
 
 set(PARSER_SRC

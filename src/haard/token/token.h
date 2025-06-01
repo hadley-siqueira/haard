@@ -8,8 +8,8 @@ namespace haard {
     typedef enum TokenKind {
         TK_DEF,
         TK_CLASS,
-        TK_VAR,
-        TK_CONSTANT,
+        TK_LET,
+        TK_CONST,
         TK_STRUCT,
         TK_ENUM,
         TK_UNION,
@@ -138,8 +138,8 @@ namespace haard {
     const std::unordered_map<std::string, TokenKind> value_to_token_kind_map = {
         {"def", TK_DEF},
         {"class", TK_CLASS},
-        {"var", TK_VAR},
-        {"const", TK_CONSTANT},
+        {"let", TK_LET},
+        {"const", TK_CONST},
         {"struct", TK_STRUCT},
         {"enum", TK_ENUM},
         {"union", TK_UNION},
@@ -254,8 +254,8 @@ namespace haard {
     const std::unordered_map<TokenKind, std::string> token_kind_to_str_map = {
         {TK_DEF, "TK_DEF"},
         {TK_CLASS, "TK_CLASS"},
-        {TK_VAR, "TK_VAR"},
-        {TK_CONSTANT, "TK_CONSTANT"},
+        {TK_LET, "TK_LET"},
+        {TK_CONST, "TK_CONST"},
         {TK_STRUCT, "TK_STRUCT"},
         {TK_ENUM, "TK_ENUM"},
         {TK_UNION, "TK_UNION"},

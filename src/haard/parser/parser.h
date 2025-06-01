@@ -4,10 +4,14 @@
 #include <vector>
 #include <stack>
 
+#include <haard/log/logger.h>
+
 #include <haard/ast/ast.h>
 #include <haard/ast/import.h>
 #include <haard/ast/module.h>
-#include <haard/log/logger.h>
+#include <haard/ast/variable.h>
+#include <haard/ast/type.h>
+#include <haard/ast/expression.h>
 
 namespace haard {
     class Parser {
@@ -22,6 +26,10 @@ namespace haard {
     public:
         Module* parse_module();
         Import* parse_import();
+        Variable* parse_variable();
+
+        Type* parse_type();
+        Expression* parse_expression();
 
     private:
         void advance();
