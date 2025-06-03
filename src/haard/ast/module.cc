@@ -29,3 +29,10 @@ void Module::add_variable(Variable* node) {
         node->set_parent_node(this);
     }
 }
+
+void Module::add_function(Function* node) {
+    if (node) {
+        functions.push_back(node);
+        node->set_parent_node(this);
+    }
+}

@@ -53,6 +53,14 @@ Module* Parser::parse_module() {
             } else {
                 recover();
             }
+        } else if (lookahead(TK_DEF)) {
+            auto function = parse_function();
+
+            if (function) {
+                mod->add_function(function);
+            } else {
+                recover();
+            }
         } else if (match(TK_EOF)) {
             break;
         } else {
@@ -168,6 +176,99 @@ Variable* Parser::parse_variable() {
     var->set_const(const_flag);
 
     return var;
+}
+
+Function* Parser::parse_function() {
+    if (!lookahead(TK_DEF)) {
+        return nullptr;
+    }
+
+    match(TK_DEF);
+
+    if (!match(TK_ID)) {
+        std::cout << "error: missing function name after token 'def'\n";
+        return nullptr;
+    }
+
+    auto name = matched;
+
+    if (!match(TK_COLON)) {
+        std::cout << "error: missing ':' on function definition\n";
+        return nullptr;
+    }
+
+    auto return_type = parse_type();
+
+    if (return_type == nullptr) {
+        std::cout << "error: missing return type after ':'\n";
+        return nullptr;
+    }
+
+    auto function = new Function();
+
+    indent();
+
+    while (is_indented() && lookahead(TK_AT)) {
+        auto param = parse_parameter();
+
+        if (param) {
+            function->add_parameter(param);
+        }
+    }
+
+    dedent();
+
+    function->set_name(name);
+    function->set_return_type(return_type);
+
+    return function;
+}
+
+Variable* Parser::parse_parameter() {
+    Variable* var = nullptr;
+    Type* type = nullptr;
+    Expression* expression = nullptr;
+    bool const_flag = false;
+    Token name;
+
+    match(TK_AT);
+
+    if (!match(TK_ID)) {
+        std::cout << "error: expected parameter name\n";
+        return nullptr;
+    } else {
+        name = matched;
+    }
+
+    if (!match(TK_COLON)) {
+        std::cout << "error: missing ':' on parameter definition\n";
+        return nullptr;
+    }
+
+    type = parse_type();
+
+    if (type == nullptr) {
+        std::cout << "error: missing type after colon on parameter\n";
+        return nullptr;
+    }
+
+    if (match(TK_ASSIGNMENT)) {
+        expression = parse_expression();
+
+        if (expression == nullptr) {
+            std::cout << "error: missing expression after '=' on parameter definition\n";
+            delete type;
+            return nullptr;
+        }
+    }
+
+    var = new Variable();
+    var->set_name(name);
+    var->set_type(type);
+    var->set_expression(expression);
+
+    return var;
+
 }
 
 Type* Parser::parse_type() {
