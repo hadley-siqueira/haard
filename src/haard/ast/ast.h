@@ -3,9 +3,11 @@
 
 namespace haard {
     typedef enum AstKind {
+        AST_UNKNOWN,
         AST_IMPORT,
         AST_MODULE,
-        AST_VAR,
+        AST_FUNCTION,
+        AST_VARIABLE,
     } AstKind;
 
     class Ast {
@@ -17,8 +19,12 @@ namespace haard {
         void set_kind(AstKind kind);
         AstKind get_kind();
 
+        void set_parent_node(Ast* node);
+        Ast* get_parent_node();
+
     private:
         AstKind kind;
+        Ast* parent_node;
     };
 }
 

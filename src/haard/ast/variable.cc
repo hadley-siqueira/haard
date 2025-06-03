@@ -3,7 +3,7 @@
 using namespace haard;
 
 Variable::Variable() {
-    set_kind(AST_VAR);
+    set_kind(AST_VARIABLE);
     set_const(false);
     set_expression(nullptr);
     set_type(nullptr);
@@ -28,6 +28,10 @@ bool Variable::is_const() {
 
 void Variable::set_type(Type* type) {
     this->type = type;
+
+    if (type) {
+        type->set_parent_node(this);
+    }
 }
 
 Type* Variable::get_type() {
@@ -36,6 +40,10 @@ Type* Variable::get_type() {
 
 void Variable::set_expression(Expression* expression) {
     this->expression = expression;
+
+    if (expression) {
+        expression->set_parent_node(this);
+    }
 }
 
 Expression* Variable::get_expression() {
