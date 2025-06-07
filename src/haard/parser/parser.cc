@@ -272,10 +272,23 @@ Variable* Parser::parse_parameter() {
 }
 
 Type* Parser::parse_type() {
-    if (match(TK_I32)) {
-        return new Type();
-    } 
-
+    if (match(TK_I8) || match(TK_U8)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_I16) || match(TK_U16)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_I32) || match(TK_U32)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_I64) || match(TK_U64)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_F64) || match(TK_F32)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_BOOL) || match(TK_CHAR)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_STR) || match(TK_SYMBOL)) {
+        return new PrimitiveType(matched);
+    } else if (match(TK_VOID)) {
+        return new PrimitiveType(matched);
+    }
     return nullptr;
 }
 

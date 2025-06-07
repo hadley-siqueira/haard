@@ -14,8 +14,14 @@ namespace haard {
 
     public:
         void add_to_path(Token& token);
+
+        bool has_alias();
         void set_alias(Token& token);
+        Token& get_alias();
+
         void set_token(Token& token);
+
+        std::vector<Token>& get_path();
 
     private:
         std::vector<Token> path;

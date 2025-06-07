@@ -12,6 +12,7 @@
 #include <haard/ast/variable.h>
 #include <haard/ast/function.h>
 #include <haard/ast/type.h>
+#include <haard/ast/primitive_type.h>
 #include <haard/ast/expression.h>
 
 namespace haard {

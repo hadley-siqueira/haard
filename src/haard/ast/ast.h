@@ -8,6 +8,7 @@ namespace haard {
         AST_MODULE,
         AST_FUNCTION,
         AST_VARIABLE,
+        AST_PRIMITIVE_TYPE,
     } AstKind;
 
     class Ast {

@@ -34,11 +34,16 @@ set(AST_SRC
     src/haard/ast/function.cc
     src/haard/ast/variable.cc
     src/haard/ast/type.cc
+    src/haard/ast/primitive_type.cc
     src/haard/ast/expression.cc
 )
 
 set(PARSER_SRC
     src/haard/parser/parser.cc
+)
+
+set(PRINTERS_SRC
+    src/haard/printers/pretty_printer.cc
 )
 
 set(SOURCES
@@ -49,6 +54,7 @@ set(SOURCES
     ${SCANNER_SRC}
     ${AST_SRC}
     ${PARSER_SRC}
+    ${PRINTERS_SRC}
     src/main.cc
 )
 
