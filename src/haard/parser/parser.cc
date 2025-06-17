@@ -47,7 +47,7 @@ Module* Parser::parse_module() {
             }
         } else if (lookahead(TK_LET) || lookahead(TK_CONST)) {
             auto var = parse_variable();
-
+            
             if (var) {
                 mod->add_variable(var);
             } else {
@@ -158,10 +158,10 @@ Variable* Parser::parse_variable() {
             } else {
                 std::cout << "error: missing expression on variable\n";
             }
-        }
 
-        delete type;
-        return nullptr;
+            delete type;
+            return nullptr;
+        }
     }
 
     if (type == nullptr && expression == nullptr) {
@@ -272,30 +272,56 @@ Variable* Parser::parse_parameter() {
 }
 
 Type* Parser::parse_type() {
+    Type* type = nullptr;
+
     if (match(TK_I8) || match(TK_U8)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_I16) || match(TK_U16)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_I32) || match(TK_U32)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_I64) || match(TK_U64)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_F64) || match(TK_F32)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_BOOL) || match(TK_CHAR)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_STR) || match(TK_SYMBOL)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     } else if (match(TK_VOID)) {
-        return new PrimitiveType(matched);
+        type =  new PrimitiveType(matched);
     }
-    return nullptr;
+
+    bool tail = true;
+
+    while (tail) {
+        tail = false;
+
+        if (match(TK_TIMES)) {
+            type = new BoxedType(type, matched);
+            tail = true;
+        } else if (match(TK_BITWISE_AND)) {
+            type = new BoxedType(type, matched);
+            tail = true;
+        } else if (match(TK_LOGICAL_AND)) {
+            type = new BoxedType(type, matched);
+            tail = true;
+        } else if (match(TK_POWER)) {
+            type = new BoxedType(type, matched);
+            type = new BoxedType(type, matched);
+            tail = true;
+        }
+    }
+
+    return type;
 }
 
 Expression* Parser::parse_expression() {
-    if (match(TK_LITERAL_INTEGER)) {
-        return new Expression();
-    } 
+    if (match(TK_LITERAL_CHAR) || match(TK_LITERAL_INTEGER)) {
+        return new Literal(matched);
+    } else {
+
+    }
 
     return nullptr;
 }

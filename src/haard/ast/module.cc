@@ -36,3 +36,11 @@ void Module::add_function(Function* node) {
         node->set_parent_node(this);
     }
 }
+
+std::vector<Import*>& Module::get_imports() {
+    return imports;
+}
+
+std::vector<Variable*>& Module::get_variables() {
+    return variables;
+}

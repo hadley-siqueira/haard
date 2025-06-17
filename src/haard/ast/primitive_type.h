@@ -13,6 +13,7 @@ namespace haard {
 
     public:
         void set_token(const Token& token);
+        Token& get_token();
 
     private:
         Token token;

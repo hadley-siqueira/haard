@@ -19,6 +19,9 @@ namespace haard {
         void add_variable(Variable* node);
         void add_function(Function* node);
 
+        std::vector<Import*>& get_imports();
+        std::vector<Variable*>& get_variables();
+
     private:
         std::vector<Import*> imports;
         std::vector<Variable*> variables;

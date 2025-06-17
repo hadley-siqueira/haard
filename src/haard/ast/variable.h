@@ -14,6 +14,8 @@ namespace haard {
 
     public:
         void set_name(const Token& token);
+        Token& get_name();
+
         void set_const(bool value);
 
         void set_type(Type* type);

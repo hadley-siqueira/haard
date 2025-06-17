@@ -5,21 +5,25 @@ using namespace haard;
 Variable::Variable() {
     set_kind(AST_VARIABLE);
     set_const(false);
-    set_expression(nullptr);
     set_type(nullptr);
+    set_expression(nullptr);
 }
 
 Variable::~Variable() {
-    //delete type;
-    //delete expression;
+    delete type;
+    delete expression;
 }
 
 void Variable::set_name(const Token& token) {
-    this->name = name;
+    this->name = token;
 }
 
 void Variable::set_const(bool value) {
     this->const_flag = value;
+}
+
+Token& Variable::get_name() {
+    return name;
 }
 
 bool Variable::is_const() {
