@@ -319,8 +319,8 @@ Type* Parser::parse_type() {
 Expression* Parser::parse_expression() {
     if (match(TK_LITERAL_CHAR) || match(TK_LITERAL_INTEGER)) {
         return new Literal(matched);
-    } else {
-
+    } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING) || match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
+        return new Literal(matched);
     }
 
     return nullptr;

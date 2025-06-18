@@ -49,6 +49,7 @@ void PrettyPrinter::print(Ast* node, bool newline) {
 
     case AST_LITERAL_INTEGER:
     case AST_LITERAL_CHAR:
+    case AST_LITERAL_STRING:
         print_literal((Literal*) node);
         break;
     }
