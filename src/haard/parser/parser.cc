@@ -307,7 +307,13 @@ Type* Parser::parse_type() {
             type = new IndirectionType(type, matched);
             tail = true;
         } else if (match(TK_POWER)) {
+            auto column = matched.get_column();
+            matched.set_value("*");
+            matched.set_kind(TK_TIMES);
+
             type = new IndirectionType(type, matched);
+
+            matched.set_column(column + 1);
             type = new IndirectionType(type, matched);
             tail = true;
         }
@@ -320,6 +326,8 @@ Expression* Parser::parse_expression() {
     if (match(TK_LITERAL_CHAR) || match(TK_LITERAL_INTEGER)) {
         return new Literal(matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING) || match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {
+        return new Literal(matched);
+    } else if (match(TK_TRUE) || match(TK_FALSE)) {
         return new Literal(matched);
     }
 

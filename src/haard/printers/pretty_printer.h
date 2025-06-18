@@ -28,7 +28,7 @@ namespace haard {
         void print_variable(Variable* node);
 
         void print_primitive_type(PrimitiveType* node);
-        void print_boxed_type(IndirectionType* node);
+        void print_indirection_type(IndirectionType* node);
 
         void print_literal(Literal* node);
 

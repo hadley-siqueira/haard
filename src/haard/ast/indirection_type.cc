@@ -10,21 +10,7 @@ IndirectionType::IndirectionType() {
 IndirectionType::IndirectionType(Type* type, const Token& token) {
     set_token(token);
     set_subtype(type);
-
-    switch (token.get_kind()) {
-    case TK_BITWISE_AND:
-        set_kind(AST_TYPE_REFERENCE);
-        break;
-
-    case TK_TIMES:
-    case TK_POWER:
-        set_kind(AST_TYPE_POINTER);
-        break;
-
-    case TK_LOGICAL_AND:
-        set_kind(AST_TYPE_RVALUE_REFERENCE);
-        break;
-    }
+    set_kind(AST_TYPE_INDIRECTION);
 }
 
 IndirectionType::~IndirectionType() {

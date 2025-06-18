@@ -30,26 +30,15 @@ void PrettyPrinter::print(Ast* node, bool newline) {
         print_variable((Variable*) node);
         break;
 
-    case AST_TYPE_U8:
-    case AST_TYPE_I8:
-    case AST_TYPE_U16:
-    case AST_TYPE_I16:
-    case AST_TYPE_U32:
-    case AST_TYPE_I32:
-    case AST_TYPE_U64:
-    case AST_TYPE_I64:
-    case AST_TYPE_F32:
-    case AST_TYPE_F64:
+    case AST_TYPE_PRIMITIVE:
         print_primitive_type((PrimitiveType*) node);
         break;
 
-    case AST_TYPE_POINTER:
-        print_boxed_type((IndirectionType*) node);
+    case AST_TYPE_INDIRECTION:
+        print_indirection_type((IndirectionType*) node);
         break;
 
-    case AST_LITERAL_INTEGER:
-    case AST_LITERAL_CHAR:
-    case AST_LITERAL_STRING:
+    case AST_LITERAL:
         print_literal((Literal*) node);
         break;
     }
@@ -112,14 +101,9 @@ void PrettyPrinter::print_primitive_type(PrimitiveType* node) {
     print(node->get_token());
 }
 
-void PrettyPrinter::print_boxed_type(IndirectionType* node) {
+void PrettyPrinter::print_indirection_type(IndirectionType* node) {
     print(node->get_subtype());
-
-    if (node->get_token().get_kind() == TK_POWER) {
-        emit("*");
-    } else {
-        print(node->get_token());
-    }
+    print(node->get_token());
 }
 
 void PrettyPrinter::print_literal(Literal* node) {
