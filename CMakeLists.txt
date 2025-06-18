@@ -34,7 +34,7 @@ set(AST_SRC
     src/haard/ast/function.cc
     src/haard/ast/variable.cc
     src/haard/ast/type.cc
-    src/haard/ast/boxed_type.cc
+    src/haard/ast/indirection_type.cc
     src/haard/ast/primitive_type.cc
     src/haard/ast/expression.cc
     src/haard/ast/literal.cc

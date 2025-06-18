@@ -10,7 +10,7 @@
 #include <haard/ast/function.h>
 #include <haard/ast/type.h>
 #include <haard/ast/primitive_type.h>
-#include <haard/ast/boxed_type.h>
+#include <haard/ast/indirection_type.h>
 #include <haard/ast/expression.h>
 #include <haard/ast/literal.h>
 
@@ -28,7 +28,7 @@ namespace haard {
         void print_variable(Variable* node);
 
         void print_primitive_type(PrimitiveType* node);
-        void print_boxed_type(BoxedType* node);
+        void print_boxed_type(IndirectionType* node);
 
         void print_literal(Literal* node);
 

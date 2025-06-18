@@ -44,7 +44,7 @@ void PrettyPrinter::print(Ast* node, bool newline) {
         break;
 
     case AST_TYPE_POINTER:
-        print_boxed_type((BoxedType*) node);
+        print_boxed_type((IndirectionType*) node);
         break;
 
     case AST_LITERAL_INTEGER:
@@ -111,7 +111,7 @@ void PrettyPrinter::print_primitive_type(PrimitiveType* node) {
     print(node->get_token());
 }
 
-void PrettyPrinter::print_boxed_type(BoxedType* node) {
+void PrettyPrinter::print_boxed_type(IndirectionType* node) {
     print(node->get_subtype());
 
     if (node->get_token().get_kind() == TK_POWER) {

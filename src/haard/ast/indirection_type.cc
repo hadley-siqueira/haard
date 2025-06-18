@@ -1,13 +1,13 @@
-#include <haard/ast/boxed_type.h>
+#include <haard/ast/indirection_type.h>
 
 using namespace haard;
 
-BoxedType::BoxedType() {
+IndirectionType::IndirectionType() {
     set_kind(AST_UNKNOWN);
     set_subtype(nullptr);
 }
 
-BoxedType::BoxedType(Type* type, const Token& token) {
+IndirectionType::IndirectionType(Type* type, const Token& token) {
     set_token(token);
     set_subtype(type);
 
@@ -27,11 +27,11 @@ BoxedType::BoxedType(Type* type, const Token& token) {
     }
 }
 
-BoxedType::~BoxedType() {
+IndirectionType::~IndirectionType() {
     delete subtype;
 }
 
-void BoxedType::set_subtype(Type* type) {
+void IndirectionType::set_subtype(Type* type) {
     this->subtype = type;
 
     if (type != nullptr) {
@@ -39,14 +39,14 @@ void BoxedType::set_subtype(Type* type) {
     }
 }
 
-Type* BoxedType::get_subtype() {
+Type* IndirectionType::get_subtype() {
     return subtype;
 }
 
-void BoxedType::set_token(const Token& token) {
+void IndirectionType::set_token(const Token& token) {
     this->token = token;
 }
 
-Token& BoxedType::get_token() {
+Token& IndirectionType::get_token() {
     return token;
 }

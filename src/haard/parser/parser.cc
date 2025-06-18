@@ -298,17 +298,17 @@ Type* Parser::parse_type() {
         tail = false;
 
         if (match(TK_TIMES)) {
-            type = new BoxedType(type, matched);
+            type = new IndirectionType(type, matched);
             tail = true;
         } else if (match(TK_BITWISE_AND)) {
-            type = new BoxedType(type, matched);
+            type = new IndirectionType(type, matched);
             tail = true;
         } else if (match(TK_LOGICAL_AND)) {
-            type = new BoxedType(type, matched);
+            type = new IndirectionType(type, matched);
             tail = true;
         } else if (match(TK_POWER)) {
-            type = new BoxedType(type, matched);
-            type = new BoxedType(type, matched);
+            type = new IndirectionType(type, matched);
+            type = new IndirectionType(type, matched);
             tail = true;
         }
     }

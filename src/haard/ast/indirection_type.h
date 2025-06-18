@@ -1,15 +1,15 @@
-#ifndef HAARD_AST_BOXED_TYPE_H
-#define HAARD_AST_BOXED_TYPE_H
+#ifndef HAARD_AST_INDIRECTION_TYPE_H
+#define HAARD_AST_INDIRECTION_TYPE_H
 
 #include <haard/ast/type.h>
 #include <haard/token/token.h>
 
 namespace haard {
-    class BoxedType : public Type {
+    class IndirectionType : public Type {
     public:
-        BoxedType();
-        BoxedType(Type* type, const Token& token);
-        ~BoxedType();
+        IndirectionType();
+        IndirectionType(Type* type, const Token& token);
+        ~IndirectionType();
 
     public:
         void set_subtype(Type* type);
