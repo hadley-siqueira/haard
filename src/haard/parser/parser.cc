@@ -203,13 +203,26 @@ Function* Parser::parse_function() {
 
         if (param) {
             function->add_parameter(param);
+        } else {
+            delete function;
+            return nullptr;
         }
     }
+
+    Statements* statements = parse_statements();
+
+    if (statements == nullptr) {
+        std::cout << "missing statements for function";
+        delete function;
+        return nullptr;
+    }
+
 
     dedent();
 
     function->set_name(name);
     function->set_return_type(return_type);
+    function->set_statements(statements);
 
     return function;
 }
@@ -310,6 +323,50 @@ Type* Parser::parse_type() {
     }
 
     return type;
+}
+
+Statement* Parser::parse_statement() {
+    Statement* statement = nullptr;
+
+    if (lookahead(TK_WHILE)) {
+
+    } else {
+        Expression* expression = parse_expression();
+
+        if (expression == nullptr) {
+            std::cout << "Expected an expression, but got something else";
+        } else {
+            auto expr_stmt = new ExpressionStatement(expression);
+
+            if (match(TK_SEMICOLON)) {
+                expr_stmt->set_semicolon(true);
+            }
+
+            statement = expr_stmt;
+        }
+    }
+
+    return statement;
+}
+
+Statements* Parser::parse_statements() {
+    Statements* statements = new Statements();
+
+    if (is_indented() && match(TK_PASS)) {
+        return statements;
+    }
+
+    while (is_indented() && !lookahead(TK_RIGHT_CURLY_BRACKET)) {
+        auto statement = parse_statement();
+
+        if (statement) {
+            statements->add_statement(parse_statement());
+        } else {
+
+        }
+    }
+
+    return statements;
 }
 
 Expression* Parser::parse_expression() {
@@ -549,5 +606,4 @@ void Parser::log_error_missing_type_on_variable_declaration(bool const_flag) {
     ss << exp;
 
     logger->error(ss.str());
-
 }

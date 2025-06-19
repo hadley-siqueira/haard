@@ -7,6 +7,7 @@
 #include <haard/ast/variable.h>
 #include <haard/ast/type.h>
 #include <haard/token/token.h>
+#include <haard/ast/statements.h>
 
 namespace haard {
     class Function : public Ast {
@@ -20,12 +21,16 @@ namespace haard {
         void set_return_type(Type* type);
         Type* get_return_type();
 
+        void set_statements(Statements* statements);
+        Statements* get_statements();
+
         void set_name(const Token& token);
 
     private:
         Token name;
         Type* return_type;
         std::vector<Variable*> parameters;
+        Statements* statements;
     };
 }
 

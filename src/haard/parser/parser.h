@@ -13,6 +13,9 @@
 #include <haard/ast/function.h>
 #include <haard/ast/type.h>
 #include <haard/ast/indirection_type.h>
+#include <haard/ast/statement.h>
+#include <haard/ast/statements.h>
+#include <haard/ast/expression_statement.h>
 #include <haard/ast/primitive_type.h>
 #include <haard/ast/expression.h>
 #include <haard/ast/literal.h>
@@ -35,6 +38,10 @@ namespace haard {
         Variable* parse_parameter();
 
         Type* parse_type();
+
+        Statement* parse_statement();
+        Statements* parse_statements();
+
         Expression* parse_expression();
 
     private:

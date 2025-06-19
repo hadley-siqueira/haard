@@ -33,6 +33,9 @@ set(AST_SRC
     src/haard/ast/module.cc
     src/haard/ast/function.cc
     src/haard/ast/variable.cc
+    src/haard/ast/statement.cc
+    src/haard/ast/statements.cc
+    src/haard/ast/expression_statement.cc
     src/haard/ast/type.cc
     src/haard/ast/indirection_type.cc
     src/haard/ast/primitive_type.cc
