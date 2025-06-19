@@ -56,6 +56,7 @@ namespace haard {
         void log_error_missing_import_path();
         void log_error_missing_import_alias();
         void log_error_missing_variable_name(bool const_flag);
+        void log_error_missing_type_on_variable_declaration(bool const_flag);
 
     private:
         unsigned idx;

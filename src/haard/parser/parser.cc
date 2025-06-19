@@ -134,12 +134,7 @@ Variable* Parser::parse_variable() {
         type = parse_type();
 
         if (type == nullptr) {
-            if (const_flag) {
-                std::cout << "error: missing type after colon on constant\n";
-            } else {
-                std::cout << "error: missing type after colon on variable\n";
-            }
-
+            log_error_missing_type_on_variable_declaration(const_flag);
             return nullptr;
         }
     }
@@ -524,6 +519,33 @@ void Parser::log_error_missing_variable_name(bool const_flag) {
         exp = add_explanation(lin, "expected name here", column + 3);
     }
 
+    ss << exp;
+
+    logger->error(ss.str());
+
+}
+
+void Parser::log_error_missing_type_on_variable_declaration(bool const_flag) {
+    unsigned line = matched.get_line();
+    unsigned column = matched.get_column();
+
+    if (logger == nullptr) {
+        return;
+    }
+
+    std::stringstream ss;
+    std::string exp;
+
+    if (const_flag) {
+        ss << "error: missing type after colon on constant declaration\n";
+    } else {
+        ss << "error: missing type after colon on variable declaration\n";
+    }
+
+    ss << "--> " << path << ":" << line << ":" << column << '\n';
+    auto lin = get_line_from_file(path, matched.get_line());
+
+    exp = add_explanation(lin, "expected type here", column + 1);
     ss << exp;
 
     logger->error(ss.str());
