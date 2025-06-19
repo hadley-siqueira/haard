@@ -126,12 +126,7 @@ Variable* Parser::parse_variable() {
     if (match(TK_ID)) {
         name = matched;
     } else {
-        if (const_flag) {
-            std::cout << "Error: expected constant name\n";
-        } else {
-            std::cout << "error: expected variable name\n";
-        }
-
+        log_error_missing_variable_name(const_flag);
         return nullptr;
     }
 
@@ -501,4 +496,36 @@ void Parser::log_error_missing_import_alias() {
     ss << exp;
 
     logger->error(ss.str());
+}
+
+void Parser::log_error_missing_variable_name(bool const_flag) {
+    unsigned line = matched.get_line();
+    unsigned column = matched.get_column();
+
+    if (logger == nullptr) {
+        return;
+    }
+
+    std::stringstream ss;
+    std::string exp;
+
+    if (const_flag) {
+        ss << "expected constant name\n";
+    } else {
+        ss << "expected variable name\n";
+    }
+
+    ss << "--> " << path << ":" << line << ":" << column << '\n';
+    auto lin = get_line_from_file(path, matched.get_line());
+
+    if (const_flag) {
+        exp = add_explanation(lin, "expected name here", column + 5);
+    } else {
+        exp = add_explanation(lin, "expected name here", column + 3);
+    }
+
+    ss << exp;
+
+    logger->error(ss.str());
+
 }
