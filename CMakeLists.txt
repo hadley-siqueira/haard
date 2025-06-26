@@ -51,6 +51,10 @@ set(PRINTERS_SRC
     src/haard/printers/pretty_printer.cc
 )
 
+set (DRIVER_SRC
+    src/haard/driver/driver.cc
+)
+
 set(SOURCES
     ${STRING_POOL_SRC}
     ${UTILS_SRC}
@@ -60,6 +64,7 @@ set(SOURCES
     ${AST_SRC}
     ${PARSER_SRC}
     ${PRINTERS_SRC}
+    ${DRIVER_SRC}
     src/main.cc
 )
 

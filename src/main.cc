@@ -5,6 +5,7 @@
 #include <haard/scanner/scanner.h>
 #include <haard/parser/parser.h>
 #include <haard/printers/pretty_printer.h>
+#include <haard/driver/driver.h>
 
 void test_scanner(int argc, char* argv[]) {
     haard::Scanner sc;
@@ -42,8 +43,12 @@ void test_printer(int argc, char* argv[]) {
     delete mod;
 }
 
+void test_driver(int argc, char* argv[]) {
+    haard::Driver driver;
+}
+
 int main(int argc, char* argv[]) {
-    test_printer(argc, argv);
+    test_driver(argc, argv);
 
     return 0;
 }
