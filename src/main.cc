@@ -45,6 +45,8 @@ void test_printer(int argc, char* argv[]) {
 
 void test_driver(int argc, char* argv[]) {
     haard::Driver driver;
+
+    driver.run(argc, argv);
 }
 
 int main(int argc, char* argv[]) {

@@ -29,8 +29,9 @@ set(SCANNER_SRC
 
 set(AST_SRC
     src/haard/ast/ast.cc
-    src/haard/ast/import.cc
+    src/haard/ast/modules.cc
     src/haard/ast/module.cc
+    src/haard/ast/import.cc
     src/haard/ast/function.cc
     src/haard/ast/variable.cc
     src/haard/ast/statement.cc
@@ -53,6 +54,7 @@ set(PRINTERS_SRC
 
 set (DRIVER_SRC
     src/haard/driver/driver.cc
+    src/haard/driver/command.cc
 )
 
 set(SOURCES

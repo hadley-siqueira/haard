@@ -1,6 +1,12 @@
 #ifndef HAARD_DRIVER_H
 #define HAARD_DRIVER_H
 
+#include <vector>
+
+#include <haard/ast/modules.h>
+#include <haard/driver/command.h>
+#include <haard/log/logger.h>
+
 namespace haard {
     class Driver {
     public:
@@ -8,9 +14,13 @@ namespace haard {
         ~Driver();
 
     public:
+        void run(int argc, char* argv[]);
         void show_help();
 
     private:
+        Modules modules;
+        Logger logger;
+        std::vector<Command*> commands;
     };
 }
 

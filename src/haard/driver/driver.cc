@@ -6,11 +6,23 @@
 using namespace haard;
 
 Driver::Driver() {
-    show_help();
+
 }
 
 Driver::~Driver() {
 
+}
+
+void Driver::run(int argc, char* argv[]) {
+    for (int i = 0; i < argc; ++i) {
+        std::string arg(argv[i]);
+
+        if (arg == "--help") {
+            show_help();
+        } else if (arg == "--pretty") {
+            std::cerr << "Do pretty print\n";
+        }
+    }
 }
 
 void Driver::show_help() {

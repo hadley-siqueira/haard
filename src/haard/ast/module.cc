@@ -44,3 +44,12 @@ std::vector<Import*>& Module::get_imports() {
 std::vector<Variable*>& Module::get_variables() {
     return variables;
 }
+
+
+void Module::set_path(const std::string& path) {
+    this->path = path;
+}
+
+const std::string& Module::get_path() {
+    return path;
+}

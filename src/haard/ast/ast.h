@@ -4,8 +4,9 @@
 namespace haard {
     typedef enum AstKind {
         AST_UNKNOWN,
-        AST_IMPORT,
+        AST_MODULES,
         AST_MODULE,
+        AST_IMPORT,
         AST_FUNCTION,
         AST_VARIABLE,
 

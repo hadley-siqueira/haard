@@ -22,7 +22,11 @@ namespace haard {
         std::vector<Import*>& get_imports();
         std::vector<Variable*>& get_variables();
 
+        void set_path(const std::string& path);
+        const std::string& get_path();
+
     private:
+        std::string path;
         std::vector<Import*> imports;
         std::vector<Variable*> variables;
         std::vector<Function*> functions;
