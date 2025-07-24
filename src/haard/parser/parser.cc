@@ -370,6 +370,64 @@ Statements* Parser::parse_statements() {
 }
 
 Expression* Parser::parse_expression() {
+    return parse_primary_expression();
+}
+
+Expression* Parser::parse_arith_expression() {
+    Expression* expr = parse_postfix_expression();
+    Expression* left;
+    Expression* right;
+
+    if (expr == nullptr) {
+        return nullptr;
+    }
+
+    while (true) {
+        if (match(TK_PLUS)) {
+            left = expr;
+            right = parse_postfix_expression();
+
+            if (right) {
+                expr = new BinaryOperator(AST_PLUS, matched, left, right);
+            } else {
+                delete left;
+                std::cout << "Error: missing rhs for '+' operator\n";
+            }
+        } else if (match(TK_MINUS)) {
+            left = expr;
+            right = parse_postfix_expression();
+
+            if (right) {
+                expr = new BinaryOperator(AST_MINUS, matched, left, right);
+            } else {
+                delete left;
+                std::cout << "Error: missing rhs for '-' operator\n";
+            }
+        }
+    }
+
+    return expr;
+}
+
+Expression* Parser::parse_postfix_expression() {
+    Expression* expr = parse_primary_expression();
+
+    if (expr == nullptr) {
+        return nullptr;
+    }
+
+    while (true) {
+        if (match(TK_INC)) {
+            expr = new UnaryOperator(AST_POS_INC, expr, matched);
+        } else if (match(TK_DEC)) {
+            expr = new UnaryOperator(AST_POS_DEC, expr, matched);
+        }
+    }
+
+    return expr;
+}
+
+Expression* Parser::parse_primary_expression() {
     if (match(TK_LITERAL_CHAR) || match(TK_LITERAL_INTEGER)) {
         return new Literal(matched);
     } else if (match(TK_LITERAL_SINGLE_QUOTE_STRING) || match(TK_LITERAL_DOUBLE_QUOTE_STRING)) {

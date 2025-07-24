@@ -18,6 +18,8 @@
 #include <haard/ast/expression_statement.h>
 #include <haard/ast/primitive_type.h>
 #include <haard/ast/expression.h>
+#include <haard/ast/binary_operator.h>
+#include <haard/ast/unary_operator.h>
 #include <haard/ast/literal.h>
 
 namespace haard {
@@ -43,6 +45,9 @@ namespace haard {
         Statements* parse_statements();
 
         Expression* parse_expression();
+        Expression* parse_arith_expression();
+        Expression* parse_postfix_expression();
+        Expression* parse_primary_expression();
 
     private:
         void recover();

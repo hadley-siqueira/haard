@@ -15,6 +15,12 @@ namespace haard {
         AST_TYPE_REFERENCE,
         AST_TYPE_RVALUE_REFERENCE,
 
+        AST_PLUS,
+        AST_MINUS,
+
+        AST_POS_INC,
+        AST_POS_DEC,
+
         AST_LITERAL,
     } AstKind;
 

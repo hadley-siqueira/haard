@@ -41,6 +41,8 @@ set(AST_SRC
     src/haard/ast/indirection_type.cc
     src/haard/ast/primitive_type.cc
     src/haard/ast/expression.cc
+    src/haard/ast/binary_operator.cc
+    src/haard/ast/unary_operator.cc
     src/haard/ast/literal.cc
 )
 
