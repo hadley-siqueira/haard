@@ -15,6 +15,8 @@ namespace haard {
         AST_TYPE_REFERENCE,
         AST_TYPE_RVALUE_REFERENCE,
 
+        AST_ASSIGNMENT,
+
         AST_PLUS,
         AST_MINUS,
 

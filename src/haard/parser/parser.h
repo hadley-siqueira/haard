@@ -45,6 +45,7 @@ namespace haard {
         Statements* parse_statements();
 
         Expression* parse_expression();
+        Expression* parse_assignment_expression();
         Expression* parse_arith_expression();
         Expression* parse_postfix_expression();
         Expression* parse_primary_expression();

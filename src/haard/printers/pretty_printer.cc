@@ -38,6 +38,12 @@ void PrettyPrinter::print(Ast* node, bool newline) {
         print_indirection_type((IndirectionType*) node);
         break;
 
+    case AST_ASSIGNMENT:
+    case AST_PLUS:
+    case AST_MINUS:
+        print_binop((BinaryOperator*) node);
+        break;
+
     case AST_LITERAL:
         print_literal((Literal*) node);
         break;
@@ -79,20 +85,20 @@ void PrettyPrinter::print_import(Import* node) {
 
 void PrettyPrinter::print_variable(Variable* node) {
     if (node->is_const()) {
-        emit("const ");
+        print("const ");
     } else {
-        emit("let ");
+        print("let ");
     }
 
     print(node->get_name());
 
     if (node->get_type()) {
-        emit(" : ");
+        print(" : ");
         print(node->get_type());
     }
 
     if (node->get_expression()) {
-        emit(" = ");
+        print(" = ");
         print(node->get_expression());
     }
 }
@@ -104,6 +110,12 @@ void PrettyPrinter::print_primitive_type(PrimitiveType* node) {
 void PrettyPrinter::print_indirection_type(IndirectionType* node) {
     print(node->get_subtype());
     print(node->get_token());
+}
+
+void PrettyPrinter::print_binop(BinaryOperator* node) {
+    print(node->get_left());
+    print(node->get_token());
+    print(node->get_right());
 }
 
 void PrettyPrinter::print_literal(Literal* node) {
@@ -125,21 +137,21 @@ void PrettyPrinter::print_literal(Literal* node) {
     }
 
     if (single_quoted) {
-        emit("'");
+        print("'");
     } else if (quoted) {
-        emit("\"");
+        print("\"");
     }
 
     print(node->get_token());
 
     if (single_quoted) {
-        emit("'");
+        print("'");
     } else if (quoted) {
-        emit("\"");
+        print("\"");
     }
 }
 
-void PrettyPrinter::print(Token& token) {
+void PrettyPrinter::print(const Token& token) {
     if (token.get_value() != nullptr) {
         out << token.get_value();
     }
@@ -149,7 +161,7 @@ std::string PrettyPrinter::get_output() {
     return out.str();
 }
 
-void PrettyPrinter::emit(const std::string& msg) {
+void PrettyPrinter::print(const std::string& msg) {
     out << msg;
 }
 

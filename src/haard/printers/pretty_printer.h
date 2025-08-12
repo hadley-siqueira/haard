@@ -12,6 +12,7 @@
 #include <haard/ast/primitive_type.h>
 #include <haard/ast/indirection_type.h>
 #include <haard/ast/expression.h>
+#include <haard/ast/binary_operator.h>
 #include <haard/ast/literal.h>
 
 namespace haard {
@@ -30,14 +31,16 @@ namespace haard {
         void print_primitive_type(PrimitiveType* node);
         void print_indirection_type(IndirectionType* node);
 
+        void print_binop(BinaryOperator* node);
+
         void print_literal(Literal* node);
 
-        void print(Token& token);
+        void print(const Token& token);
 
         std::string get_output();
 
     public:
-        void emit(const std::string& msg);
+        void print(const std::string& msg);
         void print_newline();
         void print_indentation();
         void indent();

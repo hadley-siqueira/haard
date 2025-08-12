@@ -16,6 +16,7 @@ namespace haard {
     public:
         void run(int argc, char* argv[]);
         void show_help();
+        void pretty_print();
 
     private:
         Modules modules;

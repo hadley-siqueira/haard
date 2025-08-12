@@ -373,6 +373,34 @@ Expression* Parser::parse_expression() {
     return parse_primary_expression();
 }
 
+Expression* Parser::parse_assignment_expression() {
+    Expression* expr = parse_arith_expression();
+    Expression* left;
+    Expression* right;
+
+    if (expr == nullptr) {
+        return nullptr;
+    }
+
+    while (true) {
+        if (match(TK_ASSIGNMENT)) {
+            left = expr;
+            right = parse_arith_expression();
+
+            if (right) {
+                expr = new BinaryOperator(AST_ASSIGNMENT, matched, left, right);
+            } else {
+                delete left;
+                std::cout << "Error: missing rhs for '=' operator\n";
+            }
+        } else {
+            break;
+        }
+    }
+
+    return expr;
+}
+
 Expression* Parser::parse_arith_expression() {
     Expression* expr = parse_postfix_expression();
     Expression* left;
@@ -403,6 +431,8 @@ Expression* Parser::parse_arith_expression() {
                 delete left;
                 std::cout << "Error: missing rhs for '-' operator\n";
             }
+        } else {
+            break;
         }
     }
 

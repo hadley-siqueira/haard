@@ -2,6 +2,8 @@
 #include <map>
 
 #include <haard/driver/driver.h>
+#include <haard/printers/pretty_printer.h>
+#include <haard/parser/parser.h>
 
 using namespace haard;
 
@@ -20,7 +22,18 @@ void Driver::run(int argc, char* argv[]) {
         if (arg == "--help") {
             show_help();
         } else if (arg == "--pretty") {
-            std::cerr << "Do pretty print\n";
+            Parser p;
+            Logger logger;
+            PrettyPrinter printer;
+
+            p.set_logger(&logger);
+            auto mod = p.read(argv[1]);
+            logger.print_logs();
+
+            printer.print(mod);
+            std::cout << printer.get_output() << std::endl;
+
+            delete mod;
         }
     }
 }
