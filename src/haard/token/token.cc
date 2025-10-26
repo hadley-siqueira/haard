@@ -2,6 +2,10 @@
 
 using namespace haard;
 
+void Token::set_kind(TokenKind kind) {
+    this->kind = kind;
+}
+
 void Token::set_offset(unsigned int offset) {
     this->offset = offset;
 }
@@ -18,8 +22,12 @@ void Token::set_whitespace(unsigned int whitespace) {
     this->whitespace = whitespace;
 }
 
-void Token::set_value(char* value) {
+void Token::set_value(const char* value) {
     this->value = value;
+}
+
+TokenKind Token::get_kind() {
+    return kind;
 }
 
 unsigned int Token::get_offset() {
@@ -38,6 +46,6 @@ unsigned int Token::get_whitespace() {
     return whitespace;
 }
 
-char* Token::get_value() {
+const char* Token::get_value() {
     return value;
 }
