@@ -69,7 +69,7 @@ bool Scanner::has_tokens() {
 }
 
 char Scanner::advance() {
-    char c = buffer[idx];
+    unsigned char c = buffer[idx];
 
     if (c == '\n') {
         column = 1;
@@ -92,18 +92,16 @@ char Scanner::advance() {
     } else if (((c >> 3) & 0b11111) == 0b11110) {
         column++;
         value += c;
+    } else {
+        std::cout << "Error: unknown char = " << ((int) c) << '\n';
     }
-    std::cout << idx << ' ' << buffer.size() << '\n';
-    ++idx;
- /*   if (idx < buffer.size()) {
-        idx++;
-    }*/
 
+    ++idx;
     return c;
 }
 
 bool Scanner::is_whitespace() {
-    char c = buffer[idx];
+    unsigned char c = buffer[idx];
 
     return c == ' ' || c == '\t';
 }
@@ -113,7 +111,7 @@ bool Scanner::is_newline() {
 }
 
 bool Scanner::is_alpha() {
-    char c = buffer[idx];
+    unsigned char c = buffer[idx];
 
     return c >= 'a' && c <= 'z' 
         || c >= 'A' && c <= 'Z' 
@@ -122,7 +120,7 @@ bool Scanner::is_alpha() {
 }
 
 bool Scanner::is_digit() {
-    char c = buffer[idx];
+    unsigned char c = buffer[idx];
 
     return c >= '0' && c <= '9';
 }
