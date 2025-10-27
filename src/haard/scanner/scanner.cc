@@ -19,6 +19,8 @@ std::vector<Token> Scanner::get_tokens(const std::string& path) {
             advance();
         } else if (is_alpha()) {
             get_keyword_or_identifier();
+        } else if (is_digit()) {
+            get_number();
         }
     }
 
@@ -37,6 +39,43 @@ void Scanner::get_keyword_or_identifier() {
     }
 
     create_token();
+}
+
+void Scanner::get_number() {
+    start_token();
+
+    if (peek('0')) {
+
+    } 
+
+    while (is_digit() || peek('_')) {
+        advance();
+    }
+
+    // avoid .. since it is the range operator and thus not part of a number
+    if (peek('.') && !peek_ahead('.', 1)) {
+        advance();
+
+        if (is_digit()) {
+            while (is_digit() || peek('_')) {
+                advance();
+            }
+
+            if (match('e') || match('E')) {
+                if (peek('-') || peek('+')) {
+                    advance();
+                }
+
+                if (is_digit()) {
+                    while (is_digit()) {
+                        advance();
+                    }
+                } else {
+                    std::cout << "error: missing exponent value for number\n";
+                }
+            }
+        }
+    }
 }
 
 bool Scanner::is_keyword(const std::string& v) {
@@ -101,32 +140,67 @@ char Scanner::advance() {
 }
 
 bool Scanner::is_whitespace() {
-    unsigned char c = buffer[idx];
-
-    return c == ' ' || c == '\t';
+    return peek(' ') || peek('\t');
 }
 
 bool Scanner::is_newline() {
-    return buffer[idx] == '\n';
+    return peek('\n');
 }
 
 bool Scanner::is_alpha() {
     unsigned char c = buffer[idx];
 
-    return c >= 'a' && c <= 'z' 
-        || c >= 'A' && c <= 'Z' 
-        || c == '_'
+    return peek('a', 'z') 
+        || peek('A', 'Z') 
+        || peek('_') 
         || c >= 128;
 }
 
 bool Scanner::is_digit() {
-    unsigned char c = buffer[idx];
-
-    return c >= '0' && c <= '9';
+    return peek('0', '9');
 }
 
 bool Scanner::is_alphanum() {
     return is_alpha() || is_digit();
+}
+
+bool Scanner::is_hex_digit() {
+    return is_digit() || peek('a', 'z') || peek('A', 'Z');
+}
+
+bool Scanner::is_binary_digit() {
+    return peek('0') || peek('1');
+}
+
+bool Scanner::is_octal_digit() {
+    unsigned char c = buffer[idx];
+
+    return c >= '0' && c <= '7';
+}
+
+bool Scanner::match(char c) {
+    if (peek(c)) {
+        advance();
+        return true;
+    }
+
+    return false;
+}
+
+bool Scanner::peek(char c) {
+    return buffer[idx] == c;
+}
+
+bool Scanner::peek(char first, char last) {
+    return buffer[idx] >= first && buffer[idx] <= last;
+}
+
+bool Scanner::peek_ahead(char c, int offset) {
+    if (idx + offset < buffer.size()) {
+        return buffer[idx + offset] == c;
+    }
+
+    return false;
 }
 
 void Scanner::create_token() {

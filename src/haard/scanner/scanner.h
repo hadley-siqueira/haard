@@ -17,6 +17,7 @@ namespace haard {
 
         private:
             void get_keyword_or_identifier();
+            void get_number();
 
             void read_to_buffer(const std::string& path);
             void reset_state();
@@ -33,6 +34,14 @@ namespace haard {
             bool is_alpha();
             bool is_digit();
             bool is_alphanum();
+            bool is_hex_digit();
+            bool is_binary_digit();
+            bool is_octal_digit();
+
+            bool match(char c);
+            bool peek(char c);
+            bool peek(char first, char last);
+            bool peek_ahead(char c, int offset);
 
         private:
             unsigned int ws;
