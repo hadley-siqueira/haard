@@ -45,37 +45,79 @@ void Scanner::get_number() {
     start_token();
 
     if (peek('0')) {
+        if (peek_ahead('b', 1)) {
+            advance();
+            advance();
 
-    } 
+            if (is_binary_digit()) {
+                while (is_binary_digit() || peek('_')) {
+                    advance();
+                }
+
+                create_token();
+            } else {
+                std::cout << "Error on token: invalid binary literal. Expected at least an 0 or 1, but got something else\n";
+            }
+
+            return;
+        } else if (peek_ahead('o', 1) || peek('_')) {
+            advance();
+            advance();
+
+            while (is_octal_digit()) {
+                advance();
+            }
+
+            create_token();
+            return;
+        } else if (peek_ahead('x', 1) || peek('_')) {
+            advance();
+            advance();
+
+            while (is_hex_digit()) {
+                advance();
+            }
+
+            create_token();
+            return;
+        }
+    }
 
     while (is_digit() || peek('_')) {
         advance();
     }
 
-    // avoid .. since it is the range operator and thus not part of a number
-    if (peek('.') && !peek_ahead('.', 1)) {
-        advance();
+    if (!peek('.')) {
+        create_token();
+        return;
+    } else if (peek_ahead('.', 1)) { // avoid .. since it is the range operator and thus not part of a number
+        create_token();
+        return;
+    } 
 
-        if (is_digit()) {
-            while (is_digit() || peek('_')) {
+    advance();
+
+    if (is_digit()) {
+        while (is_digit() || peek('_')) {
+            advance();
+        }
+
+        if (match('e') || match('E')) {
+            if (peek('-') || peek('+')) {
                 advance();
             }
 
-            if (match('e') || match('E')) {
-                if (peek('-') || peek('+')) {
+            if (is_digit()) {
+                while (is_digit()) {
                     advance();
                 }
-
-                if (is_digit()) {
-                    while (is_digit()) {
-                        advance();
-                    }
-                } else {
-                    std::cout << "error: missing exponent value for number\n";
-                }
+            } else {
+                std::cout << "error: missing exponent value for number\n";
             }
         }
     }
+
+    create_token();
 }
 
 bool Scanner::is_keyword(const std::string& v) {
