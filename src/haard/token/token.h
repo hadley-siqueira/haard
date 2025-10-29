@@ -1,6 +1,8 @@
 #ifndef HAARD_TOKEN_H
 #define HAARD_TOKEN_H
 
+#include <string>
+
 namespace haard {
     typedef enum TokenKind {
         TK_DEF,
@@ -44,6 +46,8 @@ namespace haard {
             unsigned int get_column();
             unsigned int get_whitespace();
             const char* get_value();
+
+            std::string get_kind_as_string();
 
         private:
             TokenKind kind;
