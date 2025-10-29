@@ -3,9 +3,30 @@
 
 namespace haard {
     typedef enum TokenKind {
-        TK_IDENTIFIER,
         TK_DEF,
+
         TK_CLASS,
+        TK_STRUCT,
+        TK_ENUM,
+        TK_UNION,
+
+        TK_WHILE,
+        TK_FOR,
+        TK_IF,
+        TK_ELIF,
+        TK_ELSE,
+
+        TK_RETURN,
+        TK_YIELD,
+        TK_CONTINUE,
+        TK_BREAK,
+
+        TK_IDENTIFIER,
+        TK_BINARY_INTEGER,
+        TK_OCTAL_INTEGER,
+        TK_HEXADECIMAL_INTEGER,
+        TK_INTEGER,
+        TK_FLOAT,
     } TokenKind;
 
     class Token {

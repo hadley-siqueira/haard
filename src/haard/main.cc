@@ -1,7 +1,6 @@
 #include <iostream>
 #include <haard/scanner/scanner.h>
 
-
 int main(int argc, char* argv[]) {
     haard::Scanner sc;
 

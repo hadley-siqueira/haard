@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #include <haard/token/token.h>
 #include <haard/string_pool/string_pool.h>
@@ -24,10 +25,10 @@ namespace haard {
             bool has_tokens();
             char advance();
 
-            void create_token();
+            void create_token(TokenKind kind);
             void start_token();
 
-            bool is_keyword(const std::string& v);
+            TokenKind get_keyword_kind(const std::string& v);
 
             bool is_whitespace();
             bool is_newline();
@@ -51,6 +52,7 @@ namespace haard {
             unsigned int idx;
             bool line_start;
             std::vector<Token> tokens;
+            std::unordered_map<std::string, TokenKind> keywords;
             std::string buffer;
             std::string value;
             Token token;

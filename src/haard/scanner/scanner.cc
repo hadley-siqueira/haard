@@ -8,6 +8,24 @@ using namespace haard;
 
 Scanner::Scanner() {
     reset_state();
+
+    keywords["def"] = TK_DEF;
+
+    keywords["class"] = TK_CLASS;
+    keywords["struct"] = TK_CLASS;
+    keywords["enum"] = TK_ENUM;
+    keywords["union"] = TK_UNION;
+
+    keywords["while"] = TK_WHILE;
+    keywords["for"] = TK_FOR;
+    keywords["if"] = TK_IF;
+    keywords["elif"] = TK_ELIF;
+    keywords["else"] = TK_ELSE;
+
+    keywords["return"] = TK_RETURN;
+    keywords["yield"] = TK_YIELD;
+    keywords["continue"] = TK_CONTINUE;
+    keywords["break"] = TK_BREAK;
 }
 
 std::vector<Token> Scanner::get_tokens(const std::string& path) {
@@ -34,11 +52,7 @@ void Scanner::get_keyword_or_identifier() {
         advance();
     }
 
-    if (is_keyword(value)) {
-
-    }
-
-    create_token();
+    create_token(get_keyword_kind(value));
 }
 
 void Scanner::get_number() {
@@ -54,7 +68,7 @@ void Scanner::get_number() {
                     advance();
                 }
 
-                create_token();
+                create_token(TK_BINARY_INTEGER);
             } else {
                 std::cout << "Error on token: invalid binary literal. Expected at least an 0 or 1, but got something else\n";
             }
@@ -68,7 +82,7 @@ void Scanner::get_number() {
                 advance();
             }
 
-            create_token();
+            create_token(TK_OCTAL_INTEGER);
             return;
         } else if (peek_ahead('x', 1) || peek('_')) {
             advance();
@@ -78,7 +92,7 @@ void Scanner::get_number() {
                 advance();
             }
 
-            create_token();
+            create_token(TK_HEXADECIMAL_INTEGER);
             return;
         }
     }
@@ -88,10 +102,10 @@ void Scanner::get_number() {
     }
 
     if (!peek('.')) {
-        create_token();
+        create_token(TK_INTEGER);
         return;
     } else if (peek_ahead('.', 1)) { // avoid .. since it is the range operator and thus not part of a number
-        create_token();
+        create_token(TK_FLOAT);
         return;
     } 
 
@@ -117,12 +131,17 @@ void Scanner::get_number() {
         }
     }
 
-    create_token();
+    create_token(TK_FLOAT);
 }
 
-bool Scanner::is_keyword(const std::string& v) {
-    std::unordered_map<std::string, TokenKind> mapping;
-    return true;
+TokenKind Scanner::get_keyword_kind(const std::string& v) {
+    TokenKind kind = TK_IDENTIFIER;
+
+    if (keywords.count(v) > 0) {
+        kind = keywords[v];
+    } 
+
+    return kind;
 }
 
 void Scanner::read_to_buffer(const std::string& path) {
@@ -245,7 +264,8 @@ bool Scanner::peek_ahead(char c, int offset) {
     return false;
 }
 
-void Scanner::create_token() {
+void Scanner::create_token(TokenKind kind) {
+    token.set_kind(kind);
     token.set_value(StringPool::get(value));
     tokens.push_back(token);
 }
