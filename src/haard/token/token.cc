@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include <haard/token/token.h>
 
 using namespace haard;
@@ -115,4 +117,18 @@ std::string Token::get_kind_as_string() {
         default:
             return "TK_UNKNOWN";
     }
+}
+
+std::string Token::to_json() {
+    std::stringstream ss;
+
+    ss << "{" 
+        << "\"kind\": \"" << get_kind_as_string() << "\", "
+        << "\"line\": " << line << ", "
+        << "\"column\": " << column << ", "
+        << "\"offset\": " << offset << ", "
+        << "\"whitespace\": " << whitespace << ", "
+        << "\"value\": \"" << value << "\"}";
+
+    return ss.str();
 }

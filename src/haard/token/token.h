@@ -48,6 +48,7 @@ namespace haard {
             const char* get_value();
 
             std::string get_kind_as_string();
+            std::string to_json();
 
         private:
             TokenKind kind;

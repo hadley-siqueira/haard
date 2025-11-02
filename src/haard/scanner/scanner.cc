@@ -197,6 +197,7 @@ char Scanner::advance() {
     }
 
     ++idx;
+    ++offset;
     return c;
 }
 
