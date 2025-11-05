@@ -26,6 +26,22 @@ Scanner::Scanner() {
     keywords["yield"] = TK_YIELD;
     keywords["continue"] = TK_CONTINUE;
     keywords["break"] = TK_BREAK;
+
+    keywords["and"] = TK_AND;
+    keywords["or"] = TK_OR;
+    keywords["not"] = TK_NOT;
+
+    keywords["++"] = TK_INC;
+    keywords["--"] = TK_DEC;
+    keywords["+"] = TK_PLUS;
+    keywords["-"] = TK_MINUS;
+    keywords["*"] = TK_TIMES;
+    keywords["/"] = TK_DIVISION;
+    keywords["**"] = TK_POWER;
+
+    keywords["^"] = TK_BITWISE_XOR;
+    keywords["&"] = TK_BITWISE_AND;
+    keywords["~"] = TK_BITWISE_NOT;
 }
 
 std::vector<Token> Scanner::get_tokens(const std::string& path) {
@@ -39,6 +55,8 @@ std::vector<Token> Scanner::get_tokens(const std::string& path) {
             get_keyword_or_identifier();
         } else if (is_digit()) {
             get_number();
+        } else if (is_operator()) {
+            get_operator();
         }
     }
 
@@ -134,6 +152,38 @@ void Scanner::get_number() {
     create_token(TK_FLOAT);
 }
 
+// here we use an ad hoc maximal munch
+void Scanner::get_operator() {
+    start_token();
+    std::string tmp;
+
+    // grab the possible chars that composes the operator
+    for (int i = 0; i < 4 && idx + i < buffer.size(); ++i) { 
+        tmp += buffer[idx + i];
+    }
+
+    // search for the first available
+    while (tmp.size() > 0 && keywords.count(tmp) == 0) {
+        tmp.pop_back();
+    }
+
+    if (tmp.size() == 0) {
+        std::cout << "Something went wrong while scanning an operator\n";
+        return;
+    }
+
+    auto kind = keywords[tmp];
+
+    if (kind != TK_LESS_THAN
+
+    while (tmp.size() > 0) {
+        advance();
+        tmp.pop_back();
+    }
+
+    create_token(kind);
+}
+
 TokenKind Scanner::get_keyword_kind(const std::string& v) {
     TokenKind kind = TK_IDENTIFIER;
 
@@ -161,6 +211,7 @@ void Scanner::reset_state() {
     idx = 0;
     buffer = "";
     line_start = true;
+    template_counter = 0;
     tokens.clear();
 }
 
@@ -220,6 +271,18 @@ bool Scanner::is_alpha() {
 
 bool Scanner::is_digit() {
     return peek('0', '9');
+}
+
+bool Scanner::is_operator() {
+    return peek('.') || peek(',') || peek(':')
+        || peek('(') || peek(')') || peek('=')
+        || peek('{') || peek('}') || peek('>')
+        || peek('[') || peek(']') || peek('<')
+        || peek('+') || peek('-') || peek('*')
+        || peek('/') || peek('%') || peek('&')
+        || peek('@') || peek('$') || peek('!')
+        || peek('~') || peek('^') || peek(';')
+        || peek('|');
 }
 
 bool Scanner::is_alphanum() {

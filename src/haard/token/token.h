@@ -23,6 +23,22 @@ namespace haard {
         TK_CONTINUE,
         TK_BREAK,
 
+        TK_AND,
+        TK_OR,
+        TK_NOT,
+
+        TK_INC,
+        TK_DEC,
+        TK_PLUS,
+        TK_MINUS,
+        TK_TIMES,
+        TK_DIVISION,
+        TK_POWER,
+
+        TK_BITWISE_XOR,
+        TK_BITWISE_AND,
+        TK_BITWISE_NOT,
+
         TK_IDENTIFIER,
         TK_BINARY_INTEGER,
         TK_OCTAL_INTEGER,

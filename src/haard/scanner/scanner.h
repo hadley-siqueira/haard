@@ -19,6 +19,7 @@ namespace haard {
         private:
             void get_keyword_or_identifier();
             void get_number();
+            void get_operator();
 
             void read_to_buffer(const std::string& path);
             void reset_state();
@@ -34,6 +35,7 @@ namespace haard {
             bool is_newline();
             bool is_alpha();
             bool is_digit();
+            bool is_operator();
             bool is_alphanum();
             bool is_hex_digit();
             bool is_binary_digit();
@@ -50,6 +52,7 @@ namespace haard {
             unsigned int column;
             unsigned int offset;
             unsigned int idx;
+            unsigned int template_counter;
             bool line_start;
             std::vector<Token> tokens;
             std::unordered_map<std::string, TokenKind> keywords;
