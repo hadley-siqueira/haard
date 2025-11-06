@@ -96,6 +96,45 @@ std::string Token::get_kind_as_string() {
         case TK_BREAK:
             return "TK_BREAK";
 
+        case TK_AND:
+            return "TK_AND";
+
+        case TK_OR:
+            return "TK_OR";
+
+        case TK_NOT:
+            return "TK_NOT";
+
+        case TK_INC:
+            return "TK_INC";
+
+        case TK_DEC:
+            return "TK_DEC";
+
+        case TK_PLUS:
+            return "TK_PLUS";
+
+        case TK_MINUS:
+            return "TK_MINUS";
+
+        case TK_TIMES:
+            return "TK_TIMES";
+
+        case TK_DIVISION:
+            return "TK_DIVISION";
+
+        case TK_POWER:
+            return "TK_POWER";
+
+        case TK_BITWISE_XOR:
+            return "TK_BITWISE_XOR";
+
+        case TK_BITWISE_AND:
+            return "TK_BITWISE_AND";
+
+        case TK_BITWISE_NOT:
+            return "TK_BITWISE_NOT";
+
         case TK_IDENTIFIER:
             return "TK_IDENTIFIER";
 

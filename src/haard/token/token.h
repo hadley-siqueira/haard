@@ -39,6 +39,12 @@ namespace haard {
         TK_BITWISE_AND,
         TK_BITWISE_NOT,
 
+        TK_SLL, 
+        TK_SRL,
+        TK_SRA,
+        TK_BEGIN_GENERIC,
+        TK_END_GENERIC,
+
         TK_IDENTIFIER,
         TK_BINARY_INTEGER,
         TK_OCTAL_INTEGER,

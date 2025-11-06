@@ -54,8 +54,10 @@ namespace haard {
             unsigned int idx;
             unsigned int template_counter;
             bool line_start;
+            bool template_flag;
             std::vector<Token> tokens;
             std::unordered_map<std::string, TokenKind> keywords;
+            std::unordered_map<std::string, TokenKind> operators;
             std::string buffer;
             std::string value;
             Token token;

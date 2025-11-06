@@ -31,17 +31,24 @@ Scanner::Scanner() {
     keywords["or"] = TK_OR;
     keywords["not"] = TK_NOT;
 
-    keywords["++"] = TK_INC;
-    keywords["--"] = TK_DEC;
-    keywords["+"] = TK_PLUS;
-    keywords["-"] = TK_MINUS;
-    keywords["*"] = TK_TIMES;
-    keywords["/"] = TK_DIVISION;
-    keywords["**"] = TK_POWER;
+    operators["++"] = TK_INC;
+    operators["--"] = TK_DEC;
+    operators["+"] = TK_PLUS;
+    operators["-"] = TK_MINUS;
+    operators["*"] = TK_TIMES;
+    operators["/"] = TK_DIVISION;
+    operators["**"] = TK_POWER;
 
-    keywords["^"] = TK_BITWISE_XOR;
-    keywords["&"] = TK_BITWISE_AND;
-    keywords["~"] = TK_BITWISE_NOT;
+    operators["=="] = TK_EQ;
+    operators["!="] = TK_NE;
+    operators["<"] = TK_LT;
+    operators["<"] = TK_LE;
+    operators[">"] = TK_GT;
+    operators[">="] = TK_GE;
+
+    operators["^"] = TK_BITWISE_XOR;
+    operators["&"] = TK_BITWISE_AND;
+    operators["~"] = TK_BITWISE_NOT;
 }
 
 std::vector<Token> Scanner::get_tokens(const std::string& path) {
@@ -70,6 +77,7 @@ void Scanner::get_keyword_or_identifier() {
         advance();
     }
 
+    template_flag = peek('<');
     create_token(get_keyword_kind(value));
 }
 
@@ -154,7 +162,6 @@ void Scanner::get_number() {
 
 // here we use an ad hoc maximal munch
 void Scanner::get_operator() {
-    start_token();
     std::string tmp;
 
     // grab the possible chars that composes the operator
@@ -163,7 +170,7 @@ void Scanner::get_operator() {
     }
 
     // search for the first available
-    while (tmp.size() > 0 && keywords.count(tmp) == 0) {
+    while (tmp.size() > 0 && operators.count(tmp) == 0) {
         tmp.pop_back();
     }
 
@@ -172,10 +179,21 @@ void Scanner::get_operator() {
         return;
     }
 
-    auto kind = keywords[tmp];
+    auto kind = operators[tmp];
 
-    if (kind != TK_LESS_THAN
+    if (template_flag || template_counter > 0) {
+        if (peek('<')) {
+            kind = TK_BEGIN_GENERIC;
+            ++template_counter;
+            tmp = "<";
+        } else if (peek('>')) {
+            kind = TK_END_GENERIC;
+            --template_counter;
+            tmp = ">";
+        }
+    }
 
+    start_token();
     while (tmp.size() > 0) {
         advance();
         tmp.pop_back();
@@ -211,6 +229,7 @@ void Scanner::reset_state() {
     idx = 0;
     buffer = "";
     line_start = true;
+    template_flag = false;
     template_counter = 0;
     tokens.clear();
 }
