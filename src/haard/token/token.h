@@ -29,6 +29,14 @@ namespace haard {
 
         TK_INC,
         TK_DEC,
+
+        TK_EQ,
+        TK_NE,
+        TK_GT,
+        TK_LT,
+        TK_LE,
+        TK_GE,
+
         TK_PLUS,
         TK_MINUS,
         TK_TIMES,
