@@ -31,6 +31,10 @@ Scanner::Scanner() {
     keywords["or"] = TK_OR;
     keywords["not"] = TK_NOT;
 
+    operators[","] = TK_COMMA;
+    operators[";"] = TK_SEMICOLON;
+    operators[":"] = TK_COLON;
+
     operators["++"] = TK_INC;
     operators["--"] = TK_DEC;
     operators["+"] = TK_PLUS;
@@ -42,7 +46,7 @@ Scanner::Scanner() {
     operators["=="] = TK_EQ;
     operators["!="] = TK_NE;
     operators["<"] = TK_LT;
-    operators["<"] = TK_LE;
+    operators["<="] = TK_LE;
     operators[">"] = TK_GT;
     operators[">="] = TK_GE;
 

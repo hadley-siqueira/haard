@@ -53,6 +53,10 @@ namespace haard {
         TK_BEGIN_GENERIC,
         TK_END_GENERIC,
 
+        TK_COMMA,
+        TK_SEMICOLON,
+        TK_COLON,
+
         TK_IDENTIFIER,
         TK_BINARY_INTEGER,
         TK_OCTAL_INTEGER,

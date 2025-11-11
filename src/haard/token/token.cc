@@ -111,6 +111,24 @@ std::string Token::get_kind_as_string() {
         case TK_DEC:
             return "TK_DEC";
 
+        case TK_EQ:
+            return "TK_EQ";
+
+        case TK_NE:
+            return "TK_NE";
+
+        case TK_GT:
+            return "TK_GT";
+
+        case TK_LT:
+            return "TK_LT";
+
+        case TK_LE:
+            return "TK_LE";
+
+        case TK_GE:
+            return "TK_GE";
+
         case TK_PLUS:
             return "TK_PLUS";
 
@@ -134,6 +152,30 @@ std::string Token::get_kind_as_string() {
 
         case TK_BITWISE_NOT:
             return "TK_BITWISE_NOT";
+
+        case TK_SLL:
+            return "TK_SLL";
+
+        case TK_SRL:
+            return "TK_SRL";
+
+        case TK_SRA:
+            return "TK_SRA";
+
+        case TK_BEGIN_GENERIC:
+            return "TK_BEGIN_GENERIC";
+
+        case TK_END_GENERIC:
+            return "TK_END_GENERIC";
+
+        case TK_COMMA:
+            return "TK_COMMA";
+
+        case TK_SEMICOLON:
+            return "TK_SEMICOLON";
+
+        case TK_COLON:
+            return "TK_COLON";
 
         case TK_IDENTIFIER:
             return "TK_IDENTIFIER";
