@@ -11,6 +11,7 @@ set(STRING_POOL_SRC
 
 set(LOG_SRC
     src/haard/log/log.cc
+    src/haard/log/logger.cc
 )
 
 set(TOKEN_SRC
@@ -25,6 +26,10 @@ set(SCANNER_SRC
     src/haard/scanner/scanner.cc
 )
 
+set(DRIVER_SRC
+    src/haard/driver/driver.cc
+)
+
 set(SOURCES
     src/haard/main.cc
     ${STRING_POOL_SRC}
@@ -32,6 +37,7 @@ set(SOURCES
     ${TOKEN_SRC}
     ${AST_SRC}
     ${SCANNER_SRC}
+    ${DRIVER_SRC}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

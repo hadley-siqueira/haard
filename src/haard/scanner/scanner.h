@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <haard/token/token.h>
+#include <haard/log/logger.h>
 #include <haard/string_pool/string_pool.h>
 
 namespace haard {
@@ -61,6 +62,7 @@ namespace haard {
             std::string buffer;
             std::string value;
             Token token;
+            Logger logger;
     };
 }
 
