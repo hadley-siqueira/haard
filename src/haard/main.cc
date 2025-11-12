@@ -1,14 +1,9 @@
 #include <iostream>
-#include <haard/scanner/scanner.h>
+#include <haard/driver/driver.h>
 
 int main(int argc, char* argv[]) {
-    haard::Scanner sc;
+    haard::Driver driver;
 
-    auto tokens = sc.get_tokens(argv[1]);
-
-    for (auto tk : tokens) {
-        std::cout << tk.to_json() << std::endl;
-    }
-
+    driver.run(argc, argv);
     return 0;
 }

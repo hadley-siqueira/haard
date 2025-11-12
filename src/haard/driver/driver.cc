@@ -18,7 +18,7 @@ void Driver::run(int argc, char** argv) {
 
         if (is_flag("-h", "--help")) {
             show_help();
-        } else if (is_flag("--scan")) {
+        } else if (is_flag("--scan-json")) {
             Scanner scanner;
 
             if (idx + 1 >= argc) {
@@ -27,7 +27,13 @@ void Driver::run(int argc, char** argv) {
             }
 
             auto tokens = scanner.get_tokens(argv[idx + 1]);
+
+            for (auto tk : tokens) {
+                std::cout << tk.to_json() << std::endl;
+            }
         }
+
+        ++idx;
     }
 }
 
