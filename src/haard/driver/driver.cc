@@ -27,6 +27,7 @@ void Driver::run(int argc, char** argv) {
             }
 
             auto tokens = scanner.get_tokens(argv[idx + 1]);
+            logger.get_logs_from(scanner.get_logger());
 
             for (auto tk : tokens) {
                 std::cout << tk.to_json() << std::endl;

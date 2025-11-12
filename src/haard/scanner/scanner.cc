@@ -74,6 +74,10 @@ std::vector<Token> Scanner::get_tokens(const std::string& path) {
     return tokens;
 }
 
+const Logger& Scanner::get_logger() {
+    return logger;
+}
+
 void Scanner::get_keyword_or_identifier() {
     start_token();
 

@@ -16,6 +16,7 @@ namespace haard {
             
         public:
             std::vector<Token> get_tokens(const std::string& path);
+            const Logger& get_logger();
 
         private:
             void get_keyword_or_identifier();
