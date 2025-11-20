@@ -9,6 +9,7 @@ using namespace haard;
 Scanner::Scanner() {
     reset_state();
 
+    keywords["import"] = TK_IMPORT;
     keywords["def"] = TK_DEF;
 
     keywords["class"] = TK_CLASS;
@@ -27,6 +28,8 @@ Scanner::Scanner() {
     keywords["continue"] = TK_CONTINUE;
     keywords["break"] = TK_BREAK;
 
+    keywords["as"] = TK_AS;
+
     keywords["and"] = TK_AND;
     keywords["or"] = TK_OR;
     keywords["not"] = TK_NOT;
@@ -34,6 +37,7 @@ Scanner::Scanner() {
     operators[","] = TK_COMMA;
     operators[";"] = TK_SEMICOLON;
     operators[":"] = TK_COLON;
+    operators["."] = TK_DOT;
 
     operators["++"] = TK_INC;
     operators["--"] = TK_DEC;

@@ -20,10 +20,15 @@ set(TOKEN_SRC
 
 set(AST_SRC
     src/haard/ast/ast.cc
+    src/haard/ast/ast_n.cc
 )
 
 set(SCANNER_SRC
     src/haard/scanner/scanner.cc
+)
+
+set(PARSER_SRC
+    src/haard/parser/parser.cc
 )
 
 set(DRIVER_SRC
@@ -37,6 +42,7 @@ set(SOURCES
     ${TOKEN_SRC}
     ${AST_SRC}
     ${SCANNER_SRC}
+    ${PARSER_SRC}
     ${DRIVER_SRC}
 )
 

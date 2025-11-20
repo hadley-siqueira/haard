@@ -5,6 +5,7 @@
 
 namespace haard {
     typedef enum TokenKind {
+        TK_IMPORT,
         TK_DEF,
 
         TK_CLASS,
@@ -22,6 +23,8 @@ namespace haard {
         TK_YIELD,
         TK_CONTINUE,
         TK_BREAK,
+
+        TK_AS,
 
         TK_AND,
         TK_OR,
@@ -52,6 +55,8 @@ namespace haard {
         TK_SRA,
         TK_BEGIN_GENERIC,
         TK_END_GENERIC,
+
+        TK_DOT,
 
         TK_COMMA,
         TK_SEMICOLON,

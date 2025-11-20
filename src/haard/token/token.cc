@@ -54,6 +54,9 @@ const char* Token::get_value() {
 
 std::string Token::get_kind_as_string() {
     switch (kind) {
+        case TK_IMPORT:
+            return "TK_IMPORT";
+
         case TK_DEF:
             return "TK_DEF";
 
@@ -95,6 +98,9 @@ std::string Token::get_kind_as_string() {
 
         case TK_BREAK:
             return "TK_BREAK";
+
+        case TK_AS:
+            return "TK_AS";
 
         case TK_AND:
             return "TK_AND";
@@ -167,6 +173,9 @@ std::string Token::get_kind_as_string() {
 
         case TK_END_GENERIC:
             return "TK_END_GENERIC";
+
+        case TK_DOT:
+            return "TK_DOT";
 
         case TK_COMMA:
             return "TK_COMMA";
