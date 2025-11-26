@@ -75,6 +75,8 @@ std::vector<Token> Scanner::get_tokens(const std::string& path) {
         }
     }
 
+    start_token();
+    create_token(TK_EOF);
     return tokens;
 }
 

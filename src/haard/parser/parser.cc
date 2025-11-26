@@ -21,11 +21,19 @@ Ast* Parser::parse_module() {
     while (true) {
         if (lookahead(TK_IMPORT)) {
             mod->add_child(parse_import());
+        } else if (lookahead(TK_EOF)) {
+            break;
+        } else {
+            std::cout << "unexpected token while parsing\n";
         }
     }
+
+    return mod;
 }
 
 Ast* Parser::parse_import() {
+    std::cout << "parsing import\n";
+
     if (!match(TK_IMPORT)) {
         return nullptr;
     }
@@ -41,9 +49,13 @@ Ast* Parser::parse_import() {
     }
 
     AstN* node = new AstN(AST_IMPORT);
+    node->add_child(path);
+
+    return node;
 }
 
 Ast* Parser::parse_import_path() {
+    std::cout << "parsing import path\n";
     Ast* path = parse_identifier();
 
     if (path == nullptr) {

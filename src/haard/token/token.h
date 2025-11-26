@@ -68,6 +68,7 @@ namespace haard {
         TK_HEXADECIMAL_INTEGER,
         TK_INTEGER,
         TK_FLOAT,
+        TK_EOF,
     } TokenKind;
 
     class Token {

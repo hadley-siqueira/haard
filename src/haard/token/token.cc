@@ -204,6 +204,9 @@ std::string Token::get_kind_as_string() {
         case TK_FLOAT:
             return "TK_FLOAT";
 
+        case TK_EOF:
+            return "TK_EOF";
+
         default:
             return "TK_UNKNOWN";
     }

@@ -3,6 +3,7 @@
 
 #include <haard/driver/driver.h>
 #include <haard/scanner/scanner.h>
+#include <haard/parser/parser.h>
 
 using namespace haard;
 
@@ -32,6 +33,10 @@ void Driver::run(int argc, char** argv) {
             for (auto tk : tokens) {
                 std::cout << tk.to_json() << std::endl;
             }
+        } else {
+            Parser parser;
+
+            parser.parse_file(argv[1]);
         }
 
         ++idx;
