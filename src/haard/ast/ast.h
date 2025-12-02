@@ -1,6 +1,7 @@
 #ifndef HAARD_AST_H
 #define HAARD_AST_H
 
+#include <string>
 #include <haard/token/token.h>
 
 namespace haard{
@@ -8,6 +9,7 @@ namespace haard{
         AST_MODULE,
         AST_IMPORT,
         AST_IMPORT_PATH,
+        AST_IMPORT_ALIAS,
         AST_DEF,
         AST_CLASS,
         AST_ENUM,
@@ -29,9 +31,12 @@ namespace haard{
             void set_token(Token& token);
 
             AstKind get_kind();
+            std::string get_kind_as_string();
             Token get_token();
 
-        private:
+            virtual std::string to_json();
+
+        protected:
             AstKind kind;
             Token token;
     };

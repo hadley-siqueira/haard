@@ -28,10 +28,12 @@ Ast* Parser::parse_module() {
         }
     }
 
+    std::cout << mod->to_json();
     return mod;
 }
 
 Ast* Parser::parse_import() {
+    Ast* alias = nullptr;
     std::cout << "parsing import\n";
 
     if (!match(TK_IMPORT)) {
@@ -45,12 +47,20 @@ Ast* Parser::parse_import() {
     }
 
     if (match(TK_AS)) {
-        
+        alias = parse_identifier();
+
+        if (alias == nullptr) {
+            std::cout << "expected an alias for import, but got something else\n";
+            delete path;
+            return nullptr;
+        } else {
+            alias->set_kind(AST_IMPORT_ALIAS);
+        }
     }
 
     AstN* node = new AstN(AST_IMPORT);
     node->add_child(path);
-
+    node->add_child(alias);
     return node;
 }
 

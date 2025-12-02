@@ -1,3 +1,4 @@
+#include <sstream>
 #include <haard/ast/ast.h>
 
 using namespace haard;
@@ -28,4 +29,40 @@ AstKind Ast::get_kind() {
 
 Token Ast::get_token() {
     return token;
+}
+
+std::string Ast::to_json() {
+    std::stringstream ss;
+
+    ss << "{";
+    ss << "\"kind\": \"" << get_kind_as_string() << "\", ";
+    ss << "\"token\": " << token.to_json();
+    ss << "}";
+
+    return ss.str();
+}
+
+std::string Ast::get_kind_as_string() {
+    switch (kind) {
+        case AST_MODULE:
+            return "AST_MODULE";
+
+        case AST_IMPORT:
+            return "AST_IMPORT";
+
+        case AST_IMPORT_PATH:
+            return "AST_IMPORT_PATH";
+
+        case AST_IMPORT_ALIAS:
+            return "AST_IMPORT_ALIAS";
+
+        case AST_DEF:
+            return "AST_DEF";
+
+        case AST_IDENTIFIER:
+            return "AST_IDENTIFIER";
+
+        default:
+            return "AST_UNKNOWN";
+    }
 }

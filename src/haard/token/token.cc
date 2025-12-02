@@ -4,6 +4,15 @@
 
 using namespace haard;
 
+Token::Token() {
+    set_kind(TK_UNKNOWN);
+    set_line(0);
+    set_column(0);
+    set_offset(0);
+    set_whitespace(0);
+    set_value(nullptr);
+}
+
 void Token::set_kind(TokenKind kind) {
     this->kind = kind;
 }
@@ -220,8 +229,13 @@ std::string Token::to_json() {
         << "\"line\": " << line << ", "
         << "\"column\": " << column << ", "
         << "\"offset\": " << offset << ", "
-        << "\"whitespace\": " << whitespace << ", "
-        << "\"value\": \"" << value << "\"}";
+        << "\"whitespace\": " << whitespace;
+
+    if (value) {
+        ss << ", \"value\": \"" << value << "\"";
+    }
+
+    ss << "}";
 
     return ss.str();
 }

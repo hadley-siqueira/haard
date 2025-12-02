@@ -69,9 +69,13 @@ namespace haard {
         TK_INTEGER,
         TK_FLOAT,
         TK_EOF,
+        TK_UNKNOWN
     } TokenKind;
 
     class Token {
+        public:
+            Token();
+
         public:
             void set_kind(TokenKind kind);
             void set_offset(unsigned int offset);

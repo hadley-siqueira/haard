@@ -12,7 +12,7 @@ Driver::Driver() {
 }
 
 void Driver::run(int argc, char** argv) {
-    int idx = 0;
+    int idx = 1;
 
     while (idx < argc) {
         cmd = argv[idx];
@@ -36,7 +36,7 @@ void Driver::run(int argc, char** argv) {
         } else {
             Parser parser;
 
-            parser.parse_file(argv[1]);
+            delete parser.parse_file(argv[1]);
         }
 
         ++idx;
