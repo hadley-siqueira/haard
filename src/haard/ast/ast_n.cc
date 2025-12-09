@@ -23,6 +23,13 @@ void AstN::add_child(Ast* child) {
     }
 }
 
+void AstN::add_child_as(AstKind kind, Ast* child) {
+    if (child) {
+        child->set_kind(kind);
+        children.push_back(child);
+    }
+}
+
 std::string AstN::to_json() {
     std::stringstream ss;
 

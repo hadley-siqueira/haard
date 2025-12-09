@@ -21,6 +21,8 @@ Ast* Parser::parse_module() {
     while (true) {
         if (lookahead(TK_IMPORT)) {
             mod->add_child(parse_import());
+        } else if (lookahead(TK_DEF)) {
+            mod->add_child(parse_function());
         } else if (lookahead(TK_EOF)) {
             break;
         } else {
@@ -34,7 +36,6 @@ Ast* Parser::parse_module() {
 
 Ast* Parser::parse_import() {
     Ast* alias = nullptr;
-    std::cout << "parsing import\n";
 
     if (!match(TK_IMPORT)) {
         return nullptr;
@@ -65,7 +66,6 @@ Ast* Parser::parse_import() {
 }
 
 Ast* Parser::parse_import_path() {
-    std::cout << "parsing import path\n";
     Ast* path = parse_identifier();
 
     if (path == nullptr) {
@@ -91,6 +91,28 @@ Ast* Parser::parse_import_path() {
     return node;
 }
 
+Ast* Parser::parse_function() {
+    if (!match(TK_DEF)) {
+        return nullptr;
+    }
+
+    auto node = new AstN(AST_DEF);
+    auto name = parse_identifier();
+
+    if (name == nullptr) {
+        std::cout << "Error: missing name in function definition\n";
+        delete node;
+        return nullptr;
+    }
+
+    node->add_child_as(AST_DEF_NAME, name);
+
+    auto type_parameters = parse_type_parameters();
+    node->add_child(type_parameters);
+
+    return node;
+}
+
 Ast* Parser::parse_identifier() {
     if (match(TK_IDENTIFIER)) {
         Ast* node = new Ast(AST_IDENTIFIER);
@@ -99,6 +121,43 @@ Ast* Parser::parse_identifier() {
     }
 
     return nullptr;
+}
+
+Ast* Parser::parse_type_parameters() {
+    if (!match(TK_BEGIN_GENERIC)) {
+        return nullptr;
+    }
+
+    auto node = new AstN(AST_TYPE_PARAMETERS);
+    auto id = parse_identifier();
+
+    if (id == nullptr) {
+        std::cout << "Error while parsing generic: expected an identifier\n";
+        delete node;
+        return nullptr;
+    }
+
+    node->add_child(id);
+
+    while (match(TK_COMMA)) {
+        id = parse_identifier();
+
+        if (id == nullptr) {
+            std::cout << "Error: missing identifier after ',' in generics\n";
+            delete node;
+            return nullptr;
+        }
+
+        node->add_child(id);
+    }
+
+    if (!match(TK_END_GENERIC)) {
+        std::cout << "Error: missing '>' ending generic\n";
+        delete node;
+        return nullptr;
+    }
+
+    return node;
 }
 
 bool Parser::match(TokenKind kind) {
@@ -112,8 +171,33 @@ bool Parser::match(TokenKind kind) {
 }
 
 bool Parser::lookahead(TokenKind kind) {
-    if (current_token_idx < tokens.size()) {
+    if (has_next()) {
         return tokens[current_token_idx].get_kind() == kind;
+    }
+
+    return false;
+}
+
+bool Parser::has_next() {
+    return current_token_idx < tokens.size();
+}
+
+void Parser::indent(unsigned int level) {
+    indentation_stack.push(level);
+}
+
+void Parser::dedent() {
+    if (indentation_stack.size() > 0) {
+        indentation_stack.pop();
+    }
+}
+
+bool Parser::is_indented() {
+    if (has_next()) {
+        auto top = indentation_stack.top();
+        auto current = tokens[current_token_idx].get_whitespace();
+
+        return top < current;
     }
 
     return false;

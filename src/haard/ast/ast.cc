@@ -66,3 +66,11 @@ std::string Ast::get_kind_as_string() {
             return "AST_UNKNOWN";
     }
 }
+void Ast::add_child(Ast* child) {
+
+}
+
+void Ast::add_child_as(AstKind kind, Ast* child) {
+
+}
+

@@ -11,6 +11,8 @@ namespace haard{
         AST_IMPORT_PATH,
         AST_IMPORT_ALIAS,
         AST_DEF,
+        AST_DEF_NAME,
+        AST_TYPE_PARAMETERS,
         AST_CLASS,
         AST_ENUM,
         AST_UNION,
@@ -35,6 +37,8 @@ namespace haard{
             Token get_token();
 
             virtual std::string to_json();
+            virtual void add_child(Ast* child);
+            virtual void add_child_as(AstKind kind, Ast* child);
 
         protected:
             AstKind kind;
