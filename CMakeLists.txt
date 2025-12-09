@@ -3,7 +3,7 @@ project(hdc)
 
 include_directories(src)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -g")
 
 set(STRING_POOL_SRC
     src/haard/string_pool/string_pool.cc
@@ -31,6 +31,10 @@ set(PARSER_SRC
     src/haard/parser/parser.cc
 )
 
+set(PRINTERS_SRC
+    src/haard/printers/pretty_printer.cc
+)
+
 set(DRIVER_SRC
     src/haard/driver/driver.cc
 )
@@ -43,6 +47,7 @@ set(SOURCES
     ${AST_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
+    ${PRINTERS_SRC}
     ${DRIVER_SRC}
 )
 

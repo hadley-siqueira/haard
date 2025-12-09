@@ -30,6 +30,32 @@ void AstN::add_child_as(AstKind kind, Ast* child) {
     }
 }
 
+std::vector<Ast*> AstN::get_children() {
+    return children;
+}
+
+std::vector<Ast*> AstN::get_children(AstKind kind) {
+    std::vector<Ast*> tmp;
+
+    for (auto child : children) {
+        if (child->get_kind() == kind) {
+            tmp.push_back(child);
+        }
+    }
+
+    return tmp;
+}
+
+Ast* AstN::get_child(AstKind kind) {
+    for (auto child : children) {
+        if (child->get_kind() == kind) {
+            return child;
+        }
+    }
+
+    return nullptr;
+}
+
 std::string AstN::to_json() {
     std::stringstream ss;
 

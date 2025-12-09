@@ -2,6 +2,7 @@
 #define HAARD_AST_H
 
 #include <string>
+#include <vector>
 #include <haard/token/token.h>
 
 namespace haard{
@@ -34,11 +35,14 @@ namespace haard{
 
             AstKind get_kind();
             std::string get_kind_as_string();
-            Token get_token();
+            Token& get_token();
 
             virtual std::string to_json();
             virtual void add_child(Ast* child);
             virtual void add_child_as(AstKind kind, Ast* child);
+            virtual std::vector<Ast*> get_children();
+            virtual std::vector<Ast*> get_children(AstKind kind);
+            virtual Ast* get_child(AstKind kind);
 
         protected:
             AstKind kind;

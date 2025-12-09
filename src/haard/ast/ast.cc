@@ -27,7 +27,7 @@ AstKind Ast::get_kind() {
     return kind;
 }
 
-Token Ast::get_token() {
+Token& Ast::get_token() {
     return token;
 }
 
@@ -74,3 +74,15 @@ void Ast::add_child_as(AstKind kind, Ast* child) {
 
 }
 
+std::vector<Ast*> Ast::get_children() {
+    std::vector<Ast*> tmp;
+    return tmp;
+}
+
+std::vector<Ast*> Ast::get_children(AstKind kind) {
+    return get_children();
+}
+
+Ast* Ast::get_child(AstKind kind) {
+    return nullptr;
+}

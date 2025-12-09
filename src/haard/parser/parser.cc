@@ -10,6 +10,7 @@ Ast* Parser::parse_file(const std::string& path) {
 
     tokens = sc.get_tokens(path);
     current_token_idx = 0;
+    indent(0);
 
     auto mod = parse_module();
     return mod;
@@ -54,14 +55,13 @@ Ast* Parser::parse_import() {
             std::cout << "expected an alias for import, but got something else\n";
             delete path;
             return nullptr;
-        } else {
-            alias->set_kind(AST_IMPORT_ALIAS);
         }
     }
 
     AstN* node = new AstN(AST_IMPORT);
     node->add_child(path);
-    node->add_child(alias);
+    node->add_child_as(AST_IMPORT_ALIAS, alias);
+
     return node;
 }
 
@@ -109,6 +109,10 @@ Ast* Parser::parse_function() {
 
     auto type_parameters = parse_type_parameters();
     node->add_child(type_parameters);
+
+    if (!match(TK_COLON)) {
+        std::cout << "Error: missing ':' after function name\n";
+    }
 
     return node;
 }

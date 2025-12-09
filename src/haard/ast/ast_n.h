@@ -14,6 +14,9 @@ namespace haard {
         public:
             void add_child(Ast* child);
             void add_child_as(AstKind kind, Ast* child);
+            std::vector<Ast*> get_children();
+            std::vector<Ast*> get_children(AstKind kind);
+            Ast* get_child(AstKind kind);
 
             std::string to_json();
 
