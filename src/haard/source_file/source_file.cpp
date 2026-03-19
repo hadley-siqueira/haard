@@ -12,6 +12,7 @@ void SourceFile::open(const std::filesystem::path& path) {
     // Open the file in binary mode for exact byte count and to prevent
     // issues with text file translations (e.g., \r\n to \n)
     std::ifstream file(path, std::ios::in | std::ios::binary);
+    this->path = path;
 
     if (!file) {
         throw std::runtime_error("Failed to open file: " + path.string());
@@ -30,3 +31,11 @@ void SourceFile::open(const std::filesystem::path& path) {
         throw std::runtime_error("Failed to read file: " + path.string());
     }
 };
+
+size_t SourceFile::size() {
+    return content.size();
+}
+
+char SourceFile::char_at(size_t index) {
+    return content[index];
+}

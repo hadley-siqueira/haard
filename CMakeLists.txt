@@ -13,6 +13,10 @@ set(TOKEN_SRC
     src/haard/token/token.cpp
 )
 
+set(TOKENS_SRC
+    src/haard/tokens/tokens.cpp
+)
+
 set(SCANNER_SRC
     src/haard/scanner/scanner.cpp
 )
@@ -24,6 +28,7 @@ set(CONTEXT_SRC
 set(SOURCES
     src/main.cpp
     ${TOKEN_SRC}
+    ${TOKENS_SRC}
     ${SOURCE_FILE_SRC}
     ${SCANNER_SRC}
     ${CONTEXT_SRC}

@@ -9,8 +9,13 @@ namespace haard {
         public:
             void open(const std::filesystem::path& path);
 
+            size_t size();
+
+            char char_at(size_t index);
+
         private:
             std::string content;
+            std::filesystem::path path;
     };
 }
 
