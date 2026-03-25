@@ -9,13 +9,20 @@ namespace haard {
         TK_DEF,
         TK_CLASS,
         TK_ENUM,
-        TK_UNION
+        TK_UNION,
+        TK_IDENTIFIER,
     } TokenKind;
 
     class Token {
         public:
             void set_kind(TokenKind kind);
             TokenKind get_kind();
+
+            void set_offset(u32 offset);
+            u32 get_offset();
+
+            void set_length(u16 length);
+            u16 get_length();
 
         private:
             u8 kind;

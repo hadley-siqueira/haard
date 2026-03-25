@@ -6,22 +6,36 @@
 namespace haard {
     class Scanner {
         public:
-            void get_tokens(std::filesystem::path& path);
-            void set_context(Context& context);
+            Scanner();
+
+        public:
+            void get_tokens(const std::filesystem::path& path);
+            void set_context(Context* context);
 
         public:
             void get_token();
             bool has_next();
 
         private:
+            void get_keyword_or_identifier();
+
+        private:
+            void start_token();
+            void end_token();
+            void create_token(TokenKind kind);
+
+            void advance();
             bool lookahead(char c);
             bool is_alpha(int offset = 0);
             bool is_digit(int offset = 0);
+            bool is_alphanum(int offset = 0);
 
         private:
-            Tokens& tokens;
-            SourceFile& source_file;
-            Context& context;
+            Tokens* tokens;
+            SourceFile* source_file;
+            Context* context;
+            u32 token_offset;
+            u32 token_length;
             size_t idx;
     };
 }

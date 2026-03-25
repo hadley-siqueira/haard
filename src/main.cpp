@@ -1,10 +1,15 @@
 #include <iostream>
 #include <haard/source_file/source_file.h>
+#include <haard/scanner/scanner.h>
+#include <haard/context/context.h>
 
 int main(int argc, char* argv[]) {
-    haard::SourceFile sf;
+    haard::Context ctx;
+    haard::Scanner sc;
+    sc.set_context(&ctx);
 
-    sf.open(argv[1]);
+    sc.get_tokens(argv[1]);
+    ctx.inspect_tokens();
 
     return 0;
 }

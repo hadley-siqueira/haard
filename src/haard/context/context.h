@@ -7,8 +7,11 @@
 namespace haard {
     class Context {
         public:
-            Tokens& get_tokens();
-            SourceFile& get_source_file();
+            Tokens* get_tokens();
+            SourceFile* get_source_file();
+
+        public:
+            void inspect_tokens();
 
         private:
             SourceFile source_file;

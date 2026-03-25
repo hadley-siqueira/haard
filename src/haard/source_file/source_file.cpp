@@ -37,5 +37,9 @@ size_t SourceFile::size() {
 }
 
 char SourceFile::char_at(size_t index) {
-    return content[index];
+    if (index < content.size()) {
+        return content[index];
+    }
+
+    return '\0';
 }

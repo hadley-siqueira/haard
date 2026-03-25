@@ -8,6 +8,8 @@ namespace haard {
     class Tokens {
         public:
             void reset();
+            void push(Token& token);
+            std::vector<Token>& get_tokens();
 
         private:
             std::vector<Token> tokens;
