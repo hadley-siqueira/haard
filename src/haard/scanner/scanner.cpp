@@ -24,6 +24,8 @@ void Scanner::get_tokens(const std::filesystem::path& path) {
 void Scanner::get_token() {
     if (is_alpha()) {
         get_keyword_or_identifier();
+    } else if (is_digit()) {
+        get_number();
     } else {
         advance();
     }
@@ -38,6 +40,55 @@ void Scanner::get_keyword_or_identifier() {
 
     end_token();
     create_token(TK_IDENTIFIER);
+}
+
+void Scanner::get_number() {
+    auto kind = TK_INTEGER_LITERAL;
+
+    start_token();
+
+    if (lookahead("0b")) {
+        advance(2);
+
+        if (is_binary_digit()) {
+            while (is_binary_digit() || lookahead('_')) {
+                advance();
+            }
+        } else {
+            std::cout << "Error: missing binary digits after '0b'\n";
+        }
+    } else if (lookahead("0o")) {
+        advance(2);
+
+        if (is_octal_digit()) {
+            while (is_octal_digit() || lookahead('_')) {
+                advance();
+            }
+        } else {
+            std::cout << "Error: missing octal digits after '0o'\n";
+        }
+    } else if (lookahead("0x")) {
+        advance(2);
+
+        if (is_hex_digit()) {
+            while (is_hex_digit() || lookahead('_')) {
+                advance();
+            }
+        } else {
+            std::cout << "Error: missing hexadecimal digits after '0x'\n";
+        }
+    } else {
+        while (is_digit() || lookahead('_')) {
+            advance();
+        }
+
+        if (lookahead('.') && is_digit(1) || lookahead('.', 1)) {
+
+        }
+    }
+
+    end_token();
+    create_token(kind);
 }
 
 void Scanner::set_context(Context* context) {
@@ -73,12 +124,31 @@ void Scanner::create_token(TokenKind kind) {
     tokens->push(token);
 }
 
-void Scanner::advance() {
-    ++idx;
+void Scanner::advance(int steps) {
+    idx += steps;
 }
 
 bool Scanner::lookahead(char c) {
     return has_next() && source_file->char_at(idx) == c;
+}
+
+bool Scanner::lookahead(char c, int offset) {
+    return source_file->char_at(idx + offset) == c;
+}
+
+bool Scanner::lookahead(const char* s) {
+    int offset = 0;
+
+    while (*s != '\0') {
+        if (!lookahead(*s, offset)) {
+            return false;
+        }
+
+        ++offset;
+        ++s;
+    }
+
+    return true;
 }
 
 bool Scanner::is_alpha(int offset) {
@@ -91,6 +161,24 @@ bool Scanner::is_digit(int offset) {
     char c = source_file->char_at(idx + offset);
 
     return c >= '0' && c <= '9';
+}
+
+bool Scanner::is_binary_digit(int offset) {
+    char c = source_file->char_at(idx + offset);
+
+    return c >= '0' && c <= '1';
+}
+
+bool Scanner::is_octal_digit(int offset) {
+    char c = source_file->char_at(idx + offset);
+
+    return c >= '0' && c <= '7';
+}
+
+bool Scanner::is_hex_digit(int offset) {
+    char c = source_file->char_at(idx + offset);
+
+    return c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
 }
 
 bool Scanner::is_alphanum(int offset) {

@@ -22,6 +22,6 @@ void Context::inspect_tokens() {
             std::cout << source_file.char_at(i);
         }
 
-        std::cout << '\n';
+        std::cout << "'\n";
     }
 }

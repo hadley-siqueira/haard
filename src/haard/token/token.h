@@ -10,6 +10,8 @@ namespace haard {
         TK_CLASS,
         TK_ENUM,
         TK_UNION,
+        TK_INTEGER_LITERAL,
+        TK_FLOAT_LITERAL,
         TK_IDENTIFIER,
     } TokenKind;
 

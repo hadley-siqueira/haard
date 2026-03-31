@@ -18,16 +18,23 @@ namespace haard {
 
         private:
             void get_keyword_or_identifier();
+            void get_number();
 
         private:
             void start_token();
             void end_token();
             void create_token(TokenKind kind);
 
-            void advance();
+            void advance(int steps = 1);
             bool lookahead(char c);
+            bool lookahead(char c, int offset);
+            bool lookahead(const char* s);
+
             bool is_alpha(int offset = 0);
             bool is_digit(int offset = 0);
+            bool is_binary_digit(int offset = 0);
+            bool is_octal_digit(int offset = 0);
+            bool is_hex_digit(int offset = 0);
             bool is_alphanum(int offset = 0);
 
         private:
