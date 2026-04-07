@@ -1,7 +1,33 @@
 #include <haard/scanner/scanner.h>
 #include <iostream>
+#include <unordered_map>
 
 using namespace haard;
+
+TokenKind get_token_kind(const std::string& lexeme) {
+    static const std::unordered_map<std::string, TokenKind> table = {
+        {"def", TK_DEF},
+        {"class", TK_CLASS},
+        {"enum", TK_ENUM},
+        {"union", TK_UNION},
+        {"struct", TK_STRUCT},
+        {"if", TK_IF},
+        {"elif", TK_ELIF},
+        {"else", TK_ELSE},
+        {"+", TK_PLUS},
+        {"-", TK_MINUS},
+        {"++", TK_INCREMENT},
+        {"--", TK_DECREMENT},
+    };
+
+    auto it = table.find(lexeme);
+
+    if (it != table.end()) {
+        return it->second;
+    }
+
+    return TK_UNKNOWN;
+}
 
 Scanner::Scanner() {
     tokens = nullptr;
@@ -26,6 +52,8 @@ void Scanner::get_token() {
         get_keyword_or_identifier();
     } else if (is_digit()) {
         get_number();
+    } else if (is_operator()) {
+        get_operator();
     } else {
         advance();
     }
@@ -39,7 +67,14 @@ void Scanner::get_keyword_or_identifier() {
     }
 
     end_token();
-    create_token(TK_IDENTIFIER);
+    auto lexeme = get_lexeme_from_token();
+    auto kind = get_token_kind(lexeme);
+
+    if (kind == TK_UNKNOWN) {
+        kind = TK_IDENTIFIER;
+    }
+
+    create_token(kind);
 }
 
 void Scanner::get_number() {
@@ -87,6 +122,30 @@ void Scanner::get_number() {
         }
     }
 
+    end_token();
+    create_token(kind);
+}
+
+void Scanner::get_operator() {
+    std::string tmp;
+
+    for (int i = 0; i < 4; ++i) { 
+        tmp += source_file->char_at(idx + i);
+    }
+
+    while (tmp.size() > 0 && get_token_kind(tmp) == TK_UNKNOWN) {
+        tmp.pop_back();
+    }
+
+    if (tmp.size() == 0) {
+        std::cout << "Error: Something went wrong while scanning an operator\n";
+        return;
+    }
+
+    auto kind = get_token_kind(tmp);
+
+    start_token();
+    advance(tmp.size());
     end_token();
     create_token(kind);
 }
@@ -185,3 +244,24 @@ bool Scanner::is_alphanum(int offset) {
     return is_alpha(offset) || is_digit(offset);
 }
 
+bool Scanner::is_operator(int offset) {
+    char c = source_file->char_at(idx + offset);
+
+    return c == '(' || c == ')' || c == '[' || c == ']'
+        || c == '{' || c == '}' || c == '+' || c == '-'
+        || c == '*' || c == '/' || c == '%' || c == '!'
+        || c == '&' || c == '|' || c == '~' || c ==  '='
+        || c == '>' || c == '<' || c == '^' || c == '.'
+        || c == '$' || c == ':' || c == '?' || c == '@'
+        || c == ',' || c == ';';
+}
+
+std::string Scanner::get_lexeme_from_token() {
+    std::string r;
+
+    for (auto i = 0; i < token_length; ++i) {
+        r += source_file->char_at(token_offset + i);
+    }
+
+    return r;
+}

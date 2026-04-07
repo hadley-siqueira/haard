@@ -19,6 +19,7 @@ namespace haard {
         private:
             void get_keyword_or_identifier();
             void get_number();
+            void get_operator();
 
         private:
             void start_token();
@@ -36,6 +37,8 @@ namespace haard {
             bool is_octal_digit(int offset = 0);
             bool is_hex_digit(int offset = 0);
             bool is_alphanum(int offset = 0);
+            bool is_operator(int offset = 0);
+            std::string get_lexeme_from_token();
 
         private:
             Tokens* tokens;
