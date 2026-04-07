@@ -22,6 +22,6 @@ void Context::inspect_tokens() {
             std::cout << source_file.char_at(i);
         }
 
-        std::cout << "' (" << tk.get_kind() << ")\n";
+        std::cout << "' (" << tk.get_kind_as_string() << ")\n";
     }
 }

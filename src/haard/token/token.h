@@ -2,6 +2,7 @@
 #define HAARD_TOKEN_H
 
 #include <haard/haard.h>
+#include <string>
 
 namespace haard {
     typedef enum TokenKind {
@@ -17,8 +18,16 @@ namespace haard {
         TK_INTEGER_LITERAL,
         TK_FLOAT_LITERAL,
         TK_IDENTIFIER,
+        TK_BEGIN_GENERIC,
+        TK_END_GENERIC,
         TK_PLUS,
         TK_MINUS,
+        TK_EQUAL,
+        TK_NOT_EQUAL,
+        TK_LESS_THAN,
+        TK_LESS_THAN_OR_EQUAL,
+        TK_GREATER_THAN,
+        TK_GREATER_THAN_OR_EQUAL,
         TK_INCREMENT,
         TK_DECREMENT,
     } TokenKind;
@@ -27,6 +36,7 @@ namespace haard {
         public:
             void set_kind(TokenKind kind);
             TokenKind get_kind();
+            std::string get_kind_as_string();
 
             void set_offset(u32 offset);
             u32 get_offset();

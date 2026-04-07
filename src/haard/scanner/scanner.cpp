@@ -18,6 +18,12 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"-", TK_MINUS},
         {"++", TK_INCREMENT},
         {"--", TK_DECREMENT},
+        {"==", TK_EQUAL},
+        {"!=", TK_NOT_EQUAL},
+        {"<", TK_LESS_THAN},
+        {"<=", TK_LESS_THAN_OR_EQUAL},
+        {">", TK_GREATER_THAN},
+        {">=", TK_GREATER_THAN_OR_EQUAL},
     };
 
     auto it = table.find(lexeme);
@@ -36,6 +42,8 @@ Scanner::Scanner() {
     token_offset = 0;
     token_length = 0;
     idx = 0;
+    template_flag = false;
+    template_counter = 0;
 }
 
 void Scanner::get_tokens(const std::filesystem::path& path) {
@@ -75,6 +83,10 @@ void Scanner::get_keyword_or_identifier() {
     }
 
     create_token(kind);
+
+    if (lookahead('<')) {
+        template_flag = true;
+    }
 }
 
 void Scanner::get_number() {
@@ -144,6 +156,19 @@ void Scanner::get_operator() {
 
     auto kind = get_token_kind(tmp);
 
+    if (template_flag || template_counter > 0) {
+        if (lookahead('<')) {
+            kind = TK_BEGIN_GENERIC;
+            ++template_counter;
+            tmp = "<";
+        } else if (lookahead('>')) {
+            kind = TK_END_GENERIC;
+            --template_counter;
+            tmp = ">";
+        }
+    }
+
+    template_flag = false;
     start_token();
     advance(tmp.size());
     end_token();

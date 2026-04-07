@@ -46,6 +46,8 @@ namespace haard {
             Context* context;
             u32 token_offset;
             u32 token_length;
+            int template_counter;
+            bool template_flag;
             size_t idx;
     };
 }
