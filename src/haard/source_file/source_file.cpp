@@ -43,3 +43,28 @@ char SourceFile::char_at(size_t index) {
 
     return '\0';
 }
+
+std::string SourceFile::get_lines_by_index(int index, int n_before, int n_after) {
+    std::string tmp;
+    int before = index;
+    int after = index;
+
+    while (before > 0) {
+        if (content[before] == '\n') {
+            ++before;
+            break;
+        }
+
+        --before;
+    }
+
+    while (after < content.size()) {
+        if (content[after] == '\n') {
+            break;
+        }
+
+        ++after;
+    }
+
+    return content.substr(before, after);
+}

@@ -26,11 +26,13 @@ namespace haard {
             void end_token();
             void create_token(TokenKind kind);
 
-            void advance(int steps = 1);
+            void advance(int steps);
+            void advance();
             bool lookahead(char c);
             bool lookahead(char c, int offset);
             bool lookahead(const char* s);
 
+            bool is_newline();
             bool is_alpha(int offset = 0);
             bool is_digit(int offset = 0);
             bool is_binary_digit(int offset = 0);
@@ -46,8 +48,12 @@ namespace haard {
             Context* context;
             u32 token_offset;
             u32 token_length;
+            u32 column;
+            u32 line;
+            u32 ws;
             int template_counter;
             bool template_flag;
+            bool line_start;
             size_t idx;
     };
 }

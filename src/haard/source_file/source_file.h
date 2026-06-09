@@ -12,6 +12,7 @@ namespace haard {
             size_t size();
 
             char char_at(size_t index);
+            std::string get_lines_by_index(int index, int n_before, int n_after);
 
         private:
             std::string content;

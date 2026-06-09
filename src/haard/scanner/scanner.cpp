@@ -14,8 +14,15 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"if", TK_IF},
         {"elif", TK_ELIF},
         {"else", TK_ELSE},
+        {"for", TK_FOR},
+        {"while", TK_WHILE},
+        {"true", TK_TRUE},
+        {"false", TK_FALSE},
+        {"=", TK_ASSIGNMENT},
         {"+", TK_PLUS},
         {"-", TK_MINUS},
+        {"*", TK_TIMES},
+        {"/", TK_DIVISION},
         {"++", TK_INCREMENT},
         {"--", TK_DECREMENT},
         {"==", TK_EQUAL},
@@ -24,6 +31,8 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"<=", TK_LESS_THAN_OR_EQUAL},
         {">", TK_GREATER_THAN},
         {">=", TK_GREATER_THAN_OR_EQUAL},
+        {":", TK_COLON},
+        {"@", TK_AT},
     };
 
     auto it = table.find(lexeme);
@@ -56,12 +65,16 @@ void Scanner::get_tokens(const std::filesystem::path& path) {
 }
 
 void Scanner::get_token() {
-    if (is_alpha()) {
+    if (is_newline()) {
+        advance();
+    } else if (is_alpha()) {
         get_keyword_or_identifier();
     } else if (is_digit()) {
         get_number();
     } else if (is_operator()) {
         get_operator();
+    } else if (is_newline()) {
+        advance();
     } else {
         advance();
     }
@@ -103,6 +116,9 @@ void Scanner::get_number() {
             }
         } else {
             std::cout << "Error: missing binary digits after '0b'\n";
+            auto v = source_file->get_lines_by_index(idx, 0, 0);
+            std::cout << v << std::endl;
+            // log_error(file_id, token_offset, ERR_MISSING_BINARY_DIGITS)
         }
     } else if (lookahead("0o")) {
         advance(2);
@@ -209,7 +225,40 @@ void Scanner::create_token(TokenKind kind) {
 }
 
 void Scanner::advance(int steps) {
-    idx += steps;
+    for (int i = 0; i < steps; ++i) {
+        advance();
+    }
+}
+
+void Scanner::advance() {
+    char c = source_file->char_at(idx);
+
+    if (c == '\n') {
+        column = 1;
+        line++;
+        ws = 0;
+        line_start = true;
+    } else if (c == ' ' && line_start) {
+        ws++;
+    } else if (((c >> 7) & 1) == 0) {
+        column++;
+        //value += c;
+    } else if (((c >> 6) & 0b11) == 0b10) {
+        //value += c;
+    } else if (((c >> 5) & 0b111) == 0b110) {
+        column++;
+        //value += c;
+    } else if (((c >> 4) & 0b1111) == 0b1110) {
+        column++;
+        //value += c;
+    } else if (((c >> 3) & 0b11111) == 0b11110) {
+        column++;
+        //value += c;
+    } else {
+        std::cout << "Error: unknown char = " << ((int) c) << '\n';
+    }
+
+    ++idx;
 }
 
 bool Scanner::lookahead(char c) {
@@ -233,6 +282,10 @@ bool Scanner::lookahead(const char* s) {
     }
 
     return true;
+}
+
+bool Scanner::is_newline() {
+    return source_file->char_at(idx) == '\n';
 }
 
 bool Scanner::is_alpha(int offset) {
