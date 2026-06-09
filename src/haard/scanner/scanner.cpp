@@ -6,6 +6,7 @@ using namespace haard;
 
 TokenKind get_token_kind(const std::string& lexeme) {
     static const std::unordered_map<std::string, TokenKind> table = {
+        {"import", TK_IMPORT},
         {"def", TK_DEF},
         {"class", TK_CLASS},
         {"enum", TK_ENUM},

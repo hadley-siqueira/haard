@@ -11,6 +11,10 @@ SourceFile* Context::get_source_file() {
     return &source_file;
 }
 
+Ast* Context::get_ast() {
+    return &ast;
+}
+
 void Context::inspect_tokens() {
     for (auto tk : tokens.get_tokens()) {
         auto offset = tk.get_offset();

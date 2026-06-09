@@ -2,6 +2,7 @@
 #define HAARD_CONTEXT_H
 
 #include <haard/tokens/tokens.h>
+#include <haard/ast/ast.h>
 #include <haard/source_file/source_file.h>
 
 namespace haard {
@@ -9,6 +10,7 @@ namespace haard {
         public:
             Tokens* get_tokens();
             SourceFile* get_source_file();
+            Ast* get_ast();
 
         public:
             void inspect_tokens();
@@ -16,6 +18,7 @@ namespace haard {
         private:
             SourceFile source_file;
             Tokens tokens;
+            Ast ast;
     };
 }
 

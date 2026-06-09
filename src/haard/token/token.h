@@ -7,6 +7,7 @@
 namespace haard {
     typedef enum TokenKind {
         TK_UNKNOWN = 0,
+        TK_IMPORT,
         TK_DEF,
         TK_CLASS,
         TK_ENUM,
@@ -40,6 +41,7 @@ namespace haard {
         TK_DECREMENT,
         TK_COLON,
         TK_AT,
+        TK_EOF,
     } TokenKind;
 
     class Token {

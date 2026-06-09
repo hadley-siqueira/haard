@@ -30,6 +30,7 @@ u16 Token::get_length() {
 std::string Token::get_kind_as_string() {
     static const std::unordered_map<TokenKind, std::string> table = {
         { TK_UNKNOWN, "TK_UNKNOWN" },
+        { TK_IMPORT, "TK_IMPORT" },
         { TK_DEF, "TK_DEF" },
         { TK_CLASS, "TK_CLASS" },
         { TK_ENUM, "TK_ENUM" },

@@ -7,12 +7,17 @@
 namespace haard {
     class Tokens {
         public:
+            Tokens();
+
+        public:
             void reset();
             void push(Token& token);
             std::vector<Token>& get_tokens();
+            Token& get_token(u32 index);
 
         private:
             std::vector<Token> tokens;
+            Token eof;
     };
 }
 
