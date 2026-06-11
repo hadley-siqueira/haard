@@ -19,6 +19,7 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"while", TK_WHILE},
         {"true", TK_TRUE},
         {"false", TK_FALSE},
+        {"as", TK_AS},
         {"=", TK_ASSIGNMENT},
         {"+", TK_PLUS},
         {"-", TK_MINUS},
@@ -32,6 +33,7 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"<=", TK_LESS_THAN_OR_EQUAL},
         {">", TK_GREATER_THAN},
         {">=", TK_GREATER_THAN_OR_EQUAL},
+        {".", TK_DOT},
         {":", TK_COLON},
         {"@", TK_AT},
     };

@@ -14,6 +14,10 @@ void Tokens::push(Token& token) {
     tokens.push_back(token);
 }
 
+size_t Tokens::size() {
+    return tokens.size();
+}
+
 std::vector<Token>& Tokens::get_tokens() {
     return tokens;
 }

@@ -1,4 +1,5 @@
 #include <haard/parser/parser.h>
+#include <haard/scanner/scanner.h>
 #include <iostream>
 
 using namespace haard;
@@ -14,6 +15,20 @@ void Parser::set_context(Context* context) {
 }
 
 void Parser::parse_file(const std::string& path) {
+    haard::Context ctx;
+    haard::Scanner sc;
+    sc.set_context(&ctx);
+    this->set_context(&ctx);
+    this->ast = ctx.get_ast();
+    this->tokens = ctx.get_tokens();
+
+    sc.get_tokens(path);    
+    parse_module();
+    ctx.inspect_tokens();
+    ctx.inspect_ast();
+}
+
+u32 Parser::parse_module() {
     auto mod = ast->make_node(AST_MODULE);
     u32 last_child = 0;
 
@@ -24,6 +39,8 @@ void Parser::parse_file(const std::string& path) {
             break;
         }
     }
+
+    return mod;
 }
 
 u32 Parser::parse_import() {
@@ -31,19 +48,15 @@ u32 Parser::parse_import() {
         return 0;
     }
 
+    auto node = ast->make_node(AST_IMPORT);
     auto path = parse_import_path();
 
     if (path == 0) {
+        std::cout << "Error: missing import's path. Expected an identifier but got something else";
         return 0;
     }
 
     auto alias = parse_import_alias();
-
-    if (alias != 0) {
-        
-    }
-
-    auto node = ast->make_node(AST_IMPORT);
     ast->add_child(node, path);
     ast->add_sibling(path, alias);
 
@@ -51,34 +64,61 @@ u32 Parser::parse_import() {
 }
 
 u32 Parser::parse_import_path() {
-    if (!lookahead(TK_IDENTIFIER)) {
+    u32 node = 0;
+    u32 last = 0;
+    u32 member = 0;
+
+    member = parse_import_path_member();
+
+    if (member == 0) {
         return 0;
     }
 
-    auto node = ast->make_node(AST_IMPORT_PATH);
-    match(TK_IDENTIFIER);
+    node = ast->make_node(AST_IMPORT_PATH);
+    last = ast->add_child(node, member);
 
     while (match(TK_DOT)) {
-        if (match(TK_IDENTIFIER)) {
-            ast->add_child(node, last, matched)
-        } else {
+        member = parse_import_path_member();
 
+        if (member) {
+            last = ast->add_child(node, last, member);
+        } else {
+            std::cout << "Error: expected an identifier after '.' in import's path\n";
+            return 0;
+        }
+    }
+    
+    return node;
+}
+
+u32 Parser::parse_import_path_member() {
+    if (!match(TK_IDENTIFIER)) {
+        return 0;
+    }
+
+    return ast->make_node_with_token(AST_IMPORT_PATH_MEMBER, matched);
+}
+
+
+u32 Parser::parse_import_alias() {
+    u32 node = 0;
+
+    if (match(TK_AS)) {
+        if (match(TK_IDENTIFIER)) {
+            node = ast->make_node_with_token(AST_IMPORT_ALIAS, matched);
+        } else {
+            std::cout << "Error: expected an identifier after 'as' in import's alias\n";
         }
     }
 
-    if (path == 0) {
-        std::cout << "error: missing import path";
-        return 0;
-    }
+    return node;
 }
 
 u32 Parser::parse_identifier() {
     u32 node = 0;
 
     if (match(TK_IDENTIFIER)) {
-        node = ast->make_node(AST_IDENTIFIER);
-        node->set_kind(AST_IDENTIFIER);
-        node->set_token(matched);
+        node = ast->make_node_with_token(AST_IDENTIFIER, matched);
     }
 
     return node;

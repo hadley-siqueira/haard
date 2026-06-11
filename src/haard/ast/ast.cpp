@@ -1,4 +1,5 @@
 #include <haard/ast/ast.h>
+#include <iostream>
 
 using namespace haard;
 
@@ -15,7 +16,18 @@ u32 Ast::make_node(AstNodeKind kind) {
     return nodes.size() - 1;
 }
 
+u32 Ast::make_node_with_token(AstNodeKind kind, u32 token) {
+    auto node = make_node(kind);
+    nodes[node].set_token(token);
+
+    return node;
+}
+
 u32 Ast::add_child(u32 parent, u32 child) {
+    if (child == 0) {
+        return 0;
+    }
+
     if (nodes[parent].get_children() == 0) {
         nodes[parent].set_children(child);
         return child;
@@ -53,4 +65,8 @@ void Ast::add_sibling(u32 node, u32 sibling) {
     }
 
     nodes[node].set_sibling(sibling);
+}
+
+std::vector<AstNode>& Ast::get_nodes() {
+    return nodes;
 }

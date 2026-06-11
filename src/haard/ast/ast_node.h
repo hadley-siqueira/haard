@@ -9,7 +9,7 @@ namespace haard {
         AST_MODULE,
         AST_IMPORT,
         AST_IMPORT_PATH,
-        AST_IMPORT_PATH_MEMBER,
+        AST_IMPORT_PATH_SEGMENT,
         AST_IMPORT_ALIAS,
         AST_IDENTIFIER,
     } AstNodeKind;

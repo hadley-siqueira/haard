@@ -43,6 +43,7 @@ std::string Token::get_kind_as_string() {
         { TK_WHILE, "TK_WHILE" },
         { TK_TRUE, "TK_TRUE" },
         { TK_FALSE, "TK_FALSE" },
+        { TK_AS, "TK_AS" },
         { TK_INTEGER_LITERAL, "TK_INTEGER_LITERAL" },
         { TK_FLOAT_LITERAL, "TK_FLOAT_LITERAL" },
         { TK_IDENTIFIER, "TK_IDENTIFIER" },
@@ -62,6 +63,7 @@ std::string Token::get_kind_as_string() {
         { TK_GREATER_THAN_OR_EQUAL, "TK_GREATER_THAN_OR_EQUAL" },
         { TK_INCREMENT, "TK_INCREMENT" },
         { TK_DECREMENT, "TK_DECREMENT" },
+        { TK_DOT, "." },
         { TK_COLON, ":" },
         { TK_AT, "@" },
     };

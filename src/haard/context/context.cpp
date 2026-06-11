@@ -15,6 +15,13 @@ Ast* Context::get_ast() {
     return &ast;
 }
 
+std::stringview Context::get_token_value(u32 token) {
+    auto t = tokens.get_token(token);
+    std::stringview view(source_file.get_content());
+
+    return view.substr(t.get_offset(), t.get_length());
+}
+
 void Context::inspect_tokens() {
     for (auto tk : tokens.get_tokens()) {
         auto offset = tk.get_offset();
@@ -27,5 +34,20 @@ void Context::inspect_tokens() {
         }
 
         std::cout << "' (" << tk.get_kind_as_string() << ")\n";
+    }
+}
+
+void Context::inspect_ast() {
+    u32 index = 0;
+
+    for (auto node : ast.get_nodes()) {
+        std::cout << "{\n" 
+            << "    index: " << index << ",\n"
+            << "    kind: " << node.get_kind() << ",\n"
+            << "    token: " << node.get_token() << ",\n"
+            << "    sibling: " << node.get_sibling() << ",\n"
+            << "    children: " << node.get_children() << "\n},\n";
+
+        ++index;
     }
 }

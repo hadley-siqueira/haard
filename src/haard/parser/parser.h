@@ -13,9 +13,12 @@ namespace haard {
 
         public:
             void parse_file(const std::string& path);
+            u32 parse_module();
             u32 parse_import();
             u32 parse_import_path();
+            u32 parse_import_path_member();
             u32 parse_import_alias();
+            u32 parse_identifier();
 
         public:
             bool match(TokenKind kind);

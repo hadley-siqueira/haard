@@ -12,8 +12,11 @@ namespace haard {
             SourceFile* get_source_file();
             Ast* get_ast();
 
+            std::stringview get_token_value(u32 token);
+
         public:
             void inspect_tokens();
+            void inspect_ast();
 
         private:
             SourceFile source_file;
