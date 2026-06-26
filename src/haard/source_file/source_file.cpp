@@ -32,6 +32,10 @@ void SourceFile::open(const std::filesystem::path& path) {
     }
 };
 
+std::string& SourceFile::get_content() {
+    return content;
+}
+
 size_t SourceFile::size() {
     return content.size();
 }

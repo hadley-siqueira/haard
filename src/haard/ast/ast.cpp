@@ -70,3 +70,8 @@ void Ast::add_sibling(u32 node, u32 sibling) {
 std::vector<AstNode>& Ast::get_nodes() {
     return nodes;
 }
+
+
+AstNode* Ast::get_node(u32 index) {
+    return &nodes[index];
+}

@@ -14,6 +14,8 @@ namespace haard {
             char char_at(size_t index);
             std::string get_lines_by_index(int index, int n_before, int n_after);
 
+            std::string& get_content();
+
         private:
             std::string content;
             std::filesystem::path path;

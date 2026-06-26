@@ -18,6 +18,8 @@ namespace haard {
 
             std::vector<AstNode>& get_nodes();
 
+            AstNode* get_node(u32 index);
+
         private:
             std::vector<AstNode> nodes;
     };

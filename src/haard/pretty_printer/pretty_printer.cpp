@@ -1,6 +1,16 @@
+#include <iostream>
 #include <haard/pretty_printer/pretty_printer.h>
 
 using namespace haard;
+
+PrettyPrinter::PrettyPrinter() {
+    set_context(nullptr);
+}
+
+void PrettyPrinter::print() {
+    print_node(1);
+    std::cout << output.str() << std::endl;
+}
 
 void PrettyPrinter::print_node(u32 node) {
     if (node == 0) {
@@ -21,11 +31,19 @@ void PrettyPrinter::print_node(u32 node) {
         case AST_IMPORT_PATH:
             print_import_path(node);
             break;
+
+        case AST_IMPORT_PATH_SEGMENT:
+            print_import_path_segment(node);
+            break;
+
+        case AST_IMPORT_ALIAS:
+            print_import_alias(node);
+            break;
     }
 }
 
 void PrettyPrinter::print_module(u32 node) {
-    print_children(node);
+    print_children_joined(node, "\n");
 }
 
 void PrettyPrinter::print_import(u32 node) {
@@ -34,7 +52,7 @@ void PrettyPrinter::print_import(u32 node) {
 }
 
 void PrettyPrinter::print_import_path(u32 node) {
-    print_children_joined(node, ".");:
+    print_children_joined(node, ".");
 }
 
 void PrettyPrinter::print_import_path_segment(u32 node) {
@@ -75,9 +93,15 @@ void PrettyPrinter::print_node_token(u32 node) {
 }
 
 void PrettyPrinter::print_token(u32 token) {
-    print_string(ctx->get_token_value(token));
+    print_string(context->get_token_value(token));
 }
 
-void PrettyPrinter::print_string(const std::string& s) {
+void PrettyPrinter::print_string(const std::string_view& s) {
     output << s;
+}
+
+
+void PrettyPrinter::set_context(Context* context) {
+    this->context = context;
+    this->ast = context->get_ast();
 }

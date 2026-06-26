@@ -7,6 +7,11 @@
 namespace haard {
     class PrettyPrinter {
         public:
+            PrettyPrinter();
+
+        public:
+            void print();
+
             void print_node(u32 node);
             void print_module(u32 node);
 
@@ -21,10 +26,15 @@ namespace haard {
             void print_node_token(u32 node);
             void print_token(u32 token);
 
-            void print_string(const std::string& s);
+            void print_string(const std::string_view& s);
+
+        public:
+            void set_context(Context* context);
 
         private:
             std::stringstream output;
+            Context* context;
+            Ast* ast;
     };
 }
 

@@ -15,17 +15,13 @@ void Parser::set_context(Context* context) {
 }
 
 void Parser::parse_file(const std::string& path) {
-    haard::Context ctx;
     haard::Scanner sc;
-    sc.set_context(&ctx);
-    this->set_context(&ctx);
-    this->ast = ctx.get_ast();
-    this->tokens = ctx.get_tokens();
+    sc.set_context(context);
+    this->ast = context->get_ast();
+    this->tokens = context->get_tokens();
 
     sc.get_tokens(path);    
     parse_module();
-    ctx.inspect_tokens();
-    ctx.inspect_ast();
 }
 
 u32 Parser::parse_module() {
@@ -35,6 +31,8 @@ u32 Parser::parse_module() {
     while (true) {
         if (lookahead(TK_IMPORT)) {
             last_child = ast->add_child(mod, last_child, parse_import());
+        } else if (lookahead(TK_LET)) {
+            last_child = ast->add_child(mod, last_child, parse_variable());
         } else {
             break;
         }
@@ -96,7 +94,7 @@ u32 Parser::parse_import_path_member() {
         return 0;
     }
 
-    return ast->make_node_with_token(AST_IMPORT_PATH_MEMBER, matched);
+    return ast->make_node_with_token(AST_IMPORT_PATH_SEGMENT, matched);
 }
 
 
@@ -112,6 +110,10 @@ u32 Parser::parse_import_alias() {
     }
 
     return node;
+}
+
+u32 Parser::parse_variable() {
+
 }
 
 u32 Parser::parse_identifier() {

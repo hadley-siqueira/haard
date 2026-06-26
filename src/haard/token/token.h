@@ -18,6 +18,7 @@ namespace haard {
         TK_ELSE,
         TK_FOR,
         TK_WHILE,
+        TK_LET,
         TK_TRUE,
         TK_FALSE,
         TK_AS,

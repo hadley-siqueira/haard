@@ -15,9 +15,9 @@ Ast* Context::get_ast() {
     return &ast;
 }
 
-std::stringview Context::get_token_value(u32 token) {
+std::string_view Context::get_token_value(u32 token) {
     auto t = tokens.get_token(token);
-    std::stringview view(source_file.get_content());
+    std::string_view view(source_file.get_content());
 
     return view.substr(t.get_offset(), t.get_length());
 }

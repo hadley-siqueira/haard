@@ -41,6 +41,7 @@ std::string Token::get_kind_as_string() {
         { TK_ELSE, "TK_ELSE" },
         { TK_FOR, "TK_FOR" },
         { TK_WHILE, "TK_WHILE" },
+        { TK_LET, "TK_LET" },
         { TK_TRUE, "TK_TRUE" },
         { TK_FALSE, "TK_FALSE" },
         { TK_AS, "TK_AS" },

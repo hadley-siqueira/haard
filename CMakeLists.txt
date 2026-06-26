@@ -30,6 +30,10 @@ set(PARSER_SRC
     src/haard/parser/parser.cpp
 )
 
+set(PRETTY_SRC
+    src/haard/pretty_printer/pretty_printer.cpp
+)
+
 set(CONTEXT_SRC
     src/haard/context/context.cpp
 )
@@ -44,6 +48,7 @@ set(SOURCES
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${CONTEXT_SRC}
+    ${PRETTY_SRC}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
