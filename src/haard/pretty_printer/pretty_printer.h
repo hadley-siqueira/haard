@@ -20,6 +20,16 @@ namespace haard {
             void print_import_path_segment(u32 node);
             void print_import_alias(u32 node);
 
+            void print_let_declaration(u32 node);
+
+            void print_binding(u32 node);
+            void print_binding_name(u32 node);
+            void print_binding_type(u32 node);
+            void print_binding_expression(u32 node);
+
+            void print_identifier(u32 node);
+
+        public:
             void print_children(u32 node);
             void print_children_joined(u32 node, const std::string& sep);
 

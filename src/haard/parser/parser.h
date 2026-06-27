@@ -18,7 +18,17 @@ namespace haard {
             u32 parse_import_path();
             u32 parse_import_path_member();
             u32 parse_import_alias();
-            u32 parse_variable();
+
+            u32 parse_let_declaration();
+
+            u32 parse_binding();
+            u32 parse_binding_name();
+            u32 parse_binding_type();
+            u32 parse_binding_expression();
+
+            u32 parse_type();
+            u32 parse_expression();
+
             u32 parse_identifier();
 
         public:

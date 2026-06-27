@@ -11,6 +11,13 @@ namespace haard {
         AST_IMPORT_PATH,
         AST_IMPORT_PATH_SEGMENT,
         AST_IMPORT_ALIAS,
+        AST_LET_DECLARATION,
+        AST_CONST_DECLARATION,
+        AST_PARAM,
+        AST_BINDING,
+        AST_BINDING_NAME,
+        AST_BINDING_TYPE,
+        AST_BINDING_EXPRESSION,
         AST_IDENTIFIER,
     } AstNodeKind;
 
@@ -37,7 +44,6 @@ namespace haard {
             u32 sibling;
             u32 children;
     };
-
 }
 
 #endif

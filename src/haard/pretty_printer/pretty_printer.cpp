@@ -39,6 +39,30 @@ void PrettyPrinter::print_node(u32 node) {
         case AST_IMPORT_ALIAS:
             print_import_alias(node);
             break;
+
+        case AST_LET_DECLARATION:
+            print_let_declaration(node);
+            break;
+
+        case AST_BINDING:
+            print_binding(node);
+            break;
+
+        case AST_BINDING_NAME:
+            print_binding_name(node);
+            break;
+
+        case AST_BINDING_TYPE:
+            print_binding_type(node);
+            break;
+
+        case AST_BINDING_EXPRESSION:
+            print_binding_expression(node);
+            break;
+
+        case AST_IDENTIFIER:
+            print_identifier(node);
+            break;
     }
 }
 
@@ -61,6 +85,33 @@ void PrettyPrinter::print_import_path_segment(u32 node) {
 
 void PrettyPrinter::print_import_alias(u32 node) {
     print_string(" as ");
+    print_node_token(node);
+}
+
+void PrettyPrinter::print_let_declaration(u32 node) {
+    print_string("let ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_binding(u32 node) {
+    print_children(node);
+}
+
+void PrettyPrinter::print_binding_name(u32 node) {
+    print_children(node);
+}
+
+void PrettyPrinter::print_binding_type(u32 node) {
+    print_string(" : ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_binding_expression(u32 node) {
+    print_string(" = ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_identifier(u32 node) {
     print_node_token(node);
 }
 

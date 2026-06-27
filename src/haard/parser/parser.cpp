@@ -32,7 +32,7 @@ u32 Parser::parse_module() {
         if (lookahead(TK_IMPORT)) {
             last_child = ast->add_child(mod, last_child, parse_import());
         } else if (lookahead(TK_LET)) {
-            last_child = ast->add_child(mod, last_child, parse_variable());
+            last_child = ast->add_child(mod, last_child, parse_let_declaration());
         } else {
             break;
         }
@@ -112,8 +112,89 @@ u32 Parser::parse_import_alias() {
     return node;
 }
 
-u32 Parser::parse_variable() {
+u32 Parser::parse_let_declaration() {
+    u32 node = 0;
 
+    if (!match(TK_LET)) {
+        return 0;
+    }
+
+    node = ast->make_node_with_token(AST_LET_DECLARATION, matched);
+    auto binding = parse_binding();
+
+    if (binding == 0) {
+        return 0;
+    }
+
+    ast->add_child(node, binding);
+    return node;
+}
+
+u32 Parser::parse_binding() {
+    auto node = ast->make_node(AST_BINDING);
+    auto name = parse_binding_name();
+    auto type = parse_binding_type();
+    auto expr = parse_binding_expression();
+
+    if (name == 0) {
+        return 0;
+    }
+
+    auto last = ast->add_child(node, name);
+
+    if (type != 0) {
+        ast->add_child(node, last, type);
+    }
+
+    if (expr != 0) {
+        ast->add_child(node, last, expr);
+    }
+
+    return node;
+}
+
+u32 Parser::parse_binding_type() {
+    if (!match(TK_COLON)) {
+        return 0;
+    }
+    
+    u32 node = ast->make_node(AST_BINDING_TYPE);
+    u32 type = parse_type();
+
+    if (type == 0) {
+        return 0;
+    }
+
+    ast->add_child(node, type);
+    return node;
+}
+
+u32 Parser::parse_binding_expression() {
+    if (!match(TK_ASSIGNMENT)) {
+        return 0;
+    }
+
+    u32 node = ast->make_node(AST_BINDING_EXPRESSION);
+    u32 expr = parse_expression();
+
+    if (expr == 0) {
+        return 0;
+    }
+
+    ast->add_child(node, expr);
+    return node;
+}
+
+u32 Parser::parse_binding_name() {
+    return parse_identifier();
+}
+
+u32 Parser::parse_type() {
+    return parse_identifier();
+}
+
+u32 Parser::parse_expression() {
+    return parse_identifier();
 }
 
 u32 Parser::parse_identifier() {
