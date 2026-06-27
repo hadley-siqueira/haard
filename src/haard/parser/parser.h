@@ -20,6 +20,7 @@ namespace haard {
             u32 parse_import_alias();
 
             u32 parse_let_declaration();
+            u32 parse_const_declaration();
 
             u32 parse_binding();
             u32 parse_binding_name();

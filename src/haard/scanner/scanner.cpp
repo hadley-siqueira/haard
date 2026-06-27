@@ -18,6 +18,7 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"for", TK_FOR},
         {"while", TK_WHILE},
         {"let", TK_LET},
+        {"const", TK_CONST},
         {"true", TK_TRUE},
         {"false", TK_FALSE},
         {"as", TK_AS},

@@ -33,6 +33,8 @@ u32 Parser::parse_module() {
             last_child = ast->add_child(mod, last_child, parse_import());
         } else if (lookahead(TK_LET)) {
             last_child = ast->add_child(mod, last_child, parse_let_declaration());
+        } else if (lookahead(TK_CONST)) {
+            last_child = ast->add_child(mod, last_child, parse_const_declaration());
         } else {
             break;
         }
@@ -130,6 +132,24 @@ u32 Parser::parse_let_declaration() {
     return node;
 }
 
+u32 Parser::parse_const_declaration() {
+    u32 node = 0;
+
+    if (!match(TK_CONST)) {
+        return 0;
+    }
+
+    node = ast->make_node_with_token(AST_CONST_DECLARATION, matched);
+    auto binding = parse_binding();
+
+    if (binding == 0) {
+        return 0;
+    }
+
+    ast->add_child(node, binding);
+    return node;
+}
+
 u32 Parser::parse_binding() {
     auto node = ast->make_node(AST_BINDING);
     auto name = parse_binding_name();
@@ -141,14 +161,8 @@ u32 Parser::parse_binding() {
     }
 
     auto last = ast->add_child(node, name);
-
-    if (type != 0) {
-        ast->add_child(node, last, type);
-    }
-
-    if (expr != 0) {
-        ast->add_child(node, last, expr);
-    }
+    last = ast->add_child(node, last, type);
+    last = ast->add_child(node, last, expr);
 
     return node;
 }

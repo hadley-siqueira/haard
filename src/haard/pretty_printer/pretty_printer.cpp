@@ -44,6 +44,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_let_declaration(node);
             break;
 
+        case AST_CONST_DECLARATION:
+            print_const_declaration(node);
+            break;
+
         case AST_BINDING:
             print_binding(node);
             break;
@@ -90,6 +94,11 @@ void PrettyPrinter::print_import_alias(u32 node) {
 
 void PrettyPrinter::print_let_declaration(u32 node) {
     print_string("let ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_const_declaration(u32 node) {
+    print_string("const ");
     print_children(node);
 }
 

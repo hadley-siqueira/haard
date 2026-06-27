@@ -21,6 +21,7 @@ namespace haard {
             void print_import_alias(u32 node);
 
             void print_let_declaration(u32 node);
+            void print_const_declaration(u32 node);
 
             void print_binding(u32 node);
             void print_binding_name(u32 node);
