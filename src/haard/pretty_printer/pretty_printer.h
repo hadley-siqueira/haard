@@ -28,6 +28,8 @@ namespace haard {
             void print_binding_type(u32 node);
             void print_binding_expression(u32 node);
 
+            void print_plus_expression(u32 node);
+            void print_minus_expression(u32 node);
             void print_identifier(u32 node);
 
         public:

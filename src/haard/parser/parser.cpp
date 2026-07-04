@@ -208,7 +208,78 @@ u32 Parser::parse_type() {
 }
 
 u32 Parser::parse_expression() {
-    return parse_identifier();
+    return parse_arith_expression();
+}
+
+u32 Parser::parse_arith_expression() {
+    u32 left = 0;
+    u32 right = 0;
+    u32 last = 0;
+    u32 node = parse_primary_expression();
+
+    if (node == 0) {
+        return 0;
+    }
+
+    while (true) {
+        if (match(TK_PLUS)) {
+            left = node;
+            node = ast->make_node_with_token(AST_PLUS, matched);
+            last = ast->add_child(node, left);
+            right = parse_primary_expression();
+
+            if (right == 0) {
+                std::cout << "error: missing right expr in '+'\n";
+                return 0;
+            } else {
+                ast->add_child(node, last, right);
+            }
+        } else if (match(TK_MINUS)) {
+            left = node;
+            node = ast->make_node_with_token(AST_MINUS, matched);
+            last = ast->add_child(node, left);
+            right = parse_primary_expression();
+
+            if (right == 0) {
+                std::cout << "error: missing right expr in '-'\n";
+                return 0;
+            } else {
+                ast->add_child(node, last, right);
+            }
+        } else {
+            break;
+        }
+    }
+
+    return node;
+}
+
+u32 Parser::parse_primary_expression() {
+    if (lookahead(TK_IDENTIFIER) || lookahead(TK_SCOPE)) {
+        return parse_scoped_identifier();
+    }
+
+    return 0;
+}
+
+u32 Parser::parse_scoped_identifier() {
+    u32 first = parse_identifier_as(AST_);
+
+    if (first == 0) {
+        return 0;
+    }
+
+    ast->make_node_with_token(AST_
+}
+
+u32 Parser::parse_identifier_as(AstNodeKind kind) {
+    u32 node = parse_identifier();
+
+    if (node != 0) {
+        ast->set_node_kind(node, kind);
+    }
+
+    return node;
 }
 
 u32 Parser::parse_identifier() {

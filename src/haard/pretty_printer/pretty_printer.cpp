@@ -64,6 +64,14 @@ void PrettyPrinter::print_node(u32 node) {
             print_binding_expression(node);
             break;
 
+        case AST_PLUS:
+            print_plus_expression(node);
+            break;
+
+        case AST_MINUS:
+            print_minus_expression(node);
+            break;
+
         case AST_IDENTIFIER:
             print_identifier(node);
             break;
@@ -118,6 +126,14 @@ void PrettyPrinter::print_binding_type(u32 node) {
 void PrettyPrinter::print_binding_expression(u32 node) {
     print_string(" = ");
     print_children(node);
+}
+
+void PrettyPrinter::print_plus_expression(u32 node) {
+    print_children_joined(node, " + ");
+}
+
+void PrettyPrinter::print_minus_expression(u32 node) {
+    print_children_joined(node, " - ");
 }
 
 void PrettyPrinter::print_identifier(u32 node) {

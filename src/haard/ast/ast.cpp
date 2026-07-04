@@ -59,6 +59,12 @@ u32 Ast::add_child(u32 parent, u32 last_child, u32 child) {
     return child;
 }
 
+void Ast::set_node_kind(u32 node, AstNodeKind kind) {
+    if (node != 0 && node < nodes.size()) {
+        nodes[node].set_kind(kind);
+    }
+}
+
 void Ast::add_sibling(u32 node, u32 sibling) {
     if (sibling == 0) {
         return;

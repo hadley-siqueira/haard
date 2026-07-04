@@ -22,13 +22,19 @@ namespace haard {
             u32 parse_let_declaration();
             u32 parse_const_declaration();
 
+            u32 parse_function_declaration();
+
             u32 parse_binding();
             u32 parse_binding_name();
             u32 parse_binding_type();
             u32 parse_binding_expression();
 
             u32 parse_type();
+
             u32 parse_expression();
+            u32 parse_arith_expression();
+            u32 parse_primary_expression();
+            u32 parse_scoped_identifier();
 
             u32 parse_identifier();
 

@@ -16,6 +16,8 @@ namespace haard {
             u32 add_child(u32 parent, u32 last_child, u32 child);
             void add_sibling(u32 node, u32 sibling);
 
+            void set_node_kind(u32 node, AstNodeKind kind);
+
             std::vector<AstNode>& get_nodes();
 
             AstNode* get_node(u32 index);
