@@ -52,3 +52,40 @@ set(SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+
+# Formatacao de codigo com clang-format.
+# Use -DCLANG_FORMAT_EXECUTABLE=/caminho/para/clang-format para escolher outro binario.
+find_program(CLANG_FORMAT_EXECUTABLE
+    NAMES clang-format clang-format-18 clang-format-17
+)
+
+file(GLOB_RECURSE FORMAT_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/*.h
+)
+
+if(CLANG_FORMAT_EXECUTABLE)
+    # make format: reescreve os fontes no estilo de .clang-format
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_EXECUTABLE} -i --style=file ${FORMAT_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Formatando os fontes com clang-format"
+        VERBATIM
+    )
+
+    # make format-check: nao altera nada, falha se algo estiver fora do padrao
+    add_custom_target(format-check
+        COMMAND ${CLANG_FORMAT_EXECUTABLE} --dry-run -Werror --style=file ${FORMAT_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Verificando a formatacao dos fontes"
+        VERBATIM
+    )
+else()
+    add_custom_target(format
+        COMMAND ${CMAKE_COMMAND} -E echo "clang-format nao encontrado. Instale com: sudo apt install clang-format"
+        COMMAND ${CMAKE_COMMAND} -E false
+        VERBATIM
+    )
+
+    add_custom_target(format-check DEPENDS format)
+endif()

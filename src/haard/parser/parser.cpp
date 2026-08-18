@@ -44,21 +44,29 @@ u32 Parser::parse_module() {
 }
 
 u32 Parser::parse_import() {
-    if (!match(TK_IMPORT)) {
-        return 0;
-    }
+    u32 token = 0;
+    u32 path = 0;
+    u32 alias = 0;
 
-    auto node = ast->make_node(AST_IMPORT);
+    auto token = expect_token(TK_IMPORT);
     auto path = parse_import_path();
 
-    if (path == 0) {
-        std::cout << "Error: missing import's path. Expected an identifier but got something else";
-        return 0;
+    if (lookahead(TK_AS)) {
+        alias = parse_import_alias();
     }
 
-    auto alias = parse_import_alias();
-    ast->add_child(node, path);
-    ast->add_sibling(path, alias);
+    return make_import(token, path, alias);;
+}
+
+// import foo.
+//            ^ Expected an <identifier>
+
+u32 make_import(u32 token, u32 path, u32 alias) {
+    u32 node = ast_factory->make_node(AST_IMPORT, token);
+    u32 last = 0;
+
+    ast_factory->add_child(node, last, path);
+    ast_factory->add_child(node, last, alias);
 
     return node;
 }
@@ -68,17 +76,15 @@ u32 Parser::parse_import_path() {
     u32 last = 0;
     u32 member = 0;
 
-    member = parse_import_path_member();
+    builder.start();
 
-    if (member == 0) {
-        return 0;
-    }
+    member = parse_identifier();
 
     node = ast->make_node(AST_IMPORT_PATH);
     last = ast->add_child(node, member);
 
     while (match(TK_DOT)) {
-        member = parse_import_path_member();
+        member = parse_identifier();
 
         if (member) {
             last = ast->add_child(node, last, member);
@@ -88,7 +94,8 @@ u32 Parser::parse_import_path() {
         }
     }
     
-    return node;
+    builder.finish();
+    return builder.make_import_path();
 }
 
 u32 Parser::parse_import_path_member() {
@@ -263,13 +270,21 @@ u32 Parser::parse_primary_expression() {
 }
 
 u32 Parser::parse_scoped_identifier() {
-    u32 first = parse_identifier_as(AST_);
+    u32 alias;
+    u32 oper;
+    u32 name;
 
-    if (first == 0) {
-        return 0;
+    name = expect_token(TK_IDENTIFIER);
+
+    if (match(TK_SCOPE)) {
+        oper = matched;
+        alias = name;
+        auto name = expect_token(TK_SCOPE);
     }
 
-    ast->make_node_with_token(AST_
+    auto id = expect_token(TK_IDENTIFIER);
+
+    return make_binary(oper, alias, id);
 }
 
 u32 Parser::parse_identifier_as(AstNodeKind kind) {
@@ -283,13 +298,46 @@ u32 Parser::parse_identifier_as(AstNodeKind kind) {
 }
 
 u32 Parser::parse_identifier() {
-    u32 node = 0;
+    u32 token;
 
-    if (match(TK_IDENTIFIER)) {
-        node = ast->make_node_with_token(AST_IDENTIFIER, matched);
+    token = expect_token(TK_IDENTIFIER);
+    return ast_builder.make_identifier(token);
+}
+
+u32 make_identifier(u32 token) {
+    return ast_factory->make_node(AST_IDENTIFIER, token);
+}
+
+u32 Parser::expect_token(TokenKind kind) {
+    if (match(kind)) {
+        return matched;
     }
 
-    return node;
+    logger.error("expected")
+    has_errors = true;
+
+
+    // /path/to/file.hd:34:12: error: expected %{kind} but got a %{matched.kind}
+}
+
+void Parser::synchronize() {
+    while (!sync_token()) {
+        advance();
+    }
+}
+
+bool Parser::sync_token() {
+    return lookahead(TK_DEF)
+        || lookahead(TK_CLASS)
+        || lookahead(TK_UNION)
+        || lookahead(TK_ENUM)
+        || lookahead(TK_STRUCT)
+        || lookahead(TK_IF)
+        || lookahead(TK_WHILE)
+        || lookahead(TK_FOR)
+        || lookahead(TK_RETURN)
+        || lookahead(TK_CONTINUE)
+        || lookahead(TK_YIELD);
 }
 
 bool Parser::match(TokenKind kind) {

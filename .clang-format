@@ -1,0 +1,57 @@
+# Estilo do compilador Haard (hdc).
+# Reproduz as convencoes ja usadas em src/. Requer clang-format >= 17.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# --- Indentacao ---
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+ContinuationIndentWidth: 4
+NamespaceIndentation: All        # conteudo de 'namespace haard' e indentado
+IndentAccessModifiers: true      # 'public:' em +1 nivel, membros em +2
+IndentCaseLabels: true           # 'case' indentado dentro do 'switch'
+IndentPPDirectives: None
+
+# --- Chaves e blocos (K&R / 1TBS) ---
+BreakBeforeBraces: Attach
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+InsertBraces: true               # chaves sempre, mesmo em corpo de 1 comando
+
+# --- Linhas em branco ---
+MaxEmptyLinesToKeep: 1                    # nunca duas linhas em branco seguidas
+KeepEmptyLinesAtTheStartOfBlocks: false   # nada logo apos '{'
+SeparateDefinitionBlocks: Always          # exatamente 1 linha entre funcoes
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+InsertNewlineAtEOF: true
+KeepEmptyLinesAtEOF: false
+
+# --- Espacamento ---
+PointerAlignment: Left           # Context* context
+ReferenceAlignment: Left         # std::vector<Token>&
+DerivePointerAlignment: false
+SpaceAfterCStyleCast: true       # (TokenKind) kind
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpaceBeforeRangeBasedForLoopColon: true
+Cpp11BracedListStyle: true       # {"import", TK_IMPORT} sem espacos internos
+
+# --- Quebra de linha ---
+ColumnLimit: 100                 # maior linha atual do projeto tem 88
+BreakBeforeBinaryOperators: All  # '||' no inicio da linha de continuacao
+AlignAfterOpenBracket: Align
+AlignOperands: DontAlign        # continuacao com +4, nao alinhada ao operando
+BinPackParameters: true
+BinPackArguments: true
+
+# --- Preservar decisoes manuais ---
+SortIncludes: Never              # a ordem dos includes do projeto nao e alfabetica
+FixNamespaceComments: false      # o projeto nao usa '} // namespace haard'
+ReflowComments: false
