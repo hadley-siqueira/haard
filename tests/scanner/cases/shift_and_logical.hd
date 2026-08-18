@@ -1,0 +1,9 @@
+a = b << 2
+c = d >> 3
+e = f && g
+h = i || j
+# the single-character forms must survive
+k = l & m
+n = o | p
+q = r < s
+t = u > v

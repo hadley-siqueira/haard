@@ -22,7 +22,19 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"true", TK_TRUE},
         {"false", TK_FALSE},
         {"as", TK_AS},
+        {"in", TK_IN},
+        {"not", TK_NOT},
         {"=", TK_ASSIGNMENT},
+        {"+=", TK_PLUS_ASSIGNMENT},
+        {"-=", TK_MINUS_ASSIGNMENT},
+        {"*=", TK_TIMES_ASSIGNMENT},
+        {"/=", TK_DIVISION_ASSIGNMENT},
+        {"%=", TK_MODULO_ASSIGNMENT},
+        {"&=", TK_BITWISE_AND_ASSIGNMENT},
+        {"|=", TK_BITWISE_OR_ASSIGNMENT},
+        {"^=", TK_BITWISE_XOR_ASSIGNMENT},
+        {"<<=", TK_BITWISE_LEFT_SHIFT_ASSIGNMENT},
+        {">>=", TK_BITWISE_RIGHT_SHIFT_ASSIGNMENT},
         {"+", TK_PLUS},
         {"-", TK_MINUS},
         {"*", TK_TIMES},
@@ -37,7 +49,11 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {">=", TK_GREATER_THAN_OR_EQUAL},
         {"%", TK_MODULO},
         {".", TK_DOT},
+        {"..", TK_INCLUSIVE_RANGE},
+        {"...", TK_EXCLUSIVE_RANGE},
+        {"->", TK_ARROW},
         {":", TK_COLON},
+        {"::", TK_SCOPE},
         {"@", TK_AT},
         {"(", TK_LEFT_PARENTHESIS},
         {")", TK_RIGHT_PARENTHESIS},
@@ -52,6 +68,10 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"|", TK_BITWISE_OR},
         {"~", TK_BITWISE_NOT},
         {"^", TK_BITWISE_XOR},
+        {"<<", TK_BITWISE_LEFT_SHIFT},
+        {">>", TK_BITWISE_RIGHT_SHIFT},
+        {"&&", TK_LOGICAL_AND},
+        {"||", TK_LOGICAL_OR},
         {"$", TK_DOLLAR},
         {"?", TK_QUESTION_MARK},
     };
@@ -183,8 +203,35 @@ void Scanner::get_number() {
             advance();
         }
 
-        if (lookahead('.') && is_digit(1) || lookahead('.', 1)) {
+        // a '.' only opens a fraction when a digit follows it. That is what
+        // keeps '1..10' a range and '1.field' a member access on an integer;
+        // a trailing '1.' is an integer followed by a dot as well
+        if (lookahead('.') && is_digit(1)) {
+            kind = TK_FLOAT_LITERAL;
+            advance();
 
+            while (is_digit() || lookahead('_')) {
+                advance();
+            }
+        }
+
+        // exponent: 1e10, 2E+8, 1.5e-3. The digits are required, so the 'e' of
+        // '1e' is left alone and scans as an identifier
+        bool exponent = (lookahead('e') || lookahead('E'))
+            && (is_digit(1)
+                || ((lookahead('+', 1) || lookahead('-', 1)) && is_digit(2)));
+
+        if (exponent) {
+            kind = TK_FLOAT_LITERAL;
+            advance();
+
+            if (lookahead('+') || lookahead('-')) {
+                advance();
+            }
+
+            while (is_digit() || lookahead('_')) {
+                advance();
+            }
         }
     }
 

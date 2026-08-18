@@ -1,0 +1,16 @@
+for i in 0..len
+    print(i)
+
+for x in 0...n
+    print(x)
+
+# 'not in' is two separate tokens, the parser puts them together
+if k not in table
+    insert(k)
+
+if not found
+    stop()
+
+# 'in' and 'not' are keywords now, not identifiers
+in
+not

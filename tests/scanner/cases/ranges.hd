@@ -1,0 +1,11 @@
+a = 1..10
+b = 1...10
+c = start..end
+d = x...y
+# longest match: '...' is one token, not '..' followed by '.'
+e = 0...n
+for i in 0..len
+arr[1..n]
+# a lone '.' is still member access
+f = obj.field
+g = a..b.c

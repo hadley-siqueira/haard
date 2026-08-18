@@ -1,0 +1,12 @@
+# a fraction only starts when a digit follows the dot, so ranges still win
+a = 1..10
+b = 1...10
+c = 1.5..2.5
+d = 1.5...2.5
+e = 0.0..1.0
+f = 1e3..2e3
+# '.' as member access, next to floats and ranges
+g = obj.field.sub
+h = 1.5.round
+i = a..b.c
+j = arr[0.5..1.5]

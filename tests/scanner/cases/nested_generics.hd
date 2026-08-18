@@ -1,0 +1,4 @@
+# '>>' and '>>>' close generics one level at a time, they are not shifts here
+a = Map<String, Array<i32>>
+b = Array<Array<Array<i32>>>
+c = Map<String, Map<i32, Array<f64>>>

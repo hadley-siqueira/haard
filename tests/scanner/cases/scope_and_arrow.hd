@@ -1,0 +1,12 @@
+a::b
+std::io::println
+p->x
+p->next->value
+a :: b -> c
+# longest match wins: ':::' is '::' then ':', not three colons
+a:::b
+# the single-character forms must survive
+def main : int
+i - -j
+i--j
+a - > b

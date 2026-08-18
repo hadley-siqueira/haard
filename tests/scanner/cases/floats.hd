@@ -1,0 +1,19 @@
+a = 1.5
+b = 0.0
+c = 3.14159
+d = 1_000.000_1
+e = 1e10
+f = 2E+8
+g = 1.5e-3
+h = 1.5E7
+i = 0.5e0
+# the exponent digits are required: the 'e' of '1e' is just an identifier
+j = 1e
+k = 1e+
+# no leading-dot floats: '.5' is a dot followed by an integer
+l = .5
+# a trailing dot is not part of the number either
+m = 1.
+# the other bases stay integers, even with an 'e' in the digits
+n = 0xcaFE7
+o = 0b1010
