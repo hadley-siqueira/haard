@@ -19,6 +19,9 @@ namespace haard {
         private:
             void get_keyword_or_identifier();
             void get_number();
+            void get_string();
+            void get_template_string();
+            void get_interpolation();
             void get_operator();
             void skip_comment();
 
@@ -36,6 +39,10 @@ namespace haard {
 
             bool is_newline();
             bool is_comment();
+            bool is_string();
+            bool is_template_string();
+            bool is_interpolation();
+            bool is_utf8_continuation(int offset = 0);
             bool is_alpha(int offset = 0);
             bool is_digit(int offset = 0);
             bool is_binary_digit(int offset = 0);
@@ -51,6 +58,8 @@ namespace haard {
             Context* context;
             u32 token_offset;
             u32 token_length;
+            u32 token_line;
+            u32 token_ws;
             u32 column;
             u32 line;
             u32 last_token_line;

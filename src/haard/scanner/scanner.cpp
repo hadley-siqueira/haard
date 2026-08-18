@@ -35,9 +35,25 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"<=", TK_LESS_THAN_OR_EQUAL},
         {">", TK_GREATER_THAN},
         {">=", TK_GREATER_THAN_OR_EQUAL},
+        {"%", TK_MODULO},
         {".", TK_DOT},
         {":", TK_COLON},
         {"@", TK_AT},
+        {"(", TK_LEFT_PARENTHESIS},
+        {")", TK_RIGHT_PARENTHESIS},
+        {"[", TK_LEFT_SQUARE_BRACKET},
+        {"]", TK_RIGHT_SQUARE_BRACKET},
+        {"{", TK_LEFT_CURLY_BRACKET},
+        {"}", TK_RIGHT_CURLY_BRACKET},
+        {",", TK_COMMA},
+        {";", TK_SEMICOLON},
+        {"!", TK_LOGICAL_NOT},
+        {"&", TK_BITWISE_AND},
+        {"|", TK_BITWISE_OR},
+        {"~", TK_BITWISE_NOT},
+        {"^", TK_BITWISE_XOR},
+        {"$", TK_DOLLAR},
+        {"?", TK_QUESTION_MARK},
     };
 
     auto it = table.find(lexeme);
@@ -59,6 +75,8 @@ Scanner::Scanner() {
 void Scanner::reset() {
     token_offset = 0;
     token_length = 0;
+    token_line = 1;
+    token_ws = 0;
     column = 1;
     line = 1;
     last_token_line = 1;
@@ -85,6 +103,8 @@ void Scanner::get_token() {
         advance();
     } else if (is_comment()) {
         skip_comment();
+    } else if (is_string()) {
+        get_string();
     } else if (is_alpha()) {
         get_keyword_or_identifier();
     } else if (is_digit()) {
@@ -172,6 +192,143 @@ void Scanner::get_number() {
     create_token(kind);
 }
 
+// literals are delimited by " or ' and may span several lines. Between single
+// quotes, a lexeme holding at most one character is a char literal and anything
+// longer is a string. An escape sequence and a multibyte utf8 sequence each
+// count as one character
+void Scanner::get_string() {
+    char delimiter = source_file->char_at(idx);
+    u32 counter = 0;
+
+    if (is_template_string()) {
+        get_template_string();
+        return;
+    }
+
+    start_token();
+    advance();
+
+    while (has_next() && !lookahead(delimiter)) {
+        if (lookahead('\\')) {
+            advance();
+
+            if (has_next()) {
+                advance();
+            }
+        } else {
+            advance();
+
+            while (is_utf8_continuation()) {
+                advance();
+            }
+        }
+
+        ++counter;
+    }
+
+    if (!lookahead(delimiter)) {
+        std::cout << "Error: unterminated string literal\n";
+        end_token();
+        create_token(TK_STRING_LITERAL);
+        return;
+    }
+
+    advance();
+    end_token();
+
+    if (delimiter == '\'' && counter <= 1) {
+        create_token(TK_CHAR_LITERAL);
+    } else {
+        create_token(TK_STRING_LITERAL);
+    }
+}
+
+// a string holding '${' is broken into a token sequence instead of a single
+// literal, so that the interpolated expressions are scanned as regular code:
+//
+//   BEGIN CHUNK (INTERPOLATION_BEGIN <tokens> INTERPOLATION_END CHUNK)* END
+//
+// a chunk is emitted even when empty, so the sequence always alternates and
+// the parser can walk it without special cases
+void Scanner::get_template_string() {
+    char delimiter = source_file->char_at(idx);
+
+    start_token();
+    advance();
+    end_token();
+    create_token(TK_TEMPLATE_STRING_BEGIN);
+
+    while (true) {
+        start_token();
+
+        while (has_next() && !lookahead(delimiter) && !is_interpolation()) {
+            if (lookahead('\\')) {
+                advance();
+
+                if (has_next()) {
+                    advance();
+                }
+            } else {
+                advance();
+            }
+        }
+
+        end_token();
+        create_token(TK_TEMPLATE_STRING_CHUNK);
+
+        if (!is_interpolation()) {
+            break;
+        }
+
+        start_token();
+        advance(2);
+        end_token();
+        create_token(TK_INTERPOLATION_BEGIN);
+
+        get_interpolation();
+    }
+
+    if (!lookahead(delimiter)) {
+        std::cout << "Error: unterminated template string\n";
+        return;
+    }
+
+    start_token();
+    advance();
+    end_token();
+    create_token(TK_TEMPLATE_STRING_END);
+}
+
+// scans the expression inside '${ }' as regular code. The nesting counter is
+// what keeps a '}' belonging to a nested block from closing the interpolation
+void Scanner::get_interpolation() {
+    int depth = 0;
+
+    while (has_next()) {
+        if (lookahead('}')) {
+            if (depth == 0) {
+                break;
+            }
+
+            --depth;
+        } else if (lookahead('{')) {
+            ++depth;
+        }
+
+        get_token();
+    }
+
+    if (!lookahead('}')) {
+        std::cout << "Error: unterminated interpolation in template string\n";
+        return;
+    }
+
+    start_token();
+    advance();
+    end_token();
+    create_token(TK_INTERPOLATION_END);
+}
+
 // python style comment: '#' up to the end of the line. The newline itself is
 // left for get_token, so that a comment behaves exactly like a blank line and
 // never creates a token, which is what keeps the whitespace flag consistent
@@ -194,6 +351,9 @@ void Scanner::get_operator() {
 
     if (tmp.size() == 0) {
         std::cout << "Error: Something went wrong while scanning an operator\n";
+        // without advancing, get_token would be called again on the same
+        // character forever
+        advance();
         return;
     }
 
@@ -231,6 +391,10 @@ bool Scanner::has_next() {
 void Scanner::start_token() {
     token_offset = idx;
     token_length = 0;
+    // captured at the start because a token may span lines (multiline
+    // strings), and its flag and indentation belong to the line it opens on
+    token_line = line;
+    token_ws = ws;
 }
 
 void Scanner::end_token() {
@@ -247,16 +411,16 @@ void Scanner::create_token(TokenKind kind) {
     // the flag is flipped per line that actually holds a token, not per
     // newline, so that blank lines don't flip it twice and make two
     // different lines look like the same one
-    if (line != last_token_line) {
+    if (token_line != last_token_line) {
         whitespace_flag = !whitespace_flag;
-        last_token_line = line;
+        last_token_line = token_line;
     }
 
     token.set_kind(kind);
     token.set_offset(token_offset);
     token.set_length(token_length);
     token.set_whitespace_flag(whitespace_flag);
-    token.set_whitespace(ws);
+    token.set_whitespace(token_ws);
 
     tokens->push(token);
 }
@@ -334,6 +498,39 @@ bool Scanner::is_newline() {
 
 bool Scanner::is_comment() {
     return source_file->char_at(idx) == '#';
+}
+
+bool Scanner::is_string() {
+    return lookahead('"') || lookahead('\'');
+}
+
+// looks ahead from the opening delimiter for a '${' before the closing one,
+// without consuming anything, so that get_string can pick which form to emit
+bool Scanner::is_template_string() {
+    char delimiter = source_file->char_at(idx);
+    size_t i = idx + 1;
+
+    while (i < source_file->size() && source_file->char_at(i) != delimiter) {
+        if (source_file->char_at(i) == '\\') {
+            i += 2;
+        } else if (source_file->char_at(i) == '$' && source_file->char_at(i + 1) == '{') {
+            return true;
+        } else {
+            ++i;
+        }
+    }
+
+    return false;
+}
+
+bool Scanner::is_interpolation() {
+    return lookahead("${");
+}
+
+bool Scanner::is_utf8_continuation(int offset) {
+    char c = source_file->char_at(idx + offset);
+
+    return ((c >> 6) & 0b11) == 0b10;
 }
 
 bool Scanner::is_alpha(int offset) {

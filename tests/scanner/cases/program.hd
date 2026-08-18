@@ -1,0 +1,11 @@
+import std.io
+
+def main : int
+    @args : String[]
+
+    # its just a demo. Don't blame me
+    println('Running program ' + args[0] + '...\n')
+    c = 'x'
+    z = '\0'
+    s = "double quoted"
+    return 0

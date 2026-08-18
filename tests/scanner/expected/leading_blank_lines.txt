@@ -1,0 +1,4 @@
+TK_IDENTIFIER              off=7    len=1   flag=1 ws=4   'x'
+:                          off=9    len=1   flag=1 ws=4   ':'
+TK_IDENTIFIER              off=11   len=3   flag=1 ws=4   'int'
+TK_IDENTIFIER              off=15   len=1   flag=0 ws=0   'y'

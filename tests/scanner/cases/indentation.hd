@@ -1,0 +1,12 @@
+import std.io
+
+class Player:
+    life : int
+
+    def init : void
+        @life : int
+
+        this.life = life
+
+    def is_alive : bool
+        return life > 0

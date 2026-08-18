@@ -1,0 +1,11 @@
+# header
+a = 1
+# c1
+# c2
+# c3
+b = 2  # at the end of the line
+    # indented comment
+c = 3
+#nospace
+# def class return 123 + - @ : none of this becomes a token
+d = 4

@@ -1,0 +1,8 @@
+a = '${f(x, y)}'
+b = '${ {k} }'
+c = '${"nested"}'
+d = "escaped \${no}"
+e = "lone dollar sign a$b"
+f = "multi
+${v}
+line"

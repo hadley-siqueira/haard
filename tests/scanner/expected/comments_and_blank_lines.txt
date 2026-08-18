@@ -1,0 +1,6 @@
+TK_IDENTIFIER              off=5    len=1   flag=1 ws=0   'a'
+TK_ASSIGNMENT              off=7    len=1   flag=1 ws=0   '='
+TK_INTEGER_LITERAL         off=9    len=1   flag=1 ws=0   '1'
+TK_IDENTIFIER              off=17   len=1   flag=0 ws=0   'b'
+TK_ASSIGNMENT              off=19   len=1   flag=0 ws=0   '='
+TK_INTEGER_LITERAL         off=21   len=1   flag=0 ws=0   '2'

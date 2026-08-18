@@ -1,0 +1,7 @@
+a = ''
+b = 'x'
+c = 'ab'
+d = 'hello'
+e = ""
+f = "x"
+g = "hello world"

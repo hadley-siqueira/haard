@@ -53,8 +53,8 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# Formatacao de codigo com clang-format.
-# Use -DCLANG_FORMAT_EXECUTABLE=/caminho/para/clang-format para escolher outro binario.
+# Code formatting with clang-format.
+# Use -DCLANG_FORMAT_EXECUTABLE=/path/to/clang-format to pick another binary.
 find_program(CLANG_FORMAT_EXECUTABLE
     NAMES clang-format clang-format-18 clang-format-17
 )
@@ -65,27 +65,35 @@ file(GLOB_RECURSE FORMAT_SOURCES
 )
 
 if(CLANG_FORMAT_EXECUTABLE)
-    # make format: reescreve os fontes no estilo de .clang-format
+    # make format: rewrites the sources in the .clang-format style
     add_custom_target(format
         COMMAND ${CLANG_FORMAT_EXECUTABLE} -i --style=file ${FORMAT_SOURCES}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Formatando os fontes com clang-format"
+        COMMENT "Formatting the sources with clang-format"
         VERBATIM
     )
 
-    # make format-check: nao altera nada, falha se algo estiver fora do padrao
+    # make format-check: changes nothing, fails if anything is out of style
     add_custom_target(format-check
         COMMAND ${CLANG_FORMAT_EXECUTABLE} --dry-run -Werror --style=file ${FORMAT_SOURCES}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Verificando a formatacao dos fontes"
+        COMMENT "Checking the formatting of the sources"
         VERBATIM
     )
 else()
     add_custom_target(format
-        COMMAND ${CMAKE_COMMAND} -E echo "clang-format nao encontrado. Instale com: sudo apt install clang-format"
+        COMMAND ${CMAKE_COMMAND} -E echo "clang-format not found. Install it with: sudo apt install clang-format"
         COMMAND ${CMAKE_COMMAND} -E false
         VERBATIM
     )
 
     add_custom_target(format-check DEPENDS format)
 endif()
+
+# make check: runs the scanner test suite (tests/scanner/run.sh)
+add_custom_target(check
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/scanner/run.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running the scanner tests"
+    VERBATIM
+)

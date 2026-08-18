@@ -36,6 +36,70 @@ make
 Examples of code can be found at the samples folder. Note, however, that
 they are just example of code. Many of them are not running yet.
 
+Note that `src/haard/parser/parser.cpp` is a work in progress and does not
+compile yet, so `make` currently fails on that one file. Every other part of
+the compiler builds, and the scanner is complete enough to be tested on its own.
+
+## Tests
+
+The parser is not functional yet, so the test suite covers the scanner only. It
+has no external dependencies: it needs `g++`, `bash`, `diff` and `timeout`, all
+of which you already have if you can build the compiler. There is no test
+framework and no extra binary in the repository — the two small drivers are
+compiled on the fly into a temporary directory.
+
+```
+./tests/scanner/run.sh
+```
+
+Or, from inside the `build` folder, `make check`. The suite exits with 0 when
+everything passes and 1 otherwise, so it works in a git hook or in CI.
+
+Each file in `tests/scanner/cases/*.hd` is fed through two checks.
+
+**Golden tests.** `dump_tokens.cpp` prints the token stream in a stable text
+format — one line per token with its kind, offset, length, whitespace flag,
+indentation counter and lexeme — and the output is compared against the
+committed `tests/scanner/expected/<case>.txt`. Scanner error messages are part
+of that comparison, so the wording of the diagnostics is covered too.
+
+**Invariants.** `check_invariants.cpp` verifies properties that must hold for
+*any* input, so they also catch regressions in files nobody wrote an expected
+output for:
+
+* *round trip* — each token's lexeme is exactly `source[offset, length)`, tokens
+  are ordered and never overlap, and whatever sits between two tokens is only
+  whitespace or a comment. No byte of code is lost or duplicated.
+* *whitespace sensitivity* — the indentation counter matches the spaces at the
+  start of the line where the token begins; tokens on the same line share the
+  line flag; tokens on different lines have it flipped.
+
+The per-case `timeout` is a test in its own right: a scanner that stops making
+progress shows up as `TRAVOU` instead of hanging the suite.
+
+To add a case, drop a `.hd` file in `cases/`, run `./tests/scanner/run.sh -u` to
+record its output, **read the resulting `git diff` of `expected/`** to confirm
+the output is actually correct, and commit both files. That last step is the one
+that matters: `-u` blindly accepts whatever the scanner produces, bugs included.
+
+Cases listed in `tests/scanner/known_failures.txt` document bugs that are known
+and not fixed yet. They report as `XFAIL` and do not fail the suite; if one of
+them starts passing, the suite reports `XPASS` and fails, so the list cannot go
+stale. See `tests/scanner/README.md` for more.
+
+## Code formatting
+
+The project ships a `.clang-format` describing the style used across `src/`.
+With `clang-format` installed (`sudo apt install clang-format`):
+
+```
+make format         # rewrite the sources in the project style
+make format-check   # check only, fails if anything is off
+```
+
+Both are run from the `build` folder. If `clang-format` is missing, the target
+still exists and fails with a message telling you how to install it.
+
 ## The language
 
 The programming language is named Haard. The name is a play of the 

@@ -1,20 +1,20 @@
-# Estilo do compilador Haard (hdc).
-# Reproduz as convencoes ja usadas em src/. Requer clang-format >= 17.
+# Style of the Haard compiler (hdc).
+# Reproduces the conventions already used in src/. Requires clang-format >= 17.
 ---
 Language: Cpp
 BasedOnStyle: LLVM
 
-# --- Indentacao ---
+# --- Indentation ---
 IndentWidth: 4
 UseTab: Never
 TabWidth: 4
 ContinuationIndentWidth: 4
-NamespaceIndentation: All        # conteudo de 'namespace haard' e indentado
-IndentAccessModifiers: true      # 'public:' em +1 nivel, membros em +2
-IndentCaseLabels: true           # 'case' indentado dentro do 'switch'
+NamespaceIndentation: All        # the contents of 'namespace haard' are indented
+IndentAccessModifiers: true      # 'public:' at +1 level, members at +2
+IndentCaseLabels: true           # 'case' indented inside the 'switch'
 IndentPPDirectives: None
 
-# --- Chaves e blocos (K&R / 1TBS) ---
+# --- Braces and blocks (K&R / 1TBS) ---
 BreakBeforeBraces: Attach
 AllowShortBlocksOnASingleLine: Never
 AllowShortIfStatementsOnASingleLine: Never
@@ -22,18 +22,18 @@ AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
-InsertBraces: true               # chaves sempre, mesmo em corpo de 1 comando
+InsertBraces: true               # always braces, even for a one-statement body
 
-# --- Linhas em branco ---
-MaxEmptyLinesToKeep: 1                    # nunca duas linhas em branco seguidas
-KeepEmptyLinesAtTheStartOfBlocks: false   # nada logo apos '{'
-SeparateDefinitionBlocks: Always          # exatamente 1 linha entre funcoes
+# --- Blank lines ---
+MaxEmptyLinesToKeep: 1                    # never two blank lines in a row
+KeepEmptyLinesAtTheStartOfBlocks: false   # nothing right after '{'
+SeparateDefinitionBlocks: Always          # exactly 1 line between functions
 EmptyLineBeforeAccessModifier: LogicalBlock
 EmptyLineAfterAccessModifier: Never
 InsertNewlineAtEOF: true
 KeepEmptyLinesAtEOF: false
 
-# --- Espacamento ---
+# --- Spacing ---
 PointerAlignment: Left           # Context* context
 ReferenceAlignment: Left         # std::vector<Token>&
 DerivePointerAlignment: false
@@ -41,17 +41,17 @@ SpaceAfterCStyleCast: true       # (TokenKind) kind
 SpaceBeforeParens: ControlStatements
 SpacesInParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
-Cpp11BracedListStyle: true       # {"import", TK_IMPORT} sem espacos internos
+Cpp11BracedListStyle: true       # {"import", TK_IMPORT} with no inner spaces
 
-# --- Quebra de linha ---
-ColumnLimit: 100                 # maior linha atual do projeto tem 88
-BreakBeforeBinaryOperators: All  # '||' no inicio da linha de continuacao
+# --- Line breaking ---
+ColumnLimit: 100                 # the longest line in the project today is 88
+BreakBeforeBinaryOperators: All  # '||' at the start of the continuation line
 AlignAfterOpenBracket: Align
-AlignOperands: DontAlign        # continuacao com +4, nao alinhada ao operando
+AlignOperands: DontAlign        # continuation at +4, not aligned to the operand
 BinPackParameters: true
 BinPackArguments: true
 
-# --- Preservar decisoes manuais ---
-SortIncludes: Never              # a ordem dos includes do projeto nao e alfabetica
-FixNamespaceComments: false      # o projeto nao usa '} // namespace haard'
+# --- Preserve manual decisions ---
+SortIncludes: Never              # the project's include order is not alphabetical
+FixNamespaceComments: false      # the project does not use '} // namespace haard'
 ReflowComments: false
