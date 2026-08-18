@@ -20,8 +20,10 @@ namespace haard {
             void get_keyword_or_identifier();
             void get_number();
             void get_operator();
+            void skip_comment();
 
         private:
+            void reset();
             void start_token();
             void end_token();
             void create_token(TokenKind kind);
@@ -33,6 +35,7 @@ namespace haard {
             bool lookahead(const char* s);
 
             bool is_newline();
+            bool is_comment();
             bool is_alpha(int offset = 0);
             bool is_digit(int offset = 0);
             bool is_binary_digit(int offset = 0);
@@ -50,10 +53,12 @@ namespace haard {
             u32 token_length;
             u32 column;
             u32 line;
+            u32 last_token_line;
             u32 ws;
             int template_counter;
             bool template_flag;
             bool line_start;
+            bool whitespace_flag;
             size_t idx;
     };
 }

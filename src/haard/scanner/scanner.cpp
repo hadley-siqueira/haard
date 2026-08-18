@@ -53,14 +53,25 @@ Scanner::Scanner() {
     tokens = nullptr;
     source_file = nullptr;
     context = nullptr;
+    reset();
+}
+
+void Scanner::reset() {
     token_offset = 0;
     token_length = 0;
+    column = 1;
+    line = 1;
+    last_token_line = 1;
+    ws = 0;
     idx = 0;
     template_flag = false;
     template_counter = 0;
+    line_start = true;
+    whitespace_flag = false;
 }
 
 void Scanner::get_tokens(const std::filesystem::path& path) {
+    reset();
     tokens->reset();
     source_file->open(path);
 
@@ -72,6 +83,8 @@ void Scanner::get_tokens(const std::filesystem::path& path) {
 void Scanner::get_token() {
     if (is_newline()) {
         advance();
+    } else if (is_comment()) {
+        skip_comment();
     } else if (is_alpha()) {
         get_keyword_or_identifier();
     } else if (is_digit()) {
@@ -159,6 +172,15 @@ void Scanner::get_number() {
     create_token(kind);
 }
 
+// python style comment: '#' up to the end of the line. The newline itself is
+// left for get_token, so that a comment behaves exactly like a blank line and
+// never creates a token, which is what keeps the whitespace flag consistent
+void Scanner::skip_comment() {
+    while (has_next() && !is_newline()) {
+        advance();
+    }
+}
+
 void Scanner::get_operator() {
     std::string tmp;
 
@@ -222,9 +244,19 @@ void Scanner::end_token() {
 void Scanner::create_token(TokenKind kind) {
     Token token;
 
+    // the flag is flipped per line that actually holds a token, not per
+    // newline, so that blank lines don't flip it twice and make two
+    // different lines look like the same one
+    if (line != last_token_line) {
+        whitespace_flag = !whitespace_flag;
+        last_token_line = line;
+    }
+
     token.set_kind(kind);
     token.set_offset(token_offset);
     token.set_length(token_length);
+    token.set_whitespace_flag(whitespace_flag);
+    token.set_whitespace(ws);
 
     tokens->push(token);
 }
@@ -245,22 +277,29 @@ void Scanner::advance() {
         line_start = true;
     } else if (c == ' ' && line_start) {
         ws++;
-    } else if (((c >> 7) & 1) == 0) {
         column++;
-        //value += c;
-    } else if (((c >> 6) & 0b11) == 0b10) {
-        //value += c;
-    } else if (((c >> 5) & 0b111) == 0b110) {
-        column++;
-        //value += c;
-    } else if (((c >> 4) & 0b1111) == 0b1110) {
-        column++;
-        //value += c;
-    } else if (((c >> 3) & 0b11111) == 0b11110) {
-        column++;
-        //value += c;
     } else {
-        std::cout << "Error: unknown char = " << ((int) c) << '\n';
+        // the first character that is not leading whitespace closes the
+        // indentation of this line, freezing 'ws' until the next newline
+        line_start = false;
+
+        if (((c >> 7) & 1) == 0) {
+            column++;
+            //value += c;
+        } else if (((c >> 6) & 0b11) == 0b10) {
+            //value += c;
+        } else if (((c >> 5) & 0b111) == 0b110) {
+            column++;
+            //value += c;
+        } else if (((c >> 4) & 0b1111) == 0b1110) {
+            column++;
+            //value += c;
+        } else if (((c >> 3) & 0b11111) == 0b11110) {
+            column++;
+            //value += c;
+        } else {
+            std::cout << "Error: unknown char = " << ((int) c) << '\n';
+        }
     }
 
     ++idx;
@@ -291,6 +330,10 @@ bool Scanner::lookahead(const char* s) {
 
 bool Scanner::is_newline() {
     return source_file->char_at(idx) == '\n';
+}
+
+bool Scanner::is_comment() {
+    return source_file->char_at(idx) == '#';
 }
 
 bool Scanner::is_alpha(int offset) {
