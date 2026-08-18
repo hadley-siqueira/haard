@@ -45,7 +45,7 @@ namespace haard {
 
         private:
             Context* context;
-            Tokens* tokens;
+            TokenStream* tokens;
             Ast* ast;
             u32 current_token;
             u32 matched;

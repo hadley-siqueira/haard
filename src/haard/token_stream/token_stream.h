@@ -1,13 +1,13 @@
-#ifndef HAARD_TOKENS_H
-#define HAARD_TOKENS_H
+#ifndef HAARD_TOKEN_STREAM_H
+#define HAARD_TOKEN_STREAM_H
 
 #include <vector>
 #include <haard/token/token.h>
 
 namespace haard {
-    class Tokens {
+    class TokenStream {
         public:
-            Tokens();
+            TokenStream();
 
         public:
             void reset();

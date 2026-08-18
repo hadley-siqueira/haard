@@ -3,7 +3,7 @@
 
 using namespace haard;
 
-Tokens* Context::get_tokens() {
+TokenStream* Context::get_tokens() {
     return &tokens;
 }
 

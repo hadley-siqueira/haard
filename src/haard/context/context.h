@@ -1,14 +1,14 @@
 #ifndef HAARD_CONTEXT_H
 #define HAARD_CONTEXT_H
 
-#include <haard/tokens/tokens.h>
+#include <haard/token_stream/token_stream.h>
 #include <haard/ast/ast.h>
 #include <haard/source_file/source_file.h>
 
 namespace haard {
     class Context {
         public:
-            Tokens* get_tokens();
+            TokenStream* get_tokens();
             SourceFile* get_source_file();
             Ast* get_ast();
 
@@ -20,7 +20,7 @@ namespace haard {
 
         private:
             SourceFile source_file;
-            Tokens tokens;
+            TokenStream tokens;
             Ast ast;
     };
 }

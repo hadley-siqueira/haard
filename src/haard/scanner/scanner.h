@@ -43,7 +43,7 @@ namespace haard {
             std::string get_lexeme_from_token();
 
         private:
-            Tokens* tokens;
+            TokenStream* tokens;
             SourceFile* source_file;
             Context* context;
             u32 token_offset;
