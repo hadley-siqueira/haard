@@ -3,6 +3,13 @@
 
 using namespace haard;
 
+Token::Token() {
+    kind = TK_UNKNOWN;
+    flags = 0;
+    length = 0;
+    offset = 0;
+}
+
 void Token::set_kind(TokenKind kind) {
     this->kind = kind;
 }
@@ -25,6 +32,32 @@ void Token::set_length(u16 length) {
 
 u16 Token::get_length() {
     return length;
+}
+
+void Token::set_whitespace_flag(bool value) {
+    if (value) {
+        flags |= 0b10000000;
+    } else {
+        flags &= 0b01111111;
+    }
+}
+
+bool Token::get_whitespace_flag() {
+    return (flags >> 7) & 1;
+}
+
+void Token::set_whitespace(int whitespace) {
+    if (whitespace < 0) {
+        whitespace = 0;
+    } else if (whitespace > 127) {
+        whitespace = 127;
+    }
+
+    flags = (flags & 0b10000000) | whitespace;
+}
+
+u8 Token::get_whitespace() {
+    return flags & 0b01111111;
 }
 
 std::string Token::get_kind_as_string() {

@@ -13,8 +13,8 @@ set(TOKEN_SRC
     src/haard/token/token.cpp
 )
 
-set(TOKENS_SRC
-    src/haard/tokens/tokens.cpp
+set(TOKEN_STREAM_SRC
+    src/haard/token_stream/token_stream.cpp
 )
 
 set(AST_SRC
@@ -42,7 +42,7 @@ set(CONTEXT_SRC
 set(SOURCES
     src/main.cpp
     ${TOKEN_SRC}
-    ${TOKENS_SRC}
+    ${TOKEN_STREAM_SRC}
     ${AST_SRC}
     ${SOURCE_FILE_SRC}
     ${SCANNER_SRC}

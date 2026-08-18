@@ -50,6 +50,9 @@ namespace haard {
 
     class Token {
         public:
+            Token();
+
+        public:
             void set_kind(TokenKind kind);
             TokenKind get_kind();
             std::string get_kind_as_string();
@@ -59,6 +62,16 @@ namespace haard {
 
             void set_length(u16 length);
             u16 get_length();
+
+            // most significant bit of 'flags': flipped on every line change,
+            // so tokens on the same line share the same value
+            void set_whitespace_flag(bool value);
+            bool get_whitespace_flag();
+
+            // 7 least significant bits of 'flags': amount of whitespace at the
+            // start of the token's line, used to compare indentation
+            void set_whitespace(int whitespace);
+            u8 get_whitespace();
 
         private:
             u8 kind;
