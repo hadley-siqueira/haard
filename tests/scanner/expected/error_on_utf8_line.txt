@@ -1,0 +1,30 @@
+error: missing hexadecimal digits after '0x'
+ --> cases/error_on_utf8_line.hd:7:12
+  |
+7 | let café = 0xZZ
+  |            ^^
+error: missing octal digits after '0o'
+ --> cases/error_on_utf8_line.hd:8:13
+  |
+8 | let médio	= 0oPQ
+  |          	  ^^
+error: unterminated string literal
+ --> cases/error_on_utf8_line.hd:9:12
+  |
+9 | let ação = 'não fechada
+  |            ^^^^^^^^^^^^
+TK_LET                     off=419  len=3   at=7:1     nl=1 ws=0   'let'
+TK_IDENTIFIER              off=423  len=5   at=7:5     nl=0 ws=0   'café'
+TK_ASSIGNMENT              off=429  len=1   at=7:10    nl=0 ws=0   '='
+TK_INTEGER_LITERAL         off=431  len=2   at=7:12    nl=0 ws=0   '0x'
+TK_IDENTIFIER              off=433  len=2   at=7:14    nl=0 ws=0   'ZZ'
+TK_LET                     off=436  len=3   at=8:1     nl=1 ws=0   'let'
+TK_IDENTIFIER              off=440  len=6   at=8:5     nl=0 ws=0   'médio'
+TK_ASSIGNMENT              off=447  len=1   at=8:11    nl=0 ws=0   '='
+TK_INTEGER_LITERAL         off=449  len=2   at=8:13    nl=0 ws=0   '0o'
+TK_IDENTIFIER              off=451  len=2   at=8:15    nl=0 ws=0   'PQ'
+TK_LET                     off=454  len=3   at=9:1     nl=1 ws=0   'let'
+TK_IDENTIFIER              off=458  len=6   at=9:5     nl=0 ws=0   'ação'
+TK_ASSIGNMENT              off=465  len=1   at=9:10    nl=0 ws=0   '='
+TK_STRING_LITERAL          off=467  len=14  at=9:12    nl=0 ws=0   ''não fechada\n'
+TK_EOF                     off=481  len=0   at=10:1    nl=0 ws=0   ''

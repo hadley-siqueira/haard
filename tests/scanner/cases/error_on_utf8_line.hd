@@ -1,0 +1,9 @@
+# the caret has to land on the right character when the line holds utf8 before
+# the error: each multibyte letter takes one column, not one per byte. The tab
+# below matters too — the padding copies it instead of guessing its width, and
+# which byte is a tab is not the same question as which character is. The last
+# line puts utf8 *inside* the token the caret spans, so its width is counted in
+# characters as well
+let café = 0xZZ
+let médio	= 0oPQ
+let ação = 'não fechada

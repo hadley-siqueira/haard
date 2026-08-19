@@ -29,6 +29,12 @@ namespace haard {
             // bytes per token. Only the diagnostics path pays for it
             Position position_of(u32 offset);
 
+            // 1-based, without the trailing newline. Used to echo the offending
+            // line under a diagnostic
+            std::string line_text(u32 line);
+
+            const std::filesystem::path& get_path();
+
             std::string& get_content();
 
         private:

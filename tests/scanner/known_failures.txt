@@ -2,8 +2,3 @@
 # and do not break the suite. When the bug is fixed, delete the line from here:
 # if a listed case passes, the suite reports XPASS and fails, so the file cannot
 # go stale.
-#
-# stray_characters: get_token silently throws away, with no diagnostic, any byte
-# that is not whitespace, a comment, a quote, alphanumeric or an operator. A
-# stray '`' or '\' disappears from the stream without a word.
-stray_characters

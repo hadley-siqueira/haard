@@ -38,6 +38,10 @@ set(CONTEXT_SRC
     src/haard/context/context.cpp
 )
 
+set(LOG_SRC
+    src/haard/log/log.cpp
+)
+
 
 set(SOURCES
     src/main.cpp
@@ -48,6 +52,7 @@ set(SOURCES
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${CONTEXT_SRC}
+    ${LOG_SRC}
     ${PRETTY_SRC}
 )
 

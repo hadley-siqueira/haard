@@ -11,6 +11,12 @@ void test_scanner(int argc, char* argv[]) {
     sc.set_context(&ctx);
 
     sc.get_tokens(argv[1]);
+    ctx.get_logger()->print(std::cerr);
+
+    if (ctx.get_logger()->has_errors()) {
+        return;
+    }
+
     ctx.inspect_tokens();
 }
 
@@ -21,6 +27,12 @@ void test_parser(int argc, char* argv[]) {
     parser.set_context(&ctx);
 
     parser.parse_file(argv[1]);
+    ctx.get_logger()->print(std::cerr);
+
+    if (ctx.get_logger()->has_errors()) {
+        return;
+    }
+
     ctx.inspect_tokens();
     ctx.inspect_ast();
 }
@@ -36,6 +48,13 @@ void test_pretty_printer(int argc, char* argv[]) {
     printer.set_context(&ctx);
 
     parser.parse_file(argv[1]);
+    ctx.get_logger()->print(std::cerr);
+
+    // nothing downstream runs on a file that did not scan and parse cleanly
+    if (ctx.get_logger()->has_errors()) {
+        return;
+    }
+
     printer.print();
 }
 

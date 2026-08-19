@@ -1,5 +1,5 @@
 #include <haard/scanner/scanner.h>
-#include <iostream>
+#include <cstdio>
 #include <unordered_map>
 
 using namespace haard;
@@ -94,6 +94,7 @@ Scanner::Scanner() {
     tokens = nullptr;
     source_file = nullptr;
     context = nullptr;
+    logger = nullptr;
     reset();
 }
 
@@ -111,6 +112,7 @@ void Scanner::reset() {
     last_end_line = 0;
     last_tab_line = 0;
     last_deep_indentation_line = 0;
+    line_tab_offset = 0;
     line_start = true;
     line_has_tab = false;
     token_has_tab = false;
@@ -143,11 +145,29 @@ void Scanner::get_token() {
         get_symbol();
     } else if (is_operator()) {
         get_operator();
-    } else if (is_newline()) {
+    } else if (is_whitespace()) {
         advance();
     } else {
-        advance();
+        get_invalid_character();
     }
+}
+
+// a byte that can start no token at all. It is reported and skipped: skipping
+// without a word is what the stray_characters bug used to be, and not skipping
+// would call get_token on it forever
+void Scanner::get_invalid_character() {
+    char c = source_file->char_at(idx);
+    char message[32];
+
+    if (c >= 32 && c < 127) {
+        snprintf(message, sizeof(message), "invalid character '%c'", c);
+    } else {
+        snprintf(message, sizeof(message), "invalid byte 0x%02X",
+                 (unsigned char) c);
+    }
+
+    logger->error(idx, 1, message);
+    advance();
 }
 
 void Scanner::get_keyword_or_identifier() {
@@ -181,7 +201,8 @@ void Scanner::get_number() {
                 advance();
             }
         } else {
-            std::cout << "Error: missing binary digits after '0b'\n";
+            logger->error(token_offset, idx - token_offset,
+                          "missing binary digits after '0b'");
             // log_error(file_id, token_offset, ERR_MISSING_BINARY_DIGITS)
         }
     } else if (lookahead("0o")) {
@@ -192,7 +213,8 @@ void Scanner::get_number() {
                 advance();
             }
         } else {
-            std::cout << "Error: missing octal digits after '0o'\n";
+            logger->error(token_offset, idx - token_offset,
+                          "missing octal digits after '0o'");
         }
     } else if (lookahead("0x")) {
         advance(2);
@@ -202,7 +224,8 @@ void Scanner::get_number() {
                 advance();
             }
         } else {
-            std::cout << "Error: missing hexadecimal digits after '0x'\n";
+            logger->error(token_offset, idx - token_offset,
+                          "missing hexadecimal digits after '0x'");
         }
     } else {
         while (is_digit() || lookahead('_')) {
@@ -280,7 +303,8 @@ void Scanner::get_string() {
     }
 
     if (!lookahead(delimiter)) {
-        std::cout << "Error: unterminated string literal\n";
+        logger->error(token_offset, idx - token_offset,
+                      "unterminated string literal");
         end_token();
         create_token(TK_STRING_LITERAL);
         return;
@@ -305,6 +329,7 @@ void Scanner::get_string() {
 // the parser can walk it without special cases
 void Scanner::get_template_string() {
     char delimiter = source_file->char_at(idx);
+    u32 opening = idx;
 
     start_token();
     advance();
@@ -342,7 +367,7 @@ void Scanner::get_template_string() {
     }
 
     if (!lookahead(delimiter)) {
-        std::cout << "Error: unterminated template string\n";
+        logger->error(opening, idx - opening, "unterminated template string");
         return;
     }
 
@@ -355,6 +380,7 @@ void Scanner::get_template_string() {
 // scans the expression inside '${ }' as regular code. The nesting counter is
 // what keeps a '}' belonging to a nested block from closing the interpolation
 void Scanner::get_interpolation() {
+    u32 opening = idx - 2;
     int depth = 0;
 
     while (has_next()) {
@@ -372,7 +398,7 @@ void Scanner::get_interpolation() {
     }
 
     if (!lookahead('}')) {
-        std::cout << "Error: unterminated interpolation in template string\n";
+        logger->error(opening, 2, "unterminated interpolation in template string");
         return;
     }
 
@@ -403,7 +429,7 @@ void Scanner::get_operator() {
     }
 
     if (tmp.size() == 0) {
-        std::cout << "Error: Something went wrong while scanning an operator\n";
+        logger->error(idx, 1, "unknown operator");
         // without advancing, get_token would be called again on the same
         // character forever
         advance();
@@ -448,7 +474,8 @@ void Scanner::get_symbol() {
         }
 
         if (!lookahead(delimiter)) {
-            std::cout << "Error: unterminated symbol literal\n";
+            logger->error(token_offset, idx - token_offset,
+                          "unterminated symbol literal");
             end_token();
             create_token(TK_SYMBOL_LITERAL);
             return;
@@ -469,6 +496,7 @@ void Scanner::set_context(Context* context) {
     this->context = context;
     this->source_file = context->get_source_file();
     this->tokens = context->get_tokens();
+    this->logger = context->get_logger();
 }
 
 bool Scanner::has_next() {
@@ -489,7 +517,7 @@ void Scanner::end_token() {
     token_length = idx - token_offset;
 
     if (token_length >= 65535) {
-        std::cout << "Error while scanning: token too long\n";
+        logger->error(token_offset, 1, "token is longer than 65535 bytes");
     }
 }
 
@@ -501,16 +529,15 @@ void Scanner::create_token(TokenKind kind) {
     // line, and only for a line that bears a token, so that a tab on a blank or
     // comment only line stays as harmless as any other trailing whitespace
     if (token_has_tab && token_line != last_tab_line) {
-        std::cout << "Error: tab in the indentation of line " << token_line
-                  << ", use spaces\n";
+        logger->error(line_tab_offset, 1, "tabs are not allowed in the indentation");
         last_tab_line = token_line;
     }
 
     // 'ws' only has 7 bits. Truncating it in silence would corrupt the
     // indentation comparison the parser does, so it is reported instead
     if (token_ws > 127 && token_line != last_deep_indentation_line) {
-        std::cout << "Error: line " << token_line << " is indented by more than"
-                  << " 127 spaces\n";
+        logger->error(token_offset, token_length,
+                      "indentation is deeper than 127 spaces");
         last_deep_indentation_line = token_line;
     }
 
@@ -562,7 +589,11 @@ void Scanner::advance() {
         column++;
     } else if (c == '\t' && line_start) {
         // a tab does not close the indentation and does not count towards
-        // 'ws'; create_token turns the flag into a diagnostic
+        // 'ws'; create_token turns the flag into a diagnostic pointing here
+        if (!line_has_tab) {
+            line_tab_offset = idx;
+        }
+
         line_has_tab = true;
         column++;
     } else {
@@ -585,7 +616,11 @@ void Scanner::advance() {
             column++;
             //value += c;
         } else {
-            std::cout << "Error: unknown char = " << ((int) c) << '\n';
+            char buffer[32];
+
+            snprintf(buffer, sizeof(buffer), "invalid utf8 byte 0x%02X",
+                     (unsigned char) c);
+            logger->error(idx, 1, buffer);
         }
     }
 
@@ -617,6 +652,14 @@ bool Scanner::lookahead(const char* s) {
 
 bool Scanner::is_newline() {
     return source_file->char_at(idx) == '\n';
+}
+
+// what separates tokens without being one. The '\r' of a crlf file belongs to
+// the line ending, so it sits here and not among the invalid characters
+bool Scanner::is_whitespace() {
+    char c = source_file->char_at(idx);
+
+    return c == ' ' || c == '\t' || c == '\r';
 }
 
 bool Scanner::is_comment() {

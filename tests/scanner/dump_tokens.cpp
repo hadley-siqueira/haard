@@ -4,8 +4,8 @@
 // basis of the golden tests: the output is compared against the matching file
 // in expected/.
 //
-// Scanner error messages are printed before the tokens and are part of the
-// comparison too, so the diagnostic text is covered by the tests as well.
+// The scanner's diagnostics are printed before the tokens and are part of the
+// comparison too, so their rendering is covered by the tests as well.
 #include <haard/context/context.h>
 #include <haard/scanner/scanner.h>
 #include <iomanip>
@@ -41,6 +41,10 @@ int main(int argc, char* argv[]) {
 
     sc.set_context(&ctx);
     sc.get_tokens(argv[1]);
+
+    // the scanner collects its diagnostics instead of printing them, so the
+    // driver is what puts them in front of the stream
+    ctx.get_logger()->print(std::cout);
 
     auto& list = ctx.get_tokens()->get_tokens();
 

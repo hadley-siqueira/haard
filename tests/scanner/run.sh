@@ -75,6 +75,7 @@ sources=(
     "$root/src/haard/ast/ast.cpp"
     "$root/src/haard/ast/ast_node.cpp"
     "$root/src/haard/source_file/source_file.cpp"
+    "$root/src/haard/log/log.cpp"
     "$root/src/haard/scanner/scanner.cpp"
     "$root/src/haard/context/context.cpp"
 )

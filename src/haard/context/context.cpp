@@ -11,6 +11,14 @@ SourceFile* Context::get_source_file() {
     return &source_file;
 }
 
+Logger* Context::get_logger() {
+    // the logger renders a diagnostic from an offset, so it needs the file
+    // those offsets belong to
+    logger.set_source_file(&source_file);
+
+    return &logger;
+}
+
 Ast* Context::get_ast() {
     return &ast;
 }

@@ -1,5 +1,13 @@
-Error: line 4 is indented by more than 127 spaces
-Error: line 5 is indented by more than 127 spaces
+error: indentation is deeper than 127 spaces
+ --> cases/indentation_overflow.hd:4:131
+  |
+4 |                                                                                                                                   deep = 2
+  |                                                                                                                                   ^^^^
+error: indentation is deeper than 127 spaces
+ --> cases/indentation_overflow.hd:5:131
+  |
+5 |                                                                                                                                   also_deep = 3
+  |                                                                                                                                   ^^^^^^^^^
 TK_IDENTIFIER              off=148  len=1   at=3:1     nl=1 ws=0   'a'
 TK_ASSIGNMENT              off=150  len=1   at=3:3     nl=0 ws=0   '='
 TK_INTEGER_LITERAL         off=152  len=1   at=3:5     nl=0 ws=0   '1'

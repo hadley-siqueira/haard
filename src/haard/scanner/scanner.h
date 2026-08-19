@@ -24,6 +24,7 @@ namespace haard {
             void get_interpolation();
             void get_operator();
             void get_symbol();
+            void get_invalid_character();
             void skip_comment();
 
         private:
@@ -40,6 +41,7 @@ namespace haard {
             bool lookahead(const char* s);
 
             bool is_newline();
+            bool is_whitespace();
             bool is_comment();
             bool is_string();
             bool is_symbol();
@@ -59,6 +61,7 @@ namespace haard {
             TokenStream* tokens;
             SourceFile* source_file;
             Context* context;
+            Logger* logger;
             u32 token_offset;
             u32 token_length;
             u32 token_line;
@@ -71,6 +74,7 @@ namespace haard {
             u32 last_end_line;
             u32 last_tab_line;
             u32 last_deep_indentation_line;
+            u32 line_tab_offset;
             bool line_start;
             bool line_has_tab;
             bool token_has_tab;

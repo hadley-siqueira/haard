@@ -1,9 +1,33 @@
-Error: missing hexadecimal digits after '0x'
-Error: missing binary digits after '0b'
-Error: missing octal digits after '0o'
-Error: missing hexadecimal digits after '0x'
-Error: missing binary digits after '0b'
-Error: missing octal digits after '0o'
+error: missing hexadecimal digits after '0x'
+ --> cases/invalid_bases.hd:2:5
+  |
+2 | a = 0xZZ
+  |     ^^
+error: missing binary digits after '0b'
+ --> cases/invalid_bases.hd:4:5
+  |
+4 | c = 0b2
+  |     ^^
+error: missing octal digits after '0o'
+ --> cases/invalid_bases.hd:5:5
+  |
+5 | d = 0o8
+  |     ^^
+error: missing hexadecimal digits after '0x'
+ --> cases/invalid_bases.hd:6:5
+  |
+6 | e = 0x
+  |     ^^
+error: missing binary digits after '0b'
+ --> cases/invalid_bases.hd:7:5
+  |
+7 | f = 0b
+  |     ^^
+error: missing octal digits after '0o'
+ --> cases/invalid_bases.hd:8:5
+  |
+8 | g = 0o
+  |     ^^
 TK_IDENTIFIER              off=76   len=1   at=2:1     nl=1 ws=0   'a'
 TK_ASSIGNMENT              off=78   len=1   at=2:3     nl=0 ws=0   '='
 TK_INTEGER_LITERAL         off=80   len=2   at=2:5     nl=0 ws=0   '0x'

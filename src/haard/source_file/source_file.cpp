@@ -81,6 +81,25 @@ char SourceFile::char_at(size_t index) {
     return '\0';
 }
 
+std::string SourceFile::line_text(u32 line) {
+    if (line < 1 || line > line_starts.size()) {
+        return "";
+    }
+
+    u32 bol = line_starts[line - 1];
+    u32 eol = bol;
+
+    while (eol < content.size() && content[eol] != '\n') {
+        ++eol;
+    }
+
+    return content.substr(bol, eol - bol);
+}
+
+const std::filesystem::path& SourceFile::get_path() {
+    return path;
+}
+
 std::string SourceFile::get_lines_by_index(int index, int n_before, int n_after) {
     std::string tmp;
     int before = index;

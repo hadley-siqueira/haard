@@ -4,8 +4,9 @@
 //
 //  round-trip  each token's lexeme is exactly source[offset, length), the
 //              tokens are in order, do not overlap, and whatever sits between
-//              two tokens is only whitespace or a comment. That is, no code
-//              byte is lost or duplicated by the scanner.
+//              two tokens is only whitespace, a comment, or a byte a
+//              diagnostic points at. That is, no code byte is lost or
+//              duplicated by the scanner without a word about it.
 //
 //  whitespace  the indentation counter matches the spaces at the start of the
 //              line where the token begins.
@@ -25,6 +26,7 @@
 #include <haard/context/context.h>
 #include <haard/scanner/scanner.h>
 #include <iostream>
+#include <vector>
 
 using namespace haard;
 
@@ -75,8 +77,11 @@ bool holds_newline(const std::string& src, size_t from, size_t to) {
     return false;
 }
 
-// whatever separates two tokens can only be whitespace or a comment
-void check_gap(const std::string& src, size_t from, size_t to) {
+// whatever separates two tokens can only be whitespace, a comment, or a byte
+// some diagnostic points at — an invalid character is dropped from the stream,
+// but never in silence
+void check_gap(const std::string& src, const std::vector<bool>& reported,
+               size_t from, size_t to) {
     size_t i = from;
 
     while (i < to) {
@@ -86,8 +91,10 @@ void check_gap(const std::string& src, size_t from, size_t to) {
             }
         } else if (src[i] == ' ' || src[i] == '\t' || src[i] == '\n' || src[i] == '\r') {
             ++i;
+        } else if (reported[i]) {
+            ++i;
         } else {
-            fail("code byte dropped between tokens at offset "
+            fail("code byte dropped between tokens with no diagnostic, at offset "
                  + std::to_string(i) + ": '" + src[i] + "'");
             return;
         }
@@ -109,6 +116,16 @@ int main(int argc, char* argv[]) {
     auto& src = ctx.get_source_file()->get_content();
     auto& list = ctx.get_tokens()->get_tokens();
 
+    // every byte a diagnostic points at, so a gap can be told from a hole
+    std::vector<bool> reported(src.size(), false);
+
+    for (auto& log : ctx.get_logger()->get_logs()) {
+        for (u32 i = log.get_offset();
+             i < log.get_offset() + log.get_length() && i < src.size(); ++i) {
+            reported[i] = true;
+        }
+    }
+
     size_t end_of_previous = 0;
 
     for (u32 i = 0; i < list.size(); ++i) {
@@ -126,7 +143,7 @@ int main(int argc, char* argv[]) {
         if (offset < end_of_previous) {
             fail(at + ": overlaps the previous token");
         } else {
-            check_gap(src, end_of_previous, offset);
+            check_gap(src, reported, end_of_previous, offset);
         }
 
         if (std::string(ctx.get_token_value(i)) != src.substr(offset, length)) {
@@ -176,7 +193,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    check_gap(src, end_of_previous, src.size());
+    check_gap(src, reported, end_of_previous, src.size());
 
     if (list.size() == 0) {
         fail("the stream is empty: it must always end with a TK_EOF");

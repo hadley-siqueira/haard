@@ -1,6 +1,18 @@
-Error: tab in the indentation of line 2, use spaces
-Error: tab in the indentation of line 5, use spaces
-Error: tab in the indentation of line 6, use spaces
+error: tabs are not allowed in the indentation
+ --> cases/tab_indentation.hd:2:1
+  |
+2 | 	let x = 1
+  | ^
+error: tabs are not allowed in the indentation
+ --> cases/tab_indentation.hd:5:1
+  |
+5 | 	if x:
+  | ^
+error: tabs are not allowed in the indentation
+ --> cases/tab_indentation.hd:6:1
+  |
+6 | 		return 0
+  | ^
 TK_DEF                     off=0    len=3   at=1:1     nl=1 ws=0   'def'
 TK_IDENTIFIER              off=4    len=4   at=1:5     nl=0 ws=0   'main'
 TK_COLON                   off=8    len=1   at=1:9     nl=0 ws=0   ':'
