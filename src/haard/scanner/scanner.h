@@ -23,6 +23,7 @@ namespace haard {
             void get_template_string();
             void get_interpolation();
             void get_operator();
+            void get_symbol();
             void skip_comment();
 
         private:
@@ -40,6 +41,7 @@ namespace haard {
             bool is_newline();
             bool is_comment();
             bool is_string();
+            bool is_symbol();
             bool is_template_string();
             bool is_interpolation();
             bool is_utf8_continuation(int offset = 0);

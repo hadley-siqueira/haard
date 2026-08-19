@@ -1,0 +1,4 @@
+Error: unterminated symbol literal
+TK_IDENTIFIER              off=0    len=1   flag=0 ws=0   'a'
+TK_ASSIGNMENT              off=2    len=1   flag=0 ws=0   '='
+TK_SYMBOL_LITERAL          off=4    len=19  flag=0 ws=0   ':"not closed\nb = 1\n'

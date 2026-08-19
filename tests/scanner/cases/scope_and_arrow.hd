@@ -3,7 +3,7 @@ std::io::println
 p->x
 p->next->value
 a :: b -> c
-# longest match wins: ':::' is '::' then ':', not three colons
+# longest match wins: ':::b' is the scope '::' followed by the symbol ':b'
 a:::b
 # the single-character forms must survive
 def main : int

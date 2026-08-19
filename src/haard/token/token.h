@@ -29,6 +29,7 @@ namespace haard {
         TK_FLOAT_LITERAL,
         TK_STRING_LITERAL,
         TK_CHAR_LITERAL,
+        TK_SYMBOL_LITERAL,
         TK_TEMPLATE_STRING_BEGIN,
         TK_TEMPLATE_STRING_CHUNK,
         TK_TEMPLATE_STRING_END,

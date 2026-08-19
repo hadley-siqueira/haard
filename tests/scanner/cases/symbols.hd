@@ -1,0 +1,26 @@
+a = :name
+b = :my_symbol
+c = :_private
+d = :symbol2
+e = :'my symbol with spaces'
+f = :'with \'escaped\' quotes'
+# the quoted form is a literal: no interpolation, no template string
+g = :'${not} interpolated'
+h = [:red, :green, :blue]
+# a symbol stops at the first character that cannot be part of a name
+i = :name.upcase
+j = :a..:b
+k = f(:key, 1)
+# a ':' that is not glued to a name or a quote is still a plain colon
+def main : int
+    @args : String[]
+l = a ? b : c
+# a digit cannot start a name, so ':2' is a colon and an integer, not a symbol
+m = a ? 1:2
+# both quotes work, and the other one is plain text inside
+n = :"double quoted symbol"
+o = :"with 'single' inside"
+p = :'with "double" inside'
+q = :"with \"escaped\" quotes"
+# a double quoted symbol is a literal too: no template string, no interpolation
+r = :"${not} interpolated"

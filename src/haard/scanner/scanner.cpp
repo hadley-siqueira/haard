@@ -129,6 +129,8 @@ void Scanner::get_token() {
         get_keyword_or_identifier();
     } else if (is_digit()) {
         get_number();
+    } else if (is_symbol()) {
+        get_symbol();
     } else if (is_operator()) {
         get_operator();
     } else if (is_newline()) {
@@ -425,6 +427,53 @@ void Scanner::get_operator() {
     create_token(kind);
 }
 
+// ':name', ':'name with spaces'' or ':"name with spaces"'. Both quotes work and
+// the other one is plain text inside. Neither form interpolates: a symbol is a
+// literal, so '${' inside it is just text. A backslash escapes the next
+// character, so that ':'don\'t'' closes on the right quote
+void Scanner::get_symbol() {
+    start_token();
+    advance();
+
+    if (lookahead('\'') || lookahead('"')) {
+        char delimiter = source_file->char_at(idx);
+
+        advance();
+
+        while (has_next() && !lookahead(delimiter)) {
+            if (lookahead('\\')) {
+                advance();
+
+                if (has_next()) {
+                    advance();
+                }
+            } else {
+                advance();
+
+                while (is_utf8_continuation()) {
+                    advance();
+                }
+            }
+        }
+
+        if (!lookahead(delimiter)) {
+            std::cout << "Error: unterminated symbol literal\n";
+            end_token();
+            create_token(TK_SYMBOL_LITERAL);
+            return;
+        }
+
+        advance();
+    } else {
+        while (is_alphanum()) {
+            advance();
+        }
+    }
+
+    end_token();
+    create_token(TK_SYMBOL_LITERAL);
+}
+
 void Scanner::set_context(Context* context) {
     this->context = context;
     this->source_file = context->get_source_file();
@@ -549,6 +598,14 @@ bool Scanner::is_comment() {
 
 bool Scanner::is_string() {
     return lookahead('"') || lookahead('\'');
+}
+
+// ruby style symbol: a ':' glued to a name or to a quoted string, in either
+// quote. A ':' with anything else after it stays a plain TK_COLON, and '::' is
+// left to get_operator, since a second ':' is neither a name nor a quote
+bool Scanner::is_symbol() {
+    return lookahead(':')
+        && (is_alpha(1) || lookahead('\'', 1) || lookahead('"', 1));
 }
 
 // looks ahead from the opening delimiter for a '${' before the closing one,
