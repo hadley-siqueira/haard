@@ -1,0 +1,12 @@
+# digits that do not belong to the base, and a prefix with no digits at all
+a = 0xZZ
+b = 0x1g
+c = 0b2
+d = 0o8
+e = 0x
+f = 0b
+g = 0o
+# valid, for contrast: the hexadecimal digits stop at 'f', in either case
+h = 0xcaFE7
+# only the lowercase prefix is recognised
+i = 0Xff

@@ -34,7 +34,7 @@ void Context::inspect_tokens() {
         }
 
         std::cout << "' (" << tk.get_kind_as_string()
-            << ", line_flag=" << tk.get_whitespace_flag()
+            << ", newline_before=" << tk.get_newline_before()
             << ", ws=" << (int) tk.get_whitespace() << ")\n";
     }
 }

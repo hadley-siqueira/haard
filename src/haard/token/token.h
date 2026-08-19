@@ -41,8 +41,6 @@ namespace haard {
         TK_INTERPOLATION_BEGIN,
         TK_INTERPOLATION_END,
         TK_IDENTIFIER,
-        TK_BEGIN_GENERIC,
-        TK_END_GENERIC,
         TK_ASSIGNMENT,
         TK_PLUS_ASSIGNMENT,
         TK_MINUS_ASSIGNMENT,
@@ -111,10 +109,14 @@ namespace haard {
             void set_length(u16 length);
             u16 get_length();
 
-            // most significant bit of 'flags': flipped on every line change,
-            // so tokens on the same line share the same value
-            void set_whitespace_flag(bool value);
-            bool get_whitespace_flag();
+            // most significant bit of 'flags': set when a line break separates
+            // this token from the previous one. It is computed from the line
+            // the previous token *ended* on, so the operator right after a
+            // multiline string does not look like the start of a new line.
+            // It answers only about neighbours: for an arbitrary pair of
+            // tokens use SourceFile::position_of instead of this bit
+            void set_newline_before(bool value);
+            bool get_newline_before();
 
             // 7 least significant bits of 'flags': amount of whitespace at the
             // start of the token's line, used to compare indentation

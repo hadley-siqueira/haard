@@ -31,6 +31,7 @@ namespace haard {
             void start_token();
             void end_token();
             void create_token(TokenKind kind);
+            void create_eof_token();
 
             void advance(int steps);
             void advance();
@@ -64,12 +65,15 @@ namespace haard {
             u32 token_ws;
             u32 column;
             u32 line;
-            u32 last_token_line;
             u32 ws;
-            int template_counter;
-            bool template_flag;
+            // the line the previous token ended on, which is what decides the
+            // newline flag of the next one
+            u32 last_end_line;
+            u32 last_tab_line;
+            u32 last_deep_indentation_line;
             bool line_start;
-            bool whitespace_flag;
+            bool line_has_tab;
+            bool token_has_tab;
             size_t idx;
     };
 }

@@ -1,0 +1,11 @@
+# the scanner does not try to recognise generics: '<' and '>' are always
+# relational, so nothing a line opens can change how a later line is scanned.
+# This case is the regression guard for the leak that existed while the scanner
+# did try: an unspaced 'count<max' used to open a generic that was never closed,
+# and from there every '<' and '>' in the file, spaced ones included, came out
+# as a generic delimiter
+if count<max:
+    x = 1
+
+let a = 1 < 2
+let b = 3 > 4

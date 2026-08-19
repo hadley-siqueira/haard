@@ -1,4 +1,7 @@
-# '>>' and '>>>' close generics one level at a time, they are not shifts here
+# how a nested generic reaches the parser now that the scanner does not track
+# them: the closing angles are glued, so '>>' arrives as one shift token and
+# '>>>' as a shift plus a '>'. Splitting them back is the parser's job, and
+# this case is what will show that decision taking effect
 a = Map<String, Array<i32>>
 b = Array<Array<Array<i32>>>
 c = Map<String, Map<i32, Array<f64>>>

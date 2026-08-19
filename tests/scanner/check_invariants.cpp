@@ -8,8 +8,20 @@
 //              byte is lost or duplicated by the scanner.
 //
 //  whitespace  the indentation counter matches the spaces at the start of the
-//              line where the token begins; tokens on the same line share the
-//              flag bit; tokens on different lines have it flipped.
+//              line where the token begins.
+//
+//  newline     a token carries the newline flag exactly when a '\n' sits
+//              between the end of the previous token and its own start. The
+//              first token of the file always carries it: nothing precedes it.
+//
+//  position    the line and column SourceFile::position_of derives from an
+//              offset match the ones counted here from the raw text, columns
+//              in characters rather than bytes.
+//
+//  eof         the stream ends with a TK_EOF that sits at the end of the file,
+//              is empty, has zero indentation so the parser's blocks all close,
+//              and appears nowhere else. Its newline flag is not special: it
+//              follows the rule above like any other token.
 #include <haard/context/context.h>
 #include <haard/scanner/scanner.h>
 #include <iostream>
@@ -23,9 +35,10 @@ void fail(const std::string& what) {
     std::cout << "    " << what << "\n";
 }
 
-// line (1-based) and indentation of the line the offset falls in, read from
-// the raw text
-void line_and_indent(const std::string& src, u32 offset, int& line, int& indent) {
+// line (1-based), indentation and column (1-based, in characters) of the offset,
+// counted from the raw text and independently of SourceFile
+void line_indent_and_column(const std::string& src, u32 offset, int& line,
+                            int& indent, int& column) {
     size_t bol = 0;
 
     line = 1;
@@ -42,6 +55,24 @@ void line_and_indent(const std::string& src, u32 offset, int& line, int& indent)
     while (bol + indent < src.size() && src[bol + indent] == ' ') {
         ++indent;
     }
+
+    column = 1;
+
+    for (size_t i = bol; i < offset && i < src.size(); ++i) {
+        if ((((unsigned char) src[i]) & 0xC0) != 0x80) {
+            ++column;
+        }
+    }
+}
+
+bool holds_newline(const std::string& src, size_t from, size_t to) {
+    for (size_t i = from; i < to && i < src.size(); ++i) {
+        if (src[i] == '\n') {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // whatever separates two tokens can only be whitespace or a comment
@@ -79,8 +110,6 @@ int main(int argc, char* argv[]) {
     auto& list = ctx.get_tokens()->get_tokens();
 
     size_t end_of_previous = 0;
-    int previous_line = -1;
-    bool previous_flag = false;
 
     for (u32 i = 0; i < list.size(); ++i) {
         auto& tk = list[i];
@@ -104,30 +133,69 @@ int main(int argc, char* argv[]) {
             fail(at + ": lexeme does not match the original text");
         }
 
+        // the first token has nothing before it, so it always carries the flag
+        bool expected_newline = i == 0
+            || holds_newline(src, end_of_previous, offset);
+
+        if (tk.get_newline_before() != expected_newline) {
+            fail(at + std::string(": newline_before is ")
+                    + (tk.get_newline_before() ? "set" : "clear")
+                    + " but the text before it "
+                    + (expected_newline ? "holds" : "holds no") + " line break");
+        }
+
         end_of_previous = offset + length;
 
         int line = 0;
         int indent = 0;
-        line_and_indent(src, offset, line, indent);
+        int column = 0;
+        line_indent_and_column(src, offset, line, indent, column);
 
-        if (tk.get_whitespace() != indent) {
+        // 'ws' holds the indentation of the line, saturated at 127 because the
+        // field is 7 bits wide — the scanner reports the overflow rather than
+        // truncating in silence. TK_EOF carries a forced zero, checked below
+        int expected_ws = indent > 127 ? 127 : indent;
+
+        if (tk.get_kind() != TK_EOF && tk.get_whitespace() != expected_ws) {
             fail(at + ": ws=" + std::to_string(tk.get_whitespace())
                     + " but line " + std::to_string(line) + " has "
                     + std::to_string(indent) + " spaces");
         }
 
-        if (previous_line != -1) {
-            if (line == previous_line && tk.get_whitespace_flag() != previous_flag) {
-                fail(at + ": same line as the previous token but the flag changed");
-            } else if (line != previous_line && tk.get_whitespace_flag() == previous_flag) {
-                fail(at + ": different line from the previous token but the flag did not flip");
-            }
+        auto position = ctx.get_source_file()->position_of(offset);
+
+        if (position.line != (u32) line || position.column != (u32) column) {
+            fail(at + ": position_of says "
+                    + std::to_string(position.line) + ":"
+                    + std::to_string(position.column) + " but the text says "
+                    + std::to_string(line) + ":" + std::to_string(column));
         }
 
-        previous_line = line;
-        previous_flag = tk.get_whitespace_flag();
+        if (tk.get_kind() == TK_EOF && i + 1 != list.size()) {
+            fail(at + ": TK_EOF before the end of the stream");
+        }
     }
 
     check_gap(src, end_of_previous, src.size());
+
+    if (list.size() == 0) {
+        fail("the stream is empty: it must always end with a TK_EOF");
+    } else {
+        auto& last = list[list.size() - 1];
+
+        if (last.get_kind() != TK_EOF) {
+            fail("the stream does not end with TK_EOF");
+        }
+
+        if (last.get_offset() != src.size() || last.get_length() != 0) {
+            fail("TK_EOF is not the empty token at the end of the file");
+        }
+
+        // a nonzero indentation here would keep the parser's blocks open
+        if (last.get_whitespace() != 0) {
+            fail("TK_EOF has a nonzero indentation");
+        }
+    }
+
     return fails;
 }

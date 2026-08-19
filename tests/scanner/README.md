@@ -78,3 +78,8 @@ bugs included.
 `known_failures.txt` lists cases that document bugs not fixed yet. They show up
 as `XFAIL` and do not break the suite. If a listed case passes, the suite reports
 `XPASS` and fails — that way the file cannot go stale silently.
+
+A listed case still goes through `-u` like any other. If a case ever gets an
+`expected/` file written by hand — holding the output the scanner *should*
+produce, which is what would make it fail — say so here and refresh it by hand
+instead, because `-u` would turn the documented bug into the golden.

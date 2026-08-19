@@ -1,0 +1,6 @@
+# 'ws' only has 7 bits, so an indentation past 127 is reported instead of
+# being truncated in silence, which would corrupt the parser's block test
+a = 1
+                                                                                                                                  deep = 2
+                                                                                                                                  also_deep = 3
+b = 4

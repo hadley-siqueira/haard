@@ -1,0 +1,21 @@
+Error: tab in the indentation of line 2, use spaces
+Error: tab in the indentation of line 5, use spaces
+Error: tab in the indentation of line 6, use spaces
+TK_DEF                     off=0    len=3   at=1:1     nl=1 ws=0   'def'
+TK_IDENTIFIER              off=4    len=4   at=1:5     nl=0 ws=0   'main'
+TK_COLON                   off=8    len=1   at=1:9     nl=0 ws=0   ':'
+TK_LET                     off=11   len=3   at=2:2     nl=1 ws=0   'let'
+TK_IDENTIFIER              off=15   len=1   at=2:6     nl=0 ws=0   'x'
+TK_ASSIGNMENT              off=17   len=1   at=2:8     nl=0 ws=0   '='
+TK_INTEGER_LITERAL         off=19   len=1   at=2:10    nl=0 ws=0   '1'
+TK_IF                      off=93   len=2   at=5:2     nl=1 ws=0   'if'
+TK_IDENTIFIER              off=96   len=1   at=5:5     nl=0 ws=0   'x'
+TK_COLON                   off=97   len=1   at=5:6     nl=0 ws=0   ':'
+TK_RETURN                  off=101  len=6   at=6:3     nl=1 ws=0   'return'
+TK_INTEGER_LITERAL         off=108  len=1   at=6:10    nl=0 ws=0   '0'
+TK_DEF                     off=111  len=3   at=8:1     nl=1 ws=0   'def'
+TK_IDENTIFIER              off=115  len=6   at=8:5     nl=0 ws=0   'spaced'
+TK_COLON                   off=121  len=1   at=8:11    nl=0 ws=0   ':'
+TK_RETURN                  off=127  len=6   at=9:5     nl=1 ws=4   'return'
+TK_INTEGER_LITERAL         off=134  len=1   at=9:12    nl=0 ws=4   '1'
+TK_EOF                     off=136  len=0   at=10:1    nl=1 ws=0   ''

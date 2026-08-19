@@ -1,0 +1,10 @@
+# the flag marks a line break between a token and the one before it, which is
+# not the same as 'first token of its line': the '+' below opens no line, but
+# nothing separates it from the string that ends right before it
+a = "first
+second" + b
+
+# same for a single quoted one, and for a token that closes a line
+c = 'third
+fourth' * 2
+d = 5

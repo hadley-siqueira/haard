@@ -104,13 +104,16 @@ void Scanner::reset() {
     token_ws = 0;
     column = 1;
     line = 1;
-    last_token_line = 1;
     ws = 0;
     idx = 0;
-    template_flag = false;
-    template_counter = 0;
+    // zero, not one, so the first token of the file is reported as opening a
+    // line: nothing precedes it
+    last_end_line = 0;
+    last_tab_line = 0;
+    last_deep_indentation_line = 0;
     line_start = true;
-    whitespace_flag = false;
+    line_has_tab = false;
+    token_has_tab = false;
 }
 
 void Scanner::get_tokens(const std::filesystem::path& path) {
@@ -121,6 +124,8 @@ void Scanner::get_tokens(const std::filesystem::path& path) {
     while (has_next()) {
         get_token();
     }
+
+    create_eof_token();
 }
 
 void Scanner::get_token() {
@@ -161,10 +166,6 @@ void Scanner::get_keyword_or_identifier() {
     }
 
     create_token(kind);
-
-    if (lookahead('<')) {
-        template_flag = true;
-    }
 }
 
 void Scanner::get_number() {
@@ -181,8 +182,6 @@ void Scanner::get_number() {
             }
         } else {
             std::cout << "Error: missing binary digits after '0b'\n";
-            auto v = source_file->get_lines_by_index(idx, 0, 0);
-            std::cout << v << std::endl;
             // log_error(file_id, token_offset, ERR_MISSING_BINARY_DIGITS)
         }
     } else if (lookahead("0o")) {
@@ -413,19 +412,6 @@ void Scanner::get_operator() {
 
     auto kind = get_token_kind(tmp);
 
-    if (template_flag || template_counter > 0) {
-        if (lookahead('<')) {
-            kind = TK_BEGIN_GENERIC;
-            ++template_counter;
-            tmp = "<";
-        } else if (lookahead('>')) {
-            kind = TK_END_GENERIC;
-            --template_counter;
-            tmp = ">";
-        }
-    }
-
-    template_flag = false;
     start_token();
     advance(tmp.size());
     end_token();
@@ -496,6 +482,7 @@ void Scanner::start_token() {
     // strings), and its flag and indentation belong to the line it opens on
     token_line = line;
     token_ws = ws;
+    token_has_tab = line_has_tab;
 }
 
 void Scanner::end_token() {
@@ -509,19 +496,48 @@ void Scanner::end_token() {
 void Scanner::create_token(TokenKind kind) {
     Token token;
 
-    // the flag is flipped per line that actually holds a token, not per
-    // newline, so that blank lines don't flip it twice and make two
-    // different lines look like the same one
-    if (token_line != last_token_line) {
-        whitespace_flag = !whitespace_flag;
-        last_token_line = token_line;
+    // indentation is counted in spaces, so a tab adds nothing to 'ws' and a
+    // tab indented block would look flush against the margin. Reported once per
+    // line, and only for a line that bears a token, so that a tab on a blank or
+    // comment only line stays as harmless as any other trailing whitespace
+    if (token_has_tab && token_line != last_tab_line) {
+        std::cout << "Error: tab in the indentation of line " << token_line
+                  << ", use spaces\n";
+        last_tab_line = token_line;
+    }
+
+    // 'ws' only has 7 bits. Truncating it in silence would corrupt the
+    // indentation comparison the parser does, so it is reported instead
+    if (token_ws > 127 && token_line != last_deep_indentation_line) {
+        std::cout << "Error: line " << token_line << " is indented by more than"
+                  << " 127 spaces\n";
+        last_deep_indentation_line = token_line;
     }
 
     token.set_kind(kind);
     token.set_offset(token_offset);
     token.set_length(token_length);
-    token.set_whitespace_flag(whitespace_flag);
+    // compared against the line the *previous* token ended on: a token may span
+    // lines, and what matters is whether a break separates the two
+    token.set_newline_before(token_line != last_end_line);
     token.set_whitespace(token_ws);
+
+    tokens->push(token);
+    last_end_line = line;
+}
+
+// the stream always ends with a real TK_EOF. Its 'ws' is forced to zero, which
+// makes every block the parser has open close at the end of the file with no
+// special case. Its newline flag is not forced: it answers the same question as
+// any other token, so a file with no trailing newline reports none
+void Scanner::create_eof_token() {
+    Token token;
+
+    token.set_kind(TK_EOF);
+    token.set_offset(source_file->size());
+    token.set_length(0);
+    token.set_newline_before(line != last_end_line);
+    token.set_whitespace(0);
 
     tokens->push(token);
 }
@@ -540,8 +556,14 @@ void Scanner::advance() {
         line++;
         ws = 0;
         line_start = true;
+        line_has_tab = false;
     } else if (c == ' ' && line_start) {
         ws++;
+        column++;
+    } else if (c == '\t' && line_start) {
+        // a tab does not close the indentation and does not count towards
+        // 'ws'; create_token turns the flag into a diagnostic
+        line_has_tab = true;
         column++;
     } else {
         // the first character that is not leading whitespace closes the
@@ -642,10 +664,14 @@ bool Scanner::is_utf8_continuation(int offset) {
     return ((c >> 6) & 0b11) == 0b10;
 }
 
+// a byte >= 128 is part of a utf8 sequence, either its first byte or one of
+// the continuations, and both belong to the identifier. The cast is what makes
+// the test work: 'char' is signed here, so those bytes are negative
 bool Scanner::is_alpha(int offset) {
     char c = source_file->char_at(idx + offset);
 
-    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' || c >= 128;
+    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'
+        || ((unsigned char) c) >= 128;
 }
 
 bool Scanner::is_digit(int offset) {
@@ -669,7 +695,7 @@ bool Scanner::is_octal_digit(int offset) {
 bool Scanner::is_hex_digit(int offset) {
     char c = source_file->char_at(idx + offset);
 
-    return c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+    return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F';
 }
 
 bool Scanner::is_alphanum(int offset) {

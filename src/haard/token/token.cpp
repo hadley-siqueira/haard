@@ -34,7 +34,7 @@ u16 Token::get_length() {
     return length;
 }
 
-void Token::set_whitespace_flag(bool value) {
+void Token::set_newline_before(bool value) {
     if (value) {
         flags |= 0b10000000;
     } else {
@@ -42,7 +42,7 @@ void Token::set_whitespace_flag(bool value) {
     }
 }
 
-bool Token::get_whitespace_flag() {
+bool Token::get_newline_before() {
     return (flags >> 7) & 1;
 }
 
@@ -97,8 +97,6 @@ std::string Token::get_kind_as_string() {
         { TK_INTERPOLATION_BEGIN, "TK_INTERPOLATION_BEGIN" },
         { TK_INTERPOLATION_END, "TK_INTERPOLATION_END" },
         { TK_IDENTIFIER, "TK_IDENTIFIER" },
-        { TK_BEGIN_GENERIC, "TK_BEGIN_GENERIC" },
-        { TK_END_GENERIC, "TK_END_GENERIC" },
         { TK_ASSIGNMENT, "TK_ASSIGNMENT" },
         { TK_PLUS_ASSIGNMENT, "TK_PLUS_ASSIGNMENT" },
         { TK_MINUS_ASSIGNMENT, "TK_MINUS_ASSIGNMENT" },

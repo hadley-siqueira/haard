@@ -1,3 +1,4 @@
-TK_IDENTIFIER              off=0    len=1   flag=0 ws=0   'a'
-TK_IDENTIFIER              off=3    len=1   flag=0 ws=0   'b'
-TK_IDENTIFIER              off=7    len=1   flag=0 ws=0   'c'
+TK_IDENTIFIER              off=0    len=1   at=1:1     nl=1 ws=0   'a'
+TK_IDENTIFIER              off=3    len=1   at=1:4     nl=0 ws=0   'b'
+TK_IDENTIFIER              off=7    len=1   at=1:8     nl=0 ws=0   'c'
+TK_EOF                     off=9    len=0   at=2:1     nl=1 ws=0   ''

@@ -1,0 +1,15 @@
+Error: line 4 is indented by more than 127 spaces
+Error: line 5 is indented by more than 127 spaces
+TK_IDENTIFIER              off=148  len=1   at=3:1     nl=1 ws=0   'a'
+TK_ASSIGNMENT              off=150  len=1   at=3:3     nl=0 ws=0   '='
+TK_INTEGER_LITERAL         off=152  len=1   at=3:5     nl=0 ws=0   '1'
+TK_IDENTIFIER              off=284  len=4   at=4:131   nl=1 ws=127 'deep'
+TK_ASSIGNMENT              off=289  len=1   at=4:136   nl=0 ws=127 '='
+TK_INTEGER_LITERAL         off=291  len=1   at=4:138   nl=0 ws=127 '2'
+TK_IDENTIFIER              off=423  len=9   at=5:131   nl=1 ws=127 'also_deep'
+TK_ASSIGNMENT              off=433  len=1   at=5:141   nl=0 ws=127 '='
+TK_INTEGER_LITERAL         off=435  len=1   at=5:143   nl=0 ws=127 '3'
+TK_IDENTIFIER              off=437  len=1   at=6:1     nl=1 ws=0   'b'
+TK_ASSIGNMENT              off=439  len=1   at=6:3     nl=0 ws=0   '='
+TK_INTEGER_LITERAL         off=441  len=1   at=6:5     nl=0 ws=0   '4'
+TK_EOF                     off=443  len=0   at=7:1     nl=1 ws=0   ''

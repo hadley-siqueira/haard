@@ -1,0 +1,13 @@
+# a letter outside ascii belongs to an identifier, and to a symbol as well
+let ação = 1
+let café = "café"
+
+def média(números: Array<i32>) -> f64:
+    total = 0
+
+    for número in números:
+        total += número
+
+    return total / números.size
+
+let 日本語 = :símbolo

@@ -1,0 +1,9 @@
+def main:
+	let x = 1
+	# a comment on a tab indented line bears no token, so no diagnostic
+	
+	if x:
+		return 0
+
+def spaced:
+    return 1
