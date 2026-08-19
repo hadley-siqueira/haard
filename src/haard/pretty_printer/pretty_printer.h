@@ -2,6 +2,7 @@
 #define HAARD_PRETTY_PRINTER_H
 
 #include <haard/context/context.h>
+#include <ostream>
 #include <sstream>
 
 namespace haard {
@@ -10,7 +11,9 @@ namespace haard {
             PrettyPrinter();
 
         public:
-            void print();
+            // false when there is nothing to print, which is what an empty ast
+            // means: no phase has built one yet
+            bool print(std::ostream& out);
 
             void print_node(u32 node);
             void print_module(u32 node);
@@ -23,6 +26,7 @@ namespace haard {
             void print_let_declaration(u32 node);
             void print_const_declaration(u32 node);
 
+            void print_param(u32 node);
             void print_binding(u32 node);
             void print_binding_name(u32 node);
             void print_binding_type(u32 node);

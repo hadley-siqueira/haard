@@ -73,6 +73,7 @@ sources=(
     "$root/src/haard/token/token.cpp"
     "$root/src/haard/token_stream/token_stream.cpp"
     "$root/src/haard/ast/ast.cpp"
+    "$root/src/haard/ast/ast_builder.cpp"
     "$root/src/haard/ast/ast_node.cpp"
     "$root/src/haard/source_file/source_file.cpp"
     "$root/src/haard/log/log.cpp"

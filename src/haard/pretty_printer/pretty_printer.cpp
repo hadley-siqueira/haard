@@ -4,12 +4,22 @@
 using namespace haard;
 
 PrettyPrinter::PrettyPrinter() {
-    set_context(nullptr);
+    context = nullptr;
+    ast = nullptr;
 }
 
-void PrettyPrinter::print() {
-    print_node(1);
-    std::cout << output.str() << std::endl;
+bool PrettyPrinter::print(std::ostream& out) {
+    u32 root = ast->get_root();
+
+    if (root == 0) {
+        return false;
+    }
+
+    output.str("");
+    print_node(root);
+    out << output.str() << '\n';
+
+    return true;
 }
 
 void PrettyPrinter::print_node(u32 node) {
@@ -48,6 +58,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_const_declaration(node);
             break;
 
+        case AST_PARAM:
+            print_param(node);
+            break;
+
         case AST_BINDING:
             print_binding(node);
             break;
@@ -74,6 +88,13 @@ void PrettyPrinter::print_node(u32 node) {
 
         case AST_IDENTIFIER:
             print_identifier(node);
+            break;
+
+        // a node kind with no case here would otherwise vanish from the
+        // output without a trace, which is the worst way to find out that one
+        // is missing
+        default:
+            output << "<no printer for ast kind " << (int) kind << ">";
             break;
     }
 }
@@ -107,6 +128,11 @@ void PrettyPrinter::print_let_declaration(u32 node) {
 
 void PrettyPrinter::print_const_declaration(u32 node) {
     print_string("const ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_param(u32 node) {
+    print_string("@");
     print_children(node);
 }
 
@@ -179,5 +205,5 @@ void PrettyPrinter::print_string(const std::string_view& s) {
 
 void PrettyPrinter::set_context(Context* context) {
     this->context = context;
-    this->ast = context->get_ast();
+    this->ast = context == nullptr ? nullptr : context->get_ast();
 }

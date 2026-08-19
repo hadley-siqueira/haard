@@ -20,12 +20,14 @@ set(TOKEN_STREAM_SRC
 set(AST_SRC
     src/haard/ast/ast_node.cpp
     src/haard/ast/ast.cpp
+    src/haard/ast/ast_builder.cpp
 )
 
 set(SCANNER_SRC
     src/haard/scanner/scanner.cpp
 )
 
+# parser_old.{h,cpp} is the first attempt, kept for reference and not built
 set(PARSER_SRC
     src/haard/parser/parser.cpp
 )
@@ -42,6 +44,10 @@ set(LOG_SRC
     src/haard/log/log.cpp
 )
 
+set(DRIVER_SRC
+    src/haard/driver/driver.cpp
+)
+
 
 set(SOURCES
     src/main.cpp
@@ -53,6 +59,7 @@ set(SOURCES
     ${PARSER_SRC}
     ${CONTEXT_SRC}
     ${LOG_SRC}
+    ${DRIVER_SRC}
     ${PRETTY_SRC}
 )
 
@@ -95,10 +102,11 @@ else()
     add_custom_target(format-check DEPENDS format)
 endif()
 
-# make check: runs the scanner test suite (tests/scanner/run.sh)
+# make check: runs every test suite
 add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/scanner/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running the scanner tests"
+    COMMENT "Running the tests"
     VERBATIM
 )
