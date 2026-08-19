@@ -1,0 +1,38 @@
+import std.io
+
+class Pixel:
+    r : u8
+    g : u8
+    b : u8
+
+    def init : void
+        this.r = 0
+        this.g = 0
+        this.b = 0
+
+    def invert : void
+        this.r -= 255
+        this.g -= 255
+        this.b -= 255
+
+    def average : u8
+        let sum = r + g + b
+
+        return sum / 3
+
+class Image:
+    pixels : Array<Pixel>
+    width  : u32
+    height : u32
+
+    def save_as_ppm : void
+        @path : str
+
+        f = File(path, 'w')
+
+        f.write('P3\n${width} ${height}\n255')
+
+        for pixel in pixels:
+            f.write('${pixel.r} ${pixel.g} ${pixel.b}')
+
+        f.close()

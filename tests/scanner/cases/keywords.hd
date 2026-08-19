@@ -1,0 +1,8 @@
+import def class enum union struct
+if elif else for while
+let const true false as
+in not return continue break yield this
+# a keyword only matches a whole word: these are all identifiers
+imported define classes formal while_ letter constant
+truest falsey ash inside notation returned continued
+yielding thisone _this this_ this2 breaking break_ unbreak
