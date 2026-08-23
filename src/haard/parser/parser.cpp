@@ -234,9 +234,13 @@ u32 Parser::parse_function() {
         last = builder.add_child(node, last, parse_param());
     }
 
-    builder.add_child(node, last, parse_function_body());
-
     dedent();
+
+    // the statements sit at the level the parameters were read at, and the
+    // block pushes it again for itself. Two balanced pairs rather than one
+    // that spans both, because the block is the only rule allowed to own the
+    // stack and the parameters are not statements
+    builder.add_child(node, last, parse_block(indentation));
 
     return node;
 }
@@ -285,24 +289,145 @@ u32 Parser::parse_function_return_type() {
     return builder.make_function_return_type(type);
 }
 
-// one expression, and only for now: what belongs here is a block of statements,
-// and neither statements nor blocks of them exist yet. The expression opens a
-// line of its own, which is why the statement mark has to move before it is
-// read — see begin_statement
-u32 Parser::parse_function_body() {
-    if (!is_indented()) {
-        return 0;
+// Everything deeper than the line that opened it, and the second of the two
+// places that know about panic mode — the other is parse_module. Recovering
+// here rather than letting the error travel outwards is what keeps a broken
+// statement from taking its whole block with it.
+//
+// It is the only rule that pushes a level, and it has exactly one exit for the
+// reason parse_function does: a return between the indent and the dedent leaks
+// a level onto the stack.
+//
+//   block := statement*
+u32 Parser::parse_block(u32 header_indentation) {
+    u32 node = builder.make_block();
+    u32 last = 0;
+
+    indent(header_indentation);
+
+    // in panic this is inert, so a header whose condition failed reads no
+    // block at all and the error travels out to the statement that can recover
+    // from it, instead of being recovered inside a block that never opened
+    while (is_indented()) {
+        u32 indentation = indentation_of_current_line();
+        u32 start = current_token;
+
+        begin_statement();
+
+        u32 child = parse_statement();
+
+        if (panic) {
+            synchronize(indentation, start);
+            continue;
+        }
+
+        last = builder.add_child(node, last, child);
     }
+
+    dedent();
+
+    return node;
+}
+
+// an expression is what is left when no keyword opens the line, so it needs no
+// lookahead of its own
+//
+//   statement := if | while | expression
+u32 Parser::parse_statement() {
+    if (lookahead(TK_IF)) {
+        return parse_if();
+    }
+
+    if (lookahead(TK_WHILE)) {
+        return parse_while();
+    }
+
+    return parse_expression();
+}
+
+//   if := 'if' expression ':' block elif* else?
+u32 Parser::parse_if() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
 
     begin_statement();
+    expect(TK_IF);
 
-    u32 expression = parse_expression();
+    u32 node = builder.make_if(token);
+    u32 last = parse_conditional(node, indentation);
 
-    if (expression == 0) {
-        return 0;
+    // 'is_indented' is the guard the old compiler had here and it matters: the
+    // stack is back to the block that holds this 'if', so an 'elif' written
+    // outside that block is not this one's. Without it a dedented 'elif' would
+    // be swallowed instead of reported
+    while (lookahead(TK_ELIF) && is_indented()) {
+        last = builder.add_child(node, last, parse_elif());
     }
 
-    return builder.make_function_body(expression);
+    if (lookahead(TK_ELSE) && is_indented()) {
+        builder.add_child(node, last, parse_else());
+    }
+
+    return node;
+}
+
+//   elif := 'elif' expression ':' block
+u32 Parser::parse_elif() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_ELIF);
+
+    u32 node = builder.make_elif(token);
+
+    parse_conditional(node, indentation);
+
+    return node;
+}
+
+//   else := 'else' ':' block
+u32 Parser::parse_else() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_ELSE);
+    expect_on_same_line(TK_COLON);
+
+    u32 node = builder.make_else(token);
+
+    builder.add_child(node, 0, parse_block(indentation));
+
+    return node;
+}
+
+//   while := 'while' expression ':' block
+u32 Parser::parse_while() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_WHILE);
+
+    u32 node = builder.make_while(token);
+
+    parse_conditional(node, indentation);
+
+    return node;
+}
+
+// the shape 'if', 'elif' and 'while' share: a condition, a ':' closing the
+// header line, and the block under it. Gives back the last child, which is what
+// an 'if' needs in order to go on appending its elif and else
+u32 Parser::parse_conditional(u32 node, u32 header_indentation) {
+    u32 condition = parse_expression();
+
+    expect_on_same_line(TK_COLON);
+
+    u32 last = builder.add_child(node, 0, condition);
+
+    return builder.add_child(node, last, parse_block(header_indentation));
 }
 
 //   param := '@' identifier ':' type

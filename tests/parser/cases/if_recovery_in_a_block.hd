@@ -1,0 +1,7 @@
+# a broken statement is recovered inside its own block: the ones around it are
+# still read, and the function keeps going
+def main : i32
+    a
+    if b
+        c
+    d

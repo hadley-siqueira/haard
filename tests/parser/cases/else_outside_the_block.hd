@@ -1,0 +1,6 @@
+# same as the elif: an 'else' dedented out of the function is not this chain's
+def main : i32
+    if a:
+        b
+else:
+    c

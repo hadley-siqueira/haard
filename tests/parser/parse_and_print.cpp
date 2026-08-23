@@ -44,7 +44,11 @@ static std::string name_of(AstNodeKind kind) {
         case AST_FUNCTION: return "function";
         case AST_GENERIC_PARAMETERS: return "generic_parameters";
         case AST_FUNCTION_RETURN_TYPE: return "function_return_type";
-        case AST_FUNCTION_BODY: return "function_body";
+        case AST_BLOCK: return "block";
+        case AST_IF: return "if";
+        case AST_ELIF: return "elif";
+        case AST_ELSE: return "else";
+        case AST_WHILE: return "while";
         case AST_PARAM: return "param";
         case AST_BINDING: return "binding";
         case AST_BINDING_NAME: return "binding_name";
@@ -89,6 +93,10 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_FUNCTION:
         case AST_GENERIC_PARAMETERS:
         case AST_PARAM:
+        case AST_IF:
+        case AST_ELIF:
+        case AST_ELSE:
+        case AST_WHILE:
         case AST_PLUS:
         case AST_MINUS:
         case AST_TIMES:

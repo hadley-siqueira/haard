@@ -15,6 +15,6 @@ module
         identifier 'value'
       binding_type
         identifier 'T'
-    function_body
+    block
       identifier 'value'
 --- round trip: ok

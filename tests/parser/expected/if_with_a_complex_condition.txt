@@ -1,0 +1,23 @@
+def main : i32
+    if (a + b) * c:
+        io::print
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      if 'if'
+        times '*'
+          parenthesis '('
+            plus '+'
+              identifier 'a'
+              identifier 'b'
+          identifier 'c'
+        block
+          scope '::'
+            identifier 'io'
+            identifier 'print'
+--- round trip: ok

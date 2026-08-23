@@ -29,7 +29,16 @@ namespace haard {
             void print_function(u32 node);
             void print_generic_parameters(u32 node);
             void print_function_return_type(u32 node);
-            void print_function_body(u32 node);
+
+            void print_block(u32 node);
+            void print_if(u32 node);
+            void print_elif(u32 node);
+            void print_else(u32 node);
+            void print_while(u32 node);
+
+            // the shape 'if', 'elif', 'else' and 'while' share: a header line
+            // ending in ':' and a block of lines under it
+            void print_conditional(u32 node, const std::string& keyword);
 
             void print_param(u32 node);
             void print_binding(u32 node);

@@ -1,5 +1,11 @@
+error: expected a declaration, found 'elif'
+ --> cases/elif_outside_the_block.hd:5:1
+  |
+5 | elif c:
+  | ^^^^
 def main : i32
-    a + b
+    if a:
+        b
 --- tree
 module
   function 'def'
@@ -8,7 +14,8 @@ module
     function_return_type
       identifier 'i32'
     block
-      plus '+'
+      if 'if'
         identifier 'a'
-        identifier 'b'
+        block
+          identifier 'b'
 --- round trip: ok

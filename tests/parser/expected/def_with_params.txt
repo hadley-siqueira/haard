@@ -19,7 +19,7 @@ module
         identifier 'argv'
       binding_type
         identifier 'String'
-    function_body
+    block
       plus '+'
         identifier 'argc'
         integer '1'

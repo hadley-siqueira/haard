@@ -1,0 +1,9 @@
+def main : i32
+    if a:
+        b
+    elif c:
+        d
+    elif e:
+        f
+    else:
+        g

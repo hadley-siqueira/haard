@@ -1,0 +1,4 @@
+# there is no 'pass' yet, so a header with nothing under it keeps an empty block
+def main : i32
+    if a:
+    while b:

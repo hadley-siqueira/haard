@@ -61,7 +61,17 @@ namespace haard {
             u32 make_function(u32 token);
             u32 make_generic_parameters(u32 token);
             u32 make_function_return_type(u32 child);
-            u32 make_function_body(u32 child);
+
+            // a block is a list of statements and is built even when it holds
+            // none: an 'if a:' with nothing under it still had a ':' written
+            u32 make_block();
+
+            // the header keyword's token, then the condition, the block and —
+            // for an 'if' — the elif and else that follow it, as siblings
+            u32 make_if(u32 token);
+            u32 make_elif(u32 token);
+            u32 make_else(u32 token);
+            u32 make_while(u32 token);
 
             u32 make_param(u32 token, u32 name, u32 type);
             u32 make_binding(u32 name, u32 type, u32 expression);

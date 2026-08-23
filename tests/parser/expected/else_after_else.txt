@@ -1,0 +1,26 @@
+error: expected an expression, found 'else'
+ --> cases/else_after_else.hd:6:5
+  |
+6 |     else:
+  |     ^^^^
+def main : i32
+    if a:
+        b
+    else:
+        c
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      if 'if'
+        identifier 'a'
+        block
+          identifier 'b'
+        else 'else'
+          block
+            identifier 'c'
+--- round trip: ok

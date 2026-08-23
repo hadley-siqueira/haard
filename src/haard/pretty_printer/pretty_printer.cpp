@@ -72,8 +72,24 @@ void PrettyPrinter::print_node(u32 node) {
             print_function_return_type(node);
             break;
 
-        case AST_FUNCTION_BODY:
-            print_function_body(node);
+        case AST_BLOCK:
+            print_block(node);
+            break;
+
+        case AST_IF:
+            print_if(node);
+            break;
+
+        case AST_ELIF:
+            print_elif(node);
+            break;
+
+        case AST_ELSE:
+            print_else(node);
+            break;
+
+        case AST_WHILE:
+            print_while(node);
             break;
 
         case AST_PARAM:
@@ -197,22 +213,25 @@ void PrettyPrinter::print_const_declaration(u32 node) {
 // own inside it, so which part goes where is decided by the kind of each child
 void PrettyPrinter::print_function(u32 node) {
     print_string("def ");
-    ++indentation;
 
     u32 child = ast->get_node(node)->get_children();
 
     while (child != 0) {
         AstNodeKind kind = ast->get_node(child)->get_kind();
 
-        if (kind == AST_PARAM || kind == AST_FUNCTION_BODY) {
+        // a parameter needs a line of its own, one level in. The block raises
+        // the level itself, so it must not be raised for it here as well
+        if (kind == AST_PARAM) {
+            ++indentation;
             print_new_line();
+            print_node(child);
+            --indentation;
+        } else {
+            print_node(child);
         }
 
-        print_node(child);
         child = ast->get_node(child)->get_sibling();
     }
-
-    --indentation;
 }
 
 void PrettyPrinter::print_generic_parameters(u32 node) {
@@ -226,8 +245,63 @@ void PrettyPrinter::print_function_return_type(u32 node) {
     print_children(node);
 }
 
-void PrettyPrinter::print_function_body(u32 node) {
-    print_children(node);
+// every statement on a line of its own, one level deeper than the line that
+// opened the block. A block with no statements writes nothing, which is what
+// makes 'if a:' with an empty body print as itself
+void PrettyPrinter::print_block(u32 node) {
+    u32 child = ast->get_node(node)->get_children();
+
+    ++indentation;
+
+    while (child != 0) {
+        print_new_line();
+        print_node(child);
+        child = ast->get_node(child)->get_sibling();
+    }
+
+    --indentation;
+}
+
+void PrettyPrinter::print_if(u32 node) {
+    print_conditional(node, "if ");
+}
+
+void PrettyPrinter::print_elif(u32 node) {
+    print_conditional(node, "elif ");
+}
+
+void PrettyPrinter::print_else(u32 node) {
+    print_conditional(node, "else");
+}
+
+void PrettyPrinter::print_while(u32 node) {
+    print_conditional(node, "while ");
+}
+
+// the parts are told apart by kind rather than by position, so a header whose
+// condition failed to parse still writes its ':' and its block. The elif and
+// the else go back to the level of the header they belong to, which is where
+// the indentation already is: the block raised it and lowered it again
+void PrettyPrinter::print_conditional(u32 node, const std::string& keyword) {
+    print_string(keyword);
+
+    u32 child = ast->get_node(node)->get_children();
+
+    while (child != 0) {
+        AstNodeKind kind = ast->get_node(child)->get_kind();
+
+        if (kind == AST_BLOCK) {
+            print_string(":");
+            print_node(child);
+        } else if (kind == AST_ELIF || kind == AST_ELSE) {
+            print_new_line();
+            print_node(child);
+        } else {
+            print_node(child);
+        }
+
+        child = ast->get_node(child)->get_sibling();
+    }
 }
 
 void PrettyPrinter::print_param(u32 node) {

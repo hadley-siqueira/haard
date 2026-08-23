@@ -1,0 +1,4 @@
+# the body is a block now, so every line deeper than the header is a statement
+def main : i32
+    a
+    b + c

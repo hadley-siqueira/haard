@@ -1,0 +1,4 @@
+# there are no comparison operators yet, so 'a < b' does not reach the ':'
+def main : i32
+    while a < b:
+        c

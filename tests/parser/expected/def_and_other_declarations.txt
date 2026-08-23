@@ -28,7 +28,7 @@ module
         identifier 'n'
       binding_type
         identifier 'i32'
-    function_body
+    block
       modulo '%'
         identifier 'n'
         identifier 'limit'

@@ -1,0 +1,35 @@
+def main : i32
+    while n:
+        if n % 2:
+            n - 1
+        else:
+            n / 2
+        n + 1
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      while 'while'
+        identifier 'n'
+        block
+          if 'if'
+            modulo '%'
+              identifier 'n'
+              integer '2'
+            block
+              minus '-'
+                identifier 'n'
+                integer '1'
+            else 'else'
+              block
+                division '/'
+                  identifier 'n'
+                  integer '2'
+          plus '+'
+            identifier 'n'
+            integer '1'
+--- round trip: ok

@@ -1,5 +1,10 @@
+error: expected an expression, found ':'
+ --> cases/if_broken_condition_drops_its_block.hd:2:11
+  |
+2 |     if a +:
+  |           ^
 def main : i32
-const x = 1
+    d
 --- tree
 module
   function 'def'
@@ -8,10 +13,5 @@ module
     function_return_type
       identifier 'i32'
     block
-  const_declaration 'const'
-    binding
-      binding_name
-        identifier 'x'
-      binding_expression
-        integer '1'
+      identifier 'd'
 --- round trip: ok

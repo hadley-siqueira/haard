@@ -43,9 +43,18 @@ namespace haard {
             u32 parse_function();
             u32 parse_generic_parameters();
             u32 parse_function_return_type();
-            u32 parse_function_body();
             u32 parse_param();
             u32 parse_param_type();
+
+            // the block owns the indentation stack: it is the only rule that
+            // pushes a level, and it is the second of the two recovery points
+            u32 parse_block(u32 header_indentation);
+            u32 parse_statement();
+            u32 parse_if();
+            u32 parse_elif();
+            u32 parse_else();
+            u32 parse_while();
+            u32 parse_conditional(u32 node, u32 header_indentation);
 
             u32 parse_binding();
             u32 parse_binding_name();

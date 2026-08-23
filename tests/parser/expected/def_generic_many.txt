@@ -21,4 +21,5 @@ module
         identifier 'value'
       binding_type
         identifier 'V'
+    block
 --- round trip: ok

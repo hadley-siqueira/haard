@@ -1,0 +1,6 @@
+# the 'elif' is dedented out of the function, so it is not this 'if' chain's
+def main : i32
+    if a:
+        b
+elif c:
+    d

@@ -1,5 +1,9 @@
+error: expected an expression, found 'elif'
+ --> cases/elif_without_an_if.hd:2:5
+  |
+2 |     elif a:
+  |     ^^^^
 def main : i32
-const x = 1
 --- tree
 module
   function 'def'
@@ -8,10 +12,4 @@ module
     function_return_type
       identifier 'i32'
     block
-  const_declaration 'const'
-    binding
-      binding_name
-        identifier 'x'
-      binding_expression
-        integer '1'
 --- round trip: ok

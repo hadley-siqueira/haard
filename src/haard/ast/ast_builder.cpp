@@ -92,12 +92,24 @@ u32 AstBuilder::make_function_return_type(u32 child) {
     return node;
 }
 
-u32 AstBuilder::make_function_body(u32 child) {
-    u32 node = make_node(AST_FUNCTION_BODY, 0);
+u32 AstBuilder::make_block() {
+    return make_node(AST_BLOCK, 0);
+}
 
-    add_child(node, 0, child);
+u32 AstBuilder::make_if(u32 token) {
+    return make_node(AST_IF, token);
+}
 
-    return node;
+u32 AstBuilder::make_elif(u32 token) {
+    return make_node(AST_ELIF, token);
+}
+
+u32 AstBuilder::make_else(u32 token) {
+    return make_node(AST_ELSE, token);
+}
+
+u32 AstBuilder::make_while(u32 token) {
+    return make_node(AST_WHILE, token);
 }
 
 u32 AstBuilder::make_param(u32 token, u32 name, u32 type) {

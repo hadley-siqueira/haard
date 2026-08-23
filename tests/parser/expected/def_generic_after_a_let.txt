@@ -15,4 +15,5 @@ module
       identifier 'T'
     function_return_type
       identifier 'i32'
+    block
 --- round trip: ok

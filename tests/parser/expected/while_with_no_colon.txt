@@ -1,5 +1,9 @@
+error: expected ':', found the end of the line
+ --> cases/while_with_no_colon.hd:2:12
+  |
+2 |     while a
+  |            ^
 def main : i32
-const x = 1
 --- tree
 module
   function 'def'
@@ -8,10 +12,4 @@ module
     function_return_type
       identifier 'i32'
     block
-  const_declaration 'const'
-    binding
-      binding_name
-        identifier 'x'
-      binding_expression
-        integer '1'
 --- round trip: ok

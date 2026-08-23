@@ -1,4 +1,0 @@
-# the body is a single expression for now: the second line is not part of it
-def main : i32
-    a
-    b

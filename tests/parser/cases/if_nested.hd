@@ -1,0 +1,8 @@
+def main : i32
+    if a:
+        if b:
+            c
+        else:
+            d
+    else:
+        e

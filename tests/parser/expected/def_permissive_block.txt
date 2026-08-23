@@ -13,6 +13,6 @@ module
         identifier 'argc'
       binding_type
         identifier 'i32'
-    function_body
+    block
       identifier 'argc'
 --- round trip: ok

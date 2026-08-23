@@ -1,9 +1,11 @@
-error: expected a declaration, found '@'
- --> cases/def_param_on_the_header_line.hd:1:16
+error: expected ':', found the end of the line
+ --> cases/if_recovery_in_a_block.hd:5:9
   |
-1 | def main : i32 @argc : i32
-  |                ^
+5 |     if b
+  |         ^
 def main : i32
+    a
+    d
 --- tree
 module
   function 'def'
@@ -12,4 +14,6 @@ module
     function_return_type
       identifier 'i32'
     block
+      identifier 'a'
+      identifier 'd'
 --- round trip: ok

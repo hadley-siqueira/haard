@@ -1,0 +1,9 @@
+error: expected a declaration, found 'if'
+ --> cases/if_at_module_level.hd:1:1
+  |
+1 | if a:
+  | ^^
+
+--- tree
+module
+--- round trip: ok

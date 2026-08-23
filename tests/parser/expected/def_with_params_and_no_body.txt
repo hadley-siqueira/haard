@@ -12,4 +12,5 @@ module
         identifier 'message'
       binding_type
         identifier 'String'
+    block
 --- round trip: ok

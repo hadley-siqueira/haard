@@ -1,0 +1,7 @@
+def main : i32
+    while n:
+        if n % 2:
+            n - 1
+        else:
+            n / 2
+        n + 1
