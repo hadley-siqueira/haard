@@ -1,0 +1,5 @@
+def main : i32
+    let a = new Node
+    let b = new Node(1, 2)
+    let c = new Array<i32>(n)
+    return 0

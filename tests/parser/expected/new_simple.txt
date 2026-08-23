@@ -1,0 +1,49 @@
+def main : i32
+    let a = new Node
+    let b = new Node(1, 2)
+    let c = new Array<i32>(n)
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            new 'new'
+              named_type
+                identifier 'Node'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            new 'new'
+              named_type
+                identifier 'Node'
+              arguments '('
+                integer '1'
+                integer '2'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            new 'new'
+              named_type
+                identifier 'Array'
+                generic_arguments '<'
+                  named_type
+                    identifier 'i32'
+              arguments '('
+                identifier 'n'
+      return 'return'
+        integer '0'
+--- round trip: ok

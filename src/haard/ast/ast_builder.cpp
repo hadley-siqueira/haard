@@ -60,6 +60,11 @@ u32 AstBuilder::make_import_alias(u32 token) {
     return make_node(AST_IMPORT_ALIAS, token);
 }
 
+// the '*' that ends an import path, which takes everything under it
+u32 AstBuilder::make_import_all(u32 token) {
+    return make_node(AST_IMPORT_ALL, token);
+}
+
 u32 AstBuilder::make_let_declaration(u32 token, u32 binding) {
     u32 node = make_node(AST_LET_DECLARATION, token);
 
@@ -144,6 +149,30 @@ u32 AstBuilder::make_else(u32 token) {
 
 u32 AstBuilder::make_while(u32 token) {
     return make_node(AST_WHILE, token);
+}
+
+u32 AstBuilder::make_for(u32 token) {
+    return make_node(AST_FOR, token);
+}
+
+u32 AstBuilder::make_for_each(u32 token) {
+    return make_node(AST_FOR_EACH, token);
+}
+
+// the comma separated expressions between the 'for' and the first ';' or ':'.
+// In the C shaped loop they are the initialisation; in the other two the last
+// of them is the 'in' and the ones before it are what the sequence is taken
+// apart into
+u32 AstBuilder::make_for_head() {
+    return make_node(AST_FOR_HEAD, 0);
+}
+
+u32 AstBuilder::make_for_condition() {
+    return make_node(AST_FOR_CONDITION, 0);
+}
+
+u32 AstBuilder::make_for_increment() {
+    return make_node(AST_FOR_INCREMENT, 0);
 }
 
 u32 AstBuilder::make_jump(AstNodeKind kind, u32 token, u32 expression) {
@@ -253,6 +282,24 @@ u32 AstBuilder::make_unary_operator(AstNodeKind kind, u32 token, u32 operand) {
     u32 node = make_node(kind, token);
 
     add_child(node, 0, operand);
+
+    return node;
+}
+
+u32 AstBuilder::make_new(u32 token, u32 type, u32 arguments) {
+    u32 node = make_node(AST_NEW, token);
+
+    u32 last = add_child(node, 0, type);
+
+    add_child(node, last, arguments);
+
+    return node;
+}
+
+u32 AstBuilder::make_sizeof(u32 token, u32 expression) {
+    u32 node = make_node(AST_SIZEOF, token);
+
+    add_child(node, 0, expression);
 
     return node;
 }

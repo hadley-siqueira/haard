@@ -1,0 +1,5 @@
+def main : i32
+    delete a
+    delete[] b
+    delete this.head
+    return 0

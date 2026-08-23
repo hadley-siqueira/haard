@@ -1,0 +1,4 @@
+def main : i32
+    for i in 0..10:
+        io::print(i)
+    return 0

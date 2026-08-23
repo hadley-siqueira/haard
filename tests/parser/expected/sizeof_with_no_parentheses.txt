@@ -1,0 +1,9 @@
+error: expected '(', found 'i32'
+ --> cases/sizeof_with_no_parentheses.hd:2:19
+  |
+2 |     return sizeof i32
+  |                   ^^^
+
+--- tree
+module
+--- round trip: ok

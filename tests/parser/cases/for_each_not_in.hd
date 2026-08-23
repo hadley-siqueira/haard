@@ -1,0 +1,4 @@
+def main : i32
+    for i not in seen:
+        i
+    return 0

@@ -1,0 +1,13 @@
+error: expected a declaration, found '.'
+ --> cases/import_all_not_last.hd:1:13
+  |
+1 | import std.*.io
+  |             ^
+import std.*
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_all '*'
+--- round trip: ok

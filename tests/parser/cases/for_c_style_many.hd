@@ -1,0 +1,4 @@
+def main : i32
+    for i = 0, j = n; i < j; i++, j--:
+        i
+    return 0

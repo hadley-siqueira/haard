@@ -78,6 +78,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_import_alias(node);
             break;
 
+        case AST_IMPORT_ALL:
+            print_import_all(node);
+            break;
+
         case AST_LET_DECLARATION:
             print_let_declaration(node);
             break;
@@ -147,6 +151,23 @@ void PrettyPrinter::print_node(u32 node) {
 
         case AST_WHILE:
             print_while(node);
+            break;
+
+        case AST_FOR:
+        case AST_FOR_EACH:
+            print_for(node);
+            break;
+
+        case AST_FOR_HEAD:
+            print_for_head(node);
+            break;
+
+        case AST_FOR_CONDITION:
+            print_for_condition(node);
+            break;
+
+        case AST_FOR_INCREMENT:
+            print_for_increment(node);
             break;
 
         case AST_RETURN:
@@ -325,6 +346,22 @@ void PrettyPrinter::print_node(u32 node) {
             print_pre_decrement(node);
             break;
 
+        case AST_NEW:
+            print_new(node);
+            break;
+
+        case AST_DELETE:
+            print_delete(node);
+            break;
+
+        case AST_DELETE_ARRAY:
+            print_delete_array(node);
+            break;
+
+        case AST_SIZEOF:
+            print_sizeof(node);
+            break;
+
         case AST_SCOPE:
             print_scope(node);
             break;
@@ -495,6 +532,10 @@ void PrettyPrinter::print_import_alias(u32 node) {
     print_node_token(node);
 }
 
+void PrettyPrinter::print_import_all(u32 node) {
+    print_node_token(node);
+}
+
 void PrettyPrinter::print_let_declaration(u32 node) {
     print_string("let ");
     print_children(node);
@@ -621,6 +662,38 @@ void PrettyPrinter::print_else(u32 node) {
 
 void PrettyPrinter::print_while(u32 node) {
     print_conditional(node, "while ");
+}
+
+// the ':' is written when the walk reaches the block, and each part before it
+// carries its own separator — which is what keeps 'for a; ; c:' writable, where
+// the condition is missing but its semicolon is not
+void PrettyPrinter::print_for(u32 node) {
+    print_string("for ");
+
+    u32 child = ast->get_node(node)->get_children();
+
+    while (child != 0) {
+        if (ast->get_node(child)->get_kind() == AST_BLOCK) {
+            print_string(":");
+        }
+
+        print_node(child);
+        child = ast->get_node(child)->get_sibling();
+    }
+}
+
+void PrettyPrinter::print_for_head(u32 node) {
+    print_children_joined(node, ", ");
+}
+
+void PrettyPrinter::print_for_condition(u32 node) {
+    print_string("; ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_for_increment(u32 node) {
+    print_string("; ");
+    print_children_joined(node, ", ");
 }
 
 void PrettyPrinter::print_return(u32 node) {
@@ -850,6 +923,26 @@ void PrettyPrinter::print_pre_increment(u32 node) {
 
 void PrettyPrinter::print_pre_decrement(u32 node) {
     print_prefix(node, "--");
+}
+
+// the type and, when there is one, the argument list against it
+void PrettyPrinter::print_new(u32 node) {
+    print_string("new ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_delete(u32 node) {
+    print_prefix(node, "delete ");
+}
+
+void PrettyPrinter::print_delete_array(u32 node) {
+    print_prefix(node, "delete[] ");
+}
+
+void PrettyPrinter::print_sizeof(u32 node) {
+    print_string("sizeof(");
+    print_children(node);
+    print_string(")");
 }
 
 void PrettyPrinter::print_prefix(u32 node, const std::string& oper) {

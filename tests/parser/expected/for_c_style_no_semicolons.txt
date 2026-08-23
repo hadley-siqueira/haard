@@ -1,0 +1,23 @@
+def main : i32
+    for i = 0:
+        i
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      for 'for'
+        for_head
+          assignment '='
+            identifier 'i'
+            integer '0'
+        block
+          identifier 'i'
+      return 'return'
+        integer '0'
+--- round trip: ok

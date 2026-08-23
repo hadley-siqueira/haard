@@ -1,0 +1,19 @@
+error: expected ':', found the end of the line
+ --> cases/for_with_no_colon.hd:2:19
+  |
+2 |     for i in 0..10
+  |                   ^
+def main : i32
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      return 'return'
+        integer '0'
+--- round trip: ok

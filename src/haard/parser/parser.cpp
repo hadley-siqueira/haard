@@ -13,6 +13,7 @@ static std::string describe(TokenKind kind) {
         case TK_COLON: return "':'";
         case TK_COMMA: return "','";
         case TK_IN: return "'in'";
+        case TK_SEMICOLON: return "';'";
         case TK_BITWISE_OR: return "'|'";
         case TK_LEFT_CURLY_BRACKET: return "'{'";
         case TK_RIGHT_CURLY_BRACKET: return "'}'";
@@ -201,7 +202,10 @@ u32 Parser::parse_import() {
     return builder.make_import(token, path, alias);
 }
 
-//   import_path := identifier ('.' identifier)*
+// A '*' after a dot takes everything under that path and ends it: nothing may
+// follow it, which is why the loop stops there rather than going round again.
+//
+//   import_path := identifier ('.' identifier)* ('.' '*')?
 u32 Parser::parse_import_path() {
     u32 node = builder.make_import_path();
     u32 last = builder.add_child(node, 0, parse_import_path_segment());
@@ -209,6 +213,11 @@ u32 Parser::parse_import_path() {
     // in panic the match answers false, so a broken path stops here instead of
     // reporting one error per segment
     while (match_on_same_line(TK_DOT)) {
+        if (match_on_same_line(TK_TIMES)) {
+            builder.add_child(node, last, builder.make_import_all(matched));
+            break;
+        }
+
         last = builder.add_child(node, last, parse_import_path_segment());
     }
 
@@ -601,7 +610,7 @@ u32 Parser::parse_pass() {
 // lookahead of its own
 //
 //   statement := let_declaration | const_declaration
-//              | if | while
+//              | if | while | for
 //              | return | break | continue | yield | goto
 //              | expression
 u32 Parser::parse_statement() {
@@ -621,6 +630,10 @@ u32 Parser::parse_statement() {
 
     if (lookahead(TK_WHILE)) {
         return parse_while();
+    }
+
+    if (lookahead(TK_FOR)) {
+        return parse_for();
     }
 
     if (lookahead(TK_RETURN)) {
@@ -725,6 +738,98 @@ u32 Parser::parse_else() {
     u32 node = builder.make_else(token);
 
     builder.add_child(node, 0, parse_block(indentation));
+
+    return node;
+}
+
+// One word, three loops, and which one it is cannot be known until its head has
+// been read — that is the reference's shape and it is kept:
+//
+//   for i in 0..len:          a foreach
+//   for a, b in pairs:        a foreach that takes the sequence apart
+//   for i = 0; i < n; i++:    the C shaped one, and the only use of ';'
+//
+// What separates them is whether the **last** expression of the head is an 'in'
+// or a 'not in'. So the head is read into a node of its own first, and only
+// then is the loop it belongs to built. The reference decided the same way but
+// left the taking-apart case unfinished; here the expressions simply stay in
+// the head, in order, with the 'in' last.
+//
+//   for := 'for' for_head (';' expression? (';' expression_list?)?)? ':' block
+u32 Parser::parse_for() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_FOR);
+
+    u32 head = builder.make_for_head();
+    u32 last_expression = 0;
+
+    // 'for ; a < n; i++:' leaves the head empty
+    if (!lookahead_on_same_line(TK_SEMICOLON)) {
+        last_expression = builder.add_child(head, 0, parse_expression());
+
+        while (match_on_same_line(TK_COMMA)) {
+            last_expression = builder.add_child(head, last_expression,
+                                                parse_expression());
+        }
+    }
+
+    bool each = kind_of(last_expression) == AST_IN
+             || kind_of(last_expression) == AST_NOT_IN;
+
+    u32 node = each ? builder.make_for_each(token) : builder.make_for(token);
+    u32 last = builder.add_child(node, 0, head);
+
+    // a foreach has no semicolons: what would have been the condition and the
+    // increment is the sequence it walks
+    if (!each) {
+        last = builder.add_child(node, last, parse_for_condition());
+        last = builder.add_child(node, last, parse_for_increment());
+    }
+
+    expect_on_same_line(TK_COLON);
+
+    builder.add_child(node, last, parse_block(indentation));
+
+    return node;
+}
+
+// The node is built as soon as its ';' is read, even when nothing follows it,
+// because the semicolons are what say which part is which: 'for a; ; c:' has no
+// condition and still needs both of them written back.
+u32 Parser::parse_for_condition() {
+    if (!match_on_same_line(TK_SEMICOLON)) {
+        return 0;
+    }
+
+    u32 node = builder.make_for_condition();
+
+    if (!lookahead_on_same_line(TK_SEMICOLON)
+        && !lookahead_on_same_line(TK_COLON)) {
+        builder.add_child(node, 0, parse_expression());
+    }
+
+    return node;
+}
+
+u32 Parser::parse_for_increment() {
+    if (!match_on_same_line(TK_SEMICOLON)) {
+        return 0;
+    }
+
+    u32 node = builder.make_for_increment();
+
+    if (lookahead_on_same_line(TK_COLON)) {
+        return node;
+    }
+
+    u32 last = builder.add_child(node, 0, parse_expression());
+
+    while (match_on_same_line(TK_COMMA)) {
+        last = builder.add_child(node, last, parse_expression());
+    }
 
     return node;
 }
@@ -1502,6 +1607,20 @@ u32 Parser::parse_shift_expression() {
 u32 Parser::parse_unary_expression() {
     AstNodeKind kind;
 
+    // the three that are words rather than symbols. They sit at this level in
+    // the reference too, and each takes an operand the same way the symbols do
+    if (lookahead_on_same_line(TK_NEW)) {
+        return parse_new();
+    }
+
+    if (lookahead_on_same_line(TK_DELETE)) {
+        return parse_delete();
+    }
+
+    if (lookahead_on_same_line(TK_SIZEOF)) {
+        return parse_sizeof();
+    }
+
     if (match_on_same_line(TK_LOGICAL_NOT)) {
         kind = AST_LOGICAL_NOT_OPERATOR;
     } else if (match_on_same_line(TK_NOT)) {
@@ -1536,6 +1655,62 @@ u32 Parser::parse_unary_expression() {
     u32 operand = parse_unary_expression();
 
     return builder.make_unary_operator(kind, oper, operand);
+}
+
+// 'new T' allocates one; 'new T(a, b)' hands the arguments to it. The type is
+// the type grammar's, so 'new Node<i32>*' is written the way any other type is
+//
+//   new := 'new' type arguments?
+u32 Parser::parse_new() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_NEW);
+
+    u32 type = parse_type();
+    u32 arguments = 0;
+
+    if (lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
+        arguments = parse_arguments();
+    }
+
+    return builder.make_new(token, type, arguments);
+}
+
+// 'delete x' and 'delete[] x', the two C++ writes. The brackets are empty and
+// are the whole difference between them
+//
+//   delete := 'delete' '[' ']'? expression
+u32 Parser::parse_delete() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_DELETE);
+
+    AstNodeKind kind = AST_DELETE;
+
+    if (match_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
+        expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+        kind = AST_DELETE_ARRAY;
+    }
+
+    return builder.make_unary_operator(kind, token, parse_unary_expression());
+}
+
+// The reference takes an **expression** here, not a type, and that is kept. It
+// means 'sizeof(i32)' works because 'i32' is also a name, while 'sizeof(i32*)'
+// does not — worth revisiting when the type grammar is allowed in more places.
+//
+//   sizeof := 'sizeof' '(' unary_expression ')'
+u32 Parser::parse_sizeof() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_SIZEOF);
+    expect_on_same_line(TK_LEFT_PARENTHESIS);
+
+    u32 expression = parse_unary_expression();
+
+    expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+    return builder.make_sizeof(token, expression);
 }
 
 // Tighter than every binary operator and left associative, so 'a.b.c' is

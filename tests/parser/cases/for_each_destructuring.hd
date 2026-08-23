@@ -1,0 +1,6 @@
+# the last expression of the head is the 'in', and everything before it is what
+# the sequence is taken apart into
+def main : i32
+    for key, value in pairs:
+        io::print(key)
+    return 0

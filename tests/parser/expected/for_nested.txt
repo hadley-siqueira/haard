@@ -1,0 +1,47 @@
+def main : i32
+    for i in 0..n:
+        for j = 0; j < i; j++:
+            if j == i:
+                break
+            continue
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      for_each 'for'
+        for_head
+          in 'in'
+            identifier 'i'
+            inclusive_range '..'
+              integer '0'
+              identifier 'n'
+        block
+          for 'for'
+            for_head
+              assignment '='
+                identifier 'j'
+                integer '0'
+            for_condition
+              less_than '<'
+                identifier 'j'
+                identifier 'i'
+            for_increment
+              post_increment '++'
+                identifier 'j'
+            block
+              if 'if'
+                equal '=='
+                  identifier 'j'
+                  identifier 'i'
+                block
+                  break 'break'
+              continue 'continue'
+      return 'return'
+        integer '0'
+--- round trip: ok

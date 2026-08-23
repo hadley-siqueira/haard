@@ -101,17 +101,6 @@ else()
     add_custom_target(format-check DEPENDS format)
 endif()
 
-# make benchmark: times the parser over a generated file and profiles it under
-# massif. Deliberately not part of 'make check' — it has no pass and no fail,
-# and valgrind makes it slow
-add_custom_target(benchmark
-    COMMAND ${CMAKE_SOURCE_DIR}/tests/benchmark/run.sh
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Benchmarking the parser"
-    USES_TERMINAL
-    VERBATIM
-)
-
 # make check: runs every test suite
 add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/scanner/run.sh

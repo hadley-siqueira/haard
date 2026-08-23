@@ -57,6 +57,16 @@ static std::string name_of(AstNodeKind kind) {
         case AST_ELIF: return "elif";
         case AST_ELSE: return "else";
         case AST_WHILE: return "while";
+        case AST_FOR: return "for";
+        case AST_FOR_EACH: return "for_each";
+        case AST_FOR_HEAD: return "for_head";
+        case AST_FOR_CONDITION: return "for_condition";
+        case AST_FOR_INCREMENT: return "for_increment";
+        case AST_IMPORT_ALL: return "import_all";
+        case AST_NEW: return "new";
+        case AST_DELETE: return "delete";
+        case AST_DELETE_ARRAY: return "delete_array";
+        case AST_SIZEOF: return "sizeof";
         case AST_RETURN: return "return";
         case AST_BREAK: return "break";
         case AST_CONTINUE: return "continue";
@@ -187,6 +197,13 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_ELIF:
         case AST_ELSE:
         case AST_WHILE:
+        case AST_FOR:
+        case AST_FOR_EACH:
+        case AST_IMPORT_ALL:
+        case AST_NEW:
+        case AST_DELETE:
+        case AST_DELETE_ARRAY:
+        case AST_SIZEOF:
         case AST_RETURN:
         case AST_BREAK:
         case AST_CONTINUE:

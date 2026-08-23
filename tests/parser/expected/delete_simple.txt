@@ -1,0 +1,25 @@
+def main : i32
+    delete a
+    delete[] b
+    delete this.head
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      delete 'delete'
+        identifier 'a'
+      delete_array 'delete'
+        identifier 'b'
+      delete 'delete'
+        dot '.'
+          this 'this'
+          identifier 'head'
+      return 'return'
+        integer '0'
+--- round trip: ok

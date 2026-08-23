@@ -1,0 +1,9 @@
+import std.io.*
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+      import_all '*'
+--- round trip: ok

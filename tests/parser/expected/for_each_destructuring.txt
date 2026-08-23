@@ -1,0 +1,29 @@
+def main : i32
+    for key, value in pairs:
+        io::print(key)
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      for_each 'for'
+        for_head
+          identifier 'key'
+          in 'in'
+            identifier 'value'
+            identifier 'pairs'
+        block
+          call '('
+            scope '::'
+              identifier 'io'
+              identifier 'print'
+            arguments '('
+              identifier 'key'
+      return 'return'
+        integer '0'
+--- round trip: ok

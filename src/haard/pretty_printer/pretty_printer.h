@@ -22,6 +22,7 @@ namespace haard {
             void print_import_path(u32 node);
             void print_import_path_segment(u32 node);
             void print_import_alias(u32 node);
+            void print_import_all(u32 node);
 
             void print_let_declaration(u32 node);
             void print_const_declaration(u32 node);
@@ -47,6 +48,13 @@ namespace haard {
             void print_elif(u32 node);
             void print_else(u32 node);
             void print_while(u32 node);
+
+            // the three loops share a printer: what changes is which parts
+            // are there, and each part writes its own separator
+            void print_for(u32 node);
+            void print_for_head(u32 node);
+            void print_for_condition(u32 node);
+            void print_for_increment(u32 node);
 
             void print_return(u32 node);
             void print_break(u32 node);
@@ -101,6 +109,10 @@ namespace haard {
             void print_unary_plus(u32 node);
             void print_pre_increment(u32 node);
             void print_pre_decrement(u32 node);
+            void print_new(u32 node);
+            void print_delete(u32 node);
+            void print_delete_array(u32 node);
+            void print_sizeof(u32 node);
 
             // an operator written in front of what it applies to
             void print_prefix(u32 node, const std::string& oper);

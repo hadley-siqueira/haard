@@ -1,7 +1,7 @@
 import def class enum union struct
 if elif else for while
 let const true false as
-in not and or return continue break yield this null pass goto
+in not and or return continue break yield this null pass goto new delete sizeof
 # a keyword only matches a whole word: these are all identifiers
 imported define classes formal while_ letter constant
 truest falsey ash inside notation returned continued
@@ -10,3 +10,4 @@ passes passed bypass _pass pass_ Pass
 gotos going _goto goto_ Goto
 andes android _and and_ And ores order _or or_ Or
 nulls nullable _null null_ Null
+news renew _new new_ New deleted undelete sizeofs _sizeof

@@ -1,0 +1,11 @@
+# every part is optional and the semicolons say which is which
+def main : i32
+    for ; i < n; i++:
+        i
+    for i = 0; ; i++:
+        i
+    for i = 0; i < n; :
+        i
+    for ; ; :
+        i
+    return 0

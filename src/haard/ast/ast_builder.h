@@ -52,6 +52,7 @@ namespace haard {
             u32 make_import_path();
             u32 make_import_path_segment(u32 token);
             u32 make_import_alias(u32 token);
+            u32 make_import_all(u32 token);
 
             u32 make_let_declaration(u32 token, u32 binding);
             u32 make_const_declaration(u32 token, u32 binding);
@@ -82,6 +83,15 @@ namespace haard {
             u32 make_else(u32 token);
             u32 make_while(u32 token);
 
+            // A 'for' is three loops written with one word, and which one it
+            // is shows only after its head has been read. So the head is built
+            // first, on its own, and handed to whichever of the two takes it.
+            u32 make_for(u32 token);
+            u32 make_for_each(u32 token);
+            u32 make_for_head();
+            u32 make_for_condition();
+            u32 make_for_increment();
+
             // return, break, continue, yield and goto are one shape: the
             // keyword, and an expression only when one was written after it
             u32 make_jump(AstNodeKind kind, u32 token, u32 expression);
@@ -103,6 +113,9 @@ namespace haard {
             u32 make_call(u32 token, u32 callee, u32 arguments);
             u32 make_arguments(u32 token);
             u32 make_unary_operator(AstNodeKind kind, u32 token, u32 operand);
+
+            u32 make_new(u32 token, u32 type, u32 arguments);
+            u32 make_sizeof(u32 token, u32 expression);
             // the '(' is kept as a node of its own, so the printer writes the
             // parentheses the source had instead of working out where they
             // would be needed

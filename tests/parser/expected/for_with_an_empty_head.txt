@@ -1,0 +1,19 @@
+error: expected an expression, found ':'
+ --> cases/for_with_an_empty_head.hd:2:9
+  |
+2 |     for :
+  |         ^
+def main : i32
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      return 'return'
+        integer '0'
+--- round trip: ok

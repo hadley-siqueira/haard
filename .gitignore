@@ -57,11 +57,7 @@ build
 tags
 
 
-# Parser benchmark
-# The generated source, the massif profile and its text summary are all built
-# by tests/benchmark/run.sh and are not worth versioning: the generator is
-# deterministic, so the .hd can be recreated byte for byte at any time.
-tests/benchmark/out/
+# Valgrind, whenever a profile is taken
 massif.out.*
 callgrind.out.*
 cachegrind.out.*

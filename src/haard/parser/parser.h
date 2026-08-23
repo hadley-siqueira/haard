@@ -80,6 +80,9 @@ namespace haard {
             u32 parse_elif();
             u32 parse_else();
             u32 parse_while();
+            u32 parse_for();
+            u32 parse_for_condition();
+            u32 parse_for_increment();
             u32 parse_jump(TokenKind keyword, AstNodeKind kind);
             u32 parse_conditional(u32 node, u32 header_indentation);
 
@@ -126,6 +129,9 @@ namespace haard {
             u32 parse_bitwise_and_expression();
             u32 parse_shift_expression();
             u32 parse_unary_expression();
+            u32 parse_new();
+            u32 parse_delete();
+            u32 parse_sizeof();
             u32 parse_postfix_expression();
             u32 parse_arguments();
             u32 parse_primary_expression();

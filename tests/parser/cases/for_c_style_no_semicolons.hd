@@ -1,0 +1,5 @@
+# an initialisation and nothing else: a loop that never stops on its own
+def main : i32
+    for i = 0:
+        i
+    return 0
