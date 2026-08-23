@@ -1,0 +1,4 @@
+def main : i32
+    while a:
+        break 2
+    return 0

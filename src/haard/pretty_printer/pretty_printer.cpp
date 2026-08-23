@@ -96,6 +96,26 @@ void PrettyPrinter::print_node(u32 node) {
             print_while(node);
             break;
 
+        case AST_RETURN:
+            print_return(node);
+            break;
+
+        case AST_BREAK:
+            print_break(node);
+            break;
+
+        case AST_CONTINUE:
+            print_continue(node);
+            break;
+
+        case AST_YIELD:
+            print_yield(node);
+            break;
+
+        case AST_GOTO:
+            print_goto(node);
+            break;
+
         case AST_PARAM:
             print_param(node);
             break;
@@ -284,6 +304,39 @@ void PrettyPrinter::print_else(u32 node) {
 
 void PrettyPrinter::print_while(u32 node) {
     print_conditional(node, "while ");
+}
+
+void PrettyPrinter::print_return(u32 node) {
+    print_jump(node, "return");
+}
+
+void PrettyPrinter::print_break(u32 node) {
+    print_jump(node, "break");
+}
+
+void PrettyPrinter::print_continue(u32 node) {
+    print_jump(node, "continue");
+}
+
+void PrettyPrinter::print_yield(u32 node) {
+    print_jump(node, "yield");
+}
+
+void PrettyPrinter::print_goto(u32 node) {
+    print_jump(node, "goto");
+}
+
+// the space belongs to the expression, not to the keyword: a bare 'return' must
+// not be written with a trailing space, or it stops being what was read
+void PrettyPrinter::print_jump(u32 node, const std::string& keyword) {
+    print_string(keyword);
+
+    if (ast->get_node(node)->get_children() == 0) {
+        return;
+    }
+
+    print_string(" ");
+    print_children(node);
 }
 
 // the parts are told apart by kind rather than by position, so a header whose

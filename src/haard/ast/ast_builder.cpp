@@ -116,6 +116,14 @@ u32 AstBuilder::make_while(u32 token) {
     return make_node(AST_WHILE, token);
 }
 
+u32 AstBuilder::make_jump(AstNodeKind kind, u32 token, u32 expression) {
+    u32 node = make_node(kind, token);
+
+    add_child(node, 0, expression);
+
+    return node;
+}
+
 u32 AstBuilder::make_param(u32 token, u32 name, u32 type) {
     u32 node = make_node(AST_PARAM, token);
 

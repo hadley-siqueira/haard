@@ -1,0 +1,17 @@
+error: expected an expression, found the end of the line
+ --> cases/jump_broken_value.hd:2:15
+  |
+2 |     return a +
+  |               ^
+def main : i32
+    b
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      identifier 'b'
+--- round trip: ok

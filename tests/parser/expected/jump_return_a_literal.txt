@@ -1,0 +1,13 @@
+def main : String
+    return "done"
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'String'
+    block
+      return 'return'
+        string '"done"'
+--- round trip: ok

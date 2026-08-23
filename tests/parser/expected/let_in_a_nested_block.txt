@@ -1,0 +1,37 @@
+def main : i32
+    if a:
+        let x = 1
+        return x
+    else:
+        const y = 2
+        return y
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      if 'if'
+        identifier 'a'
+        block
+          let_declaration 'let'
+            binding
+              binding_name
+                identifier 'x'
+              binding_expression
+                integer '1'
+          return 'return'
+            identifier 'x'
+        else 'else'
+          block
+            const_declaration 'const'
+              binding
+                binding_name
+                  identifier 'y'
+                binding_expression
+                  integer '2'
+            return 'return'
+              identifier 'y'
+--- round trip: ok

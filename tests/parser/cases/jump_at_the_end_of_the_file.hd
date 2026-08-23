@@ -1,0 +1,4 @@
+# this file ends without a newline on purpose: that is what puts the eof
+# token on the same line as the 'return', with nothing after it
+def main : Unit
+    return

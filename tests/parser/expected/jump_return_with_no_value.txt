@@ -1,0 +1,12 @@
+def main : Unit
+    return
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'Unit'
+    block
+      return 'return'
+--- round trip: ok

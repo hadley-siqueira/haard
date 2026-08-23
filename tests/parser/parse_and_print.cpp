@@ -50,6 +50,11 @@ static std::string name_of(AstNodeKind kind) {
         case AST_ELIF: return "elif";
         case AST_ELSE: return "else";
         case AST_WHILE: return "while";
+        case AST_RETURN: return "return";
+        case AST_BREAK: return "break";
+        case AST_CONTINUE: return "continue";
+        case AST_YIELD: return "yield";
+        case AST_GOTO: return "goto";
         case AST_PARAM: return "param";
         case AST_BINDING: return "binding";
         case AST_BINDING_NAME: return "binding_name";
@@ -99,6 +104,11 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_ELIF:
         case AST_ELSE:
         case AST_WHILE:
+        case AST_RETURN:
+        case AST_BREAK:
+        case AST_CONTINUE:
+        case AST_YIELD:
+        case AST_GOTO:
         case AST_PLUS:
         case AST_MINUS:
         case AST_TIMES:

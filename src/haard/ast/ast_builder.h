@@ -75,6 +75,10 @@ namespace haard {
             u32 make_else(u32 token);
             u32 make_while(u32 token);
 
+            // return, break, continue, yield and goto are one shape: the
+            // keyword, and an expression only when one was written after it
+            u32 make_jump(AstNodeKind kind, u32 token, u32 expression);
+
             u32 make_param(u32 token, u32 name, u32 type);
             u32 make_binding(u32 name, u32 type, u32 expression);
             u32 make_binding_name(u32 child);

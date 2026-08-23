@@ -1,0 +1,18 @@
+error: expected an expression, found the end of the line
+ --> cases/let_in_a_block_broken.hd:2:12
+  |
+2 |     let x =
+  |            ^
+def main : i32
+    return 1
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        integer '1'
+--- round trip: ok

@@ -1,0 +1,4 @@
+# a jump takes its value from its own line: 'a' below is the next statement
+def main : i32
+    return
+    a

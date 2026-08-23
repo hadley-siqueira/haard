@@ -376,8 +376,21 @@ u32 Parser::parse_pass() {
 // an expression is what is left when no keyword opens the line, so it needs no
 // lookahead of its own
 //
-//   statement := if | while | expression
+//   statement := let_declaration | const_declaration
+//              | if | while
+//              | return | break | continue | yield | goto
+//              | expression
 u32 Parser::parse_statement() {
+    // the same rules the module level uses: a binding is a binding wherever it
+    // is written, and only what may hold one differs
+    if (lookahead(TK_LET)) {
+        return parse_let_declaration();
+    }
+
+    if (lookahead(TK_CONST)) {
+        return parse_const_declaration();
+    }
+
     if (lookahead(TK_IF)) {
         return parse_if();
     }
@@ -386,7 +399,53 @@ u32 Parser::parse_statement() {
         return parse_while();
     }
 
+    if (lookahead(TK_RETURN)) {
+        return parse_jump(TK_RETURN, AST_RETURN);
+    }
+
+    if (lookahead(TK_BREAK)) {
+        return parse_jump(TK_BREAK, AST_BREAK);
+    }
+
+    if (lookahead(TK_CONTINUE)) {
+        return parse_jump(TK_CONTINUE, AST_CONTINUE);
+    }
+
+    if (lookahead(TK_YIELD)) {
+        return parse_jump(TK_YIELD, AST_YIELD);
+    }
+
+    if (lookahead(TK_GOTO)) {
+        return parse_jump(TK_GOTO, AST_GOTO);
+    }
+
     return parse_expression();
+}
+
+// The five that leave a block: one shape, and the expression after the keyword
+// is optional for all of them, exactly as the old compiler had it.
+//
+// What decides whether there is one is the **line**: 'return' on its own is a
+// return with nothing to give back, and the next line is the next statement,
+// not the value. That is the same rule as everywhere else here, and it is the
+// only thing standing between 'return' and swallowing whatever comes after it.
+//
+//   jump := ('return' | 'break' | 'continue' | 'yield' | 'goto') expression?
+u32 Parser::parse_jump(TokenKind keyword, AstNodeKind kind) {
+    u32 token = current_token;
+
+    begin_statement();
+    expect(keyword);
+
+    u32 expression = 0;
+
+    // the end of the file is not the same line as anything: without this a
+    // file ending in 'return' would look for a value past its last token
+    if (on_same_line() && !lookahead(TK_EOF)) {
+        expression = parse_expression();
+    }
+
+    return builder.make_jump(kind, token, expression);
 }
 
 //   if := 'if' expression ':' block elif* else?

@@ -87,6 +87,7 @@ std::string Token::get_kind_as_string() {
         { TK_YIELD, "TK_YIELD" },
         { TK_THIS, "TK_THIS" },
         { TK_PASS, "TK_PASS" },
+        { TK_GOTO, "TK_GOTO" },
         { TK_INTEGER_LITERAL, "TK_INTEGER_LITERAL" },
         { TK_FLOAT_LITERAL, "TK_FLOAT_LITERAL" },
         { TK_STRING_LITERAL, "TK_STRING_LITERAL" },

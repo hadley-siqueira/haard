@@ -1,0 +1,31 @@
+def main : i32
+    let x = 1
+    const y : i32 = x + 2
+    return y
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'x'
+          binding_expression
+            integer '1'
+      const_declaration 'const'
+        binding
+          binding_name
+            identifier 'y'
+          binding_type
+            identifier 'i32'
+          binding_expression
+            plus '+'
+              identifier 'x'
+              integer '2'
+      return 'return'
+        identifier 'y'
+--- round trip: ok

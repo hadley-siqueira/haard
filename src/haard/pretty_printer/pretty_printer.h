@@ -37,6 +37,15 @@ namespace haard {
             void print_else(u32 node);
             void print_while(u32 node);
 
+            void print_return(u32 node);
+            void print_break(u32 node);
+            void print_continue(u32 node);
+            void print_yield(u32 node);
+            void print_goto(u32 node);
+
+            // the keyword, and the expression after it only when there is one
+            void print_jump(u32 node, const std::string& keyword);
+
             // the shape 'if', 'elif', 'else' and 'while' share: a header line
             // ending in ':' and a block of lines under it
             void print_conditional(u32 node, const std::string& keyword);
