@@ -1,0 +1,9 @@
+error: expected an expression, found the end of the file
+ --> cases/unary_with_no_operand.hd:1:10
+  |
+1 | let x = !
+  |          ^
+
+--- tree
+module
+--- round trip: ok

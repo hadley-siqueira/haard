@@ -12,6 +12,7 @@ static std::string describe(TokenKind kind) {
         case TK_AT: return "'@'";
         case TK_COLON: return "':'";
         case TK_COMMA: return "','";
+        case TK_IN: return "'in'";
         case TK_GREATER_THAN: return "'>'";
         case TK_LET: return "'let'";
         case TK_CONST: return "'const'";
@@ -33,6 +34,41 @@ static std::string describe(TokenKind kind) {
 // the ast kind a literal token becomes, or AST_UNKNOWN when the token is not a
 // literal at all. They all become the same shape of node — a kind and the token
 // it was written as — so what separates them is only this table
+// the ast kind an assignment token becomes, or AST_UNKNOWN when the token is
+// not one of them. They are all the same shape of node, so what separates them
+// is only this table
+static AstNodeKind assignment_kind(TokenKind kind) {
+    switch (kind) {
+        case TK_ASSIGNMENT: return AST_ASSIGNMENT;
+        case TK_PLUS_ASSIGNMENT: return AST_PLUS_ASSIGNMENT;
+        case TK_MINUS_ASSIGNMENT: return AST_MINUS_ASSIGNMENT;
+        case TK_TIMES_ASSIGNMENT: return AST_TIMES_ASSIGNMENT;
+        case TK_DIVISION_ASSIGNMENT: return AST_DIVISION_ASSIGNMENT;
+        case TK_BITWISE_NOT_ASSIGNMENT: return AST_BITWISE_NOT_ASSIGNMENT;
+
+        case TK_INTEGER_DIVISION_ASSIGNMENT:
+            return AST_INTEGER_DIVISION_ASSIGNMENT;
+
+        case TK_MODULO_ASSIGNMENT: return AST_MODULO_ASSIGNMENT;
+        case TK_BITWISE_AND_ASSIGNMENT: return AST_BITWISE_AND_ASSIGNMENT;
+        case TK_BITWISE_OR_ASSIGNMENT: return AST_BITWISE_OR_ASSIGNMENT;
+        case TK_BITWISE_XOR_ASSIGNMENT: return AST_BITWISE_XOR_ASSIGNMENT;
+
+        case TK_BITWISE_LEFT_SHIFT_ASSIGNMENT:
+            return AST_BITWISE_LEFT_SHIFT_ASSIGNMENT;
+
+        case TK_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
+            return AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT;
+
+        case TK_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+            return AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT;
+
+        default: break;
+    }
+
+    return AST_UNKNOWN;
+}
+
 static AstNodeKind literal_kind(TokenKind kind) {
     switch (kind) {
         case TK_INTEGER_LITERAL: return AST_INTEGER_LITERAL;
@@ -693,7 +729,188 @@ u32 Parser::parse_type() {
 }
 
 u32 Parser::parse_expression() {
-    return parse_arith_expression();
+    return parse_assignment_expression();
+}
+
+// **Right associative**, so 'a = b = c' is 'a = (b = c)'. The old compiler wrote
+// this level as a left folding loop, which made it '(a = b) = c' — Hadley
+// confirmed 2026-08-23 that the reference is wrong here, and this is the
+// correction. It is the one level of the cascade that recurses on itself
+// instead of looping, and that is what right associativity looks like.
+//
+//   assignment := cast (assignment_operator assignment)?
+u32 Parser::parse_assignment_expression() {
+    u32 node = parse_cast_expression();
+
+    TokenKind token_kind = current().get_kind();
+    AstNodeKind kind = assignment_kind(token_kind);
+
+    if (kind == AST_UNKNOWN || !match_on_same_line(token_kind)) {
+        return node;
+    }
+
+    u32 oper = matched;
+    u32 right = parse_assignment_expression();
+
+    return builder.make_binary_operator(kind, oper, node, right);
+}
+
+// the type is whatever parse_type reads, which is one identifier for now: a
+// cast to 'List<T>' waits on the type grammar
+//
+//   cast := logical_or ('as' type)?
+u32 Parser::parse_cast_expression() {
+    u32 node = parse_logical_or_expression();
+
+    if (!match_on_same_line(TK_AS)) {
+        return node;
+    }
+
+    u32 oper = matched;
+    u32 type = parse_type();
+
+    return builder.make_binary_operator(AST_CAST, oper, node, type);
+}
+
+// 'or' and '||' are the same operator with two spellings, so they build the
+// same node kind. Which one was written stays in the token, and that is what
+// the printer reads back — the same arrangement as a template string's quote
+//
+//   logical_or := logical_and (('or' | '||') logical_and)*
+u32 Parser::parse_logical_or_expression() {
+    u32 node = parse_logical_and_expression();
+
+    while (match_on_same_line(TK_OR) || match_on_same_line(TK_LOGICAL_OR)) {
+        u32 oper = matched;
+        u32 right = parse_logical_and_expression();
+
+        node = builder.make_binary_operator(AST_LOGICAL_OR, oper, node, right);
+    }
+
+    return node;
+}
+
+//   logical_and := equality (('and' | '&&') equality)*
+u32 Parser::parse_logical_and_expression() {
+    u32 node = parse_equality_expression();
+
+    while (match_on_same_line(TK_AND) || match_on_same_line(TK_LOGICAL_AND)) {
+        u32 oper = matched;
+        u32 right = parse_equality_expression();
+
+        node = builder.make_binary_operator(AST_LOGICAL_AND, oper, node, right);
+    }
+
+    return node;
+}
+
+//   equality := relational (('==' | '!=') relational)*
+u32 Parser::parse_equality_expression() {
+    u32 node = parse_relational_expression();
+
+    while (true) {
+        AstNodeKind kind;
+
+        if (match_on_same_line(TK_EQUAL)) {
+            kind = AST_EQUAL;
+        } else if (match_on_same_line(TK_NOT_EQUAL)) {
+            kind = AST_NOT_EQUAL;
+        } else {
+            break;
+        }
+
+        u32 oper = matched;
+        u32 right = parse_relational_expression();
+
+        node = builder.make_binary_operator(kind, oper, node, right);
+    }
+
+    return node;
+}
+
+// 'not in' is two tokens on purpose and is combined here, which is the decision
+// recorded for the scanner: it emits no TK_NOT_IN.
+//
+//   relational := range (('<' | '>' | '<=' | '>=' | 'in' | 'not' 'in') range)*
+u32 Parser::parse_relational_expression() {
+    u32 node = parse_range_expression();
+
+    while (true) {
+        // Spacing decides generic from comparison, and this is where it bites
+        // in an expression: 'a < b' compares, 'a<b' opens a generic type
+        // argument list. That list is not read here yet, so glued is an error
+        // rather than a comparison — reading it as one now would silently
+        // change meaning the day generics arrive.
+        if ((lookahead_on_same_line(TK_LESS_THAN)
+             || lookahead_on_same_line(TK_GREATER_THAN))
+            && glued_to_previous()) {
+            error_at_current("a comparison is written with spaces around it; "
+                             "glued to the name before it this opens a generic "
+                             "type argument list, which is not read in an "
+                             "expression yet");
+            break;
+        }
+
+        AstNodeKind kind;
+
+        if (match_on_same_line(TK_LESS_THAN)) {
+            kind = AST_LESS_THAN;
+        } else if (match_on_same_line(TK_GREATER_THAN)) {
+            kind = AST_GREATER_THAN;
+        } else if (match_on_same_line(TK_LESS_THAN_OR_EQUAL)) {
+            kind = AST_LESS_THAN_OR_EQUAL;
+        } else if (match_on_same_line(TK_GREATER_THAN_OR_EQUAL)) {
+            kind = AST_GREATER_THAN_OR_EQUAL;
+        } else if (match_on_same_line(TK_IN)) {
+            kind = AST_IN;
+        } else if (match_on_same_line(TK_NOT)) {
+            kind = AST_NOT_IN;
+
+            u32 oper = matched;
+
+            expect_on_same_line(TK_IN);
+
+            u32 right = parse_range_expression();
+
+            node = builder.make_binary_operator(kind, oper, node, right);
+            continue;
+        } else {
+            break;
+        }
+
+        u32 oper = matched;
+        u32 right = parse_range_expression();
+
+        node = builder.make_binary_operator(kind, oper, node, right);
+    }
+
+    return node;
+}
+
+// Ruby's meaning, not Rust's: '..' includes the end and '...' excludes it
+//
+//   range := arith (('..' | '...') arith)*
+u32 Parser::parse_range_expression() {
+    u32 node = parse_arith_expression();
+
+    while (true) {
+        AstNodeKind kind;
+
+        if (match_on_same_line(TK_INCLUSIVE_RANGE)) {
+            kind = AST_INCLUSIVE_RANGE;
+        } else if (match_on_same_line(TK_EXCLUSIVE_RANGE)) {
+            kind = AST_EXCLUSIVE_RANGE;
+        } else {
+            break;
+        }
+
+        u32 oper = matched;
+        u32 right = parse_arith_expression();
+
+        node = builder.make_binary_operator(kind, oper, node, right);
+    }
+
+    return node;
 }
 
 // left associative, and the loosest level written so far, so this is where the
@@ -729,9 +946,9 @@ u32 Parser::parse_arith_expression() {
 // 'a + b * c' fold the product first. Left associative like the level above it,
 // so 'a / b / c' is '(a / b) / c'
 //
-//   term_expression := postfix_expression (('*' | '/' | '%') postfix_expression)*
+//   term_expression := power_expression (('*' | '/' | '//' | '%') power_expression)*
 u32 Parser::parse_term_expression() {
-    u32 node = parse_postfix_expression();
+    u32 node = parse_power_expression();
 
     while (true) {
         AstNodeKind kind;
@@ -740,6 +957,8 @@ u32 Parser::parse_term_expression() {
             kind = AST_TIMES;
         } else if (match_on_same_line(TK_DIVISION)) {
             kind = AST_DIVISION;
+        } else if (match_on_same_line(TK_INTEGER_DIVISION)) {
+            kind = AST_INTEGER_DIVISION;
         } else if (match_on_same_line(TK_MODULO)) {
             kind = AST_MODULO;
         } else {
@@ -747,12 +966,161 @@ u32 Parser::parse_term_expression() {
         }
 
         u32 oper = matched;
-        u32 right = parse_postfix_expression();
+        u32 right = parse_power_expression();
 
         node = builder.make_binary_operator(kind, oper, node, right);
     }
 
     return node;
+}
+
+// Everything from here down to the unary operators is the old compiler's
+// precedence, and it is **deliberately not C's**: '**', '|', '^', '&' and the
+// shifts all bind tighter than '*' and '/', so 'a + b & c' is 'a + (b & c)' and
+// '2 * 3 ** 4' is '2 * (3 ** 4)'. In C the bitwise operators are looser than
+// the arithmetic ones and this order would be wrong. It is not an accident and
+// it is not to be corrected.
+//
+// '**' is left associative here, the way the old compiler wrote it, even though
+// mathematics reads a power tower from the right.
+//
+//   power_expression := bitwise_or_expression ('**' bitwise_or_expression)*
+u32 Parser::parse_power_expression() {
+    u32 node = parse_bitwise_or_expression();
+
+    while (match_on_same_line(TK_POWER)) {
+        u32 oper = matched;
+        u32 right = parse_bitwise_or_expression();
+
+        node = builder.make_binary_operator(AST_POWER, oper, node, right);
+    }
+
+    return node;
+}
+
+//   bitwise_or_expression := bitwise_xor_expression ('|' bitwise_xor_expression)*
+u32 Parser::parse_bitwise_or_expression() {
+    u32 node = parse_bitwise_xor_expression();
+
+    while (match_on_same_line(TK_BITWISE_OR)) {
+        u32 oper = matched;
+        u32 right = parse_bitwise_xor_expression();
+
+        node = builder.make_binary_operator(AST_BITWISE_OR, oper, node, right);
+    }
+
+    return node;
+}
+
+//   bitwise_xor_expression := bitwise_and_expression ('^' bitwise_and_expression)*
+u32 Parser::parse_bitwise_xor_expression() {
+    u32 node = parse_bitwise_and_expression();
+
+    while (match_on_same_line(TK_BITWISE_XOR)) {
+        u32 oper = matched;
+        u32 right = parse_bitwise_and_expression();
+
+        node = builder.make_binary_operator(AST_BITWISE_XOR, oper, node, right);
+    }
+
+    return node;
+}
+
+// the '&' that stands between two operands. The one that opens an operand is
+// the address-of below, and what separates them is only where they are read
+//
+//   bitwise_and_expression := shift_expression ('&' shift_expression)*
+u32 Parser::parse_bitwise_and_expression() {
+    u32 node = parse_shift_expression();
+
+    while (match_on_same_line(TK_BITWISE_AND)) {
+        u32 oper = matched;
+        u32 right = parse_shift_expression();
+
+        node = builder.make_binary_operator(AST_BITWISE_AND, oper, node, right);
+    }
+
+    return node;
+}
+
+// '>>' keeps the sign and '>>>' fills with zeroes, the way Java writes them
+//
+//   shift_expression := unary_expression (('<<' | '>>' | '>>>') unary_expression)*
+u32 Parser::parse_shift_expression() {
+    u32 node = parse_unary_expression();
+
+    while (true) {
+        AstNodeKind kind;
+
+        if (match_on_same_line(TK_BITWISE_LEFT_SHIFT)) {
+            kind = AST_BITWISE_LEFT_SHIFT;
+        } else if (match_on_same_line(TK_BITWISE_RIGHT_SHIFT)) {
+            kind = AST_BITWISE_RIGHT_SHIFT;
+        } else if (match_on_same_line(TK_BITWISE_UNSIGNED_RIGHT_SHIFT)) {
+            kind = AST_BITWISE_UNSIGNED_RIGHT_SHIFT;
+        } else {
+            break;
+        }
+
+        u32 oper = matched;
+        u32 right = parse_unary_expression();
+
+        node = builder.make_binary_operator(kind, oper, node, right);
+    }
+
+    return node;
+}
+
+// Right associative by recursion: '- -a' negates a negation and '!!x' is two
+// nots. There is no loop here because a prefix operator applies to whatever
+// comes after it, however many of them there are.
+//
+// 'not' and '!' are two node kinds, as they are two token kinds — the language
+// keeps them apart and this is not the place to merge them.
+//
+// '**p' is the old compiler's shape: two dereferences, both carrying the same
+// '**' token, rather than a node kind of its own.
+//
+//   unary_expression := ('!' | 'not' | '&' | '*' | '**' | '~' | '-' | '+'
+//                       | '++' | '--') unary_expression
+//                     | postfix_expression
+u32 Parser::parse_unary_expression() {
+    AstNodeKind kind;
+
+    if (match_on_same_line(TK_LOGICAL_NOT)) {
+        kind = AST_LOGICAL_NOT_OPERATOR;
+    } else if (match_on_same_line(TK_NOT)) {
+        kind = AST_LOGICAL_NOT;
+    } else if (match_on_same_line(TK_BITWISE_AND)) {
+        kind = AST_ADDRESS_OF;
+    } else if (match_on_same_line(TK_TIMES)) {
+        kind = AST_DEREFERENCE;
+    } else if (match_on_same_line(TK_POWER)) {
+        // one token, two dereferences
+        u32 oper = matched;
+        u32 operand = parse_unary_expression();
+
+        operand = builder.make_unary_operator(AST_DEREFERENCE, oper, operand);
+
+        return builder.make_unary_operator(AST_DEREFERENCE, oper, operand);
+    } else if (match_on_same_line(TK_BITWISE_NOT)) {
+        kind = AST_BITWISE_NOT;
+    } else if (match_on_same_line(TK_MINUS)) {
+        kind = AST_UNARY_MINUS;
+    } else if (match_on_same_line(TK_PLUS)) {
+        kind = AST_UNARY_PLUS;
+    } else if (match_on_same_line(TK_INCREMENT)) {
+        kind = AST_PRE_INCREMENT;
+    } else if (match_on_same_line(TK_DECREMENT)) {
+        kind = AST_PRE_DECREMENT;
+    } else {
+        return parse_postfix_expression();
+    }
+
+    u32 oper = matched;
+    u32 operand = parse_unary_expression();
+
+    return builder.make_unary_operator(kind, oper, operand);
 }
 
 // Tighter than every binary operator and left associative, so 'a.b.c' is

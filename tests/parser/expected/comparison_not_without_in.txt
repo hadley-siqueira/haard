@@ -1,0 +1,9 @@
+error: expected 'in', found 'b'
+ --> cases/comparison_not_without_in.hd:2:18
+  |
+2 |     return a not b
+  |                  ^
+
+--- tree
+module
+--- round trip: ok

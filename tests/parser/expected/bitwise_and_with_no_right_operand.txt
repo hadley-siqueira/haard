@@ -1,0 +1,9 @@
+error: expected an expression, found the end of the file
+ --> cases/bitwise_and_with_no_right_operand.hd:1:12
+  |
+1 | let x = a &
+  |            ^
+
+--- tree
+module
+--- round trip: ok

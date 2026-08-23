@@ -1,0 +1,54 @@
+def main : i32
+    let a = a + b & c - d << e
+    let b = 2 * 3 ** 4
+    let c = a | b ^ c & d << e
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            minus '-'
+              plus '+'
+                identifier 'a'
+                bitwise_and '&'
+                  identifier 'b'
+                  identifier 'c'
+              left_shift '<<'
+                identifier 'd'
+                identifier 'e'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            times '*'
+              integer '2'
+              power '**'
+                integer '3'
+                integer '4'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            bitwise_or '|'
+              identifier 'a'
+              bitwise_xor '^'
+                identifier 'b'
+                bitwise_and '&'
+                  identifier 'c'
+                  left_shift '<<'
+                    identifier 'd'
+                    identifier 'e'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

@@ -1,0 +1,33 @@
+def main : i32
+    let a = not x == y
+    let b = !x == y
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            equal '=='
+              logical_not 'not'
+                identifier 'x'
+              identifier 'y'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            equal '=='
+              logical_not_operator '!'
+                identifier 'x'
+              identifier 'y'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

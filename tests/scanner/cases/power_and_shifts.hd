@@ -1,0 +1,12 @@
+a ** b
+a * b
+a * *b
+**p
+a << b
+a >> b
+a >>> b
+# longest match: the compound assignments still win over the operators
+a <<= b
+a >>= b
+a >>>= b
+a **= b

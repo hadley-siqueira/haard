@@ -1,0 +1,4 @@
+# right associative, so this is 'a = (b = c)'. The reference folded it left and
+# that was an oversight, corrected here
+def main : i32
+    a = b = c

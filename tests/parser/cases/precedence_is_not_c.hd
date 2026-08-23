@@ -1,0 +1,8 @@
+# the old compiler's order on purpose, and it is not C's: '**', '|', '^', '&'
+# and the shifts all bind tighter than '*' and '/', so this is
+# a + (b & c) - (d << e) and 2 * (3 ** 4)
+def main : i32
+    let a = a + b & c - d << e
+    let b = 2 * 3 ** 4
+    let c = a | b ^ c & d << e
+    return a

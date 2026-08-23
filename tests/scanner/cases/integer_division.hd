@@ -1,0 +1,7 @@
+a / b
+a // b
+a /= b
+a //= b
+a ~= b
+# a comment still opens with '#', so '//' is free to be an operator
+a // b # trailing

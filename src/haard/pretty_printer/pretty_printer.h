@@ -60,7 +60,40 @@ namespace haard {
             void print_minus_expression(u32 node);
             void print_times_expression(u32 node);
             void print_division_expression(u32 node);
+            void print_integer_division_expression(u32 node);
             void print_modulo_expression(u32 node);
+            void print_assignment_expression(u32 node);
+            void print_cast_expression(u32 node);
+            void print_logical_expression(u32 node);
+            void print_comparison_expression(u32 node);
+            void print_range_expression(u32 node);
+            void print_not_in_expression(u32 node);
+
+            // 'and' and '&&' mean the same thing, so which was written lives
+            // in the token, the way a template string's quote does
+            void print_binary_from_token(u32 node);
+
+            void print_power_expression(u32 node);
+            void print_bitwise_or_expression(u32 node);
+            void print_bitwise_xor_expression(u32 node);
+            void print_bitwise_and_expression(u32 node);
+            void print_left_shift_expression(u32 node);
+            void print_right_shift_expression(u32 node);
+            void print_unsigned_right_shift_expression(u32 node);
+
+            void print_logical_not(u32 node);
+            void print_logical_not_operator(u32 node);
+            void print_address_of(u32 node);
+            void print_dereference(u32 node);
+            void print_bitwise_not(u32 node);
+            void print_unary_minus(u32 node);
+            void print_unary_plus(u32 node);
+            void print_pre_increment(u32 node);
+            void print_pre_decrement(u32 node);
+
+            // an operator written in front of what it applies to
+            void print_prefix(u32 node, const std::string& oper);
+
             void print_scope(u32 node);
 
             void print_dot(u32 node);
@@ -91,6 +124,10 @@ namespace haard {
             void print_token(u32 token);
 
             void print_string(const std::string_view& s);
+
+            // the last character written, so that two operators written next
+            // to each other cannot be read back as one
+            char last_character;
 
             // a line break followed by the current indentation. Four spaces a
             // level: the block rule accepts any depth, so what comes out is

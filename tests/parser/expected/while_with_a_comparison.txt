@@ -1,9 +1,18 @@
-error: expected ':', found '<'
- --> cases/while_with_a_comparison.hd:3:13
-  |
-3 |     while a < b:
-  |             ^
-
+def main : i32
+    while a < b:
+        c
 --- tree
 module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      while 'while'
+        less_than '<'
+          identifier 'a'
+          identifier 'b'
+        block
+          identifier 'c'
 --- round trip: ok

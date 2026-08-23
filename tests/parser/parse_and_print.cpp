@@ -64,7 +64,52 @@ static std::string name_of(AstNodeKind kind) {
         case AST_MINUS: return "minus";
         case AST_TIMES: return "times";
         case AST_DIVISION: return "division";
+        case AST_INTEGER_DIVISION: return "integer_division";
         case AST_MODULO: return "modulo";
+        case AST_ASSIGNMENT: return "assignment";
+        case AST_PLUS_ASSIGNMENT: return "plus_assignment";
+        case AST_MINUS_ASSIGNMENT: return "minus_assignment";
+        case AST_TIMES_ASSIGNMENT: return "times_assignment";
+        case AST_DIVISION_ASSIGNMENT: return "division_assignment";
+        case AST_INTEGER_DIVISION_ASSIGNMENT: return "integer_division_assignment";
+        case AST_BITWISE_NOT_ASSIGNMENT: return "bitwise_not_assignment";
+        case AST_MODULO_ASSIGNMENT: return "modulo_assignment";
+        case AST_BITWISE_AND_ASSIGNMENT: return "bitwise_and_assignment";
+        case AST_BITWISE_OR_ASSIGNMENT: return "bitwise_or_assignment";
+        case AST_BITWISE_XOR_ASSIGNMENT: return "bitwise_xor_assignment";
+        case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT: return "left_shift_assignment";
+        case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT: return "right_shift_assignment";
+        case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+            return "unsigned_right_shift_assignment";
+        case AST_CAST: return "cast";
+        case AST_LOGICAL_OR: return "logical_or";
+        case AST_LOGICAL_AND: return "logical_and";
+        case AST_EQUAL: return "equal";
+        case AST_NOT_EQUAL: return "not_equal";
+        case AST_LESS_THAN: return "less_than";
+        case AST_GREATER_THAN: return "greater_than";
+        case AST_LESS_THAN_OR_EQUAL: return "less_than_or_equal";
+        case AST_GREATER_THAN_OR_EQUAL: return "greater_than_or_equal";
+        case AST_IN: return "in";
+        case AST_NOT_IN: return "not_in";
+        case AST_INCLUSIVE_RANGE: return "inclusive_range";
+        case AST_EXCLUSIVE_RANGE: return "exclusive_range";
+        case AST_POWER: return "power";
+        case AST_BITWISE_OR: return "bitwise_or";
+        case AST_BITWISE_XOR: return "bitwise_xor";
+        case AST_BITWISE_AND: return "bitwise_and";
+        case AST_BITWISE_LEFT_SHIFT: return "left_shift";
+        case AST_BITWISE_RIGHT_SHIFT: return "right_shift";
+        case AST_BITWISE_UNSIGNED_RIGHT_SHIFT: return "unsigned_right_shift";
+        case AST_LOGICAL_NOT: return "logical_not";
+        case AST_LOGICAL_NOT_OPERATOR: return "logical_not_operator";
+        case AST_ADDRESS_OF: return "address_of";
+        case AST_DEREFERENCE: return "dereference";
+        case AST_BITWISE_NOT: return "bitwise_not";
+        case AST_UNARY_MINUS: return "unary_minus";
+        case AST_UNARY_PLUS: return "unary_plus";
+        case AST_PRE_INCREMENT: return "pre_increment";
+        case AST_PRE_DECREMENT: return "pre_decrement";
         case AST_SCOPE: return "scope";
         case AST_DOT: return "dot";
         case AST_ARROW: return "arrow";
@@ -120,7 +165,51 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_MINUS:
         case AST_TIMES:
         case AST_DIVISION:
+        case AST_INTEGER_DIVISION:
+        case AST_INTEGER_DIVISION_ASSIGNMENT:
+        case AST_BITWISE_NOT_ASSIGNMENT:
         case AST_MODULO:
+        case AST_ASSIGNMENT:
+        case AST_PLUS_ASSIGNMENT:
+        case AST_MINUS_ASSIGNMENT:
+        case AST_TIMES_ASSIGNMENT:
+        case AST_DIVISION_ASSIGNMENT:
+        case AST_MODULO_ASSIGNMENT:
+        case AST_BITWISE_AND_ASSIGNMENT:
+        case AST_BITWISE_OR_ASSIGNMENT:
+        case AST_BITWISE_XOR_ASSIGNMENT:
+        case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT:
+        case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
+        case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+        case AST_CAST:
+        case AST_LOGICAL_OR:
+        case AST_LOGICAL_AND:
+        case AST_EQUAL:
+        case AST_NOT_EQUAL:
+        case AST_LESS_THAN:
+        case AST_GREATER_THAN:
+        case AST_LESS_THAN_OR_EQUAL:
+        case AST_GREATER_THAN_OR_EQUAL:
+        case AST_IN:
+        case AST_NOT_IN:
+        case AST_INCLUSIVE_RANGE:
+        case AST_EXCLUSIVE_RANGE:
+        case AST_POWER:
+        case AST_BITWISE_OR:
+        case AST_BITWISE_XOR:
+        case AST_BITWISE_AND:
+        case AST_BITWISE_LEFT_SHIFT:
+        case AST_BITWISE_RIGHT_SHIFT:
+        case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
+        case AST_LOGICAL_NOT:
+        case AST_LOGICAL_NOT_OPERATOR:
+        case AST_ADDRESS_OF:
+        case AST_DEREFERENCE:
+        case AST_BITWISE_NOT:
+        case AST_UNARY_MINUS:
+        case AST_UNARY_PLUS:
+        case AST_PRE_INCREMENT:
+        case AST_PRE_DECREMENT:
         case AST_SCOPE:
         case AST_DOT:
         case AST_ARROW:

@@ -1,0 +1,49 @@
+def main : i32
+    let a = a < b
+    let b = a > b
+    let c = a <= b
+    let d = a >= b
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            less_than '<'
+              identifier 'a'
+              identifier 'b'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            greater_than '>'
+              identifier 'a'
+              identifier 'b'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            less_than_or_equal '<='
+              identifier 'a'
+              identifier 'b'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'd'
+          binding_expression
+            greater_than_or_equal '>='
+              identifier 'a'
+              identifier 'b'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

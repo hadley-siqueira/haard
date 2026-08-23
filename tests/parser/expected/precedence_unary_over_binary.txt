@@ -1,0 +1,20 @@
+def main : i32
+    return -a ** ~b & !c
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        power '**'
+          unary_minus '-'
+            identifier 'a'
+          bitwise_and '&'
+            bitwise_not '~'
+              identifier 'b'
+            logical_not_operator '!'
+              identifier 'c'
+--- round trip: ok

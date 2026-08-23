@@ -1,0 +1,14 @@
+def main : i32
+    a //= b
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      integer_division_assignment '//='
+        identifier 'a'
+        identifier 'b'
+--- round trip: ok

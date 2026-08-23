@@ -1,0 +1,15 @@
+def main : i32
+    return 0...len
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        exclusive_range '...'
+          integer '0'
+          identifier 'len'
+--- round trip: ok

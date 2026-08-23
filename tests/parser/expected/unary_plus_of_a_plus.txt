@@ -1,0 +1,12 @@
+let x = + +a
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        unary_plus '+'
+          unary_plus '+'
+            identifier 'a'
+--- round trip: ok

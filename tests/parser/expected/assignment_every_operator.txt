@@ -1,0 +1,66 @@
+def main : i32
+    a = b
+    a += b
+    a -= b
+    a *= b
+    a /= b
+    a //= b
+    a %= b
+    a &= b
+    a |= b
+    a ^= b
+    a ~= b
+    a <<= b
+    a >>= b
+    a >>>= b
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      assignment '='
+        identifier 'a'
+        identifier 'b'
+      plus_assignment '+='
+        identifier 'a'
+        identifier 'b'
+      minus_assignment '-='
+        identifier 'a'
+        identifier 'b'
+      times_assignment '*='
+        identifier 'a'
+        identifier 'b'
+      division_assignment '/='
+        identifier 'a'
+        identifier 'b'
+      integer_division_assignment '//='
+        identifier 'a'
+        identifier 'b'
+      modulo_assignment '%='
+        identifier 'a'
+        identifier 'b'
+      bitwise_and_assignment '&='
+        identifier 'a'
+        identifier 'b'
+      bitwise_or_assignment '|='
+        identifier 'a'
+        identifier 'b'
+      bitwise_xor_assignment '^='
+        identifier 'a'
+        identifier 'b'
+      bitwise_not_assignment '~='
+        identifier 'a'
+        identifier 'b'
+      left_shift_assignment '<<='
+        identifier 'a'
+        identifier 'b'
+      right_shift_assignment '>>='
+        identifier 'a'
+        identifier 'b'
+      unsigned_right_shift_assignment '>>>='
+        identifier 'a'
+        identifier 'b'
+--- round trip: ok

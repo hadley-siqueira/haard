@@ -8,11 +8,11 @@ error: expected an expression, found '['
   |
 6 |     [0]
   |     ^
-error: expected an expression, found '++'
- --> cases/postfix_on_the_next_line.hd:7:5
+error: expected an expression, found the end of the file
+ --> cases/postfix_on_the_next_line.hd:7:7
   |
 7 |     ++
-  |     ^^
+  |       ^
 def main : i32
     a
     (c)

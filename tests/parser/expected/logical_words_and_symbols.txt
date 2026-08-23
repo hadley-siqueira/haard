@@ -1,0 +1,49 @@
+def main : i32
+    let a = x and y
+    let b = x && y
+    let c = x or y
+    let d = x || y
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            logical_and 'and'
+              identifier 'x'
+              identifier 'y'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            logical_and '&&'
+              identifier 'x'
+              identifier 'y'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            logical_or 'or'
+              identifier 'x'
+              identifier 'y'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'd'
+          binding_expression
+            logical_or '||'
+              identifier 'x'
+              identifier 'y'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

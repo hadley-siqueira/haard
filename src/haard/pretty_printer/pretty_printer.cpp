@@ -3,10 +3,35 @@
 
 using namespace haard;
 
+// Whether writing 'second' straight after 'first' would be read back as one
+// token that means something else. Only prefix operators can meet with nothing
+// between them — every binary operator here carries its own spaces — so the
+// question is only ever about two prefix operators in a row, and of those only
+// three double into a token with a different meaning:
+//
+//   '-' '-' -> '--', a pre-decrement, not a negated negation
+//   '+' '+' -> '++', a pre-increment, not a doubled unary plus
+//   '&' '&' -> '&&', a logical and, not the address of an address
+//
+// '*' '*' is deliberately **not** in the list: '**' is the language's own
+// spelling for two dereferences, so pasting them changes nothing. Neither are
+// pairs like '~' '-', which no token is made of.
+//
+// This list has to grow when a prefix operator does — a '|' one, for the
+// closure syntax, would need it.
+static bool would_paste(char first, char second) {
+    if (first != second) {
+        return false;
+    }
+
+    return first == '-' || first == '+' || first == '&';
+}
+
 PrettyPrinter::PrettyPrinter() {
     context = nullptr;
     ast = nullptr;
     indentation = 0;
+    last_character = 0;
 }
 
 bool PrettyPrinter::print(std::ostream& out) {
@@ -18,6 +43,7 @@ bool PrettyPrinter::print(std::ostream& out) {
 
     output.str("");
     indentation = 0;
+    last_character = 0;
     print_node(root);
     out << output.str() << '\n';
 
@@ -152,8 +178,124 @@ void PrettyPrinter::print_node(u32 node) {
             print_division_expression(node);
             break;
 
+        case AST_INTEGER_DIVISION:
+            print_integer_division_expression(node);
+            break;
+
         case AST_MODULO:
             print_modulo_expression(node);
+            break;
+
+        // every assignment writes its own lexeme, so one printer serves the
+        // twelve of them
+        case AST_ASSIGNMENT:
+        case AST_PLUS_ASSIGNMENT:
+        case AST_MINUS_ASSIGNMENT:
+        case AST_TIMES_ASSIGNMENT:
+        case AST_DIVISION_ASSIGNMENT:
+        case AST_MODULO_ASSIGNMENT:
+        case AST_BITWISE_AND_ASSIGNMENT:
+        case AST_BITWISE_OR_ASSIGNMENT:
+        case AST_BITWISE_XOR_ASSIGNMENT:
+        case AST_BITWISE_NOT_ASSIGNMENT:
+        case AST_INTEGER_DIVISION_ASSIGNMENT:
+        case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT:
+        case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
+        case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+            print_assignment_expression(node);
+            break;
+
+        case AST_CAST:
+            print_cast_expression(node);
+            break;
+
+        // 'or' / '||' and 'and' / '&&' are one operator with two spellings
+        case AST_LOGICAL_OR:
+        case AST_LOGICAL_AND:
+            print_logical_expression(node);
+            break;
+
+        case AST_EQUAL:
+        case AST_NOT_EQUAL:
+        case AST_LESS_THAN:
+        case AST_GREATER_THAN:
+        case AST_LESS_THAN_OR_EQUAL:
+        case AST_GREATER_THAN_OR_EQUAL:
+        case AST_IN:
+            print_comparison_expression(node);
+            break;
+
+        case AST_NOT_IN:
+            print_not_in_expression(node);
+            break;
+
+        case AST_INCLUSIVE_RANGE:
+        case AST_EXCLUSIVE_RANGE:
+            print_range_expression(node);
+            break;
+
+        case AST_POWER:
+            print_power_expression(node);
+            break;
+
+        case AST_BITWISE_OR:
+            print_bitwise_or_expression(node);
+            break;
+
+        case AST_BITWISE_XOR:
+            print_bitwise_xor_expression(node);
+            break;
+
+        case AST_BITWISE_AND:
+            print_bitwise_and_expression(node);
+            break;
+
+        case AST_BITWISE_LEFT_SHIFT:
+            print_left_shift_expression(node);
+            break;
+
+        case AST_BITWISE_RIGHT_SHIFT:
+            print_right_shift_expression(node);
+            break;
+
+        case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
+            print_unsigned_right_shift_expression(node);
+            break;
+
+        case AST_LOGICAL_NOT:
+            print_logical_not(node);
+            break;
+
+        case AST_LOGICAL_NOT_OPERATOR:
+            print_logical_not_operator(node);
+            break;
+
+        case AST_ADDRESS_OF:
+            print_address_of(node);
+            break;
+
+        case AST_DEREFERENCE:
+            print_dereference(node);
+            break;
+
+        case AST_BITWISE_NOT:
+            print_bitwise_not(node);
+            break;
+
+        case AST_UNARY_MINUS:
+            print_unary_minus(node);
+            break;
+
+        case AST_UNARY_PLUS:
+            print_unary_plus(node);
+            break;
+
+        case AST_PRE_INCREMENT:
+            print_pre_increment(node);
+            break;
+
+        case AST_PRE_DECREMENT:
+            print_pre_decrement(node);
             break;
 
         case AST_SCOPE:
@@ -224,7 +366,9 @@ void PrettyPrinter::print_node(u32 node) {
         // output without a trace, which is the worst way to find out that one
         // is missing
         default:
-            output << "<no printer for ast kind " << (int) kind << ">";
+            print_string("<no printer for ast kind ");
+            print_string(std::to_string((int) kind));
+            print_string(">");
             break;
     }
 }
@@ -234,7 +378,7 @@ void PrettyPrinter::print_module(u32 node) {
 }
 
 void PrettyPrinter::print_import(u32 node) {
-    output << "import ";
+    print_string("import ");
     print_children(node);
 }
 
@@ -432,6 +576,10 @@ void PrettyPrinter::print_division_expression(u32 node) {
     print_children_joined(node, " / ");
 }
 
+void PrettyPrinter::print_integer_division_expression(u32 node) {
+    print_children_joined(node, " // ");
+}
+
 void PrettyPrinter::print_modulo_expression(u32 node) {
     print_children_joined(node, " % ");
 }
@@ -450,6 +598,118 @@ void PrettyPrinter::print_scope(u32 node) {
     }
 
     print_children_joined(node, "::");
+}
+
+void PrettyPrinter::print_assignment_expression(u32 node) {
+    print_binary_from_token(node);
+}
+
+void PrettyPrinter::print_cast_expression(u32 node) {
+    print_binary_from_token(node);
+}
+
+void PrettyPrinter::print_logical_expression(u32 node) {
+    print_binary_from_token(node);
+}
+
+void PrettyPrinter::print_comparison_expression(u32 node) {
+    print_binary_from_token(node);
+}
+
+// the token is the 'not'; the 'in' after it has none of its own
+void PrettyPrinter::print_not_in_expression(u32 node) {
+    print_children_joined(node, " not in ");
+}
+
+// a range is written against its ends, the way a '..' reads: '0..len', not
+// '0 .. len'
+void PrettyPrinter::print_range_expression(u32 node) {
+    print_children_joined(node, std::string(
+        context->get_token_value(ast->get_node(node)->get_token())));
+}
+
+// The operator comes from the node's token rather than a literal, because more
+// than one lexeme can build the same kind: 'and' and '&&' are one operator, and
+// the twelve assignments are one printer. What the source chose is kept in the
+// tree and written back unchanged.
+void PrettyPrinter::print_binary_from_token(u32 node) {
+    std::string oper = " ";
+
+    oper += context->get_token_value(ast->get_node(node)->get_token());
+    oper += " ";
+
+    print_children_joined(node, oper);
+}
+
+void PrettyPrinter::print_power_expression(u32 node) {
+    print_children_joined(node, " ** ");
+}
+
+void PrettyPrinter::print_bitwise_or_expression(u32 node) {
+    print_children_joined(node, " | ");
+}
+
+void PrettyPrinter::print_bitwise_xor_expression(u32 node) {
+    print_children_joined(node, " ^ ");
+}
+
+void PrettyPrinter::print_bitwise_and_expression(u32 node) {
+    print_children_joined(node, " & ");
+}
+
+void PrettyPrinter::print_left_shift_expression(u32 node) {
+    print_children_joined(node, " << ");
+}
+
+void PrettyPrinter::print_right_shift_expression(u32 node) {
+    print_children_joined(node, " >> ");
+}
+
+void PrettyPrinter::print_unsigned_right_shift_expression(u32 node) {
+    print_children_joined(node, " >>> ");
+}
+
+// 'not' is a word, so it carries its own separating space; the symbols are
+// written against what they apply to
+void PrettyPrinter::print_logical_not(u32 node) {
+    print_prefix(node, "not ");
+}
+
+void PrettyPrinter::print_logical_not_operator(u32 node) {
+    print_prefix(node, "!");
+}
+
+void PrettyPrinter::print_address_of(u32 node) {
+    print_prefix(node, "&");
+}
+
+void PrettyPrinter::print_dereference(u32 node) {
+    print_prefix(node, "*");
+}
+
+void PrettyPrinter::print_bitwise_not(u32 node) {
+    print_prefix(node, "~");
+}
+
+void PrettyPrinter::print_unary_minus(u32 node) {
+    print_prefix(node, "-");
+}
+
+void PrettyPrinter::print_unary_plus(u32 node) {
+    print_prefix(node, "+");
+}
+
+void PrettyPrinter::print_pre_increment(u32 node) {
+    print_prefix(node, "++");
+}
+
+void PrettyPrinter::print_pre_decrement(u32 node) {
+    print_prefix(node, "--");
+}
+
+void PrettyPrinter::print_prefix(u32 node, const std::string& oper) {
+    print_string(oper);
+    print_children(node);
 }
 
 // glued, like the '.' of an import path and the '::' of a scope: these reach
@@ -570,12 +830,29 @@ void PrettyPrinter::print_token(u32 token) {
     print_string(context->get_token_value(token));
 }
 
+// The one thing the printer checks about what it already wrote, and it is not a
+// judgement about the tree: '- -a' is a negated negation, and writing it as
+// '--a' would read back as a pre-decrement — a different program. So when the
+// two would paste into such a token, a space goes between them.
+//
+// It costs nothing anywhere else: '-1' keeps its digit, '**p' stays '**p' and
+// '~-a' stays '~-a', because none of those paste into anything.
 void PrettyPrinter::print_string(const std::string_view& s) {
+    if (s.empty()) {
+        return;
+    }
+
+    if (would_paste(last_character, s.front())) {
+        output << ' ';
+    }
+
     output << s;
+    last_character = s.back();
 }
 
 void PrettyPrinter::print_new_line() {
     output << '\n' << std::string(indentation * 4, ' ');
+    last_character = ' ';
 }
 
 

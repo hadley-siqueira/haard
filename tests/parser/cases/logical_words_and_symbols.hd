@@ -1,0 +1,8 @@
+# 'and' is '&&' and 'or' is '||': one operator each, and the tree keeps which
+# spelling was written
+def main : i32
+    let a = x and y
+    let b = x && y
+    let c = x or y
+    let d = x || y
+    return a

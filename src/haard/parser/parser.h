@@ -66,8 +66,29 @@ namespace haard {
             u32 parse_type();
 
             u32 parse_expression();
+
+            // the loose end of the cascade. The order is the old compiler's,
+            // and so is the *left* associativity of the assignment level
+            u32 parse_assignment_expression();
+            u32 parse_cast_expression();
+            u32 parse_logical_or_expression();
+            u32 parse_logical_and_expression();
+            u32 parse_equality_expression();
+            u32 parse_relational_expression();
+            u32 parse_range_expression();
             u32 parse_arith_expression();
             u32 parse_term_expression();
+
+            // The order below is the old compiler's, and it is deliberately
+            // not C's: '**', the bitwise operators and the shifts all bind
+            // *tighter* than '*' and '/', so 'a + b & c' is 'a + (b & c)'.
+            // Do not "fix" it into the C precedence.
+            u32 parse_power_expression();
+            u32 parse_bitwise_or_expression();
+            u32 parse_bitwise_xor_expression();
+            u32 parse_bitwise_and_expression();
+            u32 parse_shift_expression();
+            u32 parse_unary_expression();
             u32 parse_postfix_expression();
             u32 parse_arguments();
             u32 parse_primary_expression();

@@ -1,0 +1,12 @@
+let x = **p
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        dereference '**'
+          dereference '**'
+            identifier 'p'
+--- round trip: ok

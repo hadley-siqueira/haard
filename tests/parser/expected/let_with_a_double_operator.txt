@@ -1,9 +1,0 @@
-error: expected an expression, found '+'
- --> cases/let_with_a_double_operator.hd:1:13
-  |
-1 | let x = a + + b
-  |             ^
-
---- tree
-module
---- round trip: ok

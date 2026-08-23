@@ -1,0 +1,15 @@
+def main : i32
+    return a as i32
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        cast 'as'
+          identifier 'a'
+          identifier 'i32'
+--- round trip: ok

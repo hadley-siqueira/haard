@@ -1,0 +1,13 @@
+let x = a * *b
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        times '*'
+          identifier 'a'
+          dereference '*'
+            identifier 'b'
+--- round trip: ok
