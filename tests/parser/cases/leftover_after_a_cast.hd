@@ -1,0 +1,4 @@
+# the type grammar is greedy, so 'i32*' swallows the star and 'b' is left over
+def main : i32
+    let x = a as i32 * b
+    return 0

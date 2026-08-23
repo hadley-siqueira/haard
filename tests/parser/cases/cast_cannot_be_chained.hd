@@ -1,0 +1,4 @@
+# one cast per expression: the rule matches once, it does not loop
+def main : i32
+    let x = a as i32 as f64
+    return 0

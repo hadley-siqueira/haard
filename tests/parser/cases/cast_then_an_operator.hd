@@ -1,0 +1,4 @@
+# the cast closed the expression, so the '+' has nowhere to attach
+def main : i32
+    let x = a as i32 + b
+    return 0

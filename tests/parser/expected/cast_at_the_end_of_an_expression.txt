@@ -1,0 +1,40 @@
+def main : i32
+    let a = a * b as i32
+    let b = a + b * c as f64
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            cast 'as'
+              times '*'
+                identifier 'a'
+                identifier 'b'
+              named_type
+                identifier 'i32'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            cast 'as'
+              plus '+'
+                identifier 'a'
+                times '*'
+                  identifier 'b'
+                  identifier 'c'
+              named_type
+                identifier 'f64'
+      return 'return'
+        integer '0'
+--- round trip: ok

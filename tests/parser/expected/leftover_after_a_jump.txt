@@ -1,0 +1,19 @@
+error: nothing may follow a statement on its line
+ --> cases/leftover_after_a_jump.hd:2:14
+  |
+2 |     return a b
+  |              ^
+def main : i32
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      return 'return'
+        identifier 'a'
+--- round trip: ok

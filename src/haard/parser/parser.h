@@ -51,6 +51,7 @@ namespace haard {
             u32 parse_block(u32 header_indentation);
             u32 parse_block_statements(u32 node, bool braced);
             bool inside_block(bool braced);
+            bool leftover_on_the_line(bool braced);
             u32 parse_pass();
             u32 parse_statement();
             u32 parse_if();
@@ -164,8 +165,10 @@ namespace haard {
 
             // the statement cannot be kept and the reason is already reported
             void poison();
-            void synchronize(u32 statement_indentation, u32 statement_start);
-            void skip_to_next_line();
+            void synchronize(u32 statement_indentation, u32 statement_start,
+                             bool braced);
+            void skip_to_next_line(bool braced);
+            bool at_block_end(bool braced);
 
         private:
             Context* context;

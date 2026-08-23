@@ -1,0 +1,6 @@
+# 'a as i32 * b' cannot be told apart from a cast to 'i32*': the type grammar
+# takes the '*' first, so the caret lands on the 'b' rather than on the '*'.
+# Written '(a as i32) * b' it is unambiguous
+def main : i32
+    let x = a as i32 * b
+    return 0

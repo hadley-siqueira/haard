@@ -1,0 +1,5 @@
+# a statement takes the whole line: 'b' is not part of the let and is not the
+# next statement either
+def main : i32
+    let x = a b
+    return 0

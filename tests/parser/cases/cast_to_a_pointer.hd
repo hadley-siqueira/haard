@@ -1,0 +1,5 @@
+# no ambiguity here: nothing follows, so the '*' can only belong to the type
+def main : i32
+    let a = a as i32*
+    let b = a as i32**
+    return 0

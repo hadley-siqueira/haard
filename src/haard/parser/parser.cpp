@@ -136,7 +136,7 @@ u32 Parser::parse_module() {
 
         // one of the two places that know about panic mode: the recovery point
         if (panic) {
-            synchronize(indentation, start);
+            synchronize(indentation, start, false);
             continue;
         }
 
@@ -402,8 +402,24 @@ u32 Parser::parse_block_statements(u32 node, bool braced) {
 
             u32 child = parse_statement();
 
+            // A statement takes the whole line, and until now only half of
+            // that was enforced: everything had to be *on* the line, but
+            // nothing checked that the line was finished. So 'let x = a b'
+            // quietly became two statements sharing a line, and the greedier
+            // the grammar got the easier that was to hit.
+            //
+            // The statement that did parse is kept: it is complete and correct,
+            // and only what trails it is thrown away. That is more of the file
+            // surviving than the usual 'the statement is dropped' recovery.
+            if (!panic && leftover_on_the_line(braced)) {
+                error_at_current("nothing may follow a statement on its line");
+                last = builder.add_child(node, last, child);
+                synchronize(indentation, start, braced);
+                continue;
+            }
+
             if (panic) {
-                synchronize(indentation, start);
+                synchronize(indentation, start, braced);
                 continue;
             }
 
@@ -428,6 +444,21 @@ u32 Parser::parse_block_statements(u32 node, bool braced) {
     }
 
     return last;
+}
+
+// whether the statement just read left something behind on its line. The brace
+// that closes a braced block does not count: '|x| { x + 1 }' is one line on
+// purpose, and the '}' is what ends it rather than something left over
+bool Parser::leftover_on_the_line(bool braced) {
+    if (current().get_kind() == TK_EOF) {
+        return false;
+    }
+
+    if (braced && lookahead(TK_RIGHT_CURLY_BRACKET)) {
+        return false;
+    }
+
+    return on_same_line();
 }
 
 // whether another statement of this block is still ahead
@@ -1969,7 +2000,11 @@ void Parser::poison() {
     panic = true;
 }
 
-void Parser::synchronize(u32 statement_indentation, u32 statement_start) {
+// The second half of the recovery: throw away what is left of the line that
+// failed, and the lines it opened. Everything indented deeper than the line the
+// statement started on belonged to it.
+void Parser::synchronize(u32 statement_indentation, u32 statement_start,
+                         bool braced) {
     panic = false;
 
     // a statement that failed without consuming a single token has to give one
@@ -1978,22 +2013,42 @@ void Parser::synchronize(u32 statement_indentation, u32 statement_start) {
     // of a line then that line is a fresh statement: taking it would make one
     // bad statement swallow a good one
     if (current_token == statement_start) {
-        skip_to_next_line();
+        skip_to_next_line(braced);
     } else if (!current().get_newline_before()) {
-        skip_to_next_line();
+        skip_to_next_line(braced);
     }
 
-    while (!lookahead(TK_EOF)
+    while (!at_block_end(braced)
            && indentation_of_current_line() > statement_indentation) {
-        skip_to_next_line();
+        skip_to_next_line(braced);
     }
 }
 
-// moves at least one token and stops on the first of the next line
-void Parser::skip_to_next_line() {
+// Moves at least one token and stops on the first of the next line — unless the
+// block is a braced one and its brace is what comes next, because skipping past
+// that would leave the closure looking unclosed and turn one mistake into two
+// errors.
+//
+// Stopping without consuming cannot spin here: the loop that calls this ends on
+// the same brace.
+void Parser::skip_to_next_line(bool braced) {
+    if (at_block_end(braced)) {
+        return;
+    }
+
     advance();
 
-    while (!lookahead(TK_EOF) && !current().get_newline_before()) {
+    while (!at_block_end(braced) && !current().get_newline_before()) {
         advance();
     }
+}
+
+// where a recovery has to stop. A braced block ends at its brace, not at the
+// end of a line
+bool Parser::at_block_end(bool braced) {
+    if (current().get_kind() == TK_EOF) {
+        return true;
+    }
+
+    return braced && lookahead(TK_RIGHT_CURLY_BRACKET);
 }

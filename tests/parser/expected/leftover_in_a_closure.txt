@@ -1,0 +1,33 @@
+error: nothing may follow a statement on its line
+ --> cases/leftover_in_a_closure.hd:2:21
+  |
+2 |     let f = |x| { a b }
+  |                     ^
+def main : i32
+    let f = |x| {
+        a
+    }
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'f'
+          binding_expression
+            closure '|'
+              closure_parameter
+                binding_name
+                  identifier 'x'
+              block
+                identifier 'a'
+      return 'return'
+        integer '0'
+--- round trip: ok

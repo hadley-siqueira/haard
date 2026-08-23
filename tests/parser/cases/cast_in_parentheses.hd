@@ -1,0 +1,5 @@
+# the way to write a cast in the middle of an expression
+def main : i32
+    let a = (a as i32) * b
+    let b = (a as i32) + (b as i32)
+    return 0

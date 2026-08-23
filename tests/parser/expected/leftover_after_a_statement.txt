@@ -1,0 +1,26 @@
+error: nothing may follow a statement on its line
+ --> cases/leftover_after_a_statement.hd:4:15
+  |
+4 |     let x = a b
+  |               ^
+def main : i32
+    let x = a
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      named_type
+        identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'x'
+          binding_expression
+            identifier 'a'
+      return 'return'
+        integer '0'
+--- round trip: ok
