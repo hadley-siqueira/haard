@@ -183,12 +183,23 @@ u32 AstBuilder::make_jump(AstNodeKind kind, u32 token, u32 expression) {
     return node;
 }
 
-u32 AstBuilder::make_param(u32 token, u32 name, u32 type) {
+u32 AstBuilder::make_label(u32 token, u32 name) {
+    u32 node = make_node(AST_LABEL, token);
+
+    add_child(node, 0, name);
+
+    return node;
+}
+
+// the same three parts a field has, and for the same reason: the value is what
+// the caller gets when it leaves the argument out
+u32 AstBuilder::make_param(u32 token, u32 name, u32 type, u32 value) {
     u32 node = make_node(AST_PARAM, token);
 
     u32 last = add_child(node, 0, name);
 
-    add_child(node, last, type);
+    last = add_child(node, last, type);
+    add_child(node, last, value);
 
     return node;
 }

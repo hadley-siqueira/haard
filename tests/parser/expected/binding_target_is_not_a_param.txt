@@ -1,0 +1,9 @@
+error: expected an identifier, found '('
+ --> cases/binding_target_is_not_a_param.hd:2:6
+  |
+2 |     @(a, b) : i32
+  |      ^
+
+--- tree
+module
+--- round trip: ok

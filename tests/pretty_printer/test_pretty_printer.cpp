@@ -107,9 +107,28 @@ void test_param(Context& context, AstBuilder& builder) {
 
     u32 module = builder.make_module();
 
-    builder.add_child(module, 0, builder.make_param(14, name, type));
+    builder.add_child(module, 0, builder.make_param(14, name, type, 0));
 
     check("param", print(context), "@count : u32\n");
+}
+
+// @limit : i32 = 80
+//  51 52 53 54 55 56
+//
+// the value is what the caller gets when it leaves the argument out, and it is
+// the same 'binding_expression' a let and a field carry
+void test_param_with_a_default(Context& context, AstBuilder& builder) {
+    u32 name = builder.make_binding_name(builder.make_identifier(52));
+    u32 type = builder.make_binding_type(builder.make_identifier(54));
+
+    u32 value = builder.make_binding_expression(
+        builder.make_literal(AST_INTEGER_LITERAL, 56));
+
+    u32 module = builder.make_module();
+
+    builder.add_child(module, 0, builder.make_param(51, name, type, value));
+
+    check("param with a default", print(context), "@limit : i32 = 80\n");
 }
 
 // let p = io::println
@@ -340,6 +359,7 @@ int main(int argc, char* argv[]) {
     // one test per Context: the ast is append only and each test builds a
     // module of its own, so they cannot share one
     for (auto test : { test_import, test_let_declaration, test_param,
+                       test_param_with_a_default,
                        test_scope_with_an_alias, test_scope_without_an_alias,
                        test_parenthesis, test_no_parenthesis_is_added,
                        test_division_and_modulo,

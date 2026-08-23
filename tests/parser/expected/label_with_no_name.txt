@@ -1,0 +1,18 @@
+error: expected an identifier, found the end of the line
+ --> cases/label_with_no_name.hd:2:10
+  |
+2 |     label
+  |          ^
+def main : i32
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      return 'return'
+        integer '0'
+--- round trip: ok

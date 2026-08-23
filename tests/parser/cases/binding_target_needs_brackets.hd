@@ -1,0 +1,5 @@
+# without them a comma would have to mean two bindings sharing one value, and
+# it does not
+def main : i32
+    let a, b = pair
+    return a

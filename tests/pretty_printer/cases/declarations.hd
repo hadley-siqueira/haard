@@ -5,3 +5,4 @@ let p = io::println
 let q = ::println
 let r = a * b / c % d - e
 let s = (a + b) * c
+@limit : i32 = 80

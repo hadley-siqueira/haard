@@ -1,0 +1,37 @@
+def render : String
+    @text : String
+    @width : i32 = 80
+    @wrap : bool = true
+    return text
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'render'
+    function_return_type
+      named_type
+        identifier 'String'
+    param '@'
+      binding_name
+        identifier 'text'
+      binding_type
+        named_type
+          identifier 'String'
+    param '@'
+      binding_name
+        identifier 'width'
+      binding_type
+        builtin_type 'i32'
+      binding_expression
+        integer '80'
+    param '@'
+      binding_name
+        identifier 'wrap'
+      binding_type
+        builtin_type 'bool'
+      binding_expression
+        true 'true'
+    block
+      return 'return'
+        identifier 'text'
+--- round trip: ok

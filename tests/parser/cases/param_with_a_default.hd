@@ -1,0 +1,5 @@
+def render : String
+    @text : String
+    @width : i32 = 80
+    @wrap : bool = true
+    return text

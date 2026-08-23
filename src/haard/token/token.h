@@ -54,6 +54,7 @@ namespace haard {
         TK_CHAR,
         TK_PASS,
         TK_GOTO,
+        TK_LABEL,
         TK_INTEGER_LITERAL,
         TK_FLOAT_LITERAL,
         TK_STRING_LITERAL,

@@ -190,6 +190,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_goto(node);
             break;
 
+        case AST_LABEL:
+            print_label(node);
+            break;
+
         case AST_PARAM:
             print_param(node);
             break;
@@ -722,6 +726,11 @@ void PrettyPrinter::print_yield(u32 node) {
 
 void PrettyPrinter::print_goto(u32 node) {
     print_jump(node, "goto");
+}
+
+void PrettyPrinter::print_label(u32 node) {
+    print_string("label ");
+    print_children(node);
 }
 
 // the space belongs to the expression, not to the keyword: a bare 'return' must

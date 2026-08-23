@@ -3,5 +3,5 @@ def main : i32
         break
         continue
         yield n
-        goto label
+        goto start
     return 0

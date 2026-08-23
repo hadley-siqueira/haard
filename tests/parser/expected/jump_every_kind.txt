@@ -3,7 +3,7 @@ def main : i32
         break
         continue
         yield n
-        goto label
+        goto start
     return 0
 --- tree
 module
@@ -21,7 +21,7 @@ module
           yield 'yield'
             identifier 'n'
           goto 'goto'
-            identifier 'label'
+            identifier 'start'
       return 'return'
         integer '0'
 --- round trip: ok

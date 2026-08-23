@@ -41,6 +41,7 @@ namespace haard {
         AST_CONTINUE,
         AST_YIELD,
         AST_GOTO,
+        AST_LABEL,
         AST_BINDING,
         AST_BINDING_NAME,
         AST_BINDING_TYPE,

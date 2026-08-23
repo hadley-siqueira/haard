@@ -1,0 +1,34 @@
+def main : i32
+    let (a, b) = pair
+    const (x, y, z) : i32 = triple
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            tuple '('
+              identifier 'a'
+              identifier 'b'
+          binding_expression
+            identifier 'pair'
+      const_declaration 'const'
+        binding
+          binding_name
+            tuple '('
+              identifier 'x'
+              identifier 'y'
+              identifier 'z'
+          binding_type
+            builtin_type 'i32'
+          binding_expression
+            identifier 'triple'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

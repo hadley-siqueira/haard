@@ -84,10 +84,15 @@ namespace haard {
             u32 parse_for_condition();
             u32 parse_for_increment();
             u32 parse_jump(TokenKind keyword, AstNodeKind kind);
+            u32 parse_label();
             u32 parse_conditional(u32 node, u32 header_indentation);
 
             u32 parse_binding();
             u32 parse_binding_name();
+
+            // what a let or a const binds: one name, or several between
+            // brackets when a tuple is being taken apart
+            u32 parse_binding_target();
             u32 parse_binding_type();
             u32 parse_binding_expression();
 

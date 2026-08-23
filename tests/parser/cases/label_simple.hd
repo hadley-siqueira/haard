@@ -1,0 +1,6 @@
+# a label is written 'label name', so nothing has to be told apart from an
+# expression statement
+def main : i32
+    label start
+    goto start
+    return 0

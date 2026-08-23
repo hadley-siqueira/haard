@@ -1,0 +1,5 @@
+# a tuple is taken apart between brackets
+def main : i32
+    let (a, b) = pair
+    const (x, y, z) : i32 = triple
+    return a

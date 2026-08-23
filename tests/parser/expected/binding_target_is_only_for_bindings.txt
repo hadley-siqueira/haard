@@ -1,0 +1,9 @@
+error: expected an identifier, found '('
+ --> cases/binding_target_is_only_for_bindings.hd:3:5
+  |
+3 | def (a, b) : i32
+  |     ^
+
+--- tree
+module
+--- round trip: ok

@@ -1,0 +1,23 @@
+error: nothing may follow a statement on its line
+ --> cases/binding_target_needs_brackets.hd:4:10
+  |
+4 |     let a, b = pair
+  |          ^
+def main : i32
+    let a
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

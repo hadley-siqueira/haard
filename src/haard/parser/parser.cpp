@@ -630,7 +630,7 @@ u32 Parser::parse_pass() {
 //
 //   statement := let_declaration | const_declaration
 //              | if | while | for
-//              | return | break | continue | yield | goto
+//              | return | break | continue | yield | goto | label
 //              | expression
 u32 Parser::parse_statement() {
     // the same rules the module level uses: a binding is a binding wherever it
@@ -675,7 +675,24 @@ u32 Parser::parse_statement() {
         return parse_jump(TK_GOTO, AST_GOTO);
     }
 
+    if (lookahead(TK_LABEL)) {
+        return parse_label();
+    }
+
     return parse_expression();
+}
+
+// what a 'goto' jumps to. The name is written after the word rather than before
+// a colon, so nothing here has to be told apart from an expression statement
+//
+//   label := 'label' identifier
+u32 Parser::parse_label() {
+    u32 token = current_token;
+
+    begin_statement();
+    expect(TK_LABEL);
+
+    return builder.make_label(token, parse_identifier());
 }
 
 // The five that leave a block: one shape, and the expression after the keyword
@@ -881,7 +898,10 @@ u32 Parser::parse_conditional(u32 node, u32 header_indentation) {
     return builder.add_child(node, last, parse_block(header_indentation));
 }
 
-//   param := '@' identifier ':' type
+// The type is not optional; the value is, and it is what the caller gets when
+// it leaves the argument out. The reference had neither.
+//
+//   param := '@' identifier ':' type ('=' expression)?
 u32 Parser::parse_param() {
     u32 token = current_token;
 
@@ -890,8 +910,9 @@ u32 Parser::parse_param() {
 
     u32 name = parse_binding_name();
     u32 type = parse_param_type();
+    u32 value = parse_binding_expression();
 
-    return builder.make_param(token, name, type);
+    return builder.make_param(token, name, type, value);
 }
 
 // the type of a parameter is not optional, unlike a let binding's: a parameter
@@ -916,11 +937,41 @@ u32 Parser::parse_param_type() {
 //
 //   binding := binding_name binding_type? binding_expression?
 u32 Parser::parse_binding() {
-    u32 name = parse_binding_name();
+    u32 name = parse_binding_target();
     u32 type = parse_binding_type();
     u32 expression = parse_binding_expression();
 
     return builder.make_binding(name, type, expression);
+}
+
+// One name, or several between brackets when a tuple is being taken apart:
+// 'let (a, b) = pair'. Without the brackets it is not a target — 'let a, b = p'
+// is an error, because a comma there would have to mean two bindings sharing
+// one value and it does not.
+//
+// This is not the binding *name* rule: a function, a class and a field all bind
+// a single name and must keep doing so, which is why they call that one.
+//
+//   binding_target := identifier | '(' identifier (',' identifier)* ')'
+u32 Parser::parse_binding_target() {
+    if (!lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
+        return parse_binding_name();
+    }
+
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LEFT_PARENTHESIS);
+
+    u32 tuple = builder.make_tuple(token);
+    u32 last = builder.add_child(tuple, 0, parse_identifier());
+
+    while (match_on_same_line(TK_COMMA)) {
+        last = builder.add_child(tuple, last, parse_identifier());
+    }
+
+    expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+    return builder.make_binding_name(tuple);
 }
 
 //   binding_name := identifier

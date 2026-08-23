@@ -72,6 +72,7 @@ static std::string name_of(AstNodeKind kind) {
         case AST_CONTINUE: return "continue";
         case AST_YIELD: return "yield";
         case AST_GOTO: return "goto";
+        case AST_LABEL: return "label";
         case AST_PARAM: return "param";
         case AST_BINDING: return "binding";
         case AST_BINDING_NAME: return "binding_name";
@@ -211,6 +212,7 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_CONTINUE:
         case AST_YIELD:
         case AST_GOTO:
+        case AST_LABEL:
         case AST_PLUS:
         case AST_MINUS:
         case AST_TIMES:

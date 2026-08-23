@@ -1,0 +1,4 @@
+# only a let and a const take one. A function name, a parameter, a field and a
+# closure parameter each bind a single name
+def (a, b) : i32
+    pass

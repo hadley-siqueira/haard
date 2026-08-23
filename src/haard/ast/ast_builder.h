@@ -96,7 +96,10 @@ namespace haard {
             // keyword, and an expression only when one was written after it
             u32 make_jump(AstNodeKind kind, u32 token, u32 expression);
 
-            u32 make_param(u32 token, u32 name, u32 type);
+            // the label a 'goto' jumps to
+            u32 make_label(u32 token, u32 name);
+
+            u32 make_param(u32 token, u32 name, u32 type, u32 value);
             u32 make_binding(u32 name, u32 type, u32 expression);
             u32 make_binding_name(u32 child);
             u32 make_binding_type(u32 child);

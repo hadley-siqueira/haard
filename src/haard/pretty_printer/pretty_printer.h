@@ -61,6 +61,7 @@ namespace haard {
             void print_continue(u32 node);
             void print_yield(u32 node);
             void print_goto(u32 node);
+            void print_label(u32 node);
 
             // the keyword, and the expression after it only when there is one
             void print_jump(u32 node, const std::string& keyword);
