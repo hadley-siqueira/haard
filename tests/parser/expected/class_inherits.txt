@@ -1,0 +1,18 @@
+class Derived(Base):
+    b : i32
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Derived'
+    super_type '('
+      named_type
+        identifier 'Base'
+    type_body
+      field
+        binding_name
+          identifier 'b'
+        binding_type
+          named_type
+            identifier 'i32'
+--- round trip: ok

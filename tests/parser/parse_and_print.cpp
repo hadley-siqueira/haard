@@ -41,6 +41,13 @@ static std::string name_of(AstNodeKind kind) {
         case AST_IMPORT_ALIAS: return "import_alias";
         case AST_LET_DECLARATION: return "let_declaration";
         case AST_CONST_DECLARATION: return "const_declaration";
+        case AST_CLASS: return "class";
+        case AST_STRUCT: return "struct";
+        case AST_ENUM: return "enum";
+        case AST_UNION: return "union";
+        case AST_SUPER_TYPE: return "super_type";
+        case AST_TYPE_BODY: return "type_body";
+        case AST_FIELD: return "field";
         case AST_FUNCTION: return "function";
         case AST_GENERIC_PARAMETERS: return "generic_parameters";
         case AST_FUNCTION_RETURN_TYPE: return "function_return_type";
@@ -168,6 +175,11 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_LET_DECLARATION:
         case AST_CONST_DECLARATION:
         case AST_FUNCTION:
+        case AST_CLASS:
+        case AST_STRUCT:
+        case AST_ENUM:
+        case AST_UNION:
+        case AST_SUPER_TYPE:
         case AST_GENERIC_PARAMETERS:
         case AST_PARAM:
         case AST_PASS:

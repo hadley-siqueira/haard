@@ -1,0 +1,22 @@
+class Pixel:
+    r : u8
+    g : u8
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Pixel'
+    type_body
+      field
+        binding_name
+          identifier 'r'
+        binding_type
+          named_type
+            identifier 'u8'
+      field
+        binding_name
+          identifier 'g'
+        binding_type
+          named_type
+            identifier 'u8'
+--- round trip: ok

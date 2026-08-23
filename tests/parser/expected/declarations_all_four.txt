@@ -1,0 +1,135 @@
+import std.io as io
+class Node<T>(Base<T>):
+    value : T
+    next : Node<T>*
+    def get : T
+        return value
+struct Point:
+    x : i32 = 0
+    y : i32 = 0
+union Value:
+    text : String
+    count : i32
+enum Action:
+    idle
+    click : (i32, i32)
+    move : (i32, i32) = origin
+    def name : String
+        return "action"
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+    import_alias 'io'
+  class 'class'
+    binding_name
+      identifier 'Node'
+    generic_parameters '<'
+      identifier 'T'
+    super_type '('
+      named_type
+        identifier 'Base'
+        generic_arguments '<'
+          named_type
+            identifier 'T'
+    type_body
+      field
+        binding_name
+          identifier 'value'
+        binding_type
+          named_type
+            identifier 'T'
+      field
+        binding_name
+          identifier 'next'
+        binding_type
+          pointer_type '*'
+            named_type
+              identifier 'Node'
+              generic_arguments '<'
+                named_type
+                  identifier 'T'
+      function 'def'
+        binding_name
+          identifier 'get'
+        function_return_type
+          named_type
+            identifier 'T'
+        block
+          return 'return'
+            identifier 'value'
+  struct 'struct'
+    binding_name
+      identifier 'Point'
+    type_body
+      field
+        binding_name
+          identifier 'x'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '0'
+      field
+        binding_name
+          identifier 'y'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '0'
+  union 'union'
+    binding_name
+      identifier 'Value'
+    type_body
+      field
+        binding_name
+          identifier 'text'
+        binding_type
+          named_type
+            identifier 'String'
+      field
+        binding_name
+          identifier 'count'
+        binding_type
+          named_type
+            identifier 'i32'
+  enum 'enum'
+    binding_name
+      identifier 'Action'
+    type_body
+      field
+        binding_name
+          identifier 'idle'
+      field
+        binding_name
+          identifier 'click'
+        binding_type
+          tuple_type '('
+            named_type
+              identifier 'i32'
+            named_type
+              identifier 'i32'
+      field
+        binding_name
+          identifier 'move'
+        binding_type
+          tuple_type '('
+            named_type
+              identifier 'i32'
+            named_type
+              identifier 'i32'
+        binding_expression
+          identifier 'origin'
+      function 'def'
+        binding_name
+          identifier 'name'
+        function_return_type
+          named_type
+            identifier 'String'
+        block
+          return 'return'
+            string '"action"'
+--- round trip: ok

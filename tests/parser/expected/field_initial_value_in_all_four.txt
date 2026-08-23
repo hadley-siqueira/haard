@@ -1,0 +1,59 @@
+class A:
+    a : i32 = 1
+struct B:
+    b : i32 = 2
+union C:
+    c : i32 = 3
+enum D:
+    d : i32 = 4
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'A'
+    type_body
+      field
+        binding_name
+          identifier 'a'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '1'
+  struct 'struct'
+    binding_name
+      identifier 'B'
+    type_body
+      field
+        binding_name
+          identifier 'b'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '2'
+  union 'union'
+    binding_name
+      identifier 'C'
+    type_body
+      field
+        binding_name
+          identifier 'c'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '3'
+  enum 'enum'
+    binding_name
+      identifier 'D'
+    type_body
+      field
+        binding_name
+          identifier 'd'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '4'
+--- round trip: ok

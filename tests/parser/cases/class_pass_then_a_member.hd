@@ -1,0 +1,3 @@
+class Pixel:
+    pass
+    r : u8

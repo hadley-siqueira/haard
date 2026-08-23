@@ -1,0 +1,3 @@
+union Value:
+    text : String
+    count : i32

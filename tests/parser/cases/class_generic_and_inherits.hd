@@ -1,0 +1,2 @@
+class Table<K, V>(Base<K>):
+    rows : i32

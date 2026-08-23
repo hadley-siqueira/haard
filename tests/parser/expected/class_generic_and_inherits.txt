@@ -1,0 +1,24 @@
+class Table<K, V>(Base<K>):
+    rows : i32
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Table'
+    generic_parameters '<'
+      identifier 'K'
+      identifier 'V'
+    super_type '('
+      named_type
+        identifier 'Base'
+        generic_arguments '<'
+          named_type
+            identifier 'K'
+    type_body
+      field
+        binding_name
+          identifier 'rows'
+        binding_type
+          named_type
+            identifier 'i32'
+--- round trip: ok

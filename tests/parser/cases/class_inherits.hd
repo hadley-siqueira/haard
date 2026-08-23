@@ -1,0 +1,2 @@
+class Derived(Base):
+    b : i32

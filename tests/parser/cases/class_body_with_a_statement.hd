@@ -1,0 +1,2 @@
+class Pixel:
+    return 1

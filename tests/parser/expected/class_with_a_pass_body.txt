@@ -1,0 +1,10 @@
+class Marker:
+    pass
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Marker'
+    type_body
+      pass 'pass'
+--- round trip: ok

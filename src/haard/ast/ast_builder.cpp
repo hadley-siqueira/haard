@@ -76,6 +76,36 @@ u32 AstBuilder::make_const_declaration(u32 token, u32 binding) {
     return node;
 }
 
+u32 AstBuilder::make_type_declaration(AstNodeKind kind, u32 token) {
+    return make_node(kind, token);
+}
+
+// the type between the brackets is the one being inherited from
+u32 AstBuilder::make_super_type(u32 token, u32 type) {
+    u32 node = make_node(AST_SUPER_TYPE, token);
+
+    add_child(node, 0, type);
+
+    return node;
+}
+
+u32 AstBuilder::make_type_body() {
+    return make_node(AST_TYPE_BODY, 0);
+}
+
+// the same three parts a let binding has, under a kind of its own so that a
+// walk can tell a field from a local without looking at its parent
+u32 AstBuilder::make_field(u32 name, u32 type, u32 value) {
+    u32 node = make_node(AST_FIELD, 0);
+
+    u32 last = add_child(node, 0, name);
+
+    last = add_child(node, last, type);
+    add_child(node, last, value);
+
+    return node;
+}
+
 u32 AstBuilder::make_function(u32 token) {
     return make_node(AST_FUNCTION, token);
 }

@@ -27,7 +27,6 @@ set(SCANNER_SRC
     src/haard/scanner/scanner.cpp
 )
 
-# parser_old.{h,cpp} is the first attempt, kept for reference and not built
 set(PARSER_SRC
     src/haard/parser/parser.cpp
 )

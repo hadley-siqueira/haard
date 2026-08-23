@@ -150,6 +150,7 @@ u32 Parser::parse_module() {
 // opens none of them is the one error this level reports by itself
 //
 //   declaration := import | let_declaration | const_declaration | function
+//                | class | struct | enum | union
 u32 Parser::parse_declaration() {
     if (lookahead(TK_IMPORT)) {
         return parse_import();
@@ -165,6 +166,22 @@ u32 Parser::parse_declaration() {
 
     if (lookahead(TK_DEF)) {
         return parse_function();
+    }
+
+    if (lookahead(TK_CLASS)) {
+        return parse_type_declaration(TK_CLASS, AST_CLASS);
+    }
+
+    if (lookahead(TK_STRUCT)) {
+        return parse_type_declaration(TK_STRUCT, AST_STRUCT);
+    }
+
+    if (lookahead(TK_ENUM)) {
+        return parse_type_declaration(TK_ENUM, AST_ENUM);
+    }
+
+    if (lookahead(TK_UNION)) {
+        return parse_type_declaration(TK_UNION, AST_UNION);
     }
 
     error_found("a declaration", false);
@@ -237,6 +254,99 @@ u32 Parser::parse_const_declaration() {
     expect(TK_CONST);
 
     return builder.make_const_declaration(token, parse_binding());
+}
+
+// Class, struct, enum and union are one rule with four words in front of it —
+// same generic parameters, same inherited type between brackets, same body of
+// fields and methods. Only the word and the node kind change.
+//
+//   type_declaration := ('class' | 'struct' | 'enum' | 'union') identifier
+//                       generic_parameters? super_type? ':' type_body
+u32 Parser::parse_type_declaration(TokenKind keyword, AstNodeKind kind) {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(keyword);
+
+    u32 node = builder.make_type_declaration(kind, token);
+    u32 last = builder.add_child(node, 0, parse_binding_name());
+
+    last = builder.add_child(node, last, parse_generic_parameters());
+    last = builder.add_child(node, last, parse_super_type());
+
+    expect_on_same_line(TK_COLON);
+
+    builder.add_child(node, last,
+                      parse_type_body(indentation, kind == AST_ENUM
+                                      ? BODY_ENUM_MEMBERS
+                                      : BODY_MEMBERS));
+
+    return node;
+}
+
+//   super_type := '(' type ')'
+u32 Parser::parse_super_type() {
+    if (!match_on_same_line(TK_LEFT_PARENTHESIS)) {
+        return 0;
+    }
+
+    u32 token = matched;
+    u32 type = parse_type();
+
+    expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+    return builder.make_super_type(token, type);
+}
+
+// the same shape a block has, and the same rules — 'pass' fills an empty one,
+// and a body with nothing in it is an error. Only what a line may hold differs
+//
+//   type_body := 'pass' | member+
+u32 Parser::parse_type_body(u32 header_indentation, BodyKind kind) {
+    u32 node = builder.make_type_body();
+
+    indent(header_indentation);
+    parse_body(node, kind);
+    dedent();
+
+    return node;
+}
+
+// a method is a 'def' and everything else on a line of its own is a field, so
+// no lookahead beyond the first token is needed
+//
+//   member := function | field
+u32 Parser::parse_member(bool type_is_optional) {
+    if (lookahead(TK_DEF)) {
+        return parse_function();
+    }
+
+    return parse_field(type_is_optional);
+}
+
+// Whether the type may be left out is the one thing that differs between the
+// four declarations, and Hadley settled it 2026-08-23: in a class, a struct or
+// a union a field must state its type, because a field with no type gives
+// nothing to lay out; in an enum it is optional, because a variant that carries
+// no payload is the ordinary case.
+//
+// The initial value is optional in all four. The reference allowed it for a
+// struct, a union and an enum but not for a class, and that unevenness was not
+// kept.
+//
+//   field := identifier ':' type ('=' expression)?          in a class
+//          | identifier (':' type)? ('=' expression)?       in an enum
+u32 Parser::parse_field(bool type_is_optional) {
+    u32 name = parse_binding_name();
+
+    u32 type = type_is_optional
+        ? parse_binding_type()
+        : parse_param_type();
+
+    u32 value = parse_binding_expression();
+
+    return builder.make_field(name, type, value);
 }
 
 // The first rule with a body, and so the first one that opens a block. Two
@@ -345,7 +455,7 @@ u32 Parser::parse_block(u32 header_indentation) {
     u32 node = builder.make_block();
 
     indent(header_indentation);
-    parse_block_statements(node, false);
+    parse_body(node, BODY_INDENTED);
     dedent();
 
     return node;
@@ -360,7 +470,7 @@ u32 Parser::parse_block(u32 header_indentation) {
 u32 Parser::parse_braced_block() {
     u32 node = builder.make_block();
 
-    parse_block_statements(node, true);
+    parse_body(node, BODY_BRACED);
 
     return node;
 }
@@ -374,25 +484,25 @@ u32 Parser::parse_braced_block() {
 // it, instead of being recovered inside a block that never opened. A braced
 // block answers to its brace instead, and to the end of the file, so an
 // unclosed one stops rather than running away.
-u32 Parser::parse_block_statements(u32 node, bool braced) {
+u32 Parser::parse_body(u32 node, BodyKind kind) {
     u32 last = 0;
     bool had_lines = false;
 
     // 'pass' is the whole block, not a statement inside it: it says there is
     // nothing here, so nothing else can be
-    if (inside_block(braced) && lookahead(TK_PASS)) {
+    if (inside_block(kind) && lookahead(TK_PASS)) {
         had_lines = true;
         last = builder.add_child(node, 0, parse_pass());
 
         // a line under it contradicts what it says. Reporting here rather than
         // letting the line fall out to the rule above is the difference
         // between naming the mistake and blaming the line for existing
-        if (inside_block(braced)) {
+        if (inside_block(kind)) {
             error_at_current("nothing can follow 'pass': it is how a block "
                              "with no statements is written");
         }
     } else {
-        while (inside_block(braced)) {
+        while (inside_block(kind)) {
             u32 indentation = indentation_of_current_line();
             u32 start = current_token;
 
@@ -400,7 +510,9 @@ u32 Parser::parse_block_statements(u32 node, bool braced) {
 
             begin_statement();
 
-            u32 child = parse_statement();
+            u32 child = body_holds_members(kind)
+                ? parse_member(kind == BODY_ENUM_MEMBERS)
+                : parse_statement();
 
             // A statement takes the whole line, and until now only half of
             // that was enforced: everything had to be *on* the line, but
@@ -411,15 +523,15 @@ u32 Parser::parse_block_statements(u32 node, bool braced) {
             // The statement that did parse is kept: it is complete and correct,
             // and only what trails it is thrown away. That is more of the file
             // surviving than the usual 'the statement is dropped' recovery.
-            if (!panic && leftover_on_the_line(braced)) {
+            if (!panic && leftover_on_the_line(kind)) {
                 error_at_current("nothing may follow a statement on its line");
                 last = builder.add_child(node, last, child);
-                synchronize(indentation, start, braced);
+                synchronize(indentation, start, kind == BODY_BRACED);
                 continue;
             }
 
             if (panic) {
-                synchronize(indentation, start, braced);
+                synchronize(indentation, start, kind == BODY_BRACED);
                 continue;
             }
 
@@ -437,7 +549,9 @@ u32 Parser::parse_block_statements(u32 node, bool braced) {
         // and failed, the error that killed them was already reported and a
         // second one would only be noise
         if (!had_lines) {
-            error_found("a statement or 'pass'", true);
+            error_found(body_holds_members(kind)
+                        ? "a field, a method or 'pass'"
+                        : "a statement or 'pass'", true);
         }
 
         poison();
@@ -449,12 +563,12 @@ u32 Parser::parse_block_statements(u32 node, bool braced) {
 // whether the statement just read left something behind on its line. The brace
 // that closes a braced block does not count: '|x| { x + 1 }' is one line on
 // purpose, and the '}' is what ends it rather than something left over
-bool Parser::leftover_on_the_line(bool braced) {
+bool Parser::leftover_on_the_line(BodyKind kind) {
     if (current().get_kind() == TK_EOF) {
         return false;
     }
 
-    if (braced && lookahead(TK_RIGHT_CURLY_BRACKET)) {
+    if (kind == BODY_BRACED && lookahead(TK_RIGHT_CURLY_BRACKET)) {
         return false;
     }
 
@@ -462,8 +576,12 @@ bool Parser::leftover_on_the_line(bool braced) {
 }
 
 // whether another statement of this block is still ahead
-bool Parser::inside_block(bool braced) {
-    if (!braced) {
+bool Parser::body_holds_members(BodyKind kind) {
+    return kind == BODY_MEMBERS || kind == BODY_ENUM_MEMBERS;
+}
+
+bool Parser::inside_block(BodyKind kind) {
+    if (kind != BODY_BRACED) {
         return is_indented();
     }
 

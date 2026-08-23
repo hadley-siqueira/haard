@@ -1,0 +1,9 @@
+error: expected an identifier, found ':'
+ --> cases/class_super_type_not_closed.hd:1:15
+  |
+1 | class Derived(:
+  |               ^
+
+--- tree
+module
+--- round trip: ok

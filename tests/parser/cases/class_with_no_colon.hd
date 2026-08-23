@@ -1,0 +1,2 @@
+class Pixel
+    a : i32

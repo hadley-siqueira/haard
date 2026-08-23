@@ -1,0 +1,22 @@
+union Value:
+    text : String
+    count : i32
+--- tree
+module
+  union 'union'
+    binding_name
+      identifier 'Value'
+    type_body
+      field
+        binding_name
+          identifier 'text'
+        binding_type
+          named_type
+            identifier 'String'
+      field
+        binding_name
+          identifier 'count'
+        binding_type
+          named_type
+            identifier 'i32'
+--- round trip: ok

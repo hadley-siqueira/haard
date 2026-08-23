@@ -1,0 +1,5 @@
+# the initial value is optional, which is what the reference allowed for a
+# struct, a union and an enum
+struct Config:
+    width : i32 = 80
+    mode : String = "wrap"

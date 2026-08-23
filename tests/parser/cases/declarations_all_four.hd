@@ -1,0 +1,25 @@
+# one of each, with generics, inheritance, fields and methods
+import std.io as io
+
+class Node<T>(Base<T>):
+    value : T
+    next : Node<T>*
+
+    def get : T
+        return value
+
+struct Point:
+    x : i32 = 0
+    y : i32 = 0
+
+union Value:
+    text : String
+    count : i32
+
+enum Action:
+    idle
+    click : (i32, i32)
+    move : (i32, i32) = origin
+
+    def name : String
+        return "action"

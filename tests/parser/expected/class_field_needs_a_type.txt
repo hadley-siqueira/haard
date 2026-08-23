@@ -1,0 +1,9 @@
+error: expected ':', found the end of the file
+ --> cases/class_field_needs_a_type.hd:2:6
+  |
+2 |     r
+  |      ^
+
+--- tree
+module
+--- round trip: ok

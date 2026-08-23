@@ -1,0 +1,20 @@
+enum Colour:
+    red
+    green
+    blue
+--- tree
+module
+  enum 'enum'
+    binding_name
+      identifier 'Colour'
+    type_body
+      field
+        binding_name
+          identifier 'red'
+      field
+        binding_name
+          identifier 'green'
+      field
+        binding_name
+          identifier 'blue'
+--- round trip: ok

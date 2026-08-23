@@ -1,0 +1,58 @@
+class Node<T>:
+    value : T
+    def get : T
+        return value
+    next : Node<T>*
+    def set : void
+        @v : T
+        value = v
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Node'
+    generic_parameters '<'
+      identifier 'T'
+    type_body
+      field
+        binding_name
+          identifier 'value'
+        binding_type
+          named_type
+            identifier 'T'
+      function 'def'
+        binding_name
+          identifier 'get'
+        function_return_type
+          named_type
+            identifier 'T'
+        block
+          return 'return'
+            identifier 'value'
+      field
+        binding_name
+          identifier 'next'
+        binding_type
+          pointer_type '*'
+            named_type
+              identifier 'Node'
+              generic_arguments '<'
+                named_type
+                  identifier 'T'
+      function 'def'
+        binding_name
+          identifier 'set'
+        function_return_type
+          named_type
+            identifier 'void'
+        param '@'
+          binding_name
+            identifier 'v'
+          binding_type
+            named_type
+              identifier 'T'
+        block
+          assignment '='
+            identifier 'value'
+            identifier 'v'
+--- round trip: ok

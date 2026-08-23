@@ -1,0 +1,17 @@
+class Node<T>:
+    value : T
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Node'
+    generic_parameters '<'
+      identifier 'T'
+    type_body
+      field
+        binding_name
+          identifier 'value'
+        binding_type
+          named_type
+            identifier 'T'
+--- round trip: ok

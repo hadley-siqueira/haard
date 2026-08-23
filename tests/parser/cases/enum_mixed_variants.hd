@@ -1,0 +1,5 @@
+enum Action:
+    idle
+    click : (i32, i32)
+    code = 7
+    move : (i32, i32) = origin

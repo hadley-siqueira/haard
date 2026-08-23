@@ -86,6 +86,30 @@ void PrettyPrinter::print_node(u32 node) {
             print_const_declaration(node);
             break;
 
+        case AST_CLASS:
+            print_class(node);
+            break;
+
+        case AST_STRUCT:
+            print_struct(node);
+            break;
+
+        case AST_ENUM:
+            print_enum(node);
+            break;
+
+        case AST_UNION:
+            print_union(node);
+            break;
+
+        case AST_SUPER_TYPE:
+            print_super_type(node);
+            break;
+
+        case AST_FIELD:
+            print_field(node);
+            break;
+
         case AST_FUNCTION:
             print_function(node);
             break;
@@ -98,7 +122,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_function_return_type(node);
             break;
 
+        // a body of members lays out the same way a block of statements
+        // does: one per line, one level in
         case AST_BLOCK:
+        case AST_TYPE_BODY:
             print_block(node);
             break;
 
@@ -480,6 +507,51 @@ void PrettyPrinter::print_const_declaration(u32 node) {
 
 // the header is one line and the parameters and the body are lines of their
 // own inside it, so which part goes where is decided by the kind of each child
+void PrettyPrinter::print_class(u32 node) {
+    print_type_declaration(node, "class ");
+}
+
+void PrettyPrinter::print_struct(u32 node) {
+    print_type_declaration(node, "struct ");
+}
+
+void PrettyPrinter::print_enum(u32 node) {
+    print_type_declaration(node, "enum ");
+}
+
+void PrettyPrinter::print_union(u32 node) {
+    print_type_declaration(node, "union ");
+}
+
+void PrettyPrinter::print_super_type(u32 node) {
+    print_string("(");
+    print_children(node);
+    print_string(")");
+}
+
+void PrettyPrinter::print_field(u32 node) {
+    print_children(node);
+}
+
+// the ':' is written when the walk reaches the body, so a header whose name
+// failed to parse still writes it — the parts are told apart by kind, not by
+// position, the same way a conditional's are
+void PrettyPrinter::print_type_declaration(u32 node,
+                                           const std::string& keyword) {
+    print_string(keyword);
+
+    u32 child = ast->get_node(node)->get_children();
+
+    while (child != 0) {
+        if (ast->get_node(child)->get_kind() == AST_TYPE_BODY) {
+            print_string(":");
+        }
+
+        print_node(child);
+        child = ast->get_node(child)->get_sibling();
+    }
+}
+
 void PrettyPrinter::print_function(u32 node) {
     print_string("def ");
 

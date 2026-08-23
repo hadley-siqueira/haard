@@ -1,0 +1,6 @@
+# a variant that carries nothing: the type is optional in an enum, and only
+# in an enum
+enum Colour:
+    red
+    green
+    blue

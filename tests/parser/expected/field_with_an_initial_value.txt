@@ -1,0 +1,26 @@
+struct Config:
+    width : i32 = 80
+    mode : String = "wrap"
+--- tree
+module
+  struct 'struct'
+    binding_name
+      identifier 'Config'
+    type_body
+      field
+        binding_name
+          identifier 'width'
+        binding_type
+          named_type
+            identifier 'i32'
+        binding_expression
+          integer '80'
+      field
+        binding_name
+          identifier 'mode'
+        binding_type
+          named_type
+            identifier 'String'
+        binding_expression
+          string '"wrap"'
+--- round trip: ok

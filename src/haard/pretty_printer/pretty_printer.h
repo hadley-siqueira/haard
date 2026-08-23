@@ -26,6 +26,17 @@ namespace haard {
             void print_let_declaration(u32 node);
             void print_const_declaration(u32 node);
 
+            void print_class(u32 node);
+            void print_struct(u32 node);
+            void print_enum(u32 node);
+            void print_union(u32 node);
+            void print_super_type(u32 node);
+            void print_field(u32 node);
+
+            // the shape the four of them share: a header line ending in ':'
+            // and a body of members under it
+            void print_type_declaration(u32 node, const std::string& keyword);
+
             void print_function(u32 node);
             void print_generic_parameters(u32 node);
             void print_function_return_type(u32 node);

@@ -1,0 +1,11 @@
+class A:
+    a : i32 = 1
+
+struct B:
+    b : i32 = 2
+
+union C:
+    c : i32 = 3
+
+enum D:
+    d : i32 = 4

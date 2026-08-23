@@ -1,0 +1,9 @@
+error: nothing can follow 'pass': it is how a block with no statements is written
+ --> cases/class_pass_then_a_member.hd:3:5
+  |
+3 |     r : u8
+  |     ^
+
+--- tree
+module
+--- round trip: ok

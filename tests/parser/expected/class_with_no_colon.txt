@@ -1,0 +1,9 @@
+error: expected ':', found the end of the line
+ --> cases/class_with_no_colon.hd:1:12
+  |
+1 | class Pixel
+  |            ^
+
+--- tree
+module
+--- round trip: ok

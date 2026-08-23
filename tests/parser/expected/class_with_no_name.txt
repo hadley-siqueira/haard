@@ -1,0 +1,9 @@
+error: expected an identifier, found ':'
+ --> cases/class_with_no_name.hd:1:7
+  |
+1 | class :
+  |       ^
+
+--- tree
+module
+--- round trip: ok

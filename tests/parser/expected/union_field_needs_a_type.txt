@@ -1,0 +1,9 @@
+error: expected ':', found the end of the file
+ --> cases/union_field_needs_a_type.hd:2:9
+  |
+2 |     text
+  |         ^
+
+--- tree
+module
+--- round trip: ok

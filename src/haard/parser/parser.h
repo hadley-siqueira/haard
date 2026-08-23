@@ -29,6 +29,21 @@ namespace haard {
             u32 parse();
 
         private:
+            // what a body holds. The three of them share one loop, because the
+            // recovery point, the 'pass' rule and the empty-body error do not
+            // change with what is written inside
+            typedef enum BodyKind {
+                BODY_INDENTED,
+                BODY_BRACED,
+
+                // a class, a struct or a union: a field must state its type
+                BODY_MEMBERS,
+
+                // an enum: a variant may carry no payload, so the type is
+                // optional there and only there
+                BODY_ENUM_MEMBERS,
+            } BodyKind;
+
             u32 parse_module();
             u32 parse_declaration();
 
@@ -40,6 +55,12 @@ namespace haard {
             u32 parse_let_declaration();
             u32 parse_const_declaration();
 
+            u32 parse_type_declaration(TokenKind keyword, AstNodeKind kind);
+            u32 parse_super_type();
+            u32 parse_type_body(u32 header_indentation, BodyKind kind);
+            u32 parse_member(bool type_is_optional);
+            u32 parse_field(bool type_is_optional);
+
             u32 parse_function();
             u32 parse_generic_parameters();
             u32 parse_function_return_type();
@@ -49,9 +70,10 @@ namespace haard {
             // the block owns the indentation stack: it is the only rule that
             // pushes a level, and it is the second of the two recovery points
             u32 parse_block(u32 header_indentation);
-            u32 parse_block_statements(u32 node, bool braced);
-            bool inside_block(bool braced);
-            bool leftover_on_the_line(bool braced);
+            u32 parse_body(u32 node, BodyKind kind);
+            bool inside_block(BodyKind kind);
+            bool body_holds_members(BodyKind kind);
+            bool leftover_on_the_line(BodyKind kind);
             u32 parse_pass();
             u32 parse_statement();
             u32 parse_if();

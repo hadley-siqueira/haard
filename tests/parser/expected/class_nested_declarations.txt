@@ -1,0 +1,27 @@
+class Outer:
+    a : i32
+struct Inner:
+    b : i32
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Outer'
+    type_body
+      field
+        binding_name
+          identifier 'a'
+        binding_type
+          named_type
+            identifier 'i32'
+  struct 'struct'
+    binding_name
+      identifier 'Inner'
+    type_body
+      field
+        binding_name
+          identifier 'b'
+        binding_type
+          named_type
+            identifier 'i32'
+--- round trip: ok

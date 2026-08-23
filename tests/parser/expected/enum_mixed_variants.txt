@@ -1,0 +1,40 @@
+enum Action:
+    idle
+    click : (i32, i32)
+    code = 7
+    move : (i32, i32) = origin
+--- tree
+module
+  enum 'enum'
+    binding_name
+      identifier 'Action'
+    type_body
+      field
+        binding_name
+          identifier 'idle'
+      field
+        binding_name
+          identifier 'click'
+        binding_type
+          tuple_type '('
+            named_type
+              identifier 'i32'
+            named_type
+              identifier 'i32'
+      field
+        binding_name
+          identifier 'code'
+        binding_expression
+          integer '7'
+      field
+        binding_name
+          identifier 'move'
+        binding_type
+          tuple_type '('
+            named_type
+              identifier 'i32'
+            named_type
+              identifier 'i32'
+        binding_expression
+          identifier 'origin'
+--- round trip: ok

@@ -1,0 +1,9 @@
+error: expected a field, a method or 'pass', found the end of the file
+ --> cases/class_with_an_empty_body.hd:1:13
+  |
+1 | class Pixel:
+  |             ^
+
+--- tree
+module
+--- round trip: ok

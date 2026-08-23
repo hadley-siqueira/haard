@@ -1,0 +1,9 @@
+# fields and methods may be written in any order
+class Node<T>:
+    value : T
+    def get : T
+        return value
+    next : Node<T>*
+    def set : void
+        @v : T
+        value = v

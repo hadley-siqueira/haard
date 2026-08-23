@@ -1,0 +1,18 @@
+enum Action:
+    click : (i32, i32)
+--- tree
+module
+  enum 'enum'
+    binding_name
+      identifier 'Action'
+    type_body
+      field
+        binding_name
+          identifier 'click'
+        binding_type
+          tuple_type '('
+            named_type
+              identifier 'i32'
+            named_type
+              identifier 'i32'
+--- round trip: ok

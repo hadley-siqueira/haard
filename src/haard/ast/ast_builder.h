@@ -58,6 +58,13 @@ namespace haard {
 
             // a list node: the name, the generic parameters, the return
             // type, the parameters and the body are appended as they are read
+            // class, struct, enum and union are one shape with four words,
+            // so one maker takes the kind
+            u32 make_type_declaration(AstNodeKind kind, u32 token);
+            u32 make_super_type(u32 token, u32 type);
+            u32 make_type_body();
+            u32 make_field(u32 name, u32 type, u32 value);
+
             u32 make_function(u32 token);
             u32 make_generic_parameters(u32 token);
             u32 make_function_return_type(u32 child);
