@@ -11,7 +11,8 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      identifier 'i32'
+      named_type
+        identifier 'i32'
     block
       let_declaration 'let'
         binding

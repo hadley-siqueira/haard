@@ -1,0 +1,13 @@
+let x : i32**
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        pointer_type '**'
+          pointer_type '**'
+            named_type
+              identifier 'i32'
+--- round trip: ok

@@ -1,0 +1,9 @@
+error: expected ':', found '}'
+ --> cases/type_hash_with_no_colon.hd:1:16
+  |
+1 | let x : {String}
+  |                ^
+
+--- tree
+module
+--- round trip: ok

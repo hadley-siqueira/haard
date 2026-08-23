@@ -1,0 +1,2 @@
+# five arrive as '>>>' then '>>'
+let x : A<B<C<D<E<i32>>>>>

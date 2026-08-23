@@ -1,0 +1,9 @@
+error: expected '>', found the end of the file
+ --> cases/type_generic_not_closed.hd:1:18
+  |
+1 | let x : Array<i32
+  |                  ^
+
+--- tree
+module
+--- round trip: ok

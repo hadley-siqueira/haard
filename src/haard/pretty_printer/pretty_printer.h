@@ -117,6 +117,16 @@ namespace haard {
             void print_closure(u32 node);
             void print_closure_parameter(u32 node);
             void print_closure_return_type(u32 node);
+
+            void print_named_type(u32 node);
+            void print_generic_arguments(u32 node);
+            void print_pointer_type(u32 node);
+            void print_reference_type(u32 node);
+            void print_array_type(u32 node);
+            void print_list_type(u32 node);
+            void print_hash_type(u32 node);
+            void print_tuple_type(u32 node);
+            void print_function_type(u32 node);
             void print_identifier(u32 node);
 
             // every literal prints the same way: the lexeme it was written as

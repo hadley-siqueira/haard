@@ -1,0 +1,6 @@
+def convert : Map<String, i32>
+    @rows : [i32]
+    @size : i32[]
+    let a : (i32, i32) -> f64 = f
+    let b = a as Array<i32>*
+    return this.build(rows, size)

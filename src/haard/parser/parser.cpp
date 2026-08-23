@@ -761,9 +761,237 @@ u32 Parser::parse_interpolation() {
     return builder.make_interpolation(token, expression);
 }
 
-//   type := identifier
+// A grammar of its own, and it only meets the expression grammar in one place:
+// the size of an array, 'T[n]'. Nothing here is ambiguous with an expression,
+// because a type is only ever read where a type is the only thing allowed —
+// after ':', after '->', after 'as'.
+//
+//   type := function_type
 u32 Parser::parse_type() {
-    return parse_identifier();
+    return parse_function_type();
+}
+
+// '(i32, i32) -> f64' is a function taking two i32 and giving back an f64: the
+// parameters arrive as a tuple and the arrow separates them from the return.
+// The last child is the return type and everything before it is a parameter,
+// so the chain 'A -> B -> C' also parses, with A and B as parameters.
+//
+//   function_type := tuple_type ('->' tuple_type)*
+u32 Parser::parse_function_type() {
+    u32 type = parse_tuple_type();
+
+    if (!lookahead_on_same_line(TK_ARROW)) {
+        return type;
+    }
+
+    u32 token = current_token;
+    u32 node = builder.make_function_type(token);
+    u32 last = builder.add_child(node, 0, type);
+
+    while (match_on_same_line(TK_ARROW)) {
+        last = builder.add_child(node, last, parse_tuple_type());
+    }
+
+    return node;
+}
+
+// '(T)' is a tuple of one element: unlike an expression, where '(a)' groups and
+// only '(a,)' is a tuple, the brackets in a type always build one. Note the
+// postfix below does not reach a tuple, which is where the reference left it:
+// '(A, B)*' does not parse.
+//
+//   tuple_type := '(' type (',' type)* ')' | primary_type
+u32 Parser::parse_tuple_type() {
+    if (!lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
+        return parse_primary_type();
+    }
+
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LEFT_PARENTHESIS);
+
+    u32 node = builder.make_tuple_type(token);
+    u32 last = builder.add_child(node, 0, parse_type());
+
+    while (match_on_same_line(TK_COMMA)) {
+        last = builder.add_child(node, last, parse_type());
+    }
+
+    expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+    return node;
+}
+
+//   primary_type := (named_type | '[' type ']' | '{' type ':' type '}') postfix*
+u32 Parser::parse_primary_type() {
+    u32 type = 0;
+
+    if (lookahead_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
+        u32 token = current_token;
+
+        expect_on_same_line(TK_LEFT_SQUARE_BRACKET);
+
+        u32 element = parse_type();
+
+        expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+        type = builder.make_list_type(token, element);
+    } else if (lookahead_on_same_line(TK_LEFT_CURLY_BRACKET)) {
+        u32 token = current_token;
+
+        expect_on_same_line(TK_LEFT_CURLY_BRACKET);
+
+        u32 key = parse_type();
+
+        expect_on_same_line(TK_COLON);
+
+        u32 value = parse_type();
+
+        expect_on_same_line(TK_RIGHT_CURLY_BRACKET);
+        type = builder.make_hash_type(token, key, value);
+    } else {
+        type = parse_named_type();
+    }
+
+    return parse_type_postfix(type);
+}
+
+// Left associative, each round wrapping what came before it, so 'i32*[]' is an
+// array of pointers. '**' is one token and makes two pointers, the same shape
+// the unary '**' has in an expression.
+//
+//   postfix := '*' | '**' | '&' | '[' expression? ']'
+u32 Parser::parse_type_postfix(u32 type) {
+    while (true) {
+        if (match_on_same_line(TK_TIMES)) {
+            type = builder.make_pointer_type(matched, type);
+        } else if (match_on_same_line(TK_POWER)) {
+            u32 oper = matched;
+
+            type = builder.make_pointer_type(oper, type);
+            type = builder.make_pointer_type(oper, type);
+        } else if (match_on_same_line(TK_BITWISE_AND)) {
+            type = builder.make_reference_type(matched, type);
+        } else if (lookahead_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
+            u32 token = current_token;
+            u32 size = 0;
+
+            expect_on_same_line(TK_LEFT_SQUARE_BRACKET);
+
+            // 'T[]' is an array of no stated length; 'T[n]' states it, and
+            // that 'n' is the one place a type reads an expression
+            if (!lookahead_on_same_line(TK_RIGHT_SQUARE_BRACKET)) {
+                size = parse_expression();
+            }
+
+            expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+            type = builder.make_array_type(token, type, size);
+        } else {
+            break;
+        }
+    }
+
+    return type;
+}
+
+// the name may be scoped, which is the same shape an expression writes, so the
+// scope rule is reused rather than repeated
+//
+//   named_type := scope generic_arguments?
+u32 Parser::parse_named_type() {
+    u32 name = parse_scope();
+
+    if (name == 0) {
+        return 0;
+    }
+
+    return builder.make_named_type(name, parse_generic_arguments());
+}
+
+// the one message both ends of the rule report
+static const char* generic_spacing_message =
+    "a generic argument list is written glued, with no space at its brackets";
+
+// 'Foo<T>' glued is a generic — the rule from the declaration header, applied
+// to the other end. Spaced, it is nothing a type can mean, so it is named
+// rather than left to fail somewhere further along.
+//
+//   generic_arguments := '<' type (',' type)* '>'
+u32 Parser::parse_generic_arguments() {
+    if (!lookahead_on_same_line(TK_LESS_THAN)) {
+        return 0;
+    }
+
+    if (!glued_to_previous()) {
+        error_at_current(generic_spacing_message);
+        return 0;
+    }
+
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LESS_THAN);
+
+    // and the list against the '<'. 'Array< i32 >' is not a generic — the rule
+    // is about the brackets, not only about where the '<' sits.
+    //
+    // The closing side is not checked, and that is deliberate: the '>' is where
+    // nested lists are carved apart, so after 'A<B<i32>>' has been split the
+    // token before the outer '>' is no longer the one the source wrote. A glue
+    // test there would have to know about the carving. So 'Array<i32 >' is
+    // accepted today, the same kind of leniency as 'a+b'
+    if (!glued_to_previous()) {
+        error_at_current(generic_spacing_message);
+        return 0;
+    }
+
+    u32 node = builder.make_generic_arguments(token);
+    u32 last = builder.add_child(node, 0, parse_type());
+
+    while (match_on_same_line(TK_COMMA)) {
+        last = builder.add_child(node, last, parse_type());
+    }
+
+    expect_generic_close();
+
+    return node;
+}
+
+// The angles that close nested generics arrive glued: 'A<B<i32>>' ends in one
+// '>>' and 'A<B<C<i32>>>' in one '>>>', because the scanner takes the longest
+// operator it can and has no idea it is inside a type.
+//
+// So there is no '>' to match, and one is carved off the front of the token
+// **in place**: its offset moves forward and its length shrinks, leaving a real
+// '>>' or '>' sitting exactly where the source has it. Every diagnostic after
+// this still points at the right column, which a counter of pending angles
+// would not manage.
+bool Parser::expect_generic_close() {
+    if (panic) {
+        return false;
+    }
+
+    if (match_on_same_line(TK_GREATER_THAN)) {
+        return true;
+    }
+
+    Token& token = current();
+    TokenKind kind = token.get_kind();
+
+    bool splittable = on_same_line()
+        && (kind == TK_BITWISE_RIGHT_SHIFT
+            || kind == TK_BITWISE_UNSIGNED_RIGHT_SHIFT);
+
+    if (!splittable) {
+        error_expected(TK_GREATER_THAN, true);
+        return false;
+    }
+
+    token.set_offset(token.get_offset() + 1);
+    token.set_length(token.get_length() - 1);
+    token.set_kind(kind == TK_BITWISE_RIGHT_SHIFT
+                   ? TK_GREATER_THAN
+                   : TK_BITWISE_RIGHT_SHIFT);
+
+    return true;
 }
 
 u32 Parser::parse_expression() {

@@ -1,0 +1,14 @@
+let x : {String: i32}
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        hash_type '{'
+          named_type
+            identifier 'String'
+          named_type
+            identifier 'i32'
+--- round trip: ok

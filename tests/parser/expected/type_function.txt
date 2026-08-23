@@ -1,0 +1,17 @@
+let x : (i32, i32) -> f64
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        function_type '->'
+          tuple_type '('
+            named_type
+              identifier 'i32'
+            named_type
+              identifier 'i32'
+          named_type
+            identifier 'f64'
+--- round trip: ok

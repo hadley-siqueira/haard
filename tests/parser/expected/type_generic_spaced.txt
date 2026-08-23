@@ -1,0 +1,9 @@
+error: a generic argument list is written glued, with no space at its brackets
+ --> cases/type_generic_spaced.hd:2:16
+  |
+2 | let x : Array< i32 >
+  |                ^^^
+
+--- tree
+module
+--- round trip: ok

@@ -1,0 +1,16 @@
+let x : i32 -> f64 -> bool
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        function_type '->'
+          named_type
+            identifier 'i32'
+          named_type
+            identifier 'f64'
+          named_type
+            identifier 'bool'
+--- round trip: ok

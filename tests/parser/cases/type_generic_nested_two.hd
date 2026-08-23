@@ -1,0 +1,2 @@
+# the closing angles arrive glued as one '>>' and are carved apart here
+let x : Map<String, Array<i32>>

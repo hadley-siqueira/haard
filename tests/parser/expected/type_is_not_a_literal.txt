@@ -1,0 +1,9 @@
+error: expected an identifier, found '42'
+ --> cases/type_is_not_a_literal.hd:1:9
+  |
+1 | let x : 42
+  |         ^^
+
+--- tree
+module
+--- round trip: ok

@@ -9,12 +9,14 @@ module
     generic_parameters '<'
       identifier 'T'
     function_return_type
-      identifier 'T'
+      named_type
+        identifier 'T'
     param '@'
       binding_name
         identifier 'value'
       binding_type
-        identifier 'T'
+        named_type
+          identifier 'T'
     block
       identifier 'value'
 --- round trip: ok

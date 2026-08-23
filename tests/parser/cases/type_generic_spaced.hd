@@ -1,0 +1,2 @@
+# spaced, this is not a generic argument list
+let x : Array< i32 >

@@ -6,7 +6,8 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      identifier 'Unit'
+      named_type
+        identifier 'Unit'
     block
       return 'return'
 --- round trip: ok

@@ -1,0 +1,71 @@
+def convert : Map<String, i32>
+    @rows : [i32]
+    @size : i32[]
+    let a : (i32, i32) -> f64 = f
+    let b = a as Array<i32>*
+    return this.build(rows, size)
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'convert'
+    function_return_type
+      named_type
+        identifier 'Map'
+        generic_arguments '<'
+          named_type
+            identifier 'String'
+          named_type
+            identifier 'i32'
+    param '@'
+      binding_name
+        identifier 'rows'
+      binding_type
+        list_type '['
+          named_type
+            identifier 'i32'
+    param '@'
+      binding_name
+        identifier 'size'
+      binding_type
+        array_type '['
+          named_type
+            identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_type
+            function_type '->'
+              tuple_type '('
+                named_type
+                  identifier 'i32'
+                named_type
+                  identifier 'i32'
+              named_type
+                identifier 'f64'
+          binding_expression
+            identifier 'f'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            cast 'as'
+              identifier 'a'
+              pointer_type '*'
+                named_type
+                  identifier 'Array'
+                  generic_arguments '<'
+                    named_type
+                      identifier 'i32'
+      return 'return'
+        call '('
+          dot '.'
+            this 'this'
+            identifier 'build'
+          arguments '('
+            identifier 'rows'
+            identifier 'size'
+--- round trip: ok

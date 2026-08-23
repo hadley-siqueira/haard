@@ -1,0 +1,15 @@
+let x : i32[n * 2]
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        array_type '['
+          named_type
+            identifier 'i32'
+          times '*'
+            identifier 'n'
+            integer '2'
+--- round trip: ok

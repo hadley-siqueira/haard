@@ -121,6 +121,19 @@ namespace haard {
             u32 make_closure_parameter(u32 name, u32 type);
             u32 make_closure_return_type(u32 child);
 
+            // The types. A named type wraps the name so that a walk can tell
+            // a type reference from a variable one without looking at its
+            // parent; the three list shaped ones are born empty and grow.
+            u32 make_named_type(u32 name, u32 arguments);
+            u32 make_generic_arguments(u32 token);
+            u32 make_pointer_type(u32 token, u32 type);
+            u32 make_reference_type(u32 token, u32 type);
+            u32 make_array_type(u32 token, u32 type, u32 size);
+            u32 make_list_type(u32 token, u32 type);
+            u32 make_hash_type(u32 token, u32 key, u32 value);
+            u32 make_tuple_type(u32 token);
+            u32 make_function_type(u32 token);
+
             u32 make_template_string(u32 token);
             u32 make_template_string_chunk(u32 token);
             u32 make_interpolation(u32 token, u32 expression);

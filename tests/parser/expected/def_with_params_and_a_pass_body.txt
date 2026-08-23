@@ -7,12 +7,14 @@ module
     binding_name
       identifier 'write'
     function_return_type
-      identifier 'Unit'
+      named_type
+        identifier 'Unit'
     param '@'
       binding_name
         identifier 'message'
       binding_type
-        identifier 'String'
+        named_type
+          identifier 'String'
     block
       pass 'pass'
 --- round trip: ok

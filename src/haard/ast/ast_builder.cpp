@@ -243,6 +243,77 @@ u32 AstBuilder::make_literal(AstNodeKind kind, u32 token) {
     return make_node(kind, token);
 }
 
+// the name is a child rather than the node's token, because it may be a scope
+// ('std::String') and that is already a node of its own
+u32 AstBuilder::make_named_type(u32 name, u32 arguments) {
+    u32 node = make_node(AST_NAMED_TYPE, 0);
+
+    u32 last = add_child(node, 0, name);
+
+    add_child(node, last, arguments);
+
+    return node;
+}
+
+u32 AstBuilder::make_generic_arguments(u32 token) {
+    return make_node(AST_GENERIC_ARGUMENTS, token);
+}
+
+u32 AstBuilder::make_pointer_type(u32 token, u32 type) {
+    u32 node = make_node(AST_POINTER_TYPE, token);
+
+    add_child(node, 0, type);
+
+    return node;
+}
+
+u32 AstBuilder::make_reference_type(u32 token, u32 type) {
+    u32 node = make_node(AST_REFERENCE_TYPE, token);
+
+    add_child(node, 0, type);
+
+    return node;
+}
+
+// the size is optional: 'T[]' is an array of no stated length
+u32 AstBuilder::make_array_type(u32 token, u32 type, u32 size) {
+    u32 node = make_node(AST_ARRAY_TYPE, token);
+
+    u32 last = add_child(node, 0, type);
+
+    add_child(node, last, size);
+
+    return node;
+}
+
+u32 AstBuilder::make_list_type(u32 token, u32 type) {
+    u32 node = make_node(AST_LIST_TYPE, token);
+
+    add_child(node, 0, type);
+
+    return node;
+}
+
+u32 AstBuilder::make_hash_type(u32 token, u32 key, u32 value) {
+    u32 node = make_node(AST_HASH_TYPE, token);
+
+    u32 last = add_child(node, 0, key);
+
+    add_child(node, last, value);
+
+    return node;
+}
+
+u32 AstBuilder::make_tuple_type(u32 token) {
+    return make_node(AST_TUPLE_TYPE, token);
+}
+
+// the last child is the return type and everything before it is a parameter,
+// which is what '(i32, i32) -> f64' means: one parameter, a tuple, and f64 back
+u32 AstBuilder::make_function_type(u32 token) {
+    return make_node(AST_FUNCTION_TYPE, token);
+}
+
 u32 AstBuilder::make_this(u32 token) {
     return make_node(AST_THIS, token);
 }

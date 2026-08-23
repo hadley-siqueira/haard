@@ -1,0 +1,23 @@
+let x : A<B<C<D<i32>>>>
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        named_type
+          identifier 'A'
+          generic_arguments '<'
+            named_type
+              identifier 'B'
+              generic_arguments '<'
+                named_type
+                  identifier 'C'
+                  generic_arguments '<'
+                    named_type
+                      identifier 'D'
+                      generic_arguments '<'
+                        named_type
+                          identifier 'i32'
+--- round trip: ok

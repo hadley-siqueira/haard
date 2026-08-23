@@ -1,0 +1,9 @@
+error: expected ')', found the end of the file
+ --> cases/type_tuple_not_closed.hd:1:18
+  |
+1 | let x : (i32, f64
+  |                  ^
+
+--- tree
+module
+--- round trip: ok

@@ -11,17 +11,20 @@ module
       identifier 'K'
       identifier 'V'
     function_return_type
-      identifier 'Pair'
+      named_type
+        identifier 'Pair'
     param '@'
       binding_name
         identifier 'key'
       binding_type
-        identifier 'K'
+        named_type
+          identifier 'K'
     param '@'
       binding_name
         identifier 'value'
       binding_type
-        identifier 'V'
+        named_type
+          identifier 'V'
     block
       pass 'pass'
 --- round trip: ok

@@ -6,7 +6,8 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      identifier 'String'
+      named_type
+        identifier 'String'
     block
       return 'return'
         string '"done"'

@@ -1,0 +1,2 @@
+# three levels arrive as one '>>>'
+let x : A<B<C<i32>>>

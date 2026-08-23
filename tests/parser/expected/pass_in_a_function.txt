@@ -6,7 +6,8 @@ module
     binding_name
       identifier 'nothing'
     function_return_type
-      identifier 'Unit'
+      named_type
+        identifier 'Unit'
     block
       pass 'pass'
 --- round trip: ok

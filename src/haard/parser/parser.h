@@ -65,7 +65,19 @@ namespace haard {
             u32 parse_binding_type();
             u32 parse_binding_expression();
 
+            // the type grammar, loosest first. It meets the expression
+            // grammar in one place: the size of an array, 'T[n]'
             u32 parse_type();
+            u32 parse_function_type();
+            u32 parse_tuple_type();
+            u32 parse_primary_type();
+            u32 parse_named_type();
+            u32 parse_generic_arguments();
+            u32 parse_type_postfix(u32 type);
+
+            // consumes one '>', carving it out of a '>>' or a '>>>' when the
+            // angles that close nested generics arrived glued together
+            bool expect_generic_close();
 
             u32 parse_expression();
 

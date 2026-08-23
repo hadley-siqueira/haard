@@ -1,0 +1,13 @@
+let x : i32[10]
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        array_type '['
+          named_type
+            identifier 'i32'
+          integer '10'
+--- round trip: ok

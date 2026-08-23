@@ -387,6 +387,42 @@ void PrettyPrinter::print_node(u32 node) {
             print_closure_return_type(node);
             break;
 
+        case AST_NAMED_TYPE:
+            print_named_type(node);
+            break;
+
+        case AST_GENERIC_ARGUMENTS:
+            print_generic_arguments(node);
+            break;
+
+        case AST_POINTER_TYPE:
+            print_pointer_type(node);
+            break;
+
+        case AST_REFERENCE_TYPE:
+            print_reference_type(node);
+            break;
+
+        case AST_ARRAY_TYPE:
+            print_array_type(node);
+            break;
+
+        case AST_LIST_TYPE:
+            print_list_type(node);
+            break;
+
+        case AST_HASH_TYPE:
+            print_hash_type(node);
+            break;
+
+        case AST_TUPLE_TYPE:
+            print_tuple_type(node);
+            break;
+
+        case AST_FUNCTION_TYPE:
+            print_function_type(node);
+            break;
+
         case AST_TEMPLATE_STRING:
             print_template_string(node);
             break;
@@ -895,6 +931,66 @@ void PrettyPrinter::print_closure_parameter(u32 node) {
 void PrettyPrinter::print_closure_return_type(u32 node) {
     print_string(" -> ");
     print_children(node);
+}
+
+// the name and, if there is one, the argument list written against it: the
+// spacing is the language's rule, not a style choice
+void PrettyPrinter::print_named_type(u32 node) {
+    print_children(node);
+}
+
+void PrettyPrinter::print_generic_arguments(u32 node) {
+    print_string("<");
+    print_children_joined(node, ", ");
+    print_string(">");
+}
+
+void PrettyPrinter::print_pointer_type(u32 node) {
+    print_children(node);
+    print_string("*");
+}
+
+void PrettyPrinter::print_reference_type(u32 node) {
+    print_children(node);
+    print_string("&");
+}
+
+// the element type, then the brackets holding the size when one was written
+void PrettyPrinter::print_array_type(u32 node) {
+    u32 element = ast->get_node(node)->get_children();
+
+    print_node(element);
+    print_string("[");
+
+    if (element != 0) {
+        print_node(ast->get_node(element)->get_sibling());
+    }
+
+    print_string("]");
+}
+
+void PrettyPrinter::print_list_type(u32 node) {
+    print_string("[");
+    print_children(node);
+    print_string("]");
+}
+
+void PrettyPrinter::print_hash_type(u32 node) {
+    print_string("{");
+    print_children_joined(node, ": ");
+    print_string("}");
+}
+
+void PrettyPrinter::print_tuple_type(u32 node) {
+    print_string("(");
+    print_children_joined(node, ", ");
+    print_string(")");
+}
+
+// every child but the last is a parameter and the last is what comes back, so
+// one separator writes them all
+void PrettyPrinter::print_function_type(u32 node) {
+    print_children_joined(node, " -> ");
 }
 
 void PrettyPrinter::print_identifier(u32 node) {

@@ -1,0 +1,2 @@
+# four arrive as '>>>' then '>'
+let x : A<B<C<D<i32>>>>
