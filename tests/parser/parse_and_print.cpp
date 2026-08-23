@@ -66,6 +66,13 @@ static std::string name_of(AstNodeKind kind) {
         case AST_DIVISION: return "division";
         case AST_MODULO: return "modulo";
         case AST_SCOPE: return "scope";
+        case AST_DOT: return "dot";
+        case AST_ARROW: return "arrow";
+        case AST_INDEX: return "index";
+        case AST_CALL: return "call";
+        case AST_ARGUMENTS: return "arguments";
+        case AST_POST_INCREMENT: return "post_increment";
+        case AST_POST_DECREMENT: return "post_decrement";
         case AST_PARENTHESIS: return "parenthesis";
         case AST_IDENTIFIER: return "identifier";
         case AST_INTEGER_LITERAL: return "integer";
@@ -115,6 +122,13 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_DIVISION:
         case AST_MODULO:
         case AST_SCOPE:
+        case AST_DOT:
+        case AST_ARROW:
+        case AST_INDEX:
+        case AST_CALL:
+        case AST_ARGUMENTS:
+        case AST_POST_INCREMENT:
+        case AST_POST_DECREMENT:
         case AST_PARENTHESIS:
         case AST_IDENTIFIER:
         case AST_INTEGER_LITERAL:

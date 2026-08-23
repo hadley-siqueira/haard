@@ -1,0 +1,28 @@
+def main : i32
+    return io::stream.buffer[i]->head(a, b).size++
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        post_increment '++'
+          dot '.'
+            call '('
+              arrow '->'
+                index '['
+                  dot '.'
+                    scope '::'
+                      identifier 'io'
+                      identifier 'stream'
+                    identifier 'buffer'
+                  identifier 'i'
+                identifier 'head'
+              arguments '('
+                identifier 'a'
+                identifier 'b'
+            identifier 'size'
+--- round trip: ok

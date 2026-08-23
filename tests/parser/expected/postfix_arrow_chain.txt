@@ -1,0 +1,14 @@
+let x = p->next->value
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        arrow '->'
+          arrow '->'
+            identifier 'p'
+            identifier 'next'
+          identifier 'value'
+--- round trip: ok

@@ -1,0 +1,9 @@
+error: expected ')', found the end of the file
+ --> cases/postfix_call_missing_parenthesis.hd:1:12
+  |
+1 | let x = f(a
+  |            ^
+
+--- tree
+module
+--- round trip: ok

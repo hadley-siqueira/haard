@@ -1,0 +1,11 @@
+let x = i--
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        post_decrement '--'
+          identifier 'i'
+--- round trip: ok

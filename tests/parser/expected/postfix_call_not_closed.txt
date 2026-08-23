@@ -1,0 +1,9 @@
+error: expected an expression, found the end of the file
+ --> cases/postfix_call_not_closed.hd:1:13
+  |
+1 | let x = f(a,
+  |             ^
+
+--- tree
+module
+--- round trip: ok

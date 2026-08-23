@@ -62,6 +62,17 @@ namespace haard {
             void print_division_expression(u32 node);
             void print_modulo_expression(u32 node);
             void print_scope(u32 node);
+
+            void print_dot(u32 node);
+            void print_arrow(u32 node);
+            void print_index(u32 node);
+            void print_call(u32 node);
+            void print_arguments(u32 node);
+            void print_post_increment(u32 node);
+            void print_post_decrement(u32 node);
+
+            // an operator written after what it applies to
+            void print_postfix(u32 node, const std::string& oper);
             void print_parenthesis(u32 node);
             void print_identifier(u32 node);
 

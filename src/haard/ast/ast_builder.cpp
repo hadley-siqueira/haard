@@ -193,6 +193,40 @@ u32 AstBuilder::make_scope(u32 token, u32 alias, u32 name) {
     return node;
 }
 
+u32 AstBuilder::make_index(u32 token, u32 target, u32 subscript) {
+    u32 node = make_node(AST_INDEX, token);
+
+    u32 last = add_child(node, 0, target);
+
+    add_child(node, last, subscript);
+
+    return node;
+}
+
+// the arguments are a node of their own rather than siblings of the callee, so
+// that the callee is 'the first child' and nothing has to count
+u32 AstBuilder::make_call(u32 token, u32 callee, u32 arguments) {
+    u32 node = make_node(AST_CALL, token);
+
+    u32 last = add_child(node, 0, callee);
+
+    add_child(node, last, arguments);
+
+    return node;
+}
+
+u32 AstBuilder::make_arguments(u32 token) {
+    return make_node(AST_ARGUMENTS, token);
+}
+
+u32 AstBuilder::make_unary_operator(AstNodeKind kind, u32 token, u32 operand) {
+    u32 node = make_node(kind, token);
+
+    add_child(node, 0, operand);
+
+    return node;
+}
+
 u32 AstBuilder::make_parenthesis(u32 token, u32 expression) {
     u32 node = make_node(AST_PARENTHESIS, token);
 

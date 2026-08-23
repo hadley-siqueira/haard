@@ -89,6 +89,13 @@ namespace haard {
 
             // 'alias' is 0 for the '::name' form, which has no left side
             u32 make_scope(u32 token, u32 alias, u32 name);
+
+            // the postfix operators, all of them left associative: what they
+            // are applied to is their first child
+            u32 make_index(u32 token, u32 target, u32 subscript);
+            u32 make_call(u32 token, u32 callee, u32 arguments);
+            u32 make_arguments(u32 token);
+            u32 make_unary_operator(AstNodeKind kind, u32 token, u32 operand);
             // the '(' is kept as a node of its own, so the printer writes the
             // parentheses the source had instead of working out where they
             // would be needed

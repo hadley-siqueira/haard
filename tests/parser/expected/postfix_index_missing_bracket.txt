@@ -1,0 +1,9 @@
+error: expected ']', found the end of the file
+ --> cases/postfix_index_missing_bracket.hd:1:12
+  |
+1 | let x = a[0
+  |            ^
+
+--- tree
+module
+--- round trip: ok

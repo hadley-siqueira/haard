@@ -1,0 +1,17 @@
+let x = f(a, b + c, "s")
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        call '('
+          identifier 'f'
+          arguments '('
+            identifier 'a'
+            plus '+'
+              identifier 'b'
+              identifier 'c'
+            string '"s"'
+--- round trip: ok

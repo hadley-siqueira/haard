@@ -160,6 +160,34 @@ void PrettyPrinter::print_node(u32 node) {
             print_scope(node);
             break;
 
+        case AST_DOT:
+            print_dot(node);
+            break;
+
+        case AST_ARROW:
+            print_arrow(node);
+            break;
+
+        case AST_INDEX:
+            print_index(node);
+            break;
+
+        case AST_CALL:
+            print_call(node);
+            break;
+
+        case AST_ARGUMENTS:
+            print_arguments(node);
+            break;
+
+        case AST_POST_INCREMENT:
+            print_post_increment(node);
+            break;
+
+        case AST_POST_DECREMENT:
+            print_post_decrement(node);
+            break;
+
         case AST_PARENTHESIS:
             print_parenthesis(node);
             break;
@@ -422,6 +450,55 @@ void PrettyPrinter::print_scope(u32 node) {
     }
 
     print_children_joined(node, "::");
+}
+
+// glued, like the '.' of an import path and the '::' of a scope: these reach
+// into a name, they are not operators standing between two operands
+void PrettyPrinter::print_dot(u32 node) {
+    print_children_joined(node, ".");
+}
+
+void PrettyPrinter::print_arrow(u32 node) {
+    print_children_joined(node, "->");
+}
+
+// the target then the subscript, positionally: both are expressions, so unlike
+// everywhere else there is no kind to tell them apart
+void PrettyPrinter::print_index(u32 node) {
+    u32 target = ast->get_node(node)->get_children();
+
+    print_node(target);
+    print_string("[");
+
+    if (target != 0) {
+        print_node(ast->get_node(target)->get_sibling());
+    }
+
+    print_string("]");
+}
+
+// the callee then the arguments, and the arguments carry their own parentheses
+void PrettyPrinter::print_call(u32 node) {
+    print_children(node);
+}
+
+void PrettyPrinter::print_arguments(u32 node) {
+    print_string("(");
+    print_children_joined(node, ", ");
+    print_string(")");
+}
+
+void PrettyPrinter::print_post_increment(u32 node) {
+    print_postfix(node, "++");
+}
+
+void PrettyPrinter::print_post_decrement(u32 node) {
+    print_postfix(node, "--");
+}
+
+void PrettyPrinter::print_postfix(u32 node, const std::string& oper) {
+    print_children(node);
+    print_string(oper);
 }
 
 // the parentheses are a node, so printing them is a walk like everything else:

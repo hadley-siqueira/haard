@@ -1,0 +1,12 @@
+let x = a[0]
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        index '['
+          identifier 'a'
+          integer '0'
+--- round trip: ok

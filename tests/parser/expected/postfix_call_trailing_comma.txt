@@ -1,0 +1,9 @@
+error: expected an expression, found ')'
+ --> cases/postfix_call_trailing_comma.hd:1:13
+  |
+1 | let x = f(a,)
+  |             ^
+
+--- tree
+module
+--- round trip: ok

@@ -1,0 +1,9 @@
+error: expected an identifier, found '1'
+ --> cases/postfix_dot_with_a_literal.hd:1:11
+  |
+1 | let x = a.1
+  |           ^
+
+--- tree
+module
+--- round trip: ok

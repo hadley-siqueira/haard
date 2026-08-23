@@ -1,0 +1,12 @@
+let x = f()
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        call '('
+          identifier 'f'
+          arguments '('
+--- round trip: ok

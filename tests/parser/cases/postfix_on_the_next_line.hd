@@ -1,0 +1,7 @@
+# a postfix operator wants the same line, so the chain below is not one
+def main : i32
+    a
+    .b
+    (c)
+    [0]
+    ++

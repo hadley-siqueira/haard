@@ -1,0 +1,16 @@
+let x = a.b.c.d
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        dot '.'
+          dot '.'
+            dot '.'
+              identifier 'a'
+              identifier 'b'
+            identifier 'c'
+          identifier 'd'
+--- round trip: ok

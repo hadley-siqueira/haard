@@ -1,0 +1,9 @@
+error: expected an expression, found '++'
+ --> cases/postfix_prefix_increment.hd:1:9
+  |
+1 | let x = ++i
+  |         ^^
+
+--- tree
+module
+--- round trip: ok

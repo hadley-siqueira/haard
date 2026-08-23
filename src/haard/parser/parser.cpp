@@ -21,6 +21,7 @@ static std::string describe(TokenKind kind) {
         case TK_TEMPLATE_STRING_END: return "the end of the template string";
         case TK_INTERPOLATION_END: return "'}'";
         case TK_RIGHT_PARENTHESIS: return "')'";
+        case TK_RIGHT_SQUARE_BRACKET: return "']'";
         case TK_IDENTIFIER: return "an identifier";
         case TK_EOF: return "the end of the file";
         default: break;
@@ -728,9 +729,9 @@ u32 Parser::parse_arith_expression() {
 // 'a + b * c' fold the product first. Left associative like the level above it,
 // so 'a / b / c' is '(a / b) / c'
 //
-//   term_expression := primary_expression (('*' | '/' | '%') primary_expression)*
+//   term_expression := postfix_expression (('*' | '/' | '%') postfix_expression)*
 u32 Parser::parse_term_expression() {
-    u32 node = parse_primary_expression();
+    u32 node = parse_postfix_expression();
 
     while (true) {
         AstNodeKind kind;
@@ -746,10 +747,91 @@ u32 Parser::parse_term_expression() {
         }
 
         u32 oper = matched;
-        u32 right = parse_primary_expression();
+        u32 right = parse_postfix_expression();
 
         node = builder.make_binary_operator(kind, oper, node, right);
     }
+
+    return node;
+}
+
+// Tighter than every binary operator and left associative, so 'a.b.c' is
+// '(a.b).c' and 'f(x)[0]' indexes what the call gave back. Each round wraps
+// what came before it, which is what makes the loop enough.
+//
+// The old compiler asked for the same line only on '(', '++' and '--', leaving
+// '.', '->' and '[' free to continue on the next line — a method chain written
+// one call per line. Here every one of them wants the same line, because that
+// is what the rest of this parser does and a continuation line is still an
+// open question; see the note on binary operators.
+//
+//   postfix_expression := primary_expression postfix*
+//   postfix := '.' identifier | '->' identifier | '[' expression ']'
+//            | arguments | '++' | '--'
+u32 Parser::parse_postfix_expression() {
+    u32 node = parse_primary_expression();
+
+    // in panic every match below answers false, so a broken operand ends the
+    // chain here instead of reporting one error per operator
+    while (true) {
+        // the operator's token goes into a local before the member is read:
+        // as arguments the two would be evaluated in whatever order the
+        // compiler picked, and reading the member moves 'matched'
+        if (match_on_same_line(TK_DOT)) {
+            u32 oper = matched;
+            u32 member = parse_identifier();
+
+            node = builder.make_binary_operator(AST_DOT, oper, node, member);
+        } else if (match_on_same_line(TK_ARROW)) {
+            u32 oper = matched;
+            u32 member = parse_identifier();
+
+            node = builder.make_binary_operator(AST_ARROW, oper, node, member);
+        } else if (lookahead_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
+            u32 token = current_token;
+
+            expect_on_same_line(TK_LEFT_SQUARE_BRACKET);
+
+            u32 subscript = parse_expression();
+
+            expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+            node = builder.make_index(token, node, subscript);
+        } else if (lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
+            u32 token = current_token;
+
+            node = builder.make_call(token, node, parse_arguments());
+        } else if (match_on_same_line(TK_INCREMENT)) {
+            node = builder.make_unary_operator(AST_POST_INCREMENT, matched,
+                                               node);
+        } else if (match_on_same_line(TK_DECREMENT)) {
+            node = builder.make_unary_operator(AST_POST_DECREMENT, matched,
+                                               node);
+        } else {
+            break;
+        }
+    }
+
+    return node;
+}
+
+//   arguments := '(' (expression (',' expression)*)? ')'
+u32 Parser::parse_arguments() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LEFT_PARENTHESIS);
+
+    u32 node = builder.make_arguments(token);
+
+    // 'f()' is a call with no arguments, not a call with one that is missing
+    if (!lookahead_on_same_line(TK_RIGHT_PARENTHESIS)) {
+        u32 last = builder.add_child(node, 0, parse_expression());
+
+        while (match_on_same_line(TK_COMMA)) {
+            last = builder.add_child(node, last, parse_expression());
+        }
+    }
+
+    expect_on_same_line(TK_RIGHT_PARENTHESIS);
 
     return node;
 }

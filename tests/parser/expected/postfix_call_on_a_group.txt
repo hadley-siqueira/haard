@@ -1,0 +1,16 @@
+let x = (a + b)(c)
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        call '('
+          parenthesis '('
+            plus '+'
+              identifier 'a'
+              identifier 'b'
+          arguments '('
+            identifier 'c'
+--- round trip: ok
