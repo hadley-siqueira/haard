@@ -1,0 +1,9 @@
+error: expected '}', found ':'
+ --> cases/hash_with_a_literal_key.hd:1:11
+  |
+1 | let x = {1: 2}
+  |           ^
+
+--- tree
+module
+--- round trip: ok

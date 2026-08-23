@@ -1,21 +1,17 @@
 error: expected an expression, found '.'
- --> cases/postfix_on_the_next_line.hd:4:5
+ --> cases/postfix_on_the_next_line.hd:5:5
   |
-4 |     .b
-  |     ^
-error: expected an expression, found '['
- --> cases/postfix_on_the_next_line.hd:6:5
-  |
-6 |     [0]
+5 |     .b
   |     ^
 error: expected an expression, found the end of the file
- --> cases/postfix_on_the_next_line.hd:7:7
+ --> cases/postfix_on_the_next_line.hd:8:7
   |
-7 |     ++
+8 |     ++
   |       ^
 def main : i32
     a
     (c)
+    [0]
 --- tree
 module
   function 'def'
@@ -27,4 +23,6 @@ module
       identifier 'a'
       parenthesis '('
         identifier 'c'
+      list '['
+        integer '0'
 --- round trip: ok

@@ -243,6 +243,61 @@ u32 AstBuilder::make_literal(AstNodeKind kind, u32 token) {
     return make_node(kind, token);
 }
 
+u32 AstBuilder::make_this(u32 token) {
+    return make_node(AST_THIS, token);
+}
+
+u32 AstBuilder::make_list(u32 token) {
+    return make_node(AST_LIST, token);
+}
+
+u32 AstBuilder::make_array(u32 token) {
+    return make_node(AST_ARRAY, token);
+}
+
+u32 AstBuilder::make_hash(u32 token) {
+    return make_node(AST_HASH, token);
+}
+
+u32 AstBuilder::make_hash_pair(u32 token, u32 key, u32 value) {
+    u32 node = make_node(AST_HASH_PAIR, token);
+
+    u32 last = add_child(node, 0, key);
+
+    add_child(node, last, value);
+
+    return node;
+}
+
+u32 AstBuilder::make_tuple(u32 token) {
+    return make_node(AST_TUPLE, token);
+}
+
+u32 AstBuilder::make_closure(u32 token) {
+    return make_node(AST_CLOSURE, token);
+}
+
+// unlike a 'def' parameter the type is optional, so a 0 is a real answer here
+u32 AstBuilder::make_closure_parameter(u32 name, u32 type) {
+    u32 node = make_node(AST_CLOSURE_PARAMETER, 0);
+
+    u32 last = add_child(node, 0, name);
+
+    add_child(node, last, type);
+
+    return node;
+}
+
+// its own kind rather than AST_FUNCTION_RETURN_TYPE, because a closure writes
+// it as '-> T' and a 'def' writes it as ': T'
+u32 AstBuilder::make_closure_return_type(u32 child) {
+    u32 node = make_node(AST_CLOSURE_RETURN_TYPE, 0);
+
+    add_child(node, 0, child);
+
+    return node;
+}
+
 // the token is the opening quote, and it is the only record of which quote the
 // source used: the printer writes it at both ends
 u32 AstBuilder::make_template_string(u32 token) {

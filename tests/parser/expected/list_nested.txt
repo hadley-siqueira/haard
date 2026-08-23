@@ -1,0 +1,19 @@
+let x = [a + b, f(c), [1]]
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        list '['
+          plus '+'
+            identifier 'a'
+            identifier 'b'
+          call '('
+            identifier 'f'
+            arguments '('
+              identifier 'c'
+          list '['
+            integer '1'
+--- round trip: ok

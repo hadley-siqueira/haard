@@ -1,4 +1,5 @@
-# a postfix operator wants the same line, so the chain below is not one
+# a postfix operator wants the same line, so the chain below is not one: the
+# '(c)' becomes a group of its own and the '[0]' a list of its own
 def main : i32
     a
     .b

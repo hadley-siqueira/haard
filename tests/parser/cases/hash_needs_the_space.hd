@@ -1,0 +1,3 @@
+# glued, 'k:v' scans as an identifier followed by a symbol, so it never reaches
+# the parser as a pair
+let x = {k:v}

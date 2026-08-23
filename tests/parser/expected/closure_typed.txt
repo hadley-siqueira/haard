@@ -1,0 +1,36 @@
+def main : i32
+    let f = |a, b : i32| -> i32 {
+        a + b
+    }
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'f'
+          binding_expression
+            closure '|'
+              closure_parameter
+                binding_name
+                  identifier 'a'
+              closure_parameter
+                binding_name
+                  identifier 'b'
+                binding_type
+                  identifier 'i32'
+              closure_return_type
+                identifier 'i32'
+              block
+                plus '+'
+                  identifier 'a'
+                  identifier 'b'
+      return 'return'
+        integer '0'
+--- round trip: ok

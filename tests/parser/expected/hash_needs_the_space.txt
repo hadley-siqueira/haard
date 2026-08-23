@@ -1,0 +1,9 @@
+error: expected '}', found ':v'
+ --> cases/hash_needs_the_space.hd:3:11
+  |
+3 | let x = {k:v}
+  |           ^^
+
+--- tree
+module
+--- round trip: ok

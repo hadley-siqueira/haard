@@ -1,0 +1,9 @@
+error: expected '}', found the end of the file
+ --> cases/closure_not_closed.hd:3:13
+  |
+3 |     return 0
+  |             ^
+
+--- tree
+module
+--- round trip: ok

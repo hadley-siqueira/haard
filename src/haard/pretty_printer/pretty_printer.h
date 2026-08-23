@@ -107,6 +107,16 @@ namespace haard {
             // an operator written after what it applies to
             void print_postfix(u32 node, const std::string& oper);
             void print_parenthesis(u32 node);
+            void print_this(u32 node);
+            void print_list(u32 node);
+            void print_array(u32 node);
+            void print_hash(u32 node);
+            void print_hash_pair(u32 node);
+            void print_tuple(u32 node);
+
+            void print_closure(u32 node);
+            void print_closure_parameter(u32 node);
+            void print_closure_return_type(u32 node);
             void print_identifier(u32 node);
 
             // every literal prints the same way: the lexeme it was written as

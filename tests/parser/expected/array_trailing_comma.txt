@@ -1,0 +1,12 @@
+let x = {1, 2}
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        array '{'
+          integer '1'
+          integer '2'
+--- round trip: ok

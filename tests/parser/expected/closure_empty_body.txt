@@ -1,0 +1,18 @@
+error: expected a statement or 'pass', found '}'
+ --> cases/closure_empty_body.hd:3:18
+  |
+3 |     let f = |x| {}
+  |                  ^
+def main : i32
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        integer '0'
+--- round trip: ok

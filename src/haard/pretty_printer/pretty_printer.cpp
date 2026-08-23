@@ -347,7 +347,44 @@ void PrettyPrinter::print_node(u32 node) {
         case AST_SYMBOL_LITERAL:
         case AST_TRUE:
         case AST_FALSE:
+        case AST_NULL_LITERAL:
             print_literal(node);
+            break;
+
+        case AST_THIS:
+            print_this(node);
+            break;
+
+        case AST_LIST:
+            print_list(node);
+            break;
+
+        case AST_ARRAY:
+            print_array(node);
+            break;
+
+        case AST_HASH:
+            print_hash(node);
+            break;
+
+        case AST_HASH_PAIR:
+            print_hash_pair(node);
+            break;
+
+        case AST_TUPLE:
+            print_tuple(node);
+            break;
+
+        case AST_CLOSURE:
+            print_closure(node);
+            break;
+
+        case AST_CLOSURE_PARAMETER:
+            print_closure_parameter(node);
+            break;
+
+        case AST_CLOSURE_RETURN_TYPE:
+            print_closure_return_type(node);
             break;
 
         case AST_TEMPLATE_STRING:
@@ -768,6 +805,96 @@ void PrettyPrinter::print_parenthesis(u32 node) {
     print_string("(");
     print_children(node);
     print_string(")");
+}
+
+void PrettyPrinter::print_this(u32 node) {
+    print_node_token(node);
+}
+
+void PrettyPrinter::print_list(u32 node) {
+    print_string("[");
+    print_children_joined(node, ", ");
+    print_string("]");
+}
+
+void PrettyPrinter::print_array(u32 node) {
+    print_string("{");
+    print_children_joined(node, ", ");
+    print_string("}");
+}
+
+void PrettyPrinter::print_hash(u32 node) {
+    print_string("{");
+    print_children_joined(node, ", ");
+    print_string("}");
+}
+
+// the space after the ':' is the language's, not the printer's: written glued,
+// 'key:value' scans as an identifier followed by a symbol
+void PrettyPrinter::print_hash_pair(u32 node) {
+    print_children_joined(node, ": ");
+}
+
+// A tuple of one is a tuple only because of its comma: written '(a)' the
+// brackets read back as a group, which is a different node and a different
+// meaning. So the comma stays — the same way Python writes it.
+void PrettyPrinter::print_tuple(u32 node) {
+    u32 child = ast->get_node(node)->get_children();
+
+    print_string("(");
+    print_children_joined(node, ", ");
+
+    if (child != 0 && ast->get_node(child)->get_sibling() == 0) {
+        print_string(",");
+    }
+
+    print_string(")");
+}
+
+// The parameters between the pipes, then the return type if there is one, then
+// the body between braces. The body is written one statement per line whatever
+// the source did, because statements here are delimited by lines: two of them
+// on one line would run together and read back as something else.
+void PrettyPrinter::print_closure(u32 node) {
+    u32 child = ast->get_node(node)->get_children();
+    bool first = true;
+
+    print_string("|");
+
+    while (child != 0
+           && ast->get_node(child)->get_kind() == AST_CLOSURE_PARAMETER) {
+        if (!first) {
+            print_string(", ");
+        }
+
+        print_node(child);
+        child = ast->get_node(child)->get_sibling();
+        first = false;
+    }
+
+    print_string("|");
+
+    while (child != 0) {
+        if (ast->get_node(child)->get_kind() == AST_BLOCK) {
+            print_string(" {");
+            print_node(child);
+            print_new_line();
+            print_string("}");
+        } else {
+            print_node(child);
+        }
+
+        child = ast->get_node(child)->get_sibling();
+    }
+}
+
+void PrettyPrinter::print_closure_parameter(u32 node) {
+    print_children(node);
+}
+
+void PrettyPrinter::print_closure_return_type(u32 node) {
+    print_string(" -> ");
+    print_children(node);
 }
 
 void PrettyPrinter::print_identifier(u32 node) {

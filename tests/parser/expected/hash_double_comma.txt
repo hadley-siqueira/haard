@@ -1,0 +1,9 @@
+error: expected an identifier, found ','
+ --> cases/hash_double_comma.hd:1:15
+  |
+1 | let x = {k: 1,,}
+  |               ^
+
+--- tree
+module
+--- round trip: ok

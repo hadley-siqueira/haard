@@ -49,6 +49,8 @@ namespace haard {
             // the block owns the indentation stack: it is the only rule that
             // pushes a level, and it is the second of the two recovery points
             u32 parse_block(u32 header_indentation);
+            u32 parse_block_statements(u32 node, bool braced);
+            bool inside_block(bool braced);
             u32 parse_pass();
             u32 parse_statement();
             u32 parse_if();
@@ -92,7 +94,16 @@ namespace haard {
             u32 parse_postfix_expression();
             u32 parse_arguments();
             u32 parse_primary_expression();
-            u32 parse_parenthesis();
+            u32 parse_parenthesis_or_tuple();
+            u32 parse_list();
+            u32 parse_array_or_hash();
+            u32 parse_hash(u32 token, u32 key);
+            u32 parse_closure();
+            u32 parse_closure_parameter();
+
+            // the body of a closure: delimited by its braces, not by the
+            // indentation, so it pushes no level
+            u32 parse_braced_block();
             u32 parse_literal();
             u32 parse_template_string();
             u32 parse_template_string_chunk();
@@ -117,6 +128,7 @@ namespace haard {
 
             Token& current();
             u32 indentation_of_current_line();
+            AstNodeKind kind_of(u32 node);
 
             // two tokens are glued when nothing at all sits between them, which
             // is how the language separates 'Foo<T>' from 'a < b'

@@ -108,6 +108,19 @@ namespace haard {
 
             // a list node: it is born holding only its quote and grows one
             // chunk or interpolation at a time, the way the parser reads them
+            // 'this' and the four bracketed forms. The three that hold a
+            // list are born empty and grow, like every other list node here
+            u32 make_this(u32 token);
+            u32 make_list(u32 token);
+            u32 make_array(u32 token);
+            u32 make_hash(u32 token);
+            u32 make_hash_pair(u32 token, u32 key, u32 value);
+            u32 make_tuple(u32 token);
+
+            u32 make_closure(u32 token);
+            u32 make_closure_parameter(u32 name, u32 type);
+            u32 make_closure_return_type(u32 child);
+
             u32 make_template_string(u32 token);
             u32 make_template_string_chunk(u32 token);
             u32 make_interpolation(u32 token, u32 expression);

@@ -1,0 +1,17 @@
+def main : i32
+    return this.field.name
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      return 'return'
+        dot '.'
+          dot '.'
+            this 'this'
+            identifier 'field'
+          identifier 'name'
+--- round trip: ok

@@ -1,0 +1,9 @@
+error: expected ']', found the end of the file
+ --> cases/list_not_closed.hd:1:14
+  |
+1 | let x = [1, 2
+  |              ^
+
+--- tree
+module
+--- round trip: ok

@@ -1,0 +1,13 @@
+let x = [1, 2, 3]
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        list '['
+          integer '1'
+          integer '2'
+          integer '3'
+--- round trip: ok

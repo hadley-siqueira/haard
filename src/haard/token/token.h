@@ -32,6 +32,7 @@ namespace haard {
         TK_BREAK,
         TK_YIELD,
         TK_THIS,
+        TK_NULL,
         TK_PASS,
         TK_GOTO,
         TK_INTEGER_LITERAL,

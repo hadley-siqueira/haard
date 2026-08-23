@@ -13,6 +13,9 @@ static std::string describe(TokenKind kind) {
         case TK_COLON: return "':'";
         case TK_COMMA: return "','";
         case TK_IN: return "'in'";
+        case TK_BITWISE_OR: return "'|'";
+        case TK_LEFT_CURLY_BRACKET: return "'{'";
+        case TK_RIGHT_CURLY_BRACKET: return "'}'";
         case TK_GREATER_THAN: return "'>'";
         case TK_LET: return "'let'";
         case TK_CONST: return "'const'";
@@ -78,6 +81,7 @@ static AstNodeKind literal_kind(TokenKind kind) {
         case TK_SYMBOL_LITERAL: return AST_SYMBOL_LITERAL;
         case TK_TRUE: return AST_TRUE;
         case TK_FALSE: return AST_FALSE;
+        case TK_NULL: return AST_NULL_LITERAL;
         default: break;
     }
 
@@ -339,31 +343,56 @@ u32 Parser::parse_function_return_type() {
 //   block := 'pass' | statement+
 u32 Parser::parse_block(u32 header_indentation) {
     u32 node = builder.make_block();
+
+    indent(header_indentation);
+    parse_block_statements(node, false);
+    dedent();
+
+    return node;
+}
+
+// The body of a closure. It is delimited by its braces, so it pushes **no**
+// indentation level and reads statements until the '}' — which is what lets a
+// closure be written on one line. An 'if' inside it still opens a block of its
+// own and measures against whatever level encloses the closure.
+//
+//   braced_block := '{' ('pass' | statement+) '}'
+u32 Parser::parse_braced_block() {
+    u32 node = builder.make_block();
+
+    parse_block_statements(node, true);
+
+    return node;
+}
+
+// The statements of a block, whichever delimits it. Both callers share this,
+// because the recovery point, the 'pass' rule and the empty-block error are the
+// same wherever a block is written — only what ends it differs.
+//
+// In panic 'is_indented' is inert, so a header whose condition failed reads no
+// block at all and the error travels out to the statement that can recover from
+// it, instead of being recovered inside a block that never opened. A braced
+// block answers to its brace instead, and to the end of the file, so an
+// unclosed one stops rather than running away.
+u32 Parser::parse_block_statements(u32 node, bool braced) {
     u32 last = 0;
     bool had_lines = false;
 
-    indent(header_indentation);
-
     // 'pass' is the whole block, not a statement inside it: it says there is
-    // nothing here, so nothing else can be. A line after it is left where it
-    // is and the rule that owns the level above reports it
-    if (is_indented() && lookahead(TK_PASS)) {
+    // nothing here, so nothing else can be
+    if (inside_block(braced) && lookahead(TK_PASS)) {
         had_lines = true;
         last = builder.add_child(node, 0, parse_pass());
 
         // a line under it contradicts what it says. Reporting here rather than
         // letting the line fall out to the rule above is the difference
         // between naming the mistake and blaming the line for existing
-        if (is_indented()) {
+        if (inside_block(braced)) {
             error_at_current("nothing can follow 'pass': it is how a block "
                              "with no statements is written");
         }
     } else {
-        // in panic this is inert, so a header whose condition failed reads no
-        // block at all and the error travels out to the statement that can
-        // recover from it, instead of being recovered inside a block that
-        // never opened
-        while (is_indented()) {
+        while (inside_block(braced)) {
             u32 indentation = indentation_of_current_line();
             u32 start = current_token;
 
@@ -398,9 +427,18 @@ u32 Parser::parse_block(u32 header_indentation) {
         poison();
     }
 
-    dedent();
+    return last;
+}
 
-    return node;
+// whether another statement of this block is still ahead
+bool Parser::inside_block(bool braced) {
+    if (!braced) {
+        return is_indented();
+    }
+
+    return !panic
+        && !lookahead(TK_RIGHT_CURLY_BRACKET)
+        && current().get_kind() != TK_EOF;
 }
 
 u32 Parser::parse_pass() {
@@ -1204,10 +1242,32 @@ u32 Parser::parse_arguments() {
     return node;
 }
 
-//   primary_expression := parenthesis | literal | scope
+//   primary_expression := parenthesis_or_tuple | list | array_or_hash
+//                       | closure | 'this' | template_string | literal | scope
 u32 Parser::parse_primary_expression() {
     if (lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
-        return parse_parenthesis();
+        return parse_parenthesis_or_tuple();
+    }
+
+    if (lookahead_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
+        return parse_list();
+    }
+
+    if (lookahead_on_same_line(TK_LEFT_CURLY_BRACKET)) {
+        return parse_array_or_hash();
+    }
+
+    // The '|' that opens a closure. The one that stands between two operands is
+    // the bitwise or, and what separates them is only where they are read — so
+    // a '||' met here cannot be a logical or either: it is an empty parameter
+    // list, arriving glued because the scanner has no reason to split it.
+    if (lookahead_on_same_line(TK_BITWISE_OR)
+        || lookahead_on_same_line(TK_LOGICAL_OR)) {
+        return parse_closure();
+    }
+
+    if (match_on_same_line(TK_THIS)) {
+        return builder.make_this(matched);
     }
 
     if (lookahead_on_same_line(TK_TEMPLATE_STRING_BEGIN)) {
@@ -1236,22 +1296,202 @@ u32 Parser::parse_primary_expression() {
     return 0;
 }
 
-// the parentheses are kept in the tree as a node of their own, rather than
+// The parentheses are kept in the tree as a node of their own, rather than
 // dissolved into the expression they group. That is what lets the printer stay
 // a plain walk: it writes the parentheses the source had, instead of working
-// out where they would be needed to mean the same thing
+// out where they would be needed to mean the same thing.
 //
-//   parenthesis := '(' expression ')'
-u32 Parser::parse_parenthesis() {
+// A comma turns the same brackets into a tuple, which is why one rule reads
+// both: what they are is only known after the first expression.
+//
+//   parenthesis_or_tuple := '(' expression (',' expression?)* ')'
+u32 Parser::parse_parenthesis_or_tuple() {
     u32 token = current_token;
 
     expect_on_same_line(TK_LEFT_PARENTHESIS);
 
     u32 expression = parse_expression();
 
+    if (!lookahead_on_same_line(TK_COMMA)) {
+        expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+        return builder.make_parenthesis(token, expression);
+    }
+
+    u32 node = builder.make_tuple(token);
+    u32 last = builder.add_child(node, 0, expression);
+
+    // a trailing comma is allowed, which is what the second test is for. Every
+    // bracketed list here takes one — the argument list of a call is the only
+    // one that does not, which is where the reference left it
+    while (match_on_same_line(TK_COMMA)) {
+        if (lookahead_on_same_line(TK_RIGHT_PARENTHESIS)) {
+            break;
+        }
+
+        last = builder.add_child(node, last, parse_expression());
+    }
+
     expect_on_same_line(TK_RIGHT_PARENTHESIS);
 
-    return builder.make_parenthesis(token, expression);
+    return node;
+}
+
+//   list := '[' (expression (',' expression?)*)? ']'
+u32 Parser::parse_list() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LEFT_SQUARE_BRACKET);
+
+    u32 node = builder.make_list(token);
+
+    if (!lookahead_on_same_line(TK_RIGHT_SQUARE_BRACKET)) {
+        u32 last = builder.add_child(node, 0, parse_expression());
+
+        while (match_on_same_line(TK_COMMA)) {
+            if (lookahead_on_same_line(TK_RIGHT_SQUARE_BRACKET)) {
+                break;
+            }
+
+            last = builder.add_child(node, last, parse_expression());
+        }
+    }
+
+    expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+
+    return node;
+}
+
+// The same brackets write an array and a hash, and which one it is shows only
+// after the first element: an identifier followed by a ':' opens a hash,
+// anything else is an array. That is the reference's test, and it is also why
+// the space in '{key: value}' is a language rule — glued, 'key:value' scans as
+// an identifier followed by a symbol and never reaches here as a pair.
+//
+// An empty '{}' is an array with nothing in it. The reference gave back nothing
+// at all for that, which cannot be written back as source.
+//
+//   array_or_hash := '{' (hash | expression (',' expression?)*)? '}'
+u32 Parser::parse_array_or_hash() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LEFT_CURLY_BRACKET);
+
+    if (match_on_same_line(TK_RIGHT_CURLY_BRACKET)) {
+        return builder.make_array(token);
+    }
+
+    u32 first = parse_expression();
+
+    if (kind_of(first) == AST_IDENTIFIER
+        && lookahead_on_same_line(TK_COLON)) {
+        return parse_hash(token, first);
+    }
+
+    u32 node = builder.make_array(token);
+    u32 last = builder.add_child(node, 0, first);
+
+    while (match_on_same_line(TK_COMMA)) {
+        if (lookahead_on_same_line(TK_RIGHT_CURLY_BRACKET)) {
+            break;
+        }
+
+        last = builder.add_child(node, last, parse_expression());
+    }
+
+    expect_on_same_line(TK_RIGHT_CURLY_BRACKET);
+
+    return node;
+}
+
+// the first key is already read, since it is what told a hash from an array
+//
+//   hash := identifier ':' expression (',' identifier ':' expression)*
+u32 Parser::parse_hash(u32 token, u32 key) {
+    u32 node = builder.make_hash(token);
+    u32 last = 0;
+
+    while (true) {
+        u32 colon = current_token;
+
+        expect_on_same_line(TK_COLON);
+
+        u32 value = parse_expression();
+
+        last = builder.add_child(node, last,
+                                 builder.make_hash_pair(colon, key, value));
+
+        if (!match_on_same_line(TK_COMMA)) {
+            break;
+        }
+
+        // a trailing comma, like a list, an array and a tuple take
+        if (lookahead_on_same_line(TK_RIGHT_CURLY_BRACKET)) {
+            break;
+        }
+
+        key = parse_identifier();
+    }
+
+    expect_on_same_line(TK_RIGHT_CURLY_BRACKET);
+
+    return node;
+}
+
+// A closure carries its own parameters, an optional return type after '->' and
+// a body between braces. The parameters are not written with '@' and their type
+// is optional, which is what keeps them from being the 'def' parameter rule.
+//
+//   closure := ('||' | '|' (closure_parameter (',' closure_parameter)*)? '|')
+//              ('->' type)? '{' braced_block '}'
+u32 Parser::parse_closure() {
+    u32 token = current_token;
+
+    // '||' is one token, so a closure with no parameters arrives with both
+    // pipes glued together. Splitting a compound token by hand is the same
+    // move nested generics need for the '>>' that closes them
+    bool empty_parameters = match_on_same_line(TK_LOGICAL_OR);
+
+    if (!empty_parameters) {
+        expect_on_same_line(TK_BITWISE_OR);
+    }
+
+    u32 node = builder.make_closure(token);
+    u32 last = 0;
+
+    if (!empty_parameters) {
+        if (!lookahead_on_same_line(TK_BITWISE_OR)) {
+            last = builder.add_child(node, last, parse_closure_parameter());
+
+            while (match_on_same_line(TK_COMMA)) {
+                last = builder.add_child(node, last, parse_closure_parameter());
+            }
+        }
+
+        expect_on_same_line(TK_BITWISE_OR);
+    }
+
+    if (match_on_same_line(TK_ARROW)) {
+        last = builder.add_child(node, last,
+                                 builder.make_closure_return_type(parse_type()));
+    }
+
+    expect_on_same_line(TK_LEFT_CURLY_BRACKET);
+
+    builder.add_child(node, last, parse_braced_block());
+
+    // the brace that closes it may be lines below, so no line rule here
+    expect(TK_RIGHT_CURLY_BRACKET);
+
+    return node;
+}
+
+//   closure_parameter := identifier (':' type)?
+u32 Parser::parse_closure_parameter() {
+    u32 name = parse_binding_name();
+    u32 type = parse_binding_type();
+
+    return builder.make_closure_parameter(name, type);
 }
 
 // a literal is written back exactly as it was read — the scanner's lexeme keeps
@@ -1417,6 +1657,13 @@ void Parser::advance() {
 
 Token& Parser::current() {
     return tokens->get_token(current_token);
+}
+
+// what the parser just built, which is how an array is told from a hash. The
+// sentinel at 0 answers AST_UNKNOWN, so an expression that failed takes the
+// path that reports the next error rather than a special case here
+AstNodeKind Parser::kind_of(u32 node) {
+    return context->get_ast()->get_node(node)->get_kind();
 }
 
 u32 Parser::indentation_of_current_line() {

@@ -127,6 +127,16 @@ static std::string name_of(AstNodeKind kind) {
         case AST_SYMBOL_LITERAL: return "symbol";
         case AST_TRUE: return "true";
         case AST_FALSE: return "false";
+        case AST_NULL_LITERAL: return "null";
+        case AST_THIS: return "this";
+        case AST_LIST: return "list";
+        case AST_ARRAY: return "array";
+        case AST_HASH: return "hash";
+        case AST_HASH_PAIR: return "hash_pair";
+        case AST_TUPLE: return "tuple";
+        case AST_CLOSURE: return "closure";
+        case AST_CLOSURE_PARAMETER: return "closure_parameter";
+        case AST_CLOSURE_RETURN_TYPE: return "closure_return_type";
         case AST_TEMPLATE_STRING: return "template_string";
         case AST_TEMPLATE_STRING_CHUNK: return "template_string_chunk";
         case AST_INTERPOLATION: return "interpolation";
@@ -227,6 +237,14 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_SYMBOL_LITERAL:
         case AST_TRUE:
         case AST_FALSE:
+        case AST_NULL_LITERAL:
+        case AST_THIS:
+        case AST_LIST:
+        case AST_ARRAY:
+        case AST_HASH:
+        case AST_HASH_PAIR:
+        case AST_TUPLE:
+        case AST_CLOSURE:
         case AST_TEMPLATE_STRING:
         case AST_TEMPLATE_STRING_CHUNK:
         case AST_INTERPOLATION:

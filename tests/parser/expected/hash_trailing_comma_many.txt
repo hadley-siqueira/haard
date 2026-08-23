@@ -1,0 +1,16 @@
+let x = {k: 1, j: 2}
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        hash '{'
+          hash_pair ':'
+            identifier 'k'
+            integer '1'
+          hash_pair ':'
+            identifier 'j'
+            integer '2'
+--- round trip: ok
