@@ -157,6 +157,10 @@ u32 AstBuilder::make_identifier(u32 token) {
     return make_node(AST_IDENTIFIER, token);
 }
 
+u32 AstBuilder::make_literal(AstNodeKind kind, u32 token) {
+    return make_node(kind, token);
+}
+
 u32 AstBuilder::make_node(AstNodeKind kind, u32 token) {
     AstNode node;
 

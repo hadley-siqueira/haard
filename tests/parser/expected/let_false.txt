@@ -1,0 +1,10 @@
+let x = false
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        false 'false'
+--- round trip: ok

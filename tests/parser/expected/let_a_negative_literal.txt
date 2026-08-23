@@ -1,0 +1,9 @@
+error: expected an expression, found '-'
+ --> cases/let_a_negative_literal.hd:1:9
+  |
+1 | let x = -1
+  |         ^
+
+--- tree
+module
+--- round trip: ok

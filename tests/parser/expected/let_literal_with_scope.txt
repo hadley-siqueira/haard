@@ -1,0 +1,14 @@
+let x = io::scale * 2.5
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        times '*'
+          scope '::'
+            identifier 'io'
+            identifier 'scale'
+          float '2.5'
+--- round trip: ok

@@ -11,6 +11,7 @@ static std::string describe(TokenKind kind) {
         case TK_CONST: return "'const'";
         case TK_AS: return "'as'";
         case TK_DOT: return "'.'";
+        case TK_LEFT_PARENTHESIS: return "'('";
         case TK_RIGHT_PARENTHESIS: return "')'";
         case TK_IDENTIFIER: return "an identifier";
         case TK_EOF: return "the end of the file";
@@ -18,6 +19,24 @@ static std::string describe(TokenKind kind) {
     }
 
     return "a different token";
+}
+
+// the ast kind a literal token becomes, or AST_UNKNOWN when the token is not a
+// literal at all. They all become the same shape of node — a kind and the token
+// it was written as — so what separates them is only this table
+static AstNodeKind literal_kind(TokenKind kind) {
+    switch (kind) {
+        case TK_INTEGER_LITERAL: return AST_INTEGER_LITERAL;
+        case TK_FLOAT_LITERAL: return AST_FLOAT_LITERAL;
+        case TK_STRING_LITERAL: return AST_STRING_LITERAL;
+        case TK_CHAR_LITERAL: return AST_CHAR_LITERAL;
+        case TK_SYMBOL_LITERAL: return AST_SYMBOL_LITERAL;
+        case TK_TRUE: return AST_TRUE;
+        case TK_FALSE: return AST_FALSE;
+        default: break;
+    }
+
+    return AST_UNKNOWN;
 }
 
 Parser::Parser() {
@@ -284,23 +303,70 @@ u32 Parser::parse_term_expression() {
     return node;
 }
 
+//   primary_expression := parenthesis | literal | scope
+u32 Parser::parse_primary_expression() {
+    if (lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
+        return parse_parenthesis();
+    }
+
+    // a token that is not a literal is left where it is, so the scope rule
+    // gets to see it. In panic this answers 0 as well, and the branches below
+    // are inert too, so every path gives the same nothing
+    u32 literal = parse_literal();
+
+    if (literal != 0) {
+        return literal;
+    }
+
+    if (lookahead_on_same_line(TK_SCOPE)
+        || lookahead_on_same_line(TK_IDENTIFIER)) {
+        return parse_scope();
+    }
+
+    // reported here rather than left to the scope rule, which would say it
+    // expected an identifier: an identifier is one of the five things allowed
+    // in this position, not the only one
+    error_found("an expression", true);
+
+    return 0;
+}
+
 // the parentheses are kept in the tree as a node of their own, rather than
 // dissolved into the expression they group. That is what lets the printer stay
 // a plain walk: it writes the parentheses the source had, instead of working
 // out where they would be needed to mean the same thing
 //
-//   primary_expression := '(' expression ')' | scope
-u32 Parser::parse_primary_expression() {
-    if (match_on_same_line(TK_LEFT_PARENTHESIS)) {
-        u32 token = matched;
-        u32 expression = parse_expression();
+//   parenthesis := '(' expression ')'
+u32 Parser::parse_parenthesis() {
+    u32 token = current_token;
 
-        expect_on_same_line(TK_RIGHT_PARENTHESIS);
+    expect_on_same_line(TK_LEFT_PARENTHESIS);
 
-        return builder.make_parenthesis(token, expression);
+    u32 expression = parse_expression();
+
+    expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+    return builder.make_parenthesis(token, expression);
+}
+
+// a literal is written back exactly as it was read — the scanner's lexeme keeps
+// the quotes of a string, the ':' of a symbol and the '_' separators of a
+// number — so the node needs nothing but the token
+//
+//   literal := integer | float | string | char | symbol | 'true' | 'false'
+u32 Parser::parse_literal() {
+    TokenKind token_kind = current().get_kind();
+    AstNodeKind kind = literal_kind(token_kind);
+
+    if (kind == AST_UNKNOWN) {
+        return 0;
     }
 
-    return parse_scope();
+    if (!match_on_same_line(token_kind)) {
+        return 0;
+    }
+
+    return builder.make_literal(kind, matched);
 }
 
 // '::' binds tighter than anything, so it is resolved here, below every
@@ -372,6 +438,10 @@ bool Parser::expect(TokenKind kind) {
 
 bool Parser::on_same_line() {
     return !current().get_newline_before();
+}
+
+bool Parser::lookahead_on_same_line(TokenKind kind) {
+    return on_same_line() && lookahead(kind);
 }
 
 bool Parser::match_on_same_line(TokenKind kind) {

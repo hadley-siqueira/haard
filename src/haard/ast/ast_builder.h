@@ -72,6 +72,10 @@ namespace haard {
             u32 make_parenthesis(u32 token, u32 expression);
             u32 make_identifier(u32 token);
 
+            // every literal is the same node: a kind and the token it was
+            // written as, which is also how it is written back
+            u32 make_literal(AstNodeKind kind, u32 token);
+
         private:
             u32 make_node(AstNodeKind kind, u32 token);
             void add_last_child(u32 parent, u32 child);

@@ -1,0 +1,10 @@
+let x = 42
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        integer '42'
+--- round trip: ok

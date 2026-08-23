@@ -1,0 +1,9 @@
+error: expected an identifier, found '1'
+ --> cases/let_a_literal_as_the_name.hd:1:5
+  |
+1 | let 1 = a
+  |     ^
+
+--- tree
+module
+--- round trip: ok

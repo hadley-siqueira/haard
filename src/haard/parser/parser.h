@@ -50,6 +50,8 @@ namespace haard {
             u32 parse_arith_expression();
             u32 parse_term_expression();
             u32 parse_primary_expression();
+            u32 parse_parenthesis();
+            u32 parse_literal();
             u32 parse_scope();
 
             u32 parse_identifier();
@@ -64,6 +66,7 @@ namespace haard {
             // a statement lives on one line, so everything after the word that
             // opens it has to be found before the line ends
             bool on_same_line();
+            bool lookahead_on_same_line(TokenKind kind);
             bool match_on_same_line(TokenKind kind);
             bool expect_on_same_line(TokenKind kind);
 

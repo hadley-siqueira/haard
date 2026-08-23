@@ -110,6 +110,18 @@ void PrettyPrinter::print_node(u32 node) {
             print_identifier(node);
             break;
 
+        // one case per kind would be seven copies of the same line: a literal
+        // is written back as the lexeme it was read from, whichever kind it is
+        case AST_INTEGER_LITERAL:
+        case AST_FLOAT_LITERAL:
+        case AST_STRING_LITERAL:
+        case AST_CHAR_LITERAL:
+        case AST_SYMBOL_LITERAL:
+        case AST_TRUE:
+        case AST_FALSE:
+            print_literal(node);
+            break;
+
         // a node kind with no case here would otherwise vanish from the
         // output without a trace, which is the worst way to find out that one
         // is missing
@@ -220,6 +232,10 @@ void PrettyPrinter::print_parenthesis(u32 node) {
 }
 
 void PrettyPrinter::print_identifier(u32 node) {
+    print_node_token(node);
+}
+
+void PrettyPrinter::print_literal(u32 node) {
     print_node_token(node);
 }
 

@@ -1,0 +1,15 @@
+error: expected a declaration, found '"s"'
+ --> cases/let_literal_opening_a_line.hd:2:1
+  |
+2 | "s"
+  | ^^^
+let x = 1
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        integer '1'
+--- round trip: ok

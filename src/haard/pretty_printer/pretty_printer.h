@@ -41,6 +41,9 @@ namespace haard {
             void print_parenthesis(u32 node);
             void print_identifier(u32 node);
 
+            // every literal prints the same way: the lexeme it was written as
+            void print_literal(u32 node);
+
         public:
             void print_children(u32 node);
             void print_children_joined(u32 node, const std::string& sep);

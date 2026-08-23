@@ -1,0 +1,59 @@
+const a = 1_000
+const b = 0xff
+const c = 1e10
+const d = ""
+const e = '\n'
+const f = :'with spaces'
+const g = true
+const h = false
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'a'
+      binding_expression
+        integer '1_000'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'b'
+      binding_expression
+        integer '0xff'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'c'
+      binding_expression
+        float '1e10'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'd'
+      binding_expression
+        string '""'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'e'
+      binding_expression
+        char ''\n''
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'f'
+      binding_expression
+        symbol ':'with spaces''
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'g'
+      binding_expression
+        true 'true'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'h'
+      binding_expression
+        false 'false'
+--- round trip: ok

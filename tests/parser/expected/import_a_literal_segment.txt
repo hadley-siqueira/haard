@@ -1,0 +1,9 @@
+error: expected an identifier, found '1'
+ --> cases/import_a_literal_segment.hd:1:8
+  |
+1 | import 1
+  |        ^
+
+--- tree
+module
+--- round trip: ok

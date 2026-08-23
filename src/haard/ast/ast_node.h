@@ -26,6 +26,13 @@ namespace haard {
         AST_SCOPE,
         AST_PARENTHESIS,
         AST_IDENTIFIER,
+        AST_INTEGER_LITERAL,
+        AST_FLOAT_LITERAL,
+        AST_STRING_LITERAL,
+        AST_CHAR_LITERAL,
+        AST_SYMBOL_LITERAL,
+        AST_TRUE,
+        AST_FALSE,
     } AstNodeKind;
 
     class AstNode {

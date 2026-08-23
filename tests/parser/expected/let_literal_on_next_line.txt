@@ -1,0 +1,14 @@
+error: expected an expression, found the end of the line
+ --> cases/let_literal_on_next_line.hd:2:8
+  |
+2 | let x =
+  |        ^
+error: expected a declaration, found '1'
+ --> cases/let_literal_on_next_line.hd:3:1
+  |
+3 | 1
+  | ^
+
+--- tree
+module
+--- round trip: ok

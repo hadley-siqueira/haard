@@ -1,0 +1,18 @@
+let x : i32 = 2 * 3 + 4 % 5
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        plus '+'
+          times '*'
+            integer '2'
+            integer '3'
+          modulo '%'
+            integer '4'
+            integer '5'
+--- round trip: ok

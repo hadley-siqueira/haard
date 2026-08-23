@@ -1,4 +1,4 @@
-error: expected an identifier, found ')'
+error: expected an expression, found ')'
  --> cases/let_parenthesis_orphan_close.hd:1:13
   |
 1 | let x = a + )

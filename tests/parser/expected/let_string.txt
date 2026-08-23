@@ -1,0 +1,10 @@
+let x = "hello world"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        string '"hello world"'
+--- round trip: ok

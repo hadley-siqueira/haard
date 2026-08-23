@@ -54,6 +54,13 @@ static std::string name_of(AstNodeKind kind) {
         case AST_SCOPE: return "scope";
         case AST_PARENTHESIS: return "parenthesis";
         case AST_IDENTIFIER: return "identifier";
+        case AST_INTEGER_LITERAL: return "integer";
+        case AST_FLOAT_LITERAL: return "float";
+        case AST_STRING_LITERAL: return "string";
+        case AST_CHAR_LITERAL: return "char";
+        case AST_SYMBOL_LITERAL: return "symbol";
+        case AST_TRUE: return "true";
+        case AST_FALSE: return "false";
         case AST_UNKNOWN: break;
     }
 
@@ -81,6 +88,13 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_SCOPE:
         case AST_PARENTHESIS:
         case AST_IDENTIFIER:
+        case AST_INTEGER_LITERAL:
+        case AST_FLOAT_LITERAL:
+        case AST_STRING_LITERAL:
+        case AST_CHAR_LITERAL:
+        case AST_SYMBOL_LITERAL:
+        case AST_TRUE:
+        case AST_FALSE:
             return true;
 
         default:

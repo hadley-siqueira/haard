@@ -1,0 +1,10 @@
+# one declaration per literal kind, so a kind that stops being read shows up on
+# its own line instead of behind another one
+const a = 1_000
+const b = 0xff
+const c = 1e10
+const d = ""
+const e = '\n'
+const f = :'with spaces'
+const g = true
+const h = false

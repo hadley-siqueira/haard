@@ -1,0 +1,10 @@
+let x = :name
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        symbol ':name'
+--- round trip: ok

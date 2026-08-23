@@ -1,0 +1,15 @@
+let x = (1 + 2) * "s"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        times '*'
+          parenthesis '('
+            plus '+'
+              integer '1'
+              integer '2'
+          string '"s"'
+--- round trip: ok

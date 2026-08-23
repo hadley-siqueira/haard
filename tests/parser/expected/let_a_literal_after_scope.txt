@@ -1,0 +1,9 @@
+error: expected an identifier, found '1'
+ --> cases/let_a_literal_after_scope.hd:1:12
+  |
+1 | let x = a::1
+  |            ^
+
+--- tree
+module
+--- round trip: ok

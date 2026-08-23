@@ -1,0 +1,10 @@
+let x = 3.14159
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        float '3.14159'
+--- round trip: ok
