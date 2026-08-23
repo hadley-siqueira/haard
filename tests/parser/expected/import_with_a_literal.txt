@@ -3,3 +3,7 @@ error: expected an identifier, found '42.7'
   |
 1 | import 42.7
   |        ^^^^
+
+--- tree
+module
+--- round trip: ok

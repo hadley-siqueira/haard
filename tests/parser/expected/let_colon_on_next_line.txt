@@ -4,3 +4,10 @@ error: expected a declaration, found ':'
 4 | : i32
   | ^
 let x
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+--- round trip: ok

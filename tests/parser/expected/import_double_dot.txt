@@ -5,3 +5,13 @@ error: expected a declaration, found '..'
   |           ^^
 import std
 import a.b
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+  import 'import'
+    import_path
+      import_path_segment 'a'
+      import_path_segment 'b'
+--- round trip: ok

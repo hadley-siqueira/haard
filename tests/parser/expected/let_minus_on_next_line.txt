@@ -4,3 +4,12 @@ error: expected a declaration, found '-'
 2 | - b
   | ^
 let x = a
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        identifier 'a'
+--- round trip: ok

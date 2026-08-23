@@ -4,3 +4,12 @@ error: expected a declaration, found 'x'
 1 | x = y
   | ^
 let ok = value
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'ok'
+      binding_expression
+        identifier 'value'
+--- round trip: ok

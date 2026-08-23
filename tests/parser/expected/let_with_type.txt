@@ -1,1 +1,12 @@
 let x : i32 = y
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        identifier 'y'
+--- round trip: ok

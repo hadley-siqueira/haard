@@ -8,3 +8,7 @@ error: expected a declaration, found '('
   |
 3 | (a + b)
   | ^
+
+--- tree
+module
+--- round trip: ok

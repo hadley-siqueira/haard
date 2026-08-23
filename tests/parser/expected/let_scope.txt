@@ -1,1 +1,12 @@
 let x = io::println
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        scope '::'
+          identifier 'io'
+          identifier 'println'
+--- round trip: ok

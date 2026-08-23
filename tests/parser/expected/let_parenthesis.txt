@@ -1,1 +1,15 @@
 let x = (a + b) * c
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        times '*'
+          parenthesis '('
+            plus '+'
+              identifier 'a'
+              identifier 'b'
+          identifier 'c'
+--- round trip: ok

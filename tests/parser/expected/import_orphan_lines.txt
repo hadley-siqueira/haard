@@ -4,3 +4,10 @@ error: expected an identifier, found the end of the line
 3 | import std.
   |            ^
 import a.b
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'a'
+      import_path_segment 'b'
+--- round trip: ok

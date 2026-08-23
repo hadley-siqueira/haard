@@ -1,1 +1,18 @@
 let x = (::a + b::c) * d
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        times '*'
+          parenthesis '('
+            plus '+'
+              scope '::'
+                identifier 'a'
+              scope '::'
+                identifier 'b'
+                identifier 'c'
+          identifier 'd'
+--- round trip: ok

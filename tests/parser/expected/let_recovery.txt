@@ -5,3 +5,16 @@ error: expected an identifier, found the end of the line
   |        ^
 const y = z
 import std.io
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'y'
+      binding_expression
+        identifier 'z'
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+--- round trip: ok

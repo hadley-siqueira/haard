@@ -3,3 +3,7 @@ error: expected an identifier, found '+'
   |
 1 | let x = a + + b
   |             ^
+
+--- tree
+module
+--- round trip: ok

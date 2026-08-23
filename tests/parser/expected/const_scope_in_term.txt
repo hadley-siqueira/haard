@@ -1,1 +1,15 @@
 const x = io::a * ::b
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        times '*'
+          scope '::'
+            identifier 'io'
+            identifier 'a'
+          scope '::'
+            identifier 'b'
+--- round trip: ok

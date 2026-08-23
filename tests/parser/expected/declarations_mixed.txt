@@ -2,3 +2,31 @@ import std.io as io
 let x : i32 = a + b
 const limit = max
 import std.math
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+    import_alias 'io'
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        plus '+'
+          identifier 'a'
+          identifier 'b'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'limit'
+      binding_expression
+        identifier 'max'
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'math'
+--- round trip: ok

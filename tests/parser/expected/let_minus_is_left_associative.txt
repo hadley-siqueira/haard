@@ -1,0 +1,14 @@
+let x = a - b - c
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        minus '-'
+          minus '-'
+            identifier 'a'
+            identifier 'b'
+          identifier 'c'
+--- round trip: ok

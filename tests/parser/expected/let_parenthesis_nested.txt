@@ -1,1 +1,14 @@
 let x = ((a + b))
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        parenthesis '('
+          parenthesis '('
+            plus '+'
+              identifier 'a'
+              identifier 'b'
+--- round trip: ok

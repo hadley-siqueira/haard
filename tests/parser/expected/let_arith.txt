@@ -1,1 +1,14 @@
 let total = a + b - c
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'total'
+      binding_expression
+        minus '-'
+          plus '+'
+            identifier 'a'
+            identifier 'b'
+          identifier 'c'
+--- round trip: ok

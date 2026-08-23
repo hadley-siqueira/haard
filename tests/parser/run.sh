@@ -4,10 +4,13 @@
 #   ./run.sh          run everything, one line per case
 #   ./run.sh -u       rewrite the expected/ files with the current output
 #
-# Every file in cases/*.hd is scanned, parsed and printed back as source. The
-# output — diagnostics first, then the tree — is compared against
-# expected/<case>.txt. Read the diff before committing it: -u accepts whatever
-# the parser produces, bugs included.
+# Every file in cases/*.hd is scanned, parsed, printed back as source and
+# dumped as a tree. The output — diagnostics, source, tree, round trip verdict —
+# is compared against expected/<case>.txt. Read the diff before committing it:
+# -u accepts whatever the parser produces, bugs included.
+#
+# The printed source is written to the build directory and parsed again, and the
+# two trees are compared; that verdict is the last line of every golden.
 #
 # Exits 0 if everything passed, 1 otherwise.
 set -u
@@ -72,7 +75,7 @@ for case in "${cases[@]}"; do
 
     # the timeout is a test of its own: a parser that stops making progress
     # shows up as a failure instead of hanging the suite
-    got=$(timeout 5 "$build/parse_and_print" "$case" 2>&1)
+    got=$(timeout 5 "$build/parse_and_print" "$case" "$build/$name.reprint.hd" 2>&1)
 
     if [ $? -eq 124 ]; then
         printf '%s[%2d/%d]%s %sFAIL%s  %s (timed out after 5s)\n' \

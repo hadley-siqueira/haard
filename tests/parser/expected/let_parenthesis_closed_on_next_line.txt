@@ -8,3 +8,7 @@ error: expected a declaration, found ')'
   |
 2 | )
   | ^
+
+--- tree
+module
+--- round trip: ok

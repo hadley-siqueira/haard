@@ -1,3 +1,20 @@
 import std.io
 import std.math.sqrt
 import std.collections as col
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'math'
+      import_path_segment 'sqrt'
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'collections'
+    import_alias 'col'
+--- round trip: ok

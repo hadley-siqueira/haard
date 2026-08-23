@@ -1,1 +1,10 @@
 const x = y
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        identifier 'y'
+--- round trip: ok

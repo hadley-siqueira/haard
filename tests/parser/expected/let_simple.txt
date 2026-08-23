@@ -1,1 +1,10 @@
 let x = y
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        identifier 'y'
+--- round trip: ok

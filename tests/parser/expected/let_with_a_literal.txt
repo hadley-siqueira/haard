@@ -4,3 +4,10 @@ error: expected an identifier, found '1'
 1 | let x = 1
   |         ^
 import std.io
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+--- round trip: ok

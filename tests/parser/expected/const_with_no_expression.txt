@@ -3,3 +3,7 @@ error: expected an identifier, found the end of the file
   |
 1 | const x =
   |          ^
+
+--- tree
+module
+--- round trip: ok

@@ -4,3 +4,14 @@ error: expected a declaration, found '::'
 3 | let x = std::io::println
   |                ^^
 let x = std::io
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        scope '::'
+          identifier 'std'
+          identifier 'io'
+--- round trip: ok

@@ -1,1 +1,16 @@
 let total : i32 = a - b + c
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'total'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        plus '+'
+          minus '-'
+            identifier 'a'
+            identifier 'b'
+          identifier 'c'
+--- round trip: ok

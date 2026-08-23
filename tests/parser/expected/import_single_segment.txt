@@ -1,1 +1,7 @@
 import io
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'io'
+--- round trip: ok

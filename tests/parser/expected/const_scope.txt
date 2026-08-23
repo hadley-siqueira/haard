@@ -1,1 +1,12 @@
 const x = std::max
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        scope '::'
+          identifier 'std'
+          identifier 'max'
+--- round trip: ok

@@ -1,1 +1,12 @@
 const x : i32 = y
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        identifier 'y'
+--- round trip: ok

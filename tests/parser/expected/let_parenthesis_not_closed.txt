@@ -3,3 +3,7 @@ error: expected ')', found the end of the file
   |
 1 | let x = (a + b
   |               ^
+
+--- tree
+module
+--- round trip: ok

@@ -1,1 +1,19 @@
 let x : i32 = a::b + ::c - d
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        minus '-'
+          plus '+'
+            scope '::'
+              identifier 'a'
+              identifier 'b'
+            scope '::'
+              identifier 'c'
+          identifier 'd'
+--- round trip: ok

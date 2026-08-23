@@ -4,3 +4,10 @@ error: expected an identifier, found '.'
 3 | import std. .io
   |             ^
 import a.b
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'a'
+      import_path_segment 'b'
+--- round trip: ok

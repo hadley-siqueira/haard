@@ -1,1 +1,22 @@
 let x : i32 = a + b * c - d / e % f
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        minus '-'
+          plus '+'
+            identifier 'a'
+            times '*'
+              identifier 'b'
+              identifier 'c'
+          modulo '%'
+            division '/'
+              identifier 'd'
+              identifier 'e'
+            identifier 'f'
+--- round trip: ok

@@ -3,3 +3,7 @@ error: expected an identifier, found '='
   |
 1 | let = y
   |     ^
+
+--- tree
+module
+--- round trip: ok

@@ -1,1 +1,25 @@
 const x : i32 = (a - (b - c)) % (d / io::e)
+--- tree
+module
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'x'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        modulo '%'
+          parenthesis '('
+            minus '-'
+              identifier 'a'
+              parenthesis '('
+                minus '-'
+                  identifier 'b'
+                  identifier 'c'
+          parenthesis '('
+            division '/'
+              identifier 'd'
+              scope '::'
+                identifier 'io'
+                identifier 'e'
+--- round trip: ok
