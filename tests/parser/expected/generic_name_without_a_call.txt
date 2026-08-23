@@ -1,0 +1,23 @@
+def main : i32
+    let a = make<i32>
+    return 0
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            generic_name
+              identifier 'make'
+              generic_arguments '<'
+                builtin_type 'i32'
+      return 'return'
+        integer '0'
+--- round trip: ok

@@ -15,22 +15,19 @@ module
       binding_name
         identifier 'limit'
       binding_type
-        named_type
-          identifier 'i32'
+        builtin_type 'i32'
       binding_expression
         integer '100'
   function 'def'
     binding_name
       identifier 'clamp'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     param '@'
       binding_name
         identifier 'n'
       binding_type
-        named_type
-          identifier 'i32'
+        builtin_type 'i32'
     block
       modulo '%'
         identifier 'n'

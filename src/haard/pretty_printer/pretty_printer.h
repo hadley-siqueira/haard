@@ -142,6 +142,8 @@ namespace haard {
             void print_closure_return_type(u32 node);
 
             void print_named_type(u32 node);
+            void print_builtin_type(u32 node);
+            void print_generic_name(u32 node);
             void print_generic_arguments(u32 node);
             void print_pointer_type(u32 node);
             void print_reference_type(u32 node);

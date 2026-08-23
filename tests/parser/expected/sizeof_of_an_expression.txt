@@ -1,0 +1,9 @@
+error: expected ')', found '.'
+ --> cases/sizeof_of_an_expression.hd:4:23
+  |
+4 |     return sizeof(node.value)
+  |                       ^
+
+--- tree
+module
+--- round trip: ok

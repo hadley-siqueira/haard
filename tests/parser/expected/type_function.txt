@@ -8,10 +8,7 @@ module
       binding_type
         function_type '->'
           tuple_type '('
-            named_type
-              identifier 'i32'
-            named_type
-              identifier 'i32'
-          named_type
-            identifier 'f64'
+            builtin_type 'i32'
+            builtin_type 'i32'
+          builtin_type 'f64'
 --- round trip: ok

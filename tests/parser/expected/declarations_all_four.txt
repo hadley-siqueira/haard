@@ -68,16 +68,14 @@ module
         binding_name
           identifier 'x'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '0'
       field
         binding_name
           identifier 'y'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '0'
   union 'union'
@@ -94,8 +92,7 @@ module
         binding_name
           identifier 'count'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
   enum 'enum'
     binding_name
       identifier 'Action'
@@ -108,19 +105,15 @@ module
           identifier 'click'
         binding_type
           tuple_type '('
-            named_type
-              identifier 'i32'
-            named_type
-              identifier 'i32'
+            builtin_type 'i32'
+            builtin_type 'i32'
       field
         binding_name
           identifier 'move'
         binding_type
           tuple_type '('
-            named_type
-              identifier 'i32'
-            named_type
-              identifier 'i32'
+            builtin_type 'i32'
+            builtin_type 'i32'
         binding_expression
           identifier 'origin'
       function 'def'

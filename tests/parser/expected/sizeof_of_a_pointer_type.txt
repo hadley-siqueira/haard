@@ -1,9 +1,0 @@
-error: expected ')', found '*'
- --> cases/sizeof_of_a_pointer_type.hd:3:22
-  |
-3 |     return sizeof(i32*)
-  |                      ^
-
---- tree
-module
---- round trip: ok

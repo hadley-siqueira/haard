@@ -13,6 +13,5 @@ module
         binding_name
           identifier 'b'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
 --- round trip: ok

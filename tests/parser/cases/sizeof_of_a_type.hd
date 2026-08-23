@@ -1,0 +1,8 @@
+# it takes a type, so the whole type grammar is available to it
+def main : i32
+    let a = sizeof(i32)
+    let b = sizeof(i32*)
+    let c = sizeof(Array<u8>)
+    let d = sizeof([f64])
+    let e = sizeof((i32, i32) -> f64)
+    return a

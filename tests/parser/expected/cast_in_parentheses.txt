@@ -8,8 +8,7 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       let_declaration 'let'
         binding
@@ -20,8 +19,7 @@ module
               parenthesis '('
                 cast 'as'
                   identifier 'a'
-                  named_type
-                    identifier 'i32'
+                  builtin_type 'i32'
               identifier 'b'
       let_declaration 'let'
         binding
@@ -32,13 +30,11 @@ module
               parenthesis '('
                 cast 'as'
                   identifier 'a'
-                  named_type
-                    identifier 'i32'
+                  builtin_type 'i32'
               parenthesis '('
                 cast 'as'
                   identifier 'b'
-                  named_type
-                    identifier 'i32'
+                  builtin_type 'i32'
       return 'return'
         integer '0'
 --- round trip: ok

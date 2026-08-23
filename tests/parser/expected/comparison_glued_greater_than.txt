@@ -1,7 +1,7 @@
-error: a comparison is written with spaces around it; glued to the name before it this opens a generic type argument list, which is not read in an expression yet
- --> cases/comparison_glued_greater_than.hd:2:13
+error: a comparison is written with spaces around it; glued, this opens a generic argument list, and what is in front of it cannot take one
+ --> cases/comparison_glued_greater_than.hd:3:13
   |
-2 |     return a>b
+3 |     return a>b
   |             ^
 
 --- tree

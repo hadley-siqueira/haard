@@ -15,22 +15,19 @@ module
         generic_arguments '<'
           named_type
             identifier 'String'
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
     param '@'
       binding_name
         identifier 'rows'
       binding_type
         list_type '['
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
     param '@'
       binding_name
         identifier 'size'
       binding_type
         array_type '['
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
     block
       let_declaration 'let'
         binding
@@ -39,12 +36,9 @@ module
           binding_type
             function_type '->'
               tuple_type '('
-                named_type
-                  identifier 'i32'
-                named_type
-                  identifier 'i32'
-              named_type
-                identifier 'f64'
+                builtin_type 'i32'
+                builtin_type 'i32'
+              builtin_type 'f64'
           binding_expression
             identifier 'f'
       let_declaration 'let'
@@ -58,8 +52,7 @@ module
                 named_type
                   identifier 'Array'
                   generic_arguments '<'
-                    named_type
-                      identifier 'i32'
+                    builtin_type 'i32'
       return 'return'
         call '('
           dot '.'

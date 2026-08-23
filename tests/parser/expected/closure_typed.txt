@@ -9,8 +9,7 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       let_declaration 'let'
         binding
@@ -25,11 +24,9 @@ module
                 binding_name
                   identifier 'b'
                 binding_type
-                  named_type
-                    identifier 'i32'
+                  builtin_type 'i32'
               closure_return_type
-                named_type
-                  identifier 'i32'
+                builtin_type 'i32'
               block
                 plus '+'
                   identifier 'a'

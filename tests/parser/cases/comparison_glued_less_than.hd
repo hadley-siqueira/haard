@@ -1,4 +1,4 @@
-# spacing decides: glued, this opens a generic type argument list, which is not
-# read in an expression yet
+# spacing decides: glued to a name, the '<' opens a generic argument list, so
+# this is read as one and reported for the '>' it never finds
 def main : i32
     return a<b

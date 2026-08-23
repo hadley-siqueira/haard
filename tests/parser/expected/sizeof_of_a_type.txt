@@ -1,0 +1,62 @@
+def main : i32
+    let a = sizeof(i32)
+    let b = sizeof(i32*)
+    let c = sizeof(Array<u8>)
+    let d = sizeof([f64])
+    let e = sizeof((i32, i32) -> f64)
+    return a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            sizeof 'sizeof'
+              builtin_type 'i32'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            sizeof 'sizeof'
+              pointer_type '*'
+                builtin_type 'i32'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            sizeof 'sizeof'
+              named_type
+                identifier 'Array'
+                generic_arguments '<'
+                  builtin_type 'u8'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'd'
+          binding_expression
+            sizeof 'sizeof'
+              list_type '['
+                builtin_type 'f64'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'e'
+          binding_expression
+            sizeof 'sizeof'
+              function_type '->'
+                tuple_type '('
+                  builtin_type 'i32'
+                  builtin_type 'i32'
+                builtin_type 'f64'
+      return 'return'
+        identifier 'a'
+--- round trip: ok

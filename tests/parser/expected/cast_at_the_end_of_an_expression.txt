@@ -8,8 +8,7 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       let_declaration 'let'
         binding
@@ -20,8 +19,7 @@ module
               times '*'
                 identifier 'a'
                 identifier 'b'
-              named_type
-                identifier 'i32'
+              builtin_type 'i32'
       let_declaration 'let'
         binding
           binding_name
@@ -33,8 +31,7 @@ module
                 times '*'
                   identifier 'b'
                   identifier 'c'
-              named_type
-                identifier 'f64'
+              builtin_type 'f64'
       return 'return'
         integer '0'
 --- round trip: ok

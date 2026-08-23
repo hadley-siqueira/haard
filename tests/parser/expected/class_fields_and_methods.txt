@@ -43,8 +43,7 @@ module
         binding_name
           identifier 'set'
         function_return_type
-          named_type
-            identifier 'void'
+          builtin_type 'void'
         param '@'
           binding_name
             identifier 'v'

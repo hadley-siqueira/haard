@@ -36,6 +36,22 @@ namespace haard {
         TK_NEW,
         TK_DELETE,
         TK_SIZEOF,
+
+        // the builtin types, the only type names that are words of their
+        // own. Everything else a type may name is an identifier
+        TK_U8,
+        TK_U16,
+        TK_U32,
+        TK_U64,
+        TK_I8,
+        TK_I16,
+        TK_I32,
+        TK_I64,
+        TK_F32,
+        TK_F64,
+        TK_BOOL,
+        TK_VOID,
+        TK_CHAR,
         TK_PASS,
         TK_GOTO,
         TK_INTEGER_LITERAL,

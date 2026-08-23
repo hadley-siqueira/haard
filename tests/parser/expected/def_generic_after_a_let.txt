@@ -15,8 +15,7 @@ module
     generic_parameters '<'
       identifier 'T'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       pass 'pass'
 --- round trip: ok

@@ -1,0 +1,9 @@
+error: expected '>', found the end of the file
+ --> cases/generic_name_not_closed.hd:2:15
+  |
+2 |     return a<b
+  |               ^
+
+--- tree
+module
+--- round trip: ok

@@ -332,6 +332,20 @@ u32 AstBuilder::make_named_type(u32 name, u32 arguments) {
     return node;
 }
 
+u32 AstBuilder::make_builtin_type(u32 token) {
+    return make_node(AST_BUILTIN_TYPE, token);
+}
+
+u32 AstBuilder::make_generic_name(u32 name, u32 arguments) {
+    u32 node = make_node(AST_GENERIC_NAME, 0);
+
+    u32 last = add_child(node, 0, name);
+
+    add_child(node, last, arguments);
+
+    return node;
+}
+
 u32 AstBuilder::make_generic_arguments(u32 token) {
     return make_node(AST_GENERIC_ARGUMENTS, token);
 }

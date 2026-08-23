@@ -1,0 +1,15 @@
+def main : i32
+    return make < limit
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      return 'return'
+        less_than '<'
+          identifier 'make'
+          identifier 'limit'
+--- round trip: ok

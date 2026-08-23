@@ -145,6 +145,14 @@ namespace haard {
             // a type reference from a variable one without looking at its
             // parent; the three list shaped ones are born empty and grow.
             u32 make_named_type(u32 name, u32 arguments);
+
+            // one kind for the ten sized numeric types: which one it is, is
+            // the token, exactly as it is for a literal
+            u32 make_builtin_type(u32 token);
+
+            // a name in an expression carrying its type arguments, which is
+            // how a generic function is called with them written out
+            u32 make_generic_name(u32 name, u32 arguments);
             u32 make_generic_arguments(u32 token);
             u32 make_pointer_type(u32 token, u32 type);
             u32 make_reference_type(u32 token, u32 type);

@@ -8,14 +8,12 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     param '@'
       binding_name
         identifier 'argc'
       binding_type
-        named_type
-          identifier 'i32'
+        builtin_type 'i32'
     param '@'
       binding_name
         identifier 'argv'

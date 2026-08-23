@@ -12,8 +12,7 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       let_declaration 'let'
         binding
@@ -23,8 +22,7 @@ module
             cast 'as'
               identifier 'a'
               pointer_type '*'
-                named_type
-                  identifier 'i32'
+                builtin_type 'i32'
       return 'return'
         integer '0'
 --- round trip: ok

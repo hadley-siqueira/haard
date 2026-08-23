@@ -11,8 +11,7 @@ module
         binding_name
           identifier 'width'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '80'
       field

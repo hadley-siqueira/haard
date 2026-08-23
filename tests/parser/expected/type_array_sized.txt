@@ -7,7 +7,6 @@ module
         identifier 'x'
       binding_type
         array_type '['
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
           integer '10'
 --- round trip: ok

@@ -1,0 +1,8 @@
+def make<T> : T
+    pass
+
+def main : i32
+    let a = make<i32>()
+    let b = make<Array<u8>>(1, 2)
+    let c = io::make<f64>()
+    return 0

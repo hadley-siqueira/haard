@@ -21,6 +21,5 @@ module
                         named_type
                           identifier 'E'
                           generic_arguments '<'
-                            named_type
-                              identifier 'i32'
+                            builtin_type 'i32'
 --- round trip: ok

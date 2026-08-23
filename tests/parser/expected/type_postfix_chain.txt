@@ -9,6 +9,5 @@ module
         reference_type '&'
           array_type '['
             pointer_type '*'
-              named_type
-                identifier 'i32'
+              builtin_type 'i32'
 --- round trip: ok

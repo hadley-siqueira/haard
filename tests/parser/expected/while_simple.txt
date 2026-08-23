@@ -7,8 +7,7 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       while 'while'
         identifier 'n'

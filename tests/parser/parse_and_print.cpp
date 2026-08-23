@@ -155,6 +155,8 @@ static std::string name_of(AstNodeKind kind) {
         case AST_CLOSURE_PARAMETER: return "closure_parameter";
         case AST_CLOSURE_RETURN_TYPE: return "closure_return_type";
         case AST_NAMED_TYPE: return "named_type";
+        case AST_BUILTIN_TYPE: return "builtin_type";
+        case AST_GENERIC_NAME: return "generic_name";
         case AST_GENERIC_ARGUMENTS: return "generic_arguments";
         case AST_POINTER_TYPE: return "pointer_type";
         case AST_REFERENCE_TYPE: return "reference_type";
@@ -283,6 +285,7 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_HASH_PAIR:
         case AST_TUPLE:
         case AST_CLOSURE:
+        case AST_BUILTIN_TYPE:
         case AST_GENERIC_ARGUMENTS:
         case AST_POINTER_TYPE:
         case AST_REFERENCE_TYPE:

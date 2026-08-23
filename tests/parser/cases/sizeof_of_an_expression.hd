@@ -1,0 +1,4 @@
+# but a compound expression is not a type, and the reference's 'sizeof(expr)'
+# does not survive the sized types becoming words of their own
+def main : i32
+    return sizeof(node.value)

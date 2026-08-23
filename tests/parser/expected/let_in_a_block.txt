@@ -8,8 +8,7 @@ module
     binding_name
       identifier 'main'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       let_declaration 'let'
         binding
@@ -22,8 +21,7 @@ module
           binding_name
             identifier 'y'
           binding_type
-            named_type
-              identifier 'i32'
+            builtin_type 'i32'
           binding_expression
             plus '+'
               identifier 'x'

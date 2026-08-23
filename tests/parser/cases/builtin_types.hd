@@ -1,0 +1,13 @@
+def main : i32
+    let a : u8 = 0
+    let b : u16 = 0
+    let c : u32 = 0
+    let d : u64 = 0
+    let e : i8 = 0
+    let f : i16 = 0
+    let g : i64 = 0
+    let h : f32 = 0
+    let i : f64 = 0
+    let j : bool = true
+    let k : char = 'c'
+    return 0

@@ -6,8 +6,7 @@ module
       binding_name
         identifier 'x'
       binding_type
-        named_type
-          identifier 'i32'
+        builtin_type 'i32'
       binding_expression
         identifier 'y'
 --- round trip: ok

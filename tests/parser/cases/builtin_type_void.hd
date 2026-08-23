@@ -1,0 +1,5 @@
+# 'void' is a type like any other, and 'char' is not the char literal
+def nothing : void
+    let c : char = 'c'
+    let ok : bool = true
+    return

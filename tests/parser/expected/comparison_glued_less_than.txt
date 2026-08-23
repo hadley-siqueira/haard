@@ -1,8 +1,8 @@
-error: a comparison is written with spaces around it; glued to the name before it this opens a generic type argument list, which is not read in an expression yet
- --> cases/comparison_glued_less_than.hd:4:13
+error: expected '>', found the end of the file
+ --> cases/comparison_glued_less_than.hd:4:15
   |
 4 |     return a<b
-  |             ^
+  |               ^
 
 --- tree
 module

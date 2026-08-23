@@ -1,0 +1,4 @@
+# a plain name is a type as far as the grammar is concerned, so this parses and
+# a later phase decides whether 'x' is a type or a variable
+def main : i32
+    return sizeof(x)

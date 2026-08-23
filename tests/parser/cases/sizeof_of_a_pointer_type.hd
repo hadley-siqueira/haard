@@ -1,3 +1,0 @@
-# the reference takes an expression here, not a type, so 'i32*' does not parse
-def main : i32
-    return sizeof(i32*)

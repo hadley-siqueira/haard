@@ -11,12 +11,10 @@ module
         binding_name
           identifier 'r'
         binding_type
-          named_type
-            identifier 'u8'
+          builtin_type 'u8'
       field
         binding_name
           identifier 'g'
         binding_type
-          named_type
-            identifier 'u8'
+          builtin_type 'u8'
 --- round trip: ok

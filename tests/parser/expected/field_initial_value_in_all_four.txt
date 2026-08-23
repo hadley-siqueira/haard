@@ -16,8 +16,7 @@ module
         binding_name
           identifier 'a'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '1'
   struct 'struct'
@@ -28,8 +27,7 @@ module
         binding_name
           identifier 'b'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '2'
   union 'union'
@@ -40,8 +38,7 @@ module
         binding_name
           identifier 'c'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '3'
   enum 'enum'
@@ -52,8 +49,7 @@ module
         binding_name
           identifier 'd'
         binding_type
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
         binding_expression
           integer '4'
 --- round trip: ok

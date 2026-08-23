@@ -11,22 +11,19 @@ module
     binding_name
       identifier 'first'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       integer '1'
   function 'def'
     binding_name
       identifier 'second'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     param '@'
       binding_name
         identifier 'n'
       binding_type
-        named_type
-          identifier 'i32'
+        builtin_type 'i32'
     block
       times '*'
         identifier 'n'
@@ -35,8 +32,7 @@ module
     binding_name
       identifier 'third'
     function_return_type
-      named_type
-        identifier 'i32'
+      builtin_type 'i32'
     block
       pass 'pass'
 --- round trip: ok

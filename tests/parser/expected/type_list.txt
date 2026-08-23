@@ -7,6 +7,5 @@ module
         identifier 'x'
       binding_type
         list_type '['
-          named_type
-            identifier 'i32'
+          builtin_type 'i32'
 --- round trip: ok

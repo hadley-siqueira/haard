@@ -455,6 +455,14 @@ void PrettyPrinter::print_node(u32 node) {
             print_named_type(node);
             break;
 
+        case AST_BUILTIN_TYPE:
+            print_builtin_type(node);
+            break;
+
+        case AST_GENERIC_NAME:
+            print_generic_name(node);
+            break;
+
         case AST_GENERIC_ARGUMENTS:
             print_generic_arguments(node);
             break;
@@ -1101,6 +1109,17 @@ void PrettyPrinter::print_closure_return_type(u32 node) {
 // the name and, if there is one, the argument list written against it: the
 // spacing is the language's rule, not a style choice
 void PrettyPrinter::print_named_type(u32 node) {
+    print_children(node);
+}
+
+// which of the ten it is, is the token — the same arrangement a literal has
+void PrettyPrinter::print_builtin_type(u32 node) {
+    print_node_token(node);
+}
+
+// the name and its type arguments, written against each other: glued is what
+// makes them a type argument list rather than a comparison
+void PrettyPrinter::print_generic_name(u32 node) {
     print_children(node);
 }
 

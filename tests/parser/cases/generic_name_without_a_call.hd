@@ -1,0 +1,4 @@
+# the type arguments belong to the name, so a call is not required
+def main : i32
+    let a = make<i32>
+    return 0

@@ -1,0 +1,30 @@
+def nothing : void
+    let c : char = 'c'
+    let ok : bool = true
+    return
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'nothing'
+    function_return_type
+      builtin_type 'void'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_type
+            builtin_type 'char'
+          binding_expression
+            char ''c''
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'ok'
+          binding_type
+            builtin_type 'bool'
+          binding_expression
+            true 'true'
+      return 'return'
+--- round trip: ok

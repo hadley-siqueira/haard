@@ -73,6 +73,25 @@ static AstNodeKind assignment_kind(TokenKind kind) {
     return AST_UNKNOWN;
 }
 
+// whether the token is one of the builtin types. They are words of their own so
+// that 'i32' cannot quietly be a variable name, which is what made 'sizeof(i32)'
+// parse by accident before they existed. Everything else a type may name — a
+// 'String', a 'Node' — is still an ordinary identifier
+static bool is_builtin_type(TokenKind kind) {
+    switch (kind) {
+        case TK_U8: case TK_U16: case TK_U32: case TK_U64:
+        case TK_I8: case TK_I16: case TK_I32: case TK_I64:
+        case TK_F32: case TK_F64:
+        case TK_BOOL: case TK_VOID: case TK_CHAR:
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
 static AstNodeKind literal_kind(TokenKind kind) {
     switch (kind) {
         case TK_INTEGER_LITERAL: return AST_INTEGER_LITERAL;
@@ -1102,6 +1121,12 @@ u32 Parser::parse_primary_type() {
 
         expect_on_same_line(TK_RIGHT_CURLY_BRACKET);
         type = builder.make_hash_type(token, key, value);
+    } else if (is_builtin_type(current().get_kind())
+               && lookahead_on_same_line(current().get_kind())) {
+        u32 token = current_token;
+
+        advance();
+        type = builder.make_builtin_type(token);
     } else {
         type = parse_named_type();
     }
@@ -1356,18 +1381,17 @@ u32 Parser::parse_relational_expression() {
     u32 node = parse_range_expression();
 
     while (true) {
-        // Spacing decides generic from comparison, and this is where it bites
-        // in an expression: 'a < b' compares, 'a<b' opens a generic type
-        // argument list. That list is not read here yet, so glued is an error
-        // rather than a comparison — reading it as one now would silently
-        // change meaning the day generics arrive.
+        // Spacing decides generic from comparison, and this is where what is
+        // left of it lands. A '<' glued to a **name** never reaches here —
+        // the primary rule has already taken it as a type argument list. So
+        // anything glued that gets this far is glued to something that cannot
+        // carry one: a literal, a closing bracket, a call's result.
         if ((lookahead_on_same_line(TK_LESS_THAN)
              || lookahead_on_same_line(TK_GREATER_THAN))
             && glued_to_previous()) {
             error_at_current("a comparison is written with spaces around it; "
-                             "glued to the name before it this opens a generic "
-                             "type argument list, which is not read in an "
-                             "expression yet");
+                             "glued, this opens a generic argument list, and "
+                             "what is in front of it cannot take one");
             break;
         }
 
@@ -1695,22 +1719,27 @@ u32 Parser::parse_delete() {
     return builder.make_unary_operator(kind, token, parse_unary_expression());
 }
 
-// The reference takes an **expression** here, not a type, and that is kept. It
-// means 'sizeof(i32)' works because 'i32' is also a name, while 'sizeof(i32*)'
-// does not — worth revisiting when the type grammar is allowed in more places.
+// It takes a **type**, which is what asking for a size means. The reference took
+// an expression, and that only ever worked because 'i32' was an ordinary name
+// there; now that the sized types are words of their own it could not, and a
+// type is the honest answer anyway — 'sizeof(i32*)' and 'sizeof(Array<i32>)'
+// both work, where the reference managed neither.
 //
-//   sizeof := 'sizeof' '(' unary_expression ')'
+// A plain name is still a type as far as the grammar is concerned, so
+// 'sizeof(x)' parses; 'sizeof(a.b)' does not.
+//
+//   sizeof := 'sizeof' '(' type ')'
 u32 Parser::parse_sizeof() {
     u32 token = current_token;
 
     expect_on_same_line(TK_SIZEOF);
     expect_on_same_line(TK_LEFT_PARENTHESIS);
 
-    u32 expression = parse_unary_expression();
+    u32 type = parse_type();
 
     expect_on_same_line(TK_RIGHT_PARENTHESIS);
 
-    return builder.make_sizeof(token, expression);
+    return builder.make_sizeof(token, type);
 }
 
 // Tighter than every binary operator and left associative, so 'a.b.c' is
@@ -1837,7 +1866,22 @@ u32 Parser::parse_primary_expression() {
 
     if (lookahead_on_same_line(TK_SCOPE)
         || lookahead_on_same_line(TK_IDENTIFIER)) {
-        return parse_scope();
+        u32 name = parse_scope();
+
+        // 'make<i32>()' — a generic called with its types written out. The
+        // list is only read when the '<' is glued to the name, which is the
+        // spacing rule doing the disambiguating: spaced, it is a comparison
+        // and belongs to the relational level instead.
+        //
+        // Only a name takes one. A literal cannot, which is what keeps the
+        // relational level's own check reachable for '1 < 2' written glued.
+        if (name != 0
+            && lookahead_on_same_line(TK_LESS_THAN)
+            && glued_to_previous()) {
+            return builder.make_generic_name(name, parse_generic_arguments());
+        }
+
+        return name;
     }
 
     // reported here rather than left to the scope rule, which would say it
