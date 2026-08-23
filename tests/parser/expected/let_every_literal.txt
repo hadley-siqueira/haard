@@ -37,7 +37,7 @@ module
       binding_name
         identifier 'e'
       binding_expression
-        char ''\n''
+        char ''\\n''
   const_declaration 'const'
     binding
       binding_name

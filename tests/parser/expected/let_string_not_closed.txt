@@ -1,0 +1,16 @@
+error: unterminated string literal
+ --> cases/let_string_not_closed.hd:1:9
+  |
+1 | let x = "a
+  |         ^^
+let x = "a
+
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        string '"a\n'
+--- round trip: skipped, the input did not scan

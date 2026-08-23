@@ -1,0 +1,9 @@
+error: expected an identifier, found '>'
+ --> cases/def_generic_empty.hd:1:11
+  |
+1 | def main< > : i32
+  |           ^
+
+--- tree
+module
+--- round trip: ok

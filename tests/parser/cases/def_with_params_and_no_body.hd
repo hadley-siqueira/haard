@@ -1,0 +1,2 @@
+def write : Unit
+    @message : String

@@ -1,0 +1,1 @@
+def main<T : i32

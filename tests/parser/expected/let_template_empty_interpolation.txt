@@ -1,0 +1,9 @@
+error: expected an expression, found '}'
+ --> cases/let_template_empty_interpolation.hd:1:12
+  |
+1 | let x = "${}"
+  |            ^
+
+--- tree
+module
+--- round trip: ok

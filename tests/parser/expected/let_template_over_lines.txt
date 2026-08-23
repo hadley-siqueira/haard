@@ -1,0 +1,16 @@
+let x = "multi
+${v}
+line"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '"'
+          template_string_chunk 'multi\n'
+          interpolation '${'
+            identifier 'v'
+          template_string_chunk '\nline'
+--- round trip: ok

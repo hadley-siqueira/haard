@@ -1,0 +1,18 @@
+def main : i32
+    @argc : i32
+    argc
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    param '@'
+      binding_name
+        identifier 'argc'
+      binding_type
+        identifier 'i32'
+    function_body
+      identifier 'argc'
+--- round trip: ok

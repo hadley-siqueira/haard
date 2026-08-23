@@ -1,0 +1,14 @@
+error: expected a declaration, found 'a'
+ --> cases/def_indented_header.hd:4:3
+  |
+4 |   a
+  |   ^
+def main : i32
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+--- round trip: ok

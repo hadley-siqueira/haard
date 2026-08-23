@@ -1,0 +1,15 @@
+def write : Unit
+    @message : String
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'write'
+    function_return_type
+      identifier 'Unit'
+    param '@'
+      binding_name
+        identifier 'message'
+      binding_type
+        identifier 'String'
+--- round trip: ok

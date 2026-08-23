@@ -1,0 +1,24 @@
+error: unterminated template string
+ --> cases/let_template_not_closed.hd:1:9
+  |
+1 | let x = "${i
+  |         ^^^^
+error: unterminated interpolation in template string
+ --> cases/let_template_not_closed.hd:1:10
+  |
+1 | let x = "${i
+  |          ^^
+error: expected '}', found the end of the line
+ --> cases/let_template_not_closed.hd:1:13
+  |
+1 | let x = "${i
+  |             ^
+error: expected a declaration, found ''
+ --> cases/let_template_not_closed.hd:2:1
+  |
+2 | 
+  | ^
+
+--- tree
+module
+--- round trip: skipped, the input did not scan

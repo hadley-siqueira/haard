@@ -1,0 +1,24 @@
+def pair<K, V> : Pair
+    @key : K
+    @value : V
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'pair'
+    generic_parameters '<'
+      identifier 'K'
+      identifier 'V'
+    function_return_type
+      identifier 'Pair'
+    param '@'
+      binding_name
+        identifier 'key'
+      binding_type
+        identifier 'K'
+    param '@'
+      binding_name
+        identifier 'value'
+      binding_type
+        identifier 'V'
+--- round trip: ok

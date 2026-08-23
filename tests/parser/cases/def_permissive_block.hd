@@ -1,0 +1,4 @@
+# a block is permissive: deeper than the header is inside, aligned or not
+def main : i32
+        @argc : i32
+  argc

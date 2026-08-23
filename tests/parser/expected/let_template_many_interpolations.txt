@@ -1,0 +1,17 @@
+let x = 'Hello, ${name}! You are ${age} years old'
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '''
+          template_string_chunk 'Hello, '
+          interpolation '${'
+            identifier 'name'
+          template_string_chunk '! You are '
+          interpolation '${'
+            identifier 'age'
+          template_string_chunk ' years old'
+--- round trip: ok

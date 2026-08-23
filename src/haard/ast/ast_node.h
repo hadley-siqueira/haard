@@ -13,6 +13,10 @@ namespace haard {
         AST_IMPORT_ALIAS,
         AST_LET_DECLARATION,
         AST_CONST_DECLARATION,
+        AST_FUNCTION,
+        AST_GENERIC_PARAMETERS,
+        AST_FUNCTION_RETURN_TYPE,
+        AST_FUNCTION_BODY,
         AST_PARAM,
         AST_BINDING,
         AST_BINDING_NAME,
@@ -33,6 +37,9 @@ namespace haard {
         AST_SYMBOL_LITERAL,
         AST_TRUE,
         AST_FALSE,
+        AST_TEMPLATE_STRING,
+        AST_TEMPLATE_STRING_CHUNK,
+        AST_INTERPOLATION,
     } AstNodeKind;
 
     class AstNode {

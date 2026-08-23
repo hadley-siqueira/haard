@@ -1,0 +1,16 @@
+def main : i32
+const x = 1
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        integer '1'
+--- round trip: ok

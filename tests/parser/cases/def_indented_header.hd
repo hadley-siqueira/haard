@@ -1,0 +1,4 @@
+# the body has to be deeper than the header line, not deeper than the margin:
+# 'a' is less indented than 'def', so it is not the body
+    def main : i32
+  a

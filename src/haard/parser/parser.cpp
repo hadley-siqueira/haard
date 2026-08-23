@@ -7,11 +7,18 @@ using namespace haard;
 static std::string describe(TokenKind kind) {
     switch (kind) {
         case TK_IMPORT: return "'import'";
+        case TK_DEF: return "'def'";
+        case TK_AT: return "'@'";
+        case TK_COLON: return "':'";
+        case TK_COMMA: return "','";
+        case TK_GREATER_THAN: return "'>'";
         case TK_LET: return "'let'";
         case TK_CONST: return "'const'";
         case TK_AS: return "'as'";
         case TK_DOT: return "'.'";
         case TK_LEFT_PARENTHESIS: return "'('";
+        case TK_TEMPLATE_STRING_END: return "the end of the template string";
+        case TK_INTERPOLATION_END: return "'}'";
         case TK_RIGHT_PARENTHESIS: return "')'";
         case TK_IDENTIFIER: return "an identifier";
         case TK_EOF: return "the end of the file";
@@ -45,7 +52,9 @@ Parser::Parser() {
     logger = nullptr;
     current_token = 0;
     matched = 0;
+    statement_first_token = 0;
     panic = false;
+    indentation_stack.push_back(0);
 }
 
 void Parser::set_context(Context* context) {
@@ -59,7 +68,11 @@ void Parser::set_context(Context* context) {
 u32 Parser::parse() {
     current_token = 0;
     matched = 0;
+    statement_first_token = 0;
     panic = false;
+
+    indentation_stack.clear();
+    indentation_stack.push_back(0);
 
     return parse_module();
 }
@@ -74,6 +87,9 @@ u32 Parser::parse_module() {
         // lines it opened down with it
         u32 indentation = indentation_of_current_line();
         u32 start = current_token;
+
+        begin_statement();
+
         u32 child = parse_declaration();
 
         // one of the two places that know about panic mode: the recovery point
@@ -91,7 +107,7 @@ u32 Parser::parse_module() {
 // the word a statement opens with is what picks the rule, so a token that
 // opens none of them is the one error this level reports by itself
 //
-//   declaration := import | let_declaration | const_declaration
+//   declaration := import | let_declaration | const_declaration | function
 u32 Parser::parse_declaration() {
     if (lookahead(TK_IMPORT)) {
         return parse_import();
@@ -103,6 +119,10 @@ u32 Parser::parse_declaration() {
 
     if (lookahead(TK_CONST)) {
         return parse_const_declaration();
+    }
+
+    if (lookahead(TK_DEF)) {
+        return parse_function();
     }
 
     error_found("a declaration", false);
@@ -177,6 +197,143 @@ u32 Parser::parse_const_declaration() {
     return builder.make_const_declaration(token, parse_binding());
 }
 
+// The first rule with a body, and so the first one that opens a block. Two
+// things to keep in mind while it grows:
+//
+//   - **it has exactly one exit.** The indentation stack is state, and a
+//     poisoned parser returns early from everywhere, so a 'return' between the
+//     indent and the dedent would leak a level onto the stack and every block
+//     read after it would measure against the wrong line. The loops below stop
+//     by themselves in panic, which is what makes a single exit possible;
+//   - the header line's own indentation is what gets pushed, so anything
+//     deeper is inside. Aligned or not — see the permissive block rule.
+//
+//   function := 'def' identifier generic_parameters? ':' type param* body?
+u32 Parser::parse_function() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    expect(TK_DEF);
+
+    u32 node = builder.make_function(token);
+    u32 last = builder.add_child(node, 0, parse_binding_name());
+
+    last = builder.add_child(node, last, parse_generic_parameters());
+
+    expect_on_same_line(TK_COLON);
+
+    last = builder.add_child(node, last, parse_function_return_type());
+
+    indent(indentation);
+
+    // a parameter is written on a line of its own inside the function, which
+    // is why the block has to be open before they are read. The old compiler
+    // needed three tokens of lookahead here to tell '@name : Type' from an
+    // annotation; there are no annotations yet, so the '@' is enough
+    while (is_indented() && lookahead(TK_AT)) {
+        last = builder.add_child(node, last, parse_param());
+    }
+
+    builder.add_child(node, last, parse_function_body());
+
+    dedent();
+
+    return node;
+}
+
+// 'Foo<T>' glued is a generic and 'a < b' spaced is a comparison, and this is
+// the first place the language gets to say so. Nothing is ambiguous in a
+// declaration header — a '<' after the name can only open this list — so the
+// check is not there to disambiguate, it is there because the spacing is the
+// rule and a rule nobody enforces is a suggestion
+//
+//   generic_parameters := '<' identifier (',' identifier)* '>'
+u32 Parser::parse_generic_parameters() {
+    if (!lookahead_on_same_line(TK_LESS_THAN)) {
+        return 0;
+    }
+
+    if (!glued_to_previous()) {
+        error_at_current("a generic parameter list is written glued to the "
+                         "name it belongs to");
+        return 0;
+    }
+
+    u32 token = current_token;
+
+    expect_on_same_line(TK_LESS_THAN);
+
+    u32 node = builder.make_generic_parameters(token);
+    u32 last = builder.add_child(node, 0, parse_identifier());
+
+    while (match_on_same_line(TK_COMMA)) {
+        last = builder.add_child(node, last, parse_identifier());
+    }
+
+    expect_on_same_line(TK_GREATER_THAN);
+
+    return node;
+}
+
+u32 Parser::parse_function_return_type() {
+    u32 type = parse_type();
+
+    if (type == 0) {
+        return 0;
+    }
+
+    return builder.make_function_return_type(type);
+}
+
+// one expression, and only for now: what belongs here is a block of statements,
+// and neither statements nor blocks of them exist yet. The expression opens a
+// line of its own, which is why the statement mark has to move before it is
+// read — see begin_statement
+u32 Parser::parse_function_body() {
+    if (!is_indented()) {
+        return 0;
+    }
+
+    begin_statement();
+
+    u32 expression = parse_expression();
+
+    if (expression == 0) {
+        return 0;
+    }
+
+    return builder.make_function_body(expression);
+}
+
+//   param := '@' identifier ':' type
+u32 Parser::parse_param() {
+    u32 token = current_token;
+
+    begin_statement();
+    expect(TK_AT);
+
+    u32 name = parse_binding_name();
+    u32 type = parse_param_type();
+
+    return builder.make_param(token, name, type);
+}
+
+// the type of a parameter is not optional, unlike a let binding's: a parameter
+// with no type gives the caller nothing to be checked against
+u32 Parser::parse_param_type() {
+    if (!expect_on_same_line(TK_COLON)) {
+        return 0;
+    }
+
+    u32 type = parse_type();
+
+    if (type == 0) {
+        return 0;
+    }
+
+    return builder.make_binding_type(type);
+}
+
 // the three parts are read into locals first: as arguments they would be
 // evaluated in whatever order the compiler picked, and the parser reads a
 // stream, so the order is the meaning
@@ -233,6 +390,72 @@ u32 Parser::parse_binding_expression() {
     }
 
     return builder.make_binding_expression(expression);
+}
+
+// A template string is the one literal that is not one token: the scanner cuts
+// it into the quote, the text between the interpolations, and the tokens that
+// open and close each of them. So it is read as a list, and the node grows the
+// way every other list node here does.
+//
+// The pieces do not need the line rule relaxed, even though the string may span
+// lines: the scanner does not set 'newline_before' inside a template, because
+// the chunk before a token is what consumed the newline. A template that spans
+// five lines is still one line as far as the statement rule is concerned.
+//
+//   template_string := BEGIN (chunk | interpolation)* END
+u32 Parser::parse_template_string() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_TEMPLATE_STRING_BEGIN);
+
+    u32 node = builder.make_template_string(token);
+    u32 last = 0;
+
+    // the condition and the two rules test the same thing, so a round that
+    // enters the loop always consumes a token. Without that a scanner left in a
+    // strange state after an unterminated string would spin here, which is what
+    // the runner's timeout exists to catch
+    while (lookahead_on_same_line(TK_TEMPLATE_STRING_CHUNK)
+           || lookahead_on_same_line(TK_INTERPOLATION_BEGIN)) {
+        if (lookahead_on_same_line(TK_TEMPLATE_STRING_CHUNK)) {
+            last = builder.add_child(node, last, parse_template_string_chunk());
+        } else {
+            last = builder.add_child(node, last, parse_interpolation());
+        }
+    }
+
+    expect_on_same_line(TK_TEMPLATE_STRING_END);
+
+    return node;
+}
+
+// the scanner puts a chunk on both sides of every interpolation, so '${x}' is
+// really an empty chunk, the interpolation, and another empty chunk. An empty
+// one is text that was never written, and a node for it would be noise in every
+// tree: the token is consumed and 0 given back, which add_child skips
+u32 Parser::parse_template_string_chunk() {
+    if (!match_on_same_line(TK_TEMPLATE_STRING_CHUNK)) {
+        return 0;
+    }
+
+    if (tokens->get_token(matched).get_length() == 0) {
+        return 0;
+    }
+
+    return builder.make_template_string_chunk(matched);
+}
+
+//   interpolation := '${' expression '}'
+u32 Parser::parse_interpolation() {
+    u32 token = current_token;
+
+    expect_on_same_line(TK_INTERPOLATION_BEGIN);
+
+    u32 expression = parse_expression();
+
+    expect_on_same_line(TK_INTERPOLATION_END);
+
+    return builder.make_interpolation(token, expression);
 }
 
 //   type := identifier
@@ -307,6 +530,10 @@ u32 Parser::parse_term_expression() {
 u32 Parser::parse_primary_expression() {
     if (lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
         return parse_parenthesis();
+    }
+
+    if (lookahead_on_same_line(TK_TEMPLATE_STRING_BEGIN)) {
+        return parse_template_string();
     }
 
     // a token that is not a literal is left where it is, so the scope rule
@@ -436,8 +663,48 @@ bool Parser::expect(TokenKind kind) {
     return false;
 }
 
+// the token that opens a statement always begins a line, so the rule cannot be
+// applied to it — it is what starts the line the rest has to stay on. Every
+// other rule reads its first token with the plain 'expect', which is why this
+// only started to matter with the function body, an expression that opens a
+// line of its own
 bool Parser::on_same_line() {
-    return !current().get_newline_before();
+    return current_token == statement_first_token
+        || !current().get_newline_before();
+}
+
+void Parser::begin_statement() {
+    statement_first_token = current_token;
+}
+
+// nothing at all between the two tokens: no space, no comment, no line break
+bool Parser::glued_to_previous() {
+    if (current_token == 0) {
+        return false;
+    }
+
+    Token& previous = tokens->get_token(current_token - 1);
+
+    return previous.get_offset() + previous.get_length() == current().get_offset();
+}
+
+void Parser::indent(u32 indentation) {
+    indentation_stack.push_back(indentation);
+}
+
+void Parser::dedent() {
+    // the 0 the stack is born with is not a level anyone pushed, so it stays
+    if (indentation_stack.size() > 1) {
+        indentation_stack.pop_back();
+    }
+}
+
+// inert in panic like every other predicate, so the loops that read a block
+// stop by themselves instead of each one checking the flag
+bool Parser::is_indented() {
+    return !panic
+        && current().get_kind() != TK_EOF
+        && indentation_of_current_line() > indentation_stack.back();
 }
 
 bool Parser::lookahead_on_same_line(TokenKind kind) {
@@ -498,7 +765,12 @@ void Parser::error_found(const std::string& expectation, bool same_line) {
 
     Token& token = current();
     bool at_end_of_file = token.get_kind() == TK_EOF;
-    bool at_end_of_line = same_line && token.get_newline_before();
+
+    // the line ran out exactly when the line rule says it did, which is not the
+    // same as 'this token opens a line': the token that opens the statement
+    // being read is the one exception, and blaming the line above it would
+    // point the caret at somebody else's code
+    bool at_end_of_line = same_line && !on_same_line();
 
     // what was needed never came: pointing at the first token of the next line
     // would blame a line that has nothing to do with it, so the caret goes just
@@ -522,6 +794,20 @@ void Parser::error_found(const std::string& expectation, bool same_line) {
 // the second half of the recovery: throw away what is left of the line that
 // failed, and the lines it opened. Everything indented deeper than the line the
 // statement started on belonged to it
+// for a rule that has a token in front of it and something to say about it,
+// rather than a kind it was hoping for
+void Parser::error_at_current(const std::string& message) {
+    if (panic) {
+        return;
+    }
+
+    panic = true;
+
+    Token& token = current();
+
+    logger->error(token.get_offset(), token.get_length(), message);
+}
+
 void Parser::synchronize(u32 statement_indentation, u32 statement_start) {
     panic = false;
 

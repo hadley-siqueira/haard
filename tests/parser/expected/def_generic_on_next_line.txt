@@ -1,0 +1,14 @@
+error: expected ':', found the end of the line
+ --> cases/def_generic_on_next_line.hd:1:9
+  |
+1 | def main
+  |         ^
+error: expected a declaration, found '<'
+ --> cases/def_generic_on_next_line.hd:2:1
+  |
+2 | <T> : i32
+  | ^
+
+--- tree
+module
+--- round trip: ok

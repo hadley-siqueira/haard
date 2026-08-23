@@ -1,0 +1,35 @@
+def first : i32
+    1
+def second : i32
+    @n : i32
+    n * 2
+def third : i32
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'first'
+    function_return_type
+      identifier 'i32'
+    function_body
+      integer '1'
+  function 'def'
+    binding_name
+      identifier 'second'
+    function_return_type
+      identifier 'i32'
+    param '@'
+      binding_name
+        identifier 'n'
+      binding_type
+        identifier 'i32'
+    function_body
+      times '*'
+        identifier 'n'
+        integer '2'
+  function 'def'
+    binding_name
+      identifier 'third'
+    function_return_type
+      identifier 'i32'
+--- round trip: ok

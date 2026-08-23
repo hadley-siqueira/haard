@@ -1,0 +1,9 @@
+error: expected '>', found ':'
+ --> cases/def_generic_many_not_closed.hd:1:15
+  |
+1 | def main<T, U : i32
+  |               ^
+
+--- tree
+module
+--- round trip: ok

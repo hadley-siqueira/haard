@@ -1,0 +1,17 @@
+error: expected a declaration, found 'b'
+ --> cases/def_two_expressions.hd:4:5
+  |
+4 |     b
+  |     ^
+def main : i32
+    a
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    function_body
+      identifier 'a'
+--- round trip: ok

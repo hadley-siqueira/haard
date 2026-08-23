@@ -1,0 +1,20 @@
+def identity<T> : T
+    @value : T
+    value
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'identity'
+    generic_parameters '<'
+      identifier 'T'
+    function_return_type
+      identifier 'T'
+    param '@'
+      binding_name
+        identifier 'value'
+      binding_type
+        identifier 'T'
+    function_body
+      identifier 'value'
+--- round trip: ok

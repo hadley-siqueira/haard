@@ -56,6 +56,13 @@ namespace haard {
             u32 make_let_declaration(u32 token, u32 binding);
             u32 make_const_declaration(u32 token, u32 binding);
 
+            // a list node: the name, the generic parameters, the return
+            // type, the parameters and the body are appended as they are read
+            u32 make_function(u32 token);
+            u32 make_generic_parameters(u32 token);
+            u32 make_function_return_type(u32 child);
+            u32 make_function_body(u32 child);
+
             u32 make_param(u32 token, u32 name, u32 type);
             u32 make_binding(u32 name, u32 type, u32 expression);
             u32 make_binding_name(u32 child);
@@ -75,6 +82,12 @@ namespace haard {
             // every literal is the same node: a kind and the token it was
             // written as, which is also how it is written back
             u32 make_literal(AstNodeKind kind, u32 token);
+
+            // a list node: it is born holding only its quote and grows one
+            // chunk or interpolation at a time, the way the parser reads them
+            u32 make_template_string(u32 token);
+            u32 make_template_string_chunk(u32 token);
+            u32 make_interpolation(u32 token, u32 expression);
 
         private:
             u32 make_node(AstNodeKind kind, u32 token);

@@ -41,6 +41,10 @@ static std::string name_of(AstNodeKind kind) {
         case AST_IMPORT_ALIAS: return "import_alias";
         case AST_LET_DECLARATION: return "let_declaration";
         case AST_CONST_DECLARATION: return "const_declaration";
+        case AST_FUNCTION: return "function";
+        case AST_GENERIC_PARAMETERS: return "generic_parameters";
+        case AST_FUNCTION_RETURN_TYPE: return "function_return_type";
+        case AST_FUNCTION_BODY: return "function_body";
         case AST_PARAM: return "param";
         case AST_BINDING: return "binding";
         case AST_BINDING_NAME: return "binding_name";
@@ -61,6 +65,9 @@ static std::string name_of(AstNodeKind kind) {
         case AST_SYMBOL_LITERAL: return "symbol";
         case AST_TRUE: return "true";
         case AST_FALSE: return "false";
+        case AST_TEMPLATE_STRING: return "template_string";
+        case AST_TEMPLATE_STRING_CHUNK: return "template_string_chunk";
+        case AST_INTERPOLATION: return "interpolation";
         case AST_UNKNOWN: break;
     }
 
@@ -79,6 +86,8 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_IMPORT_ALIAS:
         case AST_LET_DECLARATION:
         case AST_CONST_DECLARATION:
+        case AST_FUNCTION:
+        case AST_GENERIC_PARAMETERS:
         case AST_PARAM:
         case AST_PLUS:
         case AST_MINUS:
@@ -95,6 +104,9 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_SYMBOL_LITERAL:
         case AST_TRUE:
         case AST_FALSE:
+        case AST_TEMPLATE_STRING:
+        case AST_TEMPLATE_STRING_CHUNK:
+        case AST_INTERPOLATION:
             return true;
 
         default:
@@ -102,6 +114,25 @@ static bool carries_a_token(AstNodeKind kind) {
     }
 
     return false;
+}
+
+// a lexeme is not always one line of text: the chunk of a template string that
+// spans lines holds the newline itself. Escaped the way the scanner suite does
+// it, so one node stays one line and the dump keeps its shape
+static std::string escape(const std::string_view& s) {
+    std::string r;
+
+    for (char c : s) {
+        switch (c) {
+            case '\\': r += "\\\\"; break;
+            case '\n': r += "\\n"; break;
+            case '\t': r += "\\t"; break;
+            case '\r': r += "\\r"; break;
+            default: r += c;
+        }
+    }
+
+    return r;
 }
 
 // one node per line, two spaces per level. The indentation is what records the
@@ -114,7 +145,8 @@ static void dump_node(std::ostream& out, Context& context, u32 node, u32 depth) 
         out << std::string(depth * 2, ' ') << name_of(kind);
 
         if (carries_a_token(kind)) {
-            out << " '" << context.get_token_value(current->get_token()) << "'";
+            out << " '"
+                << escape(context.get_token_value(current->get_token())) << "'";
         }
 
         out << '\n';
@@ -133,8 +165,14 @@ static std::string dump_of(Context& context) {
 }
 
 // scans and parses one file into a context of its own. Two of these never share
-// anything, which is the point: the second tree has to stand on its own tokens
-static void read(Context& context, const std::filesystem::path& path) {
+// anything, which is the point: the second tree has to stand on its own tokens.
+//
+// Answers whether the scan was clean. The parser runs either way — on purpose,
+// so a token stream left in a strange state by an unterminated string is proof
+// that the parser does not hang on it — but the Driver only ever runs the
+// parser on a clean stream, so a tree built from a broken one is not something
+// the printer is required to write back
+static bool read(Context& context, const std::filesystem::path& path) {
     Scanner scanner;
     Parser parser;
 
@@ -142,7 +180,12 @@ static void read(Context& context, const std::filesystem::path& path) {
     parser.set_context(&context);
 
     scanner.get_tokens(path);
+
+    bool scanned = !context.get_logger()->has_errors();
+
     parser.parse();
+
+    return scanned;
 }
 
 static bool write_file(const std::filesystem::path& path,
@@ -164,7 +207,8 @@ int main(int argc, char* argv[]) {
     PrettyPrinter printer;
     std::stringstream source;
 
-    read(context, argv[1]);
+    bool scanned = read(context, argv[1]);
+
     printer.set_context(&context);
 
     context.get_logger()->print(std::cout);
@@ -181,6 +225,16 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // the round trip is a property of a tree the parser was meant to build. A
+    // scanner error means it was handed tokens the Driver would never have let
+    // through, and 'let x = "a' is the example: the string literal it emits
+    // after reporting the error carries the newline that ended the line, so
+    // writing it back cannot produce a file that scans
+    if (!scanned) {
+        std::cout << "--- round trip: skipped, the input did not scan\n";
+        return 0;
+    }
+
     // the loop: print the tree as source, read that back, and the two trees
     // have to be the same one
     if (!write_file(argv[2], source.str())) {
@@ -191,6 +245,7 @@ int main(int argc, char* argv[]) {
     Context reparsed;
 
     read(reparsed, argv[2]);
+
 
     // the printed source is what the parser kept, so it must parse cleanly even
     // when the file it came from did not

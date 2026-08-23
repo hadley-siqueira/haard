@@ -1,0 +1,9 @@
+error: expected '}', found '('
+ --> cases/let_template_with_a_call.hd:1:13
+  |
+1 | let x = "${f(a)}"
+  |             ^
+
+--- tree
+module
+--- round trip: ok

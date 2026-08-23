@@ -1,0 +1,12 @@
+let x = "${i}"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '"'
+          interpolation '${'
+            identifier 'i'
+--- round trip: ok

@@ -76,6 +76,30 @@ u32 AstBuilder::make_const_declaration(u32 token, u32 binding) {
     return node;
 }
 
+u32 AstBuilder::make_function(u32 token) {
+    return make_node(AST_FUNCTION, token);
+}
+
+u32 AstBuilder::make_generic_parameters(u32 token) {
+    return make_node(AST_GENERIC_PARAMETERS, token);
+}
+
+u32 AstBuilder::make_function_return_type(u32 child) {
+    u32 node = make_node(AST_FUNCTION_RETURN_TYPE, 0);
+
+    add_child(node, 0, child);
+
+    return node;
+}
+
+u32 AstBuilder::make_function_body(u32 child) {
+    u32 node = make_node(AST_FUNCTION_BODY, 0);
+
+    add_child(node, 0, child);
+
+    return node;
+}
+
 u32 AstBuilder::make_param(u32 token, u32 name, u32 type) {
     u32 node = make_node(AST_PARAM, token);
 
@@ -159,6 +183,24 @@ u32 AstBuilder::make_identifier(u32 token) {
 
 u32 AstBuilder::make_literal(AstNodeKind kind, u32 token) {
     return make_node(kind, token);
+}
+
+// the token is the opening quote, and it is the only record of which quote the
+// source used: the printer writes it at both ends
+u32 AstBuilder::make_template_string(u32 token) {
+    return make_node(AST_TEMPLATE_STRING, token);
+}
+
+u32 AstBuilder::make_template_string_chunk(u32 token) {
+    return make_node(AST_TEMPLATE_STRING_CHUNK, token);
+}
+
+u32 AstBuilder::make_interpolation(u32 token, u32 expression) {
+    u32 node = make_node(AST_INTERPOLATION, token);
+
+    add_child(node, 0, expression);
+
+    return node;
 }
 
 u32 AstBuilder::make_node(AstNodeKind kind, u32 token) {

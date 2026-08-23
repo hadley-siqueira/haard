@@ -1,0 +1,16 @@
+let x = "${a + b * c}"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '"'
+          interpolation '${'
+            plus '+'
+              identifier 'a'
+              times '*'
+                identifier 'b'
+                identifier 'c'
+--- round trip: ok

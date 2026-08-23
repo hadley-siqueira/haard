@@ -1,0 +1,13 @@
+let x = "the value of i = ${i}"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '"'
+          template_string_chunk 'the value of i = '
+          interpolation '${'
+            identifier 'i'
+--- round trip: ok

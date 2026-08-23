@@ -1,0 +1,9 @@
+error: a generic parameter list is written glued to the name it belongs to
+ --> cases/def_generic_spaced.hd:1:10
+  |
+1 | def main <T> : i32
+  |          ^
+
+--- tree
+module
+--- round trip: ok

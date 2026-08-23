@@ -6,6 +6,7 @@ using namespace haard;
 PrettyPrinter::PrettyPrinter() {
     context = nullptr;
     ast = nullptr;
+    indentation = 0;
 }
 
 bool PrettyPrinter::print(std::ostream& out) {
@@ -16,6 +17,7 @@ bool PrettyPrinter::print(std::ostream& out) {
     }
 
     output.str("");
+    indentation = 0;
     print_node(root);
     out << output.str() << '\n';
 
@@ -56,6 +58,22 @@ void PrettyPrinter::print_node(u32 node) {
 
         case AST_CONST_DECLARATION:
             print_const_declaration(node);
+            break;
+
+        case AST_FUNCTION:
+            print_function(node);
+            break;
+
+        case AST_GENERIC_PARAMETERS:
+            print_generic_parameters(node);
+            break;
+
+        case AST_FUNCTION_RETURN_TYPE:
+            print_function_return_type(node);
+            break;
+
+        case AST_FUNCTION_BODY:
+            print_function_body(node);
             break;
 
         case AST_PARAM:
@@ -122,6 +140,18 @@ void PrettyPrinter::print_node(u32 node) {
             print_literal(node);
             break;
 
+        case AST_TEMPLATE_STRING:
+            print_template_string(node);
+            break;
+
+        case AST_TEMPLATE_STRING_CHUNK:
+            print_template_string_chunk(node);
+            break;
+
+        case AST_INTERPOLATION:
+            print_interpolation(node);
+            break;
+
         // a node kind with no case here would otherwise vanish from the
         // output without a trace, which is the worst way to find out that one
         // is missing
@@ -160,6 +190,43 @@ void PrettyPrinter::print_let_declaration(u32 node) {
 
 void PrettyPrinter::print_const_declaration(u32 node) {
     print_string("const ");
+    print_children(node);
+}
+
+// the header is one line and the parameters and the body are lines of their
+// own inside it, so which part goes where is decided by the kind of each child
+void PrettyPrinter::print_function(u32 node) {
+    print_string("def ");
+    ++indentation;
+
+    u32 child = ast->get_node(node)->get_children();
+
+    while (child != 0) {
+        AstNodeKind kind = ast->get_node(child)->get_kind();
+
+        if (kind == AST_PARAM || kind == AST_FUNCTION_BODY) {
+            print_new_line();
+        }
+
+        print_node(child);
+        child = ast->get_node(child)->get_sibling();
+    }
+
+    --indentation;
+}
+
+void PrettyPrinter::print_generic_parameters(u32 node) {
+    print_string("<");
+    print_children_joined(node, ", ");
+    print_string(">");
+}
+
+void PrettyPrinter::print_function_return_type(u32 node) {
+    print_string(" : ");
+    print_children(node);
+}
+
+void PrettyPrinter::print_function_body(u32 node) {
     print_children(node);
 }
 
@@ -239,6 +306,26 @@ void PrettyPrinter::print_literal(u32 node) {
     print_node_token(node);
 }
 
+// the node's token is the opening quote, and a template string is closed by the
+// same character it was opened with, so one token writes both ends. It has to
+// come from the token: the source chose between ' and " and the tree is where
+// that choice is kept
+void PrettyPrinter::print_template_string(u32 node) {
+    print_node_token(node);
+    print_children(node);
+    print_node_token(node);
+}
+
+void PrettyPrinter::print_template_string_chunk(u32 node) {
+    print_node_token(node);
+}
+
+void PrettyPrinter::print_interpolation(u32 node) {
+    print_string("${");
+    print_children(node);
+    print_string("}");
+}
+
 void PrettyPrinter::print_children(u32 node) {
     u32 child = ast->get_node(node)->get_children();
 
@@ -273,6 +360,10 @@ void PrettyPrinter::print_token(u32 token) {
 
 void PrettyPrinter::print_string(const std::string_view& s) {
     output << s;
+}
+
+void PrettyPrinter::print_new_line() {
+    output << '\n' << std::string(indentation * 4, ' ');
 }
 
 

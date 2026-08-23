@@ -1,0 +1,9 @@
+error: expected an expression, found the end of the file
+ --> cases/def_body_broken.hd:2:8
+  |
+2 |     a +
+  |        ^
+
+--- tree
+module
+--- round trip: ok

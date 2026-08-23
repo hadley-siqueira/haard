@@ -26,6 +26,11 @@ namespace haard {
             void print_let_declaration(u32 node);
             void print_const_declaration(u32 node);
 
+            void print_function(u32 node);
+            void print_generic_parameters(u32 node);
+            void print_function_return_type(u32 node);
+            void print_function_body(u32 node);
+
             void print_param(u32 node);
             void print_binding(u32 node);
             void print_binding_name(u32 node);
@@ -44,6 +49,10 @@ namespace haard {
             // every literal prints the same way: the lexeme it was written as
             void print_literal(u32 node);
 
+            void print_template_string(u32 node);
+            void print_template_string_chunk(u32 node);
+            void print_interpolation(u32 node);
+
         public:
             void print_children(u32 node);
             void print_children_joined(u32 node, const std::string& sep);
@@ -53,6 +62,11 @@ namespace haard {
 
             void print_string(const std::string_view& s);
 
+            // a line break followed by the current indentation. Four spaces a
+            // level: the block rule accepts any depth, so what comes out is
+            // one depth rather than the one that went in
+            void print_new_line();
+
         public:
             void set_context(Context* context);
 
@@ -60,6 +74,7 @@ namespace haard {
             std::stringstream output;
             Context* context;
             Ast* ast;
+            u32 indentation;
     };
 }
 

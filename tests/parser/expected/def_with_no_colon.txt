@@ -1,0 +1,9 @@
+error: expected ':', found the end of the file
+ --> cases/def_with_no_colon.hd:1:9
+  |
+1 | def main
+  |         ^
+
+--- tree
+module
+--- round trip: ok

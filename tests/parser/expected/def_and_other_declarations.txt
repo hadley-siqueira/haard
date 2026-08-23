@@ -1,0 +1,35 @@
+import std.io as io
+const limit : i32 = 100
+def clamp : i32
+    @n : i32
+    n % limit
+--- tree
+module
+  import 'import'
+    import_path
+      import_path_segment 'std'
+      import_path_segment 'io'
+    import_alias 'io'
+  const_declaration 'const'
+    binding
+      binding_name
+        identifier 'limit'
+      binding_type
+        identifier 'i32'
+      binding_expression
+        integer '100'
+  function 'def'
+    binding_name
+      identifier 'clamp'
+    function_return_type
+      identifier 'i32'
+    param '@'
+      binding_name
+        identifier 'n'
+      binding_type
+        identifier 'i32'
+    function_body
+      modulo '%'
+        identifier 'n'
+        identifier 'limit'
+--- round trip: ok

@@ -1,0 +1,17 @@
+let x = "outer ${'inner ${deep}'} end"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '"'
+          template_string_chunk 'outer '
+          interpolation '${'
+            template_string '''
+              template_string_chunk 'inner '
+              interpolation '${'
+                identifier 'deep'
+          template_string_chunk ' end'
+--- round trip: ok

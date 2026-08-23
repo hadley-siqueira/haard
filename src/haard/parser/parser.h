@@ -3,6 +3,7 @@
 
 #include <haard/ast/ast_builder.h>
 #include <haard/context/context.h>
+#include <vector>
 
 namespace haard {
     // Recursive descent over the token stream the scanner left in the Context.
@@ -39,6 +40,13 @@ namespace haard {
             u32 parse_let_declaration();
             u32 parse_const_declaration();
 
+            u32 parse_function();
+            u32 parse_generic_parameters();
+            u32 parse_function_return_type();
+            u32 parse_function_body();
+            u32 parse_param();
+            u32 parse_param_type();
+
             u32 parse_binding();
             u32 parse_binding_name();
             u32 parse_binding_type();
@@ -52,6 +60,9 @@ namespace haard {
             u32 parse_primary_expression();
             u32 parse_parenthesis();
             u32 parse_literal();
+            u32 parse_template_string();
+            u32 parse_template_string_chunk();
+            u32 parse_interpolation();
             u32 parse_scope();
 
             u32 parse_identifier();
@@ -73,8 +84,25 @@ namespace haard {
             Token& current();
             u32 indentation_of_current_line();
 
+            // two tokens are glued when nothing at all sits between them, which
+            // is how the language separates 'Foo<T>' from 'a < b'
+            bool glued_to_previous();
+
+            // the block rule: the header line pushes its own indentation and
+            // everything deeper belongs to the body. Aligned or not — a block
+            // is permissive on purpose
+            void indent(u32 indentation);
+            void dedent();
+            bool is_indented();
+
+            // the token that opens the statement being read. It is the one
+            // token the line rule cannot be applied to, because it is what
+            // starts the line everything after it has to stay on
+            void begin_statement();
+
             void error_expected(TokenKind kind, bool same_line);
             void error_found(const std::string& expectation, bool same_line);
+            void error_at_current(const std::string& message);
             void synchronize(u32 statement_indentation, u32 statement_start);
             void skip_to_next_line();
 
@@ -86,7 +114,12 @@ namespace haard {
 
             u32 current_token;
             u32 matched;
+            u32 statement_first_token;
             bool panic;
+
+            // starts holding a 0, so asking for the top is always answerable.
+            // The old compiler's started empty and reading it was undefined
+            std::vector<u32> indentation_stack;
     };
 }
 

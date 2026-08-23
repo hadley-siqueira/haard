@@ -1,0 +1,8 @@
+def first : i32
+    1
+
+def second : i32
+    @n : i32
+    n * 2
+
+def third : i32

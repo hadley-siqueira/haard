@@ -1,0 +1,9 @@
+error: expected ':', found the end of the line
+ --> cases/def_param_with_no_type.hd:2:10
+  |
+2 |     @argc
+  |          ^
+
+--- tree
+module
+--- round trip: ok

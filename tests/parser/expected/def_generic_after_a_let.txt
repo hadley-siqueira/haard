@@ -1,0 +1,18 @@
+let x = a
+def main<T> : i32
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        identifier 'a'
+  function 'def'
+    binding_name
+      identifier 'main'
+    generic_parameters '<'
+      identifier 'T'
+    function_return_type
+      identifier 'i32'
+--- round trip: ok

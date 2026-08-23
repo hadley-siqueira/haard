@@ -1,0 +1,7 @@
+import std.io as io
+
+const limit : i32 = 100
+
+def clamp : i32
+    @n : i32
+    n % limit

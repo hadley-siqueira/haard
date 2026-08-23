@@ -1,0 +1,19 @@
+let x = "${(a + b) * io::c}"
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        template_string '"'
+          interpolation '${'
+            times '*'
+              parenthesis '('
+                plus '+'
+                  identifier 'a'
+                  identifier 'b'
+              scope '::'
+                identifier 'io'
+                identifier 'c'
+--- round trip: ok

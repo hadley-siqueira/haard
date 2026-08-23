@@ -1,0 +1,6 @@
+# a broken header takes its indented body down with it, and the declaration
+# after it is still read
+def main :
+    @argc : i32
+    argc
+const ok = value
