@@ -1,0 +1,4 @@
+# a doubled dot: the loop that reads the path must stop at the first error
+# instead of coming back around for the same token
+import std..io
+import a.b

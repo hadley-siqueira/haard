@@ -1,0 +1,6 @@
+error: expected a declaration, found '-'
+ --> cases/let_minus_on_next_line.hd:2:1
+  |
+2 | - b
+  | ^
+let x = a

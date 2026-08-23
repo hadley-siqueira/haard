@@ -132,6 +132,19 @@ u32 AstBuilder::make_binary_operator(AstNodeKind kind, u32 token, u32 left,
     return node;
 }
 
+// '::name' is written with a 0 alias, so the node is left with a single child.
+// That is what tells the two forms apart later: one child is '::name', two are
+// 'alias::name'
+u32 AstBuilder::make_scope(u32 token, u32 alias, u32 name) {
+    u32 node = make_node(AST_SCOPE, token);
+
+    u32 last = add_child(node, 0, alias);
+
+    add_child(node, last, name);
+
+    return node;
+}
+
 u32 AstBuilder::make_identifier(u32 token) {
     return make_node(AST_IDENTIFIER, token);
 }

@@ -1,0 +1,5 @@
+# what the broken declaration opened goes down with it
+let x :
+    i32
+    junk
+const y = z

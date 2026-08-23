@@ -1,0 +1,7 @@
+error: expected a declaration, found '..'
+ --> cases/import_double_dot.hd:3:11
+  |
+3 | import std..io
+  |           ^^
+import std
+import a.b

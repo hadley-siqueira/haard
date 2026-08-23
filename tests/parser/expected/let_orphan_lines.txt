@@ -1,0 +1,6 @@
+error: expected an identifier, found the end of the line
+ --> cases/let_orphan_lines.hd:2:8
+  |
+2 | let x :
+  |        ^
+const y = z

@@ -1,0 +1,6 @@
+error: expected a declaration, found ':'
+ --> cases/let_colon_on_next_line.hd:4:1
+  |
+4 | : i32
+  | ^
+let x

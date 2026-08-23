@@ -1,0 +1,5 @@
+error: expected an identifier, found the end of the file
+ --> cases/import_with_trailing_dot.hd:1:12
+  |
+1 | import std.
+  |            ^

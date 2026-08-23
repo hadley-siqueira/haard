@@ -1,0 +1,6 @@
+# what the broken import opened goes down with it, and the next line at
+# the same level is where parsing picks up again
+import std.
+    io
+    math
+import a.b

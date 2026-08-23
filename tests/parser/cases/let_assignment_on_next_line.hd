@@ -1,0 +1,3 @@
+# same for the '=': the declaration above it is already finished
+let x
+= y

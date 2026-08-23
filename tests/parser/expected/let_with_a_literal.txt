@@ -1,0 +1,6 @@
+error: expected an identifier, found '1'
+ --> cases/let_with_a_literal.hd:1:9
+  |
+1 | let x = 1
+  |         ^
+import std.io

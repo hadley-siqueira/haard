@@ -34,6 +34,7 @@ namespace haard {
 
             void print_plus_expression(u32 node);
             void print_minus_expression(u32 node);
+            void print_scope(u32 node);
             void print_identifier(u32 node);
 
         public:

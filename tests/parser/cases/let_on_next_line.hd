@@ -1,0 +1,4 @@
+# a declaration lives on one line: the name cannot be on the next one
+let
+x = y
+const ok = value

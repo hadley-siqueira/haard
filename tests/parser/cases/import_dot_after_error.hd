@@ -1,0 +1,4 @@
+# after the error the loop that reads the path must not come back around:
+# the primitives go inert in panic, so the second dot is left alone
+import std. .io
+import a.b

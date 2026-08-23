@@ -20,6 +20,7 @@ namespace haard {
         AST_BINDING_EXPRESSION,
         AST_PLUS,
         AST_MINUS,
+        AST_SCOPE,
         AST_IDENTIFIER,
     } AstNodeKind;
 

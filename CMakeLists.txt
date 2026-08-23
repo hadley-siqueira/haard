@@ -105,6 +105,7 @@ endif()
 # make check: runs every test suite
 add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/scanner/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/parser/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"

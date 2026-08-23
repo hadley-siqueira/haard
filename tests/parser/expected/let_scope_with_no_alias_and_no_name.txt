@@ -1,0 +1,5 @@
+error: expected an identifier, found the end of the file
+ --> cases/let_scope_with_no_alias_and_no_name.hd:1:11
+  |
+1 | let x = ::
+  |           ^

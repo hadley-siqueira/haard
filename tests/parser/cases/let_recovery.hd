@@ -1,0 +1,4 @@
+# the declarations after a broken one must still be parsed
+let x =
+const y = z
+import std.io

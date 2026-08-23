@@ -1,0 +1,7 @@
+error: expected a declaration, found '.'
+ --> cases/import_dot_on_next_line.hd:4:1
+  |
+4 | .io
+  | ^
+import std
+import a.b

@@ -86,6 +86,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_minus_expression(node);
             break;
 
+        case AST_SCOPE:
+            print_scope(node);
+            break;
+
         case AST_IDENTIFIER:
             print_identifier(node);
             break;
@@ -160,6 +164,22 @@ void PrettyPrinter::print_plus_expression(u32 node) {
 
 void PrettyPrinter::print_minus_expression(u32 node) {
     print_children_joined(node, " - ");
+}
+
+// the two forms are told apart by the number of children, because the builder
+// writes the '::name' form with no alias: one child is '::name', two are
+// 'alias::name'. The '::' is printed glued, the way the '.' of an import path
+// is — it resolves a name, it is not an operator between operands
+void PrettyPrinter::print_scope(u32 node) {
+    u32 child = ast->get_node(node)->get_children();
+
+    if (child != 0 && ast->get_node(child)->get_sibling() == 0) {
+        print_string("::");
+        print_node(child);
+        return;
+    }
+
+    print_children_joined(node, "::");
 }
 
 void PrettyPrinter::print_identifier(u32 node) {

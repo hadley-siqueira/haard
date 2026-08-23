@@ -112,6 +112,42 @@ void test_param(Context& context, AstBuilder& builder) {
     check("param", print(context), "@count : u32\n");
 }
 
+// let p = io::println
+//  18 19 20 21 22 23
+void test_scope_with_an_alias(Context& context, AstBuilder& builder) {
+    u32 name = builder.make_binding_name(builder.make_identifier(19));
+
+    u32 scope = builder.make_scope(22, builder.make_identifier(21),
+                                   builder.make_identifier(23));
+
+    u32 binding = builder.make_binding(name, 0,
+                                       builder.make_binding_expression(scope));
+    u32 module = builder.make_module();
+
+    builder.add_child(module, 0, builder.make_let_declaration(18, binding));
+
+    check("scope with an alias", print(context), "let p = io::println\n");
+}
+
+// let q = ::println
+//  24 25 26 27 28
+//
+// the '::name' form has no alias, so it is written with a 0 and the node is
+// left with a single child. That is what the printer reads to tell the two
+// forms apart
+void test_scope_without_an_alias(Context& context, AstBuilder& builder) {
+    u32 name = builder.make_binding_name(builder.make_identifier(25));
+    u32 scope = builder.make_scope(27, 0, builder.make_identifier(28));
+
+    u32 binding = builder.make_binding(name, 0,
+                                       builder.make_binding_expression(scope));
+    u32 module = builder.make_module();
+
+    builder.add_child(module, 0, builder.make_let_declaration(24, binding));
+
+    check("scope with no alias", print(context), "let q = ::println\n");
+}
+
 // a part that is not there is a 0, and needs no special case: 'let x' is a
 // binding with no type and no expression
 void test_binding_without_type(Context& context, AstBuilder& builder) {
@@ -249,6 +285,7 @@ int main(int argc, char* argv[]) {
     // one test per Context: the ast is append only and each test builds a
     // module of its own, so they cannot share one
     for (auto test : { test_import, test_let_declaration, test_param,
+                       test_scope_with_an_alias, test_scope_without_an_alias,
                        test_binding_without_type, test_module_with_three_children,
                        test_unknown_kind, test_sentinel_is_untouched,
                        test_out_of_range_is_the_sentinel,

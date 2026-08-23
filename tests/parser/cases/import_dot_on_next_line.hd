@@ -1,0 +1,5 @@
+# a statement lives on one line: the dot opening the next line does not
+# continue the import above it
+import std
+.io
+import a.b

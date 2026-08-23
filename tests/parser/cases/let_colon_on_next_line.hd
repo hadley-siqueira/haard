@@ -1,0 +1,4 @@
+# a declaration lives on one line: 'let x' is complete and the ':' below
+# opens nothing
+let x
+: i32

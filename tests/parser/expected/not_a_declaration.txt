@@ -1,0 +1,6 @@
+error: expected a declaration, found 'x'
+ --> cases/not_a_declaration.hd:1:1
+  |
+1 | x = y
+  | ^
+let ok = value

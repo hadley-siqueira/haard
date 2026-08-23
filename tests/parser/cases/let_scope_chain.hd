@@ -1,0 +1,3 @@
+# '::' takes exactly one alias: this is 'std::io' with a '::println' left over,
+# and the leftover opens no declaration
+let x = std::io::println

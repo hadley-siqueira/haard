@@ -1,0 +1,3 @@
+# the '::' does not reach back to the line above
+let x = a
+::b

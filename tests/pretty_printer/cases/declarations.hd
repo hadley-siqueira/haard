@@ -1,3 +1,5 @@
 import std.io as io
 let x : i32 = a + b
 @count : u32
+let p = io::println
+let q = ::println

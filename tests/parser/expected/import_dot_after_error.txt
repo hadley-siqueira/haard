@@ -1,0 +1,6 @@
+error: expected an identifier, found '.'
+ --> cases/import_dot_after_error.hd:3:13
+  |
+3 | import std. .io
+  |             ^
+import a.b

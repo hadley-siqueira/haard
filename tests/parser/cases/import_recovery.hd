@@ -1,0 +1,3 @@
+# the second import must still be parsed after the first one fails
+import std.
+import std.io as io

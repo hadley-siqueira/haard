@@ -63,6 +63,9 @@ namespace haard {
             u32 make_binding_expression(u32 child);
 
             u32 make_binary_operator(AstNodeKind kind, u32 token, u32 left, u32 right);
+
+            // 'alias' is 0 for the '::name' form, which has no left side
+            u32 make_scope(u32 token, u32 alias, u32 name);
             u32 make_identifier(u32 token);
 
         private:

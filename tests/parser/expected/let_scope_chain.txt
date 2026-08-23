@@ -1,0 +1,6 @@
+error: expected a declaration, found '::'
+ --> cases/let_scope_chain.hd:3:16
+  |
+3 | let x = std::io::println
+  |                ^^
+let x = std::io

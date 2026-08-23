@@ -1,0 +1,7 @@
+error: expected an identifier, found the end of the line
+ --> cases/let_recovery.hd:2:8
+  |
+2 | let x =
+  |        ^
+const y = z
+import std.io

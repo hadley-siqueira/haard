@@ -1,0 +1,3 @@
+# an expression does not continue on the next line either
+let x = a
++ b
