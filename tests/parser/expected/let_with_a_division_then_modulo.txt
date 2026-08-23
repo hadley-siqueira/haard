@@ -1,0 +1,5 @@
+error: expected an identifier, found '%'
+ --> cases/let_with_a_division_then_modulo.hd:1:13
+  |
+1 | let x = a / % b
+  |             ^

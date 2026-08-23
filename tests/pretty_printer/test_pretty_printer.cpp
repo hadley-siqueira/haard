@@ -148,6 +148,61 @@ void test_scope_without_an_alias(Context& context, AstBuilder& builder) {
     check("scope with no alias", print(context), "let q = ::println\n");
 }
 
+// let s = (a + b) * c
+//  41 42 43 44 45 46 47 48 49 50
+//
+// the parentheses are a node, so the printer writes them by walking the tree
+// and never has to work out where they would be needed. The tree here is the
+// one the parser builds for that line
+void test_parenthesis(Context& context, AstBuilder& builder) {
+    u32 sum = builder.make_binary_operator(AST_PLUS, 46,
+                                           builder.make_identifier(45),
+                                           builder.make_identifier(47));
+
+    u32 group = builder.make_parenthesis(44, sum);
+    u32 module = builder.make_module();
+
+    builder.add_child(module, 0,
+        builder.make_binary_operator(AST_TIMES, 49, group,
+                                     builder.make_identifier(50)));
+
+    check("a parenthesised operand", print(context), "(a + b) * c\n");
+}
+
+// the same operators with no parentheses in the source have none in the tree,
+// so nothing is added on the way out: the printer is a walk, not a decision
+void test_no_parenthesis_is_added(Context& context, AstBuilder& builder) {
+    u32 product = builder.make_binary_operator(AST_TIMES, 49,
+                                               builder.make_identifier(45),
+                                               builder.make_identifier(47));
+
+    u32 module = builder.make_module();
+
+    builder.add_child(module, 0,
+        builder.make_binary_operator(AST_PLUS, 46,
+                                     builder.make_identifier(50), product));
+
+    check("nothing is parenthesised on its own", print(context),
+          "c + a * b\n");
+}
+
+// a division and a modulo, so every operator of the level has a printer
+void test_division_and_modulo(Context& context, AstBuilder& builder) {
+    u32 module = builder.make_module();
+
+    u32 last = builder.add_child(module, 0,
+        builder.make_binary_operator(AST_DIVISION, 35,
+                                     builder.make_identifier(32),
+                                     builder.make_identifier(34)));
+
+    builder.add_child(module, last,
+        builder.make_binary_operator(AST_MODULO, 37,
+                                     builder.make_identifier(34),
+                                     builder.make_identifier(36)));
+
+    check("division and modulo", print(context), "a / b\nb % c\n");
+}
+
 // a part that is not there is a 0, and needs no special case: 'let x' is a
 // binding with no type and no expression
 void test_binding_without_type(Context& context, AstBuilder& builder) {
@@ -286,6 +341,8 @@ int main(int argc, char* argv[]) {
     // module of its own, so they cannot share one
     for (auto test : { test_import, test_let_declaration, test_param,
                        test_scope_with_an_alias, test_scope_without_an_alias,
+                       test_parenthesis, test_no_parenthesis_is_added,
+                       test_division_and_modulo,
                        test_binding_without_type, test_module_with_three_children,
                        test_unknown_kind, test_sentinel_is_untouched,
                        test_out_of_range_is_the_sentinel,

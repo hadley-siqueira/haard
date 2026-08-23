@@ -1,0 +1,5 @@
+error: expected an identifier, found ')'
+ --> cases/let_parenthesis_empty.hd:1:10
+  |
+1 | let x = ()
+  |          ^

@@ -66,6 +66,10 @@ namespace haard {
 
             // 'alias' is 0 for the '::name' form, which has no left side
             u32 make_scope(u32 token, u32 alias, u32 name);
+            // the '(' is kept as a node of its own, so the printer writes the
+            // parentheses the source had instead of working out where they
+            // would be needed
+            u32 make_parenthesis(u32 token, u32 expression);
             u32 make_identifier(u32 token);
 
         private:

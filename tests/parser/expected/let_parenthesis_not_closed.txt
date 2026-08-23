@@ -1,0 +1,5 @@
+error: expected ')', found the end of the file
+ --> cases/let_parenthesis_not_closed.hd:1:15
+  |
+1 | let x = (a + b
+  |               ^

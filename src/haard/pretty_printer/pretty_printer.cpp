@@ -86,8 +86,24 @@ void PrettyPrinter::print_node(u32 node) {
             print_minus_expression(node);
             break;
 
+        case AST_TIMES:
+            print_times_expression(node);
+            break;
+
+        case AST_DIVISION:
+            print_division_expression(node);
+            break;
+
+        case AST_MODULO:
+            print_modulo_expression(node);
+            break;
+
         case AST_SCOPE:
             print_scope(node);
+            break;
+
+        case AST_PARENTHESIS:
+            print_parenthesis(node);
             break;
 
         case AST_IDENTIFIER:
@@ -166,6 +182,18 @@ void PrettyPrinter::print_minus_expression(u32 node) {
     print_children_joined(node, " - ");
 }
 
+void PrettyPrinter::print_times_expression(u32 node) {
+    print_children_joined(node, " * ");
+}
+
+void PrettyPrinter::print_division_expression(u32 node) {
+    print_children_joined(node, " / ");
+}
+
+void PrettyPrinter::print_modulo_expression(u32 node) {
+    print_children_joined(node, " % ");
+}
+
 // the two forms are told apart by the number of children, because the builder
 // writes the '::name' form with no alias: one child is '::name', two are
 // 'alias::name'. The '::' is printed glued, the way the '.' of an import path
@@ -180,6 +208,15 @@ void PrettyPrinter::print_scope(u32 node) {
     }
 
     print_children_joined(node, "::");
+}
+
+// the parentheses are a node, so printing them is a walk like everything else:
+// the printer never asks what binds tighter than what. The grouping the source
+// had is in the tree, and this writes it back
+void PrettyPrinter::print_parenthesis(u32 node) {
+    print_string("(");
+    print_children(node);
+    print_string(")");
 }
 
 void PrettyPrinter::print_identifier(u32 node) {

@@ -11,6 +11,7 @@ static std::string describe(TokenKind kind) {
         case TK_CONST: return "'const'";
         case TK_AS: return "'as'";
         case TK_DOT: return "'.'";
+        case TK_RIGHT_PARENTHESIS: return "')'";
         case TK_IDENTIFIER: return "an identifier";
         case TK_EOF: return "the end of the file";
         default: break;
@@ -224,12 +225,12 @@ u32 Parser::parse_expression() {
     return parse_arith_expression();
 }
 
-// left associative, one level deep: everything below '+' and '-' is still to be
-// written, so this is where the cascade starts and stops for now
+// left associative, and the loosest level written so far, so this is where the
+// cascade starts
 //
-//   arith_expression := primary_expression (('+' | '-') primary_expression)*
+//   arith_expression := term_expression (('+' | '-') term_expression)*
 u32 Parser::parse_arith_expression() {
-    u32 node = parse_primary_expression();
+    u32 node = parse_term_expression();
 
     // in panic the matches answer false, so a broken operand ends the chain
     // here instead of reporting one error per operator
@@ -245,6 +246,36 @@ u32 Parser::parse_arith_expression() {
         }
 
         u32 oper = matched;
+        u32 right = parse_term_expression();
+
+        node = builder.make_binary_operator(kind, oper, node, right);
+    }
+
+    return node;
+}
+
+// a term is the level that binds tighter than '+' and '-', which is what makes
+// 'a + b * c' fold the product first. Left associative like the level above it,
+// so 'a / b / c' is '(a / b) / c'
+//
+//   term_expression := primary_expression (('*' | '/' | '%') primary_expression)*
+u32 Parser::parse_term_expression() {
+    u32 node = parse_primary_expression();
+
+    while (true) {
+        AstNodeKind kind;
+
+        if (match_on_same_line(TK_TIMES)) {
+            kind = AST_TIMES;
+        } else if (match_on_same_line(TK_DIVISION)) {
+            kind = AST_DIVISION;
+        } else if (match_on_same_line(TK_MODULO)) {
+            kind = AST_MODULO;
+        } else {
+            break;
+        }
+
+        u32 oper = matched;
         u32 right = parse_primary_expression();
 
         node = builder.make_binary_operator(kind, oper, node, right);
@@ -253,8 +284,22 @@ u32 Parser::parse_arith_expression() {
     return node;
 }
 
-//   primary_expression := scope
+// the parentheses are kept in the tree as a node of their own, rather than
+// dissolved into the expression they group. That is what lets the printer stay
+// a plain walk: it writes the parentheses the source had, instead of working
+// out where they would be needed to mean the same thing
+//
+//   primary_expression := '(' expression ')' | scope
 u32 Parser::parse_primary_expression() {
+    if (match_on_same_line(TK_LEFT_PARENTHESIS)) {
+        u32 token = matched;
+        u32 expression = parse_expression();
+
+        expect_on_same_line(TK_RIGHT_PARENTHESIS);
+
+        return builder.make_parenthesis(token, expression);
+    }
+
     return parse_scope();
 }
 

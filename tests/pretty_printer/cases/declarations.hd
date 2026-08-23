@@ -3,3 +3,5 @@ let x : i32 = a + b
 @count : u32
 let p = io::println
 let q = ::println
+let r = a * b / c % d - e
+let s = (a + b) * c

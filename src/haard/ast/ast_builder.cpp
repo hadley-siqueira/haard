@@ -145,6 +145,14 @@ u32 AstBuilder::make_scope(u32 token, u32 alias, u32 name) {
     return node;
 }
 
+u32 AstBuilder::make_parenthesis(u32 token, u32 expression) {
+    u32 node = make_node(AST_PARENTHESIS, token);
+
+    add_child(node, 0, expression);
+
+    return node;
+}
+
 u32 AstBuilder::make_identifier(u32 token) {
     return make_node(AST_IDENTIFIER, token);
 }

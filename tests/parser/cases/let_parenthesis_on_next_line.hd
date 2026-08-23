@@ -1,0 +1,3 @@
+# the group has to open on the line the declaration is on
+let x =
+(a + b)

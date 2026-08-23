@@ -1,0 +1,3 @@
+# '*', '/' and '%' bind tighter, so the products fold before the sums and the
+# tree survives the round trip without parentheses
+let x : i32 = a + b * c - d / e % f

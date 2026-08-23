@@ -48,6 +48,7 @@ namespace haard {
 
             u32 parse_expression();
             u32 parse_arith_expression();
+            u32 parse_term_expression();
             u32 parse_primary_expression();
             u32 parse_scope();
 
