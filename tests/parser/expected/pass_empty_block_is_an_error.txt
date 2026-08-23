@@ -1,0 +1,17 @@
+error: expected a statement or 'pass', found the end of the line
+ --> cases/pass_empty_block_is_an_error.hd:3:10
+  |
+3 |     if a:
+  |          ^
+def main : i32
+    b
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      identifier 'i32'
+    block
+      identifier 'b'
+--- round trip: ok

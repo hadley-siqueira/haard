@@ -1,2 +1,4 @@
+# the next declaration sits at the header's own column, so it is not the body
 def main : i32
+    a
 const x = 1

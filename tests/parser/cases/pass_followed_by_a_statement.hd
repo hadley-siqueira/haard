@@ -1,0 +1,4 @@
+# 'pass' is the whole block: it says there is nothing here, so nothing else can
+def main : i32
+    pass
+    a

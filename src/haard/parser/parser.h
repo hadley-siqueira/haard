@@ -49,6 +49,7 @@ namespace haard {
             // the block owns the indentation stack: it is the only rule that
             // pushes a level, and it is the second of the two recovery points
             u32 parse_block(u32 header_indentation);
+            u32 parse_pass();
             u32 parse_statement();
             u32 parse_if();
             u32 parse_elif();
@@ -112,6 +113,9 @@ namespace haard {
             void error_expected(TokenKind kind, bool same_line);
             void error_found(const std::string& expectation, bool same_line);
             void error_at_current(const std::string& message);
+
+            // the statement cannot be kept and the reason is already reported
+            void poison();
             void synchronize(u32 statement_indentation, u32 statement_start);
             void skip_to_next_line();
 

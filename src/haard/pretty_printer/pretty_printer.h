@@ -31,6 +31,7 @@ namespace haard {
             void print_function_return_type(u32 node);
 
             void print_block(u32 node);
+            void print_pass(u32 node);
             void print_if(u32 node);
             void print_elif(u32 node);
             void print_else(u32 node);

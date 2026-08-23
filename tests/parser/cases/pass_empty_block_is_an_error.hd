@@ -1,0 +1,4 @@
+# an empty body has to say so with 'pass'
+def main : i32
+    if a:
+    b

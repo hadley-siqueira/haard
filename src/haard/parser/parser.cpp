@@ -8,6 +8,7 @@ static std::string describe(TokenKind kind) {
     switch (kind) {
         case TK_IMPORT: return "'import'";
         case TK_DEF: return "'def'";
+        case TK_PASS: return "'pass'";
         case TK_AT: return "'@'";
         case TK_COLON: return "':'";
         case TK_COMMA: return "','";
@@ -298,35 +299,78 @@ u32 Parser::parse_function_return_type() {
 // reason parse_function does: a return between the indent and the dedent leaks
 // a level onto the stack.
 //
-//   block := statement*
+//   block := 'pass' | statement+
 u32 Parser::parse_block(u32 header_indentation) {
     u32 node = builder.make_block();
     u32 last = 0;
+    bool had_lines = false;
 
     indent(header_indentation);
 
-    // in panic this is inert, so a header whose condition failed reads no
-    // block at all and the error travels out to the statement that can recover
-    // from it, instead of being recovered inside a block that never opened
-    while (is_indented()) {
-        u32 indentation = indentation_of_current_line();
-        u32 start = current_token;
+    // 'pass' is the whole block, not a statement inside it: it says there is
+    // nothing here, so nothing else can be. A line after it is left where it
+    // is and the rule that owns the level above reports it
+    if (is_indented() && lookahead(TK_PASS)) {
+        had_lines = true;
+        last = builder.add_child(node, 0, parse_pass());
 
-        begin_statement();
+        // a line under it contradicts what it says. Reporting here rather than
+        // letting the line fall out to the rule above is the difference
+        // between naming the mistake and blaming the line for existing
+        if (is_indented()) {
+            error_at_current("nothing can follow 'pass': it is how a block "
+                             "with no statements is written");
+        }
+    } else {
+        // in panic this is inert, so a header whose condition failed reads no
+        // block at all and the error travels out to the statement that can
+        // recover from it, instead of being recovered inside a block that
+        // never opened
+        while (is_indented()) {
+            u32 indentation = indentation_of_current_line();
+            u32 start = current_token;
 
-        u32 child = parse_statement();
+            had_lines = true;
 
-        if (panic) {
-            synchronize(indentation, start);
-            continue;
+            begin_statement();
+
+            u32 child = parse_statement();
+
+            if (panic) {
+                synchronize(indentation, start);
+                continue;
+            }
+
+            last = builder.add_child(node, last, child);
+        }
+    }
+
+    // A block with nothing in it is an error: an empty body is written with
+    // 'pass', which is what makes 'I meant nothing here' different from 'I
+    // forgot'. The distinction below is about *messages*, not about the tree —
+    // either way the block cannot be kept, because a childless block prints as
+    // nothing and would read back as this very error.
+    if (last == 0) {
+        // there really was nothing under the header. If the lines were there
+        // and failed, the error that killed them was already reported and a
+        // second one would only be noise
+        if (!had_lines) {
+            error_found("a statement or 'pass'", true);
         }
 
-        last = builder.add_child(node, last, child);
+        poison();
     }
 
     dedent();
 
     return node;
+}
+
+u32 Parser::parse_pass() {
+    begin_statement();
+    expect(TK_PASS);
+
+    return builder.make_pass(matched);
 }
 
 // an expression is what is left when no keyword opens the line, so it needs no
@@ -931,6 +975,14 @@ void Parser::error_at_current(const std::string& message) {
     Token& token = current();
 
     logger->error(token.get_offset(), token.get_length(), message);
+}
+
+// the flag without a message. What it says is 'this statement cannot be kept',
+// which is not always the same as 'here is an error': a block left empty by a
+// statement that already failed has nothing new to report, but keeping it would
+// put something in the tree that is not writable back as source
+void Parser::poison() {
+    panic = true;
 }
 
 void Parser::synchronize(u32 statement_indentation, u32 statement_start) {

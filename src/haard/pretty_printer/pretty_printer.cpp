@@ -76,6 +76,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_block(node);
             break;
 
+        case AST_PASS:
+            print_pass(node);
+            break;
+
         case AST_IF:
             print_if(node);
             break;
@@ -260,6 +264,10 @@ void PrettyPrinter::print_block(u32 node) {
     }
 
     --indentation;
+}
+
+void PrettyPrinter::print_pass(u32 node) {
+    print_node_token(node);
 }
 
 void PrettyPrinter::print_if(u32 node) {

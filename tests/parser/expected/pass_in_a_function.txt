@@ -1,12 +1,12 @@
-def main : i32
+def nothing : Unit
     pass
 --- tree
 module
   function 'def'
     binding_name
-      identifier 'main'
+      identifier 'nothing'
     function_return_type
-      identifier 'i32'
+      identifier 'Unit'
     block
       pass 'pass'
 --- round trip: ok

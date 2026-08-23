@@ -1,3 +1,4 @@
 def pair<K, V> : Pair
     @key : K
     @value : V
+    pass

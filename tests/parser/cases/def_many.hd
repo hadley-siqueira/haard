@@ -6,3 +6,4 @@ def second : i32
     n * 2
 
 def third : i32
+    pass

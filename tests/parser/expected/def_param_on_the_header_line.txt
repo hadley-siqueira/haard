@@ -1,15 +1,9 @@
-error: expected a declaration, found '@'
+error: expected a statement or 'pass', found '@'
  --> cases/def_param_on_the_header_line.hd:1:16
   |
 1 | def main : i32 @argc : i32
   |                ^
-def main : i32
+
 --- tree
 module
-  function 'def'
-    binding_name
-      identifier 'main'
-    function_return_type
-      identifier 'i32'
-    block
 --- round trip: ok

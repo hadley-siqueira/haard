@@ -1,0 +1,9 @@
+error: nothing can follow 'pass': it is how a block with no statements is written
+ --> cases/pass_followed_by_a_statement.hd:4:5
+  |
+4 |     a
+  |     ^
+
+--- tree
+module
+--- round trip: ok

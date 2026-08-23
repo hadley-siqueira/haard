@@ -1,2 +1,3 @@
 let x = a
 def main<T> : i32
+    pass

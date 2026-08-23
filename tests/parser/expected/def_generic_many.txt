@@ -1,6 +1,7 @@
 def pair<K, V> : Pair
     @key : K
     @value : V
+    pass
 --- tree
 module
   function 'def'
@@ -22,4 +23,5 @@ module
       binding_type
         identifier 'V'
     block
+      pass 'pass'
 --- round trip: ok

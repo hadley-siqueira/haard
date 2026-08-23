@@ -18,6 +18,7 @@ namespace haard {
         AST_FUNCTION_RETURN_TYPE,
         AST_PARAM,
         AST_BLOCK,
+        AST_PASS,
         AST_IF,
         AST_ELIF,
         AST_ELSE,

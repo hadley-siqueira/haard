@@ -1,0 +1,9 @@
+def main : i32
+    if a:
+        pass
+    elif b:
+        pass
+    else:
+        pass
+    while c:
+        pass

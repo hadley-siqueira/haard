@@ -1,0 +1,9 @@
+error: expected a statement or 'pass', found the end of the file
+ --> cases/pass_empty_function_is_an_error.hd:1:15
+  |
+1 | def main : i32
+  |               ^
+
+--- tree
+module
+--- round trip: ok

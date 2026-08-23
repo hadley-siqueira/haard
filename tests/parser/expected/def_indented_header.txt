@@ -1,15 +1,14 @@
+error: expected a statement or 'pass', found the end of the line
+ --> cases/def_indented_header.hd:3:19
+  |
+3 |     def main : i32
+  |                   ^
 error: expected a declaration, found 'a'
  --> cases/def_indented_header.hd:4:3
   |
 4 |   a
   |   ^
-def main : i32
+
 --- tree
 module
-  function 'def'
-    binding_name
-      identifier 'main'
-    function_return_type
-      identifier 'i32'
-    block
 --- round trip: ok

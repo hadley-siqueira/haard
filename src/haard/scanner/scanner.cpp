@@ -29,6 +29,7 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"break", TK_BREAK},
         {"yield", TK_YIELD},
         {"this", TK_THIS},
+        {"pass", TK_PASS},
         {"=", TK_ASSIGNMENT},
         {"+=", TK_PLUS_ASSIGNMENT},
         {"-=", TK_MINUS_ASSIGNMENT},

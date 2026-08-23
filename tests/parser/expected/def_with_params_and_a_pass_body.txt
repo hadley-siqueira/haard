@@ -1,5 +1,6 @@
 def write : Unit
     @message : String
+    pass
 --- tree
 module
   function 'def'
@@ -13,4 +14,5 @@ module
       binding_type
         identifier 'String'
     block
+      pass 'pass'
 --- round trip: ok

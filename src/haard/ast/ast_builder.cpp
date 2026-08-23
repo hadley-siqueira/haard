@@ -96,6 +96,10 @@ u32 AstBuilder::make_block() {
     return make_node(AST_BLOCK, 0);
 }
 
+u32 AstBuilder::make_pass(u32 token) {
+    return make_node(AST_PASS, token);
+}
+
 u32 AstBuilder::make_if(u32 token) {
     return make_node(AST_IF, token);
 }
