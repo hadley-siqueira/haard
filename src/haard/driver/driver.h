@@ -1,7 +1,7 @@
 #ifndef HAARD_DRIVER_H
 #define HAARD_DRIVER_H
 
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 #include <haard/parser/parser.h>
 #include <haard/pretty_printer/pretty_printer.h>
 #include <haard/scanner/scanner.h>
@@ -29,7 +29,7 @@ namespace haard {
             bool parse();
 
         private:
-            Context context;
+            Module module;
             Scanner scanner;
             Parser parser;
             PrettyPrinter pretty_printer;

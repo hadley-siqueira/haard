@@ -1,7 +1,7 @@
 #ifndef HAARD_SCANNER_H
 #define HAARD_SCANNER_H
 
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 
 namespace haard {
     class Scanner {
@@ -10,7 +10,7 @@ namespace haard {
 
         public:
             void get_tokens(const std::filesystem::path& path);
-            void set_context(Context* context);
+            void set_module(Module* module);
 
         public:
             void get_token();
@@ -60,7 +60,7 @@ namespace haard {
         private:
             TokenStream* tokens;
             SourceFile* source_file;
-            Context* context;
+            Module* module;
             Logger* logger;
             u32 token_offset;
             u32 token_length;

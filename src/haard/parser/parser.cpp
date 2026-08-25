@@ -109,7 +109,7 @@ static AstNodeKind literal_kind(TokenKind kind) {
 }
 
 Parser::Parser() {
-    context = nullptr;
+    module = nullptr;
     tokens = nullptr;
     logger = nullptr;
     current_token = 0;
@@ -119,12 +119,12 @@ Parser::Parser() {
     indentation_stack.push_back(0);
 }
 
-void Parser::set_context(Context* context) {
-    this->context = context;
-    this->tokens = context->get_tokens();
-    this->logger = context->get_logger();
+void Parser::set_module(Module* module) {
+    this->module = module;
+    this->tokens = module->get_tokens();
+    this->logger = module->get_logger();
 
-    builder.set_ast(context->get_ast());
+    builder.set_ast(module->get_ast());
 }
 
 u32 Parser::parse() {
@@ -2310,7 +2310,7 @@ Token& Parser::current() {
 // sentinel at 0 answers AST_UNKNOWN, so an expression that failed takes the
 // path that reports the next error rather than a special case here
 AstNodeKind Parser::kind_of(u32 node) {
-    return context->get_ast()->get_node(node)->get_kind();
+    return module->get_ast()->get_node(node)->get_kind();
 }
 
 u32 Parser::indentation_of_current_line() {
@@ -2360,7 +2360,7 @@ void Parser::error_found(const std::string& expectation, bool same_line) {
 
     logger->error(token.get_offset(), token.get_length(),
                   "expected " + expectation + ", found '"
-                  + std::string(context->get_token_value(current_token)) + "'");
+                  + std::string(module->get_token_value(current_token)) + "'");
 }
 
 // the second half of the recovery: throw away what is left of the line that

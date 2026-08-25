@@ -12,9 +12,9 @@ Driver::Driver() {
 }
 
 int Driver::run(int argc, char* argv[]) {
-    scanner.set_context(&context);
-    parser.set_context(&context);
-    pretty_printer.set_context(&context);
+    scanner.set_module(&module);
+    parser.set_module(&module);
+    pretty_printer.set_module(&module);
 
     if (!read_arguments(argc, argv)) {
         print_usage(std::cerr);
@@ -79,16 +79,16 @@ void Driver::print_usage(std::ostream& out) {
 
 int Driver::compile() {
     if (!scan()) {
-        context.get_logger()->print(std::cerr);
+        module.get_logger()->print(std::cerr);
         return 1;
     }
 
     if (show_tokens) {
-        context.inspect_tokens();
+        module.inspect_tokens();
     }
 
     if (!parse()) {
-        context.get_logger()->print(std::cerr);
+        module.get_logger()->print(std::cerr);
         return 1;
     }
 
@@ -112,11 +112,11 @@ bool Driver::scan() {
         return false;
     }
 
-    return !context.get_logger()->has_errors();
+    return !module.get_logger()->has_errors();
 }
 
 bool Driver::parse() {
     parser.parse();
 
-    return !context.get_logger()->has_errors();
+    return !module.get_logger()->has_errors();
 }

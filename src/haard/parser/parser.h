@@ -2,11 +2,11 @@
 #define HAARD_PARSER_H
 
 #include <haard/ast/ast_builder.h>
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 #include <vector>
 
 namespace haard {
-    // Recursive descent over the token stream the scanner left in the Context.
+    // Recursive descent over the token stream the scanner left in the Module.
     //
     // Error handling is the poisoned parser: reporting an error sets 'panic',
     // and while it is set every primitive here goes inert — lookahead answers
@@ -23,9 +23,9 @@ namespace haard {
             Parser();
 
         public:
-            void set_context(Context* context);
+            void set_module(Module* module);
 
-            // parses the tokens in the context, gives back the root node
+            // parses the tokens in the module, gives back the root node
             u32 parse();
 
         private:
@@ -204,7 +204,7 @@ namespace haard {
             bool at_block_end(bool braced);
 
         private:
-            Context* context;
+            Module* module;
             TokenStream* tokens;
             Logger* logger;
             AstBuilder builder;

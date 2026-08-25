@@ -23,7 +23,7 @@
 //              is empty, has zero indentation so the parser's blocks all close,
 //              and appears nowhere else. Its newline flag is not special: it
 //              follows the rule above like any other token.
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 #include <haard/scanner/scanner.h>
 #include <iostream>
 #include <vector>
@@ -107,19 +107,19 @@ int main(int argc, char* argv[]) {
         return 2;
     }
 
-    Context ctx;
+    Module module;
     Scanner sc;
 
-    sc.set_context(&ctx);
+    sc.set_module(&module);
     sc.get_tokens(argv[1]);
 
-    auto& src = ctx.get_source_file()->get_content();
-    auto& list = ctx.get_tokens()->get_tokens();
+    auto& src = module.get_source_file()->get_content();
+    auto& list = module.get_tokens()->get_tokens();
 
     // every byte a diagnostic points at, so a gap can be told from a hole
     std::vector<bool> reported(src.size(), false);
 
-    for (auto& log : ctx.get_logger()->get_logs()) {
+    for (auto& log : module.get_logger()->get_logs()) {
         for (u32 i = log.get_offset();
              i < log.get_offset() + log.get_length() && i < src.size(); ++i) {
             reported[i] = true;
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
             check_gap(src, reported, end_of_previous, offset);
         }
 
-        if (std::string(ctx.get_token_value(i)) != src.substr(offset, length)) {
+        if (std::string(module.get_token_value(i)) != src.substr(offset, length)) {
             fail(at + ": lexeme does not match the original text");
         }
 
@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
                     + std::to_string(indent) + " spaces");
         }
 
-        auto position = ctx.get_source_file()->position_of(offset);
+        auto position = module.get_source_file()->position_of(offset);
 
         if (position.line != (u32) line || position.column != (u32) column) {
             fail(at + ": position_of says "

@@ -19,7 +19,7 @@ point at its tokens by index — the comment above each test lists the ones it
 uses. That is what keeps the checks honest about `print_node_token`, which reads
 the lexeme out of the source file.
 
-One `Context` per test: the ast is append only and `print()` always starts at
+One `Module` per test: the ast is append only and `print()` always starts at
 node 1, so each test needs a tree of its own.
 
 ## When the parser lands

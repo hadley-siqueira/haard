@@ -1,7 +1,7 @@
 #ifndef HAARD_PRETTY_PRINTER_H
 #define HAARD_PRETTY_PRINTER_H
 
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 #include <ostream>
 #include <sstream>
 
@@ -181,11 +181,11 @@ namespace haard {
             void print_new_line();
 
         public:
-            void set_context(Context* context);
+            void set_module(Module* module);
 
         private:
             std::stringstream output;
-            Context* context;
+            Module* module;
             Ast* ast;
             u32 indentation;
     };

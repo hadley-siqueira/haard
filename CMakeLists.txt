@@ -35,8 +35,8 @@ set(PRETTY_SRC
     src/haard/pretty_printer/pretty_printer.cpp
 )
 
-set(CONTEXT_SRC
-    src/haard/context/context.cpp
+set(MODULE_SRC
+    src/haard/module/module.cpp
 )
 
 set(LOG_SRC
@@ -56,7 +56,7 @@ set(SOURCES
     ${SOURCE_FILE_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
-    ${CONTEXT_SRC}
+    ${MODULE_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_SRC}

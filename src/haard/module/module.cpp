@@ -1,17 +1,17 @@
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 #include <iostream>
 
 using namespace haard;
 
-TokenStream* Context::get_tokens() {
+TokenStream* Module::get_tokens() {
     return &tokens;
 }
 
-SourceFile* Context::get_source_file() {
+SourceFile* Module::get_source_file() {
     return &source_file;
 }
 
-Logger* Context::get_logger() {
+Logger* Module::get_logger() {
     // the logger renders a diagnostic from an offset, so it needs the file
     // those offsets belong to
     logger.set_source_file(&source_file);
@@ -19,18 +19,18 @@ Logger* Context::get_logger() {
     return &logger;
 }
 
-Ast* Context::get_ast() {
+Ast* Module::get_ast() {
     return &ast;
 }
 
-std::string_view Context::get_token_value(u32 token) {
+std::string_view Module::get_token_value(u32 token) {
     auto t = tokens.get_token(token);
     std::string_view view(source_file.get_content());
 
     return view.substr(t.get_offset(), t.get_length());
 }
 
-void Context::inspect_tokens() {
+void Module::inspect_tokens() {
     for (auto tk : tokens.get_tokens()) {
         auto offset = tk.get_offset();
         auto length = tk.get_length();
@@ -47,7 +47,7 @@ void Context::inspect_tokens() {
     }
 }
 
-void Context::inspect_ast() {
+void Module::inspect_ast() {
     u32 index = 0;
 
     for (auto node : ast.get_nodes()) {

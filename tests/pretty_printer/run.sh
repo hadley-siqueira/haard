@@ -31,7 +31,7 @@ sources=(
     "$root/src/haard/source_file/source_file.cpp"
     "$root/src/haard/log/log.cpp"
     "$root/src/haard/scanner/scanner.cpp"
-    "$root/src/haard/context/context.cpp"
+    "$root/src/haard/module/module.cpp"
     "$root/src/haard/pretty_printer/pretty_printer.cpp"
 )
 

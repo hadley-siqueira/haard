@@ -28,7 +28,7 @@ static bool would_paste(char first, char second) {
 }
 
 PrettyPrinter::PrettyPrinter() {
-    context = nullptr;
+    module = nullptr;
     ast = nullptr;
     indentation = 0;
     last_character = 0;
@@ -860,7 +860,7 @@ void PrettyPrinter::print_not_in_expression(u32 node) {
 // '0 .. len'
 void PrettyPrinter::print_range_expression(u32 node) {
     print_children_joined(node, std::string(
-        context->get_token_value(ast->get_node(node)->get_token())));
+        module->get_token_value(ast->get_node(node)->get_token())));
 }
 
 // The operator comes from the node's token rather than a literal, because more
@@ -870,7 +870,7 @@ void PrettyPrinter::print_range_expression(u32 node) {
 void PrettyPrinter::print_binary_from_token(u32 node) {
     std::string oper = " ";
 
-    oper += context->get_token_value(ast->get_node(node)->get_token());
+    oper += module->get_token_value(ast->get_node(node)->get_token());
     oper += " ";
 
     print_children_joined(node, oper);
@@ -1243,7 +1243,7 @@ void PrettyPrinter::print_node_token(u32 node) {
 }
 
 void PrettyPrinter::print_token(u32 token) {
-    print_string(context->get_token_value(token));
+    print_string(module->get_token_value(token));
 }
 
 // The one thing the printer checks about what it already wrote, and it is not a
@@ -1272,7 +1272,7 @@ void PrettyPrinter::print_new_line() {
 }
 
 
-void PrettyPrinter::set_context(Context* context) {
-    this->context = context;
-    this->ast = context == nullptr ? nullptr : context->get_ast();
+void PrettyPrinter::set_module(Module* module) {
+    this->module = module;
+    this->ast = module == nullptr ? nullptr : module->get_ast();
 }

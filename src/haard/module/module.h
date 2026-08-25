@@ -1,5 +1,5 @@
-#ifndef HAARD_CONTEXT_H
-#define HAARD_CONTEXT_H
+#ifndef HAARD_MODULE_H
+#define HAARD_MODULE_H
 
 #include <haard/log/log.h>
 #include <haard/token_stream/token_stream.h>
@@ -7,7 +7,7 @@
 #include <haard/source_file/source_file.h>
 
 namespace haard {
-    class Context {
+    class Module {
         public:
             TokenStream* get_tokens();
             SourceFile* get_source_file();

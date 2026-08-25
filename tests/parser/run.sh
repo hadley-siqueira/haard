@@ -48,7 +48,7 @@ sources=(
     "$root/src/haard/scanner/scanner.cpp"
     "$root/src/haard/parser/parser.cpp"
     "$root/src/haard/pretty_printer/pretty_printer.cpp"
-    "$root/src/haard/context/context.cpp"
+    "$root/src/haard/module/module.cpp"
 )
 
 mkdir -p "$build" expected

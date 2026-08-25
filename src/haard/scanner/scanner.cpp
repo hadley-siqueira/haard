@@ -121,7 +121,7 @@ TokenKind get_token_kind(const std::string& lexeme) {
 Scanner::Scanner() {
     tokens = nullptr;
     source_file = nullptr;
-    context = nullptr;
+    module = nullptr;
     logger = nullptr;
     reset();
 }
@@ -520,11 +520,11 @@ void Scanner::get_symbol() {
     create_token(TK_SYMBOL_LITERAL);
 }
 
-void Scanner::set_context(Context* context) {
-    this->context = context;
-    this->source_file = context->get_source_file();
-    this->tokens = context->get_tokens();
-    this->logger = context->get_logger();
+void Scanner::set_module(Module* module) {
+    this->module = module;
+    this->source_file = module->get_source_file();
+    this->tokens = module->get_tokens();
+    this->logger = module->get_logger();
 }
 
 bool Scanner::has_next() {

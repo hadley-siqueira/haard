@@ -20,7 +20,7 @@
 //
 // Without the second argument the round trip is skipped, which is what makes
 // the program usable by hand on a file the runner did not stage.
-#include <haard/context/context.h>
+#include <haard/module/module.h>
 #include <haard/parser/parser.h>
 #include <haard/pretty_printer/pretty_printer.h>
 #include <haard/scanner/scanner.h>
@@ -329,34 +329,34 @@ static std::string escape(const std::string_view& s) {
 
 // one node per line, two spaces per level. The indentation is what records the
 // shape, so comparing two dumps as strings compares the two trees
-static void dump_node(std::ostream& out, Context& context, u32 node, u32 depth) {
+static void dump_node(std::ostream& out, Module& module, u32 node, u32 depth) {
     while (node != 0) {
-        AstNode* current = context.get_ast()->get_node(node);
+        AstNode* current = module.get_ast()->get_node(node);
         AstNodeKind kind = current->get_kind();
 
         out << std::string(depth * 2, ' ') << name_of(kind);
 
         if (carries_a_token(kind)) {
             out << " '"
-                << escape(context.get_token_value(current->get_token())) << "'";
+                << escape(module.get_token_value(current->get_token())) << "'";
         }
 
         out << '\n';
 
-        dump_node(out, context, current->get_children(), depth + 1);
+        dump_node(out, module, current->get_children(), depth + 1);
         node = current->get_sibling();
     }
 }
 
-static std::string dump_of(Context& context) {
+static std::string dump_of(Module& module) {
     std::stringstream out;
 
-    dump_node(out, context, context.get_ast()->get_root(), 0);
+    dump_node(out, module, module.get_ast()->get_root(), 0);
 
     return out.str();
 }
 
-// scans and parses one file into a context of its own. Two of these never share
+// scans and parses one file into a module of its own. Two of these never share
 // anything, which is the point: the second tree has to stand on its own tokens.
 //
 // Answers whether the scan was clean. The parser runs either way — on purpose,
@@ -364,16 +364,16 @@ static std::string dump_of(Context& context) {
 // that the parser does not hang on it — but the Driver only ever runs the
 // parser on a clean stream, so a tree built from a broken one is not something
 // the printer is required to write back
-static bool read(Context& context, const std::filesystem::path& path) {
+static bool read(Module& module, const std::filesystem::path& path) {
     Scanner scanner;
     Parser parser;
 
-    scanner.set_context(&context);
-    parser.set_context(&context);
+    scanner.set_module(&module);
+    parser.set_module(&module);
 
     scanner.get_tokens(path);
 
-    bool scanned = !context.get_logger()->has_errors();
+    bool scanned = !module.get_logger()->has_errors();
 
     parser.parse();
 
@@ -395,15 +395,15 @@ int main(int argc, char* argv[]) {
         return 2;
     }
 
-    Context context;
+    Module module;
     PrettyPrinter printer;
     std::stringstream source;
 
-    bool scanned = read(context, argv[1]);
+    bool scanned = read(module, argv[1]);
 
-    printer.set_context(&context);
+    printer.set_module(&module);
 
-    context.get_logger()->print(std::cout);
+    module.get_logger()->print(std::cout);
 
     if (!printer.print(source)) {
         std::cout << "<no ast>\n";
@@ -411,7 +411,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << source.str();
-    std::cout << "--- tree\n" << dump_of(context);
+    std::cout << "--- tree\n" << dump_of(module);
 
     if (argc < 3) {
         return 0;
@@ -434,7 +434,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    Context reparsed;
+    Module reparsed;
 
     read(reparsed, argv[2]);
 
@@ -447,7 +447,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string before = dump_of(context);
+    std::string before = dump_of(module);
     std::string after = dump_of(reparsed);
 
     if (before != after) {
