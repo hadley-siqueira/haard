@@ -1,0 +1,19 @@
+import std.io
+
+let width = 80
+const height = 24
+
+def main : i32
+    return 0
+
+class Point:
+    x : f64
+
+struct Pair:
+    first : i32
+
+enum Colour:
+    red
+
+union Value:
+    number : i32

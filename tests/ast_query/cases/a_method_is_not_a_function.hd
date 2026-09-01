@@ -1,0 +1,12 @@
+# the method and the local belong to what encloses them, not to the module:
+# only 'main' and 'g' are declared here
+let g = 1
+
+class Point:
+    def norm : f64
+        let local = 2
+        return local
+
+def main : i32
+    let inner = 3
+    return inner

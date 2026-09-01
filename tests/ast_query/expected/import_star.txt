@@ -1,0 +1,8 @@
+imports:
+  std.io (star)
+functions:
+classes:
+structs:
+enums:
+unions:
+global variables:

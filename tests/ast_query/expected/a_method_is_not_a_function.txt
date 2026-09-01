@@ -1,0 +1,10 @@
+imports:
+functions:
+  main
+classes:
+  Point
+structs:
+enums:
+unions:
+global variables:
+  let

@@ -1,0 +1,9 @@
+imports:
+  std.io
+  a.b.c
+functions:
+classes:
+structs:
+enums:
+unions:
+global variables:

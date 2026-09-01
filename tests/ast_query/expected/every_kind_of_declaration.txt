@@ -1,0 +1,15 @@
+imports:
+  std.io
+functions:
+  main
+classes:
+  Point
+structs:
+  Pair
+enums:
+  Colour
+unions:
+  Value
+global variables:
+  let
+  const

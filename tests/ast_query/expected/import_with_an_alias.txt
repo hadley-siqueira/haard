@@ -1,0 +1,8 @@
+imports:
+  std.io.print as p
+functions:
+classes:
+structs:
+enums:
+unions:
+global variables:
