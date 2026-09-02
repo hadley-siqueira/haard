@@ -56,8 +56,16 @@ sources=(
 
 mkdir -p "$build" expected
 
+. "$root/tests/objects.sh"
+
+# the compiler's sources, compiled once for the whole test run and shared with
+# every other suite. See tests/objects.sh
+if ! haard_objects "$root" "${sources[@]}"; then
+    exit 1
+fi
+
 if ! err=$(g++ -std=c++20 -I"$root/src" -o "$build/parse_and_print" \
-        parse_and_print.cpp "${sources[@]}" 2>&1); then
+        parse_and_print.cpp "${HAARD_OBJECTS[@]}" 2>&1); then
     printf '%sERROR%s failed to build parse_and_print\n' "$red" "$reset"
     printf '%s\n' "$err"
     exit 1

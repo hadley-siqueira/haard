@@ -1,0 +1,26 @@
+def main : i32
+    let n = 1
+    let flag = true
+    if flag and n < 2:
+        pass
+    if not flag:
+        pass
+    if !flag or flag:
+        pass
+    if n and flag:
+        pass
+    if flag and n:
+        pass
+    if n and n:
+        pass
+    if n or flag:
+        pass
+    if not n:
+        pass
+    if !n:
+        pass
+    if 1 and flag:
+        pass
+    while flag or not flag:
+        pass
+    return 0

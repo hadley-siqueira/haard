@@ -1,0 +1,28 @@
+def main : i32
+    let n = 1
+    let flag = true
+    if n:
+        pass
+    if 5:
+        pass
+    if flag:
+        pass
+    if n < 2:
+        pass
+    if flag:
+        pass
+    elif n:
+        pass
+    else:
+        pass
+    while n:
+        pass
+    while flag:
+        pass
+    for n = 0; n; n = n + 1:
+        pass
+    for n = 0; n < 2; n = n + 1:
+        pass
+    for ; ; n = n + 1:
+        pass
+    return 0

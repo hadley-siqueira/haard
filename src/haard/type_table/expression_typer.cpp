@@ -39,6 +39,11 @@ void ExpressionTyper::set_compilation(Compilation* compilation) {
     overloads.set_compilation(compilation);
 }
 
+void ExpressionTyper::set_module(u32 index) {
+    this->index = index;
+    module = compilation->get_module(index);
+}
+
 u32 ExpressionTyper::type_of(u32 index, u32 scope, u32 node, u32 expected) {
     if (node == 0) {
         return INVALID_TYPE;
@@ -82,6 +87,17 @@ u32 ExpressionTyper::type_of(u32 index, u32 scope, u32 node, u32 expected) {
     case AST_LESS_THAN_OR_EQUAL:
     case AST_GREATER_THAN_OR_EQUAL:
         return binary(scope, node, INVALID_TYPE, true);
+
+    // 'and' and 'or', written as words or as symbols
+    case AST_LOGICAL_AND:
+    case AST_LOGICAL_OR:
+        return logical(scope, node, false);
+
+    // 'not' and '!', which the parser tells apart so the printer can write
+    // back whichever was written. They ask the same question
+    case AST_LOGICAL_NOT:
+    case AST_LOGICAL_NOT_OPERATOR:
+        return logical(scope, node, true);
 
     case AST_DOT:
         return member(scope, node, false);
@@ -180,6 +196,37 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     }
 
     return comparison ? module->get_types()->builtin(BUILTIN_BOOL) : left;
+}
+
+u32 ExpressionTyper::logical(u32 scope, u32 node, bool unary) {
+    bool ok = boolean_operand(scope, first_child(node), node);
+
+    // the second operand is asked even when the first was wrong, so a line
+    // with two mistakes on it is not read twice. 'ok' is on the right of the
+    // '&&' for exactly that reason
+    if (!unary) {
+        ok = boolean_operand(scope, second_child(node), node) && ok;
+    }
+
+    return ok ? module->get_types()->builtin(BUILTIN_BOOL) : INVALID_TYPE;
+}
+
+bool ExpressionTyper::boolean_operand(u32 scope, u32 node, u32 at) {
+    u32 wanted = module->get_types()->builtin(BUILTIN_BOOL);
+    u32 given = type_of(index, scope, node, wanted);
+
+    if (given == wanted) {
+        return true;
+    }
+
+    // nothing came back and whatever could not type it has already said so --
+    // a literal asked to be a bool among them
+    if (given != INVALID_TYPE) {
+        report(node, "'" + text_of(at) + "' needs bool, and this is " +
+               name_of(given));
+    }
+
+    return false;
 }
 
 std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {

@@ -1,0 +1,13 @@
+# record 0018 has no conversion and so no truthiness: an operand of 'and',
+# 'or' or 'not' is a bool or it is nothing at all, and the binding it was
+# given to is nothing too
+def main : i32
+    let n = 1
+    let flag = true
+    let both = flag and flag
+    let either = flag or n < 2
+    let negated = not flag
+    let symbols = !flag && flag || flag
+    let broken = n and flag
+    let also_broken = not n
+    return 0

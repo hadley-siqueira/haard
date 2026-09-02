@@ -3,6 +3,7 @@
 #include <haard/scanner/scanner.h>
 #include <haard/string_table/string_table.h>
 #include <haard/name_resolver/use_resolver.h>
+#include <haard/statement_checker/statement_checker.h>
 #include <haard/symbol_table/symbol_collector.h>
 #include <haard/type_table/type_collector.h>
 #include <stdexcept>
@@ -64,6 +65,7 @@ bool Compilation::build(const std::filesystem::path& entry) {
 
     collect_types();
     resolve_uses();
+    check_statements();
 
     return !has_errors();
 }
@@ -256,6 +258,18 @@ void Compilation::resolve_uses() {
     for (u32 i = 0; i < modules.size(); i++) {
         if (modules[i]->is_parsed()) {
             uses.resolve(i);
+        }
+    }
+}
+
+void Compilation::check_statements() {
+    StatementChecker statements;
+
+    statements.set_compilation(this);
+
+    for (u32 i = 0; i < modules.size(); i++) {
+        if (modules[i]->is_parsed()) {
+            statements.check(i);
         }
     }
 }

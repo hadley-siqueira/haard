@@ -1,0 +1,22 @@
+<unnamed>:
+    main  i32
+    n  i32
+    flag  bool
+    both  bool
+    either  bool
+    negated  bool
+    symbols  bool
+    broken  <none>
+    also_broken  <none>
+  15 types interned
+diagnostics:
+error: 'and' needs bool, and this is i32
+  --> main.hd:11:18
+   |
+11 |     let broken = n and flag
+   |                  ^
+error: 'not' needs bool, and this is i32
+  --> main.hd:12:27
+   |
+12 |     let also_broken = not n
+   |                           ^

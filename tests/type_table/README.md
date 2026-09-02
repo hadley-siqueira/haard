@@ -65,6 +65,17 @@ putting it first fails a case.
 **opened** and not the one it sits in: `T` is the function's own generic
 parameter, and it is only in view there.
 
+## An operand of `and` is a bool or it is nothing
+
+`a_logical_operator_is_bool` is record 0018 with no conversion meeting the one
+place every other language quietly converts. There is no truthiness here: `n
+and flag` with an `i32` `n` is not a mistake about a type it could be turned
+into, it is simply not a bool, and the binding it was given to has **no type at
+all** — the golden shows `<none>` next to it.
+
+Both spellings are one rule (`and` and `&&`, `not` and `!`), which the parser
+keeps apart only so the printer can write back whichever was written.
+
 ## What the goldens pin
 
 - **Every shape the grammar has**: pointer, `**` as two pointers, `***`,

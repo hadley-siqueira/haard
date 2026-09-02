@@ -1,0 +1,14 @@
+class Base:
+    tag : i32
+
+    def myself : Base*
+        return this
+
+    def the_wrong_thing : i32
+        return this
+
+    def a_field : i32
+        return tag
+
+def main : i32
+    return 0

@@ -1,0 +1,10 @@
+error: cannot find 'Missing' in this scope
+ --> main.hd:1:38
+  |
+1 | def gives_back_nothing_that_exists : Missing
+  |                                      ^^^^^^^
+error: cannot find 'Missing' in this scope
+ --> main.hd:5:10
+  |
+5 |     @a : Missing
+  |          ^^^^^^^

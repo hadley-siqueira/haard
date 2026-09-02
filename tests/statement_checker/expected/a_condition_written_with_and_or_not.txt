@@ -1,0 +1,40 @@
+error: 'and' needs bool, and this is i32
+  --> main.hd:10:8
+   |
+10 |     if n and flag:
+   |        ^
+error: 'and' needs bool, and this is i32
+  --> main.hd:12:17
+   |
+12 |     if flag and n:
+   |                 ^
+error: 'and' needs bool, and this is i32
+  --> main.hd:14:8
+   |
+14 |     if n and n:
+   |        ^
+error: 'and' needs bool, and this is i32
+  --> main.hd:14:14
+   |
+14 |     if n and n:
+   |              ^
+error: 'or' needs bool, and this is i32
+  --> main.hd:16:8
+   |
+16 |     if n or flag:
+   |        ^
+error: 'not' needs bool, and this is i32
+  --> main.hd:18:12
+   |
+18 |     if not n:
+   |            ^
+error: '!' needs bool, and this is i32
+  --> main.hd:20:9
+   |
+20 |     if !n:
+   |         ^
+error: expected bool, found an integer literal
+  --> main.hd:22:8
+   |
+22 |     if 1 and flag:
+   |        ^

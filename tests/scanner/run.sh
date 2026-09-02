@@ -86,30 +86,28 @@ sources=(
 
 drivers=(dump_tokens check_invariants)
 
-mkdir -p "$build/obj" expected
+. "$root/tests/objects.sh"
 
-# The scanner sources are shared by both drivers, so compile them to objects
-# once and link twice, instead of handing the same seven files to g++ twice.
-# Each object is also one visible step of progress.
-build_total=$((${#sources[@]} + ${#drivers[@]}))
+mkdir -p "$build" expected
+
+# The sources go to objects rather than straight to the drivers, because both
+# drivers link the same twelve files and handing them to g++ twice compiles
+# them twice. They are also shared with every other suite, so a 'make check'
+# compiles each of them once and not eleven times -- see tests/objects.sh
+build_total=$((1 + ${#drivers[@]}))
 build_done=0
-objects=()
 
-for src in "${sources[@]}"; do
-    obj="$build/obj/$(basename "$src" .cpp).o"
-    live "$build_done" "$build_total" "CC" "$(basename "$src")"
+live "$build_done" "$build_total" "CC" "the compiler sources"
 
-    if ! err=$(g++ -std=c++20 -I"$root/src" -c -o "$obj" "$src" 2>&1); then
-        build_done=$((build_done + 1))
-        result "$build_done" "$build_total" "$red" "ERROR" "failed to compile $src"
-        detail "$err"
-        exit 1
-    fi
-
-    objects+=("$obj")
+if ! haard_objects "$root" "${sources[@]}"; then
     build_done=$((build_done + 1))
-    result "$build_done" "$build_total" "$green" "CC" "$(basename "$src")"
-done
+    result "$build_done" "$build_total" "$red" "ERROR" "failed to compile the sources"
+    exit 1
+fi
+
+objects=("${HAARD_OBJECTS[@]}")
+build_done=$((build_done + 1))
+result "$build_done" "$build_total" "$green" "CC" "the compiler sources"
 
 for driver in "${drivers[@]}"; do
     live "$build_done" "$build_total" "LD" "$driver"

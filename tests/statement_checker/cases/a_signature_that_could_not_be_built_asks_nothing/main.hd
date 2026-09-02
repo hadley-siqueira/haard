@@ -1,0 +1,6 @@
+def gives_back_nothing_that_exists : Missing
+    return 1
+
+def takes_nothing_that_exists : i32
+    @a : Missing
+    return 2.5

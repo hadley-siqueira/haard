@@ -21,10 +21,8 @@ namespace haard {
     // to make them one, and the diagnostic says so at the operator.
     //
     // What it cannot type yet, and gives back INVALID_TYPE for without
-    // complaining: a call, which needs overload resolution; a field access,
-    // which needs the left side's class searched; and a string or symbol
-    // literal, which has no type until the prelude declares one (record 0017
-    // leaves what else it holds open).
+    // complaining: a string or symbol literal, which has no type until the
+    // prelude declares one (record 0017 leaves what else it holds open).
     class ExpressionTyper {
         public:
             ExpressionTyper();
@@ -36,6 +34,12 @@ namespace haard {
             // which is what a 'let' with no written type does
             u32 type_of(u32 module, u32 scope, u32 node, u32 expected);
 
+            // which module name_of reads its names out of. type_of sets it
+            // too, and this is for a caller that has to name a type before it
+            // has asked for one -- the StatementChecker reporting a 'return'
+            // with nothing after it
+            void set_module(u32 module);
+
         public:
             // the name of a type as a diagnostic should print it. Public
             // because the collector reports a mismatch it found itself
@@ -45,6 +49,19 @@ namespace haard {
             u32 literal(u32 node, u32 expected, BuiltinType fallback);
             u32 identifier(u32 scope, u32 node);
             u32 binary(u32 scope, u32 node, u32 expected, bool comparison);
+
+            // 'and', 'or', 'not' and the symbol forms of all three. Record
+            // 0018 has no conversion, and so it has no truthiness either: an
+            // operand of these is a bool or it is a mistake, and there is
+            // nothing an i32 could be turned into to make 'if n and m:' mean
+            // something. 'unary' is 'not', which has one operand and no second
+            // child to ask about
+            u32 logical(u32 scope, u32 node, bool unary);
+
+            // whether this operand is a bool, complaining when it is not. It
+            // asks for a bool rather than typing first, so 'flag and 1' is a
+            // literal that cannot be one and says so about the literal
+            bool boolean_operand(u32 scope, u32 node, u32 at);
 
             // 'a.b' and 'a->b'. Record 0018: '.' reads a member of a T and
             // of a T* alike, looking through one level of pointer when there

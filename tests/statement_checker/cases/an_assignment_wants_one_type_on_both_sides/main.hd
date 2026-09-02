@@ -1,0 +1,16 @@
+def main : i32
+    let n = 1
+    let d = 2.5
+    let small : u8 = 0
+    n = n
+    n = d
+    n = 2.5
+    n = n + 1
+    small = 200
+    small = 300
+    n = n = 2.5
+    n += d
+    small <<= 1
+    for n = 2.5; n < 2; n = 2.5:
+        pass
+    return 0

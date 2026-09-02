@@ -81,6 +81,14 @@ namespace haard {
             // reached yet when it passed over it
             void resolve_uses();
 
+            // the last walk, and it needs every declaration typed: a 'return'
+            // is checked against the signature its function got in
+            // collect_types, and that signature may name a module this one
+            // reached later. Where it sits among the others does not change
+            // what is printed -- the Logger sorts a module's diagnostics by
+            // offset before printing them
+            void check_statements();
+
             void report(Module* module, u32 import, const std::string& message);
 
         private:

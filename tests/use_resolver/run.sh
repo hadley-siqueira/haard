@@ -49,6 +49,7 @@ sources=(
     "$root/src/haard/type_table/type_builder.cpp"
     "$root/src/haard/name_resolver/name_resolver.cpp"
     "$root/src/haard/name_resolver/use_resolver.cpp"
+    "$root/src/haard/statement_checker/statement_checker.cpp"
     "$root/src/haard/symbol_table/symbol_collector.cpp"
     "$root/src/haard/source_file/source_file.cpp"
     "$root/src/haard/log/log.cpp"
@@ -62,8 +63,16 @@ sources=(
 
 mkdir -p "$build" expected
 
+. "$root/tests/objects.sh"
+
+# the compiler's sources, compiled once for the whole test run and shared with
+# every other suite. See tests/objects.sh
+if ! haard_objects "$root" "${sources[@]}"; then
+    exit 1
+fi
+
 if ! err=$(g++ -std=c++20 -I"$root/src" -o "$build/check_case" \
-        check.cpp "${sources[@]}" 2>&1); then
+        check.cpp "${HAARD_OBJECTS[@]}" 2>&1); then
     printf '%sERROR%s failed to build the case runner\n' "$red" "$reset"
     printf '%s\n' "$err"
     exit 1

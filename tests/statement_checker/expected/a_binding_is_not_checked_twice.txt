@@ -1,0 +1,10 @@
+error: expected i32, found a floating point literal
+ --> main.hd:2:19
+  |
+2 |     let a : i32 = 2.5
+  |                   ^^^
+error: expected f64, found an integer literal
+ --> main.hd:3:19
+  |
+3 |     let b : f64 = 1
+  |                   ^

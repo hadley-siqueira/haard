@@ -1,0 +1,12 @@
+def nothing_and_nothing : void
+    let a = 1
+    return
+
+def nothing_but_a_value_is_written : void
+    return 1
+
+def something_and_nothing_is_written : i32
+    return
+
+def something_and_something : i32
+    return 1

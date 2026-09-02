@@ -1,0 +1,25 @@
+error: 300 does not fit in u8
+ --> main.hd:9:12
+  |
+9 |     return 300
+  |            ^^^
+error: expected i32, found a floating point literal
+  --> main.hd:12:12
+   |
+12 |     return 2.5
+   |            ^^^
+error: expected i32, found f64
+  --> main.hd:16:12
+   |
+16 |     return a
+   |            ^
+error: expected f64, found i32
+  --> main.hd:19:34
+   |
+19 |     return a_name_of_another_type(1.0)
+   |                                  ^
+error: expected i32, found a floating point literal
+  --> main.hd:25:20
+   |
+25 |             return 2.5
+   |                    ^^^

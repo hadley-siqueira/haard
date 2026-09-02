@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# TypeTable tests. Dependencies: g++, bash, diff and timeout. Nothing external.
+# StatementChecker tests. Dependencies: g++, bash, diff and timeout. Nothing external.
 #
 #   ./run.sh          run everything, one line per case
 #   ./run.sh -u       rewrite the expected/ files with the current output
 #
-# Every directory in cases/ is a project: a roots table, an entry file and the
-# queries resolve into. build.cpp runs the queries and the answers are compared
-# compared against expected/<case>.txt. Read the diff before committing it: -u
-# accepts whatever it produces, bugs included.
+# Every directory in cases/ is a project: an entry file and the sources it
+# reaches. check.cpp compiles it and prints the diagnostics, which are compared
+# against expected/<case>.txt. Read the diff before committing it: -u accepts
+# whatever it produces, bugs included.
 #
 # Exits 0 if everything passed, 1 otherwise.
 set -u
@@ -15,7 +15,7 @@ set -u
 cd "$(dirname "$0")"
 
 root=../..
-build=${TMPDIR:-/tmp}/haard-type-table-tests
+build=${TMPDIR:-/tmp}/haard-statement-checker-tests
 update=0
 
 if [ "${1:-}" = "-u" ]; then
@@ -50,13 +50,13 @@ sources=(
     "$root/src/haard/name_resolver/name_resolver.cpp"
     "$root/src/haard/name_resolver/use_resolver.cpp"
     "$root/src/haard/statement_checker/statement_checker.cpp"
-    "$root/src/haard/type_table/type_table.cpp"
     "$root/src/haard/symbol_table/symbol_collector.cpp"
     "$root/src/haard/source_file/source_file.cpp"
     "$root/src/haard/log/log.cpp"
     "$root/src/haard/scanner/scanner.cpp"
     "$root/src/haard/parser/parser.cpp"
     "$root/src/haard/module/module.cpp"
+    "$root/src/haard/type_table/type_table.cpp"
     "$root/src/haard/string_table/string_table.cpp"
     "$root/src/haard/symbol_table/symbol_table.cpp"
 )
@@ -71,8 +71,8 @@ if ! haard_objects "$root" "${sources[@]}"; then
     exit 1
 fi
 
-if ! err=$(g++ -std=c++20 -I"$root/src" -o "$build/types_case" \
-        types.cpp "${HAARD_OBJECTS[@]}" 2>&1); then
+if ! err=$(g++ -std=c++20 -I"$root/src" -o "$build/check_case" \
+        check.cpp "${HAARD_OBJECTS[@]}" 2>&1); then
     printf '%sERROR%s failed to build the case runner\n' "$red" "$reset"
     printf '%s\n' "$err"
     exit 1
@@ -93,7 +93,7 @@ for directory in "${cases[@]}"; do
 
     # the timeout is a test of its own: a loop that follows a cycle forever
     # shows up as a failure instead of hanging the suite
-    got=$(timeout 5 "$build/types_case" "cases/$name" 2>&1)
+    got=$(timeout 5 "$build/check_case" "cases/$name" 2>&1)
 
     if [ $? -eq 124 ]; then
         printf '%s[%2d/%d]%s %sFAIL%s  %s (timed out after 5s)\n' \

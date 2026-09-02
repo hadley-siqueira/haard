@@ -1,0 +1,5 @@
+error: expected i32, found Base*
+ --> main.hd:8:16
+  |
+8 |         return this
+  |                ^^^^

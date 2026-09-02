@@ -1,0 +1,10 @@
+error: expected void, found a value
+ --> main.hd:6:12
+  |
+6 |     return 1
+  |            ^
+error: expected i32, found nothing
+ --> main.hd:9:5
+  |
+9 |     return
+  |     ^^^^^^

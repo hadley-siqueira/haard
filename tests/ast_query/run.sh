@@ -57,8 +57,16 @@ sources=(
 
 mkdir -p "$build" expected
 
+. "$root/tests/objects.sh"
+
+# the compiler's sources, compiled once for the whole test run and shared with
+# every other suite. See tests/objects.sh
+if ! haard_objects "$root" "${sources[@]}"; then
+    exit 1
+fi
+
 if ! err=$(g++ -std=c++20 -I"$root/src" -o "$build/query" \
-        query.cpp "${sources[@]}" 2>&1); then
+        query.cpp "${HAARD_OBJECTS[@]}" 2>&1); then
     printf '%sERROR%s failed to build query\n' "$red" "$reset"
     printf '%s\n' "$err"
     exit 1

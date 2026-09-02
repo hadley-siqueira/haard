@@ -1,0 +1,12 @@
+def main : i32
+    let a = 1
+    let give_a_float = || -> f64 {
+        return 2.5
+    }
+    let count_up = |n : i32| -> i32 {
+        n = 2.5
+        return n
+    }
+    if a < 2:
+        return a
+    return 2.5
