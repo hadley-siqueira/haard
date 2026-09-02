@@ -1,0 +1,3 @@
+modules:
+error: cases/the_entry_is_under_no_root/outside/stray.hd: no root block of the table covers this file
+--- parsed alone: every module matches

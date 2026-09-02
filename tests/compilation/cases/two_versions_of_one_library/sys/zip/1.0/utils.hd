@@ -1,0 +1,3 @@
+def adler32 : u32
+    @data : u8*
+    pass

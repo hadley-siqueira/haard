@@ -72,6 +72,23 @@ bool AstQuery::is_star_import(u32 import) {
     return find_child(path, AST_IMPORT_ALL) != 0;
 }
 
+u32 AstQuery::get_import_offset(u32 import) {
+    u32 segment = import_segment(import, false);
+
+    return module->get_tokens()->get_token(
+        ast->get_node(segment)->get_token()).get_offset();
+}
+
+// from the start of the first segment to the end of the last, so that the
+// underline covers the dots too. The star is not part of it: it is not a
+// segment, and an import that fails to resolve failed on the name
+u32 AstQuery::get_import_length(u32 import) {
+    Token last = module->get_tokens()->get_token(
+        ast->get_node(import_segment(import, true))->get_token());
+
+    return last.get_offset() + last.get_length() - get_import_offset(import);
+}
+
 std::string AstQuery::get_import_alias(u32 import) {
     u32 alias = find_child(import, AST_IMPORT_ALIAS);
 
@@ -133,6 +150,28 @@ u32 AstQuery::find_child(u32 parent, AstNodeKind kind) {
     }
 
     return 0;
+}
+
+u32 AstQuery::import_segment(u32 import, bool last) {
+    u32 path = find_child(import, AST_IMPORT_PATH);
+    u32 node = ast->get_node(path)->get_children();
+    u32 found = 0;
+
+    while (node != 0) {
+        AstNode* current = ast->get_node(node);
+
+        if (current->get_kind() == AST_IMPORT_PATH_SEGMENT) {
+            found = node;
+
+            if (!last) {
+                break;
+            }
+        }
+
+        node = current->get_sibling();
+    }
+
+    return found;
 }
 
 std::string AstQuery::text_of(u32 node) {

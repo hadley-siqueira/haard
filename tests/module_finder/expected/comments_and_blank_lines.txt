@@ -1,0 +1,4 @@
+roots:
+    0 lib = lib
+file lib/a.hd -> root 0 (lib)
+find lib.a -> lib/a.hd

@@ -1,0 +1,1 @@
+error: cases/a_dependency_before_any_block/table.tbl:1: a dependency before any root block

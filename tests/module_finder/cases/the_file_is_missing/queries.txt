@@ -1,0 +1,4 @@
+file app/main.hd
+find zip.archive
+find zip.compress
+star zip.nowhere

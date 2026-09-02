@@ -1,0 +1,16 @@
+modules:
+    0 app.main  app/main.hd
+        imports lib.broken
+        imports lib.fine
+        declares main
+    1 lib.broken  lib/broken.hd
+        did not parse
+    2 lib.fine  lib/fine.hd
+        declares fine
+--- parsed alone: every module matches
+diagnostics:
+error: expected an expression, found the end of the file
+ --> lib/broken.hd:2:14
+  |
+2 |     let x = (
+  |              ^

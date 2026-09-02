@@ -1,0 +1,1 @@
+error: cases/a_dependency_names_no_block/table.tbl:2: 'zip -> zip' names a directory that has no root block

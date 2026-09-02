@@ -1,0 +1,5 @@
+roots:
+    0 std = sys/std/1.0
+    1 app = app
+file app/main.hd -> root 1 (app)
+find std.io -> sys/std/1.0/io.hd

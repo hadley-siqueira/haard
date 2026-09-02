@@ -1,0 +1,4 @@
+file a/a.hd
+find b
+file b/b.hd
+find a

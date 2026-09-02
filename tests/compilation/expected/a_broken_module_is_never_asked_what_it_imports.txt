@@ -1,0 +1,13 @@
+modules:
+    0 app.main  app/main.hd
+        imports lib.half
+        declares main
+    1 lib.half  lib/half.hd
+        did not parse
+--- parsed alone: every module matches
+diagnostics:
+error: expected an identifier, found the end of the line
+ --> lib/half.hd:5:12
+  |
+5 | import lib.
+  |            ^

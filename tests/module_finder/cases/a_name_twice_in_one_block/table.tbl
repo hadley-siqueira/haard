@@ -1,0 +1,4 @@
+root other = other
+
+root app = app
+    app -> other

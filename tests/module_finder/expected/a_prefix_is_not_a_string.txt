@@ -1,0 +1,5 @@
+roots:
+    0 lib = lib/1.0
+    1 beta = lib/1.0-beta
+file lib/1.0/a.hd -> root 0 (lib)
+file lib/1.0-beta/a.hd -> root 1 (beta)

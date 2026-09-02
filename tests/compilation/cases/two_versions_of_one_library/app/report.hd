@@ -1,0 +1,4 @@
+import std.io
+
+def write_summary : void
+    pass

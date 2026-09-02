@@ -1,0 +1,1 @@
+error: cases/a_name_twice_in_one_block/table.tbl:4: the root 'app' sees 'app' twice

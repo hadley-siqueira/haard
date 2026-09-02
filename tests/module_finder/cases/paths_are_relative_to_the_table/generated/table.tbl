@@ -1,0 +1,4 @@
+root ../sys/std/1.0 = std
+
+root ../app = app
+    std -> ../sys/std/1.0

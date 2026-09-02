@@ -1,0 +1,1 @@
+error: cases/a_line_that_opens_no_block/table.tbl:3: expected a root block or an indented dependency

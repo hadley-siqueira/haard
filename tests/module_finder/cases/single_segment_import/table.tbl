@@ -1,0 +1,4 @@
+root foobar = foobar
+
+root app = app
+    foobar -> foobar

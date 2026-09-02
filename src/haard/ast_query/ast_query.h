@@ -47,6 +47,13 @@ namespace haard {
             // empty when the import has no 'as'
             std::string get_import_alias(u32 import);
 
+            // the span a diagnostic about this import underlines: the whole
+            // 'a.b.c', from the first segment to the last. Not the 'import'
+            // keyword, which is the same six characters in every file and
+            // says nothing about which import went wrong
+            u32 get_import_offset(u32 import);
+            u32 get_import_length(u32 import);
+
             // the name a 'def', a 'class', a 'struct', an 'enum' or a 'union'
             // declares. Empty for a 'let' or a 'const', which declare one name
             // per AST_BINDING child instead of one for the statement
@@ -62,6 +69,9 @@ namespace haard {
             std::vector<u32> collect(AstNodeKind first, AstNodeKind second);
 
             u32 find_child(u32 parent, AstNodeKind kind);
+
+            // the first or the last AST_IMPORT_PATH_SEGMENT of an import
+            u32 import_segment(u32 import, bool last);
             std::string text_of(u32 node);
 
         private:

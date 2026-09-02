@@ -1,0 +1,2 @@
+class Archive:
+    size : i32

@@ -1,0 +1,3 @@
+roots
+file app/main.hd
+find std.io

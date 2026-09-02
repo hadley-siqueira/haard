@@ -1,0 +1,5 @@
+file app/main.hd
+find app.main
+
+# nothing covers this one, and the message has to say so instead of picking
+file outside/stray.hd

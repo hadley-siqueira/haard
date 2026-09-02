@@ -1,10 +1,8 @@
 #ifndef HAARD_DRIVER_H
 #define HAARD_DRIVER_H
 
-#include <haard/module/module.h>
-#include <haard/parser/parser.h>
+#include <haard/compilation/compilation.h>
 #include <haard/pretty_printer/pretty_printer.h>
-#include <haard/scanner/scanner.h>
 #include <string>
 
 namespace haard {
@@ -25,16 +23,13 @@ namespace haard {
             void print_usage(std::ostream& out);
 
             int compile();
-            bool scan();
-            bool parse();
 
         private:
-            Module module;
-            Scanner scanner;
-            Parser parser;
+            Compilation compilation;
             PrettyPrinter pretty_printer;
 
             std::string path;
+            std::string roots;
             std::string program;
             bool show_help;
             bool show_tokens;

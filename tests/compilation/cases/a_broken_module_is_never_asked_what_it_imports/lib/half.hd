@@ -1,0 +1,8 @@
+# a good import, and then one that does not parse. The parser drops the broken
+# statement without taking its nodes back, so the tree holds an AST_IMPORT that
+# names nothing
+import lib.fine
+import lib.
+
+def half : void
+    pass

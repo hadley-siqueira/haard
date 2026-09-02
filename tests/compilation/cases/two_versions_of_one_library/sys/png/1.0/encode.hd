@@ -1,0 +1,8 @@
+# the line that decides everything: png sees zip 1.0, and writes exactly what
+# the app writes to see 2.0
+import zip.compress
+import png.chunk
+
+def encode : void
+    @data : u8*
+    pass

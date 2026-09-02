@@ -1,0 +1,9 @@
+file app/main.hd -> root 1 (app)
+find foobar -> foobar/foobar.hd
+find foobar.other -> foobar/other.hd
+star foobar.* -> foobar
+    foobar/foobar.hd
+    foobar/other.hd
+file foobar/foobar.hd -> root 0 (foobar)
+name foobar/foobar.hd -> foobar
+name foobar/other.hd -> foobar.other

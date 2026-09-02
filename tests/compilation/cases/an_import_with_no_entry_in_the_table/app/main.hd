@@ -1,0 +1,4 @@
+import png.encode
+
+def main : i32
+    pass

@@ -1,0 +1,3 @@
+file app/main.hd -> root 0 (app)
+find app.main -> app/main.hd
+file outside/stray.hd -> no root

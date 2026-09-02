@@ -1,0 +1,3 @@
+root lib/1.0 = lib
+
+root lib/1.0-beta = beta

@@ -3,6 +3,35 @@
 
 using namespace haard;
 
+Module::Module() {
+    root = INVALID_ROOT;
+    parsed = false;
+}
+
+void Module::set_parsed(bool parsed) {
+    this->parsed = parsed;
+}
+
+bool Module::is_parsed() {
+    return parsed;
+}
+
+void Module::set_name(const std::string& name) {
+    this->name = name;
+}
+
+const std::string& Module::get_name() {
+    return name;
+}
+
+void Module::set_root(u32 root) {
+    this->root = root;
+}
+
+u32 Module::get_root() {
+    return root;
+}
+
 TokenStream* Module::get_tokens() {
     return &tokens;
 }

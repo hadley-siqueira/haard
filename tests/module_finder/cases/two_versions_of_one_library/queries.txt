@@ -1,0 +1,20 @@
+roots
+
+# the app sees zip 2.0
+file app/main.hd
+find zip.compress
+find png.encode
+find app.report
+name app/report.hd
+
+# png sees zip 1.0, and writes exactly the same import
+file sys/png/1.0/encode.hd
+find zip.compress
+find png.chunk
+name sys/png/1.0/encode.hd
+
+# a library importing itself lands in its own version, not in the other one
+file sys/zip/1.0/compress.hd
+find zip.utils
+file sys/zip/2.0/compress.hd
+find zip.utils

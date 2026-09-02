@@ -1,0 +1,10 @@
+file app/main.hd
+
+# the root directory itself, sorted, and net/ is not descended into
+star std
+
+# a subdirectory of the root
+star std.net
+
+# and the plain import next to it
+find std.io

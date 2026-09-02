@@ -1,0 +1,6 @@
+# GENERATED -- nobody edits this file by hand.
+#
+# A header like this one is why comments are a line of the format.
+
+root lib = lib
+    # even here, where the indentation says dependency

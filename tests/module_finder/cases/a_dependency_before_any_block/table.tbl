@@ -1,0 +1,3 @@
+    std -> app
+
+root app = app

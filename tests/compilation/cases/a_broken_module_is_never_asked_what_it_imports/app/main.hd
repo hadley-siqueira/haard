@@ -1,0 +1,4 @@
+import lib.half
+
+def main : i32
+    pass

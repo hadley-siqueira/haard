@@ -1,0 +1,5 @@
+# there is no table, so this import is not followed and not complained about
+import std.io
+
+def main : i32
+    pass

@@ -1,0 +1,14 @@
+modules:
+    0 app.main  app/main.hd
+        imports zip.archive
+        imports zip.compress
+        declares main
+    1 zip.archive  zip/archive.hd
+        declares Archive
+--- parsed alone: every module matches
+diagnostics:
+error: there is no file zip/compress.hd
+ --> app/main.hd:2:8
+  |
+2 | import zip.compress
+  |        ^^^^^^^^^^^^

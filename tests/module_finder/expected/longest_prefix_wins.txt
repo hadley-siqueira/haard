@@ -1,0 +1,7 @@
+roots:
+    0 tree = tree
+    1 inner = tree/inner
+file tree/outer.hd -> root 0 (tree)
+name tree/outer.hd -> tree.outer
+file tree/inner/a.hd -> root 1 (inner)
+name tree/inner/a.hd -> inner.a

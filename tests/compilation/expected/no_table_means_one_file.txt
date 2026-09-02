@@ -1,0 +1,5 @@
+modules:
+    0 <unnamed>  app/main.hd
+        imports std.io
+        declares main
+--- parsed alone: every module matches

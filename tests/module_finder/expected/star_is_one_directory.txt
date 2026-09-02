@@ -1,0 +1,7 @@
+file app/main.hd -> root 1 (app)
+star std.* -> std
+    std/io.hd
+    std/list.hd
+star std.net.* -> std/net
+    std/net/tcp.hd
+find std.io -> std/io.hd

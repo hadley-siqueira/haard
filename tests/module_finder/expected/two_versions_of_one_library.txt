@@ -1,0 +1,19 @@
+roots:
+    0 std = sys/std/1.0
+    1 zip = sys/zip/1.0
+    2 zip = sys/zip/2.0
+    3 png = sys/png/1.0
+    4 app = app
+file app/main.hd -> root 4 (app)
+find zip.compress -> sys/zip/2.0/compress.hd
+find png.encode -> sys/png/1.0/encode.hd
+find app.report -> app/report.hd
+name app/report.hd -> app.report
+file sys/png/1.0/encode.hd -> root 3 (png)
+find zip.compress -> sys/zip/1.0/compress.hd
+find png.chunk -> sys/png/1.0/chunk.hd
+name sys/png/1.0/encode.hd -> png.encode
+file sys/zip/1.0/compress.hd -> root 1 (zip)
+find zip.utils -> sys/zip/1.0/utils.hd
+file sys/zip/2.0/compress.hd -> root 2 (zip)
+find zip.utils -> sys/zip/2.0/utils.hd

@@ -1,0 +1,11 @@
+file app/main.hd
+find foobar
+find foobar.other
+
+# the same name, and the star makes it a directory instead of a file
+star foobar
+
+# the entry file of a library is named after the library, and not foobar.foobar
+file foobar/foobar.hd
+name foobar/foobar.hd
+name foobar/other.hd

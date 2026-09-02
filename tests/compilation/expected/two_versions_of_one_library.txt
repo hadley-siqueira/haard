@@ -1,0 +1,35 @@
+modules:
+    0 app.main  app/main.hd
+        imports zip.compress
+        imports png.encode
+        imports std.io
+        imports app.report
+        declares main
+    1 zip.compress  sys/zip/2.0/compress.hd
+        imports zip.archive
+        imports zip.utils
+        declares compress
+    2 png.encode  sys/png/1.0/encode.hd
+        imports zip.compress
+        imports png.chunk
+        declares encode
+    3 std.io  sys/std/1.0/io.hd
+        declares println
+    4 app.report  app/report.hd
+        imports std.io
+        declares write_summary
+    5 zip.archive  sys/zip/2.0/archive.hd
+        declares Archive
+    6 zip.utils  sys/zip/2.0/utils.hd
+        declares adler32
+    7 zip.compress  sys/zip/1.0/compress.hd
+        imports zip.archive
+        imports zip.utils
+        declares compress
+    8 png.chunk  sys/png/1.0/chunk.hd
+        declares Chunk
+    9 zip.archive  sys/zip/1.0/archive.hd
+        declares Archive
+    10 zip.utils  sys/zip/1.0/utils.hd
+        declares adler32
+--- parsed alone: every module matches

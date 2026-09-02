@@ -1,0 +1,16 @@
+root sys/std/1.0 = std
+
+root sys/zip/1.0 = zip
+    std -> sys/std/1.0
+
+root sys/zip/2.0 = zip
+    std -> sys/std/1.0
+
+root sys/png/1.0 = png
+    std -> sys/std/1.0
+    zip -> sys/zip/1.0
+
+root app = app
+    std -> sys/std/1.0
+    zip -> sys/zip/2.0
+    png -> sys/png/1.0

@@ -1,0 +1,3 @@
+roots
+file lib/a.hd
+find lib.a

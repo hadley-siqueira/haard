@@ -1,0 +1,1 @@
+error: cases/two_blocks_for_one_root/table.tbl:3: './lib/' is the directory of the root 'lib' above

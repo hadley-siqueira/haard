@@ -1,0 +1,4 @@
+file app/main.hd -> root 0 (app)
+find app.main -> app/main.hd
+find zip.compress -> no entry for the first segment
+star zip.* -> no entry for the first segment

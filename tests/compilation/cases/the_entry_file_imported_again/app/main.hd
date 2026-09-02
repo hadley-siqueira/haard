@@ -1,0 +1,4 @@
+import app.report
+
+def main : i32
+    pass

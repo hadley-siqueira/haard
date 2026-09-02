@@ -1,0 +1,8 @@
+# zip 2.0. The signature changed, which is why png cannot use it
+import zip.archive
+import zip.utils
+
+def compress : Archive
+    @data : u8*
+    @level : i32
+    pass

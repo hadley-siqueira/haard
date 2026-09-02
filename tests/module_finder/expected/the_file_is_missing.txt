@@ -1,0 +1,4 @@
+file app/main.hd -> root 1 (app)
+find zip.archive -> zip/archive.hd
+find zip.compress -> nothing at zip/compress.hd
+star zip.nowhere.* -> nothing at zip/nowhere

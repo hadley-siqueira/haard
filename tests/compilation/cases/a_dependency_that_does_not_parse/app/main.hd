@@ -1,0 +1,5 @@
+import lib.broken
+import lib.fine
+
+def main : i32
+    pass

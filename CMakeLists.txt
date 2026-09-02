@@ -27,6 +27,14 @@ set(AST_QUERY_SRC
     src/haard/ast_query/ast_query.cpp
 )
 
+set(MODULE_FINDER_SRC
+    src/haard/module_finder/module_finder.cpp
+)
+
+set(COMPILATION_SRC
+    src/haard/compilation/compilation.cpp
+)
+
 set(SCANNER_SRC
     src/haard/scanner/scanner.cpp
 )
@@ -58,6 +66,8 @@ set(SOURCES
     ${TOKEN_STREAM_SRC}
     ${AST_SRC}
     ${AST_QUERY_SRC}
+    ${MODULE_FINDER_SRC}
+    ${COMPILATION_SRC}
     ${SOURCE_FILE_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
@@ -111,6 +121,8 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/scanner/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/parser/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/ast_query/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/module_finder/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/compilation/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"

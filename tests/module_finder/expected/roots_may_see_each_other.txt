@@ -1,0 +1,4 @@
+file a/a.hd -> root 0 (a)
+find b -> b/b.hd
+file b/b.hd -> root 1 (b)
+find a -> a/a.hd

@@ -1,0 +1,4 @@
+# the base library: it depends on nobody
+def println : void
+    @line : i8*
+    pass

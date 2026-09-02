@@ -1,0 +1,9 @@
+modules:
+    0 app.main  app/main.hd
+        imports std.*
+        declares main
+    1 std.io  std/io.hd
+        declares println
+    2 std.list  std/list.hd
+        declares length
+--- parsed alone: every module matches

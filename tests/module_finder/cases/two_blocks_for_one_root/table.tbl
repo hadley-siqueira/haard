@@ -1,0 +1,3 @@
+root lib = lib
+
+root ./lib/ = other

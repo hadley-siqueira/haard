@@ -1,0 +1,5 @@
+import zip.archive
+import zip.compress
+
+def main : i32
+    pass

@@ -1,0 +1,11 @@
+modules:
+    0 app.main  app/main.hd
+        imports png.encode
+        declares main
+--- parsed alone: every module matches
+diagnostics:
+error: the root 'app' has no entry named 'png'
+ --> app/main.hd:1:8
+  |
+1 | import png.encode
+  |        ^^^^^^^^^^

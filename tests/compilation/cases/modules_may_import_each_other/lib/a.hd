@@ -1,0 +1,4 @@
+import lib.b
+
+def a : void
+    pass

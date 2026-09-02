@@ -1,0 +1,5 @@
+roots
+file tree/outer.hd
+name tree/outer.hd
+file tree/inner/a.hd
+name tree/inner/a.hd

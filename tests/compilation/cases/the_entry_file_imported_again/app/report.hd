@@ -1,0 +1,6 @@
+# imports the entry file back, spelled the way the table names it and not the
+# way the command line did
+import app.main
+
+def report : void
+    pass

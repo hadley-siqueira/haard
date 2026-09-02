@@ -1,0 +1,8 @@
+# zip 1.0. Its own imports say 'zip', and the '= zip' of its block is what
+# keeps them inside 1.0 instead of landing in 2.0
+import zip.archive
+import zip.utils
+
+def compress : Archive
+    @data : u8*
+    pass
