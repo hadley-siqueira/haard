@@ -1,0 +1,10 @@
+class Node<T>:
+    value : T
+    def get<U> : T
+        @from : U
+        let local = from
+        return value
+
+def main : Node<i32>
+    @arg : Node<i32>
+    return arg

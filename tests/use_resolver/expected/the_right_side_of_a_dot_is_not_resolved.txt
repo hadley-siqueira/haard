@@ -1,0 +1,5 @@
+error: cannot find 'missing' in this scope
+ --> main.hd:5:5
+  |
+5 |     missing.field
+  |     ^^^^^^^

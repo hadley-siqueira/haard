@@ -1,0 +1,5 @@
+import lib.second
+import lib.first
+
+def main : void
+    pass

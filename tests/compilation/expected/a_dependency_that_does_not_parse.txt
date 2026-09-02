@@ -2,6 +2,8 @@ modules:
     0 app.main  app/main.hd
         imports lib.broken
         imports lib.fine
+        depends on 1 lib.broken
+        depends on 2 lib.fine
         declares main
     1 lib.broken  lib/broken.hd
         did not parse

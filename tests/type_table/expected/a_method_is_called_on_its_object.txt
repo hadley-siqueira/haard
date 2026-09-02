@@ -1,0 +1,21 @@
+<unnamed>:
+    Base  Base
+    Derived  Derived
+    main  Derived -> Derived* -> i32
+    tag  i32
+    describe  i32
+    value  f64
+    compute  f64
+    compute  f64 -> f64
+    through_this  i32
+    by  f64
+    mine  i32
+    myself  Derived*
+    d  Derived
+    p  Derived*
+    no_args  f64
+    one_arg  f64
+    sugar  f64
+    inherited  i32
+    arrow  i32
+  21 types interned

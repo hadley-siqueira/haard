@@ -1,0 +1,21 @@
+scope 1  owner the module  parent 0
+  Node
+    class at node 2
+  get
+    function at node 39
+scope 2  owner Node  parent 1
+  value
+    field at node 10
+  next
+    field at node 17
+  get
+    function at node 18
+    function at node 26
+scope 3  owner get  parent 2
+scope 4  owner a block at node 23  parent 3
+scope 5  owner get  parent 2
+  d
+    param at node 35
+scope 6  owner a block at node 36  parent 5
+scope 7  owner get  parent 1
+scope 8  owner a block at node 44  parent 7

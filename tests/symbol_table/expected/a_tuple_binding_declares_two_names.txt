@@ -1,0 +1,11 @@
+scope 1  owner the module  parent 0
+  a
+    variable at node 8
+  b
+    variable at node 8
+  x
+    variable at node 17
+  y
+    variable at node 17
+  z
+    variable at node 17

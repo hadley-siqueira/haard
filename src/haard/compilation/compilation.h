@@ -61,7 +61,25 @@ namespace haard {
             u32 intern(const std::filesystem::path& path, u32 root);
 
             void load(u32 index);
+
+            // resolves every import of this module and records what each one
+            // reached on the module itself, in source order. Record 0013 made
+            // that order load-bearing: an import binds nothing into the
+            // importer's own tables, so a lookup walks this list and the
+            // first module that answers is the one record 0009 means
             void resolve_imports(u32 index);
+
+            void collect_symbols(u32 index);
+
+            // a second walk, after the first has finished, because a type
+            // written in the entry file may name a declaration of a module the
+            // loop had not reached yet when it passed over it
+            void collect_types();
+
+            // a third walk, after the first has finished, because a use in
+            // the entry file may name a symbol of a module the loop had not
+            // reached yet when it passed over it
+            void resolve_uses();
 
             void report(Module* module, u32 import, const std::string& message);
 

@@ -1,0 +1,9 @@
+import std.io
+
+def foo : void
+    pass
+
+class Thing:
+    value : i32
+    def foo : void
+        pass

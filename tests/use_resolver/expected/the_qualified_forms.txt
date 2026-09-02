@@ -1,0 +1,10 @@
+error: cannot find 'absent' in 'p1'
+  --> app/main.hd:10:13
+   |
+10 |         p1::absent()
+   |             ^^^^^^
+error: cannot find 'known' in 'nope'
+  --> app/main.hd:11:15
+   |
+11 |         nope::known()
+   |               ^^^^^

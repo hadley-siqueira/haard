@@ -96,6 +96,40 @@ possible answer: everything is loaded, everything is reported, nothing is
 concluded. When 4.2 lands this case changes, and that is the point of having it
 written down.
 
+## The `depends on` lines, and what they add
+
+The `imports` lines say what the **source wrote**; the `depends on` lines say
+what the compilation **resolved it to**, as module indices in the order record
+0009 reads them — the order of the imports in the file, with a star import's
+files sorted inside it.
+
+They pin things the module list alone could not:
+
+- **The edges of the graph, and not only its nodes.** In
+  `modules_may_import_each_other` the two lines `depends on 1 lib.b` and
+  `depends on 0 lib.a` are the cycle drawn as edges. The module list has always
+  shown both files; nothing showed that each points at the other.
+- **Strategy B, structurally.** In `two_versions_of_one_library`, module 1 is
+  zip 2.0 and depends on 5 and 6, module 7 is zip 1.0 and depends on 9 and 10.
+  Each version's internal imports stayed inside its own root, and now that is
+  an explicit edge instead of something inferred from the order files were
+  reached.
+- **That a star's expansion is sorted**, in `a_star_import_loads_the_directory`:
+  `std.io` before `std.list`, which record 0006 requires and record 0009 made
+  decide which declaration a bare name means.
+- **That a diamond is one module and two edges.** In
+  `one_file_imported_twice_is_one_module`, modules 1 and 2 both say
+  `depends on 3`.
+
+**Two sabotages, both caught, and neither caught by anything else in the
+suite:**
+
+- resolving a module's imports in reverse source order — 3 cases fail. This is
+  the property record 0009 rests on: first-import-wins is first *in the file*.
+- recording every dependency on the entry module instead of on the importer —
+  4 cases fail. Every other golden here still passed, because the set of
+  modules reached is identical and only the edges moved.
+
 ## The two ways an import fails, in a real diagnostic
 
 `an_import_with_no_entry_in_the_table` and `an_import_that_resolves_to_nothing`

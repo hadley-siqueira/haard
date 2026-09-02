@@ -1,0 +1,16 @@
+class Base:
+    tag : i32
+
+class Derived(Base):
+    value : f64
+
+def main : i32
+    @d : Derived
+    @p : Derived*
+    let by_value = d.value
+    let inherited = d.tag
+    let sugar = p.value
+    let sugar_inherited = p.tag
+    let explicit = p->value
+    let deep : i32 = d.tag
+    return 0

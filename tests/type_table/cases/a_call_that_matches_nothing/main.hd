@@ -1,0 +1,23 @@
+class Base:
+    tag : i32
+
+def small : bool
+    @a : u8
+    return true
+
+def with_default : i32
+    @a : i32
+    @b : i32 = 0
+    return a
+
+def upcast : i32
+    @b : Base&
+    return 0
+
+def main : i32
+    @b : Base
+    let too_big = small(300)
+    let too_few = with_default()
+    let too_many = with_default(1, 2, 3)
+    let by_value = upcast(b)
+    return 0

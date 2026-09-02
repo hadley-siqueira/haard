@@ -1,0 +1,6 @@
+def render : String
+    @text : String
+    @width : i32 = 80
+    let margin = 2
+    let text = "shadowed"
+    return text

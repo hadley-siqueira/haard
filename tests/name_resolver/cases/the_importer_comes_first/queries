@@ -1,0 +1,3 @@
+# record 0008 as amended by 0012: both are candidates and the importer's is
+# first, so choosing between two identical signatures has an order to use
+app.main module println

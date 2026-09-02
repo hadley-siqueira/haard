@@ -1,8 +1,10 @@
 modules:
     0 lib.a  lib/a.hd
         imports lib.b
+        depends on 1 lib.b
         declares a
     1 lib.b  lib/b.hd
         imports lib.a
+        depends on 0 lib.a
         declares b
 --- parsed alone: every module matches

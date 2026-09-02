@@ -1,0 +1,8 @@
+scope 1  owner the module  parent 0
+  Empty
+    class at node 2
+  after
+    function at node 7
+scope 2  owner Empty  parent 1
+scope 3  owner after  parent 1
+scope 4  owner a block at node 12  parent 3

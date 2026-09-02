@@ -1,0 +1,9 @@
+imports:
+functions:
+classes:
+structs:
+enums:
+unions:
+global variables:
+  let a b
+  const x y z

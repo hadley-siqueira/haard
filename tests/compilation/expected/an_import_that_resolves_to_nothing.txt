@@ -2,6 +2,7 @@ modules:
     0 app.main  app/main.hd
         imports zip.archive
         imports zip.compress
+        depends on 1 zip.archive
         declares main
     1 zip.archive  zip/archive.hd
         declares Archive

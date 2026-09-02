@@ -1,0 +1,19 @@
+scope 1  owner the module  parent 0
+  run
+    function at node 2
+scope 2  owner run  parent 1
+scope 3  owner a block at node 7  parent 2
+  f
+    variable at node 25
+  g
+    variable at node 33
+scope 4  owner a closure at node 10  parent 3
+  a
+    param at node 13
+  b
+    param at node 16
+scope 5  owner a block at node 17  parent 4
+  sum
+    variable at node 22
+scope 6  owner a closure at node 29  parent 3
+scope 7  owner a block at node 30  parent 6

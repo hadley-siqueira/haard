@@ -1,0 +1,26 @@
+<unnamed>:
+    Thing  Thing
+    main  Thing -> i32
+    only  f64 -> i32
+    a  f64
+    t  Thing
+    absent  <none>
+    wrong  <none>
+    outside  <none>
+  17 types interned
+diagnostics:
+error: Thing has no member named 'missing'
+ --> main.hd:8:20
+  |
+8 |     let absent = t.missing()
+  |                    ^^^^^^^
+error: no 'only' takes these arguments
+ --> main.hd:9:19
+  |
+9 |     let wrong = t.only(1)
+  |                   ^^^^
+error: cannot find 'only' in this scope
+  --> main.hd:10:19
+   |
+10 |     let outside = only(1.5)
+   |                   ^^^^

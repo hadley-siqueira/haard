@@ -1,0 +1,5 @@
+def first : i32
+    return later()
+
+def later : i32
+    return 0

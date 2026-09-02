@@ -1,0 +1,15 @@
+# record 0012: a default value makes arity a range, so two declarations may
+# both answer to one count and neither is wrong until a call is written
+def pick : i32
+    @a : i32
+    return a
+
+def pick : i32
+    @a : i32
+    @b : i32 = 0
+    return a
+
+def main : i32
+    let both = pick(1)
+    let only_one = pick(1, 2)
+    return 0

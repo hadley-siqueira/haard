@@ -27,8 +27,30 @@ set(AST_QUERY_SRC
     src/haard/ast_query/ast_query.cpp
 )
 
+set(STRING_TABLE_SRC
+    src/haard/string_table/string_table.cpp
+)
+
+set(TYPE_TABLE_SRC
+    src/haard/type_table/type_table.cpp
+    src/haard/type_table/type_builder.cpp
+    src/haard/type_table/type_collector.cpp
+    src/haard/type_table/expression_typer.cpp
+)
+
+set(SYMBOL_TABLE_SRC
+    src/haard/symbol_table/symbol_table.cpp
+    src/haard/symbol_table/symbol_collector.cpp
+)
+
 set(MODULE_FINDER_SRC
     src/haard/module_finder/module_finder.cpp
+)
+
+set(NAME_RESOLVER_SRC
+    src/haard/name_resolver/name_resolver.cpp
+    src/haard/name_resolver/use_resolver.cpp
+    src/haard/name_resolver/overload_resolver.cpp
 )
 
 set(COMPILATION_SRC
@@ -66,8 +88,12 @@ set(SOURCES
     ${TOKEN_STREAM_SRC}
     ${AST_SRC}
     ${AST_QUERY_SRC}
+    ${STRING_TABLE_SRC}
+    ${SYMBOL_TABLE_SRC}
+    ${TYPE_TABLE_SRC}
     ${MODULE_FINDER_SRC}
     ${COMPILATION_SRC}
+    ${NAME_RESOLVER_SRC}
     ${SOURCE_FILE_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
@@ -121,8 +147,13 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/scanner/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/parser/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/ast_query/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/string_table/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/symbol_table/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/type_table/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/module_finder/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/compilation/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/name_resolver/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/use_resolver/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"

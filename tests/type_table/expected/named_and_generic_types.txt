@@ -1,0 +1,11 @@
+<unnamed>:
+    Pair  Pair
+    Holder  Holder
+    A  A
+    B  B
+    first  A
+    second  B
+    both  Pair<i32, f64>
+    nested  Pair<i32, Pair<f32, bool>>
+    plain  Holder*
+  22 types interned

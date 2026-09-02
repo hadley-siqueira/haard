@@ -1,0 +1,5 @@
+# a block is a scope of its own, so the local hides the parameter instead of
+# standing beside it as a second candidate. Without the block scope both would
+# come back, and without the function scope the parameter would not be there
+app.main @deep arg
+app.main @seen arg

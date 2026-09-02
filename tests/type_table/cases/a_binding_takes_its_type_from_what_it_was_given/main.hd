@@ -1,0 +1,11 @@
+def main : i32
+    let a = 1
+    let b = 2.5
+    let t = true
+    let n : i64 = 1
+    let wide : u64 = 4294967296
+    let copied = a
+    let sum = a + a
+    let mixed : i64 = n + n
+    let flag = a < a
+    return 0

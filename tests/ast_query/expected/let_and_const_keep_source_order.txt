@@ -5,7 +5,7 @@ structs:
 enums:
 unions:
 global variables:
-  let
-  const
-  let
-  const
+  let a
+  const b
+  let c
+  const d

@@ -1,0 +1,30 @@
+<unnamed>:
+    Broken  Broken
+    takes  <none>
+    returns  <none>
+    absent  <none>
+    deep  <none>
+    bad  <none>
+    fine  i32
+  15 types interned
+diagnostics:
+error: cannot find 'Missing' in this scope
+ --> main.hd:2:14
+  |
+2 |     absent : Missing
+  |              ^^^^^^^
+error: cannot find 'Missing' in this scope
+ --> main.hd:3:12
+  |
+3 |     deep : Missing*
+  |            ^^^^^^^
+error: cannot find 'Missing' in this scope
+ --> main.hd:6:12
+  |
+6 |     @bad : Missing
+  |            ^^^^^^^
+error: cannot find 'Missing' in this scope
+ --> main.hd:9:15
+  |
+9 | def returns : Missing
+  |               ^^^^^^^

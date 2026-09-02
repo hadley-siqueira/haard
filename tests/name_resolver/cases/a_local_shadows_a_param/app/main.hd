@@ -1,0 +1,6 @@
+def run : void
+    @arg : i32
+    let seen = 1
+    if seen:
+        let arg = 2
+        let deep = 3

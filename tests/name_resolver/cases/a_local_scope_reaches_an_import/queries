@@ -1,0 +1,11 @@
+# the whole walk, from the innermost block: block, block, function, module,
+# imports. Nothing else in the suite exercises more than two of those steps
+app.main @deep println
+app.main @deep arg
+app.main @deep T
+app.main @deep deep
+# a local shadows a function of its name in the module scope
+app.main @deep outer
+# and from the module scope the local is not there at all
+app.main module deep
+app.main module outer

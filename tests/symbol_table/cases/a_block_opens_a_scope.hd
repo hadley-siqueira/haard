@@ -1,0 +1,7 @@
+def walk : void
+    let x = 1
+    if x:
+        let x = 2
+        let inner = 3
+    while x:
+        let other = 4

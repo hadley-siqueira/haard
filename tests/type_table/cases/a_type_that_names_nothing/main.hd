@@ -1,0 +1,11 @@
+class Broken:
+    absent : Missing
+    deep : Missing*
+
+def takes : void
+    @bad : Missing
+    pass
+
+def returns : Missing
+    @fine : i32
+    pass

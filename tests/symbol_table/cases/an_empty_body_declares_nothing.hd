@@ -1,0 +1,5 @@
+class Empty:
+    pass
+
+def after : void
+    pass

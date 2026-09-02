@@ -1,0 +1,15 @@
+<unnamed>:
+    Base  Base
+    Derived  Derived
+    main  Derived -> Derived* -> i32
+    tag  i32
+    value  f64
+    d  Derived
+    p  Derived*
+    by_value  f64
+    inherited  i32
+    sugar  f64
+    sugar_inherited  i32
+    explicit  f64
+    deep  i32
+  18 types interned

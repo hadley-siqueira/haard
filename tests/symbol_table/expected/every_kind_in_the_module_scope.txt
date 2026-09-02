@@ -1,0 +1,29 @@
+scope 1  owner the module  parent 0
+  main
+    function at node 2
+  Point
+    class at node 9
+  Pair
+    struct at node 18
+  Colour
+    enum at node 27
+  Value
+    union at node 34
+  width
+    variable at node 47
+  height
+    variable at node 53
+scope 2  owner main  parent 1
+scope 3  owner a block at node 7  parent 2
+scope 4  owner Point  parent 1
+  x
+    field at node 17
+scope 5  owner Pair  parent 1
+  first
+    field at node 26
+scope 6  owner Colour  parent 1
+  red
+    field at node 33
+scope 7  owner Value  parent 1
+  number
+    field at node 42

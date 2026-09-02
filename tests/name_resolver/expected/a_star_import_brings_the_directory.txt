@@ -1,0 +1,3 @@
+app.main module -> shared
+  std.io function at node 2
+  std.list function at node 2

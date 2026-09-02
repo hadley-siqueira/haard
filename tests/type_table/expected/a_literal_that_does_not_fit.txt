@@ -1,0 +1,23 @@
+<unnamed>:
+    main  i32
+    small  u8
+    fine  u8
+    wrong  i32
+    backwards  f64
+  15 types interned
+diagnostics:
+error: 300 does not fit in u8
+ --> main.hd:2:22
+  |
+2 |     let small : u8 = 300
+  |                      ^^^
+error: expected i32, found a floating point literal
+ --> main.hd:4:23
+  |
+4 |     let wrong : i32 = 2.5
+  |                       ^^^
+error: expected f64, found an integer literal
+ --> main.hd:5:27
+  |
+5 |     let backwards : f64 = 1
+  |                           ^

@@ -1,0 +1,10 @@
+import std.io
+
+def run<T> : void
+    @arg : i32
+    let outer = 1
+    if outer:
+        let deep = 2
+
+def outer : void
+    pass

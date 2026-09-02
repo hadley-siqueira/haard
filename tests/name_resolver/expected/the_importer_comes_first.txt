@@ -1,0 +1,3 @@
+app.main module -> println
+  app.main function at node 6
+  std.io function at node 2

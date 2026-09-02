@@ -1,6 +1,10 @@
 #include <haard/compilation/compilation.h>
 #include <haard/parser/parser.h>
 #include <haard/scanner/scanner.h>
+#include <haard/string_table/string_table.h>
+#include <haard/name_resolver/use_resolver.h>
+#include <haard/symbol_table/symbol_collector.h>
+#include <haard/type_table/type_collector.h>
 #include <stdexcept>
 
 using namespace haard;
@@ -54,8 +58,12 @@ bool Compilation::build(const std::filesystem::path& entry) {
         // and the other modules still load
         if (modules[i]->is_parsed()) {
             resolve_imports(i);
+            collect_symbols(i);
         }
     }
+
+    collect_types();
+    resolve_uses();
 
     return !has_errors();
 }
@@ -157,7 +165,16 @@ void Compilation::resolve_imports(u32 index) {
 
     for (u32 import : query.get_imports()) {
         std::string name = query.get_import_name(import);
+        std::string alias = query.get_import_alias(import);
         bool star = query.is_star_import(import);
+
+        // interned in the importer, because that is where the alias is
+        // written and the only place it means anything. An import with no
+        // 'as' gets no qualified form at all, not even by its last segment:
+        // record 0008 makes the alias something that must be written to exist
+        u32 interned = alias.size() > 0
+                           ? module->get_strings()->intern(alias)
+                           : INVALID_STRING;
         FindResult result = star ? finder.find_all(root, name)
                                  : finder.find(root, name);
 
@@ -182,12 +199,63 @@ void Compilation::resolve_imports(u32 index) {
 
         // the imported file belongs to its OWN root and not to this one, or
         // zip 1.0's internal imports would resolve inside whoever imported it
+        //
+        // What intern gives back is kept and not dropped: this loop runs over
+        // the imports in the order the source wrote them, and a star's files
+        // arrive sorted, so appending here is what builds the order record
+        // 0009 resolves a bare name by. interning may append to 'modules',
+        // which is a vector of pointers, so 'module' stays good
         if (star) {
+            // one alias for the whole expansion (record 0006): it names the
+            // pool, because there is no one module for it to name
             for (const std::filesystem::path& file : result.files) {
-                intern(file, result.root);
+                module->add_dependency(intern(file, result.root), interned);
             }
         } else {
-            intern(result.path, result.root);
+            module->add_dependency(intern(result.path, result.root), interned);
+        }
+    }
+}
+
+// Collecting is per module and depends on nothing but that module's tree, so
+// it rides along in the same walk. That is the weakest possible answer to
+// agenda 4.1, which has not decided a phase order, and it is deliberate: when
+// 4.1 lands this call moves
+void Compilation::collect_symbols(u32 index) {
+    SymbolCollector collector;
+
+    collector.set_module(modules[index]);
+    collector.collect();
+}
+
+void Compilation::collect_types() {
+    TypeCollector types;
+
+    types.set_compilation(this);
+
+    for (u32 i = 0; i < modules.size(); i++) {
+        if (modules[i]->is_parsed()) {
+            types.collect(i);
+        }
+    }
+
+    // and only then what a binding was given, because inferring it may resolve
+    // a call whose candidate lives in a module the first loop reached later
+    for (u32 i = 0; i < modules.size(); i++) {
+        if (modules[i]->is_parsed()) {
+            types.infer(i);
+        }
+    }
+}
+
+void Compilation::resolve_uses() {
+    UseResolver uses;
+
+    uses.set_compilation(this);
+
+    for (u32 i = 0; i < modules.size(); i++) {
+        if (modules[i]->is_parsed()) {
+            uses.resolve(i);
         }
     }
 }

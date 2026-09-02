@@ -13,6 +13,7 @@
 // carry this machine's home into the goldens.
 #include <haard/ast_query/ast_query.h>
 #include <haard/compilation/compilation.h>
+#include <haard/string_table/string_table.h>
 #include <haard/parser/parser.h>
 #include <haard/scanner/scanner.h>
 #include <fstream>
@@ -86,6 +87,10 @@ static bool parsed_the_same_alone(Module* module) {
     return dump_of(alone) == dump_of(*module);
 }
 
+static std::string name_of(Module* module) {
+    return module->get_name().size() > 0 ? module->get_name() : "<unnamed>";
+}
+
 static void print_declarations(AstQuery& query, std::vector<u32> nodes) {
     for (u32 node : nodes) {
         std::cout << "        declares " << query.get_declaration_name(node)
@@ -128,11 +133,8 @@ int main(int argc, char* argv[]) {
         Module* module = compilation.get_module(i);
         AstQuery query;
 
-        std::cout << "    " << i << " "
-                  << (module->get_name().size() > 0 ? module->get_name()
-                                                    : "<unnamed>")
-                  << "  " << show(module->get_source_file()->get_path())
-                  << '\n';
+        std::cout << "    " << i << " " << name_of(module) << "  "
+                  << show(module->get_source_file()->get_path()) << '\n';
 
         // errors are not the question -- an unresolved import is logged
         // against a module whose tree is perfectly good. The question is
@@ -147,6 +149,24 @@ int main(int argc, char* argv[]) {
         for (u32 import : query.get_imports()) {
             std::cout << "        imports " << query.get_import_name(import)
                       << (query.is_star_import(import) ? ".*" : "") << '\n';
+        }
+
+        // what each import actually reached, in the order the source wrote
+        // the imports and a star's files sorted inside it. This is the order
+        // record 0009 resolves a bare name by, so the golden pins it: the
+        // 'imports' lines above are what the source says, and these are what
+        // the compilation resolved it to
+        for (const Dependency& dependency : module->get_dependencies()) {
+            std::cout << "        depends on " << dependency.module << ' '
+                      << name_of(compilation.get_module(dependency.module));
+
+            // the alias is interned in the importer, which is this module
+            if (dependency.alias != INVALID_STRING) {
+                std::cout << " as "
+                          << module->get_strings()->get_text(dependency.alias);
+            }
+
+            std::cout << '\n';
         }
 
         print_declarations(query, query.get_functions());

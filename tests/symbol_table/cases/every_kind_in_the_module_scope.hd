@@ -1,0 +1,17 @@
+def main : void
+    pass
+
+class Point:
+    x : i32
+
+struct Pair:
+    first : i32
+
+enum Colour:
+    red
+
+union Value:
+    number : i32
+
+let width = 10
+const height = 20

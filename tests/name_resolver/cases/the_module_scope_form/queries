@@ -1,0 +1,13 @@
+# record 0009's own example: from a method, the module's foo and not this one
+app.main Thing foo
+app.main Thing ::foo
+# a field shadows, and '::' is the way out of that shadow -- the module has no
+# 'value', so this is what the escape hatch looks like when there is nothing
+app.main Thing value
+app.main Thing ::value
+# INTERPRETATION, not decided: '::' restricts where the walk STARTS and not
+# where candidates may come from, so an imported name is reachable through it.
+# Record 0009 says '::name' names 'what the module declares at its top level',
+# and record 0008 makes an import bind exactly there
+app.main Thing ::println
+app.main Thing println

@@ -1,0 +1,18 @@
+scope 1  owner the module  parent 0
+  make
+    function at node 2
+  Box
+    class at node 19
+scope 2  owner make  parent 1
+  T
+    generic at node 6
+  U
+    generic at node 7
+  from
+    param at node 16
+scope 3  owner a block at node 17  parent 2
+scope 4  owner Box  parent 1
+  T
+    generic at node 23
+  item
+    field at node 30

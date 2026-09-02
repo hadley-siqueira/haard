@@ -1,0 +1,2 @@
+def println : void
+    pass

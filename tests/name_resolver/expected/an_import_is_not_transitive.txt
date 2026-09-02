@@ -1,0 +1,6 @@
+app.main module -> middling
+  lib.middle function at node 6
+app.main module -> deep
+  nothing declares it
+lib.middle module -> deep
+  lib.bottom function at node 2

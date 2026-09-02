@@ -1,0 +1,6 @@
+# Hadley, 2026-09-02: a non function stops the walk outward and a function does
+# not. So the field hides the module's 'value', and the method joins the
+# module's 'get' in one candidate set
+app.main Node value
+app.main Node get
+app.main module value

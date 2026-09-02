@@ -1,0 +1,11 @@
+class Thing:
+    def only : i32
+        @a : f64
+        return 0
+
+def main : i32
+    @t : Thing
+    let absent = t.missing()
+    let wrong = t.only(1)
+    let outside = only(1.5)
+    return 0

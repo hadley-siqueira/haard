@@ -1,0 +1,6 @@
+# record 0013 left this open: the table represents it, and nothing here
+# reports it. Whether it is an error, and where, is resolution's to decide
+def value : i32
+    return 1
+
+let value = 2

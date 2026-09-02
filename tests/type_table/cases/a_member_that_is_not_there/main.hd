@@ -1,0 +1,16 @@
+class Base:
+    tag : i32
+
+class Derived(Base):
+    value : f64
+
+def main : i32
+    @d : Derived
+    @p : Derived*
+    @pp : Derived**
+    @n : i32
+    let absent = d.missing
+    let wrong_arrow = d->value
+    let too_deep = pp.value
+    let no_members = n.field
+    return 0

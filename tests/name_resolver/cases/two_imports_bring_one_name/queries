@@ -1,0 +1,3 @@
+# record 0009: the first import in SOURCE order, which is lib.second here
+# because that is the line written first
+app.main module shared

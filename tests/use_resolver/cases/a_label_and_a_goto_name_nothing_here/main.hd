@@ -1,0 +1,5 @@
+def main : i32
+    label again
+    goto again
+    goto never_written
+    return 0

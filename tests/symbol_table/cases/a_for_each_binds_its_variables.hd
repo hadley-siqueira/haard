@@ -1,0 +1,8 @@
+def walk : void
+    @pairs : i32
+    for key, value in pairs:
+        let inner = key
+    for i in 0..10:
+        let i = 2
+    for j = 0; j < 10; j = j + 1:
+        let counted = j

@@ -2,12 +2,16 @@ modules:
     0 lib.top  lib/top.hd
         imports lib.left
         imports lib.right
+        depends on 1 lib.left
+        depends on 2 lib.right
         declares top
     1 lib.left  lib/left.hd
         imports lib.bottom
+        depends on 3 lib.bottom
         declares left
     2 lib.right  lib/right.hd
         imports lib.bottom
+        depends on 3 lib.bottom
         declares right
     3 lib.bottom  lib/bottom.hd
         declares bottom

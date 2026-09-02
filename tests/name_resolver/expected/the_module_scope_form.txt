@@ -1,0 +1,13 @@
+app.main Thing -> foo
+  app.main function at node 22
+  app.main function at node 6
+app.main Thing -> ::foo
+  app.main function at node 6
+app.main Thing -> value
+  app.main field at node 21
+app.main Thing -> ::value
+  nothing declares it
+app.main Thing -> ::println
+  std.io function at node 2
+app.main Thing -> println
+  std.io function at node 2

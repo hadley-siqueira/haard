@@ -1,0 +1,6 @@
+# record 0006: the alias covers the whole expansion, so it is as ambiguous as
+# the bare form and resolves the same way, by the sorted order
+app.main module io::shared
+app.main module shared
+# separating one out is what the second, explicit alias is for
+app.main module tcp::shared

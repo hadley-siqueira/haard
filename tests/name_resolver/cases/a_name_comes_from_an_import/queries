@@ -1,0 +1,5 @@
+# the probe of record 0013: nothing was merged, so this reaches std.io's table
+app.main module println
+app.main module stdout
+app.main module main
+app.main module nobody

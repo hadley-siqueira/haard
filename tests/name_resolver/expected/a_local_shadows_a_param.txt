@@ -1,0 +1,4 @@
+app.main @deep -> arg
+  app.main variable at node 26
+app.main @seen -> arg
+  app.main param at node 11

@@ -1,0 +1,12 @@
+import lib.thing as p1
+
+def here : i32
+    return 0
+
+class Holder:
+    here : i32
+    def use : i32
+        p1::known()
+        p1::absent()
+        nope::known()
+        return ::here

@@ -1,0 +1,10 @@
+# an alias names one import
+app.main module p1::shared
+app.main module p2::shared
+# and adds without withholding: the bare form still brings all three, in the
+# order the imports were written
+app.main module shared
+# an import with no 'as' has no qualified form, not even by its last segment
+app.main module third::shared
+# and an alias nobody wrote names nothing
+app.main module nope::shared

@@ -1,0 +1,13 @@
+scope 1  owner the module  parent 0
+  render
+    function at node 2
+scope 2  owner render  parent 1
+  text
+    param at node 13
+  width
+    param at node 20
+scope 3  owner a block at node 21  parent 2
+  margin
+    variable at node 26
+  text
+    variable at node 32

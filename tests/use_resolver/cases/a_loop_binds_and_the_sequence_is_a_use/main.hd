@@ -1,0 +1,9 @@
+def main : i32
+    let pairs = 1
+    for key, value in pairs:
+        let seen = key
+    for i in absent:
+        let n = i
+    for j = 0; j < 10; j = j + 1:
+        let counted = j
+    return 0

@@ -1,0 +1,6 @@
+<unnamed>:
+    Shapes  Shapes
+    matrix  i32[10][5]
+    pointer_to_matrix  i32[10][5]*
+    five_pointers  i32[10]*[5]
+  20 types interned

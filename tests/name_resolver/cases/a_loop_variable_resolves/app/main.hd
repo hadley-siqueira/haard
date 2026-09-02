@@ -1,0 +1,9 @@
+def walk : void
+    @pairs : i32
+    for key, value in pairs:
+        let seen = key
+    for pairs in 0..10:
+        let deep = 1
+
+def key : void
+    pass

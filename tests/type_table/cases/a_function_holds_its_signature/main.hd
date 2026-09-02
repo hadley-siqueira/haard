@@ -1,0 +1,23 @@
+class Node:
+    value : i32
+
+def nothing : void
+    pass
+
+def one : i32
+    @a : i32
+    return a
+
+def many<T> : Node*
+    @a : i32
+    @b : T
+    @c : f64[10]
+    pass
+
+def overloaded : void
+    @a : i32
+    pass
+
+def overloaded : void
+    @a : f64
+    pass

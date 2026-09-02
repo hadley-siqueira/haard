@@ -1,0 +1,11 @@
+# record 0012: a name maps to a list of declarations, not to one
+def foo : void
+    @x : i32
+    pass
+
+def foo : void
+    @x : f32
+    pass
+
+def bar : void
+    pass

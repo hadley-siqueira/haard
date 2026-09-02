@@ -1,0 +1,2 @@
+def known : i32
+    return 0

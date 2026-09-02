@@ -1,6 +1,7 @@
 modules:
     0 app.main  app/main.hd
         imports lib.half
+        depends on 1 lib.half
         declares main
     1 lib.half  lib/half.hd
         did not parse

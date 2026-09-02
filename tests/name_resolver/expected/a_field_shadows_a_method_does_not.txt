@@ -1,0 +1,7 @@
+app.main Node -> value
+  app.main field at node 10
+app.main Node -> get
+  app.main function at node 11
+  app.main function at node 27
+app.main module -> value
+  app.main function at node 19

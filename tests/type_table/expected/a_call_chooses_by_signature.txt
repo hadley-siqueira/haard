@@ -1,0 +1,25 @@
+<unnamed>:
+    Base  Base
+    Derived  Derived
+    take  i32 -> i32
+    take  f64 -> f64
+    small  u8 -> bool
+    with_default  i32 -> i32 -> i32
+    upcast  Base& -> i32
+    main  Derived& -> i32
+    tag  i32
+    value  f64
+    a  i32
+    a  f64
+    a  u8
+    a  i32
+    b  i32
+    b  Base&
+    r  Derived&
+    by_int  i32
+    by_float  f64
+    fits  bool
+    one  i32
+    two  i32
+    up  i32
+  24 types interned

@@ -1,0 +1,15 @@
+scope 1  owner the module  parent 0
+  walk
+    function at node 2
+scope 2  owner walk  parent 1
+scope 3  owner a block at node 7  parent 2
+  x
+    variable at node 12
+scope 4  owner a block at node 16  parent 3
+  x
+    variable at node 21
+  inner
+    variable at node 27
+scope 5  owner a block at node 31  parent 3
+  other
+    variable at node 36

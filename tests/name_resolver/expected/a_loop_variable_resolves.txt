@@ -1,0 +1,10 @@
+app.main @seen -> key
+  app.main variable at node 18
+app.main @seen -> value
+  app.main variable at node 18
+app.main @deep -> pairs
+  app.main variable at node 32
+app.main @seen -> pairs
+  app.main param at node 11
+app.main module -> value
+  nothing declares it

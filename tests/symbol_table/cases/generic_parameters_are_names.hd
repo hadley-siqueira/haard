@@ -1,0 +1,6 @@
+def make<T, U> : T
+    @from : U
+    pass
+
+class Box<T>:
+    item : T

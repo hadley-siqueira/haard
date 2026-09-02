@@ -1,0 +1,11 @@
+class Node:
+    value : i32
+    next : Node*
+    def get : i32
+        return value
+    def get : i32
+        @d : i32
+        return d
+
+def get : i32
+    return 0

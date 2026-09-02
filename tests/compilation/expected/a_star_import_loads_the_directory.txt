@@ -1,6 +1,8 @@
 modules:
     0 app.main  app/main.hd
         imports std.*
+        depends on 1 std.io as io
+        depends on 2 std.list as io
         declares main
     1 std.io  std/io.hd
         declares println

@@ -1,0 +1,3 @@
+# record 0012: a name maps to a list, and the scope steps contribute to one
+# candidate set instead of stopping at the first
+app.main Node get

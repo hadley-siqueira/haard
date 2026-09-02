@@ -1,0 +1,2 @@
+# only the module scope, holding no names
+import a.b

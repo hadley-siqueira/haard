@@ -1,0 +1,8 @@
+class Pair<A, B>:
+    first : A
+    second : B
+
+class Holder:
+    both : Pair<i32, f64>
+    nested : Pair<i32, Pair<f32, bool>>
+    plain : Holder*

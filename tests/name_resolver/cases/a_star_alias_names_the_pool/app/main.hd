@@ -1,0 +1,5 @@
+import std.* as io
+import std.tcp as tcp
+
+def main : void
+    pass

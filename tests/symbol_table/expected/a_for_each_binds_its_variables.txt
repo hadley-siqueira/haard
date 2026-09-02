@@ -1,0 +1,24 @@
+scope 1  owner the module  parent 0
+  walk
+    function at node 2
+scope 2  owner walk  parent 1
+  pairs
+    param at node 11
+scope 3  owner a block at node 12  parent 2
+scope 4  owner a for-each at node 18  parent 3
+  key
+    variable at node 18
+  value
+    variable at node 18
+scope 5  owner a block at node 19  parent 4
+  inner
+    variable at node 24
+scope 6  owner a for-each at node 32  parent 3
+  i
+    variable at node 32
+scope 7  owner a block at node 33  parent 6
+  i
+    variable at node 38
+scope 8  owner a block at node 55  parent 3
+  counted
+    variable at node 60

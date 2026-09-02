@@ -1,0 +1,12 @@
+app.main module -> p1::shared
+  lib.first function at node 2
+app.main module -> p2::shared
+  lib.second function at node 2
+app.main module -> shared
+  lib.first function at node 2
+  lib.second function at node 2
+  lib.third function at node 2
+app.main module -> third::shared
+  nothing declares it
+app.main module -> nope::shared
+  nothing declares it

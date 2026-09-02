@@ -1,0 +1,6 @@
+scope 1  owner the module  parent 0
+  value
+    function at node 2
+    variable at node 14
+scope 2  owner value  parent 1
+scope 3  owner a block at node 7  parent 2

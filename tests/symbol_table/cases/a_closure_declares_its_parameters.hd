@@ -1,0 +1,3 @@
+def run : void
+    let f = |a, b| { let sum = a }
+    let g = || { pass }

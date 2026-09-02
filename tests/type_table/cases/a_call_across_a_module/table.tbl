@@ -1,0 +1,4 @@
+root lib = lib
+
+root app = app
+    lib -> lib

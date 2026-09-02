@@ -1,0 +1,9 @@
+class Node:
+    def get : i32
+        return 0
+    def get : i32
+        @d : i32
+        return d
+
+def get : i32
+    return 1

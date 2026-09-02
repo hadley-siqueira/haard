@@ -1,0 +1,18 @@
+<unnamed>:
+    main  i32
+    a  i32
+    n  i64
+    widened  i64
+    mixed  <none>
+  15 types interned
+diagnostics:
+error: expected i64, found i32
+ --> main.hd:4:25
+  |
+4 |     let widened : i64 = a
+  |                         ^
+error: cannot apply this to i32 and i64
+ --> main.hd:5:19
+  |
+5 |     let mixed = a + n
+  |                   ^

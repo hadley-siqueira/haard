@@ -1,0 +1,3 @@
+# record 0006 sorts the expansion, and record 0009 makes that sorting decide
+# which declaration a bare name means: std.io before std.list
+app.main module shared

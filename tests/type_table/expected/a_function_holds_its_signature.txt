@@ -1,0 +1,16 @@
+<unnamed>:
+    Node  Node
+    nothing  void
+    one  i32 -> i32
+    many  i32 -> T -> f64[10] -> Node*
+    overloaded  i32 -> void
+    overloaded  f64 -> void
+    value  i32
+    a  i32
+    T  T
+    a  i32
+    b  T
+    c  f64[10]
+    a  i32
+    a  f64
+  23 types interned

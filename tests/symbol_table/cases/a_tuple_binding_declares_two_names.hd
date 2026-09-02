@@ -1,0 +1,2 @@
+let (a, b) = pair
+const (x, y, z) = triple

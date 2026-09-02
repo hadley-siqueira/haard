@@ -79,6 +79,9 @@ sources=(
     "$root/src/haard/log/log.cpp"
     "$root/src/haard/scanner/scanner.cpp"
     "$root/src/haard/module/module.cpp"
+    "$root/src/haard/type_table/type_table.cpp"
+    "$root/src/haard/string_table/string_table.cpp"
+    "$root/src/haard/symbol_table/symbol_table.cpp"
 )
 
 drivers=(dump_tokens check_invariants)

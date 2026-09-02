@@ -1,0 +1,14 @@
+app.main @deep -> println
+  std.io function at node 2
+app.main @deep -> arg
+  app.main param at node 17
+app.main @deep -> T
+  app.main generic at node 10
+app.main @deep -> deep
+  app.main variable at node 32
+app.main @deep -> outer
+  app.main variable at node 23
+app.main module -> deep
+  nothing declares it
+app.main module -> outer
+  app.main function at node 34

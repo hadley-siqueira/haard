@@ -1,0 +1,6 @@
+def main : i32
+    let thing = 1
+    thing.whatever
+    thing.deeply.nested
+    missing.field
+    return 0

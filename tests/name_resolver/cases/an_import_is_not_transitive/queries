@@ -1,0 +1,4 @@
+# record 0008: A sees what B declares and nothing B imported
+app.main module middling
+app.main module deep
+lib.middle module deep

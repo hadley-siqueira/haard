@@ -1,0 +1,4 @@
+def println : void
+    pass
+
+let stdout = 1

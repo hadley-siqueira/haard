@@ -99,6 +99,176 @@ std::string AstQuery::get_import_alias(u32 import) {
     return text_of(alias);
 }
 
+std::vector<u32> AstQuery::get_declarations() {
+    std::vector<u32> declarations;
+
+    for (u32 node = ast->get_node(ast->get_root())->get_children(); node != 0;
+         node = ast->get_node(node)->get_sibling()) {
+        switch (ast->get_node(node)->get_kind()) {
+        case AST_FUNCTION:
+        case AST_CLASS:
+        case AST_STRUCT:
+        case AST_ENUM:
+        case AST_UNION:
+        case AST_LET_DECLARATION:
+        case AST_CONST_DECLARATION:
+            declarations.push_back(node);
+            break;
+
+        // an import declares nothing of its own: what it brings in is bound
+        // by record 0008 and is not a declaration of this file
+        default:
+            break;
+        }
+    }
+
+    return declarations;
+}
+
+std::vector<u32> AstQuery::get_members(u32 declaration) {
+    std::vector<u32> members;
+    u32 body = find_child(declaration, AST_TYPE_BODY);
+
+    if (body == 0) {
+        return members;
+    }
+
+    for (u32 member = ast->get_node(body)->get_children(); member != 0;
+         member = ast->get_node(member)->get_sibling()) {
+        // 'pass' fills an empty body and declares nothing
+        if (ast->get_node(member)->get_kind() != AST_PASS) {
+            members.push_back(member);
+        }
+    }
+
+    return members;
+}
+
+std::vector<u32> AstQuery::get_params(u32 function) {
+    std::vector<u32> params;
+
+    for (u32 child = ast->get_node(function)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        if (ast->get_node(child)->get_kind() == AST_PARAM) {
+            params.push_back(child);
+        }
+    }
+
+    return params;
+}
+
+std::vector<u32> AstQuery::get_generic_parameters(u32 declaration) {
+    std::vector<u32> parameters;
+    u32 list = find_child(declaration, AST_GENERIC_PARAMETERS);
+
+    if (list == 0) {
+        return parameters;
+    }
+
+    for (u32 child = ast->get_node(list)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        parameters.push_back(child);
+    }
+
+    return parameters;
+}
+
+u32 AstQuery::get_written_type(u32 declaration) {
+    u32 wrapper = find_child(declaration, AST_BINDING_TYPE);
+
+    if (wrapper == 0) {
+        wrapper = find_child(declaration, AST_FUNCTION_RETURN_TYPE);
+    }
+
+    return wrapper == 0 ? 0 : ast->get_node(wrapper)->get_children();
+}
+
+u32 AstQuery::get_super_type(u32 declaration) {
+    u32 wrapper = find_child(declaration, AST_SUPER_TYPE);
+
+    return wrapper == 0 ? 0 : ast->get_node(wrapper)->get_children();
+}
+
+u32 AstQuery::get_binding_expression(u32 declaration) {
+    u32 wrapper = find_child(declaration, AST_BINDING_EXPRESSION);
+
+    return wrapper == 0 ? 0 : ast->get_node(wrapper)->get_children();
+}
+
+std::vector<u32> AstQuery::get_loop_variables(u32 for_each) {
+    std::vector<u32> variables;
+    u32 head = find_child(for_each, AST_FOR_HEAD);
+
+    if (head == 0) {
+        return variables;
+    }
+
+    for (u32 child = ast->get_node(head)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        AstNodeKind kind = ast->get_node(child)->get_kind();
+        u32 name = child;
+
+        // the last expression of the head is the 'in', and what it binds is
+        // its left side. Everything before it binds itself
+        if (kind == AST_IN || kind == AST_NOT_IN) {
+            name = ast->get_node(child)->get_children();
+        }
+
+        if (name != 0 && ast->get_node(name)->get_kind() == AST_IDENTIFIER) {
+            variables.push_back(name);
+        }
+    }
+
+    return variables;
+}
+
+u32 AstQuery::get_block(u32 node) {
+    return find_child(node, AST_BLOCK);
+}
+
+std::vector<u32> AstQuery::get_children(u32 node) {
+    std::vector<u32> children;
+
+    for (u32 child = ast->get_node(node)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        children.push_back(child);
+    }
+
+    return children;
+}
+
+u32 AstQuery::get_binding(u32 statement) {
+    return find_child(statement, AST_BINDING);
+}
+
+// A binding names one thing, or several when a tuple target takes a value
+// apart. Both go under one AST_BINDING_NAME and the difference is its child:
+// an AST_IDENTIFIER for 'let a', an AST_TUPLE whose children are the
+// identifiers for 'let (a, b)'. Parser::parse_binding_target is where the
+// bracket decides, and it wraps the tuple in a binding name like any other
+std::vector<std::string> AstQuery::get_binding_names(u32 statement) {
+    std::vector<std::string> names;
+    u32 name = find_child(get_binding(statement), AST_BINDING_NAME);
+    u32 target = ast->get_node(name)->get_children();
+
+    if (target == 0) {
+        return names;
+    }
+
+    if (ast->get_node(target)->get_kind() != AST_TUPLE) {
+        names.push_back(text_of(target));
+
+        return names;
+    }
+
+    for (u32 child = ast->get_node(target)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        names.push_back(text_of(child));
+    }
+
+    return names;
+}
+
 // the name hangs two levels down and not one: an AST_BINDING_NAME carries no
 // token of its own, it wraps the AST_IDENTIFIER that does
 std::string AstQuery::get_declaration_name(u32 declaration) {

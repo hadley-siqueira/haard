@@ -1,0 +1,36 @@
+<unnamed>:
+    Base  Base
+    Derived  Derived
+    main  Derived -> Derived* -> Derived** -> i32 -> i32
+    tag  i32
+    value  f64
+    d  Derived
+    p  Derived*
+    pp  Derived**
+    n  i32
+    absent  <none>
+    wrong_arrow  <none>
+    too_deep  <none>
+    no_members  <none>
+  19 types interned
+diagnostics:
+error: Derived has no member named 'missing'
+  --> main.hd:12:20
+   |
+12 |     let absent = d.missing
+   |                    ^^^^^^^
+error: '->' needs a pointer, and this is Derived
+  --> main.hd:13:26
+   |
+13 |     let wrong_arrow = d->value
+   |                          ^^^^^
+error: Derived* has no member named 'value'
+  --> main.hd:14:23
+   |
+14 |     let too_deep = pp.value
+   |                       ^^^^^
+error: i32 has no member named 'field'
+  --> main.hd:15:24
+   |
+15 |     let no_members = n.field
+   |                        ^^^^^

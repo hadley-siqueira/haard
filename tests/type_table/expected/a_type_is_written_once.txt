@@ -1,0 +1,8 @@
+<unnamed>:
+    Twice  Twice
+    a  i32[10]
+    b  i32[10]
+    c  i32[5]
+    d  {i32: i32}
+    e  {i32: i32}
+  18 types interned

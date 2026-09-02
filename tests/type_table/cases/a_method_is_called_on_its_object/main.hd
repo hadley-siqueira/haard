@@ -1,0 +1,26 @@
+class Base:
+    tag : i32
+    def describe : i32
+        return tag
+
+class Derived(Base):
+    value : f64
+    def compute : f64
+        return value
+    def compute : f64
+        @by : f64
+        return by
+    def through_this : i32
+        let mine = this.describe()
+        let myself : Derived* = this
+        return mine
+
+def main : i32
+    @d : Derived
+    @p : Derived*
+    let no_args = d.compute()
+    let one_arg = d.compute(1.5)
+    let sugar = p.compute()
+    let inherited = d.describe()
+    let arrow = p->describe()
+    return 0

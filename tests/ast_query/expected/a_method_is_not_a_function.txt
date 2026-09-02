@@ -3,8 +3,9 @@ functions:
   main
 classes:
   Point
+    member norm
 structs:
 enums:
 unions:
 global variables:
-  let
+  let g

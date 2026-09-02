@@ -1,0 +1,36 @@
+class Base:
+    tag : i32
+
+class Derived(Base):
+    value : f64
+
+def take : i32
+    @a : i32
+    return a
+
+def take : f64
+    @a : f64
+    return a
+
+def small : bool
+    @a : u8
+    return true
+
+def with_default : i32
+    @a : i32
+    @b : i32 = 0
+    return a
+
+def upcast : i32
+    @b : Base&
+    return 0
+
+def main : i32
+    @r : Derived&
+    let by_int = take(1)
+    let by_float = take(2.5)
+    let fits = small(200)
+    let one = with_default(1)
+    let two = with_default(1, 2)
+    let up = upcast(r)
+    return 0

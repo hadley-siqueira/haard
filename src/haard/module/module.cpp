@@ -32,12 +32,32 @@ u32 Module::get_root() {
     return root;
 }
 
+void Module::add_dependency(u32 module, u32 alias) {
+    dependencies.push_back(Dependency{module, alias});
+}
+
+const std::vector<Dependency>& Module::get_dependencies() {
+    return dependencies;
+}
+
 TokenStream* Module::get_tokens() {
     return &tokens;
 }
 
 SourceFile* Module::get_source_file() {
     return &source_file;
+}
+
+StringTable* Module::get_strings() {
+    return &strings;
+}
+
+SymbolTable* Module::get_symbols() {
+    return &symbols;
+}
+
+TypeTable* Module::get_types() {
+    return &types;
 }
 
 Logger* Module::get_logger() {

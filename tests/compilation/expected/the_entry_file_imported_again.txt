@@ -1,8 +1,10 @@
 modules:
     0 app.main  app/main.hd
         imports app.report
+        depends on 1 app.report
         declares main
     1 app.report  app/report.hd
         imports app.main
+        depends on 0 app.main
         declares report
 --- parsed alone: every module matches

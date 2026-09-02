@@ -1,0 +1,9 @@
+app.main module -> io::shared
+  std.io function at node 2
+  std.tcp function at node 2
+app.main module -> shared
+  std.io function at node 2
+  std.tcp function at node 2
+  std.tcp function at node 2
+app.main module -> tcp::shared
+  std.tcp function at node 2

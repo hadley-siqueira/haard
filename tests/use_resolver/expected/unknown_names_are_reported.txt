@@ -1,0 +1,15 @@
+error: cannot find 'missing' in this scope
+ --> main.hd:3:17
+  |
+3 |     let b = a + missing
+  |                 ^^^^^^^
+error: cannot find 'Nowhere' in this scope
+ --> main.hd:4:13
+  |
+4 |     let c : Nowhere = 0
+  |             ^^^^^^^
+error: cannot find 'other' in this scope
+ --> main.hd:5:5
+  |
+5 |     other()
+  |     ^^^^^

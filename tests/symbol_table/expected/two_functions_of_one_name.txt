@@ -1,0 +1,16 @@
+scope 1  owner the module  parent 0
+  foo
+    function at node 2
+    function at node 14
+  bar
+    function at node 26
+scope 2  owner foo  parent 1
+  x
+    param at node 11
+scope 3  owner a block at node 12  parent 2
+scope 4  owner foo  parent 1
+  x
+    param at node 23
+scope 5  owner a block at node 24  parent 4
+scope 6  owner bar  parent 1
+scope 7  owner a block at node 31  parent 6

@@ -1,0 +1,13 @@
+<unnamed>:
+    Node  Node
+    plain  i32
+    pointer  i32*
+    two  i32**
+    three  i32***
+    reference  i32&
+    list  [i32]
+    hash  {i32: f64}
+    tuple  (i32, f64, bool)
+    unsized  i32[]
+    sized  i32[10]
+  24 types interned

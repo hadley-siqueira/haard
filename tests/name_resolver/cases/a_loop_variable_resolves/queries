@@ -1,0 +1,9 @@
+# both names a 'for ... in' writes are bound, and from inside the body they
+# shadow a function of the same name in the module scope
+app.main @seen key
+app.main @seen value
+# a loop variable shadows a parameter the same way a local does
+app.main @deep pairs
+app.main @seen pairs
+# and neither escapes the loop
+app.main module value

@@ -43,11 +43,21 @@ sources=(
     "$root/src/haard/ast_query/ast_query.cpp"
     "$root/src/haard/module_finder/module_finder.cpp"
     "$root/src/haard/compilation/compilation.cpp"
+    "$root/src/haard/type_table/type_collector.cpp"
+    "$root/src/haard/type_table/expression_typer.cpp"
+    "$root/src/haard/name_resolver/overload_resolver.cpp"
+    "$root/src/haard/type_table/type_builder.cpp"
+    "$root/src/haard/name_resolver/name_resolver.cpp"
+    "$root/src/haard/name_resolver/use_resolver.cpp"
+    "$root/src/haard/symbol_table/symbol_collector.cpp"
     "$root/src/haard/source_file/source_file.cpp"
     "$root/src/haard/log/log.cpp"
     "$root/src/haard/scanner/scanner.cpp"
     "$root/src/haard/parser/parser.cpp"
     "$root/src/haard/module/module.cpp"
+    "$root/src/haard/type_table/type_table.cpp"
+    "$root/src/haard/string_table/string_table.cpp"
+    "$root/src/haard/symbol_table/symbol_table.cpp"
 )
 
 mkdir -p "$build" expected

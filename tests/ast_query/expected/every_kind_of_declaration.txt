@@ -4,12 +4,16 @@ functions:
   main
 classes:
   Point
+    member x
 structs:
   Pair
+    member first
 enums:
   Colour
+    member red
 unions:
   Value
+    member number
 global variables:
-  let
-  const
+  let width
+  const height
