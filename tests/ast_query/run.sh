@@ -51,6 +51,7 @@ sources=(
     "$root/src/haard/pretty_printer/pretty_printer.cpp"
     "$root/src/haard/module/module.cpp"
     "$root/src/haard/type_table/type_table.cpp"
+    "$root/src/haard/resolution_table/resolution_table.cpp"
     "$root/src/haard/string_table/string_table.cpp"
     "$root/src/haard/symbol_table/symbol_table.cpp"
 )

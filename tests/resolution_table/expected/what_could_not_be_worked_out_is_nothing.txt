@@ -1,0 +1,14 @@
+<unnamed>:
+    16    1             i32
+    22    0             i32
+diagnostics:
+error: cannot find 'missing' in this scope
+ --> main.hd:2:19
+  |
+2 |     let unknown = missing
+  |                   ^^^^^^^
+error: expected i32, found a floating point literal
+ --> main.hd:3:19
+  |
+3 |     let bad = 1 + 2.5
+  |                   ^^^

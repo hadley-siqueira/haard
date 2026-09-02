@@ -1,0 +1,17 @@
+let global : i32 = 0
+
+class Square:
+    size : f64
+
+    def area : f64
+        return size * size
+
+def main : i32
+    @sq : Square
+    @p : Square*
+    let local = 1
+    let field = sq.size
+    let through = p->size
+    let called = sq.area()
+    let outer = global
+    return local

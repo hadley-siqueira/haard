@@ -1,0 +1,9 @@
+# only a plain '=' to a bare name declares. Everything else on the left names
+# something that has to be there already
+def main : i32
+    fresh = 1
+    total += 1
+    thing.field = 2
+    array[0] = 3
+    holder->value = 4
+    return fresh

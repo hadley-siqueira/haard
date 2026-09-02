@@ -1,0 +1,10 @@
+# what a name declared by an assignment is, is what it was given -- the same
+# inference a 'let' with no written type gets, reading the right side
+def main : i32
+    n = 1
+    d = 2.5
+    flag = n < 2
+    copied = d
+    for i = 0; i < 3; i = i + 1:
+        n = i
+    return n

@@ -46,6 +46,17 @@ namespace haard {
             std::string name_of(u32 type);
 
         private:
+            // what an expression is, by kind. type_of is the funnel around it
+            // and the only place record 0019's answer is written down, so this
+            // one hands the answer back and records nothing itself
+            u32 work(u32 scope, u32 node, u32 expected);
+
+            // the node that carries the name a call names: the identifier
+            // itself, the right side of a '.' or a '->', the last part of a
+            // qualified form. It is where a diagnostic about the call points
+            // and where the chosen declaration is recorded
+            u32 name_of_callee(u32 node);
+
             u32 literal(u32 node, u32 expected, BuiltinType fallback);
             u32 identifier(u32 scope, u32 node);
             u32 binary(u32 scope, u32 node, u32 expected, bool comparison);

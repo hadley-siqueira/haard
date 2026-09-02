@@ -27,6 +27,13 @@ namespace haard {
 
         // the return type, already translated into the calling module's table
         u32 result;
+
+        // and the parameters of the candidate that won, translated too, in
+        // source order and without the return. Record 0019 needs them: a
+        // literal argument is carried in untyped and only ever asked to FIT a
+        // parameter, never typed, so the signature that won is the one place
+        // its type exists
+        std::vector<u32> parameters;
     };
 
     // The second half of agenda 2.7: choosing among the candidates a name

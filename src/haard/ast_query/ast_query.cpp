@@ -190,6 +190,14 @@ u32 AstQuery::get_super_type(u32 declaration) {
 }
 
 u32 AstQuery::get_binding_expression(u32 declaration) {
+    // an assignment that declares by being written: 'let' is not required, so
+    // 'n = 1' with no n in view is a declaration whose value is the right side
+    if (ast->get_node(declaration)->get_kind() == AST_ASSIGNMENT) {
+        u32 target = ast->get_node(declaration)->get_children();
+
+        return target == 0 ? 0 : ast->get_node(target)->get_sibling();
+    }
+
     u32 wrapper = find_child(declaration, AST_BINDING_EXPRESSION);
 
     return wrapper == 0 ? 0 : ast->get_node(wrapper)->get_children();
@@ -272,6 +280,17 @@ std::vector<std::string> AstQuery::get_binding_names(u32 statement) {
 // the name hangs two levels down and not one: an AST_BINDING_NAME carries no
 // token of its own, it wraps the AST_IDENTIFIER that does
 std::string AstQuery::get_declaration_name(u32 declaration) {
+    // an assignment that declares by being written names what is on its left,
+    // which is one identifier or it would not have declared anything
+    if (ast->get_node(declaration)->get_kind() == AST_ASSIGNMENT) {
+        u32 target = ast->get_node(declaration)->get_children();
+
+        return target == 0
+            || ast->get_node(target)->get_kind() != AST_IDENTIFIER
+                   ? ""
+                   : text_of(target);
+    }
+
     u32 name = find_child(declaration, AST_BINDING_NAME);
     u32 identifier = find_child(name, AST_IDENTIFIER);
 

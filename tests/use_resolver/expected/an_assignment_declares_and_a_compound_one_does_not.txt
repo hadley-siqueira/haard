@@ -1,0 +1,20 @@
+error: cannot find 'total' in this scope
+ --> main.hd:5:5
+  |
+5 |     total += 1
+  |     ^^^^^
+error: cannot find 'thing' in this scope
+ --> main.hd:6:5
+  |
+6 |     thing.field = 2
+  |     ^^^^^
+error: cannot find 'array' in this scope
+ --> main.hd:7:5
+  |
+7 |     array[0] = 3
+  |     ^^^^^
+error: cannot find 'holder' in this scope
+ --> main.hd:8:5
+  |
+8 |     holder->value = 4
+  |     ^^^^^^

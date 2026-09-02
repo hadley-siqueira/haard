@@ -3,28 +3,3 @@ error: cannot find 'absent' in this scope
   |
 5 |     for i in absent:
   |              ^^^^^^
-error: cannot find 'j' in this scope
- --> main.hd:7:9
-  |
-7 |     for j = 0; j < 10; j = j + 1:
-  |         ^
-error: cannot find 'j' in this scope
- --> main.hd:7:16
-  |
-7 |     for j = 0; j < 10; j = j + 1:
-  |                ^
-error: cannot find 'j' in this scope
- --> main.hd:7:24
-  |
-7 |     for j = 0; j < 10; j = j + 1:
-  |                        ^
-error: cannot find 'j' in this scope
- --> main.hd:7:28
-  |
-7 |     for j = 0; j < 10; j = j + 1:
-  |                            ^
-error: cannot find 'j' in this scope
- --> main.hd:8:23
-  |
-8 |         let counted = j
-  |                       ^

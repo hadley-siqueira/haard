@@ -1,0 +1,8 @@
+def main : i32
+    let n = 1
+    let d = 2.5
+    let sum = n + n
+    let flag = n < 2
+    let both = flag and flag
+    let deep = (n + n) * n
+    return n

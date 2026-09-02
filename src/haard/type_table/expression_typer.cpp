@@ -52,6 +52,18 @@ u32 ExpressionTyper::type_of(u32 index, u32 scope, u32 node, u32 expected) {
     this->index = index;
     module = compilation->get_module(index);
 
+    u32 result = work(scope, node, expected);
+
+    // Record 0019, and it is one line because every expression goes through
+    // here. The kinds below work the answer out and hand it back; this is the
+    // only place it is written down, so a kind added later is recorded for
+    // free and none can be forgotten
+    module->get_resolutions()->set_type(node, result);
+
+    return result;
+}
+
+u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     switch (kind_of(node)) {
     case AST_INTEGER_LITERAL:
         return literal(node, expected, BUILTIN_I32);
@@ -171,6 +183,11 @@ u32 ExpressionTyper::identifier(u32 scope, u32 node) {
         return INVALID_TYPE;
     }
 
+    // record 0019: which declaration this written name meant. One candidate,
+    // so there is nothing to choose and the answer is already the answer
+    module->get_resolutions()->set_declaration(node, found[0].module,
+                                               found[0].candidate);
+
     return compilation->get_module(found[0].module)
         ->get_symbols()
         ->get_candidate(found[0].candidate)
@@ -227,6 +244,30 @@ bool ExpressionTyper::boolean_operand(u32 scope, u32 node, u32 at) {
     }
 
     return false;
+}
+
+u32 ExpressionTyper::name_of_callee(u32 node) {
+    // 'make<i32>()' hangs the name under an AST_GENERIC_NAME
+    if (kind_of(node) == AST_GENERIC_NAME) {
+        node = first_child(node);
+    }
+
+    // a dot and an arrow carry no text of their own, so the name being called
+    // is the right side
+    if (kind_of(node) == AST_DOT || kind_of(node) == AST_ARROW) {
+        return second_child(node);
+    }
+
+    // '::' carries none either. One child is '::name' and two are
+    // 'alias::name', so the name is the last of them either way
+    if (kind_of(node) == AST_SCOPE) {
+        u32 first = first_child(node);
+        u32 second = module->get_ast()->get_node(first)->get_sibling();
+
+        return second == 0 ? first : second;
+    }
+
+    return node;
 }
 
 std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
@@ -321,12 +362,26 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
     }
 
     Overload chosen = overloads.choose(index, candidates, arguments);
+    u32 at = name_of_callee(callee);
 
-    // a dot carries no text of its own, so the name being called is its right
-    // side -- which is also the span a reader wants underlined
-    u32 at = kind_of(callee) == AST_DOT || kind_of(callee) == AST_ARROW
-                 ? second_child(callee)
-                 : callee;
+    if (chosen.status == OVERLOAD_FOUND) {
+        // record 0019: *which* overload this call meant. Nothing can work it
+        // out again later -- it was the argument types that picked it, and a
+        // second lookup only gets the set back
+        module->get_resolutions()->set_declaration(at, chosen.module,
+                                                   chosen.candidate);
+
+        // and now the literals. They came in untyped so that each candidate
+        // could ask them to be its own parameter, so this is the first moment
+        // any of them has a type at all
+        for (u32 i = 0;
+             i < arguments.size() && i < chosen.parameters.size(); i++) {
+            if (arguments[i].literal) {
+                module->get_resolutions()->set_type(arguments[i].node,
+                                                    chosen.parameters[i]);
+            }
+        }
+    }
 
     if (chosen.status == OVERLOAD_AMBIGUOUS) {
         report(at, "this call matches more than one '" + text_of(at) +
@@ -466,6 +521,11 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
 
         return INVALID_TYPE;
     }
+
+    // recorded at the NAME and not at the dot: the dot is an operator and the
+    // thing that names a declaration is its right side
+    module->get_resolutions()->set_declaration(name, found[0].module,
+                                               found[0].candidate);
 
     return compilation->get_module(found[0].module)
         ->get_symbols()

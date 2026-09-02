@@ -1,0 +1,11 @@
+<unnamed>:
+    13    a             i32                 -> a
+    26    0             i32
+    39    a             f64                 -> a
+    49    take          <none>              -> take  f64 -> f64
+    51    2.5           f64
+    52    (             f64
+    58    take          <none>              -> take  i32 -> i32
+    60    70000         i32
+    61    (             i32
+    65    0             i32

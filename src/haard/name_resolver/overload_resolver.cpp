@@ -64,10 +64,18 @@ Overload OverloadResolver::choose(u32 caller,
     if (best.status == OVERLOAD_FOUND) {
         Module* owner = compilation->get_module(best.module);
         u32 signature = owner->get_symbols()->get_candidate(best.candidate)->type;
+        std::vector<u32> written = owner->get_types()->get_arguments(signature);
 
-        best.result = builder.translate(
-            caller, best.module,
-            owner->get_types()->get_arguments(signature).back());
+        best.result = builder.translate(caller, best.module, written.back());
+
+        // the return is the last one, per record 0016, and what is left is
+        // the parameters the caller's side has to be able to name
+        written.pop_back();
+
+        for (u32 parameter : written) {
+            best.parameters.push_back(
+                builder.translate(caller, best.module, parameter));
+        }
     }
 
     return best;

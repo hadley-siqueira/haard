@@ -1,0 +1,8 @@
+<unnamed>:
+    main  i32
+    n  i32
+    d  f64
+    flag  bool
+    copied  f64
+    i  i32
+  15 types interned

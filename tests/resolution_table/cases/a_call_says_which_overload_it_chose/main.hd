@@ -1,0 +1,16 @@
+def take : i32
+    @a : i32
+    return a
+
+def take : i32
+    @a : u8
+    return 0
+
+def take : f64
+    @a : f64
+    return a
+
+def main : i32
+    let by_float = take(2.5)
+    let by_int = take(70000)
+    return 0

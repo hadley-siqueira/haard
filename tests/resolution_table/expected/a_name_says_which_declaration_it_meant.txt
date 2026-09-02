@@ -1,0 +1,17 @@
+<unnamed>:
+    6     0             i32
+    25    size          f64                 -> size
+    26    size          f64                 -> size
+    27    *             f64
+    50    1             i32
+    56    sq            Square              -> sq
+    57    size          <none>              -> size
+    58    .             f64
+    64    p             Square*             -> p
+    65    size          <none>              -> size
+    66    ->            f64
+    72    sq            Square              -> sq
+    73    area          <none>              -> area  f64
+    76    (             f64
+    82    global        i32                 -> global
+    86    local         i32                 -> local

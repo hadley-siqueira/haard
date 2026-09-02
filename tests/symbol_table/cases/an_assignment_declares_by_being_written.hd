@@ -1,0 +1,31 @@
+# 'let' is not required: an assignment to a name this module has nowhere in
+# view declares it. What is already there is assigned instead, whether it was
+# written above or -- like 'later' -- at the end of the file.
+#
+# And only a bare name on the left declares. A field, a field through a
+# pointer and an element all name something that has to be there already, so
+# none of the three adds anything to a scope
+let counter : i32 = 0
+
+class Box:
+    value : i32
+
+def main : i32
+    @b : Box
+    @p : Box*
+    @row : i32[4]
+    n = 1
+    n = 2
+    counter = 3
+    later = 4
+    b.value = 5
+    p->value = 6
+    row[0] = 7
+    if n < 2:
+        inner = 8
+        n = 9
+    for i = 0; i < 3; i = i + 1:
+        n = i
+    return n
+
+let later : i32 = 0

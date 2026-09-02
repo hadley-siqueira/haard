@@ -96,7 +96,10 @@ namespace haard {
             u32 get_super_type(u32 declaration);
 
             // the expression a declaration was given, 0 when it was given
-            // none. Only a binding has one, and it is what inference reads
+            // none, and what inference reads. A binding has one, and so does
+            // an assignment that declares by being written -- 'let' is not
+            // required, so 'n = 1' with no n in view declares n and its right
+            // side is what n was given
             u32 get_binding_expression(u32 declaration);
 
             // the names a 'for ... in' binds, as the identifiers themselves.
@@ -131,8 +134,9 @@ namespace haard {
             std::vector<std::string> get_binding_names(u32 statement);
 
             // the name a 'def', a 'class', a 'struct', an 'enum' or a 'union'
-            // declares. Empty for a 'let' or a 'const', which declare one name
-            // per AST_BINDING child instead of one for the statement
+            // declares, and the name an assignment declares by being written.
+            // Empty for a 'let' or a 'const', which declare one name per
+            // AST_BINDING child instead of one for the statement
             std::string get_declaration_name(u32 declaration);
 
         private:

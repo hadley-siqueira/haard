@@ -60,6 +60,10 @@ TypeTable* Module::get_types() {
     return &types;
 }
 
+ResolutionTable* Module::get_resolutions() {
+    return &resolutions;
+}
+
 Logger* Module::get_logger() {
     // the logger renders a diagnostic from an offset, so it needs the file
     // those offsets belong to

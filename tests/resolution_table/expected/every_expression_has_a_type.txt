@@ -1,0 +1,19 @@
+<unnamed>:
+    10    1             i32
+    16    2.5           f64
+    22    n             i32                 -> n
+    23    n             i32                 -> n
+    24    +             i32
+    30    n             i32                 -> n
+    31    2             i32
+    32    <             bool
+    38    flag          bool                -> flag
+    39    flag          bool                -> flag
+    40    and           bool
+    46    n             i32                 -> n
+    47    n             i32                 -> n
+    48    +             i32
+    49    (             i32
+    50    n             i32                 -> n
+    51    *             i32
+    55    n             i32                 -> n

@@ -50,6 +50,7 @@ static std::string owner_of(Module& module, u32 scope) {
     const char* unnamed = kind == AST_BLOCK      ? "a block at node "
                         : kind == AST_CLOSURE    ? "a closure at node "
                         : kind == AST_FOR_EACH   ? "a for-each at node "
+                        : kind == AST_FOR        ? "a for at node "
                                                  : nullptr;
 
     if (unnamed != nullptr) {

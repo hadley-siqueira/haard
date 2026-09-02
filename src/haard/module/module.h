@@ -9,6 +9,7 @@
 #include <haard/string_table/string_table.h>
 #include <haard/symbol_table/symbol_table.h>
 #include <haard/type_table/type_table.h>
+#include <haard/resolution_table/resolution_table.h>
 #include <string>
 #include <vector>
 
@@ -39,6 +40,10 @@ namespace haard {
             StringTable* get_strings();
             SymbolTable* get_symbols();
             TypeTable* get_types();
+
+            // what each node turned out to be, per record 0019: the answers
+            // the type phase worked out, kept instead of thrown away
+            ResolutionTable* get_resolutions();
 
             std::string_view get_token_value(u32 token);
 
@@ -94,6 +99,7 @@ namespace haard {
             StringTable strings;
             SymbolTable symbols;
             TypeTable types;
+            ResolutionTable resolutions;
     };
 }
 

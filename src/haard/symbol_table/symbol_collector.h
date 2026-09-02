@@ -3,6 +3,7 @@
 
 #include <haard/ast_query/ast_query.h>
 #include <haard/module/module.h>
+#include <map>
 
 namespace haard {
     // Fills a module's symbol table from its tree. The fourth of the family:
@@ -65,6 +66,28 @@ namespace haard {
             // identifier has no way back up to the type it was written with
             void collect_binding(u32 scope, u32 statement);
 
+            // 'let' is not required: an assignment to a bare name that this
+            // module has nowhere in view declares it, the way 'let n = 1'
+            // would. It is a second walk and it cannot be part of the first:
+            // 'n = 1' in the first function of a file may be naming a global
+            // the file declares at its end, and a use is allowed to come
+            // before its declaration.
+            //
+            // Only a plain '=' declares. 'n += 1' reads n before it writes it,
+            // so a name it cannot find is a mistake and not a declaration, and
+            // so is anything on the left that is not one identifier: 'a.b',
+            // 'p->x' and 'a[i]' all name something that has to exist already.
+            //
+            // Only what THIS module has in view counts -- the scope chain up
+            // to and including the module scope, and not the imports. A local
+            // standing in front of an imported name is what 'let' does too, so
+            // this stays a per-module question and the phase stays inside the
+            // walk that fills one module
+            void collect_implicit(u32 node, u32 scope);
+            void declare_target(u32 scope, u32 target);
+
+            bool in_view(u32 scope, u32 name);
+
             // the identifiers of '<T, U>'. The one declaration whose name is
             // not wrapped in a binding name, so it is its own node
             void collect_generic_parameters(u32 scope, u32 declaration);
@@ -75,6 +98,11 @@ namespace haard {
         private:
             Module* module;
             AstQuery query;
+
+            // the node that opened a scope, back to the scope it opened. The
+            // same reading of Scope::owner that every later phase does, and
+            // for the same reason: one description of the scope shape
+            std::map<u32, u32> scope_of;
     };
 }
 

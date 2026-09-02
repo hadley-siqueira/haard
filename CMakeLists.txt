@@ -38,6 +38,10 @@ set(TYPE_TABLE_SRC
     src/haard/type_table/expression_typer.cpp
 )
 
+set(RESOLUTION_TABLE_SRC
+    src/haard/resolution_table/resolution_table.cpp
+)
+
 set(SYMBOL_TABLE_SRC
     src/haard/symbol_table/symbol_table.cpp
     src/haard/symbol_table/symbol_collector.cpp
@@ -95,6 +99,7 @@ set(SOURCES
     ${STRING_TABLE_SRC}
     ${SYMBOL_TABLE_SRC}
     ${TYPE_TABLE_SRC}
+    ${RESOLUTION_TABLE_SRC}
     ${MODULE_FINDER_SRC}
     ${COMPILATION_SRC}
     ${NAME_RESOLVER_SRC}
@@ -155,6 +160,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/string_table/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/symbol_table/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/type_table/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/resolution_table/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/module_finder/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/compilation/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/name_resolver/run.sh

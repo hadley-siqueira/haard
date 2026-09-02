@@ -1,0 +1,4 @@
+def main : i32
+    let unknown = missing
+    let bad = 1 + 2.5
+    return 0
