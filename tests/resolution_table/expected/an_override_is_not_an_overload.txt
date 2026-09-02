@@ -1,0 +1,18 @@
+<unnamed>:
+    17    sides         i32                 -> sides
+    30    tag           i32                 -> tag
+    45    4             i32
+    63    extra         i32                 -> extra
+    79    sq            Square              -> sq
+    80    describe      <none>              -> Square.describe  i32
+    83    (             i32
+    89    sq            Square              -> sq
+    90    name          <none>              -> Shape.name  i32 -> i32
+    93    1             i32
+    94    (             i32
+    100   sq            Square              -> sq
+    101   name          <none>              -> Square.name  i32 -> i32 -> i32
+    104   1             i32
+    105   2             i32
+    106   (             i32
+    110   overridden    i32                 -> overridden

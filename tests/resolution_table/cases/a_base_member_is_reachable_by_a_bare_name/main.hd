@@ -1,0 +1,21 @@
+# the scope chain is lexical and a base is not lexically around anything, so
+# reaching it is a step the walk has to be told to take. Inside a method of
+# Square, 'sides' and 'describe' are Shape's and no dot is written
+class Shape:
+    sides : i32
+
+    def describe : i32
+        return sides
+
+class Square(Shape):
+    size : i32
+
+    def area : i32
+        return sides + size
+
+    def show : i32
+        return describe()
+
+def main : i32
+    @sq : Square
+    return sq.area()

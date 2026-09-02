@@ -1,0 +1,15 @@
+# the other way round is unsound: a caller through the base was promised a
+# Derived* and would get a Base*
+class Base:
+    tag : i32
+
+class Derived(Base):
+    extra : i32
+
+class Shape:
+    def narrow : Derived*
+        return null
+
+class Square(Shape):
+    def narrow : Base*
+        return null

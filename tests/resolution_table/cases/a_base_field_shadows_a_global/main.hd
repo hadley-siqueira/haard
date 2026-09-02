@@ -1,0 +1,11 @@
+# a name found in a base ends the walk outward exactly as one found in the
+# class itself does: 'sides' inside Square is Shape's field and never the
+# global of the same name
+let sides : f64 = 0.0
+
+class Shape:
+    sides : i32
+
+class Square(Shape):
+    def area : i32
+        return sides

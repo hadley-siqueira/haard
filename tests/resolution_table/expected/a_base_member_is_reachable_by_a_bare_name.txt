@@ -1,0 +1,10 @@
+<unnamed>:
+    17    sides         i32                 -> sides
+    37    sides         i32                 -> sides
+    38    size          i32                 -> size
+    39    +             i32
+    47    describe      <none>              -> Shape.describe  i32
+    49    (             i32
+    63    sq            Square              -> sq
+    64    area          <none>              -> Square.area  i32
+    67    (             i32

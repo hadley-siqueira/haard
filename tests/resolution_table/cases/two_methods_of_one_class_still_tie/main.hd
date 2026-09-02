@@ -1,0 +1,15 @@
+# an override is about two classes. Two declarations in ONE class that answer
+# to the same call are record 0012's ambiguous call and always were, and
+# nothing about inheritance makes one of them win
+class Shape:
+    def pick : i32
+        @a : i32
+        return a
+
+    def pick : i32
+        @a : i32
+        return 0
+
+def main : i32
+    @s : Shape
+    return s.pick(1)

@@ -27,16 +27,24 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
     for (u32 current = scope; current != 0 && interned != INVALID_STRING;
          current = table->get_scope(current)->parent) {
         u32 symbol = table->find(current, interned);
-
-        if (symbol == 0) {
-            continue;
-        }
-
-        gather(found, module, symbol);
+        u32 owner = table->get_scope(current)->owner;
 
         // a function joins the set and keeps the walk going; anything else
         // shadows what is outside it and the walk stops here
-        if (!only_functions(module, symbol)) {
+        if (symbol != 0) {
+            gather(found, module, symbol);
+
+            if (!only_functions(module, symbol)) {
+                shadowed = true;
+                break;
+            }
+        }
+
+        // and, in a class body, what the classes above it declare. This step
+        // belongs to the same scope as the one just looked at -- a base is
+        // part of what the class means, not something outside it
+        if (owner != 0 && declares_a_type(module, owner)
+            && gather_bases(found, module, owner, hash, name)) {
             shadowed = true;
             break;
         }
@@ -58,6 +66,91 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
     }
 
     return found;
+}
+
+bool NameResolver::declares_a_type(u32 module, u32 node) {
+    switch (compilation->get_module(module)->get_ast()->get_node(node)
+                ->get_kind()) {
+    case AST_CLASS:
+    case AST_STRUCT:
+    case AST_UNION:
+    case AST_ENUM:
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool NameResolver::gather_bases(std::vector<Candidacy>& found, u32 module,
+                                u32 declaration, u32 hash,
+                                const std::string& name) {
+    u32 owner = module;
+    u32 candidate =
+        compilation->get_module(module)->get_symbols()->candidate_of(
+            declaration);
+
+    // a class reached twice is a cycle in the bases, which nothing rejects
+    // yet. Stopping is not a diagnostic and does not pretend to be one; it is
+    // what keeps a lookup from running forever while 1.10's checking is not
+    // written
+    std::vector<u32> seen;
+
+    while (candidate != 0) {
+        Module* holder = compilation->get_module(owner);
+        u32 super = holder->get_symbols()->get_candidate(candidate)->super;
+
+        if (super == INVALID_TYPE) {
+            return false;
+        }
+
+        Type* entry = holder->get_types()->get_type(super);
+
+        // a base that could not be built is nothing to look in, and it was
+        // reported where it was written
+        if (entry->kind != TYPE_NAMED) {
+            return false;
+        }
+
+        owner = entry->module;
+        candidate = entry->subject;
+        holder = compilation->get_module(owner);
+
+        u32 key = owner * 1000003 + candidate;
+
+        for (u32 already : seen) {
+            if (already == key) {
+                return false;
+            }
+        }
+
+        seen.push_back(key);
+
+        // the name means nothing in the base's module until it is interned
+        // there, and a module that never wrote it answers before any scope is
+        // looked at
+        SymbolTable* table = holder->get_symbols();
+        u32 interned = holder->get_strings()->find(hash, name);
+        u32 body = table->scope_owned_by(
+            table->get_candidate(candidate)->ast_node);
+        u32 symbol = interned == INVALID_STRING || body == 0
+                         ? 0
+                         : table->find(body, interned);
+
+        if (symbol == 0) {
+            continue;
+        }
+
+        gather(found, owner, symbol);
+
+        if (!only_functions(owner, symbol)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::vector<Candidacy> NameResolver::resolve_at_module(

@@ -1,0 +1,3 @@
+<unnamed>:
+    6     0.0           f64
+    32    sides         i32                 -> sides

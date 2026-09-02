@@ -1,0 +1,11 @@
+<unnamed>:
+    20    0             i32
+    24    a             i32                 -> a
+    44    a             i32                 -> a
+    58    sq            Square              -> sq
+diagnostics:
+error: this call matches more than one 'draw' equally well
+  --> main.hd:17:15
+   |
+17 |     return sq.draw(1)
+   |               ^^^^

@@ -77,6 +77,27 @@ namespace haard {
             // not above it at all. Single inheritance makes this a walk
             int distance(u32 caller, u32 from, u32 to);
 
+            // Hadley, 2026-09-02: a method a derived class writes with the
+            // same parameters as one of its bases **overrides** it and does
+            // not join it as an overload. Every method is virtual, so there is
+            // one of them at a call and it is the most derived one.
+            //
+            // Applied here and not where the candidates were gathered, because
+            // this is the only place that has the signatures to compare with,
+            // and because both ways of reaching a method -- a bare name inside
+            // the class and a '.' from outside -- end up here
+            bool overrides(u32 caller, const Candidacy& derived,
+                           const Candidacy& base);
+
+            // the class a candidate is a method of, as a type, and
+            // INVALID_TYPE when it is not a method. The way up is the scope
+            // the function opened, whose parent is the class body
+            u32 holder_of(const Candidacy& who);
+
+            // a candidate's parameters, without the return, translated into
+            // the caller's table so two of them can be compared
+            std::vector<u32> parameters_of(u32 caller, const Candidacy& who);
+
             // the parameters a candidate cannot do without: those the source
             // wrote no default for
             u32 required_of(u32 module, u32 candidate);

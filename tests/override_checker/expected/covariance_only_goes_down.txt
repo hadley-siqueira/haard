@@ -1,0 +1,5 @@
+error: this overrides Shape.narrow, which gives back Derived*, and gives back Base*
+  --> main.hd:14:9
+   |
+14 |     def narrow : Base*
+   |         ^^^^^^

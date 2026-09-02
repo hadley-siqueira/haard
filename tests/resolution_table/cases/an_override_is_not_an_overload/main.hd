@@ -1,0 +1,31 @@
+# Hadley, 2026-09-02: a method a derived class writes with the same parameters
+# as one of its bases OVERRIDES it. Every method is virtual, so there is one of
+# them at a call and it is the most derived one.
+#
+# Different parameters are a different thing entirely: those are two real
+# overloads and both stay callable, which is what record 0012 always said
+class Shape:
+    sides : i32
+
+    def describe : i32
+        return sides
+
+    def name : i32
+        @tag : i32
+        return tag
+
+class Square(Shape):
+    def describe : i32
+        return 4
+
+    def name : i32
+        @tag : i32
+        @extra : i32
+        return extra
+
+def main : i32
+    @sq : Square
+    let overridden = sq.describe()
+    let inherited = sq.name(1)
+    let by_arity = sq.name(1, 2)
+    return overridden

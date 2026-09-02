@@ -1,0 +1,12 @@
+# the first method found going up is the one being overridden. Middle writes
+# none, so Bottom overrides Top's -- two steps up
+class Top:
+    def describe : i32
+        return 0
+
+class Middle(Top):
+    tag : i32
+
+class Bottom(Middle):
+    def describe : f64
+        return 2.5

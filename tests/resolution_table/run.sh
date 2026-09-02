@@ -50,6 +50,7 @@ sources=(
     "$root/src/haard/name_resolver/name_resolver.cpp"
     "$root/src/haard/name_resolver/use_resolver.cpp"
     "$root/src/haard/statement_checker/statement_checker.cpp"
+    "$root/src/haard/override_checker/override_checker.cpp"
     "$root/src/haard/type_table/type_table.cpp"
     "$root/src/haard/resolution_table/resolution_table.cpp"
     "$root/src/haard/symbol_table/symbol_collector.cpp"

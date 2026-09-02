@@ -1,0 +1,17 @@
+# a base's method and a derived one that answer to the same call with
+# DIFFERENT parameters are two real overloads, and a tie between them is
+# ambiguous. Only the same parameters make one an override of the other
+class Shape:
+    def draw : i32
+        @a : i32
+        @b : i32 = 0
+        return a
+
+class Square(Shape):
+    def draw : i32
+        @a : i32
+        return a
+
+def main : i32
+    @sq : Square
+    return sq.draw(1)

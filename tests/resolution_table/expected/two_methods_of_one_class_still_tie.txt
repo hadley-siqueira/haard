@@ -1,0 +1,10 @@
+<unnamed>:
+    17    a             i32                 -> a
+    30    0             i32
+    44    s             Shape               -> s
+diagnostics:
+error: this call matches more than one 'pick' equally well
+  --> main.hd:15:14
+   |
+15 |     return s.pick(1)
+   |              ^^^^

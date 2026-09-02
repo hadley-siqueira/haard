@@ -134,6 +134,33 @@ static std::string name_of(Module* owner, u32 node, u8 kind) {
 }
 
 
+// the class a method belongs to, so that 'Square.describe' and
+// 'Shape.describe' are two different lines. Without it the golden could not
+// say which of an override and the method it overrides a call chose, which is
+// the one thing an override case exists to say
+static std::string holder_of(u32 module, u32 candidate) {
+    Module* owner = compilation.get_module(module);
+    SymbolTable* table = owner->get_symbols();
+    Candidate* found = table->get_candidate(candidate);
+    AstQuery query;
+
+    if (found->kind != SYMBOL_FUNCTION) {
+        return "";
+    }
+
+    u32 inside = table->scope_owned_by(found->ast_node);
+    u32 around = inside == 0 ? 0 : table->get_scope(inside)->parent;
+    u32 holder = around == 0 ? 0 : table->get_scope(around)->owner;
+
+    if (holder == 0) {
+        return "";
+    }
+
+    query.set_module(owner);
+
+    return query.get_declaration_name(holder) + ".";
+}
+
 // what a node shows as: the text of the token it was built from, which is the
 // name for an identifier and the operator for everything else
 static std::string text_of(Module* module, u32 node) {
@@ -205,8 +232,8 @@ int main(int argc, char* argv[]) {
                                              ->get_symbols()
                                              ->get_candidate(found->candidate);
 
-                line += "-> " + declaration_name(found->module,
-                                                 found->candidate);
+                line += "-> " + holder_of(found->module, found->candidate)
+                      + declaration_name(found->module, found->candidate);
 
                 // three overloads of one name are three lines that would read
                 // the same, so a function says which of them it is. That is

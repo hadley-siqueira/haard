@@ -602,28 +602,90 @@ u32 ExpressionTyper::second_child(u32 node) {
 }
 
 std::string ExpressionTyper::name_of(u32 type) {
-    Type* entry = module->get_types()->get_type(type);
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(type);
+    std::vector<u32> arguments = types->get_arguments(type);
+    AstQuery query;
+    std::string out;
+
+    // written back the way the source writes it, because that is the only
+    // spelling a reader of the diagnostic would recognise. A kind with no
+    // case here would print its index, which says nothing at all
+    switch ((TypeKind) entry->kind) {
+    case TYPE_BUILTIN:
+        return entry->subject < BUILTIN_COUNT ? BUILTIN_NAMES[entry->subject]
+                                              : "?";
+
+    case TYPE_POINTER:
+        return name_of(arguments[0]) + "*";
+
+    case TYPE_REFERENCE:
+        return name_of(arguments[0]) + "&";
+
+    case TYPE_ARRAY:
+        return name_of(arguments[0]) + "["
+             + (entry->subject == NO_LENGTH ? ""
+                                            : std::to_string(entry->subject))
+             + "]";
+
+    case TYPE_LIST:
+        return "[" + name_of(arguments[0]) + "]";
+
+    case TYPE_HASH:
+        return "{" + name_of(arguments[0]) + ": " + name_of(arguments[1])
+             + "}";
+
+    case TYPE_TUPLE:
+        for (u32 i = 0; i < arguments.size(); i++) {
+            out += (i > 0 ? ", " : "") + name_of(arguments[i]);
+        }
+
+        return "(" + out + ")";
+
+    // the return is the last one, per record 0016, and it reads as the arrow
+    // chain the source would write
+    case TYPE_FUNCTION:
+        for (u32 i = 0; i < arguments.size(); i++) {
+            out += (i > 0 ? " -> " : "") + name_of(arguments[i]);
+        }
+
+        return out;
+
+    case TYPE_GENERIC:
+        return declaration_name(entry->module, entry->subject);
+
+    case TYPE_NAMED:
+        out = declaration_name(entry->module, entry->subject);
+
+        if (arguments.size() == 0) {
+            return out;
+        }
+
+        for (u32 i = 0; i < arguments.size(); i++) {
+            out += (i == 0 ? "<" : ", ") + name_of(arguments[i]);
+        }
+
+        return out + ">";
+
+    default:
+        break;
+    }
+
+    return "<none>";
+}
+
+std::string ExpressionTyper::declaration_name(u32 owner, u32 candidate) {
+    Module* holder = compilation->get_module(owner);
+    Candidate* found = holder->get_symbols()->get_candidate(candidate);
     AstQuery query;
 
-    if (entry->kind == TYPE_BUILTIN && entry->subject < BUILTIN_COUNT) {
-        return BUILTIN_NAMES[entry->subject];
+    // a generic parameter is its own identifier and wraps nothing
+    if (found->kind == SYMBOL_GENERIC) {
+        return std::string(holder->get_token_value(
+            holder->get_ast()->get_node(found->ast_node)->get_token()));
     }
 
-    if (entry->kind == TYPE_POINTER) {
-        return name_of(module->get_types()->get_argument(
-                   entry->first_argument)) + "*";
-    }
+    query.set_module(holder);
 
-    // a named type says the name it was declared with, which is the only
-    // spelling a reader of the diagnostic would recognise
-    if (entry->kind == TYPE_NAMED) {
-        Module* owner = compilation->get_module(entry->module);
-
-        query.set_module(owner);
-
-        return query.get_declaration_name(
-            owner->get_symbols()->get_candidate(entry->subject)->ast_node);
-    }
-
-    return "type " + std::to_string(type);
+    return query.get_declaration_name(found->ast_node);
 }

@@ -1,0 +1,5 @@
+error: this overrides Shape.make, which gives back Base, and gives back Derived
+  --> main.hd:15:9
+   |
+15 |     def make : Derived
+   |         ^^^^

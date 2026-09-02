@@ -1,0 +1,18 @@
+# record 0012 keeps the return out of what makes two overloads different, so
+# record 0020 keeps it out of what makes one method an override of another:
+# Square.describe DOES override Shape.describe, and the resolution below picks
+# it. Giving back something else is then a mistake about the return and not
+# about which method was meant, which is why the OverrideChecker reports it
+# and this table still resolves the call
+class Shape:
+    def describe : i32
+        return 0
+
+class Square(Shape):
+    def describe : f64
+        return 2.5
+
+def main : i32
+    @sq : Square
+    let what = sq.describe()
+    return 0

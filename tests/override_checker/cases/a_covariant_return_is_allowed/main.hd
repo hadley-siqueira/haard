@@ -1,0 +1,27 @@
+# a pointer and a reference to something derived. Somebody holding a Shape*
+# and calling clone() gets back something that really is a Shape*
+class Base:
+    tag : i32
+
+class Derived(Base):
+    extra : i32
+
+class Shape:
+    def by_pointer : Base*
+        return null
+
+    def by_reference : Base&
+        return null
+
+    def same : i32
+        return 0
+
+class Square(Shape):
+    def by_pointer : Derived*
+        return null
+
+    def by_reference : Derived&
+        return null
+
+    def same : i32
+        return 1

@@ -11,7 +11,7 @@
     65    size          <none>              -> size
     66    ->            f64
     72    sq            Square              -> sq
-    73    area          <none>              -> area  f64
+    73    area          <none>              -> Square.area  f64
     76    (             f64
     82    global        i32                 -> global
     86    local         i32                 -> local

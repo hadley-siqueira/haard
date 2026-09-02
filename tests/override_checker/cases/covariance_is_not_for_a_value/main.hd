@@ -1,0 +1,16 @@
+# the reason is size: somebody calling through the base reserved room for a
+# Base, and a Derived does not fit. Two pointers are the same size whatever
+# they point at, which is what makes those safe
+class Base:
+    tag : i32
+
+class Derived(Base):
+    extra : i32
+
+class Shape:
+    def make : Base
+        return null
+
+class Square(Shape):
+    def make : Derived
+        return null

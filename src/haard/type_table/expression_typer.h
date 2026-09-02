@@ -41,8 +41,9 @@ namespace haard {
             void set_module(u32 module);
 
         public:
-            // the name of a type as a diagnostic should print it. Public
-            // because the collector reports a mismatch it found itself
+            // the name of a type as a diagnostic should print it, written
+            // back the way the source writes it. Public because the collector
+            // and the override checker both report mismatches of their own
             std::string name_of(u32 type);
 
         private:
@@ -56,6 +57,9 @@ namespace haard {
             // qualified form. It is where a diagnostic about the call points
             // and where the chosen declaration is recorded
             u32 name_of_callee(u32 node);
+
+            // the name a named or generic type points at
+            std::string declaration_name(u32 module, u32 candidate);
 
             u32 literal(u32 node, u32 expected, BuiltinType fallback);
             u32 identifier(u32 scope, u32 node);

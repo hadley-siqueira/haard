@@ -61,6 +61,10 @@ set(STATEMENT_CHECKER_SRC
     src/haard/statement_checker/statement_checker.cpp
 )
 
+set(OVERRIDE_CHECKER_SRC
+    src/haard/override_checker/override_checker.cpp
+)
+
 set(COMPILATION_SRC
     src/haard/compilation/compilation.cpp
 )
@@ -104,6 +108,7 @@ set(SOURCES
     ${COMPILATION_SRC}
     ${NAME_RESOLVER_SRC}
     ${STATEMENT_CHECKER_SRC}
+    ${OVERRIDE_CHECKER_SRC}
     ${SOURCE_FILE_SRC}
     ${SCANNER_SRC}
     ${PARSER_SRC}
@@ -166,6 +171,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/name_resolver/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/use_resolver/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/statement_checker/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/override_checker/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"

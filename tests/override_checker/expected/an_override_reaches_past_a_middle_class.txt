@@ -1,0 +1,5 @@
+error: this overrides Top.describe, which gives back i32, and gives back f64
+  --> main.hd:11:9
+   |
+11 |     def describe : f64
+   |         ^^^^^^^^

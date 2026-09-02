@@ -1,0 +1,12 @@
+# different parameters are two real overloads and not an override, so the
+# return types have nothing to do with each other
+class Shape:
+    def draw : i32
+        @a : i32
+        return a
+
+class Square(Shape):
+    def draw : f64
+        @a : i32
+        @b : i32
+        return 2.5

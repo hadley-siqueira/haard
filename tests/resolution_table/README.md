@@ -37,6 +37,12 @@ node it went to.
 | `every_expression_has_a_type` | every literal, name, operator, comparison, logical operator and parenthesis is written down — the funnel in `type_of` means a kind cannot be forgotten |
 | `a_name_says_which_declaration_it_meant` | a local, a parameter, a field through `.`, a field through `->`, a method and a global each name their own declaration |
 | `a_call_says_which_overload_it_chose` | three `take`s, and the two calls pick different ones. The golden prints the **signature** of what was chosen, because three lines reading `-> take` would say nothing — and saying which one is the whole reason the answer is kept |
+| `an_override_is_not_an_overload` | record 0020: `Square.describe` overrides `Shape.describe`, `Shape.name(tag)` is still reachable, and `Square.name(tag, extra)` is a real overload told apart by arity. The golden names the **class** each method belongs to, because that is the only thing that distinguishes an override from what it overrides |
+| `a_base_member_is_reachable_by_a_bare_name` | inside a method of `Square`, `sides` is Shape's field and `describe()` is Shape's method, with no dot written |
+| `a_base_field_shadows_a_global` | a name found in a base ends the walk outward exactly as one found in the class itself does |
+| `two_methods_of_one_class_still_tie` | an override is about **two** classes; one class declaring the same method twice has overridden nothing and is still ambiguous |
+| `a_tie_across_the_boundary_is_still_ambiguous` | a base method and a derived one with **different** parameters are two overloads, and a tie between them is reported |
+| `an_override_may_change_the_return_type` | the return is out of what makes an override, so `Square.describe` **is** the override and the call resolves to it — and giving back something else is then a mistake about the return, reported by the `OverrideChecker`. Both halves in one golden |
 | `what_could_not_be_worked_out_is_nothing` | a name that resolves to nothing and an operator whose operands disagree write nothing, and the diagnostics are the same ones as before |
 
 ## The literal in a call is the interesting one

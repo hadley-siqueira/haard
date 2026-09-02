@@ -89,6 +89,11 @@ namespace haard {
             // offset before printing them
             void check_statements();
 
+            // and what every method overrides, which needs every module's
+            // declarations typed: a base may live in a module this walk
+            // reached later. Record 0020
+            void check_overrides();
+
             void report(Module* module, u32 import, const std::string& message);
 
         private:

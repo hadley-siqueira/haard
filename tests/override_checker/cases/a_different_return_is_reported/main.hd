@@ -1,0 +1,13 @@
+class Shape:
+    def describe : i32
+        return 0
+
+    def measure : i32
+        return 0
+
+class Square(Shape):
+    def describe : f64
+        return 2.5
+
+    def measure : i64
+        return 0

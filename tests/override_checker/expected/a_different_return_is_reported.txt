@@ -1,0 +1,10 @@
+error: this overrides Shape.describe, which gives back i32, and gives back f64
+ --> main.hd:9:9
+  |
+9 |     def describe : f64
+  |         ^^^^^^^^
+error: this overrides Shape.measure, which gives back i32, and gives back i64
+  --> main.hd:12:9
+   |
+12 |     def measure : i64
+   |         ^^^^^^^

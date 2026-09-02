@@ -1,0 +1,22 @@
+# covariance is between two pointers or between two references, never across
+# the two: a caller written against a Base& is not holding a pointer, and
+# nothing about deriving from Base changes that
+class Base:
+    tag : i32
+
+class Derived(Base):
+    extra : i32
+
+class Shape:
+    def one : Base&
+        return null
+
+    def two : Base*
+        return null
+
+class Square(Shape):
+    def one : Derived*
+        return null
+
+    def two : Derived&
+        return null

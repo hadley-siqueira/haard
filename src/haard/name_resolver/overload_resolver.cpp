@@ -25,7 +25,11 @@ Overload OverloadResolver::choose(u32 caller,
                                   const std::vector<Argument>& arguments) {
     Overload best;
     int lowest = -1;
-    u32 ties = 0;
+
+    // those tied at the lowest score, and not merely how many. An override
+    // has to be told from the method it overrides, and that needs the
+    // candidates themselves
+    std::vector<Candidacy> tied;
 
     best.status = OVERLOAD_NONE;
     best.module = 0;
@@ -41,21 +45,43 @@ Overload OverloadResolver::choose(u32 caller,
 
         if (lowest < 0 || points < lowest) {
             lowest = points;
-            ties = 1;
-            best.status = OVERLOAD_FOUND;
-            best.module = candidacy.module;
-            best.candidate = candidacy.candidate;
-            continue;
+            tied.clear();
         }
 
         if (points == lowest) {
-            ties++;
+            tied.push_back(candidacy);
         }
+    }
+
+    // a method the derived class wrote over one of its bases is not a second
+    // candidate: it is the same method written again, and the derived one is
+    // what a call means. Without this the most ordinary class in the language
+    // -- one that reimplements something -- cannot be called at all
+    bool again = true;
+
+    while (again) {
+        again = false;
+
+        for (u32 i = 0; i < tied.size() && !again; i++) {
+            for (u32 j = 0; j < tied.size(); j++) {
+                if (i != j && overrides(caller, tied[i], tied[j])) {
+                    tied.erase(tied.begin() + j);
+                    again = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (tied.size() > 0) {
+        best.status = OVERLOAD_FOUND;
+        best.module = tied[0].module;
+        best.candidate = tied[0].candidate;
     }
 
     // record 0012: two candidates a call finds equally good are an ambiguous
     // call, and it is reported here and not where the name was gathered
-    if (ties > 1) {
+    if (tied.size() > 1) {
         best.status = OVERLOAD_AMBIGUOUS;
 
         return best;
@@ -79,6 +105,78 @@ Overload OverloadResolver::choose(u32 caller,
     }
 
     return best;
+}
+
+bool OverloadResolver::overrides(u32 caller, const Candidacy& derived,
+                                 const Candidacy& base) {
+    u32 below = holder_of(derived);
+    u32 above = holder_of(base);
+
+    // both have to be methods, and of two different classes
+    if (below == INVALID_TYPE || above == INVALID_TYPE) {
+        return false;
+    }
+
+    // strictly below: the same class twice is two real overloads that happen
+    // to tie, which is record 0012's ambiguous call and not an override
+    if (distance(caller, below, above) <= 0) {
+        return false;
+    }
+
+    return parameters_of(caller, derived) == parameters_of(caller, base);
+}
+
+u32 OverloadResolver::holder_of(const Candidacy& who) {
+    Module* owner = compilation->get_module(who.module);
+    SymbolTable* table = owner->get_symbols();
+    Candidate* candidate = table->get_candidate(who.candidate);
+
+    if (candidate->kind != SYMBOL_FUNCTION) {
+        return INVALID_TYPE;
+    }
+
+    // the scope the function opened, then out one step to whatever holds it.
+    // A free function's parent is the module scope, which owns nothing
+    u32 inside = table->scope_owned_by(candidate->ast_node);
+
+    if (inside == 0) {
+        return INVALID_TYPE;
+    }
+
+    u32 around = table->get_scope(inside)->parent;
+    u32 holder = around == 0 ? 0 : table->get_scope(around)->owner;
+
+    if (holder == 0) {
+        return INVALID_TYPE;
+    }
+
+    u32 declaration = table->candidate_of(holder);
+
+    return declaration == 0 ? INVALID_TYPE
+                            : table->get_candidate(declaration)->type;
+}
+
+std::vector<u32> OverloadResolver::parameters_of(u32 caller,
+                                                 const Candidacy& who) {
+    Module* owner = compilation->get_module(who.module);
+    Candidate* candidate = owner->get_symbols()->get_candidate(who.candidate);
+    std::vector<u32> written;
+
+    if (candidate->type == INVALID_TYPE) {
+        return written;
+    }
+
+    written = owner->get_types()->get_arguments(candidate->type);
+
+    // the return is the last one and record 0012 keeps it out of what makes
+    // two overloads different, so it is out of what makes one an override too
+    written.pop_back();
+
+    for (u32& one : written) {
+        one = builder.translate(caller, who.module, one);
+    }
+
+    return written;
 }
 
 int OverloadResolver::score(u32 caller, const Candidacy& candidacy,

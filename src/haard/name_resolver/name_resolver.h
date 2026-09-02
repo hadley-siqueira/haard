@@ -71,6 +71,26 @@ namespace haard {
             // the candidates of one symbol, appended in declaration order
             void gather(std::vector<Candidacy>& found, u32 module, u32 symbol);
 
+            // and what the classes ABOVE this one declare of the same name.
+            //
+            // Hadley, 2026-09-02: a derived class sees what its bases declare,
+            // by a bare name and not only through a '.'. The scope chain
+            // cannot reach that on its own -- it is lexical, and a base is not
+            // lexically around anything -- so this is the one step it has to
+            // be told to take.
+            //
+            // Crossing into the base's module means interning the name there
+            // first, which is record 0013's rule for a lookup that crosses an
+            // import. Gives back whether something that is not a function was
+            // gathered, which shadows and stops the walk outward
+            bool gather_bases(std::vector<Candidacy>& found, u32 module,
+                              u32 declaration, u32 hash,
+                              const std::string& name);
+
+            // whether this node declares a type, which is the only kind of
+            // scope that has bases to look in
+            bool declares_a_type(u32 module, u32 node);
+
             // whether a symbol's candidates are all functions. A name that is
             // anything else shadows: Hadley, 2026-09-02, settling what record
             // 0012 left for the class boundary -- a non function stops the
