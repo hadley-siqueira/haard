@@ -76,6 +76,31 @@ all** — the golden shows `<none>` next to it.
 Both spellings are one rule (`and` and `&&`, `not` and `!`), which the parser
 keeps apart only so the printer can write back whichever was written.
 
+## The sweep case, and why it exists
+
+`every_expression_kind` writes **every construction the grammar has, once**,
+and its golden shows the type of each. It is not there to prove semantics —
+the other cases do that — it is there so that a kind nothing types shows up as
+a visible `<none>` instead of as silence.
+
+It exists because of 2026-09-02. Three blocking bugs were found that day by
+writing ordinary Haard and running it, **while every suite was green**: a
+derived class could not override a method, an inherited member was invisible to
+a bare name, and fourteen expression kinds typed to nothing. A golden proves
+what its case writes, and nobody had ever written an array subscript.
+
+Three `<none>` lines are left in it on purpose, and each is waiting on a
+decision rather than on work: a range (`0..10`) has no type because nothing has
+said whether it is one, and a string and a symbol wait on the prelude of record
+0017.
+
+## `[]` is dynamic and `{}` is fixed
+
+Record 0021. `[1, 2, 3]` is a growable `Array<i32>` and `{1, 2, 3}` is an
+`i32[3]` whose length is how many were written. The golden shows `[i32]` next
+to `i32[3]`, and the first is a placeholder: it is a `TYPE_LIST` because the
+prelude does not exist and there is no `Array` to name yet.
+
 ## What the goldens pin
 
 - **Every shape the grammar has**: pointer, `**` as two pointers, `***`,

@@ -92,6 +92,23 @@ void UseResolver::walk(u32 node, u32 scope) {
         walk(module->get_ast()->get_node(node)->get_children(), scope);
         return;
 
+    // The key of a brace literal is not a name in this scope, whichever of the
+    // two things that literal turns out to be. Hadley, 2026-09-03: with a type
+    // written it initialises that type's fields and the key is a **field
+    // name**, checked against the declaration; with none it builds an
+    // anonymous struct and the key **is** the field it declares. Neither is a
+    // variable being read, so neither is this walk's business -- and agenda
+    // 1.23 can settle the rest without changing this line.
+    //
+    // Only the key is skipped: the value is an ordinary expression and every
+    // name in it is a name in this scope
+    case AST_HASH_PAIR:
+        walk(module->get_ast()->get_node(
+                 module->get_ast()->get_node(node)->get_children())
+                 ->get_sibling(),
+             scope);
+        return;
+
     default:
         break;
     }

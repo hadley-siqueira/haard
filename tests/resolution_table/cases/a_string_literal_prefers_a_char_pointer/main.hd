@@ -1,0 +1,33 @@
+# Agenda 1.21. Record 0022 makes a string literal a 'char*' when nothing asks,
+# and agenda 1.21 puts 'char* -> String' on record 0018's list. Between them a
+# call with both overloads in view is not ambiguous: 'char*' is exact and
+# 'String' is one step away, so 'char* first' is what the list says rather
+# than an exception written into the ranking.
+#
+# The golden prints the signature that won, which is the whole point of the
+# case -- both would have resolved, and only one of them is right.
+
+class String:
+    data : char*
+    size : u64
+    capacity : u64
+
+def write : void
+    @s : char*
+    pass
+
+def write : void
+    @s : String
+    pass
+
+def only_string : void
+    @s : String
+    pass
+
+def main : i32
+    @text : char*
+    write("abc")
+    write(text)
+    only_string("abc")
+    only_string(text)
+    return 0

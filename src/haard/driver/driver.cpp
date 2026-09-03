@@ -9,6 +9,7 @@ Driver::Driver() {
     show_help = false;
     show_tokens = false;
     show_pretty_print = false;
+    emit_cpp = false;
 }
 
 int Driver::run(int argc, char* argv[]) {
@@ -48,6 +49,8 @@ bool Driver::read_arguments(int argc, char* argv[]) {
             show_help = true;
         } else if (argument == "--tokens") {
             show_tokens = true;
+        } else if (argument == "--emit-cpp") {
+            emit_cpp = true;
         } else if (argument == "--pretty-print") {
             show_pretty_print = true;
         } else if (argument == "--roots") {
@@ -77,6 +80,7 @@ void Driver::print_usage(std::ostream& out) {
         << "options:\n"
         << "  -h, --help          show this message\n"
         << "      --tokens        dump the token stream\n"
+        << "      --emit-cpp      write the program as C++, for a C++ compiler\n"
         << "      --pretty-print  print the source back from the ast\n"
         << "      --roots <file>  the roots table. Without it the imports of\n"
         << "                      the input file are not followed\n";
@@ -89,6 +93,13 @@ int Driver::compile() {
     if (roots.size() > 0 && !compilation.set_roots(roots)) {
         std::cerr << program << ": " << compilation.get_error() << '\n';
         return 2;
+    }
+
+    // the printer's subject is the file the parser read, so nothing after the
+    // parser is asked. Without this a file that prints back perfectly still
+    // exits 1, reporting names and types nobody asked about
+    if (show_pretty_print) {
+        compilation.stop_after_parsing();
     }
 
     bool ok = compilation.build(path);
@@ -110,6 +121,15 @@ int Driver::compile() {
 
     if (!ok) {
         return 1;
+    }
+
+    if (emit_cpp) {
+        emitter.set_compilation(&compilation);
+
+        if (!emitter.emit(std::cout)) {
+            std::cerr << program << ": " << emitter.get_error() << '\n';
+            return 1;
+        }
     }
 
     if (show_pretty_print) {

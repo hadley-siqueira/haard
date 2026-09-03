@@ -13,6 +13,7 @@ using namespace haard;
 
 Compilation::Compilation() {
     has_table = false;
+    parsing_only = false;
 }
 
 Compilation::~Compilation() {
@@ -55,6 +56,13 @@ bool Compilation::build(const std::filesystem::path& entry) {
     for (u32 i = 0; i < modules.size(); i++) {
         load(i);
 
+        // asked for the tree and nothing else, so the loop appends nothing
+        // and no phase runs. Resolving an import is already a question about
+        // a program
+        if (parsing_only) {
+            continue;
+        }
+
         // a module that did not parse has no tree to ask, and the phase gate
         // every reader of an Ast relies on says so. Its diagnostics are kept
         // and the other modules still load
@@ -64,12 +72,20 @@ bool Compilation::build(const std::filesystem::path& entry) {
         }
     }
 
+    if (parsing_only) {
+        return !has_errors();
+    }
+
     collect_types();
     resolve_uses();
     check_statements();
     check_overrides();
 
     return !has_errors();
+}
+
+void Compilation::stop_after_parsing() {
+    parsing_only = true;
 }
 
 u32 Compilation::get_module_count() {

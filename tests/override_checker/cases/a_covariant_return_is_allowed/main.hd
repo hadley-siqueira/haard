@@ -1,5 +1,9 @@
 # a pointer and a reference to something derived. Somebody holding a Shape*
-# and calling clone() gets back something that really is a Shape*
+# and calling by_pointer() gets back something that really is a Shape*.
+#
+# The bodies read fields and take no parameters on purpose: an override is a
+# method with the SAME parameters, so giving these one each would quietly stop
+# them being overrides and the case would pass saying nothing
 class Base:
     tag : i32
 
@@ -7,21 +11,27 @@ class Derived(Base):
     extra : i32
 
 class Shape:
+    base_pointer : Base*
+    base_reference : Base&
+
     def by_pointer : Base*
-        return null
+        return base_pointer
 
     def by_reference : Base&
-        return null
+        return base_reference
 
     def same : i32
         return 0
 
 class Square(Shape):
+    derived_pointer : Derived*
+    derived_reference : Derived&
+
     def by_pointer : Derived*
-        return null
+        return derived_pointer
 
     def by_reference : Derived&
-        return null
+        return derived_reference
 
     def same : i32
         return 1

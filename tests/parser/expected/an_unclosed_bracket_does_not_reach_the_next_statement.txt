@@ -1,0 +1,22 @@
+error: expected ')', found 'after'
+ --> cases/an_unclosed_bracket_does_not_reach_the_next_statement.hd:9:5
+  |
+9 |     after = 3
+  |     ^^^^^
+def main : void
+    after = 3
+    +4
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'void'
+    block
+      assignment '='
+        identifier 'after'
+        integer '3'
+      unary_plus '+'
+        integer '4'
+--- round trip: ok

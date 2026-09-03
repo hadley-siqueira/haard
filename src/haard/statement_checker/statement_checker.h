@@ -64,6 +64,16 @@ namespace haard {
             void walk(u32 node, u32 scope, u32 result);
 
             void check_return(u32 node, u32 scope, u32 result);
+
+            // an expression written on a line of its own, for what it does
+            // and not for what it is: a call whose answer is thrown away.
+            // Nothing typed those until 2026-09-02, and they are most of the
+            // calls a real program makes -- 'println(x)', 'list.add(x)'.
+            //
+            // Being a statement is the whole of what makes one reachable from
+            // here, so this is the one check that reads the block and not the
+            // node
+            void check_expression(u32 node, u32 scope);
             void check_condition(u32 node, u32 scope);
             void check_assignment(u32 node, u32 scope);
 
@@ -82,6 +92,7 @@ namespace haard {
         private:
             Compilation* compilation;
             ExpressionTyper typer;
+            Coercion coercion;
 
             Module* module;
             u32 index;

@@ -2,6 +2,7 @@
 #define HAARD_DRIVER_H
 
 #include <haard/compilation/compilation.h>
+#include <haard/emitter/emitter.h>
 #include <haard/pretty_printer/pretty_printer.h>
 #include <string>
 
@@ -27,6 +28,7 @@ namespace haard {
         private:
             Compilation compilation;
             PrettyPrinter pretty_printer;
+            Emitter emitter;
 
             std::string path;
             std::string roots;
@@ -34,6 +36,7 @@ namespace haard {
             bool show_help;
             bool show_tokens;
             bool show_pretty_print;
+            bool emit_cpp;
     };
 }
 

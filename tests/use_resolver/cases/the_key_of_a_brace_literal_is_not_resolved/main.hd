@@ -1,0 +1,14 @@
+# The key of a brace literal is not a name in this scope, whichever of the two
+# things agenda 1.23 decides that literal is: with a type written it names a
+# field of that type, and with none it declares a field of an anonymous struct.
+# Neither is a variable being read, so 'name' and 'age' are not reported.
+#
+# The **value** is an ordinary expression and every name in it is a name in
+# this scope, which is what 'missing' is here for -- skipping the whole pair
+# instead of the key alone is the silent bug this case exists to catch.
+def main : i32
+    let here = 1
+    let plain = {name: 'Hadley', age: 23}
+    let read = {name: here, age: here}
+    let broken = {name: missing, age: 23}
+    return 0

@@ -8,9 +8,13 @@ class Derived(Base):
     extra : i32
 
 class Shape:
+    held : Base
+
     def make : Base
-        return null
+        return held
 
 class Square(Shape):
+    mine : Derived
+
     def make : Derived
-        return null
+        return mine

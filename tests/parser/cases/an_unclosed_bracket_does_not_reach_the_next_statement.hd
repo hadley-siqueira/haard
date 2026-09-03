@@ -1,0 +1,10 @@
+# a statement that failed with a bracket still open never reads the token that
+# would have closed it, so the count is never brought back down. The statement
+# after it is read with the line rule in force anyway, which is what says the
+# suspension belongs to a statement and not to the file: the golden keeps
+# 'after = 3' and '+4' as TWO statements, and with the line rule still
+# suspended they would have been the one expression '3 + 4'
+def main : void
+    broken = f(1, 2
+    after = 3
+    + 4

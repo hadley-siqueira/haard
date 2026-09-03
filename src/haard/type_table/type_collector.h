@@ -69,6 +69,7 @@ namespace haard {
             Compilation* compilation;
             TypeBuilder builder;
             ExpressionTyper typer;
+            Coercion coercion;
 
             Module* module;
             u32 index;

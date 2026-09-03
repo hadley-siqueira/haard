@@ -1,0 +1,30 @@
+def main : void
+    called = f(|x| {
+        a = 1
+        +2
+    }, 3)
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'void'
+    block
+      assignment '='
+        identifier 'called'
+        call '('
+          identifier 'f'
+          arguments '('
+            closure '|'
+              closure_parameter
+                binding_name
+                  identifier 'x'
+              block
+                assignment '='
+                  identifier 'a'
+                  integer '1'
+                unary_plus '+'
+                  integer '2'
+            integer '3'
+--- round trip: ok

@@ -1,0 +1,32 @@
+# Record 0026: 'new T(...)' runs T's own 'init', so the arguments are a call
+# and are checked like one. Nothing checked them at all until 2026-09-03 --
+# every line below passed in silence.
+#
+# T's OWN 'init' and not a base's: a base's runs on its own, before this one,
+# so what is written here answers to this class alone.
+class Plain:
+    n : i32
+
+class Counter:
+    n : i32
+
+    def init : void
+        @start : i32
+        n = start
+
+class Derived(Counter):
+    extra : i32
+
+def main : i32
+    let good = new Counter(1)
+    let by_a_literal = new Counter(200)
+
+    let wrong_type = new Counter(2.5)
+    let too_many = new Counter(1, 2)
+    let none_at_all = new Counter
+    let not_a_class = new Plain(1)
+
+    # Derived declares no 'init' of its own, so it takes none here even though
+    # the class above it does
+    let from_the_base = new Derived(1)
+    return 0

@@ -1,0 +1,15 @@
+# a class deriving from one in ANOTHER module, and overriding its method. The
+# emitter has to write Shape before Box whatever order the modules were found
+# in, and the override has to carry the base's name in the C++ or the call
+# through a Shape* below reaches the wrong body
+import geometry.shape
+
+class Box(Shape):
+    width : i32 = 2
+    height : i32 = 5
+
+    def area : i32
+        return width * height * sides
+
+def make : Box*
+    return new Box

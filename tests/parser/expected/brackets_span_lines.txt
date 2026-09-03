@@ -1,0 +1,52 @@
+def main : void
+    a = {name: 'Hadley', age: 23}
+    my_list = [{name: 'Hadley', age: 23}]
+    grouped = (a + b)
+    called = f(1, 2)
+    picked = my_list[0]
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'void'
+    block
+      assignment '='
+        identifier 'a'
+        hash '{'
+          hash_pair ':'
+            identifier 'name'
+            string ''Hadley''
+          hash_pair ':'
+            identifier 'age'
+            integer '23'
+      assignment '='
+        identifier 'my_list'
+        list '['
+          hash '{'
+            hash_pair ':'
+              identifier 'name'
+              string ''Hadley''
+            hash_pair ':'
+              identifier 'age'
+              integer '23'
+      assignment '='
+        identifier 'grouped'
+        parenthesis '('
+          plus '+'
+            identifier 'a'
+            identifier 'b'
+      assignment '='
+        identifier 'called'
+        call '('
+          identifier 'f'
+          arguments '('
+            integer '1'
+            integer '2'
+      assignment '='
+        identifier 'picked'
+        index '['
+          identifier 'my_list'
+          integer '0'
+--- round trip: ok

@@ -1,0 +1,7 @@
+# a name nothing declares, so a compilation that resolves uses reports it and
+# one that stops at the parser does not
+import lib.helper
+
+def main : i32
+    let n = nowhere
+    return n

@@ -121,6 +121,14 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // a case that writes this file asks for what '--pretty-print' asks for:
+    // scan, parse, and run nothing after. The golden then shows one module and
+    // no diagnostics, because following an import and resolving a name are
+    // both questions about a program and neither is being asked
+    if (std::filesystem::exists(directory / "stop-after-parsing")) {
+        compilation.stop_after_parsing();
+    }
+
     std::ifstream entry_file(directory / "entry");
     std::string entry;
 

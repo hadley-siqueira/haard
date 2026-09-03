@@ -37,6 +37,7 @@ void ExpressionTyper::set_compilation(Compilation* compilation) {
 
     resolver.set_compilation(compilation);
     overloads.set_compilation(compilation);
+    builder.set_compilation(compilation);
 }
 
 void ExpressionTyper::set_module(u32 index) {
@@ -123,15 +124,391 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_THIS:
         return this_type(scope);
 
-    // a string has no type until the prelude declares one, and a method call
-    // needs the member lookup to give back candidates instead of a type.
-    // Neither is an error here: this phase says nothing rather than guessing,
-    // and the golden shows the nothing
+    case AST_INDEX:
+        return subscript(scope, node);
+
+    case AST_ADDRESS_OF:
+        return address_of(scope, node);
+
+    case AST_DEREFERENCE:
+        return dereference(scope, node);
+
+    // a unary operator gives back what it was applied to, and hands the
+    // context down on the way in -- so the '1' of '-1' in an i64 place is an
+    // i64 literal and never a converted i32
+    case AST_UNARY_MINUS:
+    case AST_UNARY_PLUS:
+    case AST_BITWISE_NOT:
+    case AST_PRE_INCREMENT:
+    case AST_PRE_DECREMENT:
+    case AST_POST_INCREMENT:
+    case AST_POST_DECREMENT:
+        return type_of(index, scope, first_child(node), expected);
+
+    case AST_CAST:
+        return cast(scope, node);
+
+    case AST_NEW:
+        return allocation(scope, node);
+
+    // a size is a size whatever was measured, and the operand is typed for
+    // the sake of what the recording keeps rather than for an answer
+    case AST_SIZEOF:
+        type_of(index, scope, first_child(node), INVALID_TYPE);
+
+        return module->get_types()->builtin(BUILTIN_U64);
+
+    // Nothing typed a 'delete' until 2026-09-03 -- 'delete 5' passed in
+    // silence -- and the emitter found it by refusing to name an operand the
+    // type phase had never looked at. It gives back void: it is written for
+    // what it does, like a call whose answer is thrown away
+    case AST_DELETE:
+    case AST_DELETE_ARRAY: {
+        u32 operand = type_of(index, scope, first_child(node), INVALID_TYPE);
+
+        if (operand != INVALID_TYPE
+            && module->get_types()->get_type(operand)->kind != TYPE_POINTER) {
+            report(node, "only a pointer can be deleted, and this is "
+                   + name_of(operand));
+        }
+
+        return module->get_types()->builtin(BUILTIN_VOID);
+    }
+
+    case AST_NULL_LITERAL:
+        return null_literal(node, expected);
+
+    // Record 0022: a string literal is a 'char*' first. 'char' is a builtin
+    // and a pointer to one needs nothing from the standard library, which is
+    // why this types before any of the standard library exists.
+    //
+    // Hadley, 2026-09-02: try char* first, and become a String when that is
+    // not possible. The second half waits on a String to become -- and it is
+    // record 0018's first rule again, so loosening it later is additive
+    case AST_STRING_LITERAL:
+        return module->get_types()->pointer(
+            module->get_types()->builtin(BUILTIN_CHAR));
+
+    case AST_LIST:
+        return sequence(scope, node, expected, false);
+
+    case AST_ARRAY:
+        return sequence(scope, node, expected, true);
+
+    case AST_TUPLE:
+        return tuple(scope, node, expected);
+
+    // A template string is a String and a symbol is nobody has said what,
+    // and a range has no type at all -- nothing has decided whether it is one
+    // or only a thing a 'for ... in' reads. All three say nothing rather than
+    // guess, and the golden of
+    // tests/type_table/cases/every_expression_kind shows the nothing so that
+    // it is a line somebody can see rather than a silence
     default:
         break;
     }
 
     return INVALID_TYPE;
+}
+
+u32 ExpressionTyper::element_of(u32 type) {
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(type);
+
+    switch ((TypeKind) entry->kind) {
+    case TYPE_ARRAY:
+    case TYPE_LIST:
+    case TYPE_POINTER:
+        return types->get_argument(entry->first_argument);
+
+    // a hash is read by its key and gives back its value, so the thing it
+    // holds -- for the purpose of a subscript -- is the second of the two
+    case TYPE_HASH:
+        return types->get_argument(entry->first_argument + 1);
+
+    default:
+        break;
+    }
+
+    return INVALID_TYPE;
+}
+
+u32 ExpressionTyper::subscript(u32 scope, u32 node) {
+    u32 left = type_of(index, scope, first_child(node), INVALID_TYPE);
+
+    if (left == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(left);
+    u32 element = element_of(left);
+
+    if (element == INVALID_TYPE) {
+        report(node, name_of(left) + " cannot be indexed");
+
+        return INVALID_TYPE;
+    }
+
+    // a hash is the one that says what its subscript has to be. For everything
+    // else the subscript is a position, and nothing yet says it must be an
+    // integer
+    type_of(index, scope, second_child(node),
+            entry->kind == TYPE_HASH
+                ? types->get_argument(entry->first_argument)
+                : INVALID_TYPE);
+
+    return element;
+}
+
+u32 ExpressionTyper::address_of(u32 scope, u32 node) {
+    u32 inner = type_of(index, scope, first_child(node), INVALID_TYPE);
+
+    return inner == INVALID_TYPE ? INVALID_TYPE
+                                 : module->get_types()->pointer(inner);
+}
+
+u32 ExpressionTyper::dereference(u32 scope, u32 node) {
+    u32 inner = type_of(index, scope, first_child(node), INVALID_TYPE);
+
+    if (inner == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(inner);
+
+    if (entry->kind != TYPE_POINTER) {
+        report(node, "'*' needs a pointer, and this is " + name_of(inner));
+
+        return INVALID_TYPE;
+    }
+
+    return types->get_argument(entry->first_argument);
+}
+
+u32 ExpressionTyper::cast(u32 scope, u32 node) {
+    // typed for the recording's sake and not for the answer: what a cast is,
+    // is what it was written as
+    type_of(index, scope, first_child(node), INVALID_TYPE);
+
+    return builder.build(index, scope, second_child(node));
+}
+
+u32 ExpressionTyper::allocation(u32 scope, u32 node) {
+    u32 made = builder.build(index, scope, first_child(node));
+    u32 list = second_child(node);
+
+    // record 0026: 'new T(...)' runs T's 'init', so the arguments are a call
+    // like any other and are checked like one. Nothing checked them at all
+    // until 2026-09-03 -- 'new Counter(2.5)' against an 'init' taking an i32
+    // passed in silence, and so did arguments to a class with no 'init'
+    initialisation(scope, node, made, list);
+
+    // record 0016's poison rule: a type that would not build is not a pointer
+    // to nothing, it is nothing
+    return made == INVALID_TYPE ? INVALID_TYPE
+                                : module->get_types()->pointer(made);
+}
+
+// The 'init' of one class, and only its own: a base's runs on its own before
+// this one, the way C++ and every language with a constructor chain does it,
+// so the arguments written here answer to this class alone
+std::vector<Candidacy> ExpressionTyper::constructors_of(u32 type, u32& owner) {
+    std::vector<Candidacy> found;
+    u32 declaration = class_of(type, owner);
+
+    if (declaration == 0) {
+        return found;
+    }
+
+    Module* holder = compilation->get_module(owner);
+    SymbolTable* table = holder->get_symbols();
+    std::string wanted = "init";
+    u32 interned = holder->get_strings()->find(hash_name(wanted), wanted);
+    u32 body = table->scope_owned_by(
+        table->get_candidate(declaration)->ast_node);
+    u32 symbol = interned == INVALID_STRING || body == 0
+                     ? 0
+                     : table->find(body, interned);
+
+    for (u32 candidate = symbol == 0 ? 0
+                                     : table->get_symbol(symbol)->candidates;
+         candidate != 0;
+         candidate = table->get_candidate(candidate)->next_candidate) {
+        if (table->get_candidate(candidate)->kind == SYMBOL_FUNCTION) {
+            found.push_back(Candidacy{owner, candidate});
+        }
+    }
+
+    return found;
+}
+
+void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made, u32 list) {
+    std::vector<Argument> arguments;
+    u32 owner = index;
+    std::vector<Candidacy> candidates;
+    u32 count = 0;
+
+    for (u32 child = list == 0 ? 0 : first_child(list); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        Argument argument;
+        AstNodeKind kind = kind_of(child);
+
+        // carried untyped for the same reason a call's arguments are: record
+        // 0018 has the literal take the parameter's type rather than its own
+        argument.literal = kind == AST_INTEGER_LITERAL
+                        || kind == AST_FLOAT_LITERAL;
+        argument.node = child;
+        argument.type = argument.literal
+                            ? INVALID_TYPE
+                            : type_of(index, scope, child, INVALID_TYPE);
+
+        arguments.push_back(argument);
+        count++;
+    }
+
+    if (made == INVALID_TYPE) {
+        return;
+    }
+
+    candidates = constructors_of(made, owner);
+
+    // a class that declares no 'init' is an aggregate and takes nothing.
+    // Saying so is the difference between naming the mistake and letting the
+    // arguments evaporate
+    if (candidates.size() == 0) {
+        if (count > 0) {
+            report(node, name_of(made) + " declares no 'init', so it takes no "
+                   "arguments here");
+        }
+
+        return;
+    }
+
+    Overload chosen = overloads.choose(index, candidates, arguments);
+
+    if (chosen.status == OVERLOAD_AMBIGUOUS) {
+        report(node, "this matches more than one 'init' of " + name_of(made)
+               + " equally well");
+
+        return;
+    }
+
+    if (chosen.status == OVERLOAD_NONE) {
+        report(node, "no 'init' of " + name_of(made) + " takes these "
+               "arguments");
+
+        return;
+    }
+
+    // record 0019: which 'init' this construction meant, written on the node
+    // that spelled the type. The emitter needs it, and nothing could work it
+    // out again -- it was the arguments that chose
+    module->get_resolutions()->set_declaration(node, chosen.module,
+                                               chosen.candidate);
+
+    for (u32 i = 0; i < arguments.size() && i < chosen.parameters.size();
+         i++) {
+        if (arguments[i].literal) {
+            module->get_resolutions()->set_type(arguments[i].node,
+                                                chosen.parameters[i]);
+        }
+    }
+}
+
+u32 ExpressionTyper::null_literal(u32 node, u32 expected) {
+    if (expected != INVALID_TYPE
+        && module->get_types()->get_type(expected)->kind == TYPE_POINTER) {
+        return expected;
+    }
+
+    report(node, expected == INVALID_TYPE
+                     ? "there is nothing here to say what 'null' is a pointer to"
+                     : "expected " + name_of(expected) + ", found 'null'");
+
+    return INVALID_TYPE;
+}
+
+u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
+    TypeTable* types = module->get_types();
+    u32 wanted = INVALID_TYPE;
+    u32 count = 0;
+
+    // the context decides what it holds when it says so, and otherwise the
+    // first element does and every one after has to be it -- record 0018 has
+    // nothing that would make two different types one
+    if (expected != INVALID_TYPE) {
+        Type* entry = types->get_type(expected);
+
+        if ((array && entry->kind == TYPE_ARRAY)
+            || (!array && entry->kind == TYPE_LIST)) {
+            wanted = types->get_argument(entry->first_argument);
+        }
+    }
+
+    for (u32 child = first_child(node); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        u32 one = type_of(index, scope, child, wanted);
+
+        count++;
+
+        if (one == INVALID_TYPE) {
+            return INVALID_TYPE;
+        }
+
+        if (wanted == INVALID_TYPE) {
+            wanted = one;
+            continue;
+        }
+
+        if (one != wanted) {
+            report(child, "expected " + name_of(wanted) + ", found "
+                              + name_of(one));
+
+            return INVALID_TYPE;
+        }
+    }
+
+    // written empty with nothing asking for it, there is no answer to give
+    if (wanted == INVALID_TYPE) {
+        report(node, "there is nothing here to say what this is empty of");
+
+        return INVALID_TYPE;
+    }
+
+    // an array literal's length is written by how many were written, which is
+    // what record 0016 keeps in the type itself
+    return array ? types->array(wanted, count) : types->list(wanted);
+}
+
+u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {
+    TypeTable* types = module->get_types();
+    std::vector<u32> wanted;
+    std::vector<u32> elements;
+    u32 at = 0;
+
+    // a tuple of the same arity hands each of its own down, one per element,
+    // which is what makes 'let p : (u8, f64) = (200, 1.5)' two literals that
+    // took a type rather than two that were converted
+    if (expected != INVALID_TYPE
+        && types->get_type(expected)->kind == TYPE_TUPLE) {
+        wanted = types->get_arguments(expected);
+    }
+
+    for (u32 child = first_child(node); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling(), at++) {
+        u32 one = type_of(index, scope, child,
+                          at < wanted.size() ? wanted[at] : INVALID_TYPE);
+
+        if (one == INVALID_TYPE) {
+            return INVALID_TYPE;
+        }
+
+        elements.push_back(one);
+    }
+
+    return elements.size() == 0 ? INVALID_TYPE : types->tuple(elements);
 }
 
 u32 ExpressionTyper::literal(u32 node, u32 expected, BuiltinType fallback) {

@@ -1,0 +1,50 @@
+# Hadley, 2026-09-03. Record 0018 gives a literal the type it has when nothing
+# asks -- an i32, an f64 -- and being asked to be that costs nothing while
+# being asked to be anything else costs a step. It is the same integer rule 5
+# already ranks by, over the default instead of over an inheritance chain.
+#
+# It is a tie break and never a filter, which is what the three shapes here
+# are for: the default among the candidates wins, the default absent from them
+# decides nothing, and two candidates equally far from it still tie.
+
+def take : void
+    @a : u8
+    pass
+
+def take : void
+    @a : i32
+    pass
+
+# neither of these is what a literal is when nothing asks
+def hold : void
+    @a : u8
+    pass
+
+def hold : void
+    @a : i64
+    pass
+
+def reach : void
+    @a : u16
+    pass
+
+def reach : void
+    @a : i64
+    pass
+
+def main : i32
+    # '3' fits both, and the i32 is the default: an ambiguous call until
+    # 2026-09-03 and now the i32
+    take(3)
+
+    # '300' fits only one of them, and the ranking never got to speak
+    take(300)
+
+    # the default is neither candidate, so it filters nothing out: '300' does
+    # not fit a u8 and the i64 takes it, one step from the default
+    hold(300)
+
+    # and two candidates one step away are still tied, which is record 0012's
+    # ambiguous call. The tie break only breaks a tie the default is in
+    reach(3)
+    return 0

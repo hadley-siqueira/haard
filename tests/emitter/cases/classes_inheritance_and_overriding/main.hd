@@ -1,0 +1,65 @@
+# The answer is 145, and every part of it is a thing the emitter has to get
+# right rather than a sum.
+#
+# 'sq.describe()' is Square's, 'scaled' is Shape's and reaches Square's
+# 'describe' through a **bare name** inside an inherited method (record 0020),
+# and 'total(&sq)' reaches it through a **base pointer**. All three only work
+# if the override carries the base's name in the C++, which is why a method is
+# named by its own name and its parameters and not by its candidate.
+#
+# 'pick' is overloaded and the two calls pick different ones, which C++ must
+# not be allowed to decide for itself -- its rules are not record 0018's.
+class Shape:
+    sides : i32
+
+    def describe : i32
+        return sides
+
+    def scaled : i32
+        @factor : i32
+        return describe() * factor
+
+class Square(Shape):
+    length : i32
+
+    def describe : i32
+        return sides * length
+
+def total : i32
+    @s : Shape*
+    return s->describe()
+
+# record 0018's third coercion: '.' reads a member of a value and of a pointer
+# alike, and C++ does not. Which of '.' and '->' is written is a question about
+# the left side's type and never about what the source spelled
+def through_a_dot : i32
+    @s : Shape*
+    return s.describe() + s.sides
+
+def pick : i32
+    @a : i32
+    return a
+
+def pick : i32
+    @a : i32
+    @b : i32
+    return a + b
+
+def main : i32
+    let sq : Square
+    let sum = 0
+    let i = 0
+
+    sq.sides = 4
+    sq.length = 5
+
+    while i < 3:
+        sum = sum + sq.describe()
+        i = i + 1
+
+    if sum > 50:
+        sum = sum + pick(1)
+    else:
+        sum = sum + pick(1, 2)
+
+    return sum + sq.scaled(2) + total(&sq) + through_a_dot(&sq)

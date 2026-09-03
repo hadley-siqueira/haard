@@ -40,6 +40,7 @@ void StatementChecker::set_compilation(Compilation* compilation) {
     this->compilation = compilation;
 
     typer.set_compilation(compilation);
+    coercion.set_compilation(compilation);
 }
 
 void StatementChecker::check(u32 index) {
@@ -111,12 +112,39 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         check_condition(first_child(node), scope);
         break;
 
+    // and the last part, which was typed by **nothing** until 2026-09-03 --
+    // 'for i = 0; i < 3; takes_int(2.5):' passed in silence. It is written for
+    // what it does and not for what it is, exactly like an expression on a
+    // line of its own, and the reason it was missed is that it is not one: a
+    // block holds statements and this hangs off the loop's head.
+    //
+    // The head needs nothing here. An assignment there declares, and a
+    // declaration's initialiser belongs to the TypeCollector's second pass --
+    // typing it again would report it twice
+    case AST_FOR_INCREMENT:
+        for (u32 child = first_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            check_expression(child, scope);
+        }
+
+        break;
+
     default:
         if (is_assignment(kind)) {
             check_assignment(node, scope);
         }
 
         break;
+    }
+
+    // the children of a block are statements, and an expression written as one
+    // is typed for what it does. An assignment is one too and was checked
+    // above, so it is the one shape skipped here
+    if (kind == AST_BLOCK) {
+        for (u32 child = first_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            check_expression(child, scope);
+        }
     }
 
     // and then into everything, including what was just checked: the walk is
@@ -161,12 +189,28 @@ void StatementChecker::check_return(u32 node, u32 scope, u32 result) {
     // comes back INVALID_TYPE was reported by the typer on the way
     u32 given = typer.type_of(index, scope, expression, result);
 
-    if (given == INVALID_TYPE || given == result) {
+    // and what comes back a real type is asked against record 0018's list and
+    // not against equality: 'return d' from a function giving back a 'Base&'
+    // is the upcast that record already allows, and it failed here until
+    // 2026-09-03 because only a call knew the list
+    if (given == INVALID_TYPE || coercion.fits(index, given, result)) {
         return;
     }
 
     report(expression, "expected " + typer.name_of(result) + ", found " +
            typer.name_of(given));
+}
+
+void StatementChecker::check_expression(u32 node, u32 scope) {
+    // No filtering, and none is needed: the typer has no case for a statement
+    // kind, so asking about an 'if' or a 'let' gives back nothing in silence
+    // and descends into nothing. An assignment is the one shape that was
+    // already checked above, and asking about it again is the same nothing --
+    // the typer has no case for one either.
+    //
+    // Asked for nothing in particular, because what it gives back is thrown
+    // away. The point is that everything inside it is looked at
+    typer.type_of(index, scope, node, INVALID_TYPE);
 }
 
 void StatementChecker::check_condition(u32 node, u32 scope) {
@@ -200,7 +244,7 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
 
     u32 right = typer.type_of(index, scope, value, left);
 
-    if (right == INVALID_TYPE || right == left) {
+    if (right == INVALID_TYPE || coercion.fits(index, right, left)) {
         return;
     }
 

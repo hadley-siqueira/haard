@@ -1,0 +1,7 @@
+# A hash literal has no meaning yet (agenda 1.23) and the emitter says so
+# instead of writing C++ that means something else. The refusal is the golden:
+# every kind the emitter does not claim has to reach the reader as a sentence
+# and never as output that compiles and does the wrong thing.
+def main : i32
+    let h = {name: 'Hadley'}
+    return 0

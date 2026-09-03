@@ -1,0 +1,21 @@
+# a call whose answer is thrown away is most of the calls a real program makes,
+# and until 2026-09-02 nothing typed one at all: the checker only ever looked
+# at a return, a condition and the two sides of an assignment
+class Box:
+    value : i32
+
+    def method : i32
+        return value
+
+def takes_int : void
+    @a : i32
+    return
+
+def main : i32
+    @b : Box
+    takes_int(1)
+    b.method()
+    takes_int(2.5)
+    takes_int(1, 2)
+    b.missing()
+    return 0

@@ -1,0 +1,12 @@
+# the brackets around the closure join their lines and the block inside it does
+# not: a block holds statements and a statement is found by its line. The two
+# lines to read in the tree are 'a = 1' and '+2', which are two statements --
+# with the line rule still suspended in here they would be the one sum 'a = 1 + 2'
+def main : void
+    called = f(
+        |x| {
+            a = 1
+            + 2
+        },
+        3
+    )

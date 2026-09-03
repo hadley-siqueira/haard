@@ -166,7 +166,8 @@ namespace haard {
             void advance();
 
             // a statement lives on one line, so everything after the word that
-            // opens it has to be found before the line ends
+            // opens it has to be found before the line ends -- unless a
+            // bracket is open, which is what 'open_brackets' counts
             bool on_same_line();
             bool lookahead_on_same_line(TokenKind kind);
             bool match_on_same_line(TokenKind kind);
@@ -213,6 +214,14 @@ namespace haard {
             u32 matched;
             u32 statement_first_token;
             bool panic;
+
+            // how many brackets are open around the token being read. While it
+            // is not zero the line rule is suspended, so one expression may be
+            // spread over as many lines as it likes. Zeroed by every statement
+            // and saved across a braced block, which is what makes a count
+            // kept by hand safe: a statement that failed with a bracket still
+            // open never balances it, and never has to
+            u32 open_brackets;
 
             // starts holding a 0, so asking for the top is always answerable.
             // The old compiler's started empty and reading it was undefined

@@ -1,0 +1,14 @@
+<unnamed>:
+    73    write         <none>              -> write  char* -> void
+    75    "abc"         char*
+    76    (             void
+    77    write         <none>              -> write  char* -> void
+    79    text          char*               -> text
+    80    (             void
+    81    only_string   <none>              -> only_string  String -> void
+    83    "abc"         char*
+    84    (             void
+    85    only_string   <none>              -> only_string  String -> void
+    87    text          char*               -> text
+    88    (             void
+    89    0             i32

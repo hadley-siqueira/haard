@@ -1,0 +1,5 @@
+modules:
+    0 app.main  app/main.hd
+        imports lib.helper
+        declares main
+--- parsed alone: every module matches

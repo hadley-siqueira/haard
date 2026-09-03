@@ -1,0 +1,17 @@
+<unnamed>:
+    80    take          <none>              -> take  i32 -> void
+    82    3             i32
+    83    (             void
+    84    take          <none>              -> take  i32 -> void
+    86    300           i32
+    87    (             void
+    88    hold          <none>              -> hold  i64 -> void
+    90    300           i64
+    91    (             void
+    96    0             i32
+diagnostics:
+error: this call matches more than one 'reach' equally well
+  --> main.hd:49:5
+   |
+49 |     reach(3)
+   |     ^^^^^

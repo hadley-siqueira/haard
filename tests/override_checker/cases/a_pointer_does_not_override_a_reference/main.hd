@@ -8,15 +8,21 @@ class Derived(Base):
     extra : i32
 
 class Shape:
+    base_pointer : Base*
+    base_reference : Base&
+
     def one : Base&
-        return null
+        return base_reference
 
     def two : Base*
-        return null
+        return base_pointer
 
 class Square(Shape):
+    derived_pointer : Derived*
+    derived_reference : Derived&
+
     def one : Derived*
-        return null
+        return derived_pointer
 
     def two : Derived&
-        return null
+        return derived_reference

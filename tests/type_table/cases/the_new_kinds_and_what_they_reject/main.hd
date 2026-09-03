@@ -1,0 +1,27 @@
+# what the context gives, and what it refuses. Record 0018 all the way down:
+# a literal takes the type asked of it, and nothing converts
+def main : i32
+    @row : i32[4]
+    let n = 1
+
+    # the context reaches through a unary operator and into a container
+    let wide : i64 = -1
+    let pair : (u8, f64) = (200, 1.5)
+    let bytes : u8[2] = {1, 2}
+    let floats : [f64] = [1.5, 2.5]
+
+    # and refuses these
+    let mixed = [1, 2.5]
+    let two_names = [n, floats]
+    let empty = []
+    let loose = null
+    let wrong : i32 = null
+    let deref_array = *row
+    let index_a_number = n[0]
+
+    # a 'delete' was typed by nothing at all until 2026-09-03, so this passed
+    # in silence. The one below it is the shape that has to keep working
+    delete n
+    let p = new i32
+    delete p
+    return 0

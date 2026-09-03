@@ -61,6 +61,50 @@ namespace haard {
             // the name a named or generic type points at
             std::string declaration_name(u32 module, u32 candidate);
 
+            // 'a[i]'. The element of an array, of a list, of a pointer, and
+            // the VALUE of a hash -- whose subscript is asked to be its key
+            u32 subscript(u32 scope, u32 node);
+
+            // '&x' adds a pointer and '*p' takes one away
+            u32 address_of(u32 scope, u32 node);
+            u32 dereference(u32 scope, u32 node);
+
+            // 'x as T' is whatever it was written as. Nothing checks that the
+            // conversion makes sense: record 0018 has no implicit conversion
+            // and says nothing about the explicit one, which is its own
+            // question and not this phase's
+            u32 cast(u32 scope, u32 node);
+
+            // 'new T' and 'new T(a, b)' give back a T*. The arguments are
+            // typed and nothing yet connects them to an 'init'
+            u32 allocation(u32 scope, u32 node);
+
+            // 'null' has no type of its own and takes the pointer its context
+            // asks for -- record 0018's first rule, applied to the one other
+            // thing in the language that is written without a type. With
+            // nothing expected there is no answer to give, and that is said
+            u32 null_literal(u32 node, u32 expected);
+
+            // the 'init' candidates of one class, its own and not a base's:
+            // record 0026 runs a base's before the derived's, so what is
+            // written at a construction answers to that class alone
+            std::vector<Candidacy> constructors_of(u32 type, u32& owner);
+
+            // the arguments of a 'new T(...)' against those candidates, which
+            // is a call in every way that matters
+            void initialisation(u32 scope, u32 node, u32 made, u32 list);
+
+            // '[a, b]', '{a, b}' and '(a, b)'. The first two hold one type,
+            // which the context gives or the first element decides, and every
+            // element after has to be it -- record 0018 has nothing that would
+            // make two of them one. A tuple holds each element's own type
+            u32 sequence(u32 scope, u32 node, u32 expected, bool array);
+            u32 tuple(u32 scope, u32 node, u32 expected);
+
+            // the element a container type holds, and INVALID_TYPE for a type
+            // that holds none
+            u32 element_of(u32 type);
+
             u32 literal(u32 node, u32 expected, BuiltinType fallback);
             u32 identifier(u32 scope, u32 node);
             u32 binary(u32 scope, u32 node, u32 expected, bool comparison);
@@ -139,6 +183,7 @@ namespace haard {
             Compilation* compilation;
             NameResolver resolver;
             OverloadResolver overloads;
+            TypeBuilder builder;
 
             Module* module;
             u32 index;

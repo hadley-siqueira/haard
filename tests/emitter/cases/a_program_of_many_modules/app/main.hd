@@ -1,0 +1,28 @@
+# A program of four modules, one C++ file. The answer is 79: Box.area is
+# 2 * 5 * 3, where the 3 is Shape's field reached by a **bare name across a
+# module boundary** and set by Shape's own 'init' running with its default;
+# 'total' is 40; and 'watched' is 9, written by a destructor.
+#
+# 'geometry.box' is imported before 'geometry.shape', so Box's module is found
+# first and Shape's second -- the emitter's order is the one it works out and
+# never the one the modules arrived in.
+#
+# 'util.tracker' is imported under an alias, so the name written here is not
+# the name the module declares.
+import geometry.box
+import geometry.shape
+import util.tracker as track
+
+def main : i32
+    let watched = 0
+    let b = make()
+    let s : Shape* = b
+
+    # through a base pointer, so it only gives 10 if Box.area overrode Shape's
+    let through_base = s->area()
+
+    # and the destructor, seen through the pointer it was handed
+    let t = new track::Tracker(&watched)
+    delete t
+
+    return through_base + track::total(20, 20) + watched

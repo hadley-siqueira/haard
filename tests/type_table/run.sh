@@ -44,6 +44,7 @@ sources=(
     "$root/src/haard/module_finder/module_finder.cpp"
     "$root/src/haard/compilation/compilation.cpp"
     "$root/src/haard/type_table/type_collector.cpp"
+    "$root/src/haard/type_table/coercion.cpp"
     "$root/src/haard/type_table/expression_typer.cpp"
     "$root/src/haard/name_resolver/overload_resolver.cpp"
     "$root/src/haard/type_table/type_builder.cpp"

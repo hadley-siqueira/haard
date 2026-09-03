@@ -1,5 +1,15 @@
+error: i32 has no member named 'whatever'
+  --> main.hd:13:11
+   |
+13 |     thing.whatever
+   |           ^^^^^^^^
+error: i32 has no member named 'deeply'
+  --> main.hd:14:11
+   |
+14 |     thing.deeply.nested
+   |           ^^^^^^
 error: cannot find 'missing' in this scope
- --> main.hd:5:5
-  |
-5 |     missing.field
-  |     ^^^^^^^
+  --> main.hd:15:5
+   |
+15 |     missing.field
+   |     ^^^^^^^

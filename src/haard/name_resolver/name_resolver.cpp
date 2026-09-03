@@ -18,15 +18,24 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
     Module* importer = compilation->get_module(module);
     SymbolTable* table = importer->get_symbols();
 
-    // the name as this module interns it. When the module never wrote it, the
-    // whole scope walk is skipped: the string table answers 'no name of mine'
-    // before a single scope is looked at
+    // the name as this module interns it. A name the module never wrote is in
+    // none of its own scopes, and the string table answers that before a
+    // single scope is looked at.
+    //
+    // It does **not** answer for the base chain, and until 2026-09-03 this
+    // loop acted as though it did: skipping the walk skipped 'gather_bases'
+    // too, and a base lives in another module with a string table of its own.
+    // So a field inherited across a module boundary was invisible to a bare
+    // name -- record 0020 working inside one file and nowhere else. The test
+    // belongs to the lookup that needs it and not to the loop
     u32 interned = importer->get_strings()->find(hash, name);
     bool shadowed = false;
 
-    for (u32 current = scope; current != 0 && interned != INVALID_STRING;
+    for (u32 current = scope; current != 0;
          current = table->get_scope(current)->parent) {
-        u32 symbol = table->find(current, interned);
+        u32 symbol = interned == INVALID_STRING
+                         ? 0
+                         : table->find(current, interned);
         u32 owner = table->get_scope(current)->owner;
 
         // a function joins the set and keeps the walk going; anything else

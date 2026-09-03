@@ -1,0 +1,44 @@
+<unnamed>:
+    Plain  Plain
+    Counter  Counter
+    Derived  Derived
+    main  i32
+    n  i32
+    n  i32
+    init  i32 -> void
+    start  i32
+    extra  i32
+    good  Counter*
+    by_a_literal  Counter*
+    wrong_type  Counter*
+    too_many  Counter*
+    none_at_all  Counter*
+    not_a_class  Plain*
+    from_the_base  Derived*
+  22 types interned
+diagnostics:
+error: no 'init' of Counter takes these arguments
+  --> main.hd:24:22
+   |
+24 |     let wrong_type = new Counter(2.5)
+   |                      ^^^
+error: no 'init' of Counter takes these arguments
+  --> main.hd:25:20
+   |
+25 |     let too_many = new Counter(1, 2)
+   |                    ^^^
+error: no 'init' of Counter takes these arguments
+  --> main.hd:26:23
+   |
+26 |     let none_at_all = new Counter
+   |                       ^^^
+error: Plain declares no 'init', so it takes no arguments here
+  --> main.hd:27:23
+   |
+27 |     let not_a_class = new Plain(1)
+   |                       ^^^
+error: Derived declares no 'init', so it takes no arguments here
+  --> main.hd:31:25
+   |
+31 |     let from_the_base = new Derived(1)
+   |                         ^^^

@@ -1,0 +1,50 @@
+# Every statement and operator the emitter claims, in one program whose answer
+# is checked by running it rather than by reading the C++. 147: the collatz
+# steps of 1 to 5 are 15, the four classify calls are 6, the four bitwise
+# operators are 49, then minus a negative three, doubled, and one more for the
+# condition -- so a wrong precedence, a wrong operator or a loop that runs the
+# wrong number of times moves it.
+def collatz : i32
+    @n : i32
+    let steps = 0
+
+    while n != 1:
+        if n % 2 == 0:
+            n = n / 2
+        else:
+            n = 3 * n + 1
+
+        steps = steps + 1
+
+    return steps
+
+def classify : i32
+    @n : i32
+
+    if n < 0:
+        return 0
+    elif n == 0:
+        return 1
+    elif n < 10:
+        return 2
+    else:
+        return 3
+
+def main : i32
+    let total = 0
+    let i = 0
+
+    # a C shaped 'for'. 'for x in a..b' is not here: a range has no type yet
+    # (agenda 2.10), so a program using one does not get past the type phase
+    for i = 1; i < 6; i++:
+        total = total + collatz(i)
+
+    total = total + classify(-1) + classify(0) + classify(5) + classify(50)
+    total = total + (7 & 3) + (7 | 8) + (1 << 4) + (255 >> 4)
+    total = total - -3
+    total = total * 2
+
+    if not (total > 1000) and total > 0:
+        total = total + 1
+
+    return total

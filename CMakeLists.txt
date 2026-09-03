@@ -35,6 +35,7 @@ set(TYPE_TABLE_SRC
     src/haard/type_table/type_table.cpp
     src/haard/type_table/type_builder.cpp
     src/haard/type_table/type_collector.cpp
+    src/haard/type_table/coercion.cpp
     src/haard/type_table/expression_typer.cpp
 )
 
@@ -67,6 +68,10 @@ set(OVERRIDE_CHECKER_SRC
 
 set(COMPILATION_SRC
     src/haard/compilation/compilation.cpp
+)
+
+set(EMITTER_SRC
+    src/haard/emitter/emitter.cpp
 )
 
 set(SCANNER_SRC
@@ -107,6 +112,7 @@ set(SOURCES
     ${MODULE_FINDER_SRC}
     ${COMPILATION_SRC}
     ${NAME_RESOLVER_SRC}
+    ${EMITTER_SRC}
     ${STATEMENT_CHECKER_SRC}
     ${OVERRIDE_CHECKER_SRC}
     ${SOURCE_FILE_SRC}
@@ -172,6 +178,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/use_resolver/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/statement_checker/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/override_checker/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"

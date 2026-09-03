@@ -1,0 +1,5 @@
+error: cannot find 'missing' in this scope
+  --> main.hd:13:25
+   |
+13 |     let broken = {name: missing, age: 23}
+   |                         ^^^^^^^

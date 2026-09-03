@@ -1,0 +1,15 @@
+# the base of the hierarchy, and it lives in a module of its own. Nothing here
+# knows that anything derives from it
+class Shape:
+    sides : i32 = 3
+
+    # the default is what lets a class derive from this one: record 0026 runs
+    # a base's 'init' with no arguments, and there is no syntax yet for a
+    # derived class to write any. Record 0012's arity-as-a-range is what makes
+    # an 'init' with every parameter defaulted answer to none
+    def init : void
+        @count : i32 = 3
+        sides = count
+
+    def area : i32
+        return sides

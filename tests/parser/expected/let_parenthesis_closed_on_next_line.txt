@@ -1,14 +1,13 @@
-error: expected ')', found the end of the line
- --> cases/let_parenthesis_closed_on_next_line.hd:1:15
-  |
-1 | let x = (a + b
-  |               ^
-error: expected a declaration, found ')'
- --> cases/let_parenthesis_closed_on_next_line.hd:2:1
-  |
-2 | )
-  | ^
-
+let x = (a + b)
 --- tree
 module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        parenthesis '('
+          plus '+'
+            identifier 'a'
+            identifier 'b'
 --- round trip: ok

@@ -116,6 +116,7 @@ Parser::Parser() {
     matched = 0;
     statement_first_token = 0;
     panic = false;
+    open_brackets = 0;
     indentation_stack.push_back(0);
 }
 
@@ -132,6 +133,7 @@ u32 Parser::parse() {
     matched = 0;
     statement_first_token = 0;
     panic = false;
+    open_brackets = 0;
 
     indentation_stack.clear();
     indentation_stack.push_back(0);
@@ -516,6 +518,15 @@ u32 Parser::parse_body(u32 node, BodyKind kind) {
     u32 last = 0;
     bool had_lines = false;
 
+    // A block holds statements and a statement is found by its line, so the
+    // line rule is in force inside one however deep in brackets the block was
+    // written: 'f( |x| { a = 1 \n + 2 } )' is two statements and not one sum.
+    // Zeroing the count is begin_statement's job and every statement in here
+    // does it; what this has to do is put the **enclosing** expression's count
+    // back afterwards, so the brackets around the closure go on joining their
+    // lines once the block has ended
+    u32 enclosing_brackets = open_brackets;
+
     // 'pass' is the whole block, not a statement inside it: it says there is
     // nothing here, so nothing else can be
     if (inside_block(kind) && lookahead(TK_PASS)) {
@@ -584,6 +595,8 @@ u32 Parser::parse_body(u32 node, BodyKind kind) {
 
         poison();
     }
+
+    open_brackets = enclosing_brackets;
 
     return last;
 }
@@ -1829,10 +1842,12 @@ u32 Parser::parse_postfix_expression() {
             u32 token = current_token;
 
             expect_on_same_line(TK_LEFT_SQUARE_BRACKET);
+            open_brackets++;
 
             u32 subscript = parse_expression();
 
             expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+            open_brackets--;
             node = builder.make_index(token, node, subscript);
         } else if (lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
             u32 token = current_token;
@@ -1857,6 +1872,7 @@ u32 Parser::parse_arguments() {
     u32 token = current_token;
 
     expect_on_same_line(TK_LEFT_PARENTHESIS);
+    open_brackets++;
 
     u32 node = builder.make_arguments(token);
 
@@ -1870,6 +1886,7 @@ u32 Parser::parse_arguments() {
     }
 
     expect_on_same_line(TK_RIGHT_PARENTHESIS);
+    open_brackets--;
 
     return node;
 }
@@ -1956,11 +1973,13 @@ u32 Parser::parse_parenthesis_or_tuple() {
     u32 token = current_token;
 
     expect_on_same_line(TK_LEFT_PARENTHESIS);
+    open_brackets++;
 
     u32 expression = parse_expression();
 
     if (!lookahead_on_same_line(TK_COMMA)) {
         expect_on_same_line(TK_RIGHT_PARENTHESIS);
+        open_brackets--;
 
         return builder.make_parenthesis(token, expression);
     }
@@ -1980,6 +1999,7 @@ u32 Parser::parse_parenthesis_or_tuple() {
     }
 
     expect_on_same_line(TK_RIGHT_PARENTHESIS);
+    open_brackets--;
 
     return node;
 }
@@ -1989,6 +2009,7 @@ u32 Parser::parse_list() {
     u32 token = current_token;
 
     expect_on_same_line(TK_LEFT_SQUARE_BRACKET);
+    open_brackets++;
 
     u32 node = builder.make_list(token);
 
@@ -2005,6 +2026,7 @@ u32 Parser::parse_list() {
     }
 
     expect_on_same_line(TK_RIGHT_SQUARE_BRACKET);
+    open_brackets--;
 
     return node;
 }
@@ -2021,21 +2043,31 @@ u32 Parser::parse_list() {
 //   array_or_hash := '{' (hash | expression (',' expression?)*)? '}'
 u32 Parser::parse_array_or_hash() {
     u32 token = current_token;
+    u32 node;
 
     expect_on_same_line(TK_LEFT_CURLY_BRACKET);
+    open_brackets++;
 
     if (match_on_same_line(TK_RIGHT_CURLY_BRACKET)) {
+        open_brackets--;
+
         return builder.make_array(token);
     }
 
     u32 first = parse_expression();
 
+    // the hash reads its own closing brace, since it is what ends its last
+    // pair, and the count comes back down here either way
     if (kind_of(first) == AST_IDENTIFIER
         && lookahead_on_same_line(TK_COLON)) {
-        return parse_hash(token, first);
+        node = parse_hash(token, first);
+        open_brackets--;
+
+        return node;
     }
 
-    u32 node = builder.make_array(token);
+    node = builder.make_array(token);
+
     u32 last = builder.add_child(node, 0, first);
 
     while (match_on_same_line(TK_COMMA)) {
@@ -2047,6 +2079,7 @@ u32 Parser::parse_array_or_hash() {
     }
 
     expect_on_same_line(TK_RIGHT_CURLY_BRACKET);
+    open_brackets--;
 
     return node;
 }
@@ -2233,13 +2266,31 @@ bool Parser::expect(TokenKind kind) {
 // other rule reads its first token with the plain 'expect', which is why this
 // only started to matter with the function body, an expression that opens a
 // line of its own
+// A statement lives on one line, and inside a bracket it does not. Everything
+// between a '(', a '[' or a '{' and the token that closes it is one expression
+// however many lines it is spread over, because the bracket says where it ends
+// and the line rule has nothing left to say. It is Python's implicit line
+// joining and it is the same reason: the rule exists to find the end of a
+// statement, and here the end is already written down.
+//
+// A closure's braced block is not one of those brackets. Its contents are
+// statements and a statement is found by its line, so parse_body puts the rule
+// back for as long as the block lasts.
 bool Parser::on_same_line() {
-    return current_token == statement_first_token
+    return open_brackets > 0
+        || current_token == statement_first_token
         || !current().get_newline_before();
 }
 
 void Parser::begin_statement() {
     statement_first_token = current_token;
+
+    // and the line rule is in force again, whatever an unclosed bracket in the
+    // statement before left behind. A statement that failed inside a bracket
+    // never reaches the token that would have closed it, so the count is only
+    // balanced on the path where nothing went wrong -- and this is the anchor
+    // that makes not balancing it harmless
+    open_brackets = 0;
 }
 
 // nothing at all between the two tokens: no space, no comment, no line break

@@ -1,0 +1,5 @@
+def helper : i32
+    return 4
+
+def from_first : i32
+    return helper()

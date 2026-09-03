@@ -1,0 +1,74 @@
+# Every construction the grammar has, once, so that a kind nothing types shows
+# up as a visible <none> in the golden instead of as silence.
+#
+# This case exists because three blocking bugs were found on 2026-09-02 by
+# writing ordinary Haard and running it, while every suite was green. A golden
+# proves what its case writes, and nobody had written an array subscript.
+class Box:
+    value : i32
+
+    def method : i32
+        return value
+
+def free : i32
+    @a : i32
+    return a
+
+def main : i32
+    @row : i32[4]
+    @p : Box*
+    @b : Box
+    @h : {i32: f64}
+
+    # names and literals
+    let integer = 1
+    let floating = 2.5
+    let truth = true
+    let character = 'c'
+    let named = integer
+
+    # arithmetic, comparison and the logical operators
+    let sum = integer + integer
+    let compared = integer < integer
+    let anded = truth and truth
+    let notted = not truth
+
+    # the postfix family
+    let indexed = row[0]
+    let through_pointer = p[0]
+    let hashed = h[1]
+    let field = b.value
+    let arrow = p->value
+    let called = free(1)
+    let method_called = b.method()
+
+    # the prefix family
+    let address = &integer
+    let dereferenced = *address
+    let negated = -integer
+    let flipped = ~integer
+    let pre = ++integer
+    let post = integer++
+
+    # the rest
+    let converted = integer as f64
+    let allocated = new Box
+    let measured = sizeof(integer)
+    let parenthesised = (integer)
+    let tuple = (1, 2.5)
+    let list = [1, 2]
+    let array = {1, 2, 3}
+    let pointer : Box* = null
+
+    # a string literal is a char* first, per record 0022, and needs nothing
+    # from the standard library to be one
+    let text = "hello"
+
+    # and what nothing types yet: a range has no type because nothing has said
+    # whether it is one, a template string is a String and a symbol is nobody
+    # has said what -- both of those wait on the standard library
+    let ranged = 0..10
+    let templated = "two is ${integer}"
+    let symbol = :name
+
+    return integer

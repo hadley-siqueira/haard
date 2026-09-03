@@ -1,0 +1,29 @@
+# every bracketed form spread over lines, with the closing bracket opening a
+# line of its own and indented anywhere at all. A trailing comma still ends a
+# list, which is the one place the two rules meet
+def main : void
+    a = {
+        name: 'Hadley',
+        age: 23
+    }
+
+    my_list = [
+        {
+            name: 'Hadley',
+            age: 23
+        },
+    ]
+
+    grouped = (
+        a
+        + b
+    )
+
+    called = f(
+        1,
+        2
+    )
+
+    picked = my_list[
+        0
+    ]

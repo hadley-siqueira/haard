@@ -1,3 +1,13 @@
+# the UseResolver says nothing about 'whatever', 'deeply' or 'nested': the
+# right side of a dot is a member of whatever the left side turns out to be,
+# and sending it through the scope chain would find a global of that name in
+# silence. It reports 'missing' alone, which is the one name written in a
+# position a scope can answer for.
+#
+# The typer speaks too, and it is a different sentence: 'i32 has no member
+# named ...'. Both halves in one golden is the point -- the second one only
+# started appearing when an expression written as a statement began to be
+# typed at all, on 2026-09-02
 def main : i32
     let thing = 1
     thing.whatever

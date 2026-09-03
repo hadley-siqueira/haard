@@ -13,6 +13,7 @@ void TypeCollector::set_compilation(Compilation* compilation) {
 
     builder.set_compilation(compilation);
     typer.set_compilation(compilation);
+    coercion.set_compilation(compilation);
 }
 
 void TypeCollector::collect(u32 index) {
@@ -149,10 +150,11 @@ u32 TypeCollector::written_or_inferred(u32 node, u32 scope) {
         return given;
     }
 
-    // record 0018 has no conversion, so this is equality. A literal already
-    // took the written type or complained about the value, so what is left
-    // here is a mismatch between two real types
-    if (given != INVALID_TYPE && given != written) {
+    // a literal already took the written type or complained about the value,
+    // so what is left here is two real types, and record 0018's list is what
+    // says whether one may be given to the other -- the same list a call
+    // asks, which is the point of it living in one place
+    if (given != INVALID_TYPE && !coercion.fits(index, given, written)) {
         Token& token = module->get_tokens()->get_token(
             module->get_ast()->get_node(expression)->get_token());
 

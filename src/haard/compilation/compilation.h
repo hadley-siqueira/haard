@@ -39,6 +39,19 @@ namespace haard {
             bool set_roots(const std::filesystem::path& table);
             const std::string& get_error();
 
+            // Stop once the entry file has been scanned and parsed, running
+            // nothing after it. What '--pretty-print' asks for: the printer
+            // writes back the tree the parser built, so an import that
+            // resolves to nothing, a name nothing declares and a type that
+            // does not check are all questions about a **program** while the
+            // printer's subject is a **file**. None of them says anything
+            // about whether the file was printed back correctly, and
+            // reporting one is noise about work that is not being done.
+            //
+            // It also means the imports are not followed, so this is the
+            // entry file alone -- which is what the printer prints anyway
+            void stop_after_parsing();
+
             // loads the entry file and everything its imports reach. False
             // when any module logged an error, or when the entry file is
             // under no root of the table
@@ -109,6 +122,10 @@ namespace haard {
             std::map<std::string, u32> by_path;
 
             bool has_table;
+
+            // whether to stop once every module has parsed. Set by
+            // stop_after_parsing and read once, in build
+            bool parsing_only;
             std::string error;
     };
 }

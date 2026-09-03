@@ -1,0 +1,46 @@
+<unnamed>:
+    Box  Box
+    free  i32 -> i32
+    main  i32[4] -> Box* -> Box -> {i32: f64} -> i32
+    value  i32
+    method  i32
+    a  i32
+    row  i32[4]
+    p  Box*
+    b  Box
+    h  {i32: f64}
+    integer  i32
+    floating  f64
+    truth  bool
+    character  char
+    named  i32
+    sum  i32
+    compared  bool
+    anded  bool
+    notted  bool
+    indexed  i32
+    through_pointer  Box
+    hashed  f64
+    field  i32
+    arrow  i32
+    called  i32
+    method_called  i32
+    address  i32*
+    dereferenced  i32
+    negated  i32
+    flipped  i32
+    pre  i32
+    post  i32
+    converted  f64
+    allocated  Box*
+    measured  u64
+    parenthesised  i32
+    tuple  (i32, f64)
+    list  [i32]
+    array  i32[3]
+    pointer  Box*
+    text  char*
+    ranged  <none>
+    templated  <none>
+    symbol  <none>
+  26 types interned

@@ -18,6 +18,7 @@ void OverloadResolver::set_compilation(Compilation* compilation) {
     this->compilation = compilation;
 
     builder.set_compilation(compilation);
+    coercion.set_compilation(compilation);
 }
 
 Overload OverloadResolver::choose(u32 caller,
@@ -119,7 +120,7 @@ bool OverloadResolver::overrides(u32 caller, const Candidacy& derived,
 
     // strictly below: the same class twice is two real overloads that happen
     // to tie, which is record 0012's ambiguous call and not an override
-    if (distance(caller, below, above) <= 0) {
+    if (coercion.climb(caller, below, above) <= 0) {
         return false;
     }
 
@@ -227,66 +228,43 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
         return -1;
     }
 
-    TypeTable* types = compilation->get_module(caller)->get_types();
-    Type* wanted = types->get_type(parameter);
-
     // record 0018: a literal has no type until its context gives it one, and
     // the context here is this parameter. So it is asked to be it, and the
     // question is about the value
     if (argument.literal) {
-        return wanted->kind == TYPE_BUILTIN
-                       && fits(caller, argument, wanted->subject)
-                   ? 0
-                   : -1;
-    }
+        Type* wanted =
+            compilation->get_module(caller)->get_types()->get_type(parameter);
 
-    if (argument.type == INVALID_TYPE) {
-        return -1;
-    }
-
-    if (argument.type == parameter) {
-        return 0;
-    }
-
-    // the only other thing that matches is a reference or a pointer to
-    // something derived. Record 0018 keeps a plain value off this list, since
-    // an upcast by value is C++'s slicing and an error here
-    Type* given = types->get_type(argument.type);
-
-    if (given->kind != wanted->kind
-        || (given->kind != TYPE_POINTER && given->kind != TYPE_REFERENCE)) {
-        return -1;
-    }
-
-    return distance(caller, types->get_argument(given->first_argument),
-                    types->get_argument(wanted->first_argument));
-}
-
-int OverloadResolver::distance(u32 caller, u32 from, u32 to) {
-    TypeTable* types = compilation->get_module(caller)->get_types();
-    int steps = 0;
-
-    // single inheritance (Hadley, 2026-09-02, and no interfaces) is what makes
-    // this a walk up a chain instead of a search through a graph
-    while (from != INVALID_TYPE) {
-        if (from == to) {
-            return steps;
-        }
-
-        Type* entry = types->get_type(from);
-
-        if (entry->kind != TYPE_NAMED) {
+        if (wanted->kind != TYPE_BUILTIN
+            || !fits(caller, argument, wanted->subject)) {
             return -1;
         }
 
-        Module* owner = compilation->get_module(entry->module);
-        u32 base = owner->get_symbols()->get_candidate(entry->subject)->super;
-
-        from = builder.translate(caller, entry->module, base);
-        steps++;
+        // Hadley, 2026-09-03. Record 0018 gives every literal a type it has
+        // when nothing asks -- an i32, an f64 -- and record 0022 gives a
+        // string literal one too. Being asked to be that default costs
+        // nothing and being asked to be anything else costs a step, which is
+        // the ranking agenda 1.21 needed and it is rule 5's integer again
+        // rather than an exception to it.
+        //
+        // It loosens: 'f(3)' between 'f(u8)' and 'f(i32)' was an ambiguous
+        // call and now picks the i32. Loosening is the direction record 0018
+        // says is safe, because every program that compiled still does
+        return wanted->subject == default_of(caller, argument) ? 0 : 1;
     }
 
-    return -1;
+    return coercion.steps(caller, argument.type, parameter);
+}
+
+// what a literal is when no parameter asks it to be anything: record 0018 for
+// the numbers. A character literal is not carried in untyped -- there is one
+// builtin it could be -- so it does not reach here
+u32 OverloadResolver::default_of(u32 caller, const Argument& argument) {
+    Module* module = compilation->get_module(caller);
+    AstNodeKind kind =
+        (AstNodeKind) module->get_ast()->get_node(argument.node)->get_kind();
+
+    return kind == AST_FLOAT_LITERAL ? BUILTIN_F64 : BUILTIN_I32;
 }
 
 u32 OverloadResolver::required_of(u32 module, u32 candidate) {

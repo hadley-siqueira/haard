@@ -1,0 +1,15 @@
+error: no 'takes_int' takes these arguments
+  --> main.hd:17:23
+   |
+17 |     for i = 0; i < 3; takes_int(2.5):
+   |                       ^^^^^^^^^
+error: no 'takes_int' takes these arguments
+  --> main.hd:20:13
+   |
+20 |     for j = takes_int(2.5); n < 9; n++:
+   |             ^^^^^^^^^
+error: no 'takes_int' takes these arguments
+  --> main.hd:23:28
+   |
+23 |     for k = 0; k < 3; k++, takes_int(1, 2):
+   |                            ^^^^^^^^^

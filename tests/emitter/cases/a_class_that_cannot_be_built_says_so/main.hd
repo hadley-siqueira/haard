@@ -1,0 +1,15 @@
+# Record 0026 runs a class's own 'init' with no arguments wherever a value of
+# it comes into being with none written. Every 'init' of Counter needs one, and
+# there is no syntax yet for writing a base's arguments either -- so this is
+# refused by name here, rather than emitted as C++ that g++ would refuse in
+# words about a line nobody wrote.
+class Counter:
+    n : i32
+
+    def init : void
+        @start : i32
+        n = start
+
+def main : i32
+    let c : Counter
+    return c.n

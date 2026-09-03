@@ -1,0 +1,62 @@
+# Record 0018's coercion list is a rule of the language, not a rule about
+# arguments. Until 2026-09-03 only a call knew it, so returning, binding and
+# assigning a 'Derived&' where a 'Base&' was asked all failed -- the record
+# said they were allowed and three of the four places that ask never heard.
+#
+# Every line below is one of those places asking the list the same question.
+
+class Base:
+    tag : i32
+
+class Derived(Base):
+    value : f64
+
+class String:
+    data : char*
+    size : u64
+
+# the same fields and not the same class: 'char*' reaches String because the
+# language names String, not because a class holds a 'char*'
+class Buffer:
+    data : char*
+    size : u64
+
+def up : Base&
+    @d : Derived&
+    return d
+
+def down : Derived&
+    @b : Base&
+    return b
+
+def by_value : Base
+    @d : Derived
+    return d
+
+def widen : i64
+    @n : i32
+    return n
+
+def as_string : String
+    @text : char*
+    return text
+
+def as_char_pointer : char*
+    @s : String
+    return s
+
+def main : i32
+    @d : Derived&
+    @b : Base&
+    @s : String
+    @text : char*
+    let bound : Base& = d
+    let sliced : Base = d
+    let built : String = text
+    let unbuilt : char* = s
+    let wrong : Buffer = text
+    b = d
+    d = b
+    s = text
+    text = s
+    return 0

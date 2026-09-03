@@ -1,0 +1,13 @@
+# Two modules each declare 'helper', and they are different code -- which is
+# what record 0010 puts in one program when two versions of one library are
+# reached. Each is called from inside its own module, so no call is ambiguous
+# and both bodies are in the output.
+#
+# Emitting source names makes these ONE function in the C++ and the linker
+# picks a body. The answer is 49 when each call reached its own, and 40 or 90
+# when they collapsed into one -- so the exit status tells the two apart.
+import lib.first
+import lib.second
+
+def main : i32
+    return from_first() * 10 + from_second()

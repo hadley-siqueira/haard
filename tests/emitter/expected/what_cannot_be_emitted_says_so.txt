@@ -1,0 +1,1 @@
+cannot emit: 'h' has no type the emitter can write

@@ -1,2 +1,4 @@
+# a statement lives on one line, and inside a bracket it does not: the bracket
+# says where the expression ends, so the line rule has nothing left to say
 let x = (a + b
 )

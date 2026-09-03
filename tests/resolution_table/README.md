@@ -42,6 +42,8 @@ node it went to.
 | `a_base_field_shadows_a_global` | a name found in a base ends the walk outward exactly as one found in the class itself does |
 | `two_methods_of_one_class_still_tie` | an override is about **two** classes; one class declaring the same method twice has overridden nothing and is still ambiguous |
 | `a_tie_across_the_boundary_is_still_ambiguous` | a base method and a derived one with **different** parameters are two overloads, and a tie between them is reported |
+| `a_string_literal_prefers_a_char_pointer` | record 0023: with `write(char*)` and `write(String)` both in view, `write("abc")` picks the `char*`. The golden prints the signature because **both** resolve, and which one is the whole question. A `char*` variable reaching the `String` parameter is on the same golden, which is what says the answer is a coercion and not a rule about literals |
+| `a_literal_takes_its_default_when_two_fit` | the tie break is a tie break: the default among the candidates wins, a default absent from them filters nothing out, and two candidates equally far from it still tie |
 | `an_override_may_change_the_return_type` | the return is out of what makes an override, so `Square.describe` **is** the override and the call resolves to it — and giving back something else is then a mistake about the return, reported by the `OverrideChecker`. Both halves in one golden |
 | `what_could_not_be_worked_out_is_nothing` | a name that resolves to nothing and an operator whose operands disagree write nothing, and the diagnostics are the same ones as before |
 

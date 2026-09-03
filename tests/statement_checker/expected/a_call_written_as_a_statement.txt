@@ -1,0 +1,15 @@
+error: no 'takes_int' takes these arguments
+  --> main.hd:18:5
+   |
+18 |     takes_int(2.5)
+   |     ^^^^^^^^^
+error: no 'takes_int' takes these arguments
+  --> main.hd:19:5
+   |
+19 |     takes_int(1, 2)
+   |     ^^^^^^^^^
+error: Box has no member named 'missing'
+  --> main.hd:20:7
+   |
+20 |     b.missing()
+   |       ^^^^^^^

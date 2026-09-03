@@ -1,0 +1,14 @@
+modules:
+    0 app.main  app/main.hd
+        imports lib.helper
+        depends on 1 lib.helper
+        declares main
+    1 lib.helper  lib/helper.hd
+        declares help
+--- parsed alone: every module matches
+diagnostics:
+error: cannot find 'nowhere' in this scope
+ --> app/main.hd:6:13
+  |
+6 |     let n = nowhere
+  |             ^^^^^^^

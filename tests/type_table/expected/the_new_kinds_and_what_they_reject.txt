@@ -1,0 +1,58 @@
+<unnamed>:
+    main  i32[4] -> i32
+    row  i32[4]
+    n  i32
+    wide  i64
+    pair  (u8, f64)
+    bytes  u8[2]
+    floats  [f64]
+    mixed  <none>
+    two_names  <none>
+    empty  <none>
+    loose  <none>
+    wrong  i32
+    deref_array  <none>
+    index_a_number  <none>
+    p  i32*
+  20 types interned
+diagnostics:
+error: expected i32, found a floating point literal
+  --> main.hd:14:21
+   |
+14 |     let mixed = [1, 2.5]
+   |                     ^^^
+error: expected i32, found [f64]
+  --> main.hd:15:25
+   |
+15 |     let two_names = [n, floats]
+   |                         ^^^^^^
+error: there is nothing here to say what this is empty of
+  --> main.hd:16:17
+   |
+16 |     let empty = []
+   |                 ^
+error: there is nothing here to say what 'null' is a pointer to
+  --> main.hd:17:17
+   |
+17 |     let loose = null
+   |                 ^^^^
+error: expected i32, found 'null'
+  --> main.hd:18:23
+   |
+18 |     let wrong : i32 = null
+   |                       ^^^^
+error: '*' needs a pointer, and this is i32[4]
+  --> main.hd:19:23
+   |
+19 |     let deref_array = *row
+   |                       ^
+error: i32 cannot be indexed
+  --> main.hd:20:27
+   |
+20 |     let index_a_number = n[0]
+   |                           ^
+error: only a pointer can be deleted, and this is i32
+  --> main.hd:24:5
+   |
+24 |     delete n
+   |     ^^^^^^

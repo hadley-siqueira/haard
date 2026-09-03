@@ -1,0 +1,16 @@
+# 'destroy' is observed by writing through a pointer the caller still holds,
+# which is the only way a program with no output can show that it ran
+class Tracker:
+    slot : i32*
+
+    def init : void
+        @where : i32*
+        slot = where
+
+    def destroy : void
+        *slot = 9
+
+def total : i32
+    @a : i32
+    @b : i32
+    return a + b

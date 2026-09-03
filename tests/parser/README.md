@@ -28,6 +28,19 @@ a parser that folded `a + b * c` into `(a + b) * c` still printed
 `a + b * c` and the suite stayed green — measured, not guessed. The dump is what
 makes precedence, associativity and the token behind each node visible.
 
+## The line rule, and where it stops
+
+A statement lives on one line, and record 0024 suspends that inside a bracket.
+Four cases carry it: `brackets_span_lines` writes every bracketed form over
+several lines with the closer opening a line of its own;
+`a_closure_in_brackets_keeps_the_line_rule` puts a braced block inside those
+brackets and the tree has to show **two** statements where a suspended rule
+would give one sum; `an_unclosed_bracket_does_not_reach_the_next_statement`
+says a bracket nobody closed does not swallow the rest of the file; and
+`let_parenthesis_closed_on_next_line` used to pin the opposite answer and now
+pins this one. The `*_on_next_line` cases around it are unchanged — none of
+them opens a bracket, so none of them is joined.
+
 ## The round trip
 
 The printed source is written to the build directory, parsed again, and the two

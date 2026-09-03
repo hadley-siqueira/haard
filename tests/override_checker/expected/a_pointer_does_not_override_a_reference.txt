@@ -1,10 +1,10 @@
 error: this overrides Shape.one, which gives back Base&, and gives back Derived*
-  --> main.hd:18:9
+  --> main.hd:24:9
    |
-18 |     def one : Derived*
+24 |     def one : Derived*
    |         ^^^
 error: this overrides Shape.two, which gives back Base*, and gives back Derived&
-  --> main.hd:21:9
+  --> main.hd:27:9
    |
-21 |     def two : Derived&
+27 |     def two : Derived&
    |         ^^^

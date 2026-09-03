@@ -22,6 +22,7 @@ Every directory in `cases/` is a project:
 cases/<name>/
     table.tbl        the roots table, or generated/table.tbl, or neither
     entry            one line: the file to start from
+    stop-after-parsing   optional and empty: ask for the parser and no more
     <the sources>    real Haard, parsed by the real parser
 ```
 
@@ -74,6 +75,15 @@ which is what the per-case timeout is for.
 **That a star import is a directory.** `a_star_import_loads_the_directory` has
 `std/net/tcp.hd` below the directory `std/`, and the star loads `io` and `list`
 and does not descend. Per record 0006.
+
+**That `--pretty-print` runs nothing after the parser.**
+`parsing_only_runs_nothing_after_the_parser` and
+`the_same_sources_checked_in_full` are the **same sources twice**, and only the
+first writes the marker. Without it the golden is two modules and a name error;
+with it, one module, no `depends on` line and no diagnostics — because
+following an import and resolving a name are both questions about a program,
+and neither is being asked. The pair is the test: either golden alone would
+pass a compiler that ignored the switch.
 
 **That a broken module is never asked what it imports.**
 `a_broken_module_is_never_asked_what_it_imports` has a dependency whose second
