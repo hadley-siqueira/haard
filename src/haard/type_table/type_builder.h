@@ -2,6 +2,7 @@
 #define HAARD_TYPE_BUILDER_H
 
 #include <haard/name_resolver/name_resolver.h>
+#include <haard/type_table/instantiator.h>
 #include <haard/type_table/type_table.h>
 
 namespace haard {
@@ -61,6 +62,7 @@ namespace haard {
         private:
             Compilation* compilation;
             NameResolver resolver;
+            Instantiator instantiator;
 
             Module* module;
             u32 index;

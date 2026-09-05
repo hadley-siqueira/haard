@@ -178,6 +178,11 @@ namespace haard {
             // not in the ResolutionTable
             u32 declared_type(u32 module, u32 node);
 
+            // whether this declaration is a generic the source wrote, as
+            // opposed to a clone record 0002 made of one. The originals are
+            // not emitted: they name type parameters nothing bound
+            bool is_generic(u32 module, u32 declaration);
+
             void fail(const std::string& message);
 
             AstNodeKind kind_of(u32 module, u32 node);

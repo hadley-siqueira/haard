@@ -46,6 +46,11 @@ namespace haard {
             // and the override checker both report mismatches of their own
             std::string name_of(u32 type);
 
+            // the same, reading a given module's table rather than the
+            // current one: an instantiation's arguments live where its clone
+            // does, which is the module that declared the generic
+            std::string name_in(u32 owner, u32 type);
+
         private:
             // what an expression is, by kind. type_of is the funnel around it
             // and the only place record 0019's answer is written down, so this

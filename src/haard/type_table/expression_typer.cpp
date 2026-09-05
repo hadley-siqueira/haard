@@ -979,7 +979,15 @@ u32 ExpressionTyper::second_child(u32 node) {
 }
 
 std::string ExpressionTyper::name_of(u32 type) {
-    TypeTable* types = module->get_types();
+    return name_in(index, type);
+}
+
+// The same walk, told which table to read. An instantiation's arguments belong
+// to the module that DECLARED the generic, because that is where record 0002
+// puts the clone -- so rendering 'Pair<i32, f64>' crosses a module boundary
+// even when the type being named did not
+std::string ExpressionTyper::name_in(u32 owner, u32 type) {
+    TypeTable* types = compilation->get_module(owner)->get_types();
     Type* entry = types->get_type(type);
     std::vector<u32> arguments = types->get_arguments(type);
     AstQuery query;
@@ -994,27 +1002,27 @@ std::string ExpressionTyper::name_of(u32 type) {
                                               : "?";
 
     case TYPE_POINTER:
-        return name_of(arguments[0]) + "*";
+        return name_in(owner, arguments[0]) + "*";
 
     case TYPE_REFERENCE:
-        return name_of(arguments[0]) + "&";
+        return name_in(owner, arguments[0]) + "&";
 
     case TYPE_ARRAY:
-        return name_of(arguments[0]) + "["
+        return name_in(owner, arguments[0]) + "["
              + (entry->subject == NO_LENGTH ? ""
                                             : std::to_string(entry->subject))
              + "]";
 
     case TYPE_LIST:
-        return "[" + name_of(arguments[0]) + "]";
+        return "[" + name_in(owner, arguments[0]) + "]";
 
     case TYPE_HASH:
-        return "{" + name_of(arguments[0]) + ": " + name_of(arguments[1])
+        return "{" + name_in(owner, arguments[0]) + ": " + name_in(owner, arguments[1])
              + "}";
 
     case TYPE_TUPLE:
         for (u32 i = 0; i < arguments.size(); i++) {
-            out += (i > 0 ? ", " : "") + name_of(arguments[i]);
+            out += (i > 0 ? ", " : "") + name_in(owner, arguments[i]);
         }
 
         return "(" + out + ")";
@@ -1023,7 +1031,7 @@ std::string ExpressionTyper::name_of(u32 type) {
     // chain the source would write
     case TYPE_FUNCTION:
         for (u32 i = 0; i < arguments.size(); i++) {
-            out += (i > 0 ? " -> " : "") + name_of(arguments[i]);
+            out += (i > 0 ? " -> " : "") + name_in(owner, arguments[i]);
         }
 
         return out;
@@ -1031,18 +1039,30 @@ std::string ExpressionTyper::name_of(u32 type) {
     case TYPE_GENERIC:
         return declaration_name(entry->module, entry->subject);
 
-    case TYPE_NAMED:
+    case TYPE_NAMED: {
         out = declaration_name(entry->module, entry->subject);
+
+        // A clone carries no arguments in its type -- it is a class, which is
+        // the whole point of record 0002 -- so the spelling a reader would
+        // recognise lives on the record that made it and nowhere else
+        const Instantiation* made = compilation->get_module(entry->module)
+                                        ->get_instantiation(entry->subject);
+
+        if (made != nullptr) {
+            arguments = made->arguments;
+            owner = entry->module;
+        }
 
         if (arguments.size() == 0) {
             return out;
         }
 
         for (u32 i = 0; i < arguments.size(); i++) {
-            out += (i == 0 ? "<" : ", ") + name_of(arguments[i]);
+            out += (i == 0 ? "<" : ", ") + name_in(owner, arguments[i]);
         }
 
         return out + ">";
+    }
 
     default:
         break;

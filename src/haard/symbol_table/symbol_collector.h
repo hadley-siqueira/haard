@@ -32,17 +32,36 @@ namespace haard {
 
             void collect();
 
+            // One declaration, into a scope that already exists, under a name
+            // that is given rather than read off the tree. Record 0002's
+            // instantiation appends a cloned class to the tree after this
+            // phase has run, and the clone needs exactly the names the first
+            // walk would have given it -- under a name no source can write, so
+            // that nothing resolves to it by accident.
+            //
+            // The implicit walk runs over the clone alone, for the same reason
+            // the first one runs over the module: a body that assigns to a
+            // bare name declares it, and the clone has its own body
+            void collect_declaration(u32 scope, u32 declaration,
+                                     const std::string& name);
+
         private:
+            // the switch the two entries share: which of the five shapes this
+            // declaration is, and where its names go
+            void collect_one(u32 scope, u32 node, const std::string& name);
+
             // a class, a struct, an enum or a union: the declaration goes in
             // the scope it was written in, and its members go in a scope of
             // its own whose owner is the declaration
-            void collect_type(u32 scope, u32 declaration, SymbolKind kind);
+            void collect_type(u32 scope, u32 declaration, SymbolKind kind,
+                              const std::string& name);
 
             // a function: its generic parameters and its parameters go in a
             // scope of its own, and its block opens one more below that. Two
             // scopes and not one, so a local may shadow a parameter of its
             // name instead of joining it as a second candidate
-            void collect_function(u32 scope, u32 declaration);
+            void collect_function(u32 scope, u32 declaration,
+                                  const std::string& name);
 
             // Everything inside a body, without knowing what a statement is.
             // An 'if', a 'while' and a 'for' all carry their block as a child,

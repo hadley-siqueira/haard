@@ -16,46 +16,86 @@ void TypeCollector::set_compilation(Compilation* compilation) {
     coercion.set_compilation(compilation);
 }
 
-void TypeCollector::collect(u32 index) {
-    walk(index, false);
+bool TypeCollector::collect(u32 index) {
+    return walk(index, false);
 }
 
-void TypeCollector::infer(u32 index) {
-    walk(index, true);
+bool TypeCollector::infer(u32 index) {
+    return walk(index, true);
 }
 
-void TypeCollector::walk(u32 index, bool given) {
+bool TypeCollector::walk(u32 index, bool given) {
     this->index = index;
     module = compilation->get_module(index);
 
     SymbolTable* table = module->get_symbols();
+    std::map<u32, u32>& mark = given ? inferred : collected;
+    u32 done = mark.count(index) > 0 ? mark[index] : 0;
+    u32 count = table->get_candidate_count();
+    bool worked = false;
 
-    scope_of.clear();
+    // The list grows while it is walked, which is the module loop's shape one
+    // level down: building a type may instantiate a generic, and record 0002
+    // makes that a cloned declaration with scopes and candidates of its own.
+    //
+    // A round takes what was there when it began and the next takes what the
+    // last one made. So the order inside a round is the order it always was,
+    // every new declaration is reached, and nothing is typed -- or reported --
+    // twice
+    while (done < count) {
+        scope_of.clear();
 
-    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
-        u32 owner = table->get_scope(scope)->owner;
+        for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+            u32 owner = table->get_scope(scope)->owner;
 
-        if (owner != 0) {
-            scope_of[owner] = scope;
+            if (owner != 0) {
+                scope_of[owner] = scope;
+            }
         }
-    }
 
-    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
-        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
-             symbol = table->get_symbol(symbol)->sibling_or_next) {
-            for (u32 candidate = table->get_symbol(symbol)->candidates;
-                 candidate != 0;
-                 candidate = table->get_candidate(candidate)->next_candidate) {
-                table->set_candidate_type(candidate,
-                                          type_of(candidate, scope, given));
+        for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+            for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+                 symbol = table->get_symbol(symbol)->sibling_or_next) {
+                for (u32 candidate = table->get_symbol(symbol)->candidates;
+                     candidate != 0;
+                     candidate =
+                         table->get_candidate(candidate)->next_candidate) {
+                    if (candidate <= done || candidate >= count) {
+                        continue;
+                    }
 
-                if (!given) {
-                    table->set_candidate_super(candidate,
-                                               super_of(candidate, scope));
+                    // a declaration made during the second pass has never been
+                    // through the first, and what the second pass reads is
+                    // what the first one wrote. So it gets both, in order
+                    if (given && candidate > (collected.count(index) > 0
+                                                  ? collected[index]
+                                                  : 0)) {
+                        table->set_candidate_type(
+                            candidate, type_of(candidate, scope, false));
+                        table->set_candidate_super(candidate,
+                                                   super_of(candidate, scope));
+                    }
+
+                    table->set_candidate_type(candidate,
+                                              type_of(candidate, scope, given));
+
+                    if (!given) {
+                        table->set_candidate_super(candidate,
+                                                   super_of(candidate, scope));
+                    }
+
+                    worked = true;
                 }
             }
         }
+
+        done = count;
+        count = table->get_candidate_count();
     }
+
+    mark[index] = done;
+
+    return worked;
 }
 
 u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
@@ -84,7 +124,16 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
         return module->get_types()->named(index, candidate,
                                           std::vector<u32>());
 
+    // An instantiation bound this one when it cloned the declaration, and
+    // that binding is the whole of what makes the clone concrete -- so it
+    // survives this walk rather than being overwritten by the parameter's own
+    // TYPE_GENERIC. For an unbound parameter the branch below wrote that
+    // TYPE_GENERIC on an earlier round and reading it back says the same thing
     case SYMBOL_GENERIC:
+        if (found->type != INVALID_TYPE) {
+            return found->type;
+        }
+
         return module->get_types()->generic(index, candidate);
 
     // a field, a parameter or a variable is whatever it was written as. A
@@ -98,7 +147,7 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
                              query.get_written_type(found->ast_node));
     }
 
-    return written_or_inferred(found->ast_node, scope);
+    return written_or_inferred(found->ast_node, scope, found->type);
 }
 
 u32 TypeCollector::super_of(u32 candidate, u32 scope) {
@@ -128,13 +177,11 @@ u32 TypeCollector::super_of(u32 candidate, u32 scope) {
                          written);
 }
 
-u32 TypeCollector::written_or_inferred(u32 node, u32 scope) {
+u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written) {
     AstQuery query;
-    u32 written;
     u32 expression;
 
     query.set_module(module);
-    written = builder.build(index, scope, query.get_written_type(node));
     expression = query.get_binding_expression(node);
 
     if (expression == 0) {

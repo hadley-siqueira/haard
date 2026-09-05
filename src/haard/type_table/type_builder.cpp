@@ -32,6 +32,7 @@ void TypeBuilder::set_compilation(Compilation* compilation) {
     this->compilation = compilation;
 
     resolver.set_compilation(compilation);
+    instantiator.set_compilation(compilation);
 }
 
 u32 TypeBuilder::build(u32 index, u32 scope, u32 node) {
@@ -233,7 +234,16 @@ u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
     Candidate* candidate =
         compilation->get_module(owner)->get_symbols()->get_candidate(symbol);
 
+    // An instantiation binds a parameter by setting the type of its
+    // candidate, and this is the one place that reads it: inside a clone, 'A'
+    // is not a stand-in for i32, it is i32. Everywhere else the parameter is
+    // still itself, and its candidate holds the TYPE_GENERIC that says so --
+    // so the same line answers both
     if (candidate->kind == SYMBOL_GENERIC) {
+        if (candidate->type != INVALID_TYPE) {
+            return translate(index, owner, candidate->type);
+        }
+
         return module->get_types()->generic(owner, symbol);
     }
 
@@ -246,6 +256,48 @@ u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
         if (built.back() == INVALID_TYPE) {
             return INVALID_TYPE;
         }
+    }
+
+    AstQuery query;
+
+    query.set_module(compilation->get_module(owner));
+
+    // Record 0002: a generic declaration is not a type, it is something a
+    // type is made from. What a use of it names is the clone, which is an
+    // ordinary class -- so this is the last line of the compiler that knows
+    // a generic was involved.
+    //
+    // Asked whenever the DECLARATION has parameters and not only when the use
+    // wrote arguments, so that a bare 'Pair' is an arity error and not a type
+    // whose fields are parameters nothing bound
+    if (built.size() > 0 || query.get_generic_parameters(
+                                candidate->ast_node).size() > 0) {
+        std::vector<u32> translated;
+
+        for (u32 argument : built) {
+            translated.push_back(translate(owner, index, argument));
+        }
+
+        // the NAME and never the composite: a type node carries token 0, so
+        // a caret pointing at one lands on whatever token 0 is -- the first
+        // word of the file
+        u32 at = name;
+
+        if (kind_of(name) == AST_SCOPE) {
+            u32 first = first_child(name);
+            u32 second = module->get_ast()->get_node(first)->get_sibling();
+
+            at = second == 0 ? first : second;
+        }
+
+        u32 made = instantiator.instantiate(index, at, owner, symbol,
+                                            translated);
+
+        if (made == 0) {
+            return INVALID_TYPE;
+        }
+
+        return module->get_types()->named(owner, made, std::vector<u32>());
     }
 
     return module->get_types()->named(owner, symbol, built);

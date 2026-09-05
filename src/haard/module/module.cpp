@@ -114,3 +114,35 @@ void Module::inspect_ast() {
         ++index;
     }
 }
+
+u32 Module::find_instantiation(u32 origin,
+                               const std::vector<u32>& arguments) {
+    for (const Instantiation& made : instantiations) {
+        if (made.origin == origin && made.arguments == arguments) {
+            return made.made;
+        }
+    }
+
+    return 0;
+}
+
+void Module::add_instantiation(u32 origin, u32 made,
+                               const std::vector<u32>& arguments) {
+    Instantiation entry;
+
+    entry.origin = origin;
+    entry.made = made;
+    entry.arguments = arguments;
+
+    instantiations.push_back(entry);
+}
+
+const Instantiation* Module::get_instantiation(u32 made) {
+    for (const Instantiation& entry : instantiations) {
+        if (entry.made == made) {
+            return &entry;
+        }
+    }
+
+    return nullptr;
+}

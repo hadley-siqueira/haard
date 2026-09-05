@@ -1,6 +1,9 @@
 <unnamed>:
     Pair  Pair
     Holder  Holder
+    Pair  Pair<i32, f64>
+    Pair  Pair<f32, bool>
+    Pair  Pair<i32, Pair<f32, bool>>
     A  A
     B  B
     first  A
@@ -8,4 +11,16 @@
     both  Pair<i32, f64>
     nested  Pair<i32, Pair<f32, bool>>
     plain  Holder*
+    A  i32
+    B  f64
+    first  i32
+    second  f64
+    A  f32
+    B  bool
+    first  f32
+    second  bool
+    A  i32
+    B  Pair<f32, bool>
+    first  i32
+    second  Pair<f32, bool>
   22 types interned

@@ -34,6 +34,7 @@ set(STRING_TABLE_SRC
 set(TYPE_TABLE_SRC
     src/haard/type_table/type_table.cpp
     src/haard/type_table/type_builder.cpp
+    src/haard/type_table/instantiator.cpp
     src/haard/type_table/type_collector.cpp
     src/haard/type_table/coercion.cpp
     src/haard/type_table/expression_typer.cpp

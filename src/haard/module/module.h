@@ -25,6 +25,25 @@ namespace haard {
         u32 alias;
     };
 
+    // A generic written with arguments, as a declaration of its own. Record
+    // 0002 instantiates by cloning, and the clone belongs to the module that
+    // **declared** the generic and never to the one that used it: that is
+    // what keeps a name inside the body resolving in the scope it was
+    // written in, which is the hygiene bug C++'s two-phase lookup exists to
+    // avoid.
+    //
+    // One instantiation is one declaration. 'Pair<i32, f64>' written in five
+    // modules finds the same clone here, so the emitter writes one struct and
+    // two uses of it compare equal for free -- they are the same candidate.
+    //
+    // The arguments belong to THIS module's table, translated on the way in,
+    // because this is where the clone lives
+    struct Instantiation {
+        u32 origin;                  // the generic declaration's candidate
+        u32 made;                    // the clone's candidate
+        std::vector<u32> arguments;
+    };
+
     class Module {
         public:
             Module();
@@ -83,6 +102,23 @@ namespace haard {
             bool is_parsed();
 
         public:
+            // the clone already made for these arguments, 0 when there is
+            // none. Looked up before one is made, which is what makes the
+            // recursion in 'class Node<T>: next : Node<T>*' stop: the entry is
+            // written before the clone's own types are built
+            u32 find_instantiation(u32 origin,
+                                   const std::vector<u32>& arguments);
+            void add_instantiation(u32 origin, u32 made,
+                                   const std::vector<u32>& arguments);
+
+            // what an instantiated candidate was made from and with, and
+            // nullptr for a declaration the source wrote. Two readers: a
+            // diagnostic, which writes 'Pair<i32, f64>' where the tree only
+            // says 'Pair', and the emitter, which skips a generic declaration
+            // but not a clone of one
+            const Instantiation* get_instantiation(u32 made);
+
+        public:
             void inspect_tokens();
             void inspect_ast();
 
@@ -91,6 +127,10 @@ namespace haard {
             u32 root;
             std::vector<Dependency> dependencies;
             bool parsed;
+
+            // few per program and searched by their arguments, so a vector
+            // scanned end to end beats a key built out of the argument list
+            std::vector<Instantiation> instantiations;
 
             SourceFile source_file;
             TokenStream tokens;

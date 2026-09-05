@@ -57,6 +57,7 @@ sources=(
     "$root/src/haard/type_table/expression_typer.cpp"
     "$root/src/haard/name_resolver/overload_resolver.cpp"
     "$root/src/haard/type_table/type_builder.cpp"
+    "$root/src/haard/type_table/instantiator.cpp"
     "$root/src/haard/name_resolver/name_resolver.cpp"
     "$root/src/haard/name_resolver/use_resolver.cpp"
     "$root/src/haard/statement_checker/statement_checker.cpp"

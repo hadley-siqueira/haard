@@ -21,31 +21,7 @@ void SymbolCollector::collect() {
     // declaration that answers -- so collecting every function before every
     // class would put a name list in an order the source never wrote
     for (u32 node : query.get_declarations()) {
-        switch (module->get_ast()->get_node(node)->get_kind()) {
-        case AST_FUNCTION:
-            collect_function(scope, node);
-            break;
-
-        case AST_CLASS:
-            collect_type(scope, node, SYMBOL_CLASS);
-            break;
-
-        case AST_STRUCT:
-            collect_type(scope, node, SYMBOL_STRUCT);
-            break;
-
-        case AST_ENUM:
-            collect_type(scope, node, SYMBOL_ENUM);
-            break;
-
-        case AST_UNION:
-            collect_type(scope, node, SYMBOL_UNION);
-            break;
-
-        default:
-            collect_binding(scope, node);
-            break;
-        }
+        collect_one(scope, node, "");
     }
 
     // and only now the names an assignment declares by being written, because
@@ -64,6 +40,54 @@ void SymbolCollector::collect() {
     }
 
     collect_implicit(module->get_ast()->get_root(), table->get_module_scope());
+}
+
+void SymbolCollector::collect_declaration(u32 scope, u32 declaration,
+                                          const std::string& name) {
+    SymbolTable* table = module->get_symbols();
+
+    collect_one(scope, declaration, name);
+
+    scope_of.clear();
+
+    for (u32 index = 1; index < table->get_scope_count(); index++) {
+        u32 owner = table->get_scope(index)->owner;
+
+        if (owner != 0) {
+            scope_of[owner] = index;
+        }
+    }
+
+    collect_implicit(declaration, scope);
+}
+
+void SymbolCollector::collect_one(u32 scope, u32 node,
+                                  const std::string& name) {
+    switch (module->get_ast()->get_node(node)->get_kind()) {
+    case AST_FUNCTION:
+        collect_function(scope, node, name);
+        break;
+
+    case AST_CLASS:
+        collect_type(scope, node, SYMBOL_CLASS, name);
+        break;
+
+    case AST_STRUCT:
+        collect_type(scope, node, SYMBOL_STRUCT, name);
+        break;
+
+    case AST_ENUM:
+        collect_type(scope, node, SYMBOL_ENUM, name);
+        break;
+
+    case AST_UNION:
+        collect_type(scope, node, SYMBOL_UNION, name);
+        break;
+
+    default:
+        collect_binding(scope, node);
+        break;
+    }
 }
 
 void SymbolCollector::collect_implicit(u32 node, u32 scope) {
@@ -133,8 +157,10 @@ bool SymbolCollector::in_view(u32 scope, u32 name) {
 }
 
 void SymbolCollector::collect_type(u32 scope, u32 declaration,
-                                   SymbolKind kind) {
-    declare(scope, query.get_declaration_name(declaration), kind, declaration);
+                                   SymbolKind kind, const std::string& name) {
+    declare(scope,
+            name.size() > 0 ? name : query.get_declaration_name(declaration),
+            kind, declaration);
 
     u32 body = module->get_symbols()->open_scope(scope, declaration);
 
@@ -149,7 +175,7 @@ void SymbolCollector::collect_type(u32 scope, u32 declaration,
                 : SYMBOL_FIELD;
 
         if (member_kind == SYMBOL_FUNCTION) {
-            collect_function(body, member);
+            collect_function(body, member, "");
         } else {
             declare(body, query.get_declaration_name(member), SYMBOL_FIELD,
                     member);
@@ -157,9 +183,11 @@ void SymbolCollector::collect_type(u32 scope, u32 declaration,
     }
 }
 
-void SymbolCollector::collect_function(u32 scope, u32 declaration) {
-    declare(scope, query.get_declaration_name(declaration), SYMBOL_FUNCTION,
-            declaration);
+void SymbolCollector::collect_function(u32 scope, u32 declaration,
+                                       const std::string& name) {
+    declare(scope,
+            name.size() > 0 ? name : query.get_declaration_name(declaration),
+            SYMBOL_FUNCTION, declaration);
 
     u32 inside = module->get_symbols()->open_scope(scope, declaration);
 

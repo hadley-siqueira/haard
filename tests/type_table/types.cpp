@@ -95,8 +95,20 @@ static std::string render(u32 module, u32 type) {
     case TYPE_GENERIC:
         return declaration_name(module, entry->subject);
 
-    case TYPE_NAMED:
+    case TYPE_NAMED: {
         out = declaration_name(entry->module, entry->subject);
+
+        // An instantiation is a class of its own (record 0002) and carries no
+        // arguments in its type, so without this every clone of one generic
+        // renders as the same word and the golden stops telling them apart.
+        // Its arguments belong to the declaring module's table
+        const Instantiation* made = compilation.get_module(entry->module)
+                                        ->get_instantiation(entry->subject);
+
+        if (made != nullptr) {
+            arguments = made->arguments;
+            module = entry->module;
+        }
 
         if (arguments.size() == 0) {
             return out;
@@ -109,6 +121,7 @@ static std::string render(u32 module, u32 type) {
         }
 
         return out + ">";
+    }
 
     default:
         break;

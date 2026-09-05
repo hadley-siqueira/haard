@@ -42,15 +42,21 @@ namespace haard {
             // It is the same reason the use pass is a walk of its own: a phase
             // that reads across modules cannot run inside the walk that fills
             // them.
-            void collect(u32 module);
-            void infer(u32 module);
+            //
+            // Each gives back whether it typed anything, because record
+            // 0002's instantiation clones a declaration into the module that
+            // **declared** the generic -- which may be a module this walk has
+            // already passed. So the caller goes round again until a round
+            // types nothing
+            bool collect(u32 module);
+            bool infer(u32 module);
 
         private:
             // 'given' is false in the first pass, where a binding keeps only
             // the type it wrote, and true in the second
             u32 type_of(u32 candidate, u32 scope, bool given);
 
-            void walk(u32 index, bool given);
+            bool walk(u32 index, bool given);
 
             // a 'def': the parameter types in source order and the return type
             // last, per record 0016. A missing return type is void, which is
@@ -58,8 +64,11 @@ namespace haard {
             u32 signature_of(u32 node, u32 scope);
 
             // a field, a parameter, a binding: what it wrote, or what it was
-            // given when it wrote nothing
-            u32 written_or_inferred(u32 node, u32 scope);
+            // given when it wrote nothing. 'written' is what the first pass
+            // built and is handed in rather than built again -- rebuilding it
+            // would ask the same questions of the same tree and report every
+            // answer twice
+            u32 written_or_inferred(u32 node, u32 scope, u32 written);
 
             // the type a class, a struct or a union derives from, and
             // INVALID_TYPE for everything else
@@ -75,6 +84,12 @@ namespace haard {
             u32 index;
 
             std::map<u32, u32> scope_of;
+
+            // per module, the last candidate each pass has typed. A round
+            // takes only what is past the mark, so re-entering a module that
+            // grew costs the new declarations and reports nothing twice
+            std::map<u32, u32> collected;
+            std::map<u32, u32> inferred;
     };
 }
 

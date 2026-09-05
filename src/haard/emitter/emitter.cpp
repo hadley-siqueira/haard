@@ -32,6 +32,29 @@ void Emitter::fail(const std::string& message) {
     }
 }
 
+// A generic declaration is not a class, it is what one is made from: record
+// 0002 turns every use of it into a clone, and the clones are what the program
+// is written in terms of. Emitting the original too would write C++ naming
+// type parameters nothing bound.
+//
+// A clone has the parameters in its tree as well -- it is a copy -- so the
+// question is not whether they are there but whether this declaration is one
+// the source wrote
+bool Emitter::is_generic(u32 module_index, u32 declaration) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    if (query.get_generic_parameters(declaration).size() == 0) {
+        return false;
+    }
+
+    u32 candidate = module->get_symbols()->candidate_of(declaration);
+
+    return candidate == 0 || module->get_instantiation(candidate) == nullptr;
+}
+
 bool Emitter::emit(std::ostream& stream) {
     out.str("");
     error.clear();
@@ -80,6 +103,10 @@ void Emitter::emit_forward_declarations() {
                 continue;
             }
 
+            if (is_generic(i, declaration)) {
+                continue;
+            }
+
             u32 candidate = module->get_symbols()->candidate_of(declaration);
 
             if (candidate == 0) {
@@ -105,7 +132,8 @@ void Emitter::emit_types() {
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if (kind == AST_CLASS || kind == AST_STRUCT) {
+            if ((kind == AST_CLASS || kind == AST_STRUCT)
+                && !is_generic(i, declaration)) {
                 emit_type(i, declaration);
             }
         }
@@ -407,6 +435,10 @@ void Emitter::emit_prototypes() {
         query.set_module(module);
 
         for (u32 function : query.get_functions()) {
+            if (is_generic(i, function)) {
+                continue;
+            }
+
             u32 candidate = module->get_symbols()->candidate_of(function);
 
             if (candidate == 0) {
@@ -457,13 +489,18 @@ void Emitter::emit_bodies() {
         query.set_module(module);
 
         for (u32 function : query.get_functions()) {
+            if (is_generic(i, function)) {
+                continue;
+            }
+
             emit_function_body(i, function, 0);
         }
 
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if (kind != AST_CLASS && kind != AST_STRUCT) {
+            if (kind != AST_CLASS && kind != AST_STRUCT
+                || is_generic(i, declaration)) {
                 continue;
             }
 

@@ -28,6 +28,26 @@ u32 AstBuilder::add_child(u32 parent, u32 last, u32 child) {
     return child;
 }
 
+u32 AstBuilder::clone(u32 node) {
+    if (node == 0) {
+        return 0;
+    }
+
+    // read before pushing: a push may move the vector the node lives in, so
+    // nothing here holds an AstNode* across a call that builds one
+    AstNodeKind kind = ast->get_node(node)->get_kind();
+    u32 token = ast->get_node(node)->get_token();
+    u32 copy = make_node(kind, token);
+    u32 last = 0;
+
+    for (u32 child = ast->get_node(node)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        last = add_child(copy, last, clone(child));
+    }
+
+    return copy;
+}
+
 // a module is the root of a haard tree by definition, so building one is what
 // tells the Ast where a walk starts
 u32 AstBuilder::make_module() {

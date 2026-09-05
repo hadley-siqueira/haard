@@ -46,6 +46,16 @@ namespace haard {
             // appends and gives back the new last child, to be passed in again
             u32 add_child(u32 parent, u32 last, u32 child);
 
+            // A subtree copied node for node into the same tree, sharing the
+            // tokens it was written with. Record 0002 instantiates a generic
+            // by cloning its declaration, and every phase after that reads the
+            // clone the way it reads anything the parser built -- so the copy
+            // has to be a real tree and not a view of one.
+            //
+            // The copy's root gets no sibling: it is about to be given one by
+            // whoever appends it
+            u32 clone(u32 node);
+
             u32 make_module();
 
             u32 make_import(u32 token, u32 path, u32 alias);

@@ -250,22 +250,37 @@ void Compilation::collect_symbols(u32 index) {
 
 void Compilation::collect_types() {
     TypeCollector types;
+    bool grew;
 
     types.set_compilation(this);
 
-    for (u32 i = 0; i < modules.size(); i++) {
-        if (modules[i]->is_parsed()) {
-            types.collect(i);
+    // Round and round, and it is the module loop's shape a third time.
+    // Record 0002 instantiates a generic by cloning its declaration into the
+    // module that **wrote** it, which may be a module this loop has already
+    // passed -- so one pass over the list is not enough. Each call takes only
+    // the declarations it has not seen, so going round again is cheap and
+    // reports nothing twice
+    do {
+        grew = false;
+
+        for (u32 i = 0; i < modules.size(); i++) {
+            if (modules[i]->is_parsed()) {
+                grew = types.collect(i) || grew;
+            }
         }
-    }
+    } while (grew);
 
     // and only then what a binding was given, because inferring it may resolve
     // a call whose candidate lives in a module the first loop reached later
-    for (u32 i = 0; i < modules.size(); i++) {
-        if (modules[i]->is_parsed()) {
-            types.infer(i);
+    do {
+        grew = false;
+
+        for (u32 i = 0; i < modules.size(); i++) {
+            if (modules[i]->is_parsed()) {
+                grew = types.infer(i) || grew;
+            }
         }
-    }
+    } while (grew);
 }
 
 void Compilation::resolve_uses() {
