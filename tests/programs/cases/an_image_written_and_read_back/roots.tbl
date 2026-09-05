@@ -1,0 +1,15 @@
+# What a build system would write, and the only thing 'hdc' reads to resolve
+# an import -- it searches nowhere else (record 0010).
+#
+# A root block is 'root <path> = <name>': the path is where the files are,
+# relative to THIS file, and the name is what an import spells. The indented
+# lines under it are that root's own dependencies, and they are why 'ppm' can
+# import std while 'myapp' cannot see anything ppm imports privately.
+root std = std
+
+root ppm = ppm
+    std -> std
+
+root myapp = myapp
+    std -> std
+    ppm -> ppm

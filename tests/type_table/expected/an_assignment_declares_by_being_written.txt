@@ -1,0 +1,13 @@
+<unnamed>:
+    counter  i32
+    Box  Box
+    main  Box -> Box* -> i32[4] -> i32
+    later  i32
+    value  i32
+    b  Box
+    p  Box*
+    row  i32[4]
+    n  i32
+    inner  i32
+    i  i32
+  18 types interned

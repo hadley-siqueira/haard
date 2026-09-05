@@ -1,0 +1,8 @@
+white 8x6 read back: ok
+gradient 64x48 survived the round trip: ok
+inverted is 255 minus the gradient: ok
+--- files:
+gradient.ppm, 34125 bytes
+inverted.ppm, 34557 bytes
+white.ppm, 587 bytes
+--- exit: 0

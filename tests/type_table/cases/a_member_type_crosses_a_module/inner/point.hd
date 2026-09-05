@@ -1,0 +1,8 @@
+# a third module, and the app never imports it. What it declares reaches the
+# app only as the type of somebody else's member
+struct Point:
+    x : i32
+    y : i32
+
+    def sum : i32
+        return x + y

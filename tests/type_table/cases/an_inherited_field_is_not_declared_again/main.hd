@@ -1,0 +1,35 @@
+# Record 0020 makes a bare name in a method reach a field of a base. So an
+# assignment to one is an ASSIGNMENT, and declares nothing -- which is the
+# whole reason the decision cannot be taken where symbols are collected, since
+# a base is a type and there are no types yet.
+#
+# What the golden has to show is an absence: no 'inherited' and no 'through',
+# and one 'genuinely_new' to prove the pass still declares what nobody else
+# does. 'Middle' is there because the base a name reaches may be any distance
+# up, and 'Held' because it may be an instantiation
+class Base:
+    inherited : i32
+
+class Middle(Base):
+    pass
+
+class Holder<T>:
+    through : T
+
+class Derived(Middle):
+    def write : void
+        inherited = 7
+        genuinely_new = 8
+
+class Uses(Holder<i32>):
+    def write : void
+        through = 9
+
+def main : i32
+    let d : Derived
+    let u : Uses
+
+    d.write()
+    u.write()
+
+    return d.inherited + u.through

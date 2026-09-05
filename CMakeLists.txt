@@ -47,6 +47,7 @@ set(RESOLUTION_TABLE_SRC
 set(SYMBOL_TABLE_SRC
     src/haard/symbol_table/symbol_table.cpp
     src/haard/symbol_table/symbol_collector.cpp
+    src/haard/symbol_table/implicit_collector.cpp
 )
 
 set(MODULE_FINDER_SRC
@@ -181,7 +182,13 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/override_checker/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"
     VERBATIM
 )
+
+# tests/programs runs the real binary through each case's own Makefile, so it
+# is the one suite that needs hdc to exist. Every other one compiles the
+# compiler's sources itself, which is why 'check' needed no dependency before
+add_dependencies(check hdc)

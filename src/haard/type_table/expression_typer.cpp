@@ -307,8 +307,57 @@ u32 ExpressionTyper::allocation(u32 scope, u32 node) {
 
     // record 0016's poison rule: a type that would not build is not a pointer
     // to nothing, it is nothing
-    return made == INVALID_TYPE ? INVALID_TYPE
-                                : module->get_types()->pointer(made);
+    if (made == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    TypeTable* types = module->get_types();
+    u32 written = first_child(node);
+
+    // The length of 'new T[n]' is an ordinary expression and is typed here,
+    // which is the only place it can be. It sits under a **type** node, and a
+    // type resolves no names and types no expressions -- TypeBuilder reads it
+    // only far enough to see whether it is a literal, because a type is a
+    // value and a node is not one.
+    //
+    // Nothing typed it until 2026-09-05, and the emitter found it the way it
+    // has found every one of these: by refusing to name something the type
+    // phase had never looked at
+    if (kind_of(written) == AST_ARRAY_TYPE) {
+        u32 length = second_child(written);
+        u32 counted = length == 0
+                          ? INVALID_TYPE
+                          : type_of(index, scope, length, INVALID_TYPE);
+
+        if (counted != INVALID_TYPE) {
+            Type* entry = types->get_type(counted);
+
+            // how many of something is a whole number of them. An f64 or a
+            // class here is a mistake, and C++ would say so about a line
+            // nobody wrote
+            if (entry->kind != TYPE_BUILTIN || entry->subject > BUILTIN_I64) {
+                report(length, "a length is a whole number, and this is "
+                       + name_of(counted));
+            }
+        }
+    }
+
+    // Hadley, 2026-09-05: 'new T[n]' is a 'T*', which is C++'s answer and the
+    // only one the rest of the language leaves open. 'T[]' is already sugar
+    // for 'Array<T>' (record 0022), and 'Array<T>' is the class you *build*
+    // with this, so it cannot also be what this gives back.
+    //
+    // The length is not in the answer, and that is the whole cost: a 'T*' does
+    // not say whether it came from 'new' or from 'new[]', so which of 'delete'
+    // and 'delete[]' to write is the author's to know. C++ pays the same
+    // price, and record 0023 already had 'String' carrying its own 'capacity'
+    // -- which only makes sense if the pointer does not carry it
+    if (types->get_type(made)->kind == TYPE_ARRAY) {
+        return types->pointer(
+            types->get_argument(types->get_type(made)->first_argument));
+    }
+
+    return types->pointer(made);
 }
 
 // The 'init' of one class, and only its own: a base's runs on its own before
@@ -528,15 +577,29 @@ u32 ExpressionTyper::literal(u32 node, u32 expected, BuiltinType fallback) {
         return INVALID_TYPE;
     }
 
-    // a float literal is not an integer of any width, and an integer literal
-    // becoming a float would be the conversion record 0018 does not have
+    // Record 0018: a literal has no type of its own and takes the one asked
+    // for, but only inside its own family -- becoming anything else would be
+    // the numeric conversion the record does not have.
+    //
+    // Three families and not two, which this read as two until 2026-09-05: an
+    // integer literal is any integer width, a float literal is an f32 or an
+    // f64, and a **char literal is a char and nothing else**. A char fell into
+    // the float branch, so 'let e : f64 = 'w'' passed in silence and the
+    // emitter wrote 'double e = 'w';', while 'let d : i32 = 'z'' was refused
+    // in words that called it a floating point literal
     bool integer = kind_of(node) == AST_INTEGER_LITERAL;
+    bool character = kind_of(node) == AST_CHAR_LITERAL;
     bool wants_integer = limit_of((BuiltinType) wanted->subject) > 0;
+    bool wants_char = wanted->subject == BUILTIN_CHAR;
+    bool same_family = character ? wants_char
+                                 : (!wants_char && integer == wants_integer);
 
-    if (integer != wants_integer) {
-        report(node, "expected " + name_of(expected) + ", found " +
-               std::string(integer ? "an integer" : "a floating point") +
-               " literal");
+    if (!same_family) {
+        report(node, "expected " + name_of(expected) + ", found "
+               + std::string(character  ? "a character"
+                             : integer  ? "an integer"
+                                        : "a floating point")
+               + " literal");
 
         return INVALID_TYPE;
     }
@@ -565,10 +628,20 @@ u32 ExpressionTyper::identifier(u32 scope, u32 node) {
     module->get_resolutions()->set_declaration(node, found[0].module,
                                                found[0].candidate);
 
-    return compilation->get_module(found[0].module)
-        ->get_symbols()
-        ->get_candidate(found[0].candidate)
-        ->type;
+    // and translated, for the reason record 0016 gives: a bare name reaches a
+    // global of an imported module, and a field of a base that lives in one
+    // (record 0020), and a type index means nothing outside its own table.
+    //
+    // This hid until 2026-09-05 behind the one decision that makes an index
+    // portable: a **builtin** holds the same index in every module, which is
+    // what seeding them at fixed positions bought. So every cross-module bare
+    // name anyone had written -- an inherited 'wheels : i32' -- was right by
+    // construction, and one of a class type would not have been
+    return builder.translate(index, found[0].module,
+                             compilation->get_module(found[0].module)
+                                 ->get_symbols()
+                                 ->get_candidate(found[0].candidate)
+                                 ->type);
 }
 
 u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
@@ -904,10 +977,21 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
     module->get_resolutions()->set_declaration(name, found[0].module,
                                                found[0].candidate);
 
-    return compilation->get_module(found[0].module)
-        ->get_symbols()
-        ->get_candidate(found[0].candidate)
-        ->type;
+    // and **translated**, because the member may be declared in another
+    // module and record 0016's rule is that a type index means nothing
+    // outside the table it came from.
+    //
+    // It was not, until 2026-09-05. So a field whose type came from a third
+    // module -- 'many : Point*' on a class of lib.holder, read from an app
+    // that imports only lib.holder -- got whatever the app's own table held
+    // at that number. The diagnostic told on it by naming a class of the
+    // reader's module: *"Holder has no member named 'x'"* about a Point, and
+    // *"F2 has no member named 'x'"* once the reader declared two structs
+    return builder.translate(index, found[0].module,
+                             compilation->get_module(found[0].module)
+                                 ->get_symbols()
+                                 ->get_candidate(found[0].candidate)
+                                 ->type);
 }
 
 u32 ExpressionTyper::class_of(u32 type, u32& owner) {

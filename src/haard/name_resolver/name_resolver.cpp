@@ -15,6 +15,39 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
                                              const std::string& name) {
     std::vector<Candidacy> found;
     u32 hash = hash_name(name);
+
+    if (gather_in_module(found, module, scope, hash, name)) {
+        return found;
+    }
+
+    // and then the imports, in the order the source wrote them, which is what
+    // record 0009 resolves a bare name by. Nothing was merged at the import,
+    // so each dependency is asked in its own terms
+    Module* importer = compilation->get_module(module);
+
+    for (const Dependency& dependency : importer->get_dependencies()) {
+        u32 symbol = module_symbol(dependency.module, hash, name);
+
+        if (symbol != 0) {
+            gather(found, dependency.module, symbol);
+        }
+    }
+
+    return found;
+}
+
+std::vector<Candidacy> NameResolver::resolve_in_module(
+    u32 module, u32 scope, const std::string& name) {
+    std::vector<Candidacy> found;
+
+    gather_in_module(found, module, scope, hash_name(name), name);
+
+    return found;
+}
+
+bool NameResolver::gather_in_module(std::vector<Candidacy>& found, u32 module,
+                                    u32 scope, u32 hash,
+                                    const std::string& name) {
     Module* importer = compilation->get_module(module);
     SymbolTable* table = importer->get_symbols();
 
@@ -29,7 +62,6 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
     // name -- record 0020 working inside one file and nowhere else. The test
     // belongs to the lookup that needs it and not to the loop
     u32 interned = importer->get_strings()->find(hash, name);
-    bool shadowed = false;
 
     for (u32 current = scope; current != 0;
          current = table->get_scope(current)->parent) {
@@ -44,8 +76,7 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
             gather(found, module, symbol);
 
             if (!only_functions(module, symbol)) {
-                shadowed = true;
-                break;
+                return true;
             }
         }
 
@@ -54,27 +85,11 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
         // part of what the class means, not something outside it
         if (owner != 0 && declares_a_type(module, owner)
             && gather_bases(found, module, owner, hash, name)) {
-            shadowed = true;
-            break;
+            return true;
         }
     }
 
-    if (shadowed) {
-        return found;
-    }
-
-    // and then the imports, in the order the source wrote them, which is what
-    // record 0009 resolves a bare name by. Nothing was merged at the import,
-    // so each dependency is asked in its own terms
-    for (const Dependency& dependency : importer->get_dependencies()) {
-        u32 symbol = module_symbol(dependency.module, hash, name);
-
-        if (symbol != 0) {
-            gather(found, dependency.module, symbol);
-        }
-    }
-
-    return found;
+    return false;
 }
 
 bool NameResolver::declares_a_type(u32 module, u32 node) {

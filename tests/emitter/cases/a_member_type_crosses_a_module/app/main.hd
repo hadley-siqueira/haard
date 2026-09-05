@@ -1,0 +1,41 @@
+# A member whose type comes from a module this one does not import, and a bare
+# name reaching an inherited one. Both were read from the DECLARING module's
+# type table and used in this one's, which record 0016 forbids: a type index
+# means nothing outside the table it came from.
+#
+# The two structs are the whole point of being here. They shift this module's
+# table, and the untranslated index landed on whatever sat at that number --
+# so before 2026-09-05 the diagnostic named a class of the READER: "Holder has
+# no member named 'x'" about a Point, and "F2 has no member named 'x'" once
+# these two existed. The answer came from an unrelated table.
+#
+# The bare name hid behind the one decision that makes an index portable: a
+# **builtin** holds the same index in every module (record 0016 seeds them at
+# fixed positions), so every cross-module bare name anyone had written -- an
+# inherited 'n : i32' -- was right by construction. One of a class type was
+# not.
+import lib.holder
+
+struct F1:
+    a : i32
+
+struct F2:
+    b : i32
+
+class Derived(Base):
+    def through_a_bare_name : i32
+        origin.x = 7
+        origin.y = 5
+
+        # and a method of it, which is the same lookup one step further
+        return origin.sum()
+
+def main : i32
+    let h : Holder
+    let d : Derived
+
+    # through a '.', on a field whose type is from the third module
+    h.one.x = 20
+    h.one.y = 10
+
+    return h.one.sum() + d.through_a_bare_name()

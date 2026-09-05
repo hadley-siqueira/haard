@@ -1,0 +1,7 @@
+root inner = inner
+
+root lib = lib
+    inner -> inner
+
+root app = app
+    lib -> lib

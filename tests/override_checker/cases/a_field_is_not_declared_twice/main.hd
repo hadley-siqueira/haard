@@ -1,0 +1,30 @@
+# A field is not an override and cannot be one. Two fields of one name give
+# the object both, and record 0020 makes a bare name in a method of the base
+# still mean the base's -- so 'n' written in Top's method and 'n' written in
+# Bottom's read two different pieces of memory, and nothing in the source says
+# which. There is no rule that makes that useful.
+#
+# Middle is here because the field it hides may be any distance up, Held
+# because it may come from an instantiation, and 'tag' and 'describe' because
+# a name that is only a method's, or only this class's, is nobody's business
+class Top:
+    n : i32
+
+    def describe : i32
+        return n
+
+class Middle(Top):
+    tag : i32
+
+class Bottom(Middle):
+    n : i32
+    mine : i32
+
+    def describe : i32
+        return n
+
+class Held<T>:
+    kept : T
+
+class Uses(Held<i32>):
+    kept : i32

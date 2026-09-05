@@ -20,8 +20,6 @@ scope 7  owner a block at node 33  parent 6
   i
     variable at node 38
 scope 8  owner a for at node 44  parent 3
-  j
-    variable at node 43
 scope 9  owner a block at node 55  parent 8
   counted
     variable at node 60

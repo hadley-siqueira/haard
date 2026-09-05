@@ -1,0 +1,19 @@
+class Vehicle:
+    wheels : i32
+
+    def describe : i32
+        return wheels
+
+    # covariant, so which candidate won is readable in the golden: the binding
+    # below is a Car* only if Car's was chosen
+    def self : Vehicle*
+        return this
+
+class Car(Vehicle):
+    doors : i32
+
+    def describe : i32
+        return wheels * 10
+
+    def self : Car*
+        return this

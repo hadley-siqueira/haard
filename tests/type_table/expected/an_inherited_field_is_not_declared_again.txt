@@ -1,0 +1,19 @@
+<unnamed>:
+    Base  Base
+    Middle  Middle
+    Holder  Holder
+    Derived  Derived
+    Uses  Uses
+    main  i32
+    Holder  Holder<i32>
+    inherited  i32
+    T  T
+    through  T
+    write  void
+    genuinely_new  i32
+    write  void
+    d  Derived
+    u  Uses
+    T  i32
+    through  i32
+  23 types interned

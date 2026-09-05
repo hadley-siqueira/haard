@@ -5,6 +5,7 @@
 #include <haard/name_resolver/use_resolver.h>
 #include <haard/override_checker/override_checker.h>
 #include <haard/statement_checker/statement_checker.h>
+#include <haard/symbol_table/implicit_collector.h>
 #include <haard/symbol_table/symbol_collector.h>
 #include <haard/type_table/type_collector.h>
 #include <stdexcept>
@@ -250,9 +251,11 @@ void Compilation::collect_symbols(u32 index) {
 
 void Compilation::collect_types() {
     TypeCollector types;
+    ImplicitCollector implicit;
     bool grew;
 
     types.set_compilation(this);
+    implicit.set_compilation(this);
 
     // Round and round, and it is the module loop's shape a third time.
     // Record 0002 instantiates a generic by cloning its declaration into the
@@ -266,6 +269,23 @@ void Compilation::collect_types() {
         for (u32 i = 0; i < modules.size(); i++) {
             if (modules[i]->is_parsed()) {
                 grew = types.collect(i) || grew;
+            }
+        }
+
+        // And only now the names an assignment declares by being written, in
+        // the same round and never before it. Deciding that 'n = 1' declares n
+        // means knowing that n is not already something -- and 'something'
+        // includes a field of a **base**, which is a type and so is not there
+        // until the pass above has run.
+        //
+        // It used to ride along in the walk that collects symbols, where the
+        // answer cannot be known, and so it declared a local in front of every
+        // inherited field: the field was never written and the local never
+        // read, with nothing said. A declaration made here is typed by the
+        // next round, which is what the loop was already for
+        for (u32 i = 0; i < modules.size(); i++) {
+            if (modules[i]->is_parsed()) {
+                grew = implicit.declare(i) || grew;
             }
         }
     } while (grew);

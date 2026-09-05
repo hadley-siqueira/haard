@@ -23,42 +23,11 @@ void SymbolCollector::collect() {
     for (u32 node : query.get_declarations()) {
         collect_one(scope, node, "");
     }
-
-    // and only now the names an assignment declares by being written, because
-    // deciding that 'n = 1' declares n means knowing that nothing else in this
-    // module is called n -- including a global written further down the file
-    SymbolTable* table = module->get_symbols();
-
-    scope_of.clear();
-
-    for (u32 index = 1; index < table->get_scope_count(); index++) {
-        u32 owner = table->get_scope(index)->owner;
-
-        if (owner != 0) {
-            scope_of[owner] = index;
-        }
-    }
-
-    collect_implicit(module->get_ast()->get_root(), table->get_module_scope());
 }
 
 void SymbolCollector::collect_declaration(u32 scope, u32 declaration,
                                           const std::string& name) {
-    SymbolTable* table = module->get_symbols();
-
     collect_one(scope, declaration, name);
-
-    scope_of.clear();
-
-    for (u32 index = 1; index < table->get_scope_count(); index++) {
-        u32 owner = table->get_scope(index)->owner;
-
-        if (owner != 0) {
-            scope_of[owner] = index;
-        }
-    }
-
-    collect_implicit(declaration, scope);
 }
 
 void SymbolCollector::collect_one(u32 scope, u32 node,
@@ -88,72 +57,6 @@ void SymbolCollector::collect_one(u32 scope, u32 node,
         collect_binding(scope, node);
         break;
     }
-}
-
-void SymbolCollector::collect_implicit(u32 node, u32 scope) {
-    if (node == 0) {
-        return;
-    }
-
-    auto opened = scope_of.find(node);
-
-    if (opened != scope_of.end()) {
-        scope = opened->second;
-    }
-
-    // source order is the whole of it: the first 'n = 1' declares and every
-    // one after it finds what the first left behind
-    if (module->get_ast()->get_node(node)->get_kind() == AST_ASSIGNMENT) {
-        declare_target(scope, node);
-    }
-
-    for (u32 child : query.get_children(node)) {
-        collect_implicit(child, scope);
-    }
-}
-
-void SymbolCollector::declare_target(u32 scope, u32 assignment) {
-    u32 target = module->get_ast()->get_node(assignment)->get_children();
-
-    // one identifier and nothing else. 'a.b', 'p->x' and 'a[i]' all name
-    // something that has to exist already, and a tuple target is written with
-    // a 'let'
-    if (target == 0
-        || module->get_ast()->get_node(target)->get_kind() != AST_IDENTIFIER) {
-        return;
-    }
-
-    std::string name =
-        std::string(module->get_token_value(
-            module->get_ast()->get_node(target)->get_token()));
-
-    // interning a name that turns out to be there already costs nothing: the
-    // table gives back the entry it has
-    u32 interned = module->get_strings()->intern(name);
-
-    if (in_view(scope, interned)) {
-        return;
-    }
-
-    // the candidate points at the ASSIGNMENT and not at the identifier, the
-    // same way a 'let' points at its binding: from the name alone there is no
-    // way back to the value it was given, and that value is what the type
-    // phase infers the name's type from
-    module->get_symbols()->declare(scope, interned, SYMBOL_VARIABLE,
-                                   assignment);
-}
-
-bool SymbolCollector::in_view(u32 scope, u32 name) {
-    SymbolTable* table = module->get_symbols();
-
-    for (u32 current = scope; current != 0;
-         current = table->get_scope(current)->parent) {
-        if (table->find(current, name) != 0) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void SymbolCollector::collect_type(u32 scope, u32 declaration,

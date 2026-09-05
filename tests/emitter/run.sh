@@ -63,6 +63,7 @@ sources=(
     "$root/src/haard/statement_checker/statement_checker.cpp"
     "$root/src/haard/override_checker/override_checker.cpp"
     "$root/src/haard/symbol_table/symbol_collector.cpp"
+    "$root/src/haard/symbol_table/implicit_collector.cpp"
     "$root/src/haard/source_file/source_file.cpp"
     "$root/src/haard/log/log.cpp"
     "$root/src/haard/scanner/scanner.cpp"
@@ -123,9 +124,23 @@ for directory in "${cases[@]}"; do
 --- did not compile
 $errors"
             else
-                timeout 5 "$build/$name.bin"
+                # run it from the build directory, so a case that writes a
+                # file writes it there and not into the repository
+                printed=$(cd "$build" && timeout 5 "./$name.bin" 2>&1)
+                code=$?
+
+                # what it printed, and only when it printed something: a case
+                # that says what it did through its exit status alone reads
+                # better without an empty section, and every case wrote before
+                # std.io existed
+                if [ -n "$printed" ]; then
+                    got="$got
+--- output:
+$printed"
+                fi
+
                 got="$got
---- exit: $?"
+--- exit: $code"
             fi
         fi
     fi

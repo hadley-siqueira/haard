@@ -1,0 +1,48 @@
+# The answer is 42, and it is a sum of things that were all silence until
+# 2026-09-05.
+#
+# Record 0020 made a bare name in a method **reach** a field of a base, and
+# reading one worked from that day. **Writing** one did not: deciding that
+# 'top = x' declares a local was done where symbols are collected, and a base
+# is a type, which is filled by the pass after. So the lookup climbed the
+# scope chain, found nothing, and declared a local that stood in front of the
+# field for the rest of the program -- the field never written, the local
+# never read, and nothing said.
+#
+# Stack<i32> is the base on purpose: an instantiation is a class like any
+# other by the time anything looks at it, which is what record 0002's
+# monomorphisation is for. 'total' reaches the override through a base
+# pointer, so the write has to have landed in the base's field and not beside
+# it, or peek() gives back what push() never wrote
+class Stack<T>:
+    top : T
+
+    def push : void
+        @x : T
+        top = x
+
+    def peek : T
+        return top
+
+class Counting(Stack<i32>):
+    count : i32
+
+    def push : void
+        @x : i32
+        top = x * 2
+        count = count + 1
+
+def total : i32
+    @s : Stack<i32>*
+    s.push(10)
+    s.push(6)
+    return s.peek()
+
+def main : i32
+    let c : Counting
+    let plain : Stack<i32>
+
+    c.count = 0
+    plain.push(28)
+
+    return total(&c) + c.count + plain.peek()

@@ -1,0 +1,10 @@
+error: Top already declares this field
+  --> main.hd:20:5
+   |
+20 |     n : i32
+   |     ^
+error: Held already declares this field
+  --> main.hd:30:5
+   |
+30 |     kept : i32
+   |     ^^^^

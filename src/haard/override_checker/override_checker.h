@@ -44,12 +44,33 @@ namespace haard {
             // every method of this class, against the classes above it
             void check_class(u32 candidate);
 
+            // every class above this one, nearest first. Single inheritance
+            // makes it a chain and never a search, and a class reached twice
+            // is a cycle in the bases -- which nothing rejects yet, so the
+            // walk stops there and says nothing
+            std::vector<Candidacy> bases_of(u32 super);
+
+            // this name's symbol in that base's body, 0 when it declares
+            // nothing under it
+            u32 symbol_in(const Candidacy& base, u32 hash,
+                          const std::string& name);
+
             // the method of a base that this one overrides, as a candidacy
             // with module 0 when it overrides nothing. Same name, same
             // parameters -- record 0020's rule, and the first one found going
             // up, because a class between the two would have overridden it
             // first
             Candidacy overridden_by(u32 candidate, u32 super);
+
+            // the nearest class above this one that declares a field of this
+            // name, with candidate 0 when none does. The CLASS and not the
+            // field: the span of the diagnostic already points at the field,
+            // so what the message has to say is where the other one is
+            Candidacy declared_above(u32 candidate, u32 super);
+
+            // the name a declaration in another module was written with, read
+            // through that module's own query
+            std::string name_of_declaration(const Candidacy& one);
 
             // whether a method may give this back where the base gives that.
             //

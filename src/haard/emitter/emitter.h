@@ -164,12 +164,12 @@ namespace haard {
             // written 'this->' in C++
             u32 holder_of(u32 module, u32 candidate);
 
-            // record 0026: a value comes into being running its class's 'init'
-            // with no arguments, and a class whose every 'init' needs one
-            // cannot. Refused here by name, since there is no syntax yet for
-            // writing a base's arguments
-            void require_default_construction(u32 module, u32 type,
-                                              const std::string& where);
+            // the C++ body of one of the standard library's native functions,
+            // and "" for every other function in the program. Record 0030
+            std::string native_body(u32 module, u32 node);
+
+            std::string name_at_param(u32 module, u32 parameter);
+
 
             bool is_pointer(u32 module, u32 node);
             u32 type_at(u32 module, u32 node);

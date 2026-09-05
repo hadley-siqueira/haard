@@ -74,6 +74,39 @@ namespace haard {
             // INVALID_TYPE for everything else
             u32 super_of(u32 candidate, u32 scope);
 
+            // Record 0026 runs a class's own 'init' with no arguments wherever
+            // a value of it comes into being with none written: a local, a
+            // global, a field held by value, and the base of a class being
+            // built. A class whose every 'init' needs an argument cannot do
+            // that, and there is no syntax yet for writing a base's arguments.
+            //
+            // A class that wrote **no** 'init' is not that case and never was:
+            // C++ builds it for nothing, and its implicit constructor runs the
+            // constructors of its class-typed fields down the whole chain --
+            // checked by running one, 2026-09-05. So there is nothing to
+            // generate, and the only thing 5.5 was ever about is **where the
+            // question is asked**.
+            //
+            // It was asked in the emitter, which meant 'hdc file.hd' said the
+            // program was fine and 'hdc --emit-cpp file.hd' said it was not,
+            // and the message it gave had no file, no line and no caret --
+            // alone among this compiler's diagnostics. It belongs here, where
+            // a declaration gets its type, which is also the one place that
+            // holds the node to point at
+            void require_default_construction(u32 candidate);
+
+            // whether a value of this type can come into being with no
+            // arguments written. True for everything that is not a class
+            bool builds_with_nothing(u32 type);
+
+            // the identifier a declaration was named with, which is where a
+            // diagnostic about the declaration points. NOT the written type:
+            // a composite type node carries no token of its own and reporting
+            // at one lands on the first token of the file
+            u32 name_node_of(u32 declaration);
+
+            void report(u32 node, const std::string& message);
+
         private:
             Compilation* compilation;
             TypeBuilder builder;

@@ -65,6 +65,24 @@ void OverrideChecker::check_class(u32 candidate) {
          symbol = table->get_symbol(symbol)->sibling_or_next) {
         for (u32 method = table->get_symbol(symbol)->candidates; method != 0;
              method = table->get_candidate(method)->next_candidate) {
+            // a field is not an override and cannot be one. Two fields of one
+            // name give the object both, and record 0020 makes a bare name in
+            // a method of the base still mean the base's -- so the same name
+            // written in two methods of one object reads two different pieces
+            // of memory, and nothing in the source says which. There is no
+            // rule that makes that useful, so it is an error and not shadowing
+            if (table->get_candidate(method)->kind == SYMBOL_FIELD) {
+                Candidacy owner = declared_above(method, super);
+
+                if (owner.candidate != 0) {
+                    report(name_node_of(table->get_candidate(method)->ast_node),
+                           name_of_declaration(owner)
+                               + " already declares this field");
+                }
+
+                continue;
+            }
+
             if (table->get_candidate(method)->kind != SYMBOL_FUNCTION
                 || table->get_candidate(method)->type == INVALID_TYPE) {
                 continue;
@@ -91,14 +109,9 @@ void OverrideChecker::check_class(u32 candidate) {
     }
 }
 
-Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super) {
-    SymbolTable* table = module->get_symbols();
-    std::string name = query.get_declaration_name(
-        table->get_candidate(candidate)->ast_node);
-    std::vector<u32> wanted = parameters_of(index, candidate);
-    u32 hash = hash_name(name);
+std::vector<Candidacy> OverrideChecker::bases_of(u32 super) {
+    std::vector<Candidacy> chain;
     u32 above = super;
-    std::vector<u32> seen;
 
     while (above != INVALID_TYPE) {
         Type* entry = module->get_types()->get_type(above);
@@ -107,31 +120,64 @@ Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super) {
             break;
         }
 
-        u32 owner = entry->module;
-        u32 declaration = entry->subject;
-        u32 key = owner * 1000003 + declaration;
+        Candidacy one = Candidacy{entry->module, entry->subject};
+        bool seen = false;
 
         // a cycle in the bases, which nothing rejects yet. Stopping keeps the
         // walk finite and is not a diagnostic
-        for (u32 already : seen) {
-            if (already == key) {
-                return Candidacy{0, 0};
+        for (const Candidacy& already : chain) {
+            if (already.module == one.module
+                && already.candidate == one.candidate) {
+                seen = true;
+                break;
             }
         }
 
-        seen.push_back(key);
+        if (seen) {
+            break;
+        }
 
-        Module* holder = compilation->get_module(owner);
-        SymbolTable* theirs = holder->get_symbols();
+        chain.push_back(one);
 
-        // the name means nothing in the base's module until it is interned
-        // there -- record 0013's rule for a lookup that crosses an import
-        u32 interned = holder->get_strings()->find(hash, name);
-        u32 body = theirs->scope_owned_by(
-            theirs->get_candidate(declaration)->ast_node);
-        u32 symbol = interned == INVALID_STRING || body == 0
-                         ? 0
-                         : theirs->find(body, interned);
+        SymbolTable* theirs =
+            compilation->get_module(one.module)->get_symbols();
+
+        above = builder.translate(index, one.module,
+                                  theirs->get_candidate(one.candidate)->super);
+    }
+
+    return chain;
+}
+
+u32 OverrideChecker::symbol_in(const Candidacy& base, u32 hash,
+                               const std::string& name) {
+    Module* holder = compilation->get_module(base.module);
+    SymbolTable* theirs = holder->get_symbols();
+
+    // the name means nothing in the base's module until it is interned
+    // there -- record 0013's rule for a lookup that crosses an import
+    u32 interned = holder->get_strings()->find(hash, name);
+    u32 body =
+        theirs->scope_owned_by(theirs->get_candidate(base.candidate)->ast_node);
+
+    if (interned == INVALID_STRING || body == 0) {
+        return 0;
+    }
+
+    return theirs->find(body, interned);
+}
+
+Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super) {
+    SymbolTable* table = module->get_symbols();
+    std::string name = query.get_declaration_name(
+        table->get_candidate(candidate)->ast_node);
+    std::vector<u32> wanted = parameters_of(index, candidate);
+    u32 hash = hash_name(name);
+
+    for (const Candidacy& base : bases_of(super)) {
+        SymbolTable* theirs =
+            compilation->get_module(base.module)->get_symbols();
+        u32 symbol = symbol_in(base, hash, name);
 
         for (u32 one = symbol == 0 ? 0 : theirs->get_symbol(symbol)->candidates;
              one != 0; one = theirs->get_candidate(one)->next_candidate) {
@@ -143,16 +189,50 @@ Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super) {
             // record 0020: the same parameters and nothing else. The first one
             // found going up is the one that matters -- a class in between
             // would have overridden it first, and this method overrides that
-            if (parameters_of(owner, one) == wanted) {
-                return Candidacy{owner, one};
+            if (parameters_of(base.module, one) == wanted) {
+                return Candidacy{base.module, one};
             }
         }
-
-        above = builder.translate(
-            index, owner, theirs->get_candidate(declaration)->super);
     }
 
     return Candidacy{0, 0};
+}
+
+Candidacy OverrideChecker::declared_above(u32 candidate, u32 super) {
+    SymbolTable* table = module->get_symbols();
+    std::string name = query.get_declaration_name(
+        table->get_candidate(candidate)->ast_node);
+    u32 hash = hash_name(name);
+
+    for (const Candidacy& base : bases_of(super)) {
+        SymbolTable* theirs =
+            compilation->get_module(base.module)->get_symbols();
+        u32 symbol = symbol_in(base, hash, name);
+
+        for (u32 one = symbol == 0 ? 0 : theirs->get_symbol(symbol)->candidates;
+             one != 0; one = theirs->get_candidate(one)->next_candidate) {
+            // a method of that name is not what this asks about: a field and a
+            // method may share a name the way any two kinds may, and record
+            // 0012 puts both in the candidate list of one symbol
+            if (theirs->get_candidate(one)->kind == SYMBOL_FIELD) {
+                // the class and not the field, which is what the message
+                // names -- the span already points at the field
+                return base;
+            }
+        }
+    }
+
+    return Candidacy{0, 0};
+}
+
+std::string OverrideChecker::name_of_declaration(const Candidacy& one) {
+    Module* holder = compilation->get_module(one.module);
+    AstQuery theirs;
+
+    theirs.set_module(holder);
+
+    return theirs.get_declaration_name(
+        holder->get_symbols()->get_candidate(one.candidate)->ast_node);
 }
 
 bool OverrideChecker::may_give_back(u32 derived, u32 base) {

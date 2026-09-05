@@ -67,7 +67,25 @@ namespace haard {
                                                      const std::string& alias,
                                                      const std::string& name);
 
+            // The same walk with the imports left off: this module's own scope
+            // chain, and the bases of every class along it.
+            //
+            // Which is the question a missing 'let' asks. An assignment to a
+            // bare name declares it when nothing declares it already, and a
+            // name declared here standing in front of an imported one is what
+            // a written 'let' does too -- so what an import brings is not part
+            // of that decision, while what a base declares very much is
+            std::vector<Candidacy> resolve_in_module(u32 module, u32 scope,
+                                                     const std::string& name);
+
         private:
+            // the half of the walk that stays in one module, shared by the two
+            // public entries above. Gives back whether something shadowed,
+            // which is what says the imports are not to be asked
+            bool gather_in_module(std::vector<Candidacy>& found, u32 module,
+                                  u32 scope, u32 hash,
+                                  const std::string& name);
+
             // the candidates of one symbol, appended in declaration order
             void gather(std::vector<Candidacy>& found, u32 module, u32 symbol);
 

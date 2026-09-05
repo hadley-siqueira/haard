@@ -17,6 +17,11 @@
     from_the_base  Derived*
   22 types interned
 diagnostics:
+error: every 'init' of Counter takes an argument, and a base cannot be given one
+  --> main.hd:17:7
+   |
+17 | class Derived(Counter):
+   |       ^^^^^^^
 error: no 'init' of Counter takes these arguments
   --> main.hd:24:22
    |

@@ -1,0 +1,21 @@
+# Both classes live here, and nothing in this file is unusual. What the case
+# is about is the module that does NOT declare them
+class Vehicle:
+    wheels : i32
+
+    def describe : i32
+        return wheels
+
+    # a covariant return, which is what makes *which* candidate won visible:
+    # picking Vehicle's types the call as a Vehicle* and 'doors' is not there
+    def self : Vehicle*
+        return this
+
+class Car(Vehicle):
+    doors : i32
+
+    def describe : i32
+        return wheels * 10
+
+    def self : Car*
+        return this

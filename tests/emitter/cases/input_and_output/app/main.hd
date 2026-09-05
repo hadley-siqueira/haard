@@ -1,0 +1,74 @@
+# Haard's first program that talks to the world. Record 0030.
+#
+# std/io.hd next door is two halves. Below its line, eight functions whose
+# body is 'pass' and whose C++ the emitter writes -- by name, and only inside
+# the module named 'std.io'. Above its line, ordinary Haard: File, write,
+# writeln, the console and a file are all written in the language, on top of
+# one character at a time.
+#
+# What this case proves is the whole of that: a line reaches the terminal, a
+# file is written and read back character by character, and the count is the
+# exit status. Nothing here is in the compiler.
+import std.file
+
+# there is no conversion from an i32 to a char -- record 0018 has none -- so a
+# digit is written by indexing, which is what the language gives instead
+def write_digit : void
+    @where : File*
+    @value : i32
+    let digits = "0123456789"
+
+    where->write(digits[value])
+
+def main : i32
+    let out = console()
+
+    out->writeln("hello from Haard")
+
+    let f = open_write("round.txt")
+
+    # a handle that would not open is null, and the caller is the one that has
+    # to look
+    if f == null:
+        out->writeln("could not open for writing")
+        return 1
+
+    f->writeln("first line")
+    f->writeln("second")
+    f->close()
+
+    let back = open_read("round.txt")
+
+    if back == null:
+        out->writeln("could not open for reading")
+        return 2
+
+    let count = 0
+    let lines = 0
+
+    # 'read' gives back a char and 'at_end' is asked after it, never before.
+    # C answers both at once with an int and -1, and that is exactly what
+    # record 0018 will not have: an i32 does not compare to a char literal, so
+    # 'c == '\n'' would not even be writable. The rule pushed this somewhere
+    # better -- the value and the end are two questions with two types
+    let c = back->read()
+
+    while not back->at_end():
+        count = count + 1
+
+        if c == '\n':
+            lines = lines + 1
+
+        c = back->read()
+
+    back->close()
+
+    out->write("read back ")
+    write_digit(out, lines)
+    out->write(" lines and ")
+    write_digit(out, count / 10)
+    write_digit(out, count % 10)
+    out->writeln(" characters")
+
+    # 'first line\n' is eleven and 'second\n' is seven
+    return count

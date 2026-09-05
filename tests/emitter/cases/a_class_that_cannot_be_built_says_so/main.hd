@@ -1,8 +1,17 @@
 # Record 0026 runs a class's own 'init' with no arguments wherever a value of
 # it comes into being with none written. Every 'init' of Counter needs one, and
-# there is no syntax yet for writing a base's arguments either -- so this is
-# refused by name here, rather than emitted as C++ that g++ would refuse in
-# words about a line nobody wrote.
+# there is no syntax yet for writing a base's arguments either.
+#
+# What this case is for is that the program never reaches the emitter. The
+# question used to be asked there, so 'hdc main.hd' called this file fine and
+# only '--emit-cpp' called it broken -- and the refusal it gave had no file, no
+# line and no caret. Agenda 5.5, closed 2026-09-05: it is asked in the
+# TypeCollector now, where a declaration gets its type, and the golden below is
+# a **diagnostic** rather than an emitter refusal because the phase gate stops
+# the program first.
+#
+# The other three ways in are in tests/type_table; this one is here to say the
+# pipeline stops.
 class Counter:
     n : i32
 

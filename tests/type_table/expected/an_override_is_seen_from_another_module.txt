@@ -1,0 +1,20 @@
+app.main:
+    Dog  app.main.Dog
+    Animal  app.main.Animal
+    main  i32
+    name  i32
+    legs  i32
+    c  lib.vehicle.Car
+    mine  i32
+    back  lib.vehicle.Car*
+  20 types interned
+lib.vehicle:
+    Vehicle  lib.vehicle.Vehicle
+    Car  lib.vehicle.Car
+    wheels  i32
+    describe  i32
+    self  lib.vehicle.Vehicle*
+    doors  i32
+    describe  i32
+    self  lib.vehicle.Car*
+  21 types interned

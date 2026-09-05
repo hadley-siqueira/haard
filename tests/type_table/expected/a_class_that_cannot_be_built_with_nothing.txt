@@ -1,0 +1,45 @@
+<unnamed>:
+    Needs  Needs
+    Fine  Fine
+    ByField  ByField
+    ByBase  ByBase
+    HoldsFine  HoldsFine
+    Aggregate  Aggregate
+    global_one  Needs
+    main  i32
+    n  i32
+    init  i32 -> void
+    count  i32
+    n  i32
+    init  i32 -> void
+    count  i32
+    field  Needs
+    tag  i32
+    ok  Fine
+    held  HoldsFine
+    local  Needs
+    allowed  Fine
+    also_allowed  Aggregate
+    given  Needs*
+  23 types interned
+diagnostics:
+error: every 'init' of Needs takes an argument, and none is written here
+  --> main.hd:37:5
+   |
+37 |     field : Needs
+   |     ^^^^^
+error: every 'init' of Needs takes an argument, and a base cannot be given one
+  --> main.hd:39:7
+   |
+39 | class ByBase(Needs):
+   |       ^^^^^^
+error: every 'init' of Needs takes an argument, and none is written here
+  --> main.hd:50:5
+   |
+50 | let global_one : Needs
+   |     ^^^^^^^^^^
+error: every 'init' of Needs takes an argument, and none is written here
+  --> main.hd:53:9
+   |
+53 |     let local : Needs
+   |         ^^^^^

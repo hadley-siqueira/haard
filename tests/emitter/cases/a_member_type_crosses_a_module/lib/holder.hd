@@ -1,0 +1,10 @@
+import inner.point
+
+class Base:
+    origin : Point
+    n : i32
+
+class Holder:
+    one : Point
+    many : Point*
+    n : i32

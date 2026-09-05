@@ -95,10 +95,17 @@ namespace haard {
             bool overrides(u32 caller, const Candidacy& derived,
                            const Candidacy& base);
 
-            // the class a candidate is a method of, as a type, and
-            // INVALID_TYPE when it is not a method. The way up is the scope
-            // the function opened, whose parent is the class body
-            u32 holder_of(const Candidacy& who);
+            // the class a candidate is a method of, as a type in the
+            // **caller's** table, and INVALID_TYPE when it is not a method.
+            // The way up is the scope the function opened, whose parent is the
+            // class body.
+            //
+            // It takes the caller because the answer has to be comparable with
+            // the other candidate's, and record 0016 makes that a translation
+            // and not a cast: a type index means nothing outside the table it
+            // came from. This is the same discipline 'parameters_of' below
+            // already keeps
+            u32 holder_of(u32 caller, const Candidacy& who);
 
             // a candidate's parameters, without the return, translated into
             // the caller's table so two of them can be compared

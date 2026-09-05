@@ -1,0 +1,42 @@
+# The answer is 42, and until 2026-09-05 this file did not compile.
+#
+# 'c' is of the DERIVED type and the call is written OUTSIDE the module that
+# declares both classes -- the one shape no case had. Every other multi-module
+# case reaches an override through a **base** pointer, where the lookup finds
+# one candidate and the resolver never has to tell an override from an
+# overload.
+#
+# It did not compile because 'OverloadResolver::holder_of' gave back the type
+# index the holder's own module had, and 'Coercion::climb' reads the caller's.
+# A class of module 1 looked up among the types of module 0: record 0016's
+# rule broken in one line. What came back depended on what the caller's table
+# happened to hold at that number, so the same two classes were an override
+# when called from their own module and an ambiguous overload when called from
+# here.
+#
+# 'Dog' above 'Animal' is why they are here and why they inherit. Haard allows
+# use before declaration, so a derived class may be written above its base --
+# and that made the misread climb run BACKWARDS: the base was taken to
+# override the derived, nothing was reported, and 'let back' silently became a
+# Vehicle*. Two classes that have nothing to do with Car decided it
+import lib.vehicle
+
+class Dog(Animal):
+    name : i32
+
+class Animal:
+    legs : i32
+
+def main : i32
+    let c : Car
+
+    c.wheels = 4
+    c.doors = 2
+
+    # 40 if Car.describe won, 4 if Vehicle's did
+    let mine = c.describe()
+
+    # and 'doors' is only there if the covariant return gave back a Car*
+    let back = c.self()
+
+    return mine + back.doors

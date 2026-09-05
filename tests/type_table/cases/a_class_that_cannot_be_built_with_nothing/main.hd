@@ -1,0 +1,60 @@
+# Record 0026 runs a class's own 'init' with no arguments wherever a value of
+# it comes into being with none written. A class whose every 'init' takes one
+# cannot do that, and agenda 5.5 was about **where that question is asked**.
+#
+# It was asked in the emitter, so 'hdc main.hd' said this file was fine and
+# 'hdc --emit-cpp main.hd' said it was not -- and the message it gave had no
+# file, no line and no caret, alone among this compiler's diagnostics. It is
+# asked here now, where a declaration gets its type, which is the one place
+# that also holds the node to point at.
+#
+# The three ways a value comes into being with nothing written are all here:
+# a field held by value, a base, and a binding. A global is the same rule as
+# the binding and is here too.
+#
+# Hadley, 2026-09-05: a class that wrote **no** 'init' is not this case and
+# never was. C++ builds it for nothing and its implicit constructor runs the
+# constructors of its class-typed fields down the whole chain -- so there is
+# nothing to generate, which is what 'Fine' and 'HoldsFine' are here to say
+class Needs:
+    n : i32
+
+    def init : void
+        @count : i32
+        n = count
+
+class Fine:
+    n : i32
+
+    # record 0012 makes arity a range, so an 'init' whose every parameter has a
+    # default answers to none as well. This is how a class that wants to be
+    # derived from is written today
+    def init : void
+        @count : i32 = 3
+        n = count
+
+class ByField:
+    field : Needs
+
+class ByBase(Needs):
+    tag : i32
+
+class HoldsFine:
+    ok : Fine
+
+# no 'init' at all, and a field that is one of those: nothing to generate and
+# nothing to report
+class Aggregate:
+    held : HoldsFine
+
+let global_one : Needs
+
+def main : i32
+    let local : Needs
+    let allowed : Fine
+    let also_allowed : Aggregate
+
+    # given a value, so it is not built with nothing
+    let given = new Needs(1)
+
+    return 0

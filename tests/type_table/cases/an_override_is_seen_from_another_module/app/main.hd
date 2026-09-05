@@ -1,0 +1,24 @@
+# A method called on a value of the DERIVED type, from a module that declares
+# neither class. Record 0020's rule -- the same parameters make an override
+# and not an overload -- is applied by the OverloadResolver, and until
+# 2026-09-05 it compared the two holding classes as raw type indices without
+# translating them into the caller's table.
+#
+# 'Dog' above 'Animal' is the shape that made the misread comparison run
+# backwards, so the BASE was taken to override the derived and 'back' silently
+# became a Vehicle*. It is written here for that reason and for no other: two
+# classes with no relation to Car decided what a call to Car meant
+import lib.vehicle
+
+class Dog(Animal):
+    name : i32
+
+class Animal:
+    legs : i32
+
+def main : i32
+    let c : Car
+    let mine = c.describe()
+    let back = c.self()
+
+    return mine + back.doors

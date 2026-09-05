@@ -1,0 +1,68 @@
+# The answer is 7, and it is 'String' -- record 0023's, written in Haard and
+# not in the compiler -- allocating, copying, indexing and freeing a buffer.
+#
+# 'new T[n]' is a 'T*', which Hadley settled on 2026-09-05 and which C++ says
+# too. The other two answers were closed by decisions already taken: 'T[]' is
+# sugar for 'Array<T>' (record 0022), and 'Array<T>' is the class you *build*
+# with this, so it cannot also be what this gives back.
+#
+# The length is not in the answer. A 'T*' does not say whether it came from
+# 'new' or from 'new[]', so which of 'delete' and 'delete[]' to write is the
+# author's to know -- the price C++ pays, and the reason record 0023 already
+# had String carrying its own 'capacity'.
+#
+# 'capacity' is not a literal, and that is the point of it being here: a length
+# inside a **type** needs constant evaluation (agenda 5.3) and still does, but
+# a length written on a 'new' is an ordinary expression under the type node,
+# and the emitter reads it off the tree. Nothing typed it until 2026-09-05
+class String:
+    data : char*
+    size : i32
+    capacity : i32
+
+    def init : void
+        @text : char*
+        size = 0
+
+        while text[size] != '\0':
+            size = size + 1
+
+        capacity = size + 1
+        data = new char[capacity]
+
+        let i = 0
+
+        while i < size:
+            data[i] = text[i]
+            i = i + 1
+
+        data[size] = '\0'
+
+    def destroy : void
+        delete[] data
+
+    def length : i32
+        return size
+
+    def at : char
+        @i : i32
+        return data[i]
+
+def main : i32
+    let s = new String("hello")
+    let n = s->length()
+    let score = 0
+
+    if s->at(1) == 'e':
+        score = score + 1
+
+    # the buffer is the String's own and writable, which is what says the copy
+    # happened rather than the pointer being kept
+    s->data[0] = 'H'
+
+    if s->at(0) == 'H':
+        score = score + 1
+
+    delete s
+
+    return n + score

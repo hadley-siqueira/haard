@@ -110,8 +110,8 @@ Overload OverloadResolver::choose(u32 caller,
 
 bool OverloadResolver::overrides(u32 caller, const Candidacy& derived,
                                  const Candidacy& base) {
-    u32 below = holder_of(derived);
-    u32 above = holder_of(base);
+    u32 below = holder_of(caller, derived);
+    u32 above = holder_of(caller, base);
 
     // both have to be methods, and of two different classes
     if (below == INVALID_TYPE || above == INVALID_TYPE) {
@@ -127,7 +127,7 @@ bool OverloadResolver::overrides(u32 caller, const Candidacy& derived,
     return parameters_of(caller, derived) == parameters_of(caller, base);
 }
 
-u32 OverloadResolver::holder_of(const Candidacy& who) {
+u32 OverloadResolver::holder_of(u32 caller, const Candidacy& who) {
     Module* owner = compilation->get_module(who.module);
     SymbolTable* table = owner->get_symbols();
     Candidate* candidate = table->get_candidate(who.candidate);
@@ -153,8 +153,29 @@ u32 OverloadResolver::holder_of(const Candidacy& who) {
 
     u32 declaration = table->candidate_of(holder);
 
-    return declaration == 0 ? INVALID_TYPE
-                            : table->get_candidate(declaration)->type;
+    if (declaration == 0) {
+        return INVALID_TYPE;
+    }
+
+    // into the CALLER's table, and that is the whole of this function's
+    // history. Until 2026-09-05 it gave back the index the holder's own module
+    // had, and 'overrides' handed it to Coercion::climb, which reads the
+    // caller's -- so a class of module 1 was looked up among the types of
+    // module 0. Record 0016's rule, broken in one line: a type index does not
+    // cross a module boundary.
+    //
+    // What it cost was not one program. The index landed on whatever the
+    // caller's table happened to hold at that number, so a call written
+    // OUTSIDE the module that declared the classes got its answer from an
+    // unrelated table: usually a false ambiguity, sometimes an accidental
+    // pass, and -- when the caller declared a derived class above its base --
+    // the climb ran backwards and the BASE was taken to override the derived.
+    // Nothing was reported for that one. The method it chose was harmless,
+    // since a method is mangled by name and parameters and 'overrides' forces
+    // those equal, so C++ dispatched virtually anyway; the **return type** was
+    // not, and a covariant one silently narrowed a binding to the base
+    return builder.translate(caller, who.module,
+                             table->get_candidate(declaration)->type);
 }
 
 std::vector<u32> OverloadResolver::parameters_of(u32 caller,

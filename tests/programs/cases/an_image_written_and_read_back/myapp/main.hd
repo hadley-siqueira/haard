@@ -1,0 +1,179 @@
+# The user's project: it knows ppm and std, and nothing about how either
+# works. That is what the third root block in roots.tbl buys.
+#
+# It writes images and then READS THEM BACK to say whether they are right, so
+# the verdict is the program's own and this file is a test and not a
+# demonstration. Every check that fails is counted, and the count is the exit
+# status -- zero when everything held.
+import ppm.image
+import std.file
+
+def report : void
+    @out : File*
+    @what : char*
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+# every channel of every pixel is this value
+def all_channels_are : bool
+    @image : Image*
+    @value : u8
+
+    let i : u32 = 0
+
+    while i < image->count():
+        if image->pixels[i].r != value:
+            return false
+
+        if image->pixels[i].g != value:
+            return false
+
+        if image->pixels[i].b != value:
+            return false
+
+        i = i + 1
+
+    return true
+
+# the two images are the same size and one is 255 minus the other, channel by
+# channel. This is what says the READER worked: an inverted file can only
+# match if every value came back exactly
+def is_inverse_of : bool
+    @left : Image*
+    @right : Image*
+
+    if left->width != right->width or left->height != right->height:
+        return false
+
+    let i : u32 = 0
+
+    while i < left->count():
+        if left->pixels[i].r != 255 - right->pixels[i].r:
+            return false
+
+        if left->pixels[i].g != 255 - right->pixels[i].g:
+            return false
+
+        if left->pixels[i].b != 255 - right->pixels[i].b:
+            return false
+
+        i = i + 1
+
+    return true
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # ---- a white image, written and read back
+
+    let white = new Image(8, 6)
+
+    white->fill(255, 255, 255)
+
+    if not white->save("white.ppm"):
+        out->writeln("could not write white.ppm")
+        return 1
+
+    let white_again = load("white.ppm")
+
+    if white_again == null:
+        out->writeln("could not read white.ppm back")
+        return 1
+
+    # the parentheses are what let this span three lines: record 0024 suspends
+    # the line rule between a bracket and the token that closes it, and only
+    # there
+    let white_ok = (white_again->width == 8
+                    and white_again->height == 6
+                    and all_channels_are(white_again, 255))
+
+    report(out, "white 8x6 read back", white_ok)
+
+    if not white_ok:
+        failures = failures + 1
+
+    # ---- a gradient, read back, inverted, and read back again
+
+    let source = new Image(64, 48)
+    let y : u32 = 0
+
+    while y < source->height:
+        let x : u32 = 0
+
+        while x < source->width:
+            source->at(x, y)->set((x * 4) as u8, (y * 5) as u8, 128)
+            x = x + 1
+
+        y = y + 1
+
+    if not source->save("gradient.ppm"):
+        out->writeln("could not write gradient.ppm")
+        return 1
+
+    let loaded = load("gradient.ppm")
+
+    if loaded == null:
+        out->writeln("could not read gradient.ppm back")
+        return 1
+
+    # the same picture, so every value survived the trip out and back
+    let same = (loaded->width == 64 and loaded->height == 48)
+    let i : u32 = 0
+
+    while i < source->count():
+        if loaded->pixels[i].r != source->pixels[i].r:
+            same = false
+
+        if loaded->pixels[i].g != source->pixels[i].g:
+            same = false
+
+        if loaded->pixels[i].b != source->pixels[i].b:
+            same = false
+
+        i = i + 1
+
+    report(out, "gradient 64x48 survived the round trip", same)
+
+    if not same:
+        failures = failures + 1
+
+    let inverted = load("gradient.ppm")
+
+    i = 0
+
+    while i < inverted->count():
+        inverted->pixels[i].invert()
+        i = i + 1
+
+    if not inverted->save("inverted.ppm"):
+        out->writeln("could not write inverted.ppm")
+        return 1
+
+    let inverted_again = load("inverted.ppm")
+
+    if inverted_again == null:
+        out->writeln("could not read inverted.ppm back")
+        return 1
+
+    let inverse_ok = is_inverse_of(inverted_again, source)
+
+    report(out, "inverted is 255 minus the gradient", inverse_ok)
+
+    if not inverse_ok:
+        failures = failures + 1
+
+    delete white
+    delete white_again
+    delete source
+    delete loaded
+    delete inverted
+    delete inverted_again
+
+    return failures

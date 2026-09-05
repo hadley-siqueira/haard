@@ -3,7 +3,6 @@
 
 #include <haard/ast_query/ast_query.h>
 #include <haard/module/module.h>
-#include <map>
 
 namespace haard {
     // Fills a module's symbol table from its tree. The fourth of the family:
@@ -20,6 +19,12 @@ namespace haard {
     // one. Which names an expression *uses* is the resolver's question and not
     // this one; the only thing an expression can declare is a closure's
     // parameters.
+    //
+    // Nor does it decide what an assignment to a bare name declares. That
+    // needs to know whether the name is already something, a field of a base
+    // included, and a base is a type -- so it is the ImplicitCollector's, in
+    // the type phase. It used to be here, and shadowed every inherited field
+    // in silence.
     //
     // Like every reader of an Ast it assumes the tree parsed clean, which the
     // phase gate guarantees.
@@ -39,9 +44,10 @@ namespace haard {
             // walk would have given it -- under a name no source can write, so
             // that nothing resolves to it by accident.
             //
-            // The implicit walk runs over the clone alone, for the same reason
-            // the first one runs over the module: a body that assigns to a
-            // bare name declares it, and the clone has its own body
+            // What a body of the clone declares by assigning to a bare name is
+            // not this phase's, here or anywhere else: it is the
+            // ImplicitCollector's, which runs in the type phase and reaches
+            // the clone on its next round
             void collect_declaration(u32 scope, u32 declaration,
                                      const std::string& name);
 
@@ -85,28 +91,6 @@ namespace haard {
             // identifier has no way back up to the type it was written with
             void collect_binding(u32 scope, u32 statement);
 
-            // 'let' is not required: an assignment to a bare name that this
-            // module has nowhere in view declares it, the way 'let n = 1'
-            // would. It is a second walk and it cannot be part of the first:
-            // 'n = 1' in the first function of a file may be naming a global
-            // the file declares at its end, and a use is allowed to come
-            // before its declaration.
-            //
-            // Only a plain '=' declares. 'n += 1' reads n before it writes it,
-            // so a name it cannot find is a mistake and not a declaration, and
-            // so is anything on the left that is not one identifier: 'a.b',
-            // 'p->x' and 'a[i]' all name something that has to exist already.
-            //
-            // Only what THIS module has in view counts -- the scope chain up
-            // to and including the module scope, and not the imports. A local
-            // standing in front of an imported name is what 'let' does too, so
-            // this stays a per-module question and the phase stays inside the
-            // walk that fills one module
-            void collect_implicit(u32 node, u32 scope);
-            void declare_target(u32 scope, u32 target);
-
-            bool in_view(u32 scope, u32 name);
-
             // the identifiers of '<T, U>'. The one declaration whose name is
             // not wrapped in a binding name, so it is its own node
             void collect_generic_parameters(u32 scope, u32 declaration);
@@ -117,11 +101,6 @@ namespace haard {
         private:
             Module* module;
             AstQuery query;
-
-            // the node that opened a scope, back to the scope it opened. The
-            // same reading of Scope::owner that every later phase does, and
-            // for the same reason: one description of the scope shape
-            std::map<u32, u32> scope_of;
     };
 }
 

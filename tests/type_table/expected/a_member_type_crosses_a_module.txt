@@ -1,0 +1,26 @@
+app.main:
+    F1  app.main.F1
+    F2  app.main.F2
+    Derived  app.main.Derived
+    main  i32
+    a  i32
+    b  i32
+    through_a_bare_name  i32
+    h  lib.holder.Holder
+    d  app.main.Derived
+  21 types interned
+lib.holder:
+    Base  lib.holder.Base
+    Holder  lib.holder.Holder
+    origin  inner.point.Point
+    n  i32
+    one  inner.point.Point
+    many  inner.point.Point*
+    n  i32
+  18 types interned
+inner.point:
+    Point  inner.point.Point
+    x  i32
+    y  i32
+    sum  i32
+  16 types interned

@@ -82,6 +82,11 @@ bool TypeCollector::walk(u32 index, bool given) {
                     if (!given) {
                         table->set_candidate_super(candidate,
                                                    super_of(candidate, scope));
+
+                        // once per candidate, which the mark above is what
+                        // guarantees: the loop re-enters a module that grew
+                        // and a diagnostic must not come out twice
+                        require_default_construction(candidate);
                     }
 
                     worked = true;
@@ -247,4 +252,132 @@ u32 TypeCollector::signature_of(u32 node, u32 scope) {
     }
 
     return module->get_types()->function(parameters, result);
+}
+
+void TypeCollector::require_default_construction(u32 candidate) {
+    SymbolTable* table = module->get_symbols();
+    Candidate* found = table->get_candidate(candidate);
+    AstQuery query;
+    u32 wanted;
+    std::string where;
+
+    query.set_module(module);
+
+    switch ((SymbolKind) found->kind) {
+    // the base runs before the derived's own body, so a class that cannot be
+    // built with nothing cannot be derived from either
+    case SYMBOL_CLASS:
+    case SYMBOL_STRUCT:
+    case SYMBOL_UNION:
+        wanted = found->super;
+        // and it names why this one cannot be fixed where the others can:
+        // record 0026 leaves 'super(...)' undecided, so there is nowhere to
+        // write a base's arguments even when the author knows them
+        where = "a base cannot be given one";
+        break;
+
+    // a field held by value and a binding with no expression both come into
+    // being running the class's 'init' with nothing. One that was given a
+    // value does not
+    case SYMBOL_FIELD:
+    case SYMBOL_VARIABLE:
+        if (query.get_binding_expression(found->ast_node) != 0) {
+            return;
+        }
+
+        wanted = found->type;
+        where = "none is written here";
+        break;
+
+    // a parameter is passed and never built, and a function is not a value
+    default:
+        return;
+    }
+
+    if (builds_with_nothing(wanted)) {
+        return;
+    }
+
+    Type* entry = module->get_types()->get_type(wanted);
+    Module* holder = compilation->get_module(entry->module);
+    AstQuery theirs;
+
+    theirs.set_module(holder);
+
+    report(name_node_of(found->ast_node),
+           "every 'init' of "
+               + theirs.get_declaration_name(
+                     holder->get_symbols()->get_candidate(entry->subject)
+                         ->ast_node)
+               + " takes an argument, and " + where);
+}
+
+bool TypeCollector::builds_with_nothing(u32 type) {
+    if (type == INVALID_TYPE) {
+        return true;
+    }
+
+    Type* entry = module->get_types()->get_type(type);
+
+    // only a class is built; a pointer, a builtin and an array of them are
+    // whatever the memory held, which is record 0026's rule 3
+    if (entry->kind != TYPE_NAMED) {
+        return true;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    u32 declaration =
+        holder->get_symbols()->get_candidate(entry->subject)->ast_node;
+    AstQuery query;
+    bool has_init = false;
+
+    query.set_module(holder);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (query.get_declaration_name(member) != "init") {
+            continue;
+        }
+
+        has_init = true;
+
+        // record 0012 makes arity a range, so an 'init' whose every parameter
+        // has a default answers to no arguments as well -- which is how a
+        // class that wants to be derived from is written today
+        bool needs_nothing = true;
+
+        for (u32 parameter : query.get_params(member)) {
+            if (query.get_binding_expression(parameter) == 0) {
+                needs_nothing = false;
+            }
+        }
+
+        if (needs_nothing) {
+            return true;
+        }
+    }
+
+    // no 'init' at all is an aggregate, and C++ builds it for nothing
+    return !has_init;
+}
+
+u32 TypeCollector::name_node_of(u32 declaration) {
+    Ast* ast = module->get_ast();
+    u32 wrapper = ast->get_node(declaration)->get_children();
+
+    if (wrapper == 0
+        || ast->get_node(wrapper)->get_kind() != AST_BINDING_NAME) {
+        return declaration;
+    }
+
+    u32 identifier = ast->get_node(wrapper)->get_children();
+
+    return identifier == 0 ? declaration : identifier;
+}
+
+void TypeCollector::report(u32 node, const std::string& message) {
+    Token& token = module->get_tokens()->get_token(
+        module->get_ast()->get_node(node)->get_token());
+
+    module->get_logger()->error(token.get_offset(), token.get_length(),
+                                message);
 }
