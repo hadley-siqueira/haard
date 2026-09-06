@@ -1,0 +1,38 @@
+# The same three refusals a template string gets, for the same reason: the
+# thing has to become a declaration before the statement, and in these three
+# places that changes what the program means.
+#
+# The tree below each one shows the recovery: the literal became a binding
+# with no elements, so one mistake reads as one error and not as two.
+def total : i32
+    @xs : Array<i32>&
+    return 0
+
+# NOT refused: a global is a binding too, and the emitter builds one where it
+# is bound. What is refused is a literal with nowhere to be bound
+let global = [1, 2]
+
+def main : i32
+    let n = 3
+    let ok = true
+
+    # built once before the loop instead of every turn
+    while total([1, 2]) < n:
+        n = n - 1
+
+    # built even when the left already decided
+    if ok and total([3, 4]) > 0:
+        n = 0
+
+    if ok or total([5, 6]) > 0:
+        n = 0
+
+    # and the two that ARE safe: a condition runs once, and the left of a
+    # short circuit runs whatever the right does
+    if total([7, 8]) > 0:
+        n = 0
+
+    if total([9, 10]) > 0 and ok:
+        n = 0
+
+    return n

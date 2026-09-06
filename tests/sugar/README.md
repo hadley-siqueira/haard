@@ -81,6 +81,24 @@ that proves the rewrite is not simply "anything with brackets".
 It hoists nothing, unlike a template string: a type is not an expression, so it
 is rewritten wherever it stands — a local, a parameter, a field.
 
+## An array literal is bound before it is used
+
+`an_array_literal_is_bound_before_it_is_used` shows the second thing this pass
+hoists. A `{}` is a C++ array and a C++ array is a **declaration**, so a
+literal that is not already a binding's initialiser becomes one:
+
+```
+let bound = [1, 2, 3]
+let __ar0 = [4, 5]
+let __ar1 = [6, 7]
+let two = total(__ar0) + total(__ar1)
+```
+
+`bound` does not move, and the hoisted ones keep the order they were written
+in. `an_array_literal_cannot_always_be_hoisted` is the same three refusals a
+template string gets, plus the one that is **not** refused: a global, because a
+global is a binding and the emitter builds one where it is bound.
+
 ## The three refusals, and what is not refused
 
 The calls have to become statements, and lifting them out of the expression

@@ -1,0 +1,89 @@
+# 'let b : Held<i32> = [1, 2, 3]' means 'Held<i32>([1, 2, 3])' -- Hadley,
+# 2026-09-06. The compiler picks the constructor and writes the call, and
+# **only a literal** is translated this way: a value of another type still
+# does not convert, so record 0018's list stays closed.
+#
+# Two shapes, and a class may offer either:
+#
+#   one parameter taking what the literal already is, which for a bracket
+#   literal is an Array -- and that Array is built into a NAME first, because
+#   C++ will not bind a temporary to the reference the parameter is
+#
+#   two taking a pointer to the element and a count, which is what a braced
+#   literal offers through record 0018's decay
+#
+# Read the golden for both. Neither is a C++ implicit conversion.
+class Array<T>:
+    data : T[8]
+    size : i32
+
+    def init : void
+        size = 0
+
+    def init : void
+        @from : T*
+        @count : i32
+
+        size = count
+
+        let i = 0
+
+        while i < count:
+            data[i] = from[i]
+            i = i + 1
+
+    def length : i32
+        return size
+
+    def operator[] : T&
+        @i : i32
+        return data[i]
+
+class Held<T>:
+    slots : T[8]
+    count : i32
+
+    # the one that takes what a bracket literal already is
+    def init : void
+        @from : Array<T>&
+
+        count = from.length()
+
+        let i = 0
+
+        while i < count:
+            slots[i] = from[i]
+            i = i + 1
+
+    # and the one a braced literal reaches
+    def init : void
+        @from : T*
+        @size : i32
+
+        count = size
+
+        let i = 0
+
+        while i < size:
+            slots[i] = from[i]
+            i = i + 1
+
+    def total : i32
+        let sum = 0
+        let i = 0
+
+        while i < count:
+            sum = sum + slots[i]
+            i = i + 1
+
+        return sum
+
+def main : i32
+    # through the Array<T>& constructor, with the Array built into a name
+    let a : Held<i32> = [1, 2, 3]
+
+    # and straight through the pointer and count one, with nothing in between
+    let b : Held<i32> = {10, 20, 30}
+
+    # 6 + 60 = 66
+    return a.total() + b.total()

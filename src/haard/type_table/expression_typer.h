@@ -51,6 +51,26 @@ namespace haard {
             // does, which is the module that declared the generic
             std::string name_in(u32 owner, u32 type);
 
+            // Record 0034. Whether the class on the left overloads this
+            // operator, and the type of applying it if it does.
+            //
+            // INVALID_TYPE and nothing reported when the class declares no
+            // such method: the operator's own rules then say what is wrong.
+            // 'right' is 0 for a unary shape, and the chosen method is
+            // written down on the OPERATOR node, which is where the emitter
+            // looks.
+            //
+            // Public because an **assignment** is not an expression the typer
+            // walks -- the StatementChecker owns it (record 0019's note that
+            // the typer stops at one), and since 2026-09-06 '=' is one of the
+            // operators a class may overload
+            // 'quiet' when a caller has somewhere else to fall through to:
+            // an assignment does, since record 0031's copy assignment is what
+            // takes a class on both sides, so 'no operator= takes these
+            // operands' would be a complaint about a program that is fine
+            u32 overloaded(u32 scope, u32 node, u32 left, u32 right,
+                           bool quiet = false);
+
         private:
             // what an expression is, by kind. type_of is the funnel around it
             // and the only place record 0019's answer is written down, so this
@@ -104,6 +124,19 @@ namespace haard {
             // element after has to be it -- record 0018 has nothing that would
             // make two of them one. A tuple holds each element's own type
             u32 sequence(u32 scope, u32 node, u32 expected, bool array);
+
+            // Whether a **written** class type takes this literal by one of
+            // its constructors, and which one. Hadley, 2026-09-06: only a
+            // '[]' or a '{}' is translated this way, so a value of another
+            // type still does not convert -- record 0018's list stays closed
+            // and this is a rule about a written shape.
+            //
+            // Two ways in, and a class may offer either: one parameter taking
+            // what the literal already is, or two taking a pointer to its
+            // element and a count -- which is what a '{}' reaches through
+            // record 0018's decay
+            u32 constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
+                                 u32 element, u32 count);
             u32 tuple(u32 scope, u32 node, u32 expected);
 
             // the element a container type holds, and INVALID_TYPE for a type
@@ -184,7 +217,7 @@ namespace haard {
             // 'right' is 0 for a unary shape. The chosen method is written
             // down on the OPERATOR node, which is where the emitter looks:
             // nothing can work it out again, exactly as for a call
-            u32 overloaded(u32 scope, u32 node, u32 left, u32 right);
+
 
             // the type 'this' has: a pointer to the class the method was
             // written in. A pointer and not a reference because that is what

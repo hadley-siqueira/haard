@@ -76,6 +76,12 @@ namespace haard {
             // declares a member of this name
             bool declares(u32 module, u32 candidate, const std::string& name);
 
+            // Record 0031, amended 2026-09-06: how a class says it may be
+            // copied is an **'init' taking one parameter of its own type**,
+            // by value or by reference. Everything about construction is
+            // 'init' -- there is no method named 'copy'
+            bool declares_a_copy(u32 module, u32 candidate);
+
             bool is_char_pointer(u32 module, u32 type);
 
             // the standard library's String, which agenda 1.21 needs to name

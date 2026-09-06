@@ -133,7 +133,8 @@ namespace haard {
             void emit_unary(u32 module, u32 node, const std::string& oper);
             void emit_postfix(u32 module, u32 node, const std::string& oper);
             void emit_call(u32 module, u32 node);
-            void emit_call_arguments(u32 module, u32 arguments);
+            void emit_call_arguments(u32 module, u32 arguments, u32 holder,
+                                     u32 candidate);
             u32 second_child_of(u32 module, u32 node);
             void emit_member(u32 module, u32 node, bool arrow);
             void emit_identifier(u32 module, u32 node);
@@ -149,6 +150,17 @@ namespace haard {
             // 0 when it declares none. Record 0026's family -- 'init',
             // 'destroy' and 'copy' -- is asked for by name and this is the
             // one loop that answers
+            // Record 0031, amended 2026-09-06: **everything about
+            // construction is 'init'**. The copy constructor is the 'init'
+            // whose one parameter is this very class, by value or by
+            // reference; there is no method named 'copy', and there will not
+            // be one named 'from' or anything else either.
+            //
+            // 0 when the class declares none, which record 0031 reads as
+            // 'this class may not be copied' whenever it also declares
+            // 'destroy'
+            u32 copy_init_of(u32 module, u32 declaration);
+
             u32 member_named(u32 module, u32 declaration,
                              const std::string& name);
 
@@ -170,6 +182,27 @@ namespace haard {
             void emit_array_literal(u32 module, u32 node, u32 type,
                                     const std::string& name);
 
+            // Record 0023's conversion, written as the call it is. Haard
+            // decides that a 'char*' may become a 'String'; C++ was deciding
+            // **how**, which is record 0034's rule surviving in the emission.
+            //
+            // True when it wrote one. A reference is taken of a temporary, so
+            // the const_cast the copy constructor already needs is needed
+            // here for the same reason: Haard has no 'const' to write on the
+            // parameter (record 0029)
+            bool emit_conversion(u32 module, u32 holder, u32 wanted,
+                                 u32 node);
+
+            // the candidate a call names, digging past a '.' or a '->' to the
+            // node the typer wrote it on
+            bool is_an_rvalue(u32 module, u32 node);
+
+            u32 called_candidate(u32 module, u32 call, u32& holder);
+
+            u32 raw_parameter_of(u32 module, u32 candidate, u32 which);
+            u32 parameters_of(u32 module, u32 candidate);
+            u32 parameter_of(u32 module, u32 candidate, u32 which);
+
             bool takes_two(u32 module, u32 candidate,
                            const std::string& name);
 
@@ -186,6 +219,13 @@ namespace haard {
             // builtin '+' costs one read of the ResolutionTable and nothing
             // else changed shape
             bool emit_operator(u32 module, u32 node);
+
+            // Record 0031's assignment, which destroys and then copies. It is
+            // a method and not a C++ 'operator=' since 2026-09-06 -- record
+            // 0034's rule was surviving in the compiler's own emission
+            bool emit_copy_assignment(u32 module, u32 node);
+
+            bool declares_copy(u32 module, u32 type);
 
             // a method's parameters as a string every module spells the same
             // way, which is what makes an override carry the base's name

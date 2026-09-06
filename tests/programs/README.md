@@ -100,6 +100,16 @@ directory, it does, and `make clean` takes it back.
   No file of the program imports `String`. The table's `prelude` block does it
   (record 0033), which is what makes a template string mean anything here.
 
+- **`lists_are_built_from_literals`** — record 0037, and the two ways there
+  are to build a `List<T>`, since there is no literal for one: from a bracket
+  literal, where the compiler picks `init(Array<T>&)`, and from a braced one,
+  where it picks `init(T*, i32)`. It writes through `operator[]` (which walks,
+  from the head), pushes both ends, and checks that a copy holds its own nodes.
+
+  `List<T>` holds a `Node<T>*`, which is the shape that forced the body of an
+  **unbound generic** to stop being checked: two occurrences of `Node<T>` in
+  two generics are two types.
+
 - **`arrays_are_written_as_sugar`** — `Array<T>` written as `i32[]`, in a
   program that imports nothing: Array, String, File and `console()` all arrive
   through the table's `prelude` block. It grows an array past its capacity

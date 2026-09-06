@@ -8,13 +8,14 @@ struct h0_1_Owner {
     char *h0_2_data;
     int32_t h0_3_size;
     virtual void m_init();
-    virtual void m_copy_rn0c1(h0_1_Owner &h0_6_other);
+    virtual void m_init_rn0c1(h0_1_Owner &h0_6_other);
     virtual void m_destroy();
     virtual char m_first();
     virtual void m_poke_b12(char h0_11_c);
     h0_1_Owner();
+    h0_1_Owner(h0_1_Owner &h0_6_other);
     h0_1_Owner(const h0_1_Owner& other);
-    h0_1_Owner& operator=(const h0_1_Owner& other);
+    void m_assign(h0_1_Owner& other);
     virtual ~h0_1_Owner();
 };
 
@@ -39,8 +40,8 @@ int32_t h0_16_main() {
     char h0_19_through_a_call = h0_12_by_value(h0_17_original);
     h0_1_Owner h0_20_returned = h0_14_gives_back();
     h0_1_Owner h0_21_bound = h0_17_original;
-    h0_18_target = h0_17_original;
-    h0_18_target = h0_18_target;
+    h0_18_target.m_assign(h0_17_original);
+    h0_18_target.m_assign(h0_18_target);
     h0_21_bound.m_poke_b12('c');
     bool h0_22_independent = (h0_17_original.m_first() == 'a' && h0_21_bound.m_first() == 'c' && h0_18_target.m_first() == 'a' && h0_20_returned.m_first() == 'z' && h0_19_through_a_call == 'a');
     if (!h0_22_independent) {
@@ -57,7 +58,7 @@ void h0_1_Owner::m_init() {
     this->h0_2_data[2] = '\0';
 }
 
-void h0_1_Owner::m_copy_rn0c1(h0_1_Owner &h0_6_other) {
+void h0_1_Owner::m_init_rn0c1(h0_1_Owner &h0_6_other) {
     this->h0_3_size = h0_6_other.h0_3_size;
     this->h0_2_data = new char[this->h0_3_size];
     int32_t h0_7_i = 0;
@@ -83,18 +84,21 @@ h0_1_Owner::h0_1_Owner() {
     this->h0_1_Owner::m_init();
 }
 
-h0_1_Owner::h0_1_Owner(const h0_1_Owner& other) {
-    this->h0_1_Owner::m_copy_rn0c1(const_cast<h0_1_Owner&>(other));
+h0_1_Owner::h0_1_Owner(h0_1_Owner &h0_6_other) {
+    this->h0_1_Owner::m_init_rn0c1(h0_6_other);
 }
 
-h0_1_Owner& h0_1_Owner::operator=(const h0_1_Owner& other) {
+h0_1_Owner::h0_1_Owner(const h0_1_Owner& other) {
+    this->h0_1_Owner::m_init_rn0c1(const_cast<h0_1_Owner&>(other));
+}
+
+void h0_1_Owner::m_assign(h0_1_Owner& other) {
     if (this == &other) {
-        return *this;
+        return;
     }
 
     this->h0_1_Owner::m_destroy();
-    this->h0_1_Owner::m_copy_rn0c1(const_cast<h0_1_Owner&>(other));
-    return *this;
+    this->h0_1_Owner::m_init_rn0c1(other);
 }
 
 h0_1_Owner::~h0_1_Owner() {

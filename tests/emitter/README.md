@@ -82,3 +82,24 @@ instantiated with an unbound `T`, cloning a class whose fields are type
 parameters. It also catches the second hole of that record: a class with `copy`
 and no `init` loses C++'s implicit default constructor, so it compiles in Haard
 and fails in **C++**.
+
+## What the record 0037 cases pin
+
+**`a_fixed_array_is_a_cpp_array`** — the primitive. A `{}` is a C++ array and
+nothing else, and it could not be emitted at all until 2026-09-06. The second
+half is the decay: `i32[3]` where an `i32*` was asked for is on record 0018's
+list now, and without it a `{}` could never reach the `init(T*, i32)` it is
+written for.
+
+**`a_bracket_literal_is_an_array`** — the `Array<T>` is declared **in the same
+file**, which is the point: the compiler knows the *name* and resolves it in
+the scope the literal was written in, so a program that declares its own gets
+its own. It covers all four placements — a constant literal (file-scope
+`static`), a computed one (a local), one that is not bound at all (hoisted),
+and one at module level (a global, which is what catches the statics being
+spliced one line too late).
+
+**`a_written_type_takes_a_literal`** — both constructor shapes side by side:
+one parameter taking the `Array` (built into a **name** first, because C++ will
+not bind a temporary to a reference) and two taking a pointer and a count
+(nothing in between). Neither is a C++ implicit conversion.

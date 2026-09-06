@@ -1,0 +1,160 @@
+# std/list.hd -- List<T>, the class '[T]' is written form for (record 0022).
+#
+# A doubly linked list: every node points at the next and the previous, and
+# the list holds a head and a tail. That is the honest difference from
+# Array<T> -- cheap at both ends and cheap to remove from the middle, and O(n)
+# to reach the middle at all.
+#
+# **There is no literal for a List.** It is always built from an Array<T>, or
+# from a constant vector written with '{}', or from a pointer and a count
+# passed explicitly -- and 'let b : List<i32> = [1, 2, 3]' is the compiler
+# choosing the first of those and writing the call.
+import std.array
+
+class Node<T>:
+    value : T
+    next : Node<T>*
+    previous : Node<T>*
+
+class List<T>:
+    head : Node<T>*
+    tail : Node<T>*
+    size : i32
+
+    def init : void
+        head = null
+        tail = null
+        size = 0
+
+    # what '[1, 2, 3]' becomes when a List is what was written
+    def init : void
+        @from : Array<T>&
+
+        head = null
+        tail = null
+        size = 0
+
+        let i = 0
+
+        while i < from.length():
+            push_back(from[i])
+            i = i + 1
+
+    # and what '{1, 2, 3}' becomes, and the explicit form
+    def init : void
+        @from : T*
+        @count : i32
+
+        head = null
+        tail = null
+        size = 0
+
+        let i = 0
+
+        while i < count:
+            push_back(from[i])
+            i = i + 1
+
+    # record 0031: it owns its nodes, so it says how it is copied
+    def init : void
+        @other : List<T>&
+
+        head = null
+        tail = null
+        size = 0
+
+        let walk = other.head
+
+        while walk != null:
+            push_back(walk->value)
+            walk = walk->next
+
+    def destroy : void
+        let walk = head
+
+        while walk != null:
+            let after = walk->next
+
+            delete walk
+            walk = after
+
+    def length : i32
+        return size
+
+    def is_empty : bool
+        return size == 0
+
+    def push_back : void
+        @value : T
+
+        let made = new Node<T>
+
+        made->value = value
+        made->next = null
+        made->previous = tail
+
+        if tail == null:
+            head = made
+        else:
+            tail->next = made
+
+        tail = made
+        size = size + 1
+
+    def push_front : void
+        @value : T
+
+        let made = new Node<T>
+
+        made->value = value
+        made->previous = null
+        made->next = head
+
+        if head == null:
+            tail = made
+        else:
+            head->previous = made
+
+        head = made
+        size = size + 1
+
+    # Record 0034, and Hadley 2026-09-06: yes. It walks from the head, so it
+    # is O(n) and a loop over 'l[i]' is O(n squared) -- that is the author's
+    # to know and not the language's to forbid
+    def operator[] : T&
+        @i : i32
+
+        let walk = head
+        let at = 0
+
+        while at < i:
+            walk = walk->next
+            at = at + 1
+
+        return walk->value
+
+    def equals : bool
+        @other : List<T>&
+
+        if size != other.size:
+            return false
+
+        let here = head
+        let there = other.head
+
+        while here != null:
+            if not (here->value == there->value):
+                return false
+
+            here = here->next
+            there = there->next
+
+        return true
+
+    def operator== : bool
+        @other : List<T>&
+        return equals(other)
+
+    def operator!= : bool
+        @other : List<T>&
+        return not equals(other)

@@ -1,0 +1,8 @@
+both ways in agree, at 3 long: ok
+after l[1] = 99: 1, 99, 3: ok
+pushing both ends gives 5, from 0 to 4: ok
+a copy is its own: 0 against 7: ok
+
+failures: 0
+--- files:
+--- exit: 0

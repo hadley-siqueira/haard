@@ -53,7 +53,15 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
     // because nothing is copied.
     //
     if (to->kind == TYPE_REFERENCE && from->kind != TYPE_REFERENCE) {
-        return climb(module, given, types->get_argument(to->first_argument));
+        int climbed =
+            climb(module, given, types->get_argument(to->first_argument));
+
+        // and when it is not a class above this one, the entries below still
+        // get their turn -- 'char*' where a 'String&' was asked for is one of
+        // them, and returning here made it unreachable
+        if (climbed >= 0) {
+            return climbed;
+        }
     }
 
     // And the other direction, added 2026-09-06 with Hadley's 'implemente T&
@@ -110,6 +118,20 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
     // of being written into the ranking as an exception
     if (is_char_pointer(module, given) && is_string(module, wanted)) {
         return 1;
+    }
+
+    // And the same thing where a **reference** to a String was asked for.
+    // Hadley, 2026-09-06: 'foo("abc")' against 'foo(@s : String&)' builds a
+    // String and passes it, which is one construction and not two steps -- so
+    // this is one entry of its own and NOT record 0018's list learning to
+    // compose. Whether it should compose is still open (record 0035).
+    //
+    // Costing two, so that a 'foo(String&)' next to a 'foo(char*)' still gives
+    // the literal to the second: what took a step outranks what took none, and
+    // this took one more than the entry above
+    if (is_char_pointer(module, given) && to->kind == TYPE_REFERENCE
+        && is_string(module, types->get_argument(to->first_argument))) {
+        return 2;
     }
 
     return -1;
@@ -189,12 +211,52 @@ bool Coercion::may_be_copied(u32 module, u32 type) {
     }
 
     // owning is what 'destroy' says, since record 0026 makes it the
-    // destructor. Saying how to be copied is what 'copy' says
+    // destructor. Saying how to be copied is an 'init' taking one of these
     if (!declares(entry->module, entry->subject, "destroy")) {
         return true;
     }
 
-    return declares(entry->module, entry->subject, "copy");
+    return declares_a_copy(entry->module, entry->subject);
+}
+
+bool Coercion::declares_a_copy(u32 module, u32 candidate) {
+    Module* holder = compilation->get_module(module);
+    SymbolTable* table = holder->get_symbols();
+    TypeTable* types = holder->get_types();
+    AstQuery query;
+
+    query.set_module(holder);
+
+    u32 mine = types->named(module, candidate, std::vector<u32>());
+
+    for (u32 member :
+         query.get_members(table->get_candidate(candidate)->ast_node)) {
+        if (query.get_declaration_name(member) != "init") {
+            continue;
+        }
+
+        u32 found = table->candidate_of(member);
+        u32 signature = found == 0 ? INVALID_TYPE
+                                   : table->get_candidate(found)->type;
+
+        if (signature == INVALID_TYPE) {
+            continue;
+        }
+
+        Type* entry = types->get_type(signature);
+
+        // the return type is last (record 0016), so one parameter is two
+        if (entry->argument_count != 2) {
+            continue;
+        }
+
+        if (types->value_of(types->get_argument(entry->first_argument))
+            == mine) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool Coercion::declares(u32 module, u32 candidate, const std::string& name) {

@@ -1,5 +1,5 @@
 # A generic writing its own name inside its own body, which record 0031 makes
-# every container that owns memory do: 'def copy: @other : Array<T>&'.
+# every container that owns memory do: an 'init' taking an 'Array<T>&'.
 #
 # It could not be emitted until 2026-09-06. 'Pair<T>' there has a T nothing
 # has bound, so it was instantiated -- cloning a class whose fields are type
@@ -16,13 +16,17 @@ class Pair<T>:
     left : T
     right : T
 
-    # No 'init' that writes a literal into a T: the body of a generic is
-    # type-checked with its parameters UNBOUND, so 'left = 0' there is
-    # reported as 'a literal cannot be T' even though every instantiation of
-    # it would be fine. That is a separate hole and this case is not about it
-    #
-    # the shape that used to be unemittable
-    def copy : void
+    # The empty one, which record 0028 needs: a class whose every 'init' takes
+    # an argument cannot be built where none are written, and 'let p :
+    # Pair<i32>' writes none. Its body is 'pass' because the body of a generic
+    # is type-checked with its parameters UNBOUND until it is instantiated
+    def init : void
+        pass
+
+    # and the copy constructor, which is the shape that used to be
+    # unemittable. Record 0031, amended 2026-09-06: it is an 'init' taking one
+    # of these, because everything about construction is 'init'
+    def init : void
         @other : Pair<T>&
         left = other.left
         right = other.right

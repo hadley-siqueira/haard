@@ -64,6 +64,16 @@ bool TypeCollector::walk(u32 index, bool given) {
                         continue;
                     }
 
+                    // Record 0002: the clone is what a use names, and the
+                    // clone is typed on its own. What is written inside the
+                    // generic itself is not a program yet.
+                    //
+                    // The **parameters** are not part of that: 'T' is what
+                    // makes the declaration generic, it is what the
+                    // instantiator binds, and it is what says a declaration
+                    // is still unbound
+
+
                     // a declaration made during the second pass has never been
                     // through the first, and what the second pass reads is
                     // what the first one wrote. So it gets both, in order

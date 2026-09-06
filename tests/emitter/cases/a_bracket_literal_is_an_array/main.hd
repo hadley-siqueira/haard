@@ -1,0 +1,78 @@
+# Record 0021: a bracket literal is a DYNAMIC array, which record 0022 names
+# 'Array<T>'. Since 2026-09-06 it is one, and what it becomes is the fixed
+# array it is made of plus **one** call to an 'init' taking a pointer and a
+# count -- not one 'add' per element.
+#
+# The Array here is declared in this very file, which is the point of doing it
+# that way: the compiler knows the NAME 'Array' and nothing else about it
+# (records 0017 and 0022), and it resolves that name in the scope the literal
+# was written in. A program that declares its own gets its own, which is the
+# rule record 0009 already gives an importer over its imports.
+#
+# It keeps a fixed buffer so that this case needs no 'new', no 'destroy' and
+# no 'copy', and the golden stays about the literal.
+class Array<T>:
+    data : T[8]
+    size : i32
+
+    def init : void
+        size = 0
+
+    # what a bracket literal becomes
+    def init : void
+        @from : T*
+        @count : i32
+
+        size = count
+
+        let i = 0
+
+        while i < count:
+            data[i] = from[i]
+            i = i + 1
+
+    def length : i32
+        return size
+
+    # record 0034, and it gives back a reference so that reading one and
+    # writing through it are the same method
+    def operator[] : T&
+        @i : i32
+        return data[i]
+
+# At module level, which is a **global** and not a statement. It works, and it
+# is the one that catches where the constant arrays are spliced into the file:
+# emitted one line too late they land after the global that names them, and
+# only a C++ compiler notices
+let shared = [2, 4, 6]
+
+def total : i32
+    @xs : Array<i32>&
+
+    let sum = 0
+    let i = 0
+
+    while i < xs.length():
+        sum = sum + xs[i]
+        i = i + 1
+
+    return sum
+
+def main : i32
+    let n = 7
+
+    # every element a literal: the fixed array underneath goes to file scope,
+    # so it is written once for the whole program
+    let constant = [1, 2, 3]
+
+    # not every element a literal: it becomes a local, right where it is bound
+    let computed = [n, n + 1, n * 2]
+
+    # not bound to a name at all, so the sugar pass hoists it into one
+    let argument = total([10, 20, 30])
+
+    # and writing through the operator
+    constant[0] = 100
+
+    # 105 + 29 + 60 + 12 = 206
+    return total(constant) + total(computed) + argument + total(shared)

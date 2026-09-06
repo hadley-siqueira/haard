@@ -43,9 +43,11 @@ class String:
 
         data[size] = '\0'
 
-    # Record 0031's third method. It allocates its own and takes the bytes, so
+    # Record 0031, amended 2026-09-06: everything about construction is
+    # 'init', so the copy constructor is the overload that takes one of these.
+    # There is no method named 'copy'. It allocates its own and takes the bytes, so
     # two Strings never hold one pointer
-    def copy : void
+    def init : void
         @other : String&
 
         size = other.size
@@ -146,6 +148,16 @@ class String:
 
         size = size + other.size
         data[size] = '\0'
+
+    # Record 0034, and '=' is one of its operators since 2026-09-06. Without
+    # it 'a = "abc"' builds a temporary String and record 0031's assignment
+    # copies that -- two allocations and a copy, for what is one call
+    def operator= : void
+        @text : char*
+
+        size = 0
+        data[0] = '\0'
+        append(text)
 
     def equals : bool
         @other : String&

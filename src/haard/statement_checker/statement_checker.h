@@ -83,6 +83,12 @@ namespace haard {
             // and was already reported where it was written
             u32 result_of(u32 function);
 
+            // Whether this declaration still has parameters nothing has
+            // bound. Record 0002: a use of a generic names the **clone**, and
+            // the clone is what gets checked -- the uninstantiated body is not
+            // a program yet and nothing in it has a type to check against
+            bool is_an_unbound_generic(u32 node);
+
             void report(u32 node, const std::string& message);
 
             AstNodeKind kind_of(u32 node);

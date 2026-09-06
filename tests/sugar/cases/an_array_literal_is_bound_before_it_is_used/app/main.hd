@@ -1,0 +1,27 @@
+# A bracket literal is built where it is BOUND, because what it is made of is
+# a C++ array and a C++ array is a declaration. So one that is not already a
+# binding's initialiser is hoisted into one, and the golden below is that.
+#
+# The three places hoisting would change the meaning are refused, exactly as
+# they are for a template string -- one pass, one set of rules.
+def total : i32
+    @xs : Array<i32>&
+    return 0
+
+def main : i32
+    let n = 1
+
+    # already bound: nothing moves
+    let bound = [1, 2, 3]
+
+    # not bound: hoisted, in the order they were written
+    let two = total([4, 5]) + total([6, 7])
+
+    # a braced one is hoisted the same way -- it is a declaration too
+    let fixed = total_of({8, 9})
+
+    return two + n
+
+def total_of : i32
+    @from : i32[2]
+    return 0

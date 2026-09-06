@@ -81,15 +81,19 @@ bool Emitter::emit(std::ostream& stream) {
     emit_forward_declarations();
     emit_types();
     emit_prototypes();
-    emit_globals();
-
-    // The bodies are built into a buffer of their own so that the constant
-    // arrays they need can be written **above** them: a bracket literal
-    // becomes a file-scope array plus a constructor call, and the array has
-    // to be declared before the function that names it
+    // Everything that can hold a bracket literal is built into a buffer of
+    // its own, so that the constant arrays those literals need can be written
+    // **above** it: a literal becomes a file-scope array plus a constructor
+    // call, and the array has to be declared before whatever names it.
+    //
+    // The globals are inside that buffer and not above it, which is not a
+    // detail: 'let shared = [1, 2, 3]' at module level is a global, and with
+    // the splice one line higher its array came out after the line that used
+    // it and only a C++ compiler said so
     std::string head = out.str();
 
     out.str("");
+    emit_globals();
     emit_bodies();
     emit_main();
 
@@ -425,7 +429,7 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
     // by a class that holds nothing yet, so an assignment has to put the class
     // back into that state before calling it -- and the guard is for 'a = a',
     // which would otherwise free what it is about to read
-    u32 copy = member_named(module_index, declaration, "copy");
+    u32 copy = copy_init_of(module_index, declaration);
 
     if (!bodies) {
         if (copy != 0) {
@@ -441,7 +445,18 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
             }
 
             line(holder + "(const " + holder + "& other);");
-            line(holder + "& operator=(const " + holder + "& other);");
+
+            // NOT a C++ 'operator=', since 2026-09-06. Record 0034's rule --
+            // the emitter must not lean on C++ having the feature -- was
+            // surviving in the compiler's own emission, and an assignment
+            // between two class values leaned on it. It is an ordinary method
+            // now and 'a = b' is a call to it.
+            //
+            // It is not 'm_copy' either, though that is what an assignment
+            // means at first glance: record 0031 has an assignment **destroy
+            // first**, and calling the copy alone would leak whatever the
+            // target held
+            line("void m_assign(" + holder + "& other);");
         }
 
         line("virtual ~" + holder + "();");
@@ -459,16 +474,19 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
         out << holder << "::" << holder << "(const " << holder
             << "& other) {\n    " << call << "\n}\n\n";
 
-        out << holder << "& " << holder << "::operator=(const " << holder
+        std::string plain = "this->" + holder + "::"
+                          + name_of(module_index, copy) + "(other);";
+
+        out << "void " << holder << "::m_assign(" << holder
             << "& other) {\n"
-            << "    if (this == &other) {\n        return *this;\n    }\n\n";
+            << "    if (this == &other) {\n        return;\n    }\n\n";
 
         if (destroy != 0) {
             out << "    this->" << holder << "::"
                 << name_of(module_index, destroy) << "();\n";
         }
 
-        out << "    " << call << "\n    return *this;\n}\n\n";
+        out << "    " << plain << "\n}\n\n";
     }
 
     out << holder << "::~" << holder << "() {\n";
@@ -971,8 +989,17 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
         }
 
         // record 0021's dynamic array, which is a construction and not an
-        // assignment: it needs two lines and the second one names the first
-        if (expression != 0 && kind_of(module_index, expression) == AST_LIST) {
+        // assignment: it needs two lines and the second one names the first.
+        //
+        // A braced one joins it only when it CONSTRUCTS something -- on its
+        // own it is a C++ array and an ordinary initialiser
+        bool constructs =
+            expression != 0
+            && kind_of(module_index, expression) == AST_ARRAY
+            && module->get_resolutions()->get(expression)->candidate != 0;
+
+        if (expression != 0
+            && (kind_of(module_index, expression) == AST_LIST || constructs)) {
             emit_array_literal(module_index, expression, type,
                                name_of(module_index, candidate));
             continue;
@@ -980,6 +1007,18 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
 
         out << std::string(indentation * 4, ' ')
             << declare(module_index, type, name_of(module_index, candidate));
+
+        // record 0023's conversion is a construction, so it is written as one
+        // and not as an assignment C++ would have to work out
+        if (expression != 0
+            && type_at(module_index, expression) != type
+            && module->get_types()->get_type(type)->kind == TYPE_NAMED
+            && type_at(module_index, expression) != INVALID_TYPE) {
+            out << "(";
+            emit_expression(module_index, expression);
+            out << ");\n";
+            continue;
+        }
 
         if (expression != 0) {
             out << " = ";
@@ -1107,7 +1146,15 @@ void Emitter::emit_expression(u32 module, u32 node) {
         out << "]";
         return;
 
-    case AST_ASSIGNMENT: emit_binary(module, node, "="); return;
+    // three answers, in order: the operator a class overloaded (record
+    // 0034), record 0031's assignment, and C++'s own for everything else
+    case AST_ASSIGNMENT:
+        if (emit_operator(module, node) || emit_copy_assignment(module, node)) {
+            return;
+        }
+
+        emit_binary(module, node, "=");
+        return;
     case AST_PLUS_ASSIGNMENT: emit_binary(module, node, "+="); return;
     case AST_MINUS_ASSIGNMENT: emit_binary(module, node, "-="); return;
     case AST_TIMES_ASSIGNMENT: emit_binary(module, node, "*="); return;
@@ -1210,7 +1257,14 @@ void Emitter::emit_expression(u32 module, u32 node) {
             return;
         }
 
-        emit_call_arguments(module, second_child_of(module, node));
+        // 'new T(...)' names its constructor on the 'new' itself
+        {
+            Resolution* built =
+                compilation->get_module(module)->get_resolutions()->get(node);
+
+            emit_call_arguments(module, second_child_of(module, node),
+                                built->module, built->candidate);
+        }
         return;
     }
 
@@ -1316,11 +1370,16 @@ void Emitter::emit_identifier(u32 module_index, u32 node) {
 }
 
 void Emitter::emit_call(u32 module_index, u32 node) {
+    u32 holder = module_index;
+    u32 candidate = called_candidate(module_index, node, holder);
+
     emit_expression(module_index, child_of(module_index, node, 0));
-    emit_call_arguments(module_index, child_of(module_index, node, 1));
+    emit_call_arguments(module_index, child_of(module_index, node, 1), holder,
+                        candidate);
 }
 
-void Emitter::emit_call_arguments(u32 module_index, u32 arguments) {
+void Emitter::emit_call_arguments(u32 module_index, u32 arguments, u32 holder,
+                                  u32 candidate) {
     Module* module = compilation->get_module(module_index);
     u32 written = 0;
 
@@ -1332,7 +1391,15 @@ void Emitter::emit_call_arguments(u32 module_index, u32 arguments) {
          argument != 0;
          argument = module->get_ast()->get_node(argument)->get_sibling()) {
         out << (written > 0 ? ", " : "");
-        emit_expression(module_index, argument);
+
+        u32 wanted = candidate == 0
+                         ? INVALID_TYPE
+                         : raw_parameter_of(holder, candidate, written);
+
+        if (!emit_conversion(module_index, holder, wanted, argument)) {
+            emit_expression(module_index, argument);
+        }
+
         written++;
     }
 
@@ -1525,18 +1592,22 @@ void Emitter::emit_array_literal(u32 module_index, u32 node, u32 type,
     }
 
     u32 element = type_at(module_index, first);
+    Resolution* built = module->get_resolutions()->get(node);
 
-    // the library invariant, asked here because here is where every signature
-    // exists: 'Array<T>' has an 'init' taking a pointer and a count, and a
-    // bracket literal is one call to it
-    Type* entry = compilation->get_module(module_index)->get_types()
-                      ->get_type(type);
+    // Nothing recorded means the literal is the value itself, and then the
+    // library invariant is asked here -- here is where every signature exists:
+    // 'Array<T>' has an 'init' taking a pointer and a count, and a bracket
+    // literal is one call to it
+    if (built->candidate == 0) {
+        Type* entry = compilation->get_module(module_index)->get_types()
+                          ->get_type(type);
 
-    if (entry->kind != TYPE_NAMED
-        || !takes_two(entry->module, entry->subject, "init")) {
-        fail("an array literal is one call to an 'init' taking a pointer and "
-             "a count, and the class it builds declares none");
-        return;
+        if (entry->kind != TYPE_NAMED
+            || !takes_two(entry->module, entry->subject, "init")) {
+            fail("an array literal is one call to an 'init' taking a pointer "
+                 "and a count, and the class it builds declares none");
+            return;
+        }
     }
 
     std::string fixed = "__fx" + std::to_string(constant_count++);
@@ -1579,9 +1650,185 @@ void Emitter::emit_array_literal(u32 module_index, u32 node, u32 type,
         out << std::string(indentation * 4, ' ') << array;
     }
 
+    // What the literal becomes. With nothing recorded it is its own class and
+    // the fixed array is what builds it; with a constructor recorded, a
+    // **written** class type is taking it, and which of the two shapes that
+    // constructor has decides whether anything sits in between
+    if (built->candidate != 0
+        && parameters_of(built->module, built->candidate) == 1) {
+        // one parameter, so it takes a whole value: that value is built
+        // first, into a name, because C++ will not bind a temporary to the
+        // reference the parameter almost certainly is
+        u32 middle = parameter_of(built->module, built->candidate, 0);
+        std::string held = "__ar" + std::to_string(constant_count++);
+
+        out << std::string(indentation * 4, ' ')
+            << declare(built->module, middle, held) << "(" << fixed << ", "
+            << count << ");\n";
+
+        out << std::string(indentation * 4, ' ')
+            << declare(module_index, type, name) << "(" << held << ");\n";
+
+        return;
+    }
+
     out << std::string(indentation * 4, ' ')
         << declare(module_index, type, name) << "(" << fixed << ", " << count
         << ");\n";
+}
+
+// how many parameters this function's signature holds. Record 0016 puts the
+// return type last, so it is one fewer than the arguments
+bool Emitter::emit_conversion(u32 module_index, u32 holder, u32 wanted,
+                              u32 node) {
+    u32 given = type_at(module_index, node);
+
+    if (wanted == INVALID_TYPE || given == INVALID_TYPE) {
+        return false;
+    }
+
+    // 'wanted' is a parameter's type and belongs to the table of the module
+    // that DECLARED the function, while 'given' belongs to this one. Record
+    // 0016: an index does not cross a module boundary, and reading one in the
+    // wrong table is the bug this project has now made four times -- here it
+    // turned '__io_open_read(path)' into '__io_open_read(File(path))'
+    TypeTable* there = compilation->get_module(holder)->get_types();
+    TypeTable* here = compilation->get_module(module_index)->get_types();
+    Type* entry = there->get_type(there->value_of(wanted));
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    // and the same class is the same **pair**, which record 0016 does write
+    // down, rather than the same index, which it does not
+    Type* from = here->get_type(here->value_of(given));
+    bool same = from->kind == TYPE_NAMED && from->module == entry->module
+             && from->subject == entry->subject;
+
+    // Already the right class, so nothing is converted -- but an rvalue still
+    // will not bind to C++'s plain reference, and a call gives back one. That
+    // was broken before any of this and had simply never been written:
+    // 'append(gives())' where 'gives' returns a String by value
+    if (same) {
+        if (there->get_type(wanted)->kind != TYPE_REFERENCE
+            || !is_an_rvalue(module_index, node)) {
+            return false;
+        }
+
+        std::string held = name_of(entry->module, entry->subject);
+
+        out << "const_cast<" << held << "&>(static_cast<const " << held
+            << "&>(";
+        emit_expression(module_index, node);
+        out << "))";
+
+        return true;
+    }
+    std::string name = name_of(entry->module, entry->subject);
+
+    // a temporary is an rvalue and C++ will not bind one to a plain reference
+    bool reference = there->get_type(wanted)->kind == TYPE_REFERENCE;
+
+    if (reference) {
+        out << "const_cast<" << name << "&>(static_cast<const " << name
+            << "&>(";
+    }
+
+    out << name << "(";
+    emit_expression(module_index, node);
+    out << ")";
+
+    if (reference) {
+        out << "))";
+    }
+
+    return true;
+}
+
+// whether this expression gives back a value with no name, which is the one
+// thing C++ will not bind to a plain reference. A call is the shape that
+// matters; a name, a member and an index all name something
+bool Emitter::is_an_rvalue(u32 module_index, u32 node) {
+    switch (kind_of(module_index, node)) {
+    case AST_CALL:
+        return true;
+
+    case AST_PARENTHESIS:
+        return is_an_rvalue(module_index, child_of(module_index, node, 0));
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+u32 Emitter::called_candidate(u32 module_index, u32 call, u32& holder) {
+    Module* module = compilation->get_module(module_index);
+    u32 at = child_of(module_index, call, 0);
+
+    while (true) {
+        AstNodeKind kind = kind_of(module_index, at);
+
+        if (kind == AST_DOT || kind == AST_ARROW) {
+            at = child_of(module_index, at, 1);
+            continue;
+        }
+
+        if (kind == AST_PARENTHESIS) {
+            at = child_of(module_index, at, 0);
+            continue;
+        }
+
+        break;
+    }
+
+    Resolution* found = module->get_resolutions()->get(at);
+
+    holder = found->module;
+
+    return found->candidate;
+}
+
+u32 Emitter::raw_parameter_of(u32 module_index, u32 candidate, u32 which) {
+    Module* module = compilation->get_module(module_index);
+    u32 signature = module->get_symbols()->get_candidate(candidate)->type;
+
+    if (signature == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    Type* entry = module->get_types()->get_type(signature);
+
+    return which + 1 >= entry->argument_count
+               ? INVALID_TYPE
+               : module->get_types()->get_argument(entry->first_argument
+                                                   + which);
+}
+
+u32 Emitter::parameters_of(u32 module_index, u32 candidate) {
+    Module* module = compilation->get_module(module_index);
+    u32 signature = module->get_symbols()->get_candidate(candidate)->type;
+
+    if (signature == INVALID_TYPE) {
+        return 0;
+    }
+
+    u32 held = module->get_types()->get_type(signature)->argument_count;
+
+    return held > 0 ? held - 1 : 0;
+}
+
+// and the type of one of them, with any reference read through: what is
+// declared is the value, and record 0035 makes a reference the thing it names
+u32 Emitter::parameter_of(u32 module_index, u32 candidate, u32 which) {
+    Module* module = compilation->get_module(module_index);
+    TypeTable* types = module->get_types();
+    u32 signature = module->get_symbols()->get_candidate(candidate)->type;
+    Type* entry = types->get_type(signature);
+
+    return types->value_of(types->get_argument(entry->first_argument + which));
 }
 
 // whether this class declares a method of this name taking two parameters.
@@ -1608,6 +1855,44 @@ bool Emitter::takes_two(u32 module_index, u32 candidate,
     return false;
 }
 
+bool Emitter::emit_copy_assignment(u32 module_index, u32 node) {
+    u32 left = child_of(module_index, node, 0);
+
+    if (!declares_copy(module_index, type_at(module_index, left))) {
+        return false;
+    }
+
+    emit_expression(module_index, left);
+    out << (is_pointer(module_index, left) ? "->" : ".") << "m_assign(";
+    emit_expression(module_index, child_of(module_index, node, 1));
+    out << ")";
+
+    return true;
+}
+
+bool Emitter::declares_copy(u32 module_index, u32 type) {
+    if (type == INVALID_TYPE) {
+        return false;
+    }
+
+    Type* entry = compilation->get_module(module_index)->get_types()
+                      ->get_type(type);
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    AstQuery query;
+
+    query.set_module(holder);
+
+    u32 declaration =
+        holder->get_symbols()->get_candidate(entry->subject)->ast_node;
+
+    return copy_init_of(entry->module, declaration) != 0;
+}
+
 bool Emitter::is_constant_literal(u32 module_index, u32 node) {
     switch (kind_of(module_index, node)) {
     case AST_INTEGER_LITERAL:
@@ -1623,6 +1908,45 @@ bool Emitter::is_constant_literal(u32 module_index, u32 node) {
     }
 
     return false;
+}
+
+u32 Emitter::copy_init_of(u32 module_index, u32 declaration) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    AstQuery query;
+
+    query.set_module(module);
+
+    u32 own = table->candidate_of(declaration);
+
+    if (own == 0) {
+        return 0;
+    }
+
+    u32 mine = module->get_types()->named(module_index, own,
+                                          std::vector<u32>());
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FUNCTION
+            || query.get_declaration_name(member) != "init") {
+            continue;
+        }
+
+        u32 candidate = table->candidate_of(member);
+
+        if (candidate == 0 || parameters_of(module_index, candidate) != 1) {
+            continue;
+        }
+
+        u32 held = module->get_types()->value_of(
+            raw_parameter_of(module_index, candidate, 0));
+
+        if (held == mine) {
+            return candidate;
+        }
+    }
+
+    return 0;
 }
 
 u32 Emitter::member_named(u32 module_index, u32 declaration,

@@ -1,0 +1,94 @@
+# List<T>, which '[T]' is written form for (record 0022), built the only ways
+# there are to build one -- there is no literal for a List.
+#
+#   from a bracket literal, which is an Array<T>: the compiler picks List's
+#   'init(Array<T>&)' and writes the call
+#
+#   from a braced one, which is a fixed array: it picks 'init(T*, i32)'
+#
+# It is a doubly linked list with a head and a tail, and it owns its nodes --
+# so record 0031 makes it write a 'copy', and that 'copy' takes a 'List<T>&',
+# which is a generic naming itself (record 0036).
+#
+# It also holds a 'Node<T>*', and that is the shape that forced a change: the
+# body of an uninstantiated generic is no longer typed at all. Two occurrences
+# of 'Node<T>' written in two generics are two types, because each 'T' is a
+# parameter of its own declaration -- so 'walk = walk->next' was 'cannot
+# assign Node<T>* to Node<T>*'. Record 0002 already said the clone is what a
+# use names; now the clone is also the only thing typed.
+#
+# Nothing here imports anything. Its exit status is the number of checks that
+# failed.
+
+def check : void
+    @out : File*
+    @what : String
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # ---- the two ways in
+
+    let from_brackets : List<i32> = [1, 2, 3]
+    let from_braces : List<i32> = {1, 2, 3}
+
+    let both = (from_brackets.length() == 3 and from_braces.length() == 3
+                and from_brackets == from_braces)
+
+    check(out, "both ways in agree, at ${from_brackets.length()} long", both)
+
+    if not both:
+        failures = failures + 1
+
+    # ---- read and written through record 0034's operator, which walks
+
+    from_brackets[1] = 99
+
+    let written = (from_brackets[1] == 99 and from_brackets[2] == 3
+                   and from_brackets != from_braces)
+
+    check(out, "after l[1] = 99: ${from_brackets[0]}, ${from_brackets[1]}, ${from_brackets[2]}", written)
+
+    if not written:
+        failures = failures + 1
+
+    # ---- a head and a tail, which is what a linked list is for
+
+    from_braces.push_front(0)
+    from_braces.push_back(4)
+
+    let ends = (from_braces.length() == 5 and from_braces[0] == 0
+                and from_braces[4] == 4)
+
+    check(out, "pushing both ends gives ${from_braces.length()}, from ${from_braces[0]} to ${from_braces[4]}", ends)
+
+    if not ends:
+        failures = failures + 1
+
+    # ---- record 0031: it owns its nodes, so a copy holds its own
+
+    let copied = from_braces
+
+    copied[0] = 7
+
+    let apart = from_braces[0] == 0 and copied[0] == 7
+
+    check(out, "a copy is its own: ${from_braces[0]} against ${copied[0]}",
+          apart)
+
+    if not apart:
+        failures = failures + 1
+
+    out->writeln("")
+    out->writeln("failures: ${failures}")
+
+    return failures

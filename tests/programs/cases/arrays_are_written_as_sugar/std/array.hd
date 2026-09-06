@@ -22,10 +22,12 @@ class Array<T>:
         capacity = 4
         data = new T[capacity]
 
-    # Record 0031's third method. Its own buffer, and the elements copied one
+    # Record 0031, amended 2026-09-06: everything about construction is
+    # 'init', so the copy constructor is the overload that takes one of these.
+    # There is no method named 'copy'. Its own buffer, and the elements copied one
     # at a time -- which is what makes an Array of a class that owns something
     # work, since each element's own 'copy' runs
-    def copy : void
+    def init : void
         @other : Array<T>&
 
         size = other.size

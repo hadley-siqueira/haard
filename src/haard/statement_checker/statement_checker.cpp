@@ -82,6 +82,12 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
 
     AstNodeKind kind = kind_of(node);
 
+    // record 0002 again: what is inside a generic that nothing instantiated
+    // is not a program. Its clone is checked, with every parameter bound
+    if (is_an_unbound_generic(node)) {
+        return;
+    }
+
     switch (kind) {
     case AST_FUNCTION:
         result = result_of(node);
@@ -265,6 +271,18 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
 
     left = types->value_of(left);
 
+    // Record 0034, and '=' joined its table on 2026-09-06: a class may say
+    // what assigning to it means. 'a = "abc"' on a String is the reason --
+    // without it the char* becomes a temporary String and record 0031's
+    // assignment copies that, which is two allocations for one call.
+    //
+    // Asked before the coercion below, so an overload beats a conversion, and
+    // it answers or says nothing: a class that declares none falls through
+    if (types->get_type(left)->kind == TYPE_NAMED
+        && typer.overloaded(scope, node, left, value, true) != INVALID_TYPE) {
+        return;
+    }
+
     u32 right = typer.type_of(index, scope, value, left);
 
     // record 0031, and an assignment is the one copy that also destroys: what
@@ -312,6 +330,32 @@ u32 StatementChecker::result_of(u32 node) {
 
     return module->get_types()->get_argument(entry->first_argument +
                                              entry->argument_count - 1);
+}
+
+bool StatementChecker::is_an_unbound_generic(u32 node) {
+    Module* module = compilation->get_module(index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    SymbolTable* table = module->get_symbols();
+
+    for (u32 parameter : query.get_generic_parameters(node)) {
+        u32 candidate = table->candidate_of(parameter);
+
+        if (candidate == 0) {
+            continue;
+        }
+
+        u32 type = table->get_candidate(candidate)->type;
+
+        if (type == INVALID_TYPE
+            || module->get_types()->get_type(type)->kind == TYPE_GENERIC) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void StatementChecker::report(u32 node, const std::string& message) {

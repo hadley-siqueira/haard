@@ -250,7 +250,8 @@ u32 ExpressionTyper::element_of(u32 type) {
     return INVALID_TYPE;
 }
 
-u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right) {
+u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right,
+                                bool quiet) {
     const char* wanted = operator_name(kind_of(node));
 
     if (wanted == nullptr) {
@@ -285,11 +286,13 @@ u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right) {
     Overload chosen = overloads.choose(index, candidates, arguments);
 
     if (chosen.status != OVERLOAD_FOUND) {
-        report(node, chosen.status == OVERLOAD_AMBIGUOUS
-                         ? std::string("this matches more than one '") + wanted
-                               + "' equally well"
-                         : std::string("no '") + wanted
-                               + "' takes these operands");
+        if (!quiet) {
+            report(node, chosen.status == OVERLOAD_AMBIGUOUS
+                             ? std::string("this matches more than one '")
+                                   + wanted + "' equally well"
+                             : std::string("no '") + wanted
+                                   + "' takes these operands");
+        }
 
         return INVALID_TYPE;
     }
@@ -617,7 +620,10 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
     // many were written, which is what record 0016 keeps in the type itself.
     // It is the primitive: a C++ array, no class, nothing to construct
     if (array) {
-        return types->array(wanted, count);
+        u32 own = types->array(wanted, count);
+        u32 made = constructed_from(scope, node, expected, own, wanted, count);
+
+        return made == INVALID_TYPE ? own : made;
     }
 
     // and a bracketed one is a **dynamic** array, which record 0022 names
@@ -644,7 +650,72 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
     // further down than a diagnostic wants to be, and it is a **library**
     // invariant rather than something a program can get wrong -- the standard
     // library's Array has this constructor or nothing works
-    return made;
+    u32 wrapped = constructed_from(scope, node, expected, made, wanted, count);
+
+    return wrapped == INVALID_TYPE ? made : wrapped;
+}
+
+u32 ExpressionTyper::constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
+                                      u32 element, u32 count) {
+    TypeTable* types = module->get_types();
+
+    if (wanted == INVALID_TYPE || wanted == own || own == INVALID_TYPE
+        || types->get_type(wanted)->kind != TYPE_NAMED) {
+        return INVALID_TYPE;
+    }
+
+    u32 owner = index;
+    std::vector<Candidacy> candidates = constructors_of(wanted, owner);
+
+    if (candidates.size() == 0) {
+        return INVALID_TYPE;
+    }
+
+    // one parameter taking what the literal already is
+    std::vector<Argument> one;
+    Argument whole;
+
+    whole.literal = false;
+    whole.node = node;
+    whole.type = own;
+    one.push_back(whole);
+
+    Overload chosen = overloads.choose(index, candidates, one);
+
+    // and two taking a pointer to its element and how many, which is the pair
+    // a '{}' offers and the one Hadley named
+    if (chosen.status != OVERLOAD_FOUND) {
+        std::vector<Argument> two;
+        Argument from;
+        Argument size;
+
+        from.literal = false;
+        from.node = node;
+        from.type = types->pointer(element);
+
+        size.literal = false;
+        size.node = node;
+        size.type = types->builtin(BUILTIN_I32);
+
+        two.push_back(from);
+        two.push_back(size);
+
+        chosen = overloads.choose(index, candidates, two);
+    }
+
+    if (chosen.status != OVERLOAD_FOUND) {
+        return INVALID_TYPE;
+    }
+
+    (void) count;
+
+    // which constructor this literal means, on the literal itself -- nothing
+    // can work it out again, exactly as for a call and for record 0034's
+    // operators
+    module->get_resolutions()->set_declaration(node, chosen.module,
+                                               chosen.candidate);
+
+    return wanted;
 }
 
 u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {

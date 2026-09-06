@@ -1,0 +1,15 @@
+def total : i32
+    @xs : Array<i32>&
+    return 0
+def main : i32
+    let n = 1
+    let bound = [1, 2, 3]
+    let __ar0 = [4, 5]
+    let __ar1 = [6, 7]
+    let two = total(__ar0) + total(__ar1)
+    let __ar2 = {8, 9}
+    let fixed = total_of(__ar2)
+    return two + n
+def total_of : i32
+    @from : i32[2]
+    return 0

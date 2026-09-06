@@ -1,0 +1,37 @@
+def total : i32
+    @xs : Array<i32>&
+    return 0
+let global = [1, 2]
+def main : i32
+    let n = 3
+    let ok = true
+    while total([1, 2]) < n:
+        n = n - 1
+    if ok and total([3, 4]) > 0:
+        n = 0
+    if ok or total([5, 6]) > 0:
+        n = 0
+    let __ar0 = [7, 8]
+    if total(__ar0) > 0:
+        n = 0
+    let __ar1 = [9, 10]
+    if total(__ar1) > 0 and ok:
+        n = 0
+    return n
+
+--- diagnostics
+error: an array literal is built before the statement it is written in, so it cannot go in a loop condition
+  --> app/main.hd:20:17
+   |
+20 |     while total([1, 2]) < n:
+   |                 ^
+error: an array literal is built before the statement it is written in, so it cannot go on the right of 'and'
+  --> app/main.hd:24:21
+   |
+24 |     if ok and total([3, 4]) > 0:
+   |                     ^
+error: an array literal is built before the statement it is written in, so it cannot go on the right of 'or'
+  --> app/main.hd:27:20
+   |
+27 |     if ok or total([5, 6]) > 0:
+   |                    ^

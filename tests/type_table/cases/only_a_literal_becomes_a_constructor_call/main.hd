@@ -1,0 +1,36 @@
+# Hadley, 2026-09-06: a written class type takes a **literal** by one of its
+# constructors, and only a literal. A value of another type still does not
+# convert, which is what keeps record 0018's list closed and readable in one
+# place -- the alternative is C++'s converting constructor, which fires
+# silently for every class in the program and has 'explicit' to defend itself
+# while Haard would have nothing.
+class Array<T>:
+    size : i32
+
+    def init : void
+        size = 0
+
+    def init : void
+        @from : T*
+        @count : i32
+        size = count
+
+class Held:
+    count : i32
+
+    def init : void
+        @from : Array<i32>&
+        count = from.size
+
+def main : i32
+    # both literals are translated
+    let a : Held = [1, 2, 3]
+
+    # and a value is not, however well its type would fit the constructor
+    let made : Array<i32>
+    let b : Held = made
+
+    # nor is one that no constructor of the class takes
+    let c : Held = [1.5, 2.5]
+
+    return 0

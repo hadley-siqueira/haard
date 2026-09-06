@@ -1,3 +1,13 @@
+# Note, 2026-09-06: the assignment is a method now and not a C++
+# 'operator='. Record 0034's rule -- the emitter must not lean on C++ having
+# the feature -- was surviving in the compiler's own emission, and 'a = b'
+# between two class values leaned on it. It is 'm_assign' in the golden below
+# and 'a = b' is a call to it.
+#
+# Not 'm_copy', though that is what an assignment means at first glance:
+# record 0031 has an assignment **destroy first**, and calling the copy alone
+# would leak whatever the target held.
+
 # The answer is 42, and what it is really saying is that nothing was freed
 # twice. Record 0031.
 #
@@ -25,7 +35,7 @@ class Owner:
 
     # the whole of what makes this copyable: it allocates its own and takes
     # the bytes, so two Owners never hold one pointer
-    def copy : void
+    def init : void
         @other : Owner&
 
         size = other.size

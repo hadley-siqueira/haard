@@ -1,0 +1,81 @@
+# Hadley's four examples, 2026-09-06. The rule: only 'char*' literals exist,
+# and when a 'char*' is given to something that expects a String, the
+# **constructor** or the **overloaded operator** is called.
+#
+# The point of this case is the C++ below it. Every one of these worked before
+# in the sense that it compiled -- and none of them named a constructor,
+# because record 0026 emits 'init' as a C++ constructor of one argument and
+# C++'s own converting constructor ran it. Haard decided *that* it converts;
+# C++ decided *how*, which is record 0034's rule surviving in the emission.
+#
+# The class is called String on purpose: record 0023 makes this one pair a
+# **named** library relation, and Hadley chose to keep it that way (1a) --
+# the compiler knows this one name, and a user who wants the same for a class
+# of their own writes the overloads by hand.
+class String:
+    data : char*
+    size : i32
+
+    def init : void
+        data = ""
+        size = 0
+
+    def init : void
+        @text : char*
+
+        data = text
+        size = 0
+
+        while text[size] != '\0':
+            size = size + 1
+
+    def length : i32
+        return size
+
+    # Record 0034, and '=' is one of its operators since 2026-09-06. Without
+    # it 'a = "abc"' builds a temporary String and record 0031's assignment
+    # copies that -- two allocations and a copy, for one call
+    def operator= : void
+        @text : char*
+
+        data = text
+        size = 0
+
+        while text[size] != '\0':
+            size = size + 1
+
+def by_reference : i32
+    @s : String&
+    return s.length()
+
+def by_value : i32
+    @s : String
+    return s.length()
+
+def gives : String
+    return "returned"
+
+def main : i32
+    # 1. a literal is a char*, and stays one
+    let plain = "abc"
+
+    # 2. a written String is a construction, and the golden names it
+    let built : String = "abcd"
+
+    # 3. a char* where a String was asked for: a temporary, by reference and
+    # by value alike
+    let n = by_reference("abcde")
+    let m = by_value("abcdef")
+
+    # and a String that a call gave back, passed by reference -- an rvalue,
+    # which C++ will not bind to a plain reference either. Broken before this
+    # and simply never written
+    let r = by_reference(gives())
+
+    # 4. assigning a char* is the overloaded operator, not a temporary
+    built = "abcdefg"
+
+    # 3 + 4 + 5 + 6 + 8 = 26
+    let first = (plain[0] - 'a') as i32
+
+    return first + built.length() + n + m + r

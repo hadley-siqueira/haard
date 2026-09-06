@@ -1,0 +1,40 @@
+# A braced literal is a FIXED array -- record 0021 -- and a fixed array is a
+# C++ array and nothing else: no class, no constructor, no hoisting. It types
+# as 'i32[3]' and, until 2026-09-06, died in the emitter with 'this expression
+# cannot be emitted yet'.
+#
+# It is the primitive everything else stands on: a bracket literal is one of
+# these plus one constructor call, and so is a List built from either.
+#
+# The second half is the decay. 'i32[3]' where an 'i32*' was asked for is on
+# record 0018's list now, and without it a '{}' could not reach the
+# 'init(T*, i32)' it is written for -- 'takes(fixed, 3)' was 'no takes takes
+# these arguments'.
+
+def sum : i32
+    @from : i32*
+    @count : i32
+
+    let total = 0
+    let i = 0
+
+    while i < count:
+        total = total + from[i]
+        i = i + 1
+
+    return total
+
+def main : i32
+    # bound with its type written, and bound with it inferred
+    let written : i32[4] = {1, 2, 3, 4}
+    let inferred = {10, 20, 30}
+
+    # a fixed array is mutable, since record 0029 leaves Haard without a const
+    written[0] = 5
+
+    # and the decay, which is what makes the literal reach a pointer
+    let a = sum(written, 4)
+    let b = sum(inferred, 3)
+
+    # 14 + 60 = 74
+    return a + b

@@ -44,6 +44,7 @@ u32 AstNode::get_children() {
 
 const char* haard::operator_name(AstNodeKind kind) {
     switch (kind) {
+    case AST_ASSIGNMENT: return "operator=";
     case AST_INDEX: return "operator[]";
     case AST_PLUS: return "operator+";
     case AST_MINUS: return "operator-";
