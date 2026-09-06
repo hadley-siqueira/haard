@@ -120,6 +120,10 @@ namespace haard {
             // nothing an i32 could be turned into to make 'if n and m:' mean
             // something. 'unary' is 'not', which has one operand and no second
             // child to ask about
+            // '&', '|', '^' and the shifts: arithmetic's shape with one
+            // more rule, that a float has no bits to speak of
+            u32 bitwise(u32 scope, u32 node, u32 expected);
+
             u32 logical(u32 scope, u32 node, bool unary);
 
             // whether this operand is a bool, complaining when it is not. It
@@ -189,6 +193,10 @@ namespace haard {
             NameResolver resolver;
             OverloadResolver overloads;
             TypeBuilder builder;
+
+            // record 0031's question, asked at the fourth of the four places
+            // a value is given to something
+            Coercion coercion;
 
             Module* module;
             u32 index;

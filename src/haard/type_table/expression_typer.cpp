@@ -38,6 +38,7 @@ void ExpressionTyper::set_compilation(Compilation* compilation) {
     resolver.set_compilation(compilation);
     overloads.set_compilation(compilation);
     builder.set_compilation(compilation);
+    coercion.set_compilation(compilation);
 }
 
 void ExpressionTyper::set_module(u32 index) {
@@ -92,6 +93,22 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_INTEGER_DIVISION:
     case AST_MODULO:
         return binary(scope, node, expected, false);
+
+    // Bits. The same shape as arithmetic and one rule more: they are about the
+    // representation, so a float has none to speak of and is refused here
+    // rather than by a C++ compiler about a line nobody wrote.
+    //
+    // Nothing typed any of the six until 2026-09-05: 'a & b' passed the check
+    // phase in silence and only the emitter noticed, by refusing to name
+    // something that had no type. Agenda 2.10 counted fourteen kinds on
+    // 2026-09-02 and these were not among them
+    case AST_BITWISE_AND:
+    case AST_BITWISE_OR:
+    case AST_BITWISE_XOR:
+    case AST_BITWISE_LEFT_SHIFT:
+    case AST_BITWISE_RIGHT_SHIFT:
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
+        return bitwise(scope, node, expected);
 
     case AST_EQUAL:
     case AST_NOT_EQUAL:
@@ -644,10 +661,35 @@ u32 ExpressionTyper::identifier(u32 scope, u32 node) {
                                  ->type);
 }
 
+// whether this node is a number written down, which record 0018 gives no type
+// of its own -- so it is the one thing in an operand position that would
+// rather be told what to be than say
+static bool is_untyped_literal(AstNodeKind kind) {
+    return kind == AST_INTEGER_LITERAL || kind == AST_FLOAT_LITERAL;
+}
+
 u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
                             bool comparison) {
-    u32 left = type_of(index, scope, first_child(node), expected);
-    u32 right = type_of(index, scope, second_child(node), left);
+    u32 left;
+    u32 right;
+
+    // The other operand is the context, and until 2026-09-05 only one of them
+    // could be: the left was typed first and handed its answer to the right,
+    // so 'big - 0' worked and '0 - big' was *cannot apply this to i32 and
+    // i64*. The literal on the left had nothing to learn from and took its
+    // default.
+    //
+    // So whichever side is a written number waits for the other. Two of them
+    // is the ordinary case and either order gives the same answer, which is
+    // why the test is only about the left
+    if (is_untyped_literal(kind_of(first_child(node)))
+        && !is_untyped_literal(kind_of(second_child(node)))) {
+        right = type_of(index, scope, second_child(node), expected);
+        left = type_of(index, scope, first_child(node), right);
+    } else {
+        left = type_of(index, scope, first_child(node), expected);
+        right = type_of(index, scope, second_child(node), left);
+    }
 
     if (left == INVALID_TYPE || right == INVALID_TYPE) {
         return INVALID_TYPE;
@@ -663,6 +705,31 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     }
 
     return comparison ? module->get_types()->builtin(BUILTIN_BOOL) : left;
+}
+
+// Bits, which is arithmetic with one more rule. A float has no representation
+// to operate on -- C++ refuses '1.5 & 2' too -- so this is said here, where
+// the operator is, and the message names the type rather than leaving it to a
+// compiler talking about generated code
+u32 ExpressionTyper::bitwise(u32 scope, u32 node, u32 expected) {
+    u32 result = binary(scope, node, expected, false);
+
+    if (result == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    Type* entry = module->get_types()->get_type(result);
+
+    // BUILTIN_CHAR is a character and not a width to shift, and BUILTIN_BOOL
+    // has 'and' and 'or' of its own
+    if (entry->kind != TYPE_BUILTIN || entry->subject > BUILTIN_I64) {
+        report(node, "bits are for a whole number, and this is "
+               + name_of(result));
+
+        return INVALID_TYPE;
+    }
+
+    return result;
 }
 
 u32 ExpressionTyper::logical(u32 scope, u32 node, bool unary) {
@@ -829,6 +896,19 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
             if (arguments[i].literal) {
                 module->get_resolutions()->set_type(arguments[i].node,
                                                     chosen.parameters[i]);
+            }
+
+            // Record 0031, and this is the fourth of the four places a value
+            // is given to something. It is asked here and not in the resolver
+            // because the resolver ranks and never reports: a candidate that
+            // took an uncopyable class by value would simply not match, and
+            // the reader would be told that no overload takes these arguments
+            // -- true, and about the wrong thing
+            if (!coercion.may_be_copied(index, chosen.parameters[i])) {
+                report(arguments[i].node,
+                       name_of(chosen.parameters[i])
+                           + " cannot be copied, and this parameter takes one "
+                             "by value");
             }
         }
     }

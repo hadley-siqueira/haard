@@ -1,5 +1,9 @@
+# What a call may not do, and one thing it may that looks like it should not.
 class Base:
     tag : i32
+
+class Derived(Base):
+    extra : i32
 
 def small : bool
     @a : u8
@@ -10,14 +14,38 @@ def with_default : i32
     @b : i32 = 0
     return a
 
-def upcast : i32
+def by_reference : i32
     @b : Base&
+    return 0
+
+def by_value : i32
+    @b : Base
     return 0
 
 def main : i32
     @b : Base
+    @d : Derived
+
     let too_big = small(300)
     let too_few = with_default()
     let too_many = with_default(1, 2, 3)
-    let by_value = upcast(b)
+
+    # A **value where a reference was asked for**, which record 0018's list
+    # did not have until 2026-09-05 and which record 0031 is what exposed:
+    # 0031 sends anyone holding something that owns memory towards a '&'
+    # parameter to avoid the copy, and a '&' parameter could not be passed a
+    # value, so there was nowhere to go.
+    #
+    # It is not a conversion at all -- the parameter *is* the value -- and a
+    # derived one binds to a base's reference for the reason the list already
+    # allowed between two references: nothing is sliced, because nothing is
+    # copied.
+    let bound = by_reference(b)
+    let bound_derived = by_reference(d)
+
+    # and this is the one the list still refuses, which is the slicing the
+    # comment in Coercion has always been about: an upcast **by value** copies
+    # the base part and discards the rest
+    let sliced = by_value(d)
+
     return 0

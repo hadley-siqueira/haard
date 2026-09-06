@@ -198,6 +198,19 @@ u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written) {
     // the whole of inference for a binding
     u32 given = typer.type_of(index, scope, expression, written);
 
+    // Record 0031: what a binding was given is **copied** into it, so a class
+    // that owns something and has not said how to be copied cannot be what it
+    // was given. Asked before the list below, because a type that fits
+    // perfectly is exactly the one this is about
+    if (!coercion.may_be_copied(index, written == INVALID_TYPE ? given
+                                                              : written)) {
+        report(name_node_of(node),
+               typer.name_of(written == INVALID_TYPE ? given : written)
+                   + " cannot be copied, and this is given one");
+
+        return written == INVALID_TYPE ? given : written;
+    }
+
     if (written == INVALID_TYPE) {
         return given;
     }

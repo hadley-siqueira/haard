@@ -1,0 +1,10 @@
+a String knows its length: ok
+appending grows it: ok
+  it says: hello world
+every copy is its own: ok
+  built:   n = 42, over = true, ratio = 0.500000, of hello world, first h
+a String builds itself from every kind: ok
+  edges:   -7 -2147483648
+negatives and the smallest i32: ok
+--- files:
+--- exit: 0

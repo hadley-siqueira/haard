@@ -1,38 +1,45 @@
 <unnamed>:
     Base  Base
+    Derived  Derived
     small  u8 -> bool
     with_default  i32 -> i32 -> i32
-    upcast  Base& -> i32
-    main  Base -> i32
+    by_reference  Base& -> i32
+    by_value  Base -> i32
+    main  Base -> Derived -> i32
     tag  i32
+    extra  i32
     a  u8
     a  i32
     b  i32
     b  Base&
     b  Base
+    b  Base
+    d  Derived
     too_big  <none>
     too_few  <none>
     too_many  <none>
-    by_value  <none>
-  20 types interned
+    bound  i32
+    bound_derived  i32
+    sliced  <none>
+  22 types interned
 diagnostics:
 error: no 'small' takes these arguments
-  --> main.hd:19:19
+  --> main.hd:29:19
    |
-19 |     let too_big = small(300)
+29 |     let too_big = small(300)
    |                   ^^^^^
 error: no 'with_default' takes these arguments
-  --> main.hd:20:19
+  --> main.hd:30:19
    |
-20 |     let too_few = with_default()
+30 |     let too_few = with_default()
    |                   ^^^^^^^^^^^^
 error: no 'with_default' takes these arguments
-  --> main.hd:21:20
+  --> main.hd:31:20
    |
-21 |     let too_many = with_default(1, 2, 3)
+31 |     let too_many = with_default(1, 2, 3)
    |                    ^^^^^^^^^^^^
-error: no 'upcast' takes these arguments
-  --> main.hd:22:20
+error: no 'by_value' takes these arguments
+  --> main.hd:49:18
    |
-22 |     let by_value = upcast(b)
-   |                    ^^^^^^
+49 |     let sliced = by_value(d)
+   |                  ^^^^^^^^

@@ -41,6 +41,23 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
                      types->get_argument(to->first_argument));
     }
 
+    // A **value where a reference to it was asked for**, which is not a
+    // conversion at all: the parameter *is* the value, and nothing happens at
+    // run time. Record 0018's list did not have it and record 0031 is what
+    // made that show: 0031 sends anyone holding something that owns memory
+    // towards a '&' parameter to avoid the copy, and a '&' parameter could
+    // not be passed a value, so there was nowhere to go.
+    //
+    // A derived value binds to a base's reference for the same reason the
+    // list already allows it between two references -- nothing is sliced,
+    // because nothing is copied.
+    //
+    // Only in this direction. A reference where a **value** was asked for is
+    // a copy, and record 0031 has something to say about that
+    if (to->kind == TYPE_REFERENCE && from->kind != TYPE_REFERENCE) {
+        return climb(module, given, types->get_argument(to->first_argument));
+    }
+
     // Agenda 1.21, Hadley 2026-09-03: a 'char*' where a 'String' was asked
     // for. It is the first entry on record 0018's list that is a **library**
     // relation and not a language one, and the only one that is not free --
@@ -117,4 +134,76 @@ bool Coercion::is_string(u32 module, u32 type) {
     query.set_module(holder);
 
     return query.get_declaration_name(found->ast_node) == "String";
+}
+
+bool Coercion::may_be_copied(u32 module, u32 type) {
+    if (type == INVALID_TYPE) {
+        return true;
+    }
+
+    Type* entry = compilation->get_module(module)->get_types()->get_type(type);
+
+    // a pointer and a reference name a thing rather than holding one, and a
+    // builtin owns nothing. Only a class held by value is copied
+    if (entry->kind != TYPE_NAMED) {
+        return true;
+    }
+
+    // owning is what 'destroy' says, since record 0026 makes it the
+    // destructor. Saying how to be copied is what 'copy' says
+    if (!declares(entry->module, entry->subject, "destroy")) {
+        return true;
+    }
+
+    return declares(entry->module, entry->subject, "copy");
+}
+
+bool Coercion::declares(u32 module, u32 candidate, const std::string& name) {
+    std::vector<u32> seen;
+
+    while (candidate != 0) {
+        Module* holder = compilation->get_module(module);
+        SymbolTable* table = holder->get_symbols();
+        u32 declaration = table->get_candidate(candidate)->ast_node;
+        AstQuery query;
+
+        query.set_module(holder);
+
+        for (u32 member : query.get_members(declaration)) {
+            if (query.get_declaration_name(member) == name) {
+                return true;
+            }
+        }
+
+        u32 above = table->get_candidate(candidate)->super;
+
+        if (above == INVALID_TYPE) {
+            return false;
+        }
+
+        // the base's own module and its own table, which is where its type
+        // index means anything -- record 0016
+        Type* entry = holder->get_types()->get_type(above);
+
+        if (entry->kind != TYPE_NAMED) {
+            return false;
+        }
+
+        u32 key = entry->module * 1000003 + entry->subject;
+
+        // a cycle in the bases, which nothing rejects yet. Stopping keeps the
+        // walk finite and is not a diagnostic
+        for (u32 already : seen) {
+            if (already == key) {
+                return false;
+            }
+        }
+
+        seen.push_back(key);
+
+        module = entry->module;
+        candidate = entry->subject;
+    }
+
+    return false;
 }

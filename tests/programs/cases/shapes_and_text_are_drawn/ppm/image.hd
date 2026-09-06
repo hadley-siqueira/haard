@@ -1,0 +1,194 @@
+# A PPM image, written in the plain text form -- P3, which is the one a human
+# can read and the one worth having first.
+import ppm.pixel
+import std.file
+
+class Image:
+    width : u32
+    height : u32
+    pixels : Pixel*
+
+    def init : void
+        @w : u32
+        @h : u32
+
+        width = w
+        height = h
+        pixels = new Pixel[w * h]
+
+    def destroy : void
+        delete[] pixels
+
+    def count : u32
+        return width * height
+
+    def at : Pixel*
+        @x : u32
+        @y : u32
+        return &pixels[y * width + x]
+
+    def fill : void
+        @red : u8
+        @green : u8
+        @blue : u8
+
+        let i : u32 = 0
+
+        while i < count():
+            pixels[i].set(red, green, blue)
+            i = i + 1
+
+    # false when the file would not open, which is the caller's to look at
+    def save : bool
+        @path : char*
+
+        let f = open_write(path)
+
+        if f == null:
+            return false
+
+        f->writeln("P3")
+        write_u32(f, width)
+        f->write(' ')
+        write_u32(f, height)
+        f->write('\n')
+        f->writeln("255")
+
+        let i : u32 = 0
+
+        while i < count():
+            write_u8(f, pixels[i].r)
+            f->write(' ')
+            write_u8(f, pixels[i].g)
+            f->write(' ')
+            write_u8(f, pixels[i].b)
+            f->write('\n')
+            i = i + 1
+
+        f->close()
+
+        return true
+
+# A number as decimal text. There is no conversion from a number to a
+# character -- record 0018 has none -- so a digit is found by indexing, which
+# is what the language gives instead
+def write_u32 : void
+    @where : File*
+    @value : u32
+    let digits = "0123456789"
+
+    if value >= 10:
+        write_u32(where, value / 10)
+
+    where->write(digits[value % 10])
+
+def write_u8 : void
+    @where : File*
+    @value : u8
+    let digits = "0123456789"
+
+    if value >= 10:
+        write_u8(where, value / 10)
+
+    where->write(digits[value % 10])
+
+# ---- reading one back
+
+# Which digit a character is. There is no conversion from a char to a number
+# either -- record 0018's list has none in that direction any more than in the
+# other -- so this is the same lookup as write_u32, read the other way round
+def digit_of : u32
+    @c : char
+    let digits = "0123456789"
+    let i : u32 = 0
+
+    while i < 10:
+        if digits[i] == c:
+            return i
+        i = i + 1
+
+    return 0
+
+def is_digit : bool
+    @c : char
+    return c >= '0' and c <= '9'
+
+def is_space : bool
+    @c : char
+    return c == ' ' or c == '\n' or c == '\t' or c == '\r'
+
+# the next character that is not blank, and '\0' once the file has ended.
+# A '#' runs to the end of its line, which the format allows anywhere
+def skip_blanks : char
+    @f : File*
+    let c = f->read()
+
+    while not f->at_end():
+        if c == '#':
+            while not f->at_end() and c != '\n':
+                c = f->read()
+        elif not is_space(c):
+            return c
+
+        c = f->read()
+
+    return '\0'
+
+# a decimal number, and the character that ended it is dropped -- every number
+# in a P3 is followed by a blank or by the end of the file
+def read_u32 : u32
+    @f : File*
+    let value : u32 = 0
+    let c = skip_blanks(f)
+
+    while is_digit(c):
+        value = value * 10 + digit_of(c)
+        c = f->read()
+
+        if f->at_end():
+            return value
+
+    return value
+
+# null when the file will not open or is not a P3
+def load : Image*
+    @path : char*
+
+    let f = open_read(path)
+
+    if f == null:
+        return null
+
+    if skip_blanks(f) != 'P':
+        f->close()
+        return null
+
+    if f->read() != '3':
+        f->close()
+        return null
+
+    let w = read_u32(f)
+    let h = read_u32(f)
+    let depth = read_u32(f)
+
+    if w == 0 or h == 0 or depth != 255:
+        f->close()
+        return null
+
+    let image = new Image(w, h)
+    let i : u32 = 0
+
+    while i < image->count():
+        let red = read_u32(f)
+        let green = read_u32(f)
+        let blue = read_u32(f)
+
+        # 'as' and not a silent narrowing: record 0018 has no conversion, so
+        # going from the u32 a number was read as to the u8 a channel is has
+        # to be written down
+        image->pixels[i].set(red as u8, green as u8, blue as u8)
+        i = i + 1
+
+    f->close()
+
+    return image

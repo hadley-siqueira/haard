@@ -1,0 +1,522 @@
+# draw/font.hd -- text, from a bitmap.
+#
+# One fixed size and nothing else: every glyph is 5 wide and 7 tall, written
+# as a run of 35 characters, row by row, where '#' is ink and anything else is
+# not. A string literal is a 'char*' and a 'char*' is indexed, so the font
+# needs no array literal and no data section -- it is thirty-odd string
+# literals and a lookup.
+#
+# The comment above each one is the glyph as it reads, and the string under it
+# is those seven rows run together. 'font_is_sound' below walks every glyph
+# and checks it is exactly 35 characters, so a miscounted row is a failing
+# test and not a smeared letter.
+import ppm.image
+import draw.canvas
+
+let GLYPH_WIDTH : i32 = 5
+let GLYPH_HEIGHT : i32 = 7
+
+# The ink of one glyph, row by row, or the empty string when this font has no
+# such character. A caller that draws an unknown character draws nothing
+def glyph_of : char*
+    @c : char
+
+    # .###.
+    # #...#
+    # #...#
+    # #####
+    # #...#
+    # #...#
+    # #...#
+    if c == 'A':
+        return ".###.#...##...#######...##...##...#"
+
+    # ####.
+    # #...#
+    # #...#
+    # ####.
+    # #...#
+    # #...#
+    # ####.
+    elif c == 'B':
+        return "####.#...##...#####.#...##...#####."
+
+    # .####
+    # #....
+    # #....
+    # #....
+    # #....
+    # #....
+    # .####
+    elif c == 'C':
+        return ".#####....#....#....#....#.....####"
+
+    # ####.
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # ####.
+    elif c == 'D':
+        return "####.#...##...##...##...##...#####."
+
+    # #####
+    # #....
+    # #....
+    # ####.
+    # #....
+    # #....
+    # #####
+    elif c == 'E':
+        return "######....#....####.#....#....#####"
+
+    # #####
+    # #....
+    # #....
+    # ####.
+    # #....
+    # #....
+    # #....
+    elif c == 'F':
+        return "######....#....####.#....#....#...."
+
+    # .###.
+    # #....
+    # #....
+    # #.###
+    # #...#
+    # #...#
+    # .###.
+    elif c == 'G':
+        return ".###.#....#....#.####...##...#.###."
+
+    # #...#
+    # #...#
+    # #...#
+    # #####
+    # #...#
+    # #...#
+    # #...#
+    elif c == 'H':
+        return "#...##...##...#######...##...##...#"
+
+    # #####
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # #####
+    elif c == 'I':
+        return "#####..#....#....#....#....#..#####"
+
+    # ..###
+    # ...#.
+    # ...#.
+    # ...#.
+    # ...#.
+    # #..#.
+    # .##..
+    elif c == 'J':
+        return "..###...#....#....#....#.#..#..##.."
+
+    # #...#
+    # #..#.
+    # #.#..
+    # ##...
+    # #.#..
+    # #..#.
+    # #...#
+    elif c == 'K':
+        return "#...##..#.#.#..##...#.#..#..#.#...#"
+
+    # #....
+    # #....
+    # #....
+    # #....
+    # #....
+    # #....
+    # #####
+    elif c == 'L':
+        return "#....#....#....#....#....#....#####"
+
+    # #...#
+    # ##.##
+    # #.#.#
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    elif c == 'M':
+        return "#...###.###.#.##...##...##...##...#"
+
+    # #...#
+    # ##..#
+    # #.#.#
+    # #..##
+    # #...#
+    # #...#
+    # #...#
+    elif c == 'N':
+        return "#...###..##.#.##..###...##...##...#"
+
+    # .###.
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # .###.
+    elif c == 'O':
+        return ".###.#...##...##...##...##...#.###."
+
+    # ####.
+    # #...#
+    # #...#
+    # ####.
+    # #....
+    # #....
+    # #....
+    elif c == 'P':
+        return "####.#...##...#####.#....#....#...."
+
+    # .###.
+    # #...#
+    # #...#
+    # #...#
+    # #.#.#
+    # #..#.
+    # .##.#
+    elif c == 'Q':
+        return ".###.#...##...##...##.#.##..#..##.#"
+
+    # ####.
+    # #...#
+    # #...#
+    # ####.
+    # #.#..
+    # #..#.
+    # #...#
+    elif c == 'R':
+        return "####.#...##...#####.#.#..#..#.#...#"
+
+    # .####
+    # #....
+    # #....
+    # .###.
+    # ....#
+    # ....#
+    # ####.
+    elif c == 'S':
+        return ".#####....#.....###.....#....#####."
+
+    # #####
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    elif c == 'T':
+        return "#####..#....#....#....#....#....#.."
+
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # .###.
+    elif c == 'U':
+        return "#...##...##...##...##...##...#.###."
+
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # .#.#.
+    # ..#..
+    elif c == 'V':
+        return "#...##...##...##...##...#.#.#...#.."
+
+    # #...#
+    # #...#
+    # #...#
+    # #...#
+    # #.#.#
+    # ##.##
+    # #...#
+    elif c == 'W':
+        return "#...##...##...##...##.#.###.###...#"
+
+    # #...#
+    # #...#
+    # .#.#.
+    # ..#..
+    # .#.#.
+    # #...#
+    # #...#
+    elif c == 'X':
+        return "#...##...#.#.#...#...#.#.#...##...#"
+
+    # #...#
+    # #...#
+    # .#.#.
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    elif c == 'Y':
+        return "#...##...#.#.#...#....#....#....#.."
+
+    # #####
+    # ....#
+    # ...#.
+    # ..#..
+    # .#...
+    # #....
+    # #####
+    elif c == 'Z':
+        return "#####....#...#...#...#...#....#####"
+
+    # .###.
+    # #...#
+    # #..##
+    # #.#.#
+    # ##..#
+    # #...#
+    # .###.
+    elif c == '0':
+        return ".###.#...##..###.#.###..##...#.###."
+
+    # ..#..
+    # .##..
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # .###.
+    elif c == '1':
+        return "..#...##....#....#....#....#...###."
+
+    # .###.
+    # #...#
+    # ....#
+    # ...#.
+    # ..#..
+    # .#...
+    # #####
+    elif c == '2':
+        return ".###.#...#....#...#...#...#...#####"
+
+    # ####.
+    # ....#
+    # ....#
+    # .###.
+    # ....#
+    # ....#
+    # ####.
+    elif c == '3':
+        return "####.....#....#.###.....#....#####."
+
+    # ...#.
+    # ..##.
+    # .#.#.
+    # #..#.
+    # #####
+    # ...#.
+    # ...#.
+    elif c == '4':
+        return "...#...##..#.#.#..#.#####...#....#."
+
+    # #####
+    # #....
+    # ####.
+    # ....#
+    # ....#
+    # #...#
+    # .###.
+    elif c == '5':
+        return "######....####.....#....##...#.###."
+
+    # .###.
+    # #....
+    # #....
+    # ####.
+    # #...#
+    # #...#
+    # .###.
+    elif c == '6':
+        return ".###.#....#....####.#...##...#.###."
+
+    # #####
+    # ....#
+    # ...#.
+    # ..#..
+    # .#...
+    # .#...
+    # .#...
+    elif c == '7':
+        return "#####....#...#...#...#....#....#..."
+
+    # .###.
+    # #...#
+    # #...#
+    # .###.
+    # #...#
+    # #...#
+    # .###.
+    elif c == '8':
+        return ".###.#...##...#.###.#...##...#.###."
+
+    # .###.
+    # #...#
+    # #...#
+    # .####
+    # ....#
+    # ....#
+    # .###.
+    elif c == '9':
+        return ".###.#...##...#.####....#....#.###."
+
+    # .....
+    # .....
+    # .....
+    # .....
+    # .....
+    # .....
+    # .....
+    elif c == ' ':
+        return "..................................."
+
+    # .....
+    # .....
+    # .....
+    # #####
+    # .....
+    # .....
+    # .....
+    elif c == '-':
+        return "...............#####..............."
+
+    # .....
+    # .....
+    # .....
+    # .....
+    # .....
+    # .##..
+    # .##..
+    elif c == '.':
+        return "..........................##...##.."
+
+    # .....
+    # .##..
+    # .##..
+    # .....
+    # .##..
+    # .##..
+    # .....
+    elif c == ':':
+        return "......##...##........##...##......."
+
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # ..#..
+    # .....
+    # ..#..
+    elif c == '!':
+        return "..#....#....#....#....#.........#.."
+
+    return ""
+
+# every glyph this font knows, so that the check below can walk them
+let ALPHABET : char* = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -.:!"
+
+def length_of : i32
+    @text : char*
+    let n = 0
+
+    while text[n] != '\0':
+        n = n + 1
+
+    return n
+
+# Every glyph is exactly 35 characters of '#' and '.', which is the one thing
+# that cannot be seen by reading the file: a row of four or six looks right
+# and draws wrong. The program runs this before it draws anything
+def font_is_sound : bool
+    let i = 0
+
+    while ALPHABET[i] != '\0':
+        let ink = glyph_of(ALPHABET[i])
+
+        if length_of(ink) != GLYPH_WIDTH * GLYPH_HEIGHT:
+            return false
+
+        i = i + 1
+
+    return true
+
+# One character, its top-left corner at (x, y), each of its pixels drawn as a
+# square of 'scale' by 'scale' so a 5x7 font can be read at any size
+def draw_char : void
+    @image : Image*
+    @x : i32
+    @y : i32
+    @c : char
+    @scale : i32
+    @colour : Colour
+
+    let ink = glyph_of(c)
+
+    if length_of(ink) != GLYPH_WIDTH * GLYPH_HEIGHT:
+        return
+
+    let row = 0
+
+    while row < GLYPH_HEIGHT:
+        let column = 0
+
+        while column < GLYPH_WIDTH:
+            if ink[row * GLYPH_WIDTH + column] == '#':
+                filled_rectangle(image,
+                                 x + column * scale,
+                                 y + row * scale,
+                                 scale, scale, colour)
+
+            column = column + 1
+
+        row = row + 1
+
+# a run of them, one blank column of the same scale between each
+def draw_text : void
+    @image : Image*
+    @x : i32
+    @y : i32
+    @text : char*
+    @scale : i32
+    @colour : Colour
+
+    let i = 0
+    let pen = x
+
+    while text[i] != '\0':
+        draw_char(image, pen, y, text[i], scale, colour)
+        pen = pen + (GLYPH_WIDTH + 1) * scale
+        i = i + 1
+
+# how wide that run would be, so a caller can centre it
+def text_width : i32
+    @text : char*
+    @scale : i32
+
+    let n = length_of(text)
+
+    if n == 0:
+        return 0
+
+    return n * (GLYPH_WIDTH + 1) * scale - scale

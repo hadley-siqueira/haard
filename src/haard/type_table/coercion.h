@@ -53,7 +53,29 @@ namespace haard {
             // classes that hold two methods
             int climb(u32 module, u32 from, u32 to);
 
+            // Whether a value of this type may be given to something by
+            // **copy**. Record 0031: a class that declares 'destroy' owns
+            // something, and one that owns something and has not said how to
+            // be copied cannot be -- the C++ that used to come out of that
+            // copied the pointer and ran the destructor twice.
+            //
+            // True for everything that is not a class held by value: a
+            // pointer and a reference name a thing rather than holding one,
+            // and a builtin owns nothing.
+            //
+            // It lives here for the reason record 0018's list does: the four
+            // places a value is given to something -- a call, a return, a
+            // binding and an assignment -- must all ask, and the question has
+            // to have one answer. Walks the bases, because what a base owns
+            // is what a derived class holds
+            bool may_be_copied(u32 module, u32 type);
+
+
         private:
+            // whether the class this candidate names, or any class above it,
+            // declares a member of this name
+            bool declares(u32 module, u32 candidate, const std::string& name);
+
             bool is_char_pointer(u32 module, u32 type);
 
             // the standard library's String, which agenda 1.21 needs to name

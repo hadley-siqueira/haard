@@ -1,0 +1,92 @@
+# The answer is 42, and what it is really saying is that nothing was freed
+# twice. Record 0031.
+#
+# 'copy' is the third of record 0026's family: an ordinary method, emitted
+# twice -- once as itself, and once as a C++ **copy constructor** and a
+# **copy assignment** that call it. Without one, a class that declares
+# 'destroy' cannot be copied at all and the four ways of trying are reported;
+# with one, all four work.
+#
+# The assignment is the copy that also destroys, because 'copy' is written as
+# *become a copy of that* by a class holding nothing, so what the target held
+# has to go first. And the guard is for 'b = b', which would otherwise free
+# what it is about to read -- the golden's exit status is what says it did
+# not, since a double free aborts and never reaches the return.
+class Owner:
+    data : char*
+    size : i32
+
+    def init : void
+        size = 3
+        data = new char[size]
+        data[0] = 'a'
+        data[1] = 'b'
+        data[2] = '\0'
+
+    # the whole of what makes this copyable: it allocates its own and takes
+    # the bytes, so two Owners never hold one pointer
+    def copy : void
+        @other : Owner&
+
+        size = other.size
+        data = new char[size]
+
+        let i = 0
+
+        while i < size:
+            data[i] = other.data[i]
+            i = i + 1
+
+    def destroy : void
+        delete[] data
+
+    def first : char
+        return data[0]
+
+    def poke : void
+        @c : char
+        data[0] = c
+
+def by_value : char
+    @o : Owner
+    return o.first()
+
+def gives_back : Owner
+    let made : Owner
+
+    made.poke('z')
+
+    return made
+
+def main : i32
+    let original : Owner
+    let target : Owner
+
+    # 1. a parameter taken by value
+    let through_a_call = by_value(original)
+
+    # 2. a value given back
+    let returned = gives_back()
+
+    # 3. a binding from another value
+    let bound = original
+
+    # 4. an assignment, which destroys what the target held first
+    target = original
+
+    # and the one that would free what it is about to read
+    target = target
+
+    # every copy is its own, so poking one leaves the others alone
+    bound.poke('c')
+
+    let independent = (original.first() == 'a'
+                       and bound.first() == 'c'
+                       and target.first() == 'a'
+                       and returned.first() == 'z'
+                       and through_a_call == 'a')
+
+    if not independent:
+        return 1
+
+    return 42

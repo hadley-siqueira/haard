@@ -1,0 +1,61 @@
+<unnamed>:
+    Plain  Plain
+    Owns  Owns
+    Derived  Derived
+    by_value  Owns -> i32
+    gives_back  Owns
+    takes_plain  Plain -> i32
+    takes_derived  Derived -> i32
+    main  i32
+    x  i32
+    y  i32
+    data  char*
+    init  void
+    destroy  void
+    tag  i32
+    o  Owns
+    made  Owns
+    p  Plain
+    d  Derived
+    owner  Owns
+    other  Owns
+    derived  Derived
+    plain  Plain
+    a  i32
+    b  Owns
+    c  Owns
+    d  i32
+    e  i32
+    f  Plain
+  25 types interned
+diagnostics:
+error: Owns cannot be copied, and giving one back by value copies it
+  --> main.hd:34:12
+   |
+34 |     return made
+   |            ^^^^
+error: Owns cannot be copied, and this parameter takes one by value
+  --> main.hd:51:22
+   |
+51 |     let a = by_value(owner)
+   |                      ^^^^^
+error: Owns cannot be copied, and this is given one
+  --> main.hd:52:9
+   |
+52 |     let b = gives_back()
+   |         ^
+error: Owns cannot be copied, and this is given one
+  --> main.hd:53:9
+   |
+53 |     let c = owner
+   |         ^
+error: Owns cannot be copied, and an assignment copies one
+  --> main.hd:55:11
+   |
+55 |     other = owner
+   |           ^
+error: Derived cannot be copied, and this parameter takes one by value
+  --> main.hd:58:27
+   |
+58 |     let d = takes_derived(derived)
+   |                           ^^^^^^^

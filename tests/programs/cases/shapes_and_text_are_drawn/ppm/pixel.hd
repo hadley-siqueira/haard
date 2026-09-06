@@ -1,0 +1,26 @@
+# One pixel. A struct and not a class: it holds three bytes and nothing else,
+# and the difference is the reader's, since Haard makes every method virtual
+# either way (record 0020)
+struct Pixel:
+    r : u8
+    g : u8
+    b : u8
+
+    def init : void
+        r = 0
+        g = 0
+        b = 0
+
+    def set : void
+        @red : u8
+        @green : u8
+        @blue : u8
+
+        r = red
+        g = green
+        b = blue
+
+    def invert : void
+        r = 255 - r
+        g = 255 - g
+        b = 255 - b

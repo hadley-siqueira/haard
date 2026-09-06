@@ -65,3 +65,35 @@ directory, it does, and `make clean` takes it back.
 
   It found two compiler bugs the day it was written, both a type index used in
   the wrong module's table.
+
+- **`shapes_and_text_are_drawn`** — a drawing library in Haard on top of that
+  one, in a fourth root: lines (Bresenham), rectangles filled and hollow,
+  circles (midpoint), quadratic and cubic Béziers, and fixed-size text from a
+  bitmap font. All of it integer arithmetic; a Bézier clears its fractions by
+  multiplying the polynomial through by the step count, so there is no float
+  anywhere and no rounding drift.
+
+  It checks its work twice over, and the two halves catch different things.
+  **The golden holds the picture**, drawn in `#` and `.`, so a shape that
+  moves by one pixel shows up in a diff nobody had to anticipate — the text
+  preview literally spells HAARD. The **assertions** under it are what reading
+  a picture cannot tell you: that a circle's four cardinal points are lit,
+  that an outline is empty inside, that a curve meets its ends and misses its
+  handle, that every glyph is exactly 5 by 7.
+
+  It found the bitwise operators typing to nothing.
+
+- **`strings_are_built_and_joined`** — `String` itself, written in Haard: it
+  owns its bytes (record 0023) and writes the `copy` record 0031 requires, so
+  all four ways of giving a value to something work and no two Strings hold
+  one buffer. The case checks that a copy really is its own by poking one and
+  reading the others.
+
+  It is also where `String` turned out to be **its own builder**: `append` is
+  overloaded for every kind, so the template string that record 0025's
+  Ast → Ast pass will write becomes calls to those and there is no
+  `StringBuilder`. `let hello : String = "hello"` is record 0023's coercion
+  running for the first time.
+
+  It found the coercion list having no entry for a value where a reference was
+  expected, and a literal only learning its type from the left.

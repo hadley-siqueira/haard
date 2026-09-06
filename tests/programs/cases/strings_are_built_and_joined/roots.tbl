@@ -1,0 +1,5 @@
+# Two roots: the standard library, and the user's project.
+root std = std
+
+root myapp = myapp
+    std -> std

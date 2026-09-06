@@ -1,0 +1,67 @@
+# Record 0031. A class that declares 'destroy' owns something, and one that
+# owns something and has not said how to be copied cannot be.
+#
+# Before 2026-09-05 every line below compiled in silence and the C++ that came
+# out copied the pointer and ran the destructor twice -- a double free, caught
+# by nothing. There are four ways to give a value to something, and all four
+# are here: a call, a return, a binding and an assignment.
+#
+# 'Plain' is here to say what did **not** change. It owns nothing, so it is
+# copied as it always was, by every one of the four.
+struct Plain:
+    x : i32
+    y : i32
+
+class Owns:
+    data : char*
+
+    def init : void
+        data = new char[2]
+
+    def destroy : void
+        delete[] data
+
+# a derived class holds what its base owns, so the walk goes up the chain
+class Derived(Owns):
+    tag : i32
+
+def by_value : i32
+    @o : Owns
+    return 0
+
+def gives_back : Owns
+    let made : Owns
+    return made
+
+def takes_plain : i32
+    @p : Plain
+    return p.x
+
+def takes_derived : i32
+    @d : Derived
+    return d.tag
+
+def main : i32
+    let owner : Owns
+    let other : Owns
+    let derived : Derived
+    let plain : Plain
+
+    # the four, each reported where it is written
+    let a = by_value(owner)
+    let b = gives_back()
+    let c = owner
+
+    other = owner
+
+    # and the base chain
+    let d = takes_derived(derived)
+
+    # while a value that owns nothing is copied by every one of them, as it
+    # always was
+    let e = takes_plain(plain)
+    let f = plain
+
+    plain = f
+
+    return 0

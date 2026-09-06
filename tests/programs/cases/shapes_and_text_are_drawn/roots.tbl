@@ -1,0 +1,19 @@
+# What a build system would write, and the only thing 'hdc' reads to resolve
+# an import -- it searches nowhere else (record 0010).
+#
+# Four roots, and the arrows are the point: 'draw' may import ppm and std,
+# 'ppm' may import std and knows nothing of draw, and 'myapp' sees the three
+# it names and nothing they import privately.
+root std = std
+
+root ppm = ppm
+    std -> std
+
+root draw = draw
+    std -> std
+    ppm -> ppm
+
+root myapp = myapp
+    std -> std
+    ppm -> ppm
+    draw -> draw

@@ -1,0 +1,128 @@
+# What a String is, and what makes it its own builder.
+#
+# Record 0023 says it owns its bytes, and record 0031 is why it can be handed
+# about at all: a class that declares 'destroy' owns something, and one that
+# owns something and says nothing about being copied cannot be copied. String
+# writes a 'copy', so all four ways of giving a value to something work, and
+# no two Strings ever hold one buffer.
+#
+# There is no StringBuilder here and there does not need to be. What one would
+# hold is what a String holds, and what it would do is append -- so the
+# 'append' overloads below are the builder, and the template string that
+# record 0025's Ast -> Ast pass will write becomes calls to them.
+import std.string
+import std.file
+
+def report : void
+    @out : File*
+    @what : char*
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+# taken by value and given back by value: two copies, and neither may share a
+# buffer with the caller's
+def shout : String
+    @word : String
+
+    word.append("!")
+
+    return word
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # record 0023: a char* where a String was asked for. It falls out of
+    # record 0026 emitting 'init' as a C++ constructor of one argument, which
+    # is what an implicit conversion is over there
+    let hello : String = "hello"
+
+    report(out, "a String knows its length", hello.length() == 5)
+
+    if hello.length() != 5:
+        failures = failures + 1
+
+    hello.append(' ')
+    hello.append("world")
+
+    let grew = hello.length() == 11
+    report(out, "appending grows it", grew)
+
+    if not grew:
+        failures = failures + 1
+
+    out->write("  it says: ")
+    out->writeln(hello.text())
+
+    # the four copies of record 0031
+    let bound = hello
+    let loud = shout(hello)
+    let assigned : String = "x"
+
+    assigned = hello
+
+    let independent = (hello.length() == 11
+                       and bound.length() == 11
+                       and loud.length() == 12
+                       and assigned.length() == 11
+                       and loud.at(11) == '!'
+                       and hello.at(11) == '\0')
+
+    report(out, "every copy is its own", independent)
+
+    if not independent:
+        failures = failures + 1
+
+    # ---- the builder, which is what a template string will be written as
+
+    let built : String = ""
+
+    built.append("n = ")
+    built.append(42)
+    built.append(", over = ")
+    built.append(true)
+    built.append(", ratio = ")
+    built.append(0.5)
+    built.append(", of ")
+    built.append(hello)
+    built.append(", first ")
+    built.append(hello.at(0))
+
+    out->write("  built:   ")
+    out->writeln(built.text())
+
+    let wanted : String = "n = 42, over = true, ratio = 0.500000, of hello world, first h"
+    let matches = built.equals(wanted)
+
+    report(out, "a String builds itself from every kind", matches)
+
+    if not matches:
+        failures = failures + 1
+
+    # negatives, and the smallest i32, which cannot be negated in its own width
+    let edges : String = ""
+
+    edges.append(-7)
+    edges.append(' ')
+    edges.append(-2147483648)
+
+    out->write("  edges:   ")
+    out->writeln(edges.text())
+
+    let edge_wanted : String = "-7 -2147483648"
+    let edges_ok = edges.equals(edge_wanted)
+
+    report(out, "negatives and the smallest i32", edges_ok)
+
+    if not edges_ok:
+        failures = failures + 1
+
+    delete out
+
+    return failures

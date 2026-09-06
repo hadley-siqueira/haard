@@ -409,9 +409,54 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
         }
     }
 
+    // 'copy' is the third of record 0026's family and record 0031's subject:
+    // a class that says how to copy itself gets a C++ copy constructor and a
+    // copy assignment, both of them a call to it.
+    //
+    // Assignment destroys first. 'copy' is written as *become a copy of that*,
+    // by a class that holds nothing yet, so an assignment has to put the class
+    // back into that state before calling it -- and the guard is for 'a = a',
+    // which would otherwise free what it is about to read
+    u32 copy = 0;
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) == AST_FUNCTION
+            && query.get_declaration_name(member) == "copy") {
+            copy = module->get_symbols()->candidate_of(member);
+        }
+    }
+
     if (!bodies) {
+        if (copy != 0) {
+            line(holder + "(const " + holder + "& other);");
+            line(holder + "& operator=(const " + holder + "& other);");
+        }
+
         line("virtual ~" + holder + "();");
         return;
+    }
+
+    if (copy != 0) {
+        // const_cast because Haard has no 'const' to write on the parameter
+        // (record 0029, deferred), while C++ wants one here or the copy
+        // constructor will not bind to a temporary
+        std::string call = "this->" + holder + "::"
+                         + name_of(module_index, copy) + "(const_cast<"
+                         + holder + "&>(other));";
+
+        out << holder << "::" << holder << "(const " << holder
+            << "& other) {\n    " << call << "\n}\n\n";
+
+        out << holder << "& " << holder << "::operator=(const " << holder
+            << "& other) {\n"
+            << "    if (this == &other) {\n        return *this;\n    }\n\n";
+
+        if (destroy != 0) {
+            out << "    this->" << holder << "::"
+                << name_of(module_index, destroy) << "();\n";
+        }
+
+        out << "    " << call << "\n    return *this;\n}\n\n";
     }
 
     out << holder << "::~" << holder << "() {\n";

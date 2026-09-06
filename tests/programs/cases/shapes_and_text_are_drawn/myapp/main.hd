@@ -1,0 +1,248 @@
+# The user's project. It draws, then says whether what it drew is what it
+# meant, and prints the picture so the golden can be read as a picture.
+#
+# Two kinds of check are here on purpose. The ASCII preview is the one a
+# person reads: a shape that moves by a pixel is visible in the diff, and no
+# assertion has to have anticipated it. The assertions under it are the ones a
+# person cannot read: that a circle's four cardinal points are lit, that the
+# inside of an outline is empty, that a curve starts and ends where it was
+# told. Neither catches what the other does.
+import ppm.image
+import ppm.pixel
+import draw.canvas
+import draw.font
+import std.file
+
+let BLACK : Colour = rgb(0, 0, 0)
+
+def report : void
+    @out : File*
+    @what : char*
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+# anything that is not the background
+def is_lit : bool
+    @image : Image*
+    @x : i32
+    @y : i32
+
+    if x < 0 or y < 0:
+        return false
+
+    if (x as u32) >= image->width or (y as u32) >= image->height:
+        return false
+
+    let p = image->at(x as u32, y as u32)
+
+    return p->r != 0 or p->g != 0 or p->b != 0
+
+def lit_count : i32
+    @image : Image*
+    let n = 0
+    let i : u32 = 0
+
+    while i < image->count():
+        if (image->pixels[i].r != 0
+            or image->pixels[i].g != 0
+            or image->pixels[i].b != 0):
+            n = n + 1
+
+        i = i + 1
+
+    return n
+
+# the image as text, which is what makes the golden a picture
+def preview : void
+    @out : File*
+    @image : Image*
+
+    let y : u32 = 0
+
+    while y < image->height:
+        let x : u32 = 0
+
+        while x < image->width:
+            if is_lit(image, x as i32, y as i32):
+                out->write('#')
+            else:
+                out->write('.')
+
+            x = x + 1
+
+        out->write('\n')
+        y = y + 1
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # ---- the font, before anything is drawn with it
+
+    let sound = font_is_sound()
+
+    report(out, "every glyph is 5 by 7", sound)
+
+    if not sound:
+        return 1
+
+    # ---- shapes
+
+    let white = rgb(255, 255, 255)
+    let shapes = new Image(64, 24)
+
+    rectangle(shapes, 2, 2, 20, 10, white)
+    filled_rectangle(shapes, 26, 4, 8, 6, white)
+    circle(shapes, 48, 8, 6, white)
+    line(shapes, 2, 21, 62, 15, white)
+    quadratic_bezier(shapes, 2, 14, 20, 22, 40, 14, 24, white)
+
+    out->writeln("")
+    out->writeln("shapes:")
+    preview(out, shapes)
+
+    # a rectangle is its outline and nothing inside it
+    let outline_ok = (is_lit(shapes, 2, 2)
+                      and is_lit(shapes, 21, 2)
+                      and is_lit(shapes, 2, 11)
+                      and is_lit(shapes, 21, 11)
+                      and is_lit(shapes, 10, 2)
+                      and not is_lit(shapes, 10, 6))
+
+    report(out, "rectangle is an outline", outline_ok)
+
+    if not outline_ok:
+        failures = failures + 1
+
+    # and a filled one is filled to its edges and no further
+    let filled_ok = (is_lit(shapes, 26, 4)
+                     and is_lit(shapes, 33, 9)
+                     and is_lit(shapes, 29, 6)
+                     and not is_lit(shapes, 34, 6)
+                     and not is_lit(shapes, 25, 6))
+
+    report(out, "filled rectangle covers exactly its box", filled_ok)
+
+    if not filled_ok:
+        failures = failures + 1
+
+    # the four cardinal points of a circle are the ones the midpoint algorithm
+    # must never miss, and its centre is not on it
+    let circle_ok = (is_lit(shapes, 54, 8)
+                     and is_lit(shapes, 42, 8)
+                     and is_lit(shapes, 48, 2)
+                     and is_lit(shapes, 48, 14)
+                     and not is_lit(shapes, 48, 8))
+
+    report(out, "circle has its four cardinal points", circle_ok)
+
+    if not circle_ok:
+        failures = failures + 1
+
+    let line_ok = (is_lit(shapes, 2, 21) and is_lit(shapes, 62, 15))
+
+    report(out, "line reaches both of its ends", line_ok)
+
+    if not line_ok:
+        failures = failures + 1
+
+    # a Bézier passes through its first and last control points and not
+    # through the middle one, which is what makes it a curve and not a corner
+    let curve_ok = (is_lit(shapes, 2, 14)
+                    and is_lit(shapes, 40, 14)
+                    and not is_lit(shapes, 20, 22))
+
+    report(out, "curve meets its ends and misses its handle", curve_ok)
+
+    if not curve_ok:
+        failures = failures + 1
+
+    # ---- text
+
+    let words = new Image(64, 9)
+
+    draw_text(words, 1, 1, "HAARD", 1, white)
+
+    out->writeln("")
+    out->writeln("text:")
+    preview(out, words)
+
+    let width_ok = text_width("HAARD", 1) == 29
+
+    report(out, "five glyphs at scale one are 29 wide", width_ok)
+
+    if not width_ok:
+        failures = failures + 1
+
+    # H is two uprights and a bar: lit at its corners, empty between them
+    let letter_ok = (is_lit(words, 1, 1)
+                     and is_lit(words, 5, 1)
+                     and not is_lit(words, 3, 1)
+                     and is_lit(words, 3, 4))
+
+    report(out, "the H is drawn as an H", letter_ok)
+
+    if not letter_ok:
+        failures = failures + 1
+
+    # ---- and a scene, written and read back
+
+    let scene = new Image(200, 120)
+    let blue = rgb(40, 90, 200)
+    let amber = rgb(240, 170, 40)
+
+    filled_rectangle(scene, 0, 0, 200, 120, rgb(16, 16, 24))
+    filled_circle(scene, 150, 40, 26, blue)
+    circle(scene, 150, 40, 32, white)
+    rectangle(scene, 10, 10, 100, 60, amber)
+    cubic_bezier(scene, 10, 100, 60, 60, 130, 140, 190, 100, 48, amber)
+    line(scene, 0, 119, 199, 119, white)
+    draw_text(scene, 14, 80, "HAARD 2026", 2, white)
+
+    if not scene->save("scene.ppm"):
+        out->writeln("could not write scene.ppm")
+        return 1
+
+    let back = load("scene.ppm")
+
+    if back == null:
+        out->writeln("could not read scene.ppm back")
+        return 1
+
+    let same = (back->width == 200 and back->height == 120)
+    let i : u32 = 0
+
+    while i < scene->count():
+        if back->pixels[i].r != scene->pixels[i].r:
+            same = false
+
+        if back->pixels[i].g != scene->pixels[i].g:
+            same = false
+
+        if back->pixels[i].b != scene->pixels[i].b:
+            same = false
+
+        i = i + 1
+
+    report(out, "the scene survived being written and read", same)
+
+    if not same:
+        failures = failures + 1
+
+    out->writeln("")
+    out->write("lit pixels in the shapes preview: ")
+    write_u32(out, lit_count(shapes) as u32)
+    out->write('\n')
+
+    delete shapes
+    delete words
+    delete scene
+    delete back
+
+    return failures
