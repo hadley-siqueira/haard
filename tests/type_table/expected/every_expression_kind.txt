@@ -41,6 +41,5 @@
     pointer  Box*
     text  char*
     ranged  <none>
-    templated  <none>
     symbol  <none>
   26 types interned

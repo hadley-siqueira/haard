@@ -1,0 +1,1 @@
+error: cases/an_import_outside_the_prelude/table.tbl:8: 'import' belongs to the 'prelude' block

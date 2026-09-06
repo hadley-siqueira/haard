@@ -1,0 +1,8 @@
+def main : i32
+    let n = 7
+
+    # the inner one has to be built BEFORE the append that uses it, which is
+    # what walking the children first buys
+    let line = "outer ${"inner ${n}"} end"
+
+    return 0

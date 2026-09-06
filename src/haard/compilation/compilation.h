@@ -82,6 +82,27 @@ namespace haard {
             // first module that answers is the one record 0009 means
             void resolve_imports(u32 index);
 
+            // and what the table gives every module without its having
+            // written it, appended AFTER the imports the source wrote --
+            // which is record 0009's 'the prelude after the imports' with no
+            // step added to the lookup, since the flat walk already reads
+            // this list in order. Record 0033
+            void add_prelude(u32 index);
+
+            // whether this module already depends on that one. Record 0033's
+            // second guard, and it is not cosmetic: NameResolver::gather
+            // appends without de-duplicating, so a module that also **wrote**
+            // a prelude import would offer every candidate twice and turn a
+            // good call into an ambiguous one
+            bool has_dependency(u32 index, u32 target);
+
+            // record 0025's Ast -> Ast pass, and record 0032's use of it.
+            // It runs BEFORE the symbols are collected because it writes a
+            // declaration -- a template string becomes a local String and a
+            // run of 'append' calls -- and everything after it reads an
+            // ordinary tree
+            void lower_sugar(u32 index);
+
             void collect_symbols(u32 index);
 
             // a second walk, after the first has finished, because a type

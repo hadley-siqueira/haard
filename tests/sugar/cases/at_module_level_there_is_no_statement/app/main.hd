@@ -1,0 +1,8 @@
+let n = 2
+
+# a global's value has no statement to be built before, and no block to put
+# one in. It is the third refusal and the only one that is not about order
+let greeting = "hello ${n}"
+
+def main : i32
+    return 0

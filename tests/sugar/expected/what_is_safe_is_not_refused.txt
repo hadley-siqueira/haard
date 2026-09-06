@@ -1,0 +1,17 @@
+def check : bool
+    @s : String&
+    return true
+def main : i32
+    let n = 1
+    let ok = true
+    let __ts0 : String
+    __ts0.append("a condition runs once ")
+    __ts0.append(n)
+    if check(__ts0):
+        n = 0
+    let __ts1 : String
+    __ts1.append("the left always runs ")
+    __ts1.append(n)
+    if check(__ts1) and ok:
+        n = 0
+    return n

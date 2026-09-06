@@ -1,0 +1,21 @@
+# Record 0033. The prelude is a list of imports every module is given, and
+# it is a block with no directory: its entries resolve through its own
+# visibility lines, exactly as a root block's imports do.
+#
+# Which is what a global lookup by name could not do -- there are two blocks
+# named 'zip' below, and 'import zip.utils' would name neither of them.
+prelude
+    std -> sys/std/1.0
+    import std.string
+    import std.io
+
+root sys/std/1.0 = std
+
+root sys/zip/1.0 = zip
+    std -> sys/std/1.0
+
+root sys/zip/2.0 = zip
+    std -> sys/std/1.0
+
+root app = app
+    std -> sys/std/1.0

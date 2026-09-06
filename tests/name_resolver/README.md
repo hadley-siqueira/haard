@@ -94,6 +94,22 @@ level `def key`: from inside the loop the variable answers alone, and from the
 module scope `value` is not there at all. A loop variable also shadows a
 parameter of its name, the same way a local does.
 
+**That the prelude is the last of the dependencies.** Record 0033 makes the
+table carry a list of imports every module is given, and four cases hold it.
+`a_name_comes_from_the_prelude` resolves `println` from a file that writes no
+import at all. `the_prelude_comes_after_the_imports` writes `import other.io`
+and gets `other.io` first and `std.io` second — which is record 0009's *the
+prelude after the imports*, and no line was written to make it so: the entries
+are appended to the dependency list after the ones the source wrote, and this
+walk already reads that list in order.
+
+The other two are the guards, and neither is cosmetic, because
+`NameResolver::gather` appends without de-duplicating.
+`a_prelude_import_is_not_given_twice` has a module that **also wrote** the
+import, and `a_prelude_module_does_not_import_itself` asks from inside a module
+the prelude names. Each must give **one** candidate; two is a call reported as
+matching more than one thing equally well, about a program that is fine.
+
 ## The two qualified forms
 
 A query writes the name the way a programmer writes it, and the scope field is
@@ -157,6 +173,9 @@ Each is the number of the seven cases that fail:
 | a star gives its alias only to the first file of its expansion | 1 |
 | `::name` starts where the name was written | 1 |
 | an import with no `as` gets a qualified form from its last segment | 1 |
+| the prelude is never added to a module (record 0033) | 3 |
+| a module that wrote a prelude import is given it twice | 1 |
+| a module of the prelude is given itself | 1 |
 
 The fourth one is the point of the whole design: an interned index is
 meaningful only inside the module that made it, and using the importer's on a

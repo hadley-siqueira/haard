@@ -1,0 +1,4 @@
+import other.io
+
+def main : void
+    pass

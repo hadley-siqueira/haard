@@ -1,0 +1,4 @@
+# record 0009's order, and nothing was written to say so: the prelude is
+# appended to the dependency list AFTER the imports, and the flat walk
+# already reads that list in order. other.io first, std.io second
+app.main module println

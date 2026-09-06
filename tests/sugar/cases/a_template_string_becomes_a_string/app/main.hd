@@ -1,0 +1,8 @@
+def main : i32
+    let n = 7
+
+    # each '${}' finds the append its own type asks for, and the chunks
+    # around them become ordinary string literals
+    let line = "n is ${n} and that is that"
+
+    return 0

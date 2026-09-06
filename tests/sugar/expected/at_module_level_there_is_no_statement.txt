@@ -1,0 +1,11 @@
+let n = 2
+let greeting = "hello ${n}"
+def main : i32
+    return 0
+
+--- diagnostics
+error: a template string is built before the statement it is written in, and this is not inside one
+ --> app/main.hd:5:16
+  |
+5 | let greeting = "hello ${n}"
+  |                ^

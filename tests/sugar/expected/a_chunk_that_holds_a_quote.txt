@@ -1,0 +1,13 @@
+def main : i32
+    let n = 1
+    let __ts0 : String
+    __ts0.append("he said \"hi\" ")
+    __ts0.append(n)
+    __ts0.append(" times")
+    let said = __ts0
+    let __ts1 : String
+    __ts1.append("one\ttwo ")
+    __ts1.append(n)
+    __ts1.append("\n")
+    let lines = __ts1
+    return 0

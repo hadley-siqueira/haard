@@ -65,10 +65,15 @@ def main : i32
     let text = "hello"
 
     # and what nothing types yet: a range has no type because nothing has said
-    # whether it is one, a template string is a String and a symbol is nobody
-    # has said what -- both of those wait on the standard library
+    # whether it is one, and a symbol is nobody has said what -- both wait on
+    # the standard library.
+    #
+    # A template string used to be the third, and is not an expression this
+    # phase ever sees any more: record 0032's pass rewrites it into a local
+    # String and a run of 'append' calls before the symbols are collected, so
+    # what reaches the typer here is an ordinary identifier. Its own cases are
+    # in tests/sugar
     let ranged = 0..10
-    let templated = "two is ${integer}"
     let symbol = :name
 
     return integer

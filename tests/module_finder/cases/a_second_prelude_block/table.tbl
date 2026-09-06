@@ -1,0 +1,11 @@
+# a program has one prelude, so a second block is the table being wrong
+prelude
+    std -> std
+    import std.string
+
+prelude
+    import std.string
+
+root std = std
+root app = app
+    std -> std

@@ -1,0 +1,6 @@
+app.main module -> println
+  std.io function at node 2
+app.main module -> stdout
+  std.io variable at node 13
+app.main module -> nobody
+  nothing declares it

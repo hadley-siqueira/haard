@@ -1,0 +1,10 @@
+# the entry resolves to a root and there is nothing at the end of it. A
+# module's own import would make this a diagnostic in its source; a prelude
+# entry has no source to point at, so it is the table that is wrong
+prelude
+    std -> std
+    import std.array
+
+root std = std
+root app = app
+    std -> std

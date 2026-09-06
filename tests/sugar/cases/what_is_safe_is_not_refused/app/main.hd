@@ -1,0 +1,18 @@
+def check : bool
+    @s : String&
+    return true
+
+def main : i32
+    let n = 1
+    let ok = true
+
+    # an 'if' condition is evaluated once, before either branch, so lifting
+    # out of it changes nothing
+    if check("a condition runs once ${n}"):
+        n = 0
+
+    # and so is the LEFT of a short circuit, whatever the right one does
+    if check("the left always runs ${n}") and ok:
+        n = 0
+
+    return n

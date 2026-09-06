@@ -1,0 +1,16 @@
+# What a build system would write. Record 0033: the 'prelude' block is the
+# list of imports every module of this program is given without writing them,
+# and it is a block with no directory of its own -- its entries resolve
+# through its own visibility lines, exactly as a root block's imports do.
+#
+# This is the whole of what makes 'String' and 'console' mean something in a
+# file that imports nothing.
+prelude
+    std -> std
+    import std.string
+    import std.file
+
+root std = std
+
+root myapp = myapp
+    std -> std

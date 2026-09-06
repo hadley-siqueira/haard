@@ -1,0 +1,12 @@
+roots:
+    0 prelude = (no directory)
+    1 std = sys/std/1.0
+    2 zip = sys/zip/1.0
+    3 zip = sys/zip/2.0
+    4 app = app
+prelude:
+    sys/std/1.0/string.hd (root 1)
+    sys/std/1.0/io.hd (root 1)
+file loose/stray.hd -> no root
+file app/main.hd -> root 4 (app)
+find std.string -> sys/std/1.0/string.hd

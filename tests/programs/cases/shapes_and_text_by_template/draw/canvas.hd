@@ -1,0 +1,312 @@
+# draw/canvas.hd -- shapes on a PPM image.
+#
+# Everything here is integer arithmetic on purpose. A raster is a grid of
+# whole pixels, and the two classic algorithms below -- Bresenham for a line
+# and the midpoint for a circle -- exist so that no float is needed to decide
+# which of them to light.
+#
+# Coordinates are **i32 and not u32**, and that is not an accident: the whole
+# of Bresenham is differences that go negative, and a u32 that goes below zero
+# is a very large number rather than a mistake anyone can see. What is
+# unsigned is the image, and 'plot' is the one place the two meet.
+import ppm.image
+import ppm.pixel
+
+# A colour, so that six parameters do not have to be threaded through every
+# call. A struct: it holds three bytes and is copied like one
+struct Colour:
+    r : u8
+    g : u8
+    b : u8
+
+    def init : void
+        r = 0
+        g = 0
+        b = 0
+
+    def set : void
+        @red : u8
+        @green : u8
+        @blue : u8
+
+        r = red
+        g = green
+        b = blue
+
+def rgb : Colour
+    @red : u8
+    @green : u8
+    @blue : u8
+
+    let c : Colour
+
+    c.set(red, green, blue)
+
+    return c
+
+def abs_of : i32
+    @v : i32
+
+    if v < 0:
+        return 0 - v
+
+    return v
+
+# One pixel, and the only place a signed coordinate becomes an unsigned index.
+# Anything outside the image is dropped rather than wrapping round -- a
+# drawing that runs off the edge is ordinary and not a mistake
+def plot : void
+    @image : Image*
+    @x : i32
+    @y : i32
+    @colour : Colour
+
+    if x < 0 or y < 0:
+        return
+
+    if (x as u32) >= image->width or (y as u32) >= image->height:
+        return
+
+    image->at(x as u32, y as u32)->set(colour.r, colour.g, colour.b)
+
+# Bresenham, in the form that handles every octant without a case for each:
+# the error term is carried in both directions at once and the two 'if's below
+# decide which step to take. No division and no float
+def line : void
+    @image : Image*
+    @x0 : i32
+    @y0 : i32
+    @x1 : i32
+    @y1 : i32
+    @colour : Colour
+
+    let x = x0
+    let y = y0
+    let dx = abs_of(x1 - x0)
+    let dy = 0 - abs_of(y1 - y0)
+    let sx = 0 - 1
+    let sy = 0 - 1
+
+    if x0 < x1:
+        sx = 1
+
+    if y0 < y1:
+        sy = 1
+
+    let err = dx + dy
+
+    while true:
+        plot(image, x, y, colour)
+
+        if x == x1 and y == y1:
+            break
+
+        let twice = err * 2
+
+        if twice >= dy:
+            err = err + dy
+            x = x + sx
+
+        if twice <= dx:
+            err = err + dx
+            y = y + sy
+
+def horizontal : void
+    @image : Image*
+    @x0 : i32
+    @x1 : i32
+    @y : i32
+    @colour : Colour
+
+    let from = x0
+    let to = x1
+
+    if from > to:
+        from = x1
+        to = x0
+
+    while from <= to:
+        plot(image, from, y, colour)
+        from = from + 1
+
+# the outline, so the two horizontal edges and the two vertical ones. Written
+# as four lines rather than four loops, because 'line' already knows how
+def rectangle : void
+    @image : Image*
+    @x : i32
+    @y : i32
+    @w : i32
+    @h : i32
+    @colour : Colour
+
+    if w <= 0 or h <= 0:
+        return
+
+    let right = x + w - 1
+    let bottom = y + h - 1
+
+    line(image, x, y, right, y, colour)
+    line(image, x, bottom, right, bottom, colour)
+    line(image, x, y, x, bottom, colour)
+    line(image, right, y, right, bottom, colour)
+
+def filled_rectangle : void
+    @image : Image*
+    @x : i32
+    @y : i32
+    @w : i32
+    @h : i32
+    @colour : Colour
+
+    if w <= 0 or h <= 0:
+        return
+
+    let row = y
+
+    while row < y + h:
+        horizontal(image, x, x + w - 1, row, colour)
+        row = row + 1
+
+# The midpoint circle. One eighth is walked and the other seven are its
+# mirrors, which is what makes this eight plots per step and no trigonometry
+def circle : void
+    @image : Image*
+    @cx : i32
+    @cy : i32
+    @radius : i32
+    @colour : Colour
+
+    if radius < 0:
+        return
+
+    let x = radius
+    let y = 0
+    let err = 0
+
+    while x >= y:
+        plot(image, cx + x, cy + y, colour)
+        plot(image, cx + y, cy + x, colour)
+        plot(image, cx - y, cy + x, colour)
+        plot(image, cx - x, cy + y, colour)
+        plot(image, cx - x, cy - y, colour)
+        plot(image, cx - y, cy - x, colour)
+        plot(image, cx + y, cy - x, colour)
+        plot(image, cx + x, cy - y, colour)
+
+        y = y + 1
+
+        if err <= 0:
+            err = err + 2 * y + 1
+        else:
+            x = x - 1
+            err = err - 2 * x + 1
+
+# Filled by the definition rather than by mirroring an outline: a pixel is
+# inside when its distance squared is within the radius squared, which needs
+# no square root and no float
+def filled_circle : void
+    @image : Image*
+    @cx : i32
+    @cy : i32
+    @radius : i32
+    @colour : Colour
+
+    if radius < 0:
+        return
+
+    let dy = 0 - radius
+
+    while dy <= radius:
+        let dx = 0 - radius
+
+        while dx <= radius:
+            if dx * dx + dy * dy <= radius * radius:
+                plot(image, cx + dx, cy + dy, colour)
+
+            dx = dx + 1
+
+        dy = dy + 1
+
+# ---- curves
+
+# A Bézier is a polynomial in a fraction t, and a fraction is what integer
+# arithmetic does not have. So t is written as i/steps and the polynomial is
+# multiplied through by steps to the power of its degree, which clears every
+# denominator and leaves whole numbers:
+#
+#   quadratic:  n^2 B = (n-i)^2 P0 + 2(n-i)i P1 + i^2 P2
+#   cubic:      n^3 B = (n-i)^3 P0 + 3(n-i)^2 i P1 + 3(n-i)i^2 P2 + i^3 P3
+#
+# with n the number of steps and i the step. No float and no rounding drift.
+#
+# The points are joined by straight lines rather than plotted on their own,
+# because a curve sampled at 32 places is 32 dots and not a curve
+def quadratic_bezier : void
+    @image : Image*
+    @x0 : i32
+    @y0 : i32
+    @x1 : i32
+    @y1 : i32
+    @x2 : i32
+    @y2 : i32
+    @steps : i32
+    @colour : Colour
+
+    if steps < 1:
+        return
+
+    let n = steps
+    let last_x = x0
+    let last_y = y0
+    let i = 1
+
+    while i <= n:
+        let u = n - i
+        let square = n * n
+        let x = (u * u * x0 + 2 * u * i * x1 + i * i * x2) / square
+        let y = (u * u * y0 + 2 * u * i * y1 + i * i * y2) / square
+
+        line(image, last_x, last_y, x, y, colour)
+
+        last_x = x
+        last_y = y
+        i = i + 1
+
+def cubic_bezier : void
+    @image : Image*
+    @x0 : i32
+    @y0 : i32
+    @x1 : i32
+    @y1 : i32
+    @x2 : i32
+    @y2 : i32
+    @x3 : i32
+    @y3 : i32
+    @steps : i32
+    @colour : Colour
+
+    if steps < 1:
+        return
+
+    let n = steps
+    let last_x = x0
+    let last_y = y0
+    let i = 1
+
+    while i <= n:
+        let u = n - i
+        let cube = n * n * n
+        let x = (u * u * u * x0
+                 + 3 * u * u * i * x1
+                 + 3 * u * i * i * x2
+                 + i * i * i * x3) / cube
+        let y = (u * u * u * y0
+                 + 3 * u * u * i * y1
+                 + 3 * u * i * i * y2
+                 + i * i * i * y3) / cube
+
+        line(image, last_x, last_y, x, y, colour)
+
+        last_x = x
+        last_y = y
+        i = i + 1

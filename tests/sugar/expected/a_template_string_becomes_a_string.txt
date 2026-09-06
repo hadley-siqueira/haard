@@ -1,0 +1,8 @@
+def main : i32
+    let n = 7
+    let __ts0 : String
+    __ts0.append("n is ")
+    __ts0.append(n)
+    __ts0.append(" and that is that")
+    let line = __ts0
+    return 0

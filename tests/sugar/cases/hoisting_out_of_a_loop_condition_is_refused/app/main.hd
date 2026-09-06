@@ -1,0 +1,16 @@
+def again : bool
+    @s : String&
+    return false
+
+def main : i32
+    let n = 3
+
+    # lifted out, it would be built once before the loop instead of every
+    # turn -- so it is refused rather than quietly meaning something else
+    while again("every turn ${n}"):
+        n = n - 1
+
+    for i = 0; again("head ${i}"); i = i + 1:
+        n = 0
+
+    return n

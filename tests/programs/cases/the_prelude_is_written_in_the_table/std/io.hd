@@ -1,0 +1,67 @@
+# std/io.hd -- the whole of Haard's input and output, for now.
+#
+# Two halves, and the line between them is the point.
+#
+# BELOW the line, six functions whose body is 'pass'. Nothing in Haard can
+# reach a C library, so the emitter writes those six bodies -- by name, and
+# only inside this module, which is record 0030. It is meant to be deleted:
+# when a real foreign interface is decided, these six become ordinary
+# declarations of it and nothing above the line changes.
+#
+# ABOVE the line, ordinary Haard. That is the whole design: the native surface
+# is one character at a time, and everything anyone actually writes -- a line,
+# a number, a whole file -- is built here, in the language, where it can be
+# read and changed without touching the compiler.
+#
+# C's stdio and not C++'s streams, and the reason is the handle. A 'FILE*' is
+# an opaque pointer and is an 'i8*' here with nothing lost; an 'std::ofstream'
+# is an object, and Haard cannot name its type, know its size, or run its
+# constructor. And 'stdout' is a 'FILE*' too -- so one set of primitives covers
+# the console and a file alike, which is what lets the File below print to the
+# terminal.
+
+# ---- the native surface. Six functions, and the emitter writes their bodies
+
+# null when the file will not open
+def __io_open_read : i8*
+    @path : char*
+    pass
+
+def __io_open_write : i8*
+    @path : char*
+    pass
+
+# The character. What it gives back once the file has ended is nothing anyone
+# should read, and __io_at_end below is how that is asked.
+#
+# C's own fgetc answers both at once by giving back an int and -1 for the end,
+# and that is exactly what record 0018 will not have: an i32 does not compare
+# to a 'char' literal, so 'if c == \'\\n\':' would not even be writable. The
+# rule pushed the design somewhere better -- the value and the end are two
+# questions, and each has its own type
+def __io_read : char
+    @handle : i8*
+    pass
+
+# whether a read has run past the end. Asked AFTER a read, the way C's feof is
+def __io_at_end : bool
+    @handle : i8*
+    pass
+
+def __io_write : void
+    @handle : i8*
+    @c : char
+    pass
+
+def __io_close : void
+    @handle : i8*
+    pass
+
+def __io_stdout : i8*
+    pass
+
+def __io_stdin : i8*
+    pass
+
+def __io_stderr : i8*
+    pass

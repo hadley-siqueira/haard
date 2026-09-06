@@ -1,0 +1,4 @@
+# ONE candidate. NameResolver::gather appends without de-duplicating, so a
+# second dependency on the same module is a second copy of every candidate --
+# which a call reads as an ambiguity nobody wrote
+app.main module println

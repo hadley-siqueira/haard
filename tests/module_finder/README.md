@@ -37,6 +37,25 @@ with `sys/zip/1.0/compress.hd` and `sys/zip/2.0/compress.hd` both writing
 and dropping it silently sends zip 1.0 into zip 2.0's files — a library
 compiling against another version of itself.
 
+**That the prelude is a block with no directory.** Record 0033 makes the
+prelude a list of imports every module of the program is given, and
+`the_prelude_is_a_list_of_imports` pins the three things about it that could
+each be got wrong on their own: it is a `Root` whose path is empty, its entries
+are **resolved when the table is read** and not per importing module, and
+`file loose/stray.hd -> no root` is the one guard that empty path needs — a
+prefix test against nothing matches every file, so without it the prelude
+claims every file no real root covers.
+
+The case holds two blocks named `zip` for a reason: it is why a prelude entry
+cannot be resolved by looking a root up by name. Block names are not unique,
+so the prelude has a visibility list like anybody's, and `import std.string`
+inside it goes through `find` unchanged.
+
+The four error cases are the table being wrong, once, before a module is
+loaded: a second `prelude` block, an `import` line in a root block, an entry
+whose first segment the prelude cannot see, and an entry with no file at the
+end of it.
+
 **That the table is read in two passes.** `roots_may_see_each_other` has `a`
 depending on `b` and `b` on `a`, so a dependency must be allowed to name a
 block that has not been read yet. Resolving them as they are read fails this

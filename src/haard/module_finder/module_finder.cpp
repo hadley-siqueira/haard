@@ -16,6 +16,7 @@ static std::string trim(const std::string& text) {
 
 ModuleFinder::ModuleFinder() {
     block = INVALID_ROOT;
+    prelude_block = INVALID_ROOT;
 }
 
 // Two passes, and the second one is not an optimization: a dependency line
@@ -31,8 +32,10 @@ bool ModuleFinder::load(const std::filesystem::path& table) {
     std::ifstream input(table);
 
     roots.clear();
+    prelude.clear();
     error.clear();
     block = INVALID_ROOT;
+    prelude_block = INVALID_ROOT;
     table_name = table.string();
 
     if (!input.is_open()) {
@@ -45,6 +48,7 @@ bool ModuleFinder::load(const std::filesystem::path& table) {
     // two different files and the cache key moves with it
     std::filesystem::path directory = table.parent_path();
     std::vector<Dependency> pending;
+    std::vector<PendingImport> imports;
     std::string line;
     u32 number = 0;
 
@@ -63,7 +67,17 @@ bool ModuleFinder::load(const std::filesystem::path& table) {
         // indentation is the whole syntax: at column zero a block opens, and
         // anything indented belongs to the block above it
         if (line[0] == ' ' || line[0] == '\t') {
-            if (!read_dependency(text, number, directory, pending)) {
+            // an indented line is a dependency in a root block and either a
+            // dependency or a prelude entry in the prelude block, told apart
+            // by the word Haard already uses for one (record 0033)
+            bool is_import = text.rfind("import", 0) == 0 && text.size() > 6 &&
+                             (text[6] == ' ' || text[6] == '\t');
+
+            if (is_import) {
+                if (!read_prelude_import(text, number, imports)) {
+                    return false;
+                }
+            } else if (!read_dependency(text, number, directory, pending)) {
                 return false;
             }
         } else if (!read_header(text, number, directory)) {
@@ -85,7 +99,9 @@ bool ModuleFinder::load(const std::filesystem::path& table) {
         }
     }
 
-    return true;
+    // and only then the prelude, because its entries resolve through the
+    // visibility lines the loop above has just put in place
+    return resolve_prelude(imports, directory);
 }
 
 const std::string& ModuleFinder::get_error() {
@@ -98,6 +114,13 @@ u32 ModuleFinder::root_of_file(const std::filesystem::path& file) {
     size_t length = 0;
 
     for (size_t i = 0; i < roots.size(); i++) {
+        // the prelude block has no directory (record 0033), and starts_with
+        // is true of every file for an empty one -- so without this it would
+        // claim every file that no real root covers
+        if (i == prelude_block) {
+            continue;
+        }
+
         if (!starts_with(target, roots[i].path)) {
             continue;
         }
@@ -223,6 +246,10 @@ std::string ModuleFinder::module_name_of_file(u32 root,
     return name;
 }
 
+const std::vector<PreludeImport>& ModuleFinder::get_prelude() {
+    return prelude;
+}
+
 u32 ModuleFinder::get_root_count() {
     return (u32) roots.size();
 }
@@ -239,6 +266,10 @@ const std::filesystem::path& ModuleFinder::get_root_path(u32 root) {
 // holding one still opens its block
 bool ModuleFinder::read_header(const std::string& text, u32 line,
                                const std::filesystem::path& directory) {
+    if (text == "prelude") {
+        return read_prelude_header(line);
+    }
+
     if (text.rfind("root", 0) != 0 || text.size() < 5 ||
         (text[4] != ' ' && text[4] != '\t')) {
         return fail(line, "expected a root block or an indented dependency");
@@ -309,6 +340,78 @@ bool ModuleFinder::read_dependency(const std::string& text, u32 line,
     return true;
 }
 
+// 'prelude', a block with no directory. Record 0033: the prelude is a list of
+// imports every module of the program is given, and it is a Root and not a
+// vector of names because its entries have to resolve through a visibility
+// list like anybody's -- block names are not unique, so a global lookup by
+// name was never available.
+//
+// It gets no self-name: 'add_visible(block, name, block)' is the header line
+// of a root block saying where its own files are, and no file is in this one
+bool ModuleFinder::read_prelude_header(u32 line) {
+    if (prelude_block != INVALID_ROOT) {
+        return fail(line, "a second 'prelude' block, and a program has one");
+    }
+
+    Root root;
+
+    root.name = "prelude";
+
+    roots.push_back(root);
+    block = (u32) roots.size() - 1;
+    prelude_block = block;
+
+    return true;
+}
+
+// 'import a.b'. Spelled the way Haard spells it, so that a reader of the
+// table already knows what the line does
+bool ModuleFinder::read_prelude_import(const std::string& text, u32 line,
+                                       std::vector<PendingImport>& pending) {
+    if (prelude_block == INVALID_ROOT || block != prelude_block) {
+        return fail(line, "'import' belongs to the 'prelude' block");
+    }
+
+    std::string name = trim(text.substr(6));
+
+    if (name.size() == 0) {
+        return fail(line, "a prelude entry is 'import <module>'");
+    }
+
+    pending.push_back(PendingImport{name, line});
+
+    return true;
+}
+
+// The second half of the second pass. Every entry is resolved here, once,
+// and never again: the prelude is a property of the **program**, so a broken
+// entry is one error in the table and not one error per module that would
+// have been given it (record 0033)
+bool ModuleFinder::resolve_prelude(const std::vector<PendingImport>& pending,
+                                   const std::filesystem::path& directory) {
+    for (const PendingImport& entry : pending) {
+        FindResult result = find(prelude_block, entry.name);
+
+        if (result.status == FIND_NO_ROOT) {
+            return fail(entry.line, "the prelude sees no entry named '" +
+                        entry.name.substr(0, entry.name.find('.')) + "'");
+        }
+
+        if (result.status == FIND_NO_FILE) {
+            // relative to the table, which is both where the error is and how
+            // every other path in the file is written. The absolute one would
+            // put this machine's home in the message -- and in a golden
+            return fail(entry.line, "there is no file " +
+                        std::filesystem::relative(result.path,
+                                                  directory).string());
+        }
+
+        prelude.push_back(PreludeImport{result.path, result.root});
+    }
+
+    return true;
+}
+
 bool ModuleFinder::add_visible(u32 block, const std::string& name, u32 target,
                                u32 line) {
     if (visible_root(block, name) != INVALID_ROOT) {
@@ -327,6 +430,8 @@ bool ModuleFinder::add_visible(u32 block, const std::string& name, u32 target,
 bool ModuleFinder::fail(u32 line, const std::string& message) {
     error = table_name + ":" + std::to_string(line) + ": " + message;
     roots.clear();
+    prelude.clear();
+    prelude_block = INVALID_ROOT;
 
     return false;
 }

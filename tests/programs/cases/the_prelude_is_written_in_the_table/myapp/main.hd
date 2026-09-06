@@ -1,0 +1,115 @@
+# The point of this program is what is NOT at the top of it.
+#
+# One import, and it is this program's own other file -- nothing of the
+# library is named here. String, File, console(), open_write() and
+# open_read() are used anyway: record 0033 puts them in the table, and every
+# module of the program is given that list after the imports it wrote.
+#
+# It checks its own work and its exit status is the number of checks that
+# failed, which is what makes a golden of a few lines worth something.
+import myapp.report
+
+def check : void
+    @out : File*
+    @what : char*
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+def same : bool
+    @a : char*
+    @b : char*
+    let i = 0
+
+    while a[i] != '\0' and b[i] != '\0':
+        if a[i] != b[i]:
+            return false
+
+        i = i + 1
+
+    return a[i] == b[i]
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # a String, in a file that imports nothing
+    let greeting : String = "prelude"
+
+    greeting.append(", no import written")
+
+    let built = same(greeting.text(), "prelude, no import written")
+
+    check(out, "a String is built where nothing was imported", built)
+
+    if not built:
+        failures = failures + 1
+
+    # and one that crossed a module boundary, from a module that DID write
+    # the import the table also gives it
+    let counted = tagged("shapes", 12)
+    let crossed = same(counted.text(), "shapes = 12")
+
+    check(out, "a String crosses from a module that wrote the import", crossed)
+
+    if not crossed:
+        failures = failures + 1
+
+    # record 0031: giving it away by value hands over a buffer of its own
+    let copied = counted
+
+    copied.append(" and one more")
+
+    let apart = (same(counted.text(), "shapes = 12")
+                 and same(copied.text(), "shapes = 12 and one more"))
+
+    check(out, "a copy holds its own bytes", apart)
+
+    if not apart:
+        failures = failures + 1
+
+    # std.file came from the same list, so a file round trip proves the
+    # second entry as much as the console proves the first
+    let sink = open_write("prelude.txt")
+
+    if sink == null:
+        out->writeln("could not write prelude.txt")
+        return 1
+
+    sink->writeln(greeting.text())
+    sink->close()
+
+    let source = open_read("prelude.txt")
+
+    if source == null:
+        out->writeln("could not read prelude.txt back")
+        return 1
+
+    let read_back : String
+    let c = source->read()
+
+    while not source->at_end():
+        if c != '\n':
+            read_back.append(c)
+
+        c = source->read()
+
+    source->close()
+
+    let round_trip = same(read_back.text(), greeting.text())
+
+    check(out, "what was written came back the same", round_trip)
+
+    if not round_trip:
+        failures = failures + 1
+
+    delete out
+    delete sink
+    delete source
+
+    return failures

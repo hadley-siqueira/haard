@@ -1,0 +1,27 @@
+# What a build system would write, and the only thing 'hdc' reads to resolve
+# an import -- it searches nowhere else (record 0010).
+#
+# The 'prelude' block is record 0033: what every module of this program is
+# given without writing it. Here that is String, which is what a template
+# string becomes (records 0022 and 0032), so no file below has to say so.
+#
+# Four roots after it, and the arrows are the point: 'draw' may import ppm
+# and std, 'ppm' may import std and knows nothing of draw, and 'myapp' sees
+# the three it names and nothing they import privately.
+prelude
+    std -> std
+    import std.string
+
+root std = std
+
+root ppm = ppm
+    std -> std
+
+root draw = draw
+    std -> std
+    ppm -> ppm
+
+root myapp = myapp
+    std -> std
+    ppm -> ppm
+    draw -> draw

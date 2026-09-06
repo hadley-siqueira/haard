@@ -1,0 +1,5 @@
+def println : void
+    pass
+
+def main : void
+    println()

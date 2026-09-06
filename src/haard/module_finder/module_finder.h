@@ -45,6 +45,15 @@ namespace haard {
         u32 root;
     };
 
+    // One import the table gives to every module of the program, resolved.
+    // Record 0033: the prelude is a **list**, read once and never a module,
+    // so what a caller gets is a file and the root it belongs to -- the same
+    // pair a FindResult carries, because it is interned the same way
+    struct PreludeImport {
+        std::filesystem::path path;
+        u32 root;
+    };
+
     // one block of the table: a root, and what it can see
     struct Root {
         std::string name;
@@ -100,6 +109,18 @@ namespace haard {
             std::string module_name_of_file(u32 root,
                                             const std::filesystem::path& file);
 
+            // What every module of this program imports without writing it,
+            // in the order the table wrote them, and empty when there is no
+            // 'prelude' block. Record 0033.
+            //
+            // Resolved when the table was read and not per importing root,
+            // which is the whole reason this is a vector and not a question:
+            // 'target_of' answers an import against the visibility list of
+            // the root that wrote it, so resolving these per module would
+            // fail in every root whose block does not name the library --
+            // once per module, blaming an import nobody wrote
+            const std::vector<PreludeImport>& get_prelude();
+
         public:
             u32 get_root_count();
             const std::string& get_root_name(u32 root);
@@ -116,11 +137,25 @@ namespace haard {
                 u32 line;
             };
 
+            // a prelude entry kept aside for the second pass, with the
+            // line so that a bad one is reported where it was written
+            struct PendingImport {
+                std::string name;
+                u32 line;
+            };
+
             bool read_header(const std::string& text, u32 line,
                              const std::filesystem::path& directory);
             bool read_dependency(const std::string& text, u32 line,
                                  const std::filesystem::path& directory,
                                  std::vector<Dependency>& pending);
+
+            // 'prelude' at column zero, and 'import <module>' under it
+            bool read_prelude_header(u32 line);
+            bool read_prelude_import(const std::string& text, u32 line,
+                                     std::vector<PendingImport>& pending);
+            bool resolve_prelude(const std::vector<PendingImport>& pending,
+                                 const std::filesystem::path& directory);
 
             bool add_visible(u32 block, const std::string& name, u32 target,
                              u32 line);
@@ -150,6 +185,16 @@ namespace haard {
             std::string error;
 
             u32 block;
+
+            // The 'prelude' block, and INVALID_ROOT when the table has none.
+            // It is a Root with an **empty path**: nothing lives in it, and
+            // what it holds is a visibility list and a list of imports. That
+            // is what lets its entries resolve through 'find' unchanged --
+            // and block names are not unique (two versions of one library are
+            // two blocks both named 'zip'), so resolving them globally by
+            // name was never available
+            u32 prelude_block;
+            std::vector<PreludeImport> prelude;
     };
 }
 

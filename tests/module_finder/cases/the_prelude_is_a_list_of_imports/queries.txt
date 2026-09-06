@@ -1,0 +1,13 @@
+# the prelude is block 0 and has no directory of its own
+roots
+
+# resolved once, when the table was read, and in the order it wrote them
+prelude
+
+# a file under no root is still under no root: the prelude's empty path is a
+# prefix of every path, so without a guard it would claim this one
+file loose/stray.hd
+
+# and the ordinary questions are unchanged by its being there
+file app/main.hd
+find std.string

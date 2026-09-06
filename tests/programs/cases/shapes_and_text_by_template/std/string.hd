@@ -1,0 +1,244 @@
+# std/string.hd -- a String, per record 0023: it OWNS its bytes.
+#
+# Which is why it writes a 'copy' (record 0031). A class that declares
+# 'destroy' owns something, and one that owns something and says nothing about
+# being copied cannot be copied at all -- so without the 'copy' below, a
+# String could not be passed by value, given back, bound from another or
+# assigned. With it, all four work and no buffer is ever held twice.
+#
+# The bytes are kept with a '\0' after them, so 'text()' hands back something
+# the IO layer can walk. That terminator is not counted in 'size'.
+import std.io
+
+class String:
+    data : char*
+    size : i32
+    capacity : i32
+
+    # Record 0028: a class whose every 'init' takes an argument cannot be
+    # built where no arguments are written -- a local, a field, a base. So the
+    # empty one is what lets 'let s : String' mean anything
+    def init : void
+        size = 0
+        capacity = 1
+        data = new char[capacity]
+        data[0] = '\0'
+
+    def init : void
+        @text : char*
+
+        size = 0
+
+        while text[size] != '\0':
+            size = size + 1
+
+        capacity = size + 1
+        data = new char[capacity]
+
+        let i = 0
+
+        while i < size:
+            data[i] = text[i]
+            i = i + 1
+
+        data[size] = '\0'
+
+    # Record 0031's third method. It allocates its own and takes the bytes, so
+    # two Strings never hold one pointer
+    def copy : void
+        @other : String&
+
+        size = other.size
+        capacity = other.capacity
+        data = new char[capacity]
+
+        let i = 0
+
+        while i <= size:
+            data[i] = other.data[i]
+            i = i + 1
+
+    def destroy : void
+        delete[] data
+
+    def length : i32
+        return size
+
+    def is_empty : bool
+        return size == 0
+
+    # the bytes, terminated, for anything that walks a char*
+    def text : char*
+        return data
+
+    # '\0' for an index nobody has, which is what the terminator already means
+    def at : char
+        @i : i32
+
+        if i < 0 or i >= size:
+            return '\0'
+
+        return data[i]
+
+    # room for this many bytes and the terminator, doubling rather than
+    # growing by one, so appending a character stays cheap on average
+    def reserve : void
+        @wanted : i32
+
+        if wanted + 1 <= capacity:
+            return
+
+        let grown = capacity
+
+        while grown < wanted + 1:
+            grown = grown * 2
+
+        let moved = new char[grown]
+        let i = 0
+
+        while i <= size:
+            moved[i] = data[i]
+            i = i + 1
+
+        delete[] data
+
+        data = moved
+        capacity = grown
+
+    def append : void
+        @c : char
+
+        reserve(size + 1)
+
+        data[size] = c
+        size = size + 1
+        data[size] = '\0'
+
+    def append : void
+        @text : char*
+
+        let n = 0
+
+        while text[n] != '\0':
+            n = n + 1
+
+        reserve(size + n)
+
+        let i = 0
+
+        while i < n:
+            data[size + i] = text[i]
+            i = i + 1
+
+        size = size + n
+        data[size] = '\0'
+
+    def append : void
+        @other : String&
+
+        reserve(size + other.size)
+
+        let i = 0
+
+        while i < other.size:
+            data[size + i] = other.data[i]
+            i = i + 1
+
+        size = size + other.size
+        data[size] = '\0'
+
+    def equals : bool
+        @other : String&
+
+        if size != other.size:
+            return false
+
+        let i = 0
+
+        while i < size:
+            if data[i] != other.data[i]:
+                return false
+
+            i = i + 1
+
+        return true
+
+    # ---- numbers, as text
+    #
+    # Record 0018 has no conversion from a number to a character, in either
+    # direction, so a digit is found by **indexing** -- the same lookup
+    # write_u32 does in the ppm case, and the only thing the language offers.
+    #
+    # These are what makes a String its own builder. There is no separate
+    # StringBuilder and there does not need to be: what one would hold is
+    # exactly what a String holds, and what it would do is append
+
+    def append : void
+        @value : i64
+        let digits = "0123456789"
+
+        if value < 0:
+            append('-')
+
+            # the whole thing in i64 so that the smallest i32 still negates
+            append(0 - value)
+            return
+
+        if value >= 10:
+            append(value / 10)
+
+        append(digits[(value % 10) as i32])
+
+    def append : void
+        @value : i32
+        append(value as i64)
+
+    def append : void
+        @value : u32
+        append(value as i64)
+
+    def append : void
+        @value : bool
+
+        if value:
+            append("true")
+        else:
+            append("false")
+
+    # Six places after the point and no rounding: simple on purpose, because
+    # what a float should look like as text is a decision nobody has taken
+    def append : void
+        @value : f64
+
+        let whole = value as i64
+        let rest = value - (whole as f64)
+
+        if rest < 0.0:
+            rest = 0.0 - rest
+
+        if value < 0.0 and whole == 0:
+            append('-')
+
+        append(whole)
+        append('.')
+
+        let places = 0
+
+        while places < 6:
+            rest = rest * 10.0
+
+            let digit = rest as i64
+
+            append(digits_of(digit))
+
+            rest = rest - (digit as f64)
+            places = places + 1
+
+def digits_of : char
+    @value : i64
+    let digits = "0123456789"
+
+    if value < 0 or value > 9:
+        return '0'
+
+    return digits[value as i32]

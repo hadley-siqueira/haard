@@ -1,0 +1,8 @@
+# 'import' is the prelude block's line and nobody else's: a root block says
+# what it can SEE, and giving one an import would be giving every module of
+# that root an import, which is not a thing record 0033 offers
+root std = std
+
+root app = app
+    std -> std
+    import std.string

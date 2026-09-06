@@ -1,0 +1,12 @@
+def main : i32
+    let n = 1
+
+    # a template written with ' may hold a bare ", and the literal the chunk
+    # becomes is written with " -- so that one has to be escaped
+    let said = 'he said "hi" ${n} times'
+
+    # and an escape already written means the same thing in the literal, so
+    # it goes through untouched
+    let lines = "one\ttwo ${n}\n"
+
+    return 0

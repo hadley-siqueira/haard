@@ -1,0 +1,1 @@
+error: cases/a_prelude_entry_with_no_file/table.tbl:6: there is no file std/array.hd

@@ -1,0 +1,8 @@
+# the prelude resolves its entries through its OWN visibility lines, and it
+# has none -- so this names nothing, once, when the table is read
+prelude
+    import std.string
+
+root std = std
+root app = app
+    std -> std

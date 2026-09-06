@@ -83,6 +83,36 @@ directory, it does, and `make clean` takes it back.
 
   It found the bitwise operators typing to nothing.
 
+- **`shapes_and_text_by_template`** — `shapes_and_text_are_drawn` again, with
+  record 0032's template strings. **The drawing is identical on purpose**: the
+  picture in the two goldens is byte for byte the same, so a diff between the
+  cases is exactly what the sugar changed, and nothing else.
+
+  What it changed is that a message carries the numbers it is about —
+  `"circle at ${48},${8} radius ${6} has its four cardinal points"`, and a
+  count that used to be three statements and a helper is one `writeln`. `File`
+  grew `write` and `writeln` for a `String&` so that a `${}` at a call site
+  does not have to end in `.text()`, and `report` takes a **`String` by
+  value**: a message with no `${}` in it is a `char*` (record 0022) and
+  reaches one through record 0023's coercion, which is one step, while a
+  `String&` would need two and nothing has decided that coercions chain.
+
+  No file of the program imports `String`. The table's `prelude` block does it
+  (record 0033), which is what makes a template string mean anything here.
+
+- **`the_prelude_is_written_in_the_table`** — record 0033, and the point of it
+  is what is **not** at the top of `myapp/main.hd`. It writes one import, its
+  own sibling, and names nothing of the library — then builds a `String`, opens
+  the console, writes a file and reads it back. `String`, `File`, `console`,
+  `open_write` and `open_read` all arrive from the `prelude` block of
+  `roots.tbl`.
+
+  `myapp/report.hd` next to it **does** write `import std.string`, which the
+  table gives it anyway. That is the case record 0033's second guard exists
+  for: a second dependency on one module is a second copy of every candidate,
+  and an ordinary call would be reported as matching more than one thing
+  equally well.
+
 - **`strings_are_built_and_joined`** — `String` itself, written in Haard: it
   owns its bytes (record 0023) and writes the `copy` record 0031 requires, so
   all four ways of giving a value to something work and no two Strings hold

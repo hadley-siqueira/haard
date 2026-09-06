@@ -1,0 +1,24 @@
+def again : bool
+    @s : String&
+    return false
+def main : i32
+    let n = 3
+    let __ts0 : String
+    while again(__ts0):
+        n = n - 1
+    let __ts1 : String
+    for i = 0; again(__ts1); i = i + 1:
+        n = 0
+    return n
+
+--- diagnostics
+error: a template string is built before the statement it is written in, so it cannot go in a loop condition
+  --> app/main.hd:10:17
+   |
+10 |     while again("every turn ${n}"):
+   |                 ^
+error: a template string is built before the statement it is written in, so it cannot go in a loop condition
+  --> app/main.hd:13:22
+   |
+13 |     for i = 0; again("head ${i}"); i = i + 1:
+   |                      ^

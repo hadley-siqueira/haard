@@ -1,0 +1,4 @@
+# std.io is given the prelude too, and the prelude names std.io. One
+# candidate: its own scope answered, and the dependency on itself was
+# never added
+std.io module println

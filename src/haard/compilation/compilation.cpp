@@ -6,6 +6,7 @@
 #include <haard/override_checker/override_checker.h>
 #include <haard/statement_checker/statement_checker.h>
 #include <haard/symbol_table/implicit_collector.h>
+#include <haard/sugar/sugar_lowerer.h>
 #include <haard/symbol_table/symbol_collector.h>
 #include <haard/type_table/type_collector.h>
 #include <stdexcept>
@@ -69,6 +70,7 @@ bool Compilation::build(const std::filesystem::path& entry) {
         // and the other modules still load
         if (modules[i]->is_parsed()) {
             resolve_imports(i);
+            lower_sugar(i);
             collect_symbols(i);
         }
     }
@@ -236,6 +238,48 @@ void Compilation::resolve_imports(u32 index) {
             module->add_dependency(intern(result.path, result.root), interned);
         }
     }
+
+    add_prelude(index);
+}
+
+// Record 0033. The prelude is not a module and nothing here loads one: it is
+// a list the table carries, resolved once when the table was read, and this
+// is where every module is given it.
+//
+// No alias, so 'resolve_qualified' never sees these -- an alias is something
+// record 0008 makes the author write, and nobody wrote this
+void Compilation::add_prelude(u32 index) {
+    for (const PreludeImport& entry : finder.get_prelude()) {
+        // may append to 'modules', which is the list the build loop is
+        // walking: a prelude module is discovered here exactly the way an
+        // imported one is, and is loaded in its turn
+        u32 target = intern(entry.path, entry.root);
+
+        // a module OF the prelude would be given itself, and a module that
+        // wrote the import already has it
+        if (target == index || has_dependency(index, target)) {
+            continue;
+        }
+
+        modules[index]->add_dependency(target, INVALID_STRING);
+    }
+}
+
+bool Compilation::has_dependency(u32 index, u32 target) {
+    for (const Dependency& dependency : modules[index]->get_dependencies()) {
+        if (dependency.module == target) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Compilation::lower_sugar(u32 index) {
+    SugarLowerer sugar;
+
+    sugar.set_module(modules[index]);
+    sugar.lower();
 }
 
 // Collecting is per module and depends on nothing but that module's tree, so

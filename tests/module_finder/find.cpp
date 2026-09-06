@@ -7,6 +7,7 @@
 // of commands, and whatever tree those queries need:
 //
 //   roots            list the blocks, in the order the table declares them
+//   prelude          the imports the table gives every module (record 0033)
 //   file <path>      pick the importing root by longest prefix, and keep it
 //                    for the commands after it
 //   find <name>      resolve 'a.b.c' from that root
@@ -95,8 +96,22 @@ int main(int argc, char* argv[]) {
             std::cout << "roots:\n";
 
             for (u32 i = 0; i < finder.get_root_count(); i++) {
+                // the prelude block is a root with no directory (record
+                // 0033), and 'relative' against an empty path answers
+                // something about the case directory instead of nothing
                 std::cout << "    " << i << " " << finder.get_root_name(i)
-                          << " = " << show(finder.get_root_path(i)) << '\n';
+                          << " = "
+                          << (finder.get_root_path(i).empty()
+                                  ? "(no directory)"
+                                  : show(finder.get_root_path(i)))
+                          << '\n';
+            }
+        } else if (command == "prelude") {
+            std::cout << "prelude:\n";
+
+            for (const PreludeImport& entry : finder.get_prelude()) {
+                std::cout << "    " << show(entry.path) << " (root "
+                          << entry.root << ")\n";
             }
         } else if (command == "file") {
             root = finder.root_of_file(directory / argument);

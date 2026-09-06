@@ -1,0 +1,20 @@
+# This module WRITES the import the table would give it anyway, which is the
+# case record 0033's second guard exists for. Without it the module would
+# depend on std.string twice, and NameResolver::gather appends without
+# de-duplicating -- so every candidate would arrive twice and an ordinary
+# call would be reported as matching more than one thing equally well.
+#
+# Writing it is not an error and not a warning. An import that says out loud
+# what the table already arranged is a file that reads on its own.
+import std.string
+
+def tagged : String
+    @what : char*
+    @value : i32
+
+    let line : String = what
+
+    line.append(" = ")
+    line.append(value)
+
+    return line

@@ -66,6 +66,22 @@ namespace haard {
 
             std::string_view get_token_value(u32 token);
 
+            // A token whose text is not in the file. Record 0032's lowering
+            // pass writes a tree the author did not, and every name in it --
+            // the local it builds, 'String', 'append' -- is text no source
+            // holds, while a token is an offset and a length INTO the source.
+            //
+            // So the text is kept beside the stream and the offset is used
+            // for what is left: **where to point**. 'like' is a real token of
+            // the construct being lowered, so a diagnostic about a node
+            // nobody wrote still underlines the thing the author did write --
+            // the interpolation whose value has no 'append', say.
+            //
+            // Every one of these is made in one pass, before any phase that
+            // reads token text, so no string_view is alive across a call
+            u32 add_synthetic_token(TokenKind kind, const std::string& text,
+                                    u32 like);
+
         public:
             // the dotted name this file is known by, 'app.main'. A module is
             // a file, so its name is its path with the separators turned back
@@ -133,6 +149,13 @@ namespace haard {
             std::vector<Instantiation> instantiations;
 
             SourceFile source_file;
+
+            // the text of the synthetic tokens, and the index of the first
+            // one. They are all appended after scanning, so the range is
+            // contiguous and the lookup is a subtraction rather than a map
+            // on a path every phase walks
+            u32 first_synthetic;
+            std::vector<std::string> synthetic_text;
             TokenStream tokens;
             Ast ast;
             Logger logger;

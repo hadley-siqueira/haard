@@ -1,0 +1,10 @@
+prelude
+    std -> std
+    import std.io
+
+root std = std
+root other = other
+
+root app = app
+    std -> std
+    other -> other

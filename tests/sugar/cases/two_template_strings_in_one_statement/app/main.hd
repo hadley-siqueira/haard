@@ -1,0 +1,12 @@
+def takes : i32
+    @a : String&
+    @b : String&
+    return 0
+
+def main : i32
+    let n = 1
+
+    # two locals, in the order they were written, both before the call
+    let answer = takes("first ${n}", "second ${n}")
+
+    return 0

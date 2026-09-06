@@ -1,0 +1,17 @@
+def check : bool
+    @s : String&
+    return true
+
+def main : i32
+    let n = 1
+    let ok = true
+
+    # the right of 'and' runs only when the left did not already decide, so
+    # lifting it out would build it even then
+    if ok and check("only sometimes ${n}"):
+        n = 0
+
+    if ok or check("also sometimes ${n}"):
+        n = 0
+
+    return n

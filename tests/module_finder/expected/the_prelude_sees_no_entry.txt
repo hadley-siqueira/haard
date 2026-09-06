@@ -1,0 +1,1 @@
+error: cases/the_prelude_sees_no_entry/table.tbl:4: the prelude sees no entry named 'std'

@@ -6,6 +6,10 @@ using namespace haard;
 Module::Module() {
     root = INVALID_ROOT;
     parsed = false;
+
+    // no synthetic token yet, and every real index is below this, so the test
+    // in get_token_value is false until one is made
+    first_synthetic = 0xffffffff;
 }
 
 void Module::set_parsed(bool parsed) {
@@ -77,10 +81,32 @@ Ast* Module::get_ast() {
 }
 
 std::string_view Module::get_token_value(u32 token) {
+    // a token the lowering pass made: its offset says where to point and not
+    // what it says, so the text comes from beside the stream
+    if (token >= first_synthetic) {
+        return synthetic_text[token - first_synthetic];
+    }
+
     auto t = tokens.get_token(token);
     std::string_view view(source_file.get_content());
 
     return view.substr(t.get_offset(), t.get_length());
+}
+
+u32 Module::add_synthetic_token(TokenKind kind, const std::string& text,
+                                u32 like) {
+    Token token = tokens.get_token(like);
+
+    token.set_kind(kind);
+
+    if (synthetic_text.size() == 0) {
+        first_synthetic = (u32) tokens.size();
+    }
+
+    tokens.push(token);
+    synthetic_text.push_back(text);
+
+    return first_synthetic + (u32) synthetic_text.size() - 1;
 }
 
 void Module::inspect_tokens() {

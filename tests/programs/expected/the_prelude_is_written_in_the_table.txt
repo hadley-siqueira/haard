@@ -1,0 +1,7 @@
+a String is built where nothing was imported: ok
+a String crosses from a module that wrote the import: ok
+a copy holds its own bytes: ok
+what was written came back the same: ok
+--- files:
+prelude.txt, 27 bytes
+--- exit: 0

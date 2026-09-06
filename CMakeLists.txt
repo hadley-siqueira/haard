@@ -90,6 +90,7 @@ set(PRETTY_SRC
 
 set(MODULE_SRC
     src/haard/module/module.cpp
+    src/haard/sugar/sugar_lowerer.cpp
 )
 
 set(LOG_SRC
@@ -180,6 +181,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/use_resolver/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/statement_checker/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/override_checker/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/sugar/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh

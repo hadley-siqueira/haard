@@ -1,0 +1,1 @@
+error: cases/a_second_prelude_block/table.tbl:6: a second 'prelude' block, and a program has one

@@ -1,0 +1,3 @@
+# no import. Record 0033: the table gives every module std.io
+def main : void
+    pass
