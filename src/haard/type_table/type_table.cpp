@@ -113,6 +113,22 @@ bool TypeTable::same(u32 index, TypeKind kind, u32 subject, u32 module,
     return true;
 }
 
+u32 TypeTable::value_of(u32 index) {
+    if (index == INVALID_TYPE) {
+        return index;
+    }
+
+    Type* entry = get_type(index);
+
+    // one level, and never a walk: 'T&&' does not parse, so a reference to a
+    // reference is not a shape this table can hold
+    if (entry->kind == TYPE_REFERENCE) {
+        return get_argument(entry->first_argument);
+    }
+
+    return index;
+}
+
 Type* TypeTable::get_type(u32 index) {
     return &types[index];
 }

@@ -92,6 +92,7 @@ std::string Token::get_kind_as_string() {
         { TK_NEW, "TK_NEW" },
         { TK_DELETE, "TK_DELETE" },
         { TK_SIZEOF, "TK_SIZEOF" },
+        { TK_OPERATOR, "TK_OPERATOR" },
         { TK_U8, "TK_U8" },
         { TK_U16, "TK_U16" },
         { TK_U32, "TK_U32" },

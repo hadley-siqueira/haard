@@ -1,45 +1,50 @@
 error: expected Derived&, found Base&
-  --> main.hd:30:12
+  --> main.hd:37:12
    |
-30 |     return b
+37 |     return b
    |            ^
 error: expected Base, found Derived
-  --> main.hd:34:12
+  --> main.hd:41:12
    |
-34 |     return d
+41 |     return d
    |            ^
 error: expected i64, found i32
-  --> main.hd:38:12
+  --> main.hd:45:12
    |
-38 |     return n
+45 |     return n
    |            ^
 error: expected char*, found String
-  --> main.hd:46:12
+  --> main.hd:53:12
    |
-46 |     return s
+53 |     return s
    |            ^
 error: expected Base, found Derived&
-  --> main.hd:54:25
+  --> main.hd:63:25
    |
-54 |     let sliced : Base = d
+63 |     let sliced : Base = d
    |                         ^
 error: expected char*, found String
-  --> main.hd:56:27
+  --> main.hd:65:27
    |
-56 |     let unbuilt : char* = s
+65 |     let unbuilt : char* = s
    |                           ^
 error: expected Buffer, found char*
-  --> main.hd:57:26
+  --> main.hd:66:26
    |
-57 |     let wrong : Buffer = text
+66 |     let wrong : Buffer = text
    |                          ^^^^
-error: cannot assign Base& to Derived&
-  --> main.hd:59:7
+error: cannot assign Derived to Base
+  --> main.hd:67:7
    |
-59 |     d = b
+67 |     b = d
+   |       ^
+error: cannot assign Base to Derived
+  --> main.hd:68:7
+   |
+68 |     d = b
    |       ^
 error: cannot assign String to char*
-  --> main.hd:61:10
+  --> main.hd:75:10
    |
-61 |     text = s
+75 |     text = s
    |          ^

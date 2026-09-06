@@ -167,6 +167,25 @@ namespace haard {
             // 'owner' comes back as the module the class lives in
             std::vector<Candidacy> members_of(u32 left, u32 name, u32& owner);
 
+            // the same, by a name that is not written anywhere: what record
+            // 0034's operators are looked up by
+            std::vector<Candidacy> members_named(u32 left,
+                                                 const std::string& wanted,
+                                                 u32& owner);
+
+            // Record 0034. Whether the class on the left overloads this
+            // operator, and the type of applying it if it does.
+            //
+            // INVALID_TYPE and nothing reported when the class declares no
+            // such method: the operator's own rules then say what is wrong,
+            // and 'cannot apply this to Array<i32> and i32' is a better
+            // sentence than one about a method the reader never wrote.
+            //
+            // 'right' is 0 for a unary shape. The chosen method is written
+            // down on the OPERATOR node, which is where the emitter looks:
+            // nothing can work it out again, exactly as for a call
+            u32 overloaded(u32 scope, u32 node, u32 left, u32 right);
+
             // the type 'this' has: a pointer to the class the method was
             // written in. A pointer and not a reference because that is what
             // a method receives, and the '.' of record 0018 reads a member of

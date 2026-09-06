@@ -77,6 +77,11 @@ namespace haard {
             void walk_head_apart(u32 node, u32 block, u32 statement,
                                  Hoisting head, Hoisting rest);
 
+            // 'T[]' -> 'Array<T>', records 0016 and 0022. A type and not an
+            // expression, so it hoists nothing and can be written anywhere a
+            // type can -- including where there is no statement at all
+            void lower_array_type(u32 node);
+
             void lower_template_string(u32 node, u32 block, u32 statement);
 
             // what a refused one becomes, so that one mistake reads as one

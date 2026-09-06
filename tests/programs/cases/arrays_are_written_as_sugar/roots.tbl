@@ -1,0 +1,13 @@
+# Record 0033's prelude, and this is what makes 'i32[]' mean anything: the
+# sugar is written form for 'Array<T>' (records 0016 and 0022), so the name
+# 'Array' has to be in view of a file that never wrote an import.
+prelude
+    std -> std
+    import std.array
+    import std.string
+    import std.file
+
+root std = std
+
+root myapp = myapp
+    std -> std

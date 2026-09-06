@@ -60,3 +60,25 @@ inserting a declaration renumbers everything after it and the goldens churn.
 The alternative — hashing the name, or numbering it by something stable — buys
 less than it costs: the indices are what make the name unique without a
 lookup, and a golden that churns is a golden somebody reads.
+
+## What the 2026-09-06 cases pin
+
+**`an_operator_is_a_method`** — record 0034, and the point of it is what is
+*not* in the golden. Search the emitted C++ for `operator` and every hit is
+`m_operator_*`, a method name: Hadley's rule is that the emitter must not lean
+on C++'s own operator overloading, so `a[0]` is a call and `a[0] = 5` is a
+plain assignment through the reference that call gives back. The class declares
+`operator+` **and** `operator-` on purpose — folding every punctuation
+character to `_` makes those one C++ name, and the case fails when it does.
+
+**`a_reference_is_the_thing_it_names`** — record 0035, and all six places a
+`T&` has to read as a value: a binding, arithmetic, a call, a comparison, an
+assignment out of one, and writing through one. Before it, none of them worked,
+so giving a reference back from a function was pointless.
+
+**`a_generic_names_itself`** — record 0036. `Pair<T>` written inside `Pair<T>`,
+which record 0031 makes every container that owns memory do. It used to be
+instantiated with an unbound `T`, cloning a class whose fields are type
+parameters. It also catches the second hole of that record: a class with `copy`
+and no `init` loses C++'s implicit default constructor, so it compiles in Haard
+and fails in **C++**.

@@ -250,6 +250,64 @@ u32 ExpressionTyper::element_of(u32 type) {
     return INVALID_TYPE;
 }
 
+u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right) {
+    const char* wanted = operator_name(kind_of(node));
+
+    if (wanted == nullptr) {
+        return INVALID_TYPE;
+    }
+
+    u32 owner = index;
+    std::vector<Candidacy> candidates = members_named(left, wanted, owner);
+
+    if (candidates.size() == 0) {
+        return INVALID_TYPE;
+    }
+
+    std::vector<Argument> arguments;
+
+    if (right != 0) {
+        Argument argument;
+        AstNodeKind kind = kind_of(right);
+
+        // record 0018 again: a written number has no type of its own, so it
+        // is carried untyped and each candidate asks it to be its parameter
+        argument.literal = kind == AST_INTEGER_LITERAL
+                        || kind == AST_FLOAT_LITERAL;
+        argument.node = right;
+        argument.type = argument.literal
+                            ? INVALID_TYPE
+                            : type_of(index, scope, right, INVALID_TYPE);
+
+        arguments.push_back(argument);
+    }
+
+    Overload chosen = overloads.choose(index, candidates, arguments);
+
+    if (chosen.status != OVERLOAD_FOUND) {
+        report(node, chosen.status == OVERLOAD_AMBIGUOUS
+                         ? std::string("this matches more than one '") + wanted
+                               + "' equally well"
+                         : std::string("no '") + wanted
+                               + "' takes these operands");
+
+        return INVALID_TYPE;
+    }
+
+    // on the operator node itself, which is where the emitter looks for it
+    module->get_resolutions()->set_declaration(node, chosen.module,
+                                               chosen.candidate);
+
+    for (u32 i = 0; i < arguments.size() && i < chosen.parameters.size(); i++) {
+        if (arguments[i].literal) {
+            module->get_resolutions()->set_type(arguments[i].node,
+                                                chosen.parameters[i]);
+        }
+    }
+
+    return chosen.result;
+}
+
 u32 ExpressionTyper::subscript(u32 scope, u32 node) {
     u32 left = type_of(index, scope, first_child(node), INVALID_TYPE);
 
@@ -258,10 +316,22 @@ u32 ExpressionTyper::subscript(u32 scope, u32 node) {
     }
 
     TypeTable* types = module->get_types();
+
+    left = types->value_of(left);
+
     Type* entry = types->get_type(left);
     u32 element = element_of(left);
 
     if (element == INVALID_TYPE) {
+        // record 0034: a class says what '[]' means on it by declaring one.
+        // Asked only once the builtin shapes have had their turn, so nothing
+        // a pointer or an array does can be taken over by a method
+        u32 overload = overloaded(scope, node, left, second_child(node));
+
+        if (overload != INVALID_TYPE) {
+            return overload;
+        }
+
         report(node, name_of(left) + " cannot be indexed");
 
         return INVALID_TYPE;
@@ -682,17 +752,57 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     // So whichever side is a written number waits for the other. Two of them
     // is the ordinary case and either order gives the same answer, which is
     // why the test is only about the left
+    TypeTable* types = module->get_types();
+
+    // What travels to the other side is the **value**, never the reference.
+    // A reference is the thing it names (record 0018, amended 2026-09-06), and
+    // handing 'i32&' down made the other side a literal asked to be one:
+    // 'xs.at(0) + 1' was *a literal cannot be i32&*, which is a complaint
+    // about the 1
     if (is_untyped_literal(kind_of(first_child(node)))
         && !is_untyped_literal(kind_of(second_child(node)))) {
-        right = type_of(index, scope, second_child(node), expected);
+        right = types->value_of(
+            type_of(index, scope, second_child(node), types->value_of(expected)));
         left = type_of(index, scope, first_child(node), right);
     } else {
-        left = type_of(index, scope, first_child(node), expected);
+        left = types->value_of(
+            type_of(index, scope, first_child(node), types->value_of(expected)));
         right = type_of(index, scope, second_child(node), left);
     }
 
+    right = types->value_of(right);
+    left = types->value_of(left);
+
     if (left == INVALID_TYPE || right == INVALID_TYPE) {
         return INVALID_TYPE;
+    }
+
+    // Record 0034: a class says what an operator means on it. Asked whenever
+    // the left side is one and **not** only when the two sides differ -- two
+    // Arrays are the same type, and comparing them is exactly what an
+    // 'operator==' is for.
+    //
+    // A class that overloads nothing falls through to the rule below, which
+    // is where two class values being compared with a builtin '==' is caught
+    if (types->get_type(left)->kind == TYPE_NAMED) {
+        const char* wanted = operator_name(kind_of(node));
+        u32 owner = index;
+
+        // A class has no arithmetic and no comparison of its own, so an
+        // operator it did not overload is an error and not a fall-through.
+        // It used to fall through and, when both sides were the same class,
+        // pass -- 'a != b' between two Arrays typed to bool in silence and
+        // came out as a C++ '!=' that does not exist. Found by an Array of
+        // Arrays comparing its elements
+        if (wanted != nullptr && members_named(left, wanted, owner).size() == 0) {
+            report(node, name_of(left) + " has no '" + wanted + "'");
+
+            return INVALID_TYPE;
+        }
+
+        // and when it has one, 'overloaded' either answers or has already
+        // said why not
+        return overloaded(scope, node, left, second_child(node));
     }
 
     // record 0018 has nothing that would make two different types one, so the
@@ -704,7 +814,7 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
         return INVALID_TYPE;
     }
 
-    return comparison ? module->get_types()->builtin(BUILTIN_BOOL) : left;
+    return comparison ? types->builtin(BUILTIN_BOOL) : left;
 }
 
 // Bits, which is arithmetic with one more rule. A float has no representation
@@ -931,6 +1041,11 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
 
 std::vector<Candidacy> ExpressionTyper::members_of(u32 left, u32 name,
                                                   u32& owner) {
+    return members_named(left, text_of(name), owner);
+}
+
+std::vector<Candidacy> ExpressionTyper::members_named(
+    u32 left, const std::string& wanted, u32& owner) {
     std::vector<Candidacy> found;
     u32 declaration = class_of(left, owner);
 
@@ -939,7 +1054,6 @@ std::vector<Candidacy> ExpressionTyper::members_of(u32 left, u32 name,
     }
 
     Module* holder = compilation->get_module(owner);
-    std::string wanted = text_of(name);
     u32 interned = holder->get_strings()->find(hash_name(wanted), wanted);
 
     // up the chain of bases, one step at a time. Single inheritance (Hadley,

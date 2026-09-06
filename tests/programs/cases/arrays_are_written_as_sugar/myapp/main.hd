@@ -1,0 +1,137 @@
+# Array<T>, written as 'T[]', in a program a person could have written.
+#
+# Nothing here imports anything: Array, String, File and console() all arrive
+# through the table's prelude block (record 0033). What the program leans on,
+# in order:
+#
+#   record 0016 and 0022  'i32[]' is 'Array<i32>'
+#   record 0034           '[]' and '==' are methods, and the C++ calls them
+#   record 0018 amended   'xs[0]' gives back a T& that reads as a value
+#   record 0031           an Array owns its buffer, so it writes a 'copy'
+#   record 0032           the messages below carry the numbers they are about
+#
+# Its exit status is the number of checks that failed.
+
+def check : void
+    @out : File*
+    @what : String
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+def total_of : i32
+    @xs : i32[]&
+    let total = 0
+    let i = 0
+
+    while i < xs.length():
+        total = total + xs[i]
+        i = i + 1
+
+    return total
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # ---- built by the sugar, read by the operator
+
+    let squares : i32[]
+    let k = 0
+
+    while k < 10:
+        squares.add(k * k)
+        k = k + 1
+
+    let grew = squares.length() == 10 and squares[9] == 81
+
+    check(out, "ten squares fit, and the last is ${squares[9]}", grew)
+
+    if not grew:
+        failures = failures + 1
+
+    # it started with room for four, so this one grew three times
+    let summed = total_of(squares) == 285
+
+    check(out, "they add up to ${total_of(squares)}", summed)
+
+    if not summed:
+        failures = failures + 1
+
+    # ---- written through the reference '[]' gives back
+
+    squares[0] = 100
+
+    let written = squares[0] == 100 and total_of(squares) == 385
+
+    check(out, "writing through squares[0] makes the total ${total_of(squares)}",
+          written)
+
+    if not written:
+        failures = failures + 1
+
+    # ---- record 0031: a copy holds its own buffer
+
+    let copied = squares
+    let apart = copied == squares
+
+    copied[1] = 7
+
+    let still_apart = squares[1] == 1 and copied[1] == 7 and copied != squares
+
+    check(out, "a copy starts equal: ${apart}, and stays its own: ${still_apart}",
+          apart and still_apart)
+
+    if not (apart and still_apart):
+        failures = failures + 1
+
+    # ---- an array of arrays, which is where the self-naming generic bites
+
+    let grid : i32[][]
+    let row = 0
+
+    while row < 3:
+        let line : i32[]
+        let column = 0
+
+        while column < 3:
+            line.add(row * 3 + column)
+            column = column + 1
+
+        grid.add(line)
+        row = row + 1
+
+    let nested = grid.length() == 3 and grid[2][2] == 8 and grid[1][0] == 3
+
+    check(out, "grid[2][2] is ${grid[2][2]} and grid[1][0] is ${grid[1][0]}",
+          nested)
+
+    if not nested:
+        failures = failures + 1
+
+    # ---- and an array of a class that owns memory, so every element copies
+
+    let words : String[]
+    let one : String = "alpha"
+    let two : String = "beta"
+
+    words.add(one)
+    words.add(two)
+    words[0].append("!")
+
+    let owned = words.length() == 2
+
+    check(out, "words are ${words[0]} and ${words[1]}", owned)
+
+    if not owned:
+        failures = failures + 1
+
+    out->writeln("")
+    out->writeln("failures: ${failures}")
+
+    return failures

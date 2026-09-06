@@ -61,6 +61,26 @@ bare `"` is legal there and has to be escaped in the literal — and
 `"one\ttwo ${n}\n"`, where an escape already written means the same thing
 inside the literal and goes through untouched.
 
+## `T[]` is a class
+
+`an_unsized_array_is_a_class` is the second thing this pass does, and the
+golden is the argument for reading a tree instead of inferring one:
+
+```
+def takes : void
+    @xs : Array<i32>
+    @grid : Array<Array<i32>>
+    @fixed : i32[3]
+```
+
+from a source that wrote `i32[]`, `i32[][]` and `i32[3]`. Records 0016 and 0022
+made `T[]` written form for `Array<T>`, and record 0021 makes a **written
+length** a fixed array, which is not a class — so the third line is the one
+that proves the rewrite is not simply "anything with brackets".
+
+It hoists nothing, unlike a template string: a type is not an expression, so it
+is rewritten wherever it stands — a local, a parameter, a field.
+
 ## The three refusals, and what is not refused
 
 The calls have to become statements, and lifting them out of the expression

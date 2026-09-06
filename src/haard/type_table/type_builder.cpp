@@ -272,6 +272,26 @@ u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
     // whose fields are parameters nothing bound
     if (built.size() > 0 || query.get_generic_parameters(
                                 candidate->ast_node).size() > 0) {
+        // A generic naming **itself**, which record 0031 makes every owning
+        // container do: 'def copy: @other : Array<T>&'. Written inside the
+        // declaration's own body, 'T' is still a parameter and nothing has
+        // bound it, so instantiating here would clone a class whose fields
+        // are type parameters -- a real declaration, emitted like any other,
+        // and refused with 'this type cannot be emitted yet'.
+        //
+        // So it is not an instantiation. It is the declaration being written
+        // down, and it is only ever read from inside the generic's own body,
+        // which the emitter never writes. The clone re-resolves the same node
+        // with 'T' bound (record 0002 gives the parameter's candidate a type,
+        // so 'Array<T>' inside 'Array#i32' builds 'Array<i32>' and finds the
+        // clone itself)
+        for (u32 argument : built) {
+            if (module->get_types()->get_type(argument)->kind
+                == TYPE_GENERIC) {
+                return module->get_types()->named(owner, symbol, built);
+            }
+        }
+
         std::vector<u32> translated;
 
         for (u32 argument : built) {

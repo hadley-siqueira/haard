@@ -151,6 +151,17 @@ namespace haard {
             // indentation, so it pushes no level
             u32 parse_braced_block();
             u32 parse_literal();
+            // 'operator[]', 'operator+' and the rest. Record 0034: what
+            // it builds is an ordinary name node, so everything after this
+            // reads a method
+            u32 parse_operator_name();
+            AstNodeKind operator_kind();
+
+            // whether the current token starts where the previous one ended.
+            // Haard is space sensitive on purpose, and 'operator []' would
+            // pretty-print as 'operator[]' and stop round-tripping
+            bool joined_to_previous();
+
             u32 parse_template_string();
             u32 parse_template_string_chunk();
             u32 parse_interpolation();

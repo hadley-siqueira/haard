@@ -145,7 +145,24 @@ namespace haard {
 
             // the same, for the declaration a node names, and the empty string
             // when the node names none
+            // the candidate of a method this class declares by this name,
+            // 0 when it declares none. Record 0026's family -- 'init',
+            // 'destroy' and 'copy' -- is asked for by name and this is the
+            // one loop that answers
+            u32 member_named(u32 module, u32 declaration,
+                             const std::string& name);
+
             std::string name_at(u32 module, u32 node);
+
+            // Record 0034, and Hadley's rule for it: the C++ **must not** use
+            // C++'s own operator overloading. Haard turned the overload into
+            // a method, and this writes the call to that method.
+            //
+            // True when the node was one, which is what the operator's own
+            // emitter case tests before writing the operator itself. So a
+            // builtin '+' costs one read of the ResolutionTable and nothing
+            // else changed shape
+            bool emit_operator(u32 module, u32 node);
 
             // a method's parameters as a string every module spells the same
             // way, which is what makes an override carry the base's name

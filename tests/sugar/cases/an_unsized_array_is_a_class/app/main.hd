@@ -1,0 +1,21 @@
+# 'T[]' is written form for 'Array<T>' -- records 0016 and 0022 -- and the
+# golden below is the tree after the pass, so it reads as the class it is.
+#
+# A written length is a different thing and stays one: record 0021 makes
+# 'i32[3]' a FIXED array, which is not a class at all.
+def takes : void
+    @xs : i32[]
+    @grid : i32[][]
+    @fixed : i32[3]
+    pass
+
+class Holder:
+    numbers : i32[]
+    fixed : f64[2]
+
+def main : i32
+    let xs : i32[]
+    let nested : i32[][]
+    let fixed : i32[4]
+
+    return 0

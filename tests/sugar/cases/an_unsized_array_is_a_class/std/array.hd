@@ -1,0 +1,12 @@
+# The smallest Array these cases need: what 'T[]' is written form for. The
+# real one, which owns its buffer and writes record 0031's 'copy' and record
+# 0034's operators, is tests/programs/cases/arrays_are_written_as_sugar.
+class Array<T>:
+    size : i32
+
+    def init : void
+        size = 0
+
+    def add : void
+        @value : T
+        size = size + 1

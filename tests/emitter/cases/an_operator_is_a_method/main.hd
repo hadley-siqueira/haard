@@ -1,0 +1,111 @@
+# Record 0034. A class says what an operator means on it by declaring one, and
+# what it declares is an ordinary method with a name no source can write --
+# 'operator[]' is not something an identifier can be.
+#
+# The point of this case is the C++ below it: Hadley's rule is that the
+# emitter **must not** lean on C++'s own operator overloading, so every line
+# of the golden that came from an operator is a method call. Search it for the
+# word 'operator' and the only hits are record 0031's copy constructor and
+# copy assignment, which are a different mechanism.
+#
+# Its verdict is the exit status, which no output that merely looks right can
+# satisfy.
+
+# a tiny fixed-size bag, so that this case needs no standard library at all
+class Bag:
+    slots : i32[4]
+    count : i32
+
+    def init : void
+        count = 0
+        slots[0] = 0
+        slots[1] = 0
+        slots[2] = 0
+        slots[3] = 0
+
+    def add : void
+        @value : i32
+        slots[count] = value
+        count = count + 1
+
+    # It gives back a REFERENCE, which is what makes reading and writing one
+    # method: 'b[0]' and 'b[0] = 9' both go through here
+    def operator[] : i32&
+        @i : i32
+        return slots[i]
+
+    def operator== : bool
+        @other : Bag&
+
+        if count != other.count:
+            return false
+
+        let i = 0
+
+        while i < count:
+            if slots[i] != other.slots[i]:
+                return false
+
+            i = i + 1
+
+        return true
+
+    # a second operator whose C++ name must not collide with the first: every
+    # punctuation character folded to '_' would make 'operator+' and
+    # 'operator-' one name
+    def operator+ : i32
+        @other : Bag&
+
+        let total = 0
+        let i = 0
+
+        while i < count:
+            total = total + slots[i] + other.slots[i]
+            i = i + 1
+
+        return total
+
+    def operator- : i32
+        @other : Bag&
+
+        let total = 0
+        let i = 0
+
+        while i < count:
+            total = total + slots[i] - other.slots[i]
+            i = i + 1
+
+        return total
+
+def main : i32
+    let a : Bag
+    let b : Bag
+
+    a.add(10)
+    a.add(20)
+    b.add(3)
+    b.add(4)
+
+    # read through it
+    let first = a[0]
+
+    # and write through the reference it gives back
+    a[1] = 5
+
+    # the two that would be one C++ name if punctuation folded to '_'
+    let sum = a + b
+    let difference = a - b
+
+    # and equality, on two values of the same class -- which a builtin '=='
+    # cannot do and which used to pass the type phase in silence
+    let same = a == b
+    let itself = a == a
+
+    if same:
+        return 1
+
+    if not itself:
+        return 2
+
+    # 10 + 5 + 3 + 4 = 22, and 10 - 3 + 5 - 4 = 8, and first is 10
+    return first + sum + difference

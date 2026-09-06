@@ -249,6 +249,22 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
         return;
     }
 
+    // Assigning to a reference writes THROUGH it, as in C++ (Hadley,
+    // 2026-09-06: 'implemente T& com semântica parecida com C++'). What is
+    // being assigned is the thing it names, so that is what the right side is
+    // asked to be and what record 0031's question is about.
+    //
+    // Two things follow, and the second is a change. 'xs.at(0) = 99' works --
+    // handed the 'i32&' instead, the 99 was reported as *a literal cannot be
+    // i32&*, which blames the one part of that line that is fine. And
+    // 'b = d' between a 'Base&' and a 'Derived&' is now **refused**: it
+    // writes the Base part of a Derived and discards the rest, which is the
+    // slicing record 0018 keeps off its list -- and which the binding
+    // 'let sliced : Base = d' two lines above it was already refused for
+    TypeTable* types = compilation->get_module(index)->get_types();
+
+    left = types->value_of(left);
+
     u32 right = typer.type_of(index, scope, value, left);
 
     // record 0031, and an assignment is the one copy that also destroys: what
@@ -263,10 +279,13 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
         return;
     }
 
-    // reported at the operator, the way a mismatch between two operands is,
-    // because neither side is the one that is wrong
-    report(node, "cannot assign " + typer.name_of(right) + " to " +
-           typer.name_of(left));
+    // Reported at the operator, the way a mismatch between two operands is,
+    // because neither side is the one that is wrong. Both sides are named by
+    // the **value** they are: an assignment is about what is written, and
+    // 'cannot assign Derived to Base' is the slicing complaint, while
+    // 'Derived& to Base&' would name a pair record 0018's list allows
+    report(node, "cannot assign " + typer.name_of(types->value_of(right))
+           + " to " + typer.name_of(left));
 }
 
 u32 StatementChecker::result_of(u32 node) {

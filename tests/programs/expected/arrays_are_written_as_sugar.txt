@@ -1,0 +1,10 @@
+ten squares fit, and the last is 81: ok
+they add up to 285: ok
+writing through squares[0] makes the total 385: ok
+a copy starts equal: true, and stays its own: true: ok
+grid[2][2] is 8 and grid[1][0] is 3: ok
+words are alpha! and beta: ok
+
+failures: 0
+--- files:
+--- exit: 0

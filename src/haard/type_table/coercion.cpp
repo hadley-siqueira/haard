@@ -52,10 +52,35 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
     // list already allows it between two references -- nothing is sliced,
     // because nothing is copied.
     //
-    // Only in this direction. A reference where a **value** was asked for is
-    // a copy, and record 0031 has something to say about that
     if (to->kind == TYPE_REFERENCE && from->kind != TYPE_REFERENCE) {
         return climb(module, given, types->get_argument(to->first_argument));
+    }
+
+    // And the other direction, added 2026-09-06 with Hadley's 'implemente T&
+    // com semântica parecida com C++'. **A reference IS the thing it names**,
+    // so reading one is reading what it names, and without this a 'T&' could
+    // not be given back from a function usefully: 'total + xs.at(i)' was
+    // *cannot apply this to i32 and i32&*, and so were a binding, a call, a
+    // comparison and an assignment. Six places, and 'at' returning a
+    // reference is what makes 'a[i] = x' possible at all.
+    //
+    // Unlike the direction above, this one is **not free**: it is a copy. So
+    // record 0031's question is asked, and a class that owns something and
+    // says nothing about being copied cannot be read out of a reference any
+    // more than it can be passed by value.
+    //
+    // It costs a step, so an overload taking the reference still wins over
+    // one taking the value when a reference is what was passed
+    if (from->kind == TYPE_REFERENCE && to->kind != TYPE_REFERENCE) {
+        u32 named = types->get_argument(from->first_argument);
+
+        if (!may_be_copied(module, named)) {
+            return -1;
+        }
+
+        int rest = steps(module, named, wanted);
+
+        return rest < 0 ? -1 : rest + 1;
     }
 
     // Agenda 1.21, Hadley 2026-09-03: a 'char*' where a 'String' was asked

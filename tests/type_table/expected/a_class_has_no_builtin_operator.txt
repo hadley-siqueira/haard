@@ -1,0 +1,47 @@
+<unnamed>:
+    Point  Point
+    Same  Same
+    main  Point -> Point -> Same -> Same -> i32
+    x  i32
+    y  i32
+    x  i32
+    y  i32
+    operator==  Same& -> bool
+    other  Same&
+    a  Point
+    b  Point
+    c  Same
+    d  Same
+    equal  <none>
+    different  <none>
+    added  <none>
+    smaller  <none>
+    matched  bool
+    mismatched  <none>
+  19 types interned
+diagnostics:
+error: Point has no 'operator=='
+  --> main.hd:29:19
+   |
+29 |     let equal = a == b
+   |                   ^^
+error: Point has no 'operator!='
+  --> main.hd:30:23
+   |
+30 |     let different = a != b
+   |                       ^^
+error: Point has no 'operator+'
+  --> main.hd:31:19
+   |
+31 |     let added = a + b
+   |                   ^
+error: Point has no 'operator<'
+  --> main.hd:32:21
+   |
+32 |     let smaller = a < b
+   |                     ^
+error: Same has no 'operator!='
+  --> main.hd:38:24
+   |
+38 |     let mismatched = c != d
+   |                        ^^

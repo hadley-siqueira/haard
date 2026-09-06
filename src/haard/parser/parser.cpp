@@ -398,7 +398,10 @@ u32 Parser::parse_function() {
     expect(TK_DEF);
 
     u32 node = builder.make_function(token);
-    u32 last = builder.add_child(node, 0, parse_binding_name());
+    u32 last = builder.add_child(node, 0,
+                                 lookahead_on_same_line(TK_OPERATOR)
+                                     ? parse_operator_name()
+                                     : parse_binding_name());
 
     last = builder.add_child(node, last, parse_generic_parameters());
 
@@ -1042,6 +1045,75 @@ u32 Parser::parse_binding_expression() {
 // the chunk before a token is what consumed the newline. A template that spans
 // five lines is still one line as far as the statement rule is concerned.
 //
+// 'operator' and then the operator, written against it. Record 0034.
+//
+// What comes back is a binding name holding an identifier, exactly as a
+// written name does -- the difference is only its text, which is 'operator[]'
+// and is not something an identifier can be. So no source can call one by
+// name, and nothing after the parser has a case for operators.
+//
+//   operator_name := 'operator' operator
+u32 Parser::parse_operator_name() {
+    u32 word = current_token;
+
+    expect_on_same_line(TK_OPERATOR);
+
+    if (!joined_to_previous()) {
+        error_found("the operator, written against 'operator'", true);
+        return 0;
+    }
+
+    u32 at = current_token;
+    AstNodeKind kind = operator_kind();
+
+    if (kind == AST_UNKNOWN) {
+        error_found("an operator that may be overloaded", true);
+        return 0;
+    }
+
+    // the text is built and not read off the source, because '[]' is two
+    // tokens and the space between them, if any, is not part of the name
+    std::string text = operator_name(kind);
+
+    return builder.make_binding_name(builder.make_identifier(
+        module->add_synthetic_token(TK_IDENTIFIER, text, at)));
+}
+
+// consumes the operator and says which one it was, AST_UNKNOWN when the token
+// is not one that may be overloaded
+AstNodeKind Parser::operator_kind() {
+    if (match_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
+        return match_on_same_line(TK_RIGHT_SQUARE_BRACKET) ? AST_INDEX
+                                                           : AST_UNKNOWN;
+    }
+
+    if (match_on_same_line(TK_PLUS)) return AST_PLUS;
+    if (match_on_same_line(TK_MINUS)) return AST_MINUS;
+    if (match_on_same_line(TK_TIMES)) return AST_TIMES;
+    if (match_on_same_line(TK_INTEGER_DIVISION)) return AST_INTEGER_DIVISION;
+    if (match_on_same_line(TK_DIVISION)) return AST_DIVISION;
+    if (match_on_same_line(TK_MODULO)) return AST_MODULO;
+    if (match_on_same_line(TK_EQUAL)) return AST_EQUAL;
+    if (match_on_same_line(TK_NOT_EQUAL)) return AST_NOT_EQUAL;
+    if (match_on_same_line(TK_LESS_THAN_OR_EQUAL)) return AST_LESS_THAN_OR_EQUAL;
+    if (match_on_same_line(TK_LESS_THAN)) return AST_LESS_THAN;
+
+    if (match_on_same_line(TK_GREATER_THAN_OR_EQUAL)) {
+        return AST_GREATER_THAN_OR_EQUAL;
+    }
+
+    if (match_on_same_line(TK_GREATER_THAN)) return AST_GREATER_THAN;
+
+    return AST_UNKNOWN;
+}
+
+bool Parser::joined_to_previous() {
+    Token& before = tokens->get_token(current_token - 1);
+
+    return before.get_offset() + before.get_length()
+           == tokens->get_token(current_token).get_offset();
+}
+
 //   template_string := BEGIN (chunk | interpolation)* END
 u32 Parser::parse_template_string() {
     u32 token = current_token;

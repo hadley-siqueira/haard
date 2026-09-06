@@ -1,0 +1,108 @@
+# std/array.hd -- Array<T>, the class 'T[]' is written form for.
+#
+# Records 0016 and 0022 decided that 'T[]' means this, and record 0033's
+# prelude is what finally lets a file that writes no import say 'i32[]' and
+# have it mean something.
+#
+# It OWNS its buffer, so record 0031 makes it write a 'copy': without one, two
+# Arrays would share a pointer and the second destructor would free it again.
+#
+# Record 0034's operators are how it is read and compared. They are ordinary
+# methods with names no source can write, so nothing outside this file can
+# call one by name and nothing inside the compiler has a case for them.
+class Array<T>:
+    data : T*
+    size : i32
+    capacity : i32
+
+    # Record 0028: a class whose every 'init' takes an argument cannot be
+    # built where no arguments are written, and 'let xs : i32[]' writes none
+    def init : void
+        size = 0
+        capacity = 4
+        data = new T[capacity]
+
+    # Record 0031's third method. Its own buffer, and the elements copied one
+    # at a time -- which is what makes an Array of a class that owns something
+    # work, since each element's own 'copy' runs
+    def copy : void
+        @other : Array<T>&
+
+        size = other.size
+        capacity = other.capacity
+        data = new T[capacity]
+
+        let i = 0
+
+        while i < size:
+            data[i] = other.data[i]
+            i = i + 1
+
+    def destroy : void
+        delete[] data
+
+    def length : i32
+        return size
+
+    def is_empty : bool
+        return size == 0
+
+    # An ordinary method under the two operators below, because an operator's
+    # name is not writable and so neither of them can call the other
+    def equals : bool
+        @other : Array<T>&
+
+        if size != other.size:
+            return false
+
+        let i = 0
+
+        while i < size:
+            # '==' on the elements and not '!=': T may overload only one of
+            # them, and every T that overloads either overloads this one
+            if not (data[i] == other.data[i]):
+                return false
+
+            i = i + 1
+
+        return true
+
+    # Record 0034. It gives back a REFERENCE, which is what makes 'xs[0]' and
+    # 'xs[0] = 9' the same method -- reading one and writing through it
+    def operator[] : T&
+        @i : i32
+        return data[i]
+
+    def operator== : bool
+        @other : Array<T>&
+        return equals(other)
+
+    def operator!= : bool
+        @other : Array<T>&
+        return not equals(other)
+
+    def reserve : void
+        @wanted : i32
+
+        if wanted <= capacity:
+            return
+
+        let bigger = new T[wanted]
+        let i = 0
+
+        while i < size:
+            bigger[i] = data[i]
+            i = i + 1
+
+        delete[] data
+        data = bigger
+        capacity = wanted
+
+    def add : void
+        @value : T
+
+        if size == capacity:
+            reserve(capacity * 2)
+
+        data[size] = value
+        size = size + 1

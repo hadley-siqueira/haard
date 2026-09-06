@@ -93,6 +93,18 @@ namespace haard {
             u32 generic(u32 module, u32 candidate);
 
         public:
+            // What a reference names, and the type itself when it is not
+            // one. Record 0018 amended 2026-09-06: **a reference IS the
+            // thing it names**, which is C++'s semantics and the only one
+            // that makes a 'T&' worth giving back from a function.
+            //
+            // Anywhere a *value* is what matters -- an operand, a subscript,
+            // the target of an assignment -- this is what the type is.
+            // Whether the read is allowed is a different question and belongs
+            // to Coercion, because reading a reference is a **copy** and
+            // record 0031 has something to say about those
+            u32 value_of(u32 index);
+
             Type* get_type(u32 index);
             u32 get_argument(u32 index);
             u32 get_count();

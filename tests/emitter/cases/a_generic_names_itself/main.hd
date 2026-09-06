@@ -1,0 +1,57 @@
+# A generic writing its own name inside its own body, which record 0031 makes
+# every container that owns memory do: 'def copy: @other : Array<T>&'.
+#
+# It could not be emitted until 2026-09-06. 'Pair<T>' there has a T nothing
+# has bound, so it was instantiated -- cloning a class whose fields are type
+# parameters, a real declaration, emitted like any other and refused with
+# 'this type cannot be emitted yet'.
+#
+# It is not an instantiation. It is the declaration being written down, and it
+# is only ever read from inside the generic's own body, which the emitter
+# never writes on its own. Inside the clone the same node re-resolves with T
+# bound, so 'Pair<T>' there builds 'Pair<i32>' and finds the clone itself --
+# C++'s injected class name, arrived at from the other direction.
+
+class Pair<T>:
+    left : T
+    right : T
+
+    # No 'init' that writes a literal into a T: the body of a generic is
+    # type-checked with its parameters UNBOUND, so 'left = 0' there is
+    # reported as 'a literal cannot be T' even though every instantiation of
+    # it would be fine. That is a separate hole and this case is not about it
+    #
+    # the shape that used to be unemittable
+    def copy : void
+        @other : Pair<T>&
+        left = other.left
+        right = other.right
+
+    # and one that gives its own type back, which is the other way to name it
+    def swapped : Pair<T>
+        let out : Pair<T>
+
+        out.left = right
+        out.right = left
+
+        return out
+
+    def total : T
+        return left + right
+
+def main : i32
+    let p : Pair<i32>
+
+    p.left = 30
+    p.right = 12
+
+    let q = p
+    let r = p.swapped()
+
+    if q.total() != 42:
+        return 1
+
+    if r.left != 12:
+        return 2
+
+    return q.total() + r.left

@@ -37,6 +37,10 @@ namespace haard {
         TK_DELETE,
         TK_SIZEOF,
 
+        // 'def operator[]', record 0034. A method with a name no source can
+        // write, which is why it needs a word of its own to declare it
+        TK_OPERATOR,
+
         // the builtin types, the only type names that are words of their
         // own. Everything else a type may name is an identifier
         TK_U8,

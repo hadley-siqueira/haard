@@ -41,3 +41,26 @@ u32 AstNode::get_children() {
     return children;
 }
 
+
+const char* haard::operator_name(AstNodeKind kind) {
+    switch (kind) {
+    case AST_INDEX: return "operator[]";
+    case AST_PLUS: return "operator+";
+    case AST_MINUS: return "operator-";
+    case AST_TIMES: return "operator*";
+    case AST_DIVISION: return "operator/";
+    case AST_INTEGER_DIVISION: return "operator//";
+    case AST_MODULO: return "operator%";
+    case AST_EQUAL: return "operator==";
+    case AST_NOT_EQUAL: return "operator!=";
+    case AST_LESS_THAN: return "operator<";
+    case AST_LESS_THAN_OR_EQUAL: return "operator<=";
+    case AST_GREATER_THAN: return "operator>";
+    case AST_GREATER_THAN_OR_EQUAL: return "operator>=";
+
+    default:
+        break;
+    }
+
+    return nullptr;
+}

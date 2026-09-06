@@ -1,0 +1,57 @@
+# Record 0018, amended 2026-09-06: a reference IS the thing it names, which is
+# C++'s semantics. Until then a 'T&' could not be read as a value ANYWHERE --
+# six places, every one of them below -- so giving one back from a function
+# was pointless, and 'operator[]' returning one could not have worked.
+#
+# The other half of it is that assigning to a reference writes THROUGH it,
+# which is why 'through = 5' below changes what 'held' names and not what
+# 'through' refers to.
+
+class Cell:
+    value : i32
+
+    def init : void
+        value = 0
+
+    def slot : i32&
+        return value
+
+def takes : i32
+    @n : i32
+    return n
+
+def main : i32
+    let held = 40
+    let through : i32& = held
+    let c : Cell
+
+    c.slot() = 9
+
+    # 1. a binding
+    let bound : i32 = through
+
+    # 2. arithmetic
+    let sum = through + 2
+
+    # 3. a call
+    let passed = takes(through)
+
+    # 4. a comparison
+    let equal = through == 40
+
+    # 5. an assignment out of one
+    let copied = 0
+
+    copied = through
+
+    # 6. and writing through one, which changes what it names
+    through = 5
+
+    if not equal:
+        return 1
+
+    if held != 5:
+        return 2
+
+    # 40 + 42 + 40 + 0 + 9 = 131
+    return bound + sum + passed + held - 5 + c.slot()

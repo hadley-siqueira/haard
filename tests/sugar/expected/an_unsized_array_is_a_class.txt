@@ -1,0 +1,13 @@
+def takes : void
+    @xs : Array<i32>
+    @grid : Array<Array<i32>>
+    @fixed : i32[3]
+    pass
+class Holder:
+    numbers : Array<i32>
+    fixed : f64[2]
+def main : i32
+    let xs : Array<i32>
+    let nested : Array<Array<i32>>
+    let fixed : i32[4]
+    return 0

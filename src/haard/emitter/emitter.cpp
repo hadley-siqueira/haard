@@ -400,14 +400,7 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
     // a 'destroy': a pointer to a base is how a program holds an object, and
     // deleting through one without a virtual destructor runs the wrong code
     // -- silently, and only sometimes
-    u32 destroy = 0;
-
-    for (u32 member : query.get_members(declaration)) {
-        if (kind_of(module_index, member) == AST_FUNCTION
-            && query.get_declaration_name(member) == "destroy") {
-            destroy = module->get_symbols()->candidate_of(member);
-        }
-    }
+    u32 destroy = member_named(module_index, declaration, "destroy");
 
     // 'copy' is the third of record 0026's family and record 0031's subject:
     // a class that says how to copy itself gets a C++ copy constructor and a
@@ -417,17 +410,21 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
     // by a class that holds nothing yet, so an assignment has to put the class
     // back into that state before calling it -- and the guard is for 'a = a',
     // which would otherwise free what it is about to read
-    u32 copy = 0;
-
-    for (u32 member : query.get_members(declaration)) {
-        if (kind_of(module_index, member) == AST_FUNCTION
-            && query.get_declaration_name(member) == "copy") {
-            copy = module->get_symbols()->candidate_of(member);
-        }
-    }
+    u32 copy = member_named(module_index, declaration, "copy");
 
     if (!bodies) {
         if (copy != 0) {
+            // Declaring a constructor is what takes C++'s implicit default
+            // one away, and record 0026 leans on that one: a class with no
+            // 'init' is built with no arguments and its fields are left
+            // uninitialised. So a class that writes a 'copy' and no 'init'
+            // lost the ability to be built at all -- 'let p : Pair<i32>'
+            // stopped compiling, in C++ and not in Haard, which is the worst
+            // place for it. Found by a generic that names itself
+            if (member_named(module_index, declaration, "init") == 0) {
+                line(holder + "() = default;");
+            }
+
             line(holder + "(const " + holder + "& other);");
             line(holder + "& operator=(const " + holder + "& other);");
         }
@@ -1077,6 +1074,10 @@ void Emitter::emit_expression(u32 module, u32 node) {
         return;
 
     case AST_INDEX:
+        if (emit_operator(module, node)) {
+            return;
+        }
+
         emit_expression(module, child_of(module, node, 0));
         out << "[";
         emit_expression(module, child_of(module, node, 1));
@@ -1208,9 +1209,40 @@ void Emitter::emit_expression(u32 module, u32 node) {
 }
 
 void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
     emit_expression(module, child_of(module, node, 0));
     out << " " << oper << " ";
     emit_expression(module, child_of(module, node, 1));
+}
+
+bool Emitter::emit_operator(u32 module_index, u32 node) {
+    Module* module = compilation->get_module(module_index);
+    Resolution* found = module->get_resolutions()->get(node);
+
+    // the typer writes one down only for an operator a class overloaded, so
+    // every builtin one falls straight through
+    if (found->candidate == 0) {
+        return false;
+    }
+
+    u32 left = child_of(module_index, node, 0);
+
+    emit_expression(module_index, left);
+    out << (is_pointer(module_index, left) ? "->" : ".")
+        << name_of(found->module, found->candidate) << "(";
+
+    u32 right = child_of(module_index, node, 1);
+
+    if (right != 0) {
+        emit_expression(module_index, right);
+    }
+
+    out << ")";
+
+    return true;
 }
 
 void Emitter::emit_unary(u32 module, u32 node, const std::string& oper) {
@@ -1308,12 +1340,32 @@ std::string Emitter::name_of(u32 module, u32 candidate) {
 
     // the source name is carried only so a reader of the C++ can find their
     // way back; what makes the name unique is the two indices in front of it
+    //
+    // Except for record 0034's operators, where it is load-bearing: 'operator+'
+    // and 'operator-' both fold to 'operator_' if every punctuation character
+    // becomes an underscore, and two operators of one class taking one
+    // parameter of one type would then be one C++ name. So each gets a word
     for (char letter : source) {
-        clean += (letter >= 'a' && letter <= 'z')
-                      || (letter >= 'A' && letter <= 'Z')
-                      || (letter >= '0' && letter <= '9')
-                  ? letter
-                  : '_';
+        if ((letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z')
+            || (letter >= '0' && letter <= '9')) {
+            clean += letter;
+            continue;
+        }
+
+        switch (letter) {
+        case '[': clean += "_at"; break;
+        case ']': break;
+        case '+': clean += "_plus"; break;
+        case '-': clean += "_minus"; break;
+        case '*': clean += "_times"; break;
+        case '/': clean += "_over"; break;
+        case '%': clean += "_mod"; break;
+        case '=': clean += "_eq"; break;
+        case '!': clean += "_not"; break;
+        case '<': clean += "_lt"; break;
+        case '>': clean += "_gt"; break;
+        default: clean += '_'; break;
+        }
     }
 
     // A **method** is named by what makes it one method and not another, which
@@ -1418,6 +1470,24 @@ std::string Emitter::type_name(u32 module, u32 type) {
 
 // One string and not two, because C++ writes an array's length after the name
 // it belongs to. Everything that declares anything goes through here
+u32 Emitter::member_named(u32 module_index, u32 declaration,
+                          const std::string& name) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+    u32 found = 0;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) == AST_FUNCTION
+            && query.get_declaration_name(member) == name) {
+            found = module->get_symbols()->candidate_of(member);
+        }
+    }
+
+    return found;
+}
+
 std::string Emitter::declare(u32 module_index, u32 type,
                              const std::string& name) {
     std::string tail = name.size() > 0 ? " " + name : "";

@@ -100,6 +100,15 @@ directory, it does, and `make clean` takes it back.
   No file of the program imports `String`. The table's `prelude` block does it
   (record 0033), which is what makes a template string mean anything here.
 
+- **`arrays_are_written_as_sugar`** — `Array<T>` written as `i32[]`, in a
+  program that imports nothing: Array, String, File and `console()` all arrive
+  through the table's `prelude` block. It grows an array past its capacity
+  three times, reads it through record 0034's `operator[]`, writes through the
+  `T&` that gives back, checks that a copy holds its own buffer (record 0031),
+  builds an `i32[][]` — which is where a generic naming itself would bite —
+  and an `Array<String>`, so every element copies with the element's own
+  `copy`. Its messages carry their numbers, which is record 0032.
+
 - **`the_prelude_is_written_in_the_table`** — record 0033, and the point of it
   is what is **not** at the top of `myapp/main.hd`. It writes one import, its
   own sibling, and names nothing of the library — then builds a `String`, opens

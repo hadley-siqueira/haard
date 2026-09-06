@@ -4,6 +4,13 @@
 # said they were allowed and three of the four places that ask never heard.
 #
 # Every line below is one of those places asking the list the same question.
+#
+# Amended 2026-09-06, with references given C++'s semantics: **assigning to a
+# reference writes through it**. So 'b = d' between a 'Base&' and a 'Derived&'
+# is no longer the list being asked about two references -- it writes the Base
+# part of a Derived and discards the rest, which is the slicing the list keeps
+# off itself, and which 'let sliced : Base = d' below is already refused for.
+# The two lines now say the same thing, which they did not before.
 
 class Base:
     tag : i32
@@ -48,6 +55,8 @@ def as_char_pointer : char*
 def main : i32
     @d : Derived&
     @b : Base&
+    @n : i32&
+    @m : i32
     @s : String
     @text : char*
     let bound : Base& = d
@@ -57,6 +66,11 @@ def main : i32
     let wrong : Buffer = text
     b = d
     d = b
+
+    # and writing through one that names a builtin, which is the shape
+    # 'xs[0] = 9' takes once Array's '[]' gives back a 'T&'
+    n = m
+
     s = text
     text = s
     return 0

@@ -1,0 +1,40 @@
+# Record 0034. A class has no arithmetic and no comparison of its own, so an
+# operator it did not overload is an error.
+#
+# It used to fall through: 'binary' asked whether the two sides were the same
+# type, two values of one class are, and the answer came back bool. So
+# 'a != b' between two Points passed the type phase in SILENCE and came out as
+# a C++ '!=' that does not exist -- caught by g++ and not by hdc, which is the
+# wrong place. Found by an Array of Arrays comparing its elements with '!='
+# when only '==' was overloaded.
+class Point:
+    x : i32
+    y : i32
+
+class Same:
+    x : i32
+    y : i32
+
+    def operator== : bool
+        @other : Same&
+        return x == other.x and y == other.y
+
+def main : i32
+    @a : Point
+    @b : Point
+    @c : Same
+    @d : Same
+
+    # every one of these is reported now
+    let equal = a == b
+    let different = a != b
+    let added = a + b
+    let smaller = a < b
+
+    # and the one that IS overloaded is not
+    let matched = c == d
+
+    # while the one that is not, on the same class, still is
+    let mismatched = c != d
+
+    return 0

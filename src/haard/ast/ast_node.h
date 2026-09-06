@@ -142,6 +142,19 @@ namespace haard {
         AST_INTERPOLATION,
     } AstNodeKind;
 
+    // The name a class declares its overload of this operator under, and
+    // nullptr for a kind that is not one. Record 0034.
+    //
+    // It is a **name**, not a keyword and not a flag: 'operator[]' cannot be
+    // written as an identifier, so no source can call one by name and nothing
+    // after the parser knows an operator was involved. Overload resolution,
+    // the override checker and the emitter all read an ordinary method.
+    //
+    // One table, keyed by the node kind, because the parser and the typer must
+    // agree on the spelling exactly -- one of them writing 'operator+' and the
+    // other looking for 'operator +' would simply never find anything
+    const char* operator_name(AstNodeKind kind);
+
     class AstNode {
         public:
             AstNode();

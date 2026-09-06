@@ -8,6 +8,5 @@
     list  [i32]
     hash  {i32: f64}
     tuple  (i32, f64, bool)
-    unsized  i32[]
     sized  i32[10]
-  24 types interned
+  23 types interned

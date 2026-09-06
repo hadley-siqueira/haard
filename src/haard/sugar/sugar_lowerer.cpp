@@ -61,6 +61,17 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
         walk_head_apart(node, block, statement, hoisting, HOIST_AFTER_OR);
         return;
 
+    // 'T[]' with nothing between the brackets. 'T[3]' is a fixed array and
+    // stays one (record 0021), so the length is what tells them apart
+    case AST_ARRAY_TYPE:
+        walk_children(node, block, statement, hoisting);
+
+        if (sibling_of(first_child(node)) == 0) {
+            lower_array_type(node);
+        }
+
+        return;
+
     // its interpolations first, so that a template string written inside one
     // is already a local by the time this one appends it -- and its
     // statements, inserted before the same statement, land before these
@@ -145,6 +156,44 @@ void SugarLowerer::lower_template_string(u32 node, u32 block, u32 statement) {
     rewritten->set_children(0);
 
     insert_before(block, statement, written);
+}
+
+// 'T[]' is written form for 'Array<T>' -- record 0016 decided it and record
+// 0022 named the class, and it could not be done until a prelude could put
+// 'Array' in view of a file that never wrote an import (record 0033).
+//
+// The node is rewritten in place into the named type, so nothing downstream
+// has a case for an array with no length: TypeBuilder builds an ordinary
+// instantiation, record 0002 clones it, and the emitter writes a struct. What
+// the emitter used to say about this shape -- 'an array with no length cannot
+// be emitted yet' -- is now unreachable through the sugar.
+//
+// 'T[3]' is untouched. Record 0021 makes a written length a **fixed** array,
+// which is not a class at all
+void SugarLowerer::lower_array_type(u32 node) {
+    Ast* ast = module->get_ast();
+    u32 element = first_child(node);
+    u32 like = token_of(element) == 0 ? token_of(node) : token_of(element);
+    u32 name = module->add_synthetic_token(TK_IDENTIFIER, "Array", like);
+    u32 open = module->add_synthetic_token(TK_LESS_THAN, "<", like);
+
+    // the element leaves the array type and becomes the argument, so what it
+    // used to be followed by is nothing
+    ast->get_node(element)->set_sibling(0);
+
+    u32 arguments = builder.make_generic_arguments(open);
+
+    builder.add_child(arguments, 0, element);
+
+    u32 identifier = builder.make_identifier(name);
+
+    AstNode* rewritten = ast->get_node(node);
+
+    rewritten->set_kind(AST_NAMED_TYPE);
+    rewritten->set_token(name);
+    rewritten->set_children(0);
+
+    builder.add_child(node, builder.add_child(node, 0, identifier), arguments);
 }
 
 // A refused template string is still a String -- what was refused is where it

@@ -1,3 +1,12 @@
+# Every shape the TypeTable can hold, written as a field so the golden reads
+# as a list of them.
+#
+# 'i32[]' is NOT here, since 2026-09-06. Record 0022 makes it written form for
+# 'Array<i32>' and record 0034's pass rewrites it before this phase runs, so
+# what a field spelled that way holds is a named type and not a shape of its
+# own. The shape still exists -- 'new T[n]' with a length no constant
+# evaluation can read builds one -- it just cannot be written as a type any
+# more. Its cases are in tests/sugar.
 class Node:
     plain : i32
     pointer : i32*
@@ -7,5 +16,4 @@ class Node:
     list : [i32]
     hash : {i32: f64}
     tuple : (i32, f64, bool)
-    unsized : i32[]
     sized : i32[10]

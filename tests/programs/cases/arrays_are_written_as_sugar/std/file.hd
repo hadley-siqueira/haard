@@ -1,0 +1,88 @@
+# std/file.hd -- a file and the console, written in Haard.
+#
+# Nothing here is in the compiler. std.io next door holds the eight functions
+# whose bodies the emitter writes (record 0030), and every one of them moves a
+# single character. Everything anyone would actually write is here, on top of
+# them, in the language.
+import std.io
+
+class File:
+    handle : i8*
+
+    def init : void
+        @where : i8*
+        handle = where
+
+    # the primitive everything else is made of
+    def write : void
+        @c : char
+        __io_write(handle, c)
+
+    # and a run of them. Record 0012 makes this an overload of the one above
+    # and not a second name: what tells two apart is their parameters
+    def write : void
+        @text : char*
+        let i = 0
+
+        while text[i] != '\0':
+            __io_write(handle, text[i])
+            i = i + 1
+
+    def writeln : void
+        @text : char*
+        write(text)
+        __io_write(handle, '\n')
+
+    # And the same two for a String, which is what a template string is
+    # (records 0022 and 0032). Without them every '${}' at a call site would
+    # have to end in '.text()', which is the sugar handing its work back.
+    #
+    # 'String' is in view here because the table's prelude block puts it
+    # there (record 0033) -- this file writes no import for it
+    def write : void
+        @text : String&
+        write(text.text())
+
+    def writeln : void
+        @text : String&
+        writeln(text.text())
+
+    # what it gives back once the file has ended is nothing to use, and
+    # 'at_end' is how that is asked -- after the read, never before
+    def read : char
+        return __io_read(handle)
+
+    def at_end : bool
+        return __io_at_end(handle)
+
+    def close : void
+        __io_close(handle)
+
+# the console and a file, as the same thing
+def console : File*
+    return new File(__io_stdout())
+
+def errors : File*
+    return new File(__io_stderr())
+
+def keyboard : File*
+    return new File(__io_stdin())
+
+# null when it will not open, which the caller has to look at
+def open_read : File*
+    @path : char*
+    let handle = __io_open_read(path)
+
+    if handle == null:
+        return null
+
+    return new File(handle)
+
+def open_write : File*
+    @path : char*
+    let handle = __io_open_write(path)
+
+    if handle == null:
+        return null
+
+    return new File(handle)
