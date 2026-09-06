@@ -1,0 +1,43 @@
+# Hadley, 2026-09-06: an empty literal takes its type from the **context** when
+# the context says, and is an error when it does not. Infer where it is
+# trivial; do not try hard.
+#
+# The context is a written type -- on the binding it is given to, or on the
+# variable it is assigned to. A call is deliberately not among them: an
+# argument is typed before the overload is chosen, so there is nothing to read.
+#
+# An empty literal is also the one literal the sugar pass leaves where it
+# stands. What a literal is hoisted for is the fixed array it is made of, and
+# an empty one is made of nothing -- and moving it would throw away the only
+# thing that can say what it is empty of.
+class Array<T>:
+    size : i32
+
+    def init : void
+        size = 0
+
+    def init : void
+        @from : T*
+        @count : i32
+        size = count
+
+def takes : i32
+    @xs : Array<f64>
+    return xs.size
+
+def main : i32
+    # the context says, on the variable
+    let a : Array<f64>
+
+    a = []
+
+    # and on the binding
+    let b : Array<i32> = []
+
+    # nothing says
+    let c = []
+
+    # and an argument is not context
+    let d = takes([])
+
+    return 0

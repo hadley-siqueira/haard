@@ -4,6 +4,8 @@
 #include <haard/name_resolver/overload_resolver.h>
 
 namespace haard {
+    class TypeCollector;
+
     // What type an expression has, per record 0018.
     //
     // A literal has **no type of its own**: it takes the one the context asks
@@ -29,6 +31,10 @@ namespace haard {
 
         public:
             void set_compilation(Compilation* compilation);
+
+            // passed straight to the builder: this typer's own builder is
+            // one of the two that can instantiate a generic
+            void set_collector(TypeCollector* collector);
 
             // 'expected' is INVALID_TYPE when the context asks for nothing,
             // which is what a 'let' with no written type does
@@ -142,6 +148,13 @@ namespace haard {
             // the element a container type holds, and INVALID_TYPE for a type
             // that holds none
             u32 element_of(u32 type);
+
+            // What an 'Array<T>' holds, read off the **instantiation** and
+            // not off the type. Record 0002 gives a clone no arguments in its
+            // type -- 'Array<f64>' is a plain named type pointing at a class
+            // whose fields are already f64 -- so the arguments come from the
+            // record the compiler kept when it made the clone
+            u32 argument_of_instantiation(u32 type);
 
             u32 literal(u32 node, u32 expected, BuiltinType fallback);
             u32 identifier(u32 scope, u32 node);

@@ -222,36 +222,67 @@ bool Coercion::may_be_copied(u32 module, u32 type) {
 bool Coercion::declares_a_copy(u32 module, u32 candidate) {
     Module* holder = compilation->get_module(module);
     SymbolTable* table = holder->get_symbols();
-    TypeTable* types = holder->get_types();
+    Ast* ast = holder->get_ast();
     AstQuery query;
 
     query.set_module(holder);
 
-    u32 mine = types->named(module, candidate, std::vector<u32>());
+    u32 declaration = table->get_candidate(candidate)->ast_node;
+    std::string mine = query.get_declaration_name(declaration);
 
-    for (u32 member :
-         query.get_members(table->get_candidate(candidate)->ast_node)) {
+    // a class's name is not where a function's is, and the query gives back
+    // nothing for one -- the same fallback the emitter's 'name_of' makes
+    if (mine.size() == 0) {
+        mine = std::string(
+            holder->get_token_value(ast->get_node(declaration)->get_token()));
+    }
+
+    for (u32 member : query.get_members(declaration)) {
         if (query.get_declaration_name(member) != "init") {
             continue;
         }
 
-        u32 found = table->candidate_of(member);
-        u32 signature = found == 0 ? INVALID_TYPE
-                                   : table->get_candidate(found)->type;
+        std::vector<u32> params = query.get_params(member);
 
-        if (signature == INVALID_TYPE) {
+        if (params.size() != 1) {
             continue;
         }
 
-        Type* entry = types->get_type(signature);
+        // The type as it was **written**, and not as it was built. This is
+        // asked while a binding is being inferred, and a generic's clone is
+        // made in that same pass -- its 'init' gets a signature from a later
+        // sweep, so a type-based test answers 'no copy' for every
+        // 'let xs = [1, 2, 3]'. The name is there from the parser.
+        //
+        // A parameter's children are a binding NAME and a binding TYPE, so
+        // the type sits one level further down than a reader expects
+        u32 written = 0;
 
-        // the return type is last (record 0016), so one parameter is two
-        if (entry->argument_count != 2) {
+        for (u32 child = ast->get_node(params[0])->get_children(); child != 0;
+             child = ast->get_node(child)->get_sibling()) {
+            if (ast->get_node(child)->get_kind() == AST_BINDING_TYPE) {
+                written = ast->get_node(child)->get_children();
+                break;
+            }
+        }
+
+        // by value or by reference is the whole of the shape, so one
+        // reference is peeled and nothing else is
+        if (written != 0
+            && ast->get_node(written)->get_kind() == AST_REFERENCE_TYPE) {
+            written = ast->get_node(written)->get_children();
+        }
+
+        if (written == 0
+            || ast->get_node(written)->get_kind() != AST_NAMED_TYPE) {
             continue;
         }
 
-        if (types->value_of(types->get_argument(entry->first_argument))
-            == mine) {
+        u32 name = ast->get_node(written)->get_children();
+
+        if (name != 0
+            && std::string(holder->get_token_value(
+                   ast->get_node(name)->get_token())) == mine) {
             return true;
         }
     }

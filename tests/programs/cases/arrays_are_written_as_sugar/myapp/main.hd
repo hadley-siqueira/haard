@@ -39,6 +39,30 @@ def main : i32
     let out = console()
     let failures = 0
 
+    # ---- FIRST, and the order is the point
+
+    # Nothing above has written 'Array<i32>' as a type, so this literal is
+    # what creates the clone -- during the pass that infers this very binding,
+    # in the module that declared the generic. Everything below is what used
+    # to be impossible: its methods had no signature until a sweep that came
+    # after the one asking, so 'inferred.length()' was 'no length takes these
+    # arguments'. Move this block below 'squares' and the bug hides, which is
+    # how it survived until 2026-09-06.
+    #
+    # It also asks record 0031's question by the name the parser wrote rather
+    # than by a type that does not exist yet
+    let inferred = [4, 5, 6]
+    let taken = inferred
+
+    let bound_ok = (inferred.length() == 3 and taken[2] == 6
+                    and inferred == taken)
+
+    check(out, "a literal that is the first of its kind gives ${inferred[1]}",
+          bound_ok)
+
+    if not bound_ok:
+        failures = failures + 1
+
     # ---- built by the sugar, read by the operator
 
     let squares : i32[]

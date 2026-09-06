@@ -278,7 +278,16 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
     //
     // Asked before the coercion below, so an overload beats a conversion, and
     // it answers or says nothing: a class that declares none falls through
-    if (types->get_type(left)->kind == TYPE_NAMED
+    // An **empty** literal is skipped here, and that is not a special case
+    // about assignment: it has no type of its own, so it cannot pick an
+    // overload, and the only thing that can say what it is is the written
+    // type on the left. Asking first typed it with no context and reported
+    // 'nothing here says what this is empty of' about 'a = []', which the
+    // line below answers perfectly well
+    bool empty = (kind_of(value) == AST_LIST || kind_of(value) == AST_ARRAY)
+              && first_child(value) == 0;
+
+    if (!empty && types->get_type(left)->kind == TYPE_NAMED
         && typer.overloaded(scope, node, left, value, true) != INVALID_TYPE) {
         return;
     }

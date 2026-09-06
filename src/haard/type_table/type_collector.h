@@ -3,6 +3,7 @@
 
 #include <haard/type_table/expression_typer.h>
 #include <map>
+#include <set>
 
 namespace haard {
     // Gives every declaration of a module its type. The symbol side of the
@@ -27,6 +28,21 @@ namespace haard {
     // converted.
     class TypeCollector {
         public:
+            // Type whatever this module has grown that nobody has typed yet,
+            // now rather than on the next sweep.
+            //
+            // Record 0002 clones a generic into the module that DECLARED it,
+            // and inferring is one of the passes that does so -- 'let xs =
+            // [1, 2, 3]' makes 'Array<i32>' while module 0 is being walked,
+            // and the clone lives in module 1. Module 1's own walk comes
+            // later in the sweep, so until then the clone's methods have no
+            // signature and 'let n = xs.length()' three lines down was 'no
+            // length takes these arguments'.
+            //
+            // Repeating the sweep does not help: the complaint was already
+            // reported. The clone has to be typed the moment it is made
+            void catch_up(u32 module);
+
             TypeCollector();
 
         public:
@@ -115,6 +131,11 @@ namespace haard {
 
             Module* module;
             u32 index;
+
+            // the modules a walk is inside, so that catching one up while
+            // it is being walked does not start a second walk over the
+            // candidates the first is in the middle of
+            std::set<u32> walking;
 
             std::map<u32, u32> scope_of;
 

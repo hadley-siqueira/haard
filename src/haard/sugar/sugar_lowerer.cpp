@@ -69,6 +69,16 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
     case AST_ARRAY:
         walk_children(node, block, statement, hoisting);
 
+        // An **empty** one is left where it stands, and for a reason that is
+        // not an exception: what a literal is hoisted for is the fixed array
+        // it is made of, which is a C++ declaration -- and an empty one is
+        // made of nothing. Moving it would also throw away the only thing
+        // that can say what it is empty of, which is the type it is being
+        // given to (Hadley, 2026-09-06)
+        if (first_child(node) == 0) {
+            return;
+        }
+
         if (hoisting != HOIST_OK || block == 0) {
             refuse(node, hoisting, "an array literal");
             return;

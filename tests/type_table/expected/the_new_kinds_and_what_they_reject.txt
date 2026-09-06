@@ -31,7 +31,7 @@ error: expected i32, found [f64]
    |
 22 |     let two_names = [n, floats]
    |                         ^^^^^^
-error: there is nothing here to say what this is empty of
+error: nothing here says what this is empty of, so write the type it is being given to
   --> main.hd:23:17
    |
 23 |     let empty = []

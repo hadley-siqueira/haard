@@ -1,4 +1,5 @@
 #include <haard/type_table/type_builder.h>
+#include <haard/type_table/type_collector.h>
 
 using namespace haard;
 
@@ -24,8 +25,13 @@ static BuiltinType builtin_of(TokenKind kind) {
 
 TypeBuilder::TypeBuilder() {
     compilation = nullptr;
+    collector = nullptr;
     module = nullptr;
     index = 0;
+}
+
+void TypeBuilder::set_collector(TypeCollector* collector) {
+    this->collector = collector;
 }
 
 void TypeBuilder::set_compilation(Compilation* compilation) {
@@ -40,6 +46,19 @@ u32 TypeBuilder::build(u32 index, u32 scope, u32 node) {
         return INVALID_TYPE;
     }
 
+    // see ExpressionTyper::type_of: this one re-enters too, through the
+    // instantiation below, and the subject lives in members
+    u32 held_index = this->index;
+    Module* held_module = module;
+    u32 answer = build_here(index, scope, node);
+
+    this->index = held_index;
+    module = held_module;
+
+    return answer;
+}
+
+u32 TypeBuilder::build_here(u32 index, u32 scope, u32 node) {
     this->index = index;
     module = compilation->get_module(index);
 
@@ -317,6 +336,12 @@ u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
             return INVALID_TYPE;
         }
 
+        // and the clone is typed now, not on a sweep that may already have
+        // passed the module asking the question
+        if (collector != nullptr) {
+            collector->catch_up(owner);
+        }
+
         return module->get_types()->named(owner, made, std::vector<u32>());
     }
 
@@ -326,6 +351,19 @@ u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
 u32 TypeBuilder::build_generic(u32 index, u32 scope, u32 at,
                                const std::string& name,
                                const std::vector<u32>& arguments) {
+    u32 held_index = this->index;
+    Module* held_module = module;
+    u32 answer = build_generic_here(index, scope, at, name, arguments);
+
+    this->index = held_index;
+    module = held_module;
+
+    return answer;
+}
+
+u32 TypeBuilder::build_generic_here(u32 index, u32 scope, u32 at,
+                                    const std::string& name,
+                                    const std::vector<u32>& arguments) {
     this->index = index;
     module = compilation->get_module(index);
 
@@ -347,6 +385,13 @@ u32 TypeBuilder::build_generic(u32 index, u32 scope, u32 at,
 
     if (made == 0) {
         return INVALID_TYPE;
+    }
+
+    // the clone is typed now and not on a sweep that may already have passed
+    // the module asking the question -- this is the path a bracket literal
+    // takes, and 'let xs = [1, 2, 3]' then 'xs.length()' is what it costs
+    if (collector != nullptr) {
+        collector->catch_up(owner);
     }
 
     return module->get_types()->named(owner, made, std::vector<u32>());

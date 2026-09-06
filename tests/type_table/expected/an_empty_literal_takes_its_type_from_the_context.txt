@@ -1,0 +1,46 @@
+<unnamed>:
+    Array  Array
+    takes  Array<f64> -> i32
+    main  i32
+    Array  Array<f64>
+    Array  Array<i32>
+    T  T
+    size  i32
+    init  void
+    init  T* -> i32 -> void
+    from  T*
+    count  i32
+    xs  Array<f64>
+    a  Array<f64>
+    b  Array<i32>
+    c  <none>
+    d  <none>
+    T  f64
+    size  i32
+    init  void
+    init  f64* -> i32 -> void
+    from  f64*
+    count  i32
+    T  i32
+    size  i32
+    init  void
+    init  i32* -> i32 -> void
+    from  i32*
+    count  i32
+  27 types interned
+diagnostics:
+error: nothing here says what this is empty of, so write the type it is being given to
+  --> main.hd:38:13
+   |
+38 |     let c = []
+   |             ^
+error: no 'takes' takes these arguments
+  --> main.hd:41:13
+   |
+41 |     let d = takes([])
+   |             ^^^^^
+error: nothing here says what this is empty of, so write the type it is being given to
+  --> main.hd:41:19
+   |
+41 |     let d = takes([])
+   |                   ^

@@ -1135,6 +1135,17 @@ void Emitter::emit_expression(u32 module, u32 node) {
         emit_member(module, node, true);
         return;
 
+    // record 0037's empty literal, which needs no fixed array and so was
+    // never hoisted into a binding: one call, pointing at nothing
+    case AST_LIST:
+    case AST_ARRAY:
+        if (child_of(module, node, 0) == 0) {
+            out << declare(module, type_at(module, node), "") << "(nullptr, 0)";
+            return;
+        }
+
+        break;
+
     case AST_INDEX:
         if (emit_operator(module, node)) {
             return;
@@ -1586,8 +1597,12 @@ void Emitter::emit_array_literal(u32 module_index, u32 node, u32 type,
     Module* module = compilation->get_module(module_index);
     u32 first = child_of(module_index, node, 0);
 
+    // an empty one is made of no fixed array at all, so it is one call with
+    // nothing to point at: the constructor's loop runs zero times and never
+    // reads the pointer
     if (first == 0) {
-        fail("an empty array literal cannot be built yet");
+        out << std::string(indentation * 4, ' ')
+            << declare(module_index, type, name) << "(nullptr, 0);\n";
         return;
     }
 
@@ -1752,6 +1767,11 @@ bool Emitter::emit_conversion(u32 module_index, u32 holder, u32 wanted,
 bool Emitter::is_an_rvalue(u32 module_index, u32 node) {
     switch (kind_of(module_index, node)) {
     case AST_CALL:
+
+    // a literal is one too, and an EMPTY one is the only literal that reaches
+    // here: every other is hoisted into a binding and arrives as a name
+    case AST_LIST:
+    case AST_ARRAY:
         return true;
 
     case AST_PARENTHESIS:
@@ -1862,9 +1882,26 @@ bool Emitter::emit_copy_assignment(u32 module_index, u32 node) {
         return false;
     }
 
+    u32 right = child_of(module_index, node, 1);
+    bool held = is_an_rvalue(module_index, right);
+    std::string name = declare(module_index, type_at(module_index, left), "");
+
     emit_expression(module_index, left);
     out << (is_pointer(module_index, left) ? "->" : ".") << "m_assign(";
-    emit_expression(module_index, child_of(module_index, node, 1));
+
+    // record 0031's assignment takes a reference, and C++ will not bind one
+    // to a value that has no name -- 'a = []' and 'a = gives()' are both that
+    if (held) {
+        out << "const_cast<" << name << "&>(static_cast<const " << name
+            << "&>(";
+    }
+
+    emit_expression(module_index, right);
+
+    if (held) {
+        out << "))";
+    }
+
     out << ")";
 
     return true;

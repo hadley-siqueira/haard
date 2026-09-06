@@ -6,6 +6,8 @@
 #include <haard/type_table/type_table.h>
 
 namespace haard {
+    class TypeCollector;
+
     // Turns a type as the parser wrote it into an index in the module's type
     // table. The fifth of the family, and the same division as everywhere
     // else: TypeTable holds and interns, this one reads a tree and asks for
@@ -27,6 +29,11 @@ namespace haard {
 
         public:
             void set_compilation(Compilation* compilation);
+
+            // Who to tell when a generic is instantiated, so the clone is
+            // typed before anything asks it a question. Null outside the type
+            // phase, where nothing is being collected to catch up with
+            void set_collector(TypeCollector* collector);
 
             // the type this node names, seen from this scope of this module.
             // INVALID_TYPE when the tree says nothing a type can be built from
@@ -56,6 +63,14 @@ namespace haard {
             u32 translate(u32 into, u32 from, u32 type);
 
         private:
+            // the two above, with the members set. The public pair saves
+            // and puts back what the caller was looking at, so that an
+            // instantiation re-entering the type phase is transparent
+            u32 build_here(u32 module, u32 scope, u32 node);
+            u32 build_generic_here(u32 module, u32 scope, u32 at,
+                                   const std::string& name,
+                                   const std::vector<u32>& arguments);
+
             u32 build_named(u32 module, u32 scope, u32 node);
 
             // the declaration a type name means: a class, a struct, an
@@ -74,6 +89,7 @@ namespace haard {
 
         private:
             Compilation* compilation;
+            TypeCollector* collector;
             NameResolver resolver;
             Instantiator instantiator;
 

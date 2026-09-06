@@ -32,6 +32,10 @@ ExpressionTyper::ExpressionTyper() {
     index = 0;
 }
 
+void ExpressionTyper::set_collector(TypeCollector* collector) {
+    builder.set_collector(collector);
+}
+
 void ExpressionTyper::set_compilation(Compilation* compilation) {
     this->compilation = compilation;
 
@@ -226,6 +230,26 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     }
 
     return INVALID_TYPE;
+}
+
+u32 ExpressionTyper::argument_of_instantiation(u32 type) {
+    Type* entry = module->get_types()->get_type(type);
+
+    if (entry->kind != TYPE_NAMED) {
+        return INVALID_TYPE;
+    }
+
+    const Instantiation* made =
+        compilation->get_module(entry->module)->get_instantiation(
+            entry->subject);
+
+    if (made == nullptr || made->arguments.size() != 1) {
+        return INVALID_TYPE;
+    }
+
+    // the arguments belong to the table of the module that HOLDS the clone,
+    // which is record 0016's rule and the bug this project keeps making
+    return builder.translate(index, entry->module, made->arguments[0]);
 }
 
 u32 ExpressionTyper::element_of(u32 type) {
@@ -584,6 +608,16 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
             || (!array && entry->kind == TYPE_LIST)) {
             wanted = types->get_argument(entry->first_argument);
         }
+
+        // Record 0037 made a bracket literal an 'Array<T>', so a written
+        // 'Array<T>' -- or an 'f64[]', which is the same thing -- is the
+        // context saying what the elements are. Hadley, 2026-09-06: infer it
+        // where it is trivial and report where it is not, without trying hard.
+        //
+        // This is what makes 'let a : f64[]' then 'a = []' mean something
+        if (!array && entry->kind == TYPE_NAMED) {
+            wanted = argument_of_instantiation(expected);
+        }
     }
 
     for (u32 child = first_child(node); child != 0;
@@ -609,9 +643,13 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
         }
     }
 
-    // written empty with nothing asking for it, there is no answer to give
+    // Written empty with nothing asking for it. Hadley, 2026-09-06: infer
+    // from the context where that is trivial, and report where it is not
+    // rather than trying hard -- so this is the whole of the failure, and it
+    // names what would have fixed it
     if (wanted == INVALID_TYPE) {
-        report(node, "there is nothing here to say what this is empty of");
+        report(node, "nothing here says what this is empty of, so write the "
+               "type it is being given to");
 
         return INVALID_TYPE;
     }

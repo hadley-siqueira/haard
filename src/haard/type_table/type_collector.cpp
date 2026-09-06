@@ -14,6 +14,10 @@ void TypeCollector::set_compilation(Compilation* compilation) {
     builder.set_compilation(compilation);
     typer.set_compilation(compilation);
     coercion.set_compilation(compilation);
+
+    // both builders that can reach an instantiation are told who to catch up
+    builder.set_collector(this);
+    typer.set_collector(this);
 }
 
 bool TypeCollector::collect(u32 index) {
@@ -22,6 +26,32 @@ bool TypeCollector::collect(u32 index) {
 
 bool TypeCollector::infer(u32 index) {
     return walk(index, true);
+}
+
+void TypeCollector::catch_up(u32 module_index) {
+    // already inside a walk of it, and that walk's own loop re-reads the
+    // count every round -- so it will reach what was just added by itself
+    if (walking.count(module_index) > 0) {
+        return;
+    }
+
+    // the walk keeps its subject in members, and this one is nested inside
+    // another, so what the outer one was looking at is put back afterwards
+    u32 held_index = index;
+    Module* held_module = module;
+    std::map<u32, u32> held_scope_of = scope_of;
+
+    // the **written** pass, and not the inferred one. What a caller needs of
+    // a fresh clone is its methods' signatures, and a signature is written --
+    // 'xs.length()' resolves against parameters and a return type. Its local
+    // bindings can wait for the ordinary sweep, and must: typing them now
+    // would mark them done before what they depend on exists, and nothing
+    // retries a candidate the mark has passed
+    walk(module_index, false);
+
+    index = held_index;
+    module = held_module;
+    scope_of = held_scope_of;
 }
 
 bool TypeCollector::walk(u32 index, bool given) {
@@ -33,6 +63,8 @@ bool TypeCollector::walk(u32 index, bool given) {
     u32 done = mark.count(index) > 0 ? mark[index] : 0;
     u32 count = table->get_candidate_count();
     bool worked = false;
+
+    walking.insert(index);
 
     // The list grows while it is walked, which is the module loop's shape one
     // level down: building a type may instantiate a generic, and record 0002
@@ -109,6 +141,8 @@ bool TypeCollector::walk(u32 index, bool given) {
     }
 
     mark[index] = done;
+
+    walking.erase(index);
 
     return worked;
 }

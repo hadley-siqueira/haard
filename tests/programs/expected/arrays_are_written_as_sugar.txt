@@ -1,3 +1,4 @@
+a literal that is the first of its kind gives 5: ok
 ten squares fit, and the last is 81: ok
 they add up to 285: ok
 writing through squares[0] makes the total 385: ok
