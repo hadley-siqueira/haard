@@ -61,6 +61,37 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
         walk_head_apart(node, block, statement, hoisting, HOIST_AFTER_OR);
         return;
 
+    // A bracket or brace literal that is NOT bound to a name. The emitter
+    // builds one where it is bound, because what it is made of is a C++ array
+    // and a C++ array is a declaration -- so anywhere else it has to become a
+    // binding first
+    case AST_LIST:
+    case AST_ARRAY:
+        walk_children(node, block, statement, hoisting);
+
+        if (hoisting != HOIST_OK || block == 0) {
+            refuse(node, hoisting, "an array literal");
+            return;
+        }
+
+        hoist_literal(node, block, statement);
+        return;
+
+    // and one that IS bound to a name is already where the emitter wants it,
+    // so only its elements are walked
+    case AST_BINDING_EXPRESSION: {
+        u32 held = first_child(node);
+
+        if (held != 0
+            && (kind_of(held) == AST_LIST || kind_of(held) == AST_ARRAY)) {
+            walk_children(held, block, statement, hoisting);
+            return;
+        }
+
+        walk_children(node, block, statement, hoisting);
+        return;
+    }
+
     // 'T[]' with nothing between the brackets. 'T[3]' is a fixed array and
     // stays one (record 0021), so the length is what tells them apart
     case AST_ARRAY_TYPE:
@@ -79,7 +110,7 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
         walk_children(node, block, statement, hoisting);
 
         if (hoisting != HOIST_OK || block == 0) {
-            refuse(node, hoisting);
+            refuse(node, hoisting, "a template string");
             recover(node, block, statement);
             return;
         }
@@ -194,6 +225,32 @@ void SugarLowerer::lower_array_type(u32 node) {
     rewritten->set_children(0);
 
     builder.add_child(node, builder.add_child(node, 0, identifier), arguments);
+}
+
+void SugarLowerer::hoist_literal(u32 node, u32 block, u32 statement) {
+    u32 like = token_of(node);
+    std::string name = "__ar" + std::to_string(counter++);
+    u32 name_token = module->add_synthetic_token(TK_IDENTIFIER, name, like);
+    u32 let_token = module->add_synthetic_token(TK_LET, "let", like);
+
+    // the literal itself moves into the binding, and what is left where it
+    // stood is a use of the name. Cloning and then rewriting in place is what
+    // keeps every other link in the tree correct
+    u32 moved = builder.clone(node);
+
+    u32 binding = builder.make_binding(
+        builder.make_binding_name(builder.make_identifier(name_token)), 0,
+        builder.make_binding_expression(moved));
+
+    AstNode* rewritten = module->get_ast()->get_node(node);
+
+    rewritten->set_kind(AST_IDENTIFIER);
+    rewritten->set_token(name_token);
+    rewritten->set_children(0);
+
+    insert_before(block, statement,
+                  std::vector<u32>{
+                      builder.make_let_declaration(let_token, binding)});
 }
 
 // A refused template string is still a String -- what was refused is where it
@@ -356,7 +413,8 @@ void SugarLowerer::insert_before(u32 block, u32 statement,
     }
 }
 
-void SugarLowerer::refuse(u32 node, Hoisting hoisting) {
+void SugarLowerer::refuse(u32 node, Hoisting hoisting,
+                          const std::string& what) {
     // one sentence, and it says the mechanism rather than only the verdict:
     // what makes these three places different is not obvious from the source,
     // and a reader who knows a template string becomes a local built before
@@ -386,8 +444,7 @@ void SugarLowerer::refuse(u32 node, Hoisting hoisting) {
     module->get_logger()->error(
         module->get_tokens()->get_token(token).get_offset(),
         module->get_tokens()->get_token(token).get_length(),
-        "a template string is built before the statement it is written in, " +
-            where);
+        what + " is built before the statement it is written in, " + where);
 }
 
 AstNodeKind SugarLowerer::kind_of(u32 node) {

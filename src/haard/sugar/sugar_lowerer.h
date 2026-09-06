@@ -107,7 +107,15 @@ namespace haard {
             void insert_before(u32 block, u32 statement,
                                const std::vector<u32>& statements);
 
-            void refuse(u32 node, Hoisting hoisting);
+            // 'let __arN = [1, 2, 3]' before the statement, and the literal
+            // becomes a use of it. Record 0036's successor: the emitter
+            // builds one where it is BOUND, because a fixed array is a C++
+            // declaration and a declaration needs a statement
+            void hoist_literal(u32 node, u32 block, u32 statement);
+
+            // 'what' names the construct, since three of them now share the
+            // same three refusals
+            void refuse(u32 node, Hoisting hoisting, const std::string& what);
 
             AstNodeKind kind_of(u32 node);
             u32 first_child(u32 node);

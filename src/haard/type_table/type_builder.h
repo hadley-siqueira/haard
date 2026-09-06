@@ -32,6 +32,19 @@ namespace haard {
             // INVALID_TYPE when the tree says nothing a type can be built from
             u32 build(u32 module, u32 scope, u32 node);
 
+            // A generic instantiation the SOURCE never wrote: 'Array<i32>'
+            // for a '[1, 2, 3]'. Records 0017 and 0022 already have the
+            // compiler knowing the **name** 'Array' and nothing else about
+            // it, and this is that knowledge being used -- resolved in the
+            // scope the literal was written in, so a program that declares
+            // its own 'Array' gets its own, which is the same rule record
+            // 0009 gives an importer over its imports.
+            //
+            // 'at' is the node a diagnostic about it points at
+            u32 build_generic(u32 module, u32 scope, u32 at,
+                              const std::string& name,
+                              const std::vector<u32>& arguments);
+
             // The same type, written into another module's table. Record
             // 0016: a type crossing a module boundary is translated at the
             // import and not probed, because comparing two types across a

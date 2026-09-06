@@ -323,6 +323,35 @@ u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
     return module->get_types()->named(owner, symbol, built);
 }
 
+u32 TypeBuilder::build_generic(u32 index, u32 scope, u32 at,
+                               const std::string& name,
+                               const std::vector<u32>& arguments) {
+    this->index = index;
+    module = compilation->get_module(index);
+
+    std::vector<Candidacy> found = resolver.resolve(index, scope, name);
+    u32 owner = index;
+    u32 symbol = type_symbol(found, owner);
+
+    if (symbol == 0) {
+        return INVALID_TYPE;
+    }
+
+    std::vector<u32> translated;
+
+    for (u32 argument : arguments) {
+        translated.push_back(translate(owner, index, argument));
+    }
+
+    u32 made = instantiator.instantiate(index, at, owner, symbol, translated);
+
+    if (made == 0) {
+        return INVALID_TYPE;
+    }
+
+    return module->get_types()->named(owner, made, std::vector<u32>());
+}
+
 u32 TypeBuilder::type_symbol(const std::vector<Candidacy>& found, u32& owner) {
     for (const Candidacy& candidacy : found) {
         Candidate* candidate = compilation->get_module(candidacy.module)

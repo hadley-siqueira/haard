@@ -36,10 +36,9 @@
     measured  u64
     parenthesised  i32
     tuple  (i32, f64)
-    list  [i32]
     array  i32[3]
     pointer  Box*
     text  char*
     ranged  <none>
     symbol  <none>
-  26 types interned
+  25 types interned

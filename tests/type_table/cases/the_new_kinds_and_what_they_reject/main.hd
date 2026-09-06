@@ -1,5 +1,12 @@
 # what the context gives, and what it refuses. Record 0018 all the way down:
-# a literal takes the type asked of it, and nothing converts
+# a literal takes the type asked of it, and nothing converts.
+#
+# The bracket literals here are written for what the CONTEXT does to their
+# elements, and since 2026-09-06 one of them is an 'Array<T>' -- a class,
+# which this file has no prelude to name. So the golden holds one extra line
+# saying 'Array' names nothing, once per literal, and the mismatches under
+# them are still what the case is about. Where a bracket literal is built is
+# tests/sugar and tests/programs.
 def main : i32
     @row : i32[4]
     let n = 1

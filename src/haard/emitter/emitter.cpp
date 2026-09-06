@@ -57,6 +57,8 @@ bool Emitter::is_generic(u32 module_index, u32 declaration) {
 
 bool Emitter::emit(std::ostream& stream) {
     out.str("");
+    constants.str("");
+    constant_count = 0;
     error.clear();
     indentation = 0;
     emitted.clear();
@@ -80,8 +82,21 @@ bool Emitter::emit(std::ostream& stream) {
     emit_types();
     emit_prototypes();
     emit_globals();
+
+    // The bodies are built into a buffer of their own so that the constant
+    // arrays they need can be written **above** them: a bracket literal
+    // becomes a file-scope array plus a constructor call, and the array has
+    // to be declared before the function that names it
+    std::string head = out.str();
+
+    out.str("");
     emit_bodies();
     emit_main();
+
+    std::string body = out.str();
+
+    out.str("");
+    out << head << constants.str() << body;
 
     if (error.size() > 0) {
         return false;
@@ -955,12 +970,20 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
             return;
         }
 
+        // record 0021's dynamic array, which is a construction and not an
+        // assignment: it needs two lines and the second one names the first
+        if (expression != 0 && kind_of(module_index, expression) == AST_LIST) {
+            emit_array_literal(module_index, expression, type,
+                               name_of(module_index, candidate));
+            continue;
+        }
+
         out << std::string(indentation * 4, ' ')
             << declare(module_index, type, name_of(module_index, candidate));
 
         if (expression != 0) {
             out << " = ";
-            emit_expression(module_index, expression);
+            emit_initialiser(module_index, expression);
         }
 
         out << ";\n";
@@ -1470,6 +1493,138 @@ std::string Emitter::type_name(u32 module, u32 type) {
 
 // One string and not two, because C++ writes an array's length after the name
 // it belongs to. Everything that declares anything goes through here
+void Emitter::emit_initialiser(u32 module_index, u32 expression) {
+    if (kind_of(module_index, expression) != AST_ARRAY) {
+        emit_expression(module_index, expression);
+        return;
+    }
+
+    Module* module = compilation->get_module(module_index);
+    u32 written = 0;
+
+    out << "{";
+
+    for (u32 element = child_of(module_index, expression, 0); element != 0;
+         element = module->get_ast()->get_node(element)->get_sibling()) {
+        out << (written > 0 ? ", " : "");
+        emit_expression(module_index, element);
+        written++;
+    }
+
+    out << "}";
+}
+
+void Emitter::emit_array_literal(u32 module_index, u32 node, u32 type,
+                                 const std::string& name) {
+    Module* module = compilation->get_module(module_index);
+    u32 first = child_of(module_index, node, 0);
+
+    if (first == 0) {
+        fail("an empty array literal cannot be built yet");
+        return;
+    }
+
+    u32 element = type_at(module_index, first);
+
+    // the library invariant, asked here because here is where every signature
+    // exists: 'Array<T>' has an 'init' taking a pointer and a count, and a
+    // bracket literal is one call to it
+    Type* entry = compilation->get_module(module_index)->get_types()
+                      ->get_type(type);
+
+    if (entry->kind != TYPE_NAMED
+        || !takes_two(entry->module, entry->subject, "init")) {
+        fail("an array literal is one call to an 'init' taking a pointer and "
+             "a count, and the class it builds declares none");
+        return;
+    }
+
+    std::string fixed = "__fx" + std::to_string(constant_count++);
+    u32 count = 0;
+    bool constant = true;
+
+    for (u32 child = first; child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        constant = constant && is_constant_literal(module_index, child);
+        count++;
+    }
+
+    // where the fixed array goes, and it is the whole of what record 0036's
+    // successor decided: a constant one at file scope, so a literal written
+    // in a loop is built once and needs nothing hoisted
+    std::ostringstream elements;
+    u32 written = 0;
+    std::ostringstream* keep = &out;
+
+    for (u32 child = first; child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        elements << (written > 0 ? ", " : "");
+
+        std::swap(out, elements);
+        emit_expression(module_index, child);
+        std::swap(out, elements);
+
+        written++;
+    }
+
+    (void) keep;
+
+    std::string array = declare(module_index, element,
+                                fixed + "[" + std::to_string(count) + "]")
+                      + " = {" + elements.str() + "};\n";
+
+    if (constant) {
+        constants << "static " << array;
+    } else {
+        out << std::string(indentation * 4, ' ') << array;
+    }
+
+    out << std::string(indentation * 4, ' ')
+        << declare(module_index, type, name) << "(" << fixed << ", " << count
+        << ");\n";
+}
+
+// whether this class declares a method of this name taking two parameters.
+// Enough for the one question asked of it and no more: what an array literal
+// needs is the shape and not the exact types, which record 0002 has already
+// made concrete by the time this runs
+bool Emitter::takes_two(u32 module_index, u32 candidate,
+                        const std::string& name) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    u32 declaration = module->get_symbols()->get_candidate(candidate)->ast_node;
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) == AST_FUNCTION
+            && query.get_declaration_name(member) == name
+            && query.get_params(member).size() == 2) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Emitter::is_constant_literal(u32 module_index, u32 node) {
+    switch (kind_of(module_index, node)) {
+    case AST_INTEGER_LITERAL:
+    case AST_FLOAT_LITERAL:
+    case AST_CHAR_LITERAL:
+    case AST_STRING_LITERAL:
+    case AST_TRUE:
+    case AST_FALSE:
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
 u32 Emitter::member_named(u32 module_index, u32 declaration,
                           const std::string& name) {
     Module* module = compilation->get_module(module_index);

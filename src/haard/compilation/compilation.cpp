@@ -332,10 +332,19 @@ void Compilation::collect_types() {
                 grew = implicit.declare(i) || grew;
             }
         }
+
     } while (grew);
 
     // and only then what a binding was given, because inferring it may resolve
-    // a call whose candidate lives in a module the first loop reached later
+    // a call whose candidate lives in a module the first loop reached later.
+    //
+    // Inferring can **instantiate**, and the walk already knows it: a
+    // '[1, 2, 3]' is an 'Array<i32>' whose element type only an expression
+    // knows, so record 0002's clone is made in this pass and not the one
+    // above. TypeCollector::walk gives such a declaration BOTH passes, in
+    // order, which is why this loop is not nested inside the one above --
+    // running 'collect' again over a clone would overwrite what was inferred
+    // with what was written, and what a 'let i = 0' writes is nothing
     do {
         grew = false;
 
@@ -344,6 +353,7 @@ void Compilation::collect_types() {
                 grew = types.infer(i) || grew;
             }
         }
+
     } while (grew);
 }
 

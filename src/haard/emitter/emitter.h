@@ -152,6 +152,29 @@ namespace haard {
             u32 member_named(u32 module, u32 declaration,
                              const std::string& name);
 
+            // What a binding is given, which is the ONE place a braced
+            // literal may be written: '{1, 2, 3}' is a C++ brace initialiser
+            // and a brace initialiser initialises a declaration. Anywhere
+            // else the sugar pass has already hoisted it into one
+            void emit_initialiser(u32 module, u32 expression);
+
+            // A bracket literal bound to a name. Record 0021 makes it a
+            // **dynamic** array, so what it becomes is the fixed array it is
+            // made of and one call to the constructor that takes a pointer
+            // and a count -- not a run of 'add' calls.
+            //
+            // The fixed array is a file-scope constant when every element is
+            // a literal, which is a syntactic test and needs none of agenda
+            // 5.3's evaluation. A constant one is then written once for the
+            // whole program instead of rebuilt per turn of a loop
+            void emit_array_literal(u32 module, u32 node, u32 type,
+                                    const std::string& name);
+
+            bool takes_two(u32 module, u32 candidate,
+                           const std::string& name);
+
+            bool is_constant_literal(u32 module, u32 node);
+
             std::string name_at(u32 module, u32 node);
 
             // Record 0034, and Hadley's rule for it: the C++ **must not** use
@@ -210,6 +233,12 @@ namespace haard {
         private:
             Compilation* compilation;
             std::ostringstream out;
+
+            // the fixed arrays a bracket literal is made of, when they are
+            // constant. Written above the bodies, which is why the bodies are
+            // built into a buffer of their own
+            std::ostringstream constants;
+            u32 constant_count;
             std::string error;
             u32 indentation;
 

@@ -56,7 +56,6 @@ def main : i32
     let measured = sizeof(integer)
     let parenthesised = (integer)
     let tuple = (1, 2.5)
-    let list = [1, 2]
     let array = {1, 2, 3}
     let pointer : Box* = null
 
@@ -64,6 +63,12 @@ def main : i32
     # from the standard library to be one
     let text = "hello"
 
+    # A bracket literal is NOT here, since 2026-09-06. Record 0021 makes it a
+    # dynamic array and record 0022 names that 'Array<T>', so what it builds
+    # is a class -- and this file has no prelude to name one. It stopped being
+    # a shape of its own the way 'i32[]' did. Its cases are in tests/sugar and
+    # tests/programs.
+    #
     # and what nothing types yet: a range has no type because nothing has said
     # whether it is one, and a symbol is nobody has said what -- both wait on
     # the standard library.

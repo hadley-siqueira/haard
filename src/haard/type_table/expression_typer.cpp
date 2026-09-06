@@ -613,9 +613,38 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
         return INVALID_TYPE;
     }
 
-    // an array literal's length is written by how many were written, which is
-    // what record 0016 keeps in the type itself
-    return array ? types->array(wanted, count) : types->list(wanted);
+    // A braced literal is a **fixed** array and its length is written by how
+    // many were written, which is what record 0016 keeps in the type itself.
+    // It is the primitive: a C++ array, no class, nothing to construct
+    if (array) {
+        return types->array(wanted, count);
+    }
+
+    // and a bracketed one is a **dynamic** array, which record 0022 names
+    // 'Array<T>' (record 0021). Built here and not in the sugar pass, because
+    // the element type is exactly what a pass running before the type phase
+    // cannot know
+    u32 made = builder.build_generic(index, scope, node, "Array", {wanted});
+
+    if (made == INVALID_TYPE) {
+        report(node, "an array literal is an Array<T>, and 'Array' names "
+               "nothing here");
+
+        return INVALID_TYPE;
+    }
+
+    // Which 'init' builds one out of the fixed array it is made of is NOT
+    // resolved here, and the reason is an ordering the architecture already
+    // has: 'build_generic' has just cloned the declaration (record 0002) into
+    // the module that wrote the generic, and a clone's candidates get their
+    // signatures from a later sweep. Asked now, the count comes back zero and
+    // the message blames a class that is fine.
+    //
+    // So the emitter asks, where every signature exists. That is one place
+    // further down than a diagnostic wants to be, and it is a **library**
+    // invariant rather than something a program can get wrong -- the standard
+    // library's Array has this constructor or nothing works
+    return made;
 }
 
 u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {

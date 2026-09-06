@@ -83,6 +83,20 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
         return rest < 0 ? -1 : rest + 1;
     }
 
+    // A fixed array where a pointer to its element was asked for, which is
+    // C's decay and C++'s. Record 0036's successor needs it: a '{1, 2, 3}' is
+    // an 'i32[3]' and the constructor that takes one is 'init(T*, i32)', so
+    // without this the literal cannot reach the class it is written for.
+    //
+    // Free, and only to the element's own type -- a decay is an address and
+    // not a conversion, so nothing is climbed and nothing is copied
+    if (from->kind == TYPE_ARRAY && to->kind == TYPE_POINTER) {
+        return types->get_argument(from->first_argument)
+                       == types->get_argument(to->first_argument)
+                   ? 1
+                   : -1;
+    }
+
     // Agenda 1.21, Hadley 2026-09-03: a 'char*' where a 'String' was asked
     // for. It is the first entry on record 0018's list that is a **library**
     // relation and not a language one, and the only one that is not free --

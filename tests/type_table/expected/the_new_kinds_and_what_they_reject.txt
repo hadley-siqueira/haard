@@ -16,43 +16,48 @@
     p  i32*
   20 types interned
 diagnostics:
-error: expected i32, found a floating point literal
-  --> main.hd:14:21
+error: an array literal is an Array<T>, and 'Array' names nothing here
+  --> main.hd:18:26
    |
-14 |     let mixed = [1, 2.5]
+18 |     let floats : [f64] = [1.5, 2.5]
+   |                          ^
+error: expected i32, found a floating point literal
+  --> main.hd:21:21
+   |
+21 |     let mixed = [1, 2.5]
    |                     ^^^
 error: expected i32, found [f64]
-  --> main.hd:15:25
+  --> main.hd:22:25
    |
-15 |     let two_names = [n, floats]
+22 |     let two_names = [n, floats]
    |                         ^^^^^^
 error: there is nothing here to say what this is empty of
-  --> main.hd:16:17
+  --> main.hd:23:17
    |
-16 |     let empty = []
+23 |     let empty = []
    |                 ^
 error: there is nothing here to say what 'null' is a pointer to
-  --> main.hd:17:17
+  --> main.hd:24:17
    |
-17 |     let loose = null
+24 |     let loose = null
    |                 ^^^^
 error: expected i32, found 'null'
-  --> main.hd:18:23
+  --> main.hd:25:23
    |
-18 |     let wrong : i32 = null
+25 |     let wrong : i32 = null
    |                       ^^^^
 error: '*' needs a pointer, and this is i32[4]
-  --> main.hd:19:23
+  --> main.hd:26:23
    |
-19 |     let deref_array = *row
+26 |     let deref_array = *row
    |                       ^
 error: i32 cannot be indexed
-  --> main.hd:20:27
+  --> main.hd:27:27
    |
-20 |     let index_a_number = n[0]
+27 |     let index_a_number = n[0]
    |                           ^
 error: only a pointer can be deleted, and this is i32
-  --> main.hd:24:5
+  --> main.hd:31:5
    |
-24 |     delete n
+31 |     delete n
    |     ^^^^^^
