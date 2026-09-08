@@ -1,0 +1,19 @@
+error: expected 'case' or 'default', found 'b'
+ --> cases/switch_without_a_case.hd:5:5
+  |
+5 |     b = 1
+  |     ^
+def main : i32
+    b = 1
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      assignment '='
+        identifier 'b'
+        integer '1'
+--- round trip: ok

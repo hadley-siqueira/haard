@@ -1,0 +1,73 @@
+# Hadley's switch, 2026-09-08. It is a pattern match and not C's switch, and
+# the two differences are the ones the golden shows:
+#
+#   **there is no fall through and no 'break'** -- the emitter writes the
+#   break, one per block, and a reader never does
+#
+#   **cases are grouped by writing one with no block**, which runs the block
+#   of the one below it. That is C++'s fall through used on purpose: two
+#   labels in a row and one body under them
+#
+# The pattern is a variant of whatever the subject is, written bare -- the
+# subject already says which enum it is -- or qualified when a name in scope
+# would win.
+#
+# What the checker holds and this golden cannot: a pattern that names no
+# variant, a variant covered twice, and a switch that leaves one out with no
+# 'default'. Those are in tests/statement_checker.
+enum Movement:
+    Up
+    Down
+    Left
+    Right
+
+def value_of : i32
+    @m : Movement
+
+    # three patterns, two bodies
+    switch m:
+        case Up:
+        case Down:
+            return 1
+
+        case Left:
+            return 2
+
+        default:
+            return 3
+
+def main : i32
+    let total = 0
+
+    total = total + value_of(Movement.Up)
+    total = total + value_of(Movement.Down)
+    total = total + value_of(Movement.Left)
+    total = total + value_of(Movement.Right)
+
+    # a case body declares a local, which is why every one of them is braced:
+    # C++ refuses a declaration a later label can jump over
+    switch Movement.Left:
+        case Up:
+            let missed = 100
+
+            total = total + missed
+
+        case Down:
+        case Left:
+        case Right:
+            let taken = 10
+
+            total = total + taken
+
+    # and the qualified form of a pattern, which is the one to write when a
+    # name in scope would win
+    switch Movement.Right:
+        case Movement.Right:
+            total = total + 100
+
+        default:
+            total = total + 1
+
+    # 1 + 1 + 2 + 3 + 10 + 100 = 117, and it has to fit in a byte: an exit
+    # status is one
+    return total

@@ -1,0 +1,57 @@
+# An enum whose variants carry nothing, which is the case a sum type has for
+# free: every language that made an enum an algebraic data type -- Rust,
+# Swift, OCaml, Scala -- lets the payload-free one compile to what C's enum
+# compiles to, and decides that in the back end rather than in the syntax.
+#
+# So this is a C++ 'enum class' over an i32: **scoped**, so a variant's name
+# cannot collide with anything, and with **no implicit conversion to an
+# integer**, which is record 0018's rule arriving in the emitted code for
+# free. An explicit value is carried through.
+#
+# Three things follow from a variant being one OF the enum, and the golden
+# holds all three: a variant is a value of the enum type, a field may be one,
+# and two of them compare -- with no 'operator==' anywhere, because an enum is
+# a tag and not a shape.
+enum TokenKind:
+    unknown
+    identifier
+    plus = 40
+    minus
+
+class Token:
+    kind : TokenKind
+    length : i32
+
+    def init : void
+        kind = TokenKind.unknown
+        length = 0
+
+def value_of : i32
+    @kind : TokenKind
+
+    if kind == TokenKind.identifier:
+        return 1
+
+    if kind == TokenKind.plus:
+        return 40
+
+    if kind != TokenKind.unknown:
+        return 100
+
+    return 0
+
+def main : i32
+    let t : Token
+
+    # a variant is a value: bound, assigned into a field, passed and compared
+    let held = TokenKind.plus
+
+    t.kind = held
+
+    let total = value_of(t.kind) + value_of(TokenKind.identifier)
+
+    if t.kind == TokenKind.unknown:
+        return 1
+
+    # 40 + 1 + 100 = 141
+    return total + value_of(TokenKind.minus)

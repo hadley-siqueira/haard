@@ -1,0 +1,45 @@
+# What a variant IS, which is the half of an enum that lives in this phase.
+#
+# A variant that carries nothing is **one of the enum** -- 'Colour.red' is a
+# 'Colour' -- which is what every language with a sum type says and what makes
+# the payload-free enum the degenerate case of the tagged union rather than a
+# second feature.
+#
+# Two of them compare, and the golden's 'same' and 'other' are bool without
+# any 'operator==' being written: an enum is a **tag**, not a shape, so there
+# is nothing to look up. Only '==' and '!=' -- nothing has said an enum is
+# ordered.
+#
+# A variant that carries a payload is a **constructor** and is not decided
+# yet: 'circle' below is what it wrote, and the emitter refuses the enum it
+# belongs to by name rather than writing something else.
+enum Colour:
+    red
+    green
+    blue = 7
+
+enum Shape:
+    nothing
+    circle : i32
+
+class Pen:
+    colour : Colour
+
+def takes : i32
+    @c : Colour
+
+    return 1
+
+def main : i32
+    let c = Colour.red
+    let same = c == Colour.red
+    let other = c != Colour.green
+    let given = takes(Colour.blue)
+
+    let p : Pen
+
+    p.colour = Colour.green
+
+    let empty = Shape.nothing
+
+    return given

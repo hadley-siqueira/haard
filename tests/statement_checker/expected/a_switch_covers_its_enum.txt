@@ -1,0 +1,30 @@
+error: this switch does not cover Down, Left -- every variant, or a 'default'
+  --> main.hd:34:5
+   |
+34 |     switch m:
+   |     ^^^^^^
+error: Movement has no variant named 'Sideways'
+  --> main.hd:40:14
+   |
+40 |         case Sideways:
+   |              ^^^^^^^^
+error: 'Up' is already covered by this switch
+  --> main.hd:51:14
+   |
+51 |         case Up:
+   |              ^^
+error: a switch walks an enum, and this is i32
+  --> main.hd:58:12
+   |
+58 |     switch n:
+   |            ^
+error: this switch already has a 'default'
+  --> main.hd:70:9
+   |
+70 |         default:
+   |         ^^^^^^^
+error: this case has no block, and there is no case after it to share one with
+  --> main.hd:79:9
+   |
+79 |         case Left:
+   |         ^^^^

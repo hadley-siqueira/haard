@@ -171,6 +171,18 @@ u32 AstBuilder::make_while(u32 token) {
     return make_node(AST_WHILE, token);
 }
 
+u32 AstBuilder::make_switch(u32 token) {
+    return make_node(AST_SWITCH, token);
+}
+
+u32 AstBuilder::make_case(u32 token) {
+    return make_node(AST_CASE, token);
+}
+
+u32 AstBuilder::make_default(u32 token) {
+    return make_node(AST_DEFAULT, token);
+}
+
 u32 AstBuilder::make_for(u32 token) {
     return make_node(AST_FOR, token);
 }

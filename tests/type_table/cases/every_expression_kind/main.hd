@@ -45,6 +45,12 @@ def main : i32
     # the prefix family
     let address = &integer
     let dereferenced = *address
+
+    # and the address of a REFERENCE, which is the address of what it names
+    # (record 0035, applied here on 2026-09-08). It used to be an 'i32&*',
+    # which is a type nothing in the language can take
+    let aliased : i32& = integer
+    let pointed = &aliased
     let negated = -integer
     let flipped = ~integer
     let pre = ++integer

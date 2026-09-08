@@ -1,0 +1,9 @@
+error: nothing may follow a statement on its line
+ --> cases/switch_leftover_on_the_line.hd:3:18
+  |
+3 |         case Up: b = 1
+  |                  ^
+
+--- tree
+module
+--- round trip: ok

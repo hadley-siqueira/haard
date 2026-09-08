@@ -121,6 +121,12 @@ namespace haard {
             void emit_block(u32 module, u32 node);
             void emit_if(u32 module, u32 node);
             void emit_while(u32 module, u32 node);
+
+            // a pattern match: one C++ label per case, a 'break' this emitter
+            // writes at the end of every block, and two labels in a row where
+            // Haard grouped two patterns under one body
+            void emit_switch(u32 module, u32 node);
+            std::string label_of(u32 module, u32 subject, u32 pattern);
             void emit_for(u32 module, u32 node);
             void emit_for_part(u32 module, u32 part);
             void emit_binding(u32 module, u32 node);
@@ -198,6 +204,12 @@ namespace haard {
             // the first time the name is seen, and the table itself as C++
             u32 symbol_entry(const std::string& written);
             std::string emit_symbol_table();
+
+            // an enum: a C++ 'enum class' over an i32, and whether an
+            // expression is the NAME of one, which is what makes 'Colour.red'
+            // a '::' and not a '.'
+            void emit_enum(u32 module, u32 declaration);
+            bool names_an_enum(u32 module, u32 node);
 
             bool is_a_construction(u32 module, u32 node);
             bool emit_construction(u32 module, u32 node);

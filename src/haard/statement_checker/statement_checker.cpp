@@ -118,6 +118,10 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         check_condition(first_child(node), scope);
         break;
 
+    case AST_SWITCH:
+        check_switch(node, scope);
+        break;
+
     // and the last part, which was typed by **nothing** until 2026-09-03 --
     // 'for i = 0; i < 3; takes_int(2.5):' passed in silence. It is written for
     // what it does and not for what it is, exactly like an expression on a
@@ -224,6 +228,156 @@ void StatementChecker::check_expression(u32 node, u32 scope) {
     // Asked for nothing in particular, because what it gives back is thrown
     // away. The point is that everything inside it is looked at
     typer.type_of(index, scope, node, INVALID_TYPE);
+}
+
+// A switch is a **pattern match**, and this is where a pattern stops being an
+// expression and becomes one: the subject says what may be written, and every
+// case names a variant of it.
+//
+// Three things are checked and each is the reason a language grows this
+// statement in the first place: a pattern that names nothing is reported by
+// name, a variant written twice is reported as already covered, and a switch
+// that leaves a variant out with no 'default' is reported with the ones it
+// left out -- which is what turns adding a variant into a list of the places
+// that have to change, instead of into silence.
+void StatementChecker::check_switch(u32 node, u32 scope) {
+    u32 subject = first_child(node);
+    u32 given = typer.type_of(index, scope, subject, INVALID_TYPE);
+
+    if (given == INVALID_TYPE) {
+        return;
+    }
+
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(types->value_of(given));
+
+    if (entry->kind != TYPE_NAMED) {
+        report(subject, "a switch walks an enum, and this is "
+                            + typer.name_of(given));
+
+        return;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    SymbolTable* table = holder->get_symbols();
+    Candidate* found = table->get_candidate(entry->subject);
+    AstQuery theirs;
+
+    if ((SymbolKind) found->kind != SYMBOL_ENUM) {
+        report(subject, "a switch walks an enum, and this is "
+                            + typer.name_of(given));
+
+        return;
+    }
+
+    theirs.set_module(holder);
+
+    std::vector<std::string> variants;
+    std::set<std::string> covered;
+    bool has_default = false;
+
+    for (u32 member : theirs.get_members(found->ast_node)) {
+        variants.push_back(theirs.get_declaration_name(member));
+    }
+
+    u32 last_case = 0;
+
+    for (u32 child = module->get_ast()->get_node(subject)->get_sibling();
+         child != 0; child = module->get_ast()->get_node(child)->get_sibling()) {
+        if (kind_of(child) == AST_DEFAULT) {
+            if (has_default) {
+                report(child, "this switch already has a 'default'");
+            }
+
+            has_default = true;
+            last_case = child;
+            continue;
+        }
+
+        last_case = child;
+
+        std::string named = check_pattern(first_child(child), scope,
+                                          typer.name_of(given), variants);
+
+        if (named.size() == 0) {
+            continue;
+        }
+
+        if (covered.count(named) > 0) {
+            report(first_child(child), "'" + named
+                                           + "' is already covered by this "
+                                             "switch");
+        }
+
+        covered.insert(named);
+    }
+
+    // a case with no block runs the block of the one below it, so the last one
+    // has nothing to run
+    if (last_case != 0 && kind_of(last_case) == AST_CASE
+        && module->get_ast()->get_node(first_child(last_case))->get_sibling()
+               == 0) {
+        report(last_case, "this case has no block, and there is no case after "
+                          "it to share one with");
+    }
+
+    if (has_default) {
+        return;
+    }
+
+    std::string missing;
+
+    for (const std::string& variant : variants) {
+        if (covered.count(variant) > 0) {
+            continue;
+        }
+
+        missing += (missing.size() > 0 ? ", " : "") + variant;
+    }
+
+    if (missing.size() > 0) {
+        report(node, "this switch does not cover " + missing
+                         + " -- every variant, or a 'default'");
+    }
+}
+
+// The variant a pattern names, and an empty string when it names none. Two
+// shapes today: a bare 'Idle' and a written 'Action.Idle', which is the same
+// pair every language with this statement offers -- the short one because the
+// subject already says which enum it is, and the long one for when a name in
+// scope would win
+std::string StatementChecker::check_pattern(u32 pattern, u32 scope,
+                                            const std::string& subject,
+                                            const std::vector<std::string>&
+                                                variants) {
+    if (pattern == 0) {
+        return "";
+    }
+
+    u32 named = pattern;
+
+    if (kind_of(pattern) == AST_DOT) {
+        named = module->get_ast()->get_node(first_child(pattern))->get_sibling();
+    }
+
+    if (named == 0 || kind_of(named) != AST_IDENTIFIER) {
+        report(pattern, "a pattern names a variant of " + subject);
+
+        return "";
+    }
+
+    std::string text = std::string(
+        module->get_token_value(module->get_ast()->get_node(named)->get_token()));
+
+    for (const std::string& variant : variants) {
+        if (variant == text) {
+            return text;
+        }
+    }
+
+    report(named, subject + " has no variant named '" + text + "'");
+
+    return "";
 }
 
 void StatementChecker::check_condition(u32 node, u32 scope) {

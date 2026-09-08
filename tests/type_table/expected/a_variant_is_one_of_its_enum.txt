@@ -1,0 +1,20 @@
+<unnamed>:
+    Colour  Colour
+    Shape  Shape
+    Pen  Pen
+    takes  Colour -> i32
+    main  i32
+    red  Colour
+    green  Colour
+    blue  Colour
+    nothing  Shape
+    circle  i32
+    colour  Colour
+    c  Colour
+    c  Colour
+    same  bool
+    other  bool
+    given  i32
+    p  Pen
+    empty  Shape
+  20 types interned

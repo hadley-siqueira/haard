@@ -57,6 +57,9 @@ static std::string name_of(AstNodeKind kind) {
         case AST_ELIF: return "elif";
         case AST_ELSE: return "else";
         case AST_WHILE: return "while";
+        case AST_SWITCH: return "switch";
+        case AST_CASE: return "case";
+        case AST_DEFAULT: return "default";
         case AST_FOR: return "for";
         case AST_FOR_EACH: return "for_each";
         case AST_FOR_HEAD: return "for_head";

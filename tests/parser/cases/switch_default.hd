@@ -1,0 +1,10 @@
+def main : i32
+    switch a:
+        case Click(x, y):
+            b = x + y
+
+        case Idle:
+            b = 0
+
+        default:
+            b = -1

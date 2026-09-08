@@ -667,6 +667,10 @@ u32 Parser::parse_statement() {
         return parse_while();
     }
 
+    if (lookahead(TK_SWITCH)) {
+        return parse_switch();
+    }
+
     if (lookahead(TK_FOR)) {
         return parse_for();
     }
@@ -788,6 +792,114 @@ u32 Parser::parse_else() {
     expect_on_same_line(TK_COLON);
 
     u32 node = builder.make_else(token);
+
+    builder.add_child(node, 0, parse_block(indentation));
+
+    return node;
+}
+
+// A pattern match written as a switch. Hadley, 2026-09-08:
+//
+//     switch a:
+//         case Click(x, y):
+//             return x + y
+//
+//         case Idle:
+//             print("idle...")
+//
+//         default:
+//             print("on default case")
+//
+// **There is no fall through and no 'break'**, which is the whole difference
+// from C's. Cases are grouped instead by writing one with **no block**: it
+// runs the block of the case below it, which is how
+//
+//     case Up:
+//     case Down:
+//     case Increment(x):
+//         print("Ok!")
+//
+// says three patterns and one body.
+//
+// The pattern is parsed as an ordinary **expression** -- 'Idle' is an
+// identifier, 'Action.Idle' a dot, 'Click(x, y)' a call -- because every
+// pattern this language has is already a shape the expression grammar reads.
+// What it MEANS is not this phase's: the checker asks the subject's type
+// which variant each one names, and the names inside a call shaped pattern
+// are what it binds.
+//
+//   switch := 'switch' expression ':' (case | default)+
+//   case   := 'case' expression ':' block?
+//   default := 'default' ':' block
+u32 Parser::parse_switch() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_SWITCH);
+
+    u32 node = builder.make_switch(token);
+    u32 last = builder.add_child(node, 0, parse_expression());
+    bool had_a_case = false;
+
+    expect_on_same_line(TK_COLON);
+
+    indent(indentation);
+
+    while (is_indented() && (lookahead(TK_CASE) || lookahead(TK_DEFAULT))) {
+        had_a_case = true;
+        last = builder.add_child(node, last, lookahead(TK_CASE)
+                                                 ? parse_case()
+                                                 : parse_default());
+    }
+
+    // a switch with nothing under it is the block rule's mistake with another
+    // word: something was expected here and the message says which
+    if (!had_a_case && !panic) {
+        error_found("'case' or 'default'", false);
+        poison();
+    }
+
+    dedent();
+
+    return node;
+}
+
+u32 Parser::parse_case() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_CASE);
+
+    u32 node = builder.make_case(token);
+    u32 last = builder.add_child(node, 0, parse_expression());
+
+    expect_on_same_line(TK_COLON);
+
+    // A case with nothing under it groups with the next, so the block is
+    // optional here and nowhere else. What decides is the line after it: a
+    // deeper one is this case's body, and one at the same level is the next
+    // case
+    if (!panic && indentation_of_current_line() > indentation) {
+        builder.add_child(node, last, parse_block(indentation));
+    } else if (!panic && leftover_on_the_line(BODY_INDENTED)) {
+        error_at_current("nothing may follow a statement on its line");
+        poison();
+    }
+
+    return node;
+}
+
+u32 Parser::parse_default() {
+    u32 token = current_token;
+    u32 indentation = indentation_of_current_line();
+
+    begin_statement();
+    expect(TK_DEFAULT);
+    expect_on_same_line(TK_COLON);
+
+    u32 node = builder.make_default(token);
 
     builder.add_child(node, 0, parse_block(indentation));
 

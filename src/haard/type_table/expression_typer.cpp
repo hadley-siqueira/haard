@@ -420,8 +420,20 @@ u32 ExpressionTyper::subscript(u32 scope, u32 node) {
 u32 ExpressionTyper::address_of(u32 scope, u32 node) {
     u32 inner = type_of(index, scope, first_child(node), INVALID_TYPE);
 
-    return inner == INVALID_TYPE ? INVALID_TYPE
-                                 : module->get_types()->pointer(inner);
+    if (inner == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    // Record 0035, and the one place it had not been applied: **a reference
+    // is the thing it names**, so the address of one is the address of that
+    // thing and not of a reference. '&xs[0]' over an Array is a 'T*' -- it
+    // used to be a 'T&*', a type nothing in the language can take, and it is
+    // the idiom every table in this compiler is written with: a method that
+    // hands out a pointer into its own vector.
+    //
+    // C++ needs nothing for it: '&' on a 'T&' already gives a 'T*' there, so
+    // only the type was wrong
+    return module->get_types()->pointer(module->get_types()->value_of(inner));
 }
 
 u32 ExpressionTyper::dereference(u32 scope, u32 node) {
@@ -998,6 +1010,25 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     // A class that overloads nothing falls through to the rule below, which
     // is where two class values being compared with a builtin '==' is caught
     if (types->get_type(left)->kind == TYPE_NAMED) {
+        // An enum is a **tag**, and two tags compare by being the same tag.
+        // There is no 'operator==' to write on one and nothing to look up:
+        // asking a class for its operator is right because a class is a
+        // shape, and an enum is a name.
+        //
+        // Only '==' and '!=', because nothing has said an enum is ordered --
+        // Ada says so and gives it 'Succ' and 'Pred'; this waits
+        if (is_an_enum(left)
+            && (kind_of(node) == AST_EQUAL || kind_of(node) == AST_NOT_EQUAL)) {
+            if (left != right) {
+                report(node, "cannot apply this to " + name_of(left) + " and "
+                                 + name_of(right));
+
+                return INVALID_TYPE;
+            }
+
+            return types->builtin(BUILTIN_BOOL);
+        }
+
         const char* wanted = operator_name(kind_of(node));
         u32 owner = index;
 
@@ -1445,6 +1476,20 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
                                  ->get_symbols()
                                  ->get_candidate(found[0].candidate)
                                  ->type);
+}
+
+// Whether this named type is an enum, which is the one named type that is not
+// a shape with members but a set of tags
+bool ExpressionTyper::is_an_enum(u32 type) {
+    Type* entry = module->get_types()->get_type(module->get_types()
+                                                    ->value_of(type));
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    return compilation->get_module(entry->module)->get_symbols()
+               ->get_candidate(entry->subject)->kind == SYMBOL_ENUM;
 }
 
 u32 ExpressionTyper::class_of(u32 type, u32& owner) {

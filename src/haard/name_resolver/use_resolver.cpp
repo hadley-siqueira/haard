@@ -81,6 +81,19 @@ void UseResolver::walk(u32 node, u32 scope) {
 
         break;
 
+    // The pattern of a 'case' is not a name in this scope: it is a variant of
+    // whatever the switch's subject turned out to be, which is the same rule
+    // the right side of a '.' answers to and for the same reason. The
+    // StatementChecker asks the subject's type, where the answer is.
+    //
+    // Its block is walked, since what is written inside one is ordinary code
+    case AST_CASE:
+        walk(module->get_ast()->get_node(
+                 module->get_ast()->get_node(node)->get_children())
+                 ->get_sibling(),
+             scope);
+        return;
+
     // the right side is a member of whatever the left side is, so it waits on
     // a type. Only the left side is a name in this scope.
     //

@@ -80,6 +80,12 @@ namespace haard {
             u32 parse_elif();
             u32 parse_else();
             u32 parse_while();
+
+            // a pattern match: the subject, then a case per pattern and an
+            // optional default. A case with no block groups with the next
+            u32 parse_switch();
+            u32 parse_case();
+            u32 parse_default();
             u32 parse_for();
             u32 parse_for_condition();
             u32 parse_for_increment();

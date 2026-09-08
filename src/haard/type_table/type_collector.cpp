@@ -235,6 +235,24 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
         return written_or_inferred(binding, scope, expected);
     }
 
+    // A variant of an enum that carries nothing **is one of the enum**:
+    // 'Colour.red' is a Colour, which is what every language with a sum type
+    // says and what makes the payload-free enum the degenerate case of it.
+    //
+    // A variant that carries something is a constructor -- 'click : (i32,
+    // i32)' means 'Action' is built from two i32s -- and that waits on the
+    // record: it is what the payload half of the tagged union is about
+    if ((SymbolKind) found->kind == SYMBOL_FIELD
+        && query.get_written_type(found->ast_node) == 0) {
+        u32 owner = table->get_scope(scope)->owner;
+
+        if (owner != 0
+            && module->get_ast()->get_node(owner)->get_kind() == AST_ENUM) {
+            return module->get_types()->named(index, table->candidate_of(owner),
+                                              std::vector<u32>());
+        }
+    }
+
     if (!given) {
         return builder.build(index, scope,
                              query.get_written_type(found->ast_node));

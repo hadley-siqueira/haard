@@ -1,0 +1,81 @@
+# What a switch is checked for, and each of the four is the reason a language
+# grows this statement instead of a chain of 'if's.
+#
+# Exhaustiveness is the one that pays for itself: adding a variant turns into
+# a list of the places that have to change, instead of into silence. A switch
+# is exhaustive when it covers every variant, or when it writes 'default'.
+enum Movement:
+    Up
+    Down
+    Left
+
+def main : i32
+    let m = Movement.Up
+    let n = 1
+
+    # 1. it covers everything, so it is fine and says nothing
+    switch m:
+        case Up:
+            n = 1
+
+        case Down:
+        case Left:
+            n = 2
+
+    # 2. and so is one that writes a 'default' instead
+    switch m:
+        case Up:
+            n = 1
+
+        default:
+            n = 0
+
+    # 3. a variant left out, named
+    switch m:
+        case Up:
+            n = 1
+
+    # 4. a pattern that names no variant of it
+    switch m:
+        case Sideways:
+            n = 1
+
+        default:
+            n = 0
+
+    # 5. the same variant twice
+    switch m:
+        case Up:
+            n = 1
+
+        case Up:
+            n = 2
+
+        default:
+            n = 0
+
+    # 6. a subject that is not an enum
+    switch n:
+        case Up:
+            n = 1
+
+    # 7. two defaults
+    switch m:
+        case Up:
+            n = 1
+
+        default:
+            n = 2
+
+        default:
+            n = 3
+
+    # 8. a case with no block and nothing after it to share one with
+    switch m:
+        case Up:
+            n = 1
+
+        case Down:
+        case Left:
+
+    return n

@@ -27,6 +27,8 @@
     method_called  i32
     address  i32*
     dereferenced  i32
+    aliased  i32&
+    pointed  i32*
     negated  i32
     flipped  i32
     pre  i32
@@ -41,4 +43,4 @@
     text  char*
     ranged  <none>
     a_symbol  symbol
-  26 types interned
+  27 types interned

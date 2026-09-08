@@ -1,0 +1,11 @@
+# a case with no block runs the block of the one below it, which is how
+# several patterns share one body. There is no fall through and no 'break'
+def main : i32
+    switch movement:
+        case Up:
+        case Down:
+        case Increment(x):
+            f("ok")
+
+        case Decrement(x):
+            f("no")

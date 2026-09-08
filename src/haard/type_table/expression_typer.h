@@ -245,6 +245,11 @@ namespace haard {
             // either alike
             u32 this_type(u32 scope);
 
+            // whether a named type is an enum. An enum is a set of tags and
+            // not a shape: comparing two of them is comparing the tag, and
+            // there is no operator to look up
+            bool is_an_enum(u32 type);
+
             // the candidate of the class a type names, looking through one
             // reference. Gives back 0 for anything that has no members
             u32 class_of(u32 type, u32& owner);

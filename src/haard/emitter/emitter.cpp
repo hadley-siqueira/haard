@@ -164,6 +164,22 @@ void Emitter::emit_types() {
 
         query.set_module(module);
 
+        // An enum is a set of tags and has no layout to work out, so every
+        // one of them can be written before anything else -- and has to be,
+        // since a field may be of one
+        for (u32 declaration : query.get_declarations()) {
+            if (kind_of(i, declaration) == AST_ENUM) {
+                emit_enum(i, declaration);
+            }
+        }
+    }
+
+    for (u32 i = 0; i < compilation->get_module_count(); i++) {
+        Module* module = compilation->get_module(i);
+        AstQuery query;
+
+        query.set_module(module);
+
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
@@ -175,6 +191,58 @@ void Emitter::emit_types() {
     }
 }
 
+// An enum is a C++ 'enum class' over an i32: scoped, so a variant's name
+// cannot collide with anything, and with **no implicit conversion to an
+// integer**, which is record 0018's rule arriving in the emitted code for
+// free.
+//
+// A variant that carries a payload is not written yet -- that is the tagged
+// union half, and it is refused by name rather than emitted as something else
+void Emitter::emit_enum(u32 module_index, u32 declaration) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    u32 candidate = table->candidate_of(declaration);
+    AstQuery query;
+
+    if (candidate == 0) {
+        return;
+    }
+
+    query.set_module(module);
+
+    out << "enum class " << name_of(module_index, candidate) << " : int32_t {\n";
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        if (query.get_written_type(member) != 0) {
+            fail("'" + query.get_declaration_name(member)
+                 + "' carries a payload, and an enum that carries one cannot "
+                   "be emitted yet");
+            return;
+        }
+
+        u32 named = table->candidate_of(member);
+
+        out << "    "
+            << (named == 0 ? query.get_declaration_name(member)
+                           : name_of(module_index, named));
+
+        u32 value = query.get_binding_expression(member);
+
+        if (value != 0) {
+            out << " = ";
+            emit_expression(module_index, value);
+        }
+
+        out << ",\n";
+    }
+
+    out << "};\n\n";
+}
+
 void Emitter::emit_type(u32 module_index, u32 declaration) {
     Module* module = compilation->get_module(module_index);
     SymbolTable* table = module->get_symbols();
@@ -183,6 +251,14 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
     AstQuery query;
 
     if (candidate == 0 || emitted.count(key) > 0) {
+        return;
+    }
+
+    // An enum has no layout to work out and is written before anything else,
+    // so a field of one needs nothing from here. Walking into it would also
+    // never come back: a variant that carries nothing IS one of the enum, so
+    // the walk over its members would ask for the enum again
+    if (kind_of(module_index, declaration) == AST_ENUM) {
         return;
     }
 
@@ -795,6 +871,10 @@ void Emitter::emit_statement(u32 module, u32 node) {
         emit_while(module, node);
         return;
 
+    case AST_SWITCH:
+        emit_switch(module, node);
+        return;
+
     case AST_FOR:
         emit_for(module, node);
         return;
@@ -907,6 +987,113 @@ void Emitter::emit_if(u32 module_index, u32 node) {
 
         next = module->get_ast()->get_node(next)->get_sibling();
     }
+}
+
+// Haard's switch has **no fall through**, so every block ends in a 'break'
+// this emitter writes; and cases are grouped by writing one with no block,
+// which is C++'s fall through used on purpose -- two labels in a row and one
+// body under them.
+//
+// The braces are not decoration: a case body declares locals, and C++ refuses
+// a declaration that a later label can jump over
+void Emitter::emit_switch(u32 module_index, u32 node) {
+    Module* module = compilation->get_module(module_index);
+    u32 subject = child_of(module_index, node, 0);
+
+    out << std::string(indentation * 4, ' ') << "switch (";
+    emit_expression(module_index, subject);
+    out << ") {\n";
+
+    indentation++;
+
+    for (u32 child = module->get_ast()->get_node(subject)->get_sibling();
+         child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        u32 block = 0;
+
+        if (kind_of(module_index, child) == AST_DEFAULT) {
+            line("default:");
+            block = child_of(module_index, child, 0);
+        } else {
+            u32 pattern = child_of(module_index, child, 0);
+
+            out << std::string(indentation * 4, ' ') << "case "
+                << label_of(module_index, subject, pattern) << ":\n";
+
+            block = module->get_ast()->get_node(pattern)->get_sibling();
+        }
+
+        // a case with no block runs the one below it, which is what the two
+        // labels in a row already say
+        if (block == 0) {
+            continue;
+        }
+
+        line("{");
+        indentation++;
+        emit_block(module_index, block);
+        line("break;");
+        indentation--;
+        line("}");
+    }
+
+    indentation--;
+    line("}");
+}
+
+// 'Enum::variant', which is the only spelling C++ has for a scoped enumerator.
+// The variant is found in the enum the SUBJECT is of, which is what makes the
+// bare 'case Up:' writable in the first place
+std::string Emitter::label_of(u32 module_index, u32 subject, u32 pattern) {
+    Module* module = compilation->get_module(module_index);
+    TypeTable* types = module->get_types();
+    u32 given = type_at(module_index, subject);
+
+    if (given == INVALID_TYPE || pattern == 0) {
+        fail("a case with no pattern");
+        return "0";
+    }
+
+    Type* entry = types->get_type(types->value_of(given));
+
+    if (entry->kind != TYPE_NAMED) {
+        fail("a switch over something that is not an enum");
+        return "0";
+    }
+
+    u32 named = pattern;
+
+    if (kind_of(module_index, pattern) == AST_DOT) {
+        named = module->get_ast()->get_node(child_of(module_index, pattern, 0))
+                    ->get_sibling();
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    SymbolTable* table = holder->get_symbols();
+    AstQuery theirs;
+    std::string wanted = text_of(module_index, named);
+
+    theirs.set_module(holder);
+
+    for (u32 member : theirs.get_members(
+             table->get_candidate(entry->subject)->ast_node)) {
+        if (theirs.get_declaration_name(member) != wanted) {
+            continue;
+        }
+
+        u32 candidate = table->candidate_of(member);
+
+        if (candidate == 0) {
+            break;
+        }
+
+        return name_of(entry->module, entry->subject) + "::"
+             + name_of(entry->module, candidate);
+    }
+
+    fail("a case that names no variant");
+
+    return "0";
 }
 
 void Emitter::emit_while(u32 module, u32 node) {
@@ -1400,13 +1587,41 @@ void Emitter::emit_postfix(u32 module, u32 node, const std::string& oper) {
 }
 
 void Emitter::emit_member(u32 module, u32 node, bool arrow) {
-    emit_expression(module, child_of(module, node, 0));
+    u32 left = child_of(module, node, 0);
+
+    // 'Colour.red' names a variant of a type and not a member of a value, and
+    // C++ spells that with '::'. It is the one '.' whose left side is a TYPE
+    if (!arrow && names_an_enum(module, left)) {
+        out << name_at(module, left) << "::"
+            << name_at(module, child_of(module, node, 1));
+        return;
+    }
+
+    emit_expression(module, left);
     out << (arrow ? "->" : ".");
 
     u32 right = child_of(module, node, 1);
     std::string name = name_at(module, right);
 
     out << (name.size() > 0 ? name : text_of(module, right));
+}
+
+// whether this expression is the NAME of an enum -- an identifier that names
+// the declaration itself, and not a value of it
+bool Emitter::names_an_enum(u32 module_index, u32 node) {
+    if (node == 0 || kind_of(module_index, node) != AST_IDENTIFIER) {
+        return false;
+    }
+
+    Module* module = compilation->get_module(module_index);
+    Resolution* found = module->get_resolutions()->get(node);
+
+    if (found->candidate == 0) {
+        return false;
+    }
+
+    return compilation->get_module(found->module)->get_symbols()
+               ->get_candidate(found->candidate)->kind == SYMBOL_ENUM;
 }
 
 // A bare name that means a field or a method of the class the code is inside

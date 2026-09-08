@@ -1,6 +1,7 @@
 #ifndef HAARD_STATEMENT_CHECKER_H
 #define HAARD_STATEMENT_CHECKER_H
 
+#include <set>
 #include <haard/type_table/expression_typer.h>
 #include <map>
 
@@ -74,6 +75,15 @@ namespace haard {
             // here, so this is the one check that reads the block and not the
             // node
             void check_expression(u32 node, u32 scope);
+            // a switch is a pattern match: the subject says what may be
+            // written, and every case names a variant of it
+            void check_switch(u32 node, u32 scope);
+
+            // the variant this pattern names, empty when it names none
+            std::string check_pattern(u32 pattern, u32 scope,
+                                      const std::string& subject,
+                                      const std::vector<std::string>& variants);
+
             void check_condition(u32 node, u32 scope);
             void check_assignment(u32 node, u32 scope);
 

@@ -153,6 +153,18 @@ void PrettyPrinter::print_node(u32 node) {
             print_while(node);
             break;
 
+        case AST_SWITCH:
+            print_switch(node);
+            break;
+
+        case AST_CASE:
+            print_case(node);
+            break;
+
+        case AST_DEFAULT:
+            print_default(node);
+            break;
+
         case AST_FOR:
         case AST_FOR_EACH:
             print_for(node);
@@ -674,6 +686,46 @@ void PrettyPrinter::print_else(u32 node) {
 
 void PrettyPrinter::print_while(u32 node) {
     print_conditional(node, "while ");
+}
+
+// the subject on the header's line, and every case a line of its own at one
+// more level. A case with no block is written the same way and simply has
+// nothing under it, which is what groups it with the next
+void PrettyPrinter::print_switch(u32 node) {
+    print_string("switch ");
+
+    u32 child = ast->get_node(node)->get_children();
+
+    print_node(child);
+    print_string(":");
+
+    ++indentation;
+
+    for (child = ast->get_node(child)->get_sibling(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        print_new_line();
+        print_node(child);
+    }
+
+    --indentation;
+}
+
+void PrettyPrinter::print_case(u32 node) {
+    print_string("case ");
+
+    u32 child = ast->get_node(node)->get_children();
+
+    print_node(child);
+    print_string(":");
+
+    if (child != 0 && ast->get_node(child)->get_sibling() != 0) {
+        print_node(ast->get_node(child)->get_sibling());
+    }
+}
+
+void PrettyPrinter::print_default(u32 node) {
+    print_string("default:");
+    print_node(ast->get_node(node)->get_children());
 }
 
 // the ':' is written when the walk reaches the block, and each part before it

@@ -48,6 +48,9 @@ namespace haard {
             void print_elif(u32 node);
             void print_else(u32 node);
             void print_while(u32 node);
+            void print_switch(u32 node);
+            void print_case(u32 node);
+            void print_default(u32 node);
 
             // the three loops share a printer: what changes is which parts
             // are there, and each part writes its own separator

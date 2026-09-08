@@ -32,11 +32,17 @@ int32_t h0_7_main() {
     int32_t h0_15_copied = 0;
     h0_15_copied = h0_9_through;
     h0_9_through = 5;
+    int32_t *h0_16_pointed = &h0_9_through;
+    int32_t *h0_17_into = &h0_10_c.m_slot();
+    *h0_17_into = *h0_17_into + 1;
     if (!h0_14_equal) {
         return 1;
     }
     if (h0_8_held != 5) {
         return 2;
+    }
+    if (*h0_16_pointed != 5) {
+        return 3;
     }
     return h0_11_bound + h0_12_sum + h0_13_passed + h0_8_held - 5 + h0_10_c.m_slot();
 }
@@ -59,4 +65,4 @@ h0_1_Cell::~h0_1_Cell() {
 int main() {
     return h0_7_main();
 }
---- exit: 131
+--- exit: 132

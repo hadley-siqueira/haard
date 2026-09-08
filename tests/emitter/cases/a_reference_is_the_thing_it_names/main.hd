@@ -6,6 +6,11 @@
 # The other half of it is that assigning to a reference writes THROUGH it,
 # which is why 'through = 5' below changes what 'held' names and not what
 # 'through' refers to.
+#
+# A seventh place joined the six on 2026-09-08: the **address** of one. '&r'
+# over a 'T&' was a 'T&*' -- a type nothing can take -- and it is the idiom a
+# table is written with, a method handing out a pointer into its own storage.
+# C++ needed nothing for it; only the type was wrong.
 
 class Cell:
     value : i32
@@ -47,11 +52,21 @@ def main : i32
     # 6. and writing through one, which changes what it names
     through = 5
 
+    # 7. the address of one, which is the address of what it names. Both
+    # shapes: a reference bound to a name, and the one 'slot()' gives back
+    let pointed = &through
+    let into = &c.slot()
+
+    *into = *into + 1
+
     if not equal:
         return 1
 
     if held != 5:
         return 2
 
-    # 40 + 42 + 40 + 0 + 9 = 131
+    if *pointed != 5:
+        return 3
+
+    # 40 + 42 + 40 + 0 + 10 = 132
     return bound + sum + passed + held - 5 + c.slot()

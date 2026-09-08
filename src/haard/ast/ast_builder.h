@@ -93,6 +93,12 @@ namespace haard {
             u32 make_else(u32 token);
             u32 make_while(u32 token);
 
+            // the subject, then a case per pattern and an optional default.
+            // A case holds its pattern and, when it has one, its block
+            u32 make_switch(u32 token);
+            u32 make_case(u32 token);
+            u32 make_default(u32 token);
+
             // A 'for' is three loops written with one word, and which one it
             // is shows only after its head has been read. So the head is built
             // first, on its own, and handed to whichever of the two takes it.

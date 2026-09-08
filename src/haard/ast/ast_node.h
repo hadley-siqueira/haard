@@ -31,6 +31,14 @@ namespace haard {
         AST_ELIF,
         AST_ELSE,
         AST_WHILE,
+
+        // Record 00XX: 'switch' is a pattern match, 'case' is one pattern and
+        // the block it runs, and a case with NO block groups with the one
+        // below it -- which is how several patterns share a body without a
+        // fall-through rule
+        AST_SWITCH,
+        AST_CASE,
+        AST_DEFAULT,
         AST_FOR,
         AST_FOR_EACH,
         AST_FOR_HEAD,

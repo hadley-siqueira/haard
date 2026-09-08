@@ -1,0 +1,43 @@
+def main : i32
+    switch a:
+        case Click(x, y):
+            b = x + y
+        case Idle:
+            b = 0
+        default:
+            b = -1
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      switch
+        identifier 'a'
+        case
+          call '('
+            identifier 'Click'
+            arguments '('
+              identifier 'x'
+              identifier 'y'
+          block
+            assignment '='
+              identifier 'b'
+              plus '+'
+                identifier 'x'
+                identifier 'y'
+        case
+          identifier 'Idle'
+          block
+            assignment '='
+              identifier 'b'
+              integer '0'
+        default
+          block
+            assignment '='
+              identifier 'b'
+              unary_minus '-'
+                integer '1'
+--- round trip: ok
