@@ -2,6 +2,8 @@
 #define HAARD_SWITCH_LOWERER_H
 
 #include <haard/ast/ast_builder.h>
+#include <set>
+#include <utility>
 #include <haard/symbol_table/symbol_collector.h>
 #include <haard/type_table/expression_typer.h>
 
@@ -85,6 +87,11 @@ namespace haard {
             // the token every synthetic one is made to look like, so a
             // diagnostic about what this pass wrote points at the 'switch'
             u32 like;
+
+            // One look per switch, whatever it ends in. The pass runs on
+            // every round of the type phase's loop, and a subject that does
+            // not type reports through the typer -- once is once
+            std::set<std::pair<u32, u32>> seen;
 
             // across the compilation, so two modules never argue about a name
             u32 counter;

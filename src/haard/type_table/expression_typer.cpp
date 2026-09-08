@@ -324,9 +324,11 @@ u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right,
         AstNodeKind kind = kind_of(right);
 
         // record 0018 again: a written number has no type of its own, so it
-        // is carried untyped and each candidate asks it to be its parameter
+        // is carried untyped and each candidate asks it to be its parameter,
+        // and neither has 'null' until a pointer is asked for
         argument.literal = kind == AST_INTEGER_LITERAL
-                        || kind == AST_FLOAT_LITERAL;
+                        || kind == AST_FLOAT_LITERAL
+                        || kind == AST_NULL_LITERAL;
         argument.node = right;
         argument.type = argument.literal
                             ? INVALID_TYPE
@@ -444,7 +446,12 @@ u32 ExpressionTyper::dereference(u32 scope, u32 node) {
     }
 
     TypeTable* types = module->get_types();
-    Type* entry = types->get_type(inner);
+
+    // Record 0035, and the eighth place: **a reference is the thing it
+    // names**, so what a '*' asks of a 'T*&' is what it asks of a 'T*'. A
+    // capture of a variant that carries a pointer is one, and so is any
+    // binding of one -- found by writing a tree
+    Type* entry = types->get_type(types->value_of(inner));
 
     if (entry->kind != TYPE_POINTER) {
         report(node, "'*' needs a pointer, and this is " + name_of(inner));
@@ -1261,9 +1268,13 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
 
         // record 0018: a literal has no type of its own, so it is carried
         // untyped and each candidate asks it to be its own parameter. Typing
-        // it here would make 'f(3)' pick i32 and then fail against 'f(u8)'
+        // it here would make 'f(3)' pick i32 and then fail against 'f(u8)'.
+        //
+        // 'null' is one of them: it has no type until something says which
+        // pointer it is, and at a call that something is the parameter
         argument.literal = kind == AST_INTEGER_LITERAL
-                        || kind == AST_FLOAT_LITERAL;
+                        || kind == AST_FLOAT_LITERAL
+                        || kind == AST_NULL_LITERAL;
         argument.node = child;
         argument.type = argument.literal
                             ? INVALID_TYPE

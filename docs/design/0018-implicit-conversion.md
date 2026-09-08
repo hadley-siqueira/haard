@@ -159,3 +159,15 @@ signature.
 **Still missing, and it is now the only thing in the way:** a call's arguments
 have to have types before candidates can be compared, and **inference does not
 exist**. It is not on the agenda and it needs to be.
+
+## 'null' at a call, 2026-09-08
+
+Rule 1 says a literal has no type until its context gives it one, and `null` is
+one of them -- *"there is nothing here to say what 'null' is a pointer to"* is
+this record's own diagnostic. What it did not have was a **call**: an argument
+is typed before the overload is chosen, so `takes(null)` reported that nothing
+said what null was, and then that no overload took it.
+
+It is carried untyped now, the way an integer literal is, and matches any
+**pointer** parameter at no cost. Found by writing a tree whose leaves are
+`null`.

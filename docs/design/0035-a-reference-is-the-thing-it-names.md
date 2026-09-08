@@ -114,3 +114,14 @@ type at all. One line, `pointer(value_of(inner))`, and C++ needed nothing —
 The case is the seventh block of
 `tests/emitter/cases/a_reference_is_the_thing_it_names`, and
 `every_expression_kind` pins the type.
+
+## An eighth, 2026-09-08
+
+`*r` over a `T*&`. `dereference` asked the type it was given instead of what
+that names, so a capture of a variant carrying a pointer -- `case Node(held,
+left, right)`, where `left` is a `Tree*&` -- could not be dereferenced:
+*'*' needs a pointer, and this is Tree*&*.
+
+Found the same way as the seventh: by writing a program. The seventh came from
+asking whether this compiler could be written in Haard; this one from a binary
+search tree whose node is an enum.

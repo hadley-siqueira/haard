@@ -61,7 +61,9 @@ void SwitchLowerer::walk(u32 node, u32 scope) {
         children.push_back(child);
     }
 
-    if (kind_of(node) == AST_SWITCH) {
+    if (kind_of(node) == AST_SWITCH && seen.count({index, node}) == 0) {
+        seen.insert({index, node});
+
         u32 given = typer.type_of(index, scope, first_child(node),
                                   INVALID_TYPE);
 

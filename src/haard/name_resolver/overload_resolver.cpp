@@ -272,6 +272,22 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
         return -1;
     }
 
+    // Record 0018 again, and the one literal that is not about a value:
+    // 'null' has no type of its own and takes the **pointer** its context
+    // asks for. At a call the context is the parameter, and until 2026-09-08
+    // there was none -- an argument is typed before the overload is chosen,
+    // so 'takes(null)' reported that nothing said what null was a pointer to
+    // and then that no overload took it. Found by writing a tree
+    if (argument.node != 0
+        && compilation->get_module(caller)->get_ast()
+                   ->get_node(argument.node)->get_kind()
+               == AST_NULL_LITERAL) {
+        return compilation->get_module(caller)->get_types()
+                           ->get_type(parameter)->kind == TYPE_POINTER
+                   ? 0
+                   : -1;
+    }
+
     // record 0018: a literal has no type until its context gives it one, and
     // the context here is this parameter. So it is asked to be it, and the
     // question is about the value

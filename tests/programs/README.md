@@ -110,6 +110,23 @@ directory, it does, and `make clean` takes it back.
   **unbound generic** to stop being checked: two occurrences of `Node<T>` in
   two generics are two types.
 
+- **`a_tree_is_an_enum`** — record 0043, and the shape a sum type exists for:
+  a binary search tree whose node **is** an enum, with no null, no sentinel and
+  no `is_leaf` flag. Seven recursive functions and every one of them is a
+  single `switch`.
+
+  Three things it pins that nothing else does. **Recursion is written with a
+  pointer** — `Node : (i32, Tree*, Tree*)`, since by value has no size.
+  **A capture is a reference**, so `insert` turns a leaf into a node in place
+  and passes the subtree pointer itself rather than a copy. And the
+  construction is written **`Tree.Node(...)`** because the prelude carries
+  `class Node<T>` for the List and a name in scope wins over a variant — while
+  the **pattern** below it is bare, since a pattern is resolved against the
+  subject and never against the scope.
+
+  It frees its own tree, children before parents, which is the order a
+  `switch` makes obvious.
+
 - **`a_hash_is_written_in_haard`** — record 0042, and the fourth class of the
   standard library. Three key types in one program — `i32`, `String` and a
   **symbol** — which is what says hashing is an ordinary overload set and not
