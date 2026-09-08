@@ -199,16 +199,34 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_NULL_LITERAL:
         return null_literal(node, expected);
 
-    // Record 0022: a string literal is a 'char*' first. 'char' is a builtin
-    // and a pointer to one needs nothing from the standard library, which is
-    // why this types before any of the standard library exists.
+    // Record 0022: a string literal is a 'char*' when nothing asks. 'char' is
+    // a builtin and a pointer to one needs nothing from the standard library,
+    // which is why this types before any of the standard library exists -- and
+    // it is what makes 'write(char*)' next to a 'write(String)' still take the
+    // first.
     //
-    // Hadley, 2026-09-02: try char* first, and become a String when that is
-    // not possible. The second half waits on a String to become -- and it is
-    // record 0018's first rule again, so loosening it later is additive
-    case AST_STRING_LITERAL:
-        return module->get_types()->pointer(
+    // Hadley, 2026-09-02: try char* first, and **become a String** when that
+    // is not possible. The second half arrived on 2026-09-08 and is record
+    // 0037's mechanism: where a class is asked for, the literal is a
+    // CONSTRUCTION -- this typer picks the 'init' that takes what the literal
+    // already is, writes it on the literal for the emitter to call, and what
+    // the literal is from then on is that class.
+    //
+    // No name is involved. 'String' is a class with an 'init(char*)' and so is
+    // any other; record 0023's named entry is what a 'char*' VALUE still needs
+    case AST_STRING_LITERAL: {
+        u32 own = module->get_types()->pointer(
             module->get_types()->builtin(BUILTIN_CHAR));
+
+        if (expected == INVALID_TYPE
+            || module->get_types()->get_type(expected)->kind != TYPE_NAMED) {
+            return own;
+        }
+
+        u32 made = constructed_by_one(node, expected, own);
+
+        return made == INVALID_TYPE ? own : made;
+    }
 
     case AST_LIST:
         return sequence(scope, node, expected, false);
@@ -693,12 +711,14 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
     return wrapped == INVALID_TYPE ? made : wrapped;
 }
 
-u32 ExpressionTyper::constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
-                                      u32 element, u32 count) {
-    TypeTable* types = module->get_types();
-
+// The one shape a **string** literal can reach, and the first the bracketed
+// ones try: a constructor of one parameter, taking what the literal already
+// is. It is on its own because a string literal has no count to write -- a
+// class with 'init(char*, i32)' matches the two-parameter shape and there
+// would be nothing to pass as the second argument
+u32 ExpressionTyper::constructed_by_one(u32 node, u32 wanted, u32 own) {
     if (wanted == INVALID_TYPE || wanted == own || own == INVALID_TYPE
-        || types->get_type(wanted)->kind != TYPE_NAMED) {
+        || module->get_types()->get_type(wanted)->kind != TYPE_NAMED) {
         return INVALID_TYPE;
     }
 
@@ -709,7 +729,6 @@ u32 ExpressionTyper::constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
         return INVALID_TYPE;
     }
 
-    // one parameter taking what the literal already is
     std::vector<Argument> one;
     Argument whole;
 
@@ -720,26 +739,58 @@ u32 ExpressionTyper::constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
 
     Overload chosen = overloads.choose(index, candidates, one);
 
+    if (chosen.status != OVERLOAD_FOUND) {
+        return INVALID_TYPE;
+    }
+
+    // which constructor this literal means, written on the literal itself:
+    // nothing can work it out again, exactly as for a call and for record
+    // 0034's operators, and the emitter reads it here
+    module->get_resolutions()->set_declaration(node, chosen.module,
+                                               chosen.candidate);
+
+    return wanted;
+}
+
+u32 ExpressionTyper::constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
+                                      u32 element, u32 count) {
+    TypeTable* types = module->get_types();
+
+    if (wanted == INVALID_TYPE || wanted == own || own == INVALID_TYPE
+        || types->get_type(wanted)->kind != TYPE_NAMED) {
+        return INVALID_TYPE;
+    }
+
+    // one parameter taking what the literal already is
+    if (constructed_by_one(node, wanted, own) != INVALID_TYPE) {
+        return wanted;
+    }
+
+    u32 owner = index;
+    std::vector<Candidacy> candidates = constructors_of(wanted, owner);
+
+    if (candidates.size() == 0) {
+        return INVALID_TYPE;
+    }
+
     // and two taking a pointer to its element and how many, which is the pair
     // a '{}' offers and the one Hadley named
-    if (chosen.status != OVERLOAD_FOUND) {
-        std::vector<Argument> two;
-        Argument from;
-        Argument size;
+    std::vector<Argument> two;
+    Argument from;
+    Argument size;
 
-        from.literal = false;
-        from.node = node;
-        from.type = types->pointer(element);
+    from.literal = false;
+    from.node = node;
+    from.type = types->pointer(element);
 
-        size.literal = false;
-        size.node = node;
-        size.type = types->builtin(BUILTIN_I32);
+    size.literal = false;
+    size.node = node;
+    size.type = types->builtin(BUILTIN_I32);
 
-        two.push_back(from);
-        two.push_back(size);
+    two.push_back(from);
+    two.push_back(size);
 
-        chosen = overloads.choose(index, candidates, two);
-    }
+    Overload chosen = overloads.choose(index, candidates, two);
 
     if (chosen.status != OVERLOAD_FOUND) {
         return INVALID_TYPE;
@@ -1144,6 +1195,17 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
             if (arguments[i].literal) {
                 module->get_resolutions()->set_type(arguments[i].node,
                                                     chosen.parameters[i]);
+            }
+
+            // Record 0037, and this is the one place it cannot be asked
+            // earlier: a string literal comes in as a 'char*' so that the
+            // ranking may prefer a 'char*' parameter to a String one (record
+            // 0023) -- which is a question about the CALL. Once the overload
+            // is known, a class parameter takes it by a constructor this
+            // typer picks, the way a written type does at a binding
+            if (kind_of(arguments[i].node) == AST_STRING_LITERAL) {
+                type_of(index, scope, arguments[i].node,
+                        chosen.parameters[i]);
             }
 
             // Record 0031, and this is the fourth of the four places a value

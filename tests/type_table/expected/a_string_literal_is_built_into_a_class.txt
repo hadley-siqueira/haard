@@ -1,0 +1,27 @@
+<unnamed>:
+    Note  Note
+    Plain  Plain
+    takes  Note -> i32
+    ranks  char* -> i32
+    ranks  Note -> i32
+    main  i32
+    text  char*
+    init  void
+    init  char* -> void
+    from  char*
+    value  i32
+    n  Note
+    s  char*
+    n  Note
+    plain  char*
+    built  Note
+    given  i32
+    chosen  i32
+    refused  Plain
+  22 types interned
+diagnostics:
+error: expected Plain, found char*
+  --> main.hd:55:27
+   |
+55 |     let refused : Plain = "abc"
+   |                           ^^^^^

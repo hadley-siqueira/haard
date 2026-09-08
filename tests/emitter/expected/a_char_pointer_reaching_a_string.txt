@@ -3,6 +3,7 @@
 #include <cstdio>
 
 struct h0_1_String;
+struct h0_10_Note;
 
 struct h0_1_String {
     char *h0_2_data;
@@ -16,33 +17,57 @@ struct h0_1_String {
     virtual ~h0_1_String();
 };
 
-int32_t h0_10_by_reference(h0_1_String &h0_11_s);
-int32_t h0_12_by_value(h0_1_String h0_13_s);
-h0_1_String h0_14_gives();
-int32_t h0_15_main();
+struct h0_10_Note {
+    char *h0_11_text;
+    int32_t h0_12_size;
+    virtual void m_init();
+    virtual void m_init_pb12(char *h0_15_from);
+    virtual void m_init_rn0c10(h0_10_Note &h0_17_other);
+    virtual int32_t m_length();
+    h0_10_Note();
+    h0_10_Note(char *h0_15_from);
+    h0_10_Note(h0_10_Note &h0_17_other);
+    h0_10_Note(const h0_10_Note& other);
+    void m_assign(h0_10_Note& other);
+    virtual ~h0_10_Note();
+};
+
+int32_t h0_19_noted(h0_10_Note h0_20_n);
+int32_t h0_21_by_reference(h0_1_String &h0_22_s);
+int32_t h0_23_by_value(h0_1_String h0_24_s);
+h0_1_String h0_25_gives();
+int32_t h0_26_main();
 
 
-int32_t h0_10_by_reference(h0_1_String &h0_11_s) {
-    return h0_11_s.m_length();
+int32_t h0_19_noted(h0_10_Note h0_20_n) {
+    return h0_20_n.m_length();
 }
 
-int32_t h0_12_by_value(h0_1_String h0_13_s) {
-    return h0_13_s.m_length();
+int32_t h0_21_by_reference(h0_1_String &h0_22_s) {
+    return h0_22_s.m_length();
 }
 
-h0_1_String h0_14_gives() {
-    return "returned";
+int32_t h0_23_by_value(h0_1_String h0_24_s) {
+    return h0_24_s.m_length();
 }
 
-int32_t h0_15_main() {
-    char *h0_16_plain = "abc";
-    h0_1_String h0_17_built("abcd");
-    int32_t h0_18_n = h0_10_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_1_String("abcde"))));
-    int32_t h0_19_m = h0_12_by_value(h0_1_String("abcdef"));
-    int32_t h0_20_r = h0_10_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_14_gives())));
-    h0_17_built.m_operator_eq_pb12("abcdefg");
-    int32_t h0_21_first = (int32_t)((h0_16_plain[0] - 'a'));
-    return h0_21_first + h0_17_built.m_length() + h0_18_n + h0_19_m + h0_20_r;
+h0_1_String h0_25_gives() {
+    return h0_1_String("returned");
+}
+
+int32_t h0_26_main() {
+    char *h0_27_plain = "abc";
+    h0_1_String h0_28_built("abcd");
+    int32_t h0_29_n = h0_21_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_1_String("abcde"))));
+    int32_t h0_30_m = h0_23_by_value(h0_1_String("abcdef"));
+    int32_t h0_31_r = h0_21_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_25_gives())));
+    h0_28_built.m_operator_eq_pb12("abcdefg");
+    h0_10_Note h0_32_note("note");
+    h0_10_Note h0_33_copied;
+    h0_33_copied.m_assign(const_cast<h0_10_Note&>(static_cast<const h0_10_Note&>(h0_10_Note("copied!"))));
+    int32_t h0_34_k = h0_19_noted(h0_10_Note("noted"));
+    int32_t h0_35_first = (int32_t)((h0_27_plain[0] - 'a'));
+    return (h0_35_first + h0_28_built.m_length() + h0_29_n + h0_30_m + h0_31_r + h0_32_note.m_length() + h0_33_copied.m_length() + h0_34_k);
 }
 
 void h0_1_String::m_init() {
@@ -81,7 +106,56 @@ h0_1_String::h0_1_String(char *h0_6_text) {
 h0_1_String::~h0_1_String() {
 }
 
-int main() {
-    return h0_15_main();
+void h0_10_Note::m_init() {
+    this->h0_11_text = "";
+    this->h0_12_size = 0;
 }
---- exit: 26
+
+void h0_10_Note::m_init_pb12(char *h0_15_from) {
+    this->h0_11_text = h0_15_from;
+    this->h0_12_size = 0;
+    while (h0_15_from[this->h0_12_size] != '\0') {
+        this->h0_12_size = this->h0_12_size + 1;
+    }
+}
+
+void h0_10_Note::m_init_rn0c10(h0_10_Note &h0_17_other) {
+    this->h0_11_text = h0_17_other.h0_11_text;
+    this->h0_12_size = h0_17_other.h0_12_size;
+}
+
+int32_t h0_10_Note::m_length() {
+    return this->h0_12_size;
+}
+
+h0_10_Note::h0_10_Note() {
+    this->h0_10_Note::m_init();
+}
+
+h0_10_Note::h0_10_Note(char *h0_15_from) {
+    this->h0_10_Note::m_init_pb12(h0_15_from);
+}
+
+h0_10_Note::h0_10_Note(h0_10_Note &h0_17_other) {
+    this->h0_10_Note::m_init_rn0c10(h0_17_other);
+}
+
+h0_10_Note::h0_10_Note(const h0_10_Note& other) {
+    this->h0_10_Note::m_init_rn0c10(const_cast<h0_10_Note&>(other));
+}
+
+void h0_10_Note::m_assign(h0_10_Note& other) {
+    if (this == &other) {
+        return;
+    }
+
+    this->h0_10_Note::m_init_rn0c10(other);
+}
+
+h0_10_Note::~h0_10_Note() {
+}
+
+int main() {
+    return h0_26_main();
+}
+--- exit: 42

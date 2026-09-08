@@ -1,0 +1,31 @@
+<unnamed>:
+    Bag  Bag
+    BagCursor  BagCursor
+    count  u32
+    main  i32
+    data  i32[4]
+    size  i32
+    init  void
+    iterator  BagCursor
+    cursor  BagCursor
+    held  Bag*
+    position  i32
+    init  void
+    has_next  bool
+    next  i32&
+    at  i32
+    bag  Bag
+    fixed  i32[3]
+    x  i32&
+    __c0  BagCursor
+    seen  i32&
+    f  i32
+    __i1  i32
+    taken  i32
+    i  i32
+    __e2  i32
+    counted  i32
+    k  u32
+    __e3  u32
+    far  u32
+  26 types interned

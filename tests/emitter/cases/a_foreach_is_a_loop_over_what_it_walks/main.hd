@@ -1,0 +1,114 @@
+# Record 0040. 'for x in <something>' is written form for one of three loops,
+# and this case is all three of them in one program:
+#
+#   a class      walked by the cursor it gives back, by three names
+#   a fixed array  walked by the length its TYPE carries
+#   a range      a plain loop, with no class anywhere
+#
+# What comes out is what a reader would have written by hand, and the block
+# around each loop is where the cursor lives -- so the three walks over 'bag'
+# below declare three cursors and three 'x'es, and C++ never sees two at once.
+#
+# The container is declared here, the way the bracket literal cases declare
+# their own Array: what record 0040 asks of a container is three methods by
+# name, and nothing else in the compiler knows what a Bag is.
+class Bag<T>:
+    data : T[4]
+    size : i32
+
+    def init : void
+        size = 0
+
+    def add : void
+        @value : T
+
+        data[size] = value
+        size = size + 1
+
+    # A foreach written INSIDE a generic. What is inside one nobody
+    # instantiated is not a program yet (record 0002), so this is taken apart
+    # in the CLONE with T bound, and never here -- and 'this' is a 'Bag<T>*',
+    # walked like the class it points at
+    def counted : i32
+        let count = 0
+
+        for x in this:
+            count = count + 1
+
+        return count
+
+    # One cursor per container, so each walks the way it is fastest. It has
+    # to be built with no arguments and then filled in: there is no way yet
+    # to construct a value with arguments written
+    def iterator : BagCursor<T>
+        let cursor : BagCursor<T>
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
+class BagCursor<T>:
+    held : Bag<T>*
+    position : i32
+
+    def init : void
+        held = null
+        position = 0
+
+    def has_next : bool
+        return position < held->size
+
+    # a T& and not a T: the loop variable IS the element, which is what makes
+    # 'x = x * 2' below write into the bag
+    def next : T&
+        let at = position
+
+        position = position + 1
+
+        return held->data[at]
+
+def main : i32
+    let bag : Bag<i32>
+
+    bag.add(1)
+    bag.add(2)
+    bag.add(3)
+
+    let total = 0
+
+    # a class: the cursor loop
+    for x in bag:
+        total = total + x
+
+    # and 'x' is a reference, so this writes into the bag
+    for x in bag:
+        x = x * 2
+
+    for x in bag:
+        total = total + x
+
+    # a fixed array: the length is read off the type and written in
+    let fixed = {10, 20}
+
+    for f in fixed:
+        total = total + f
+
+    # a range: a plain loop and no class anywhere. '..' takes its end in and
+    # '...' stops before it -- the scanner's rule, and Ruby's -- so the first
+    # of these walks 1, 2, 3, 4 and the second walks 1, 2, 3.
+    #
+    # 'break' and 'continue' still mean what they say, which is why the step
+    # is a C shaped head and not a line at the end of the body: written there,
+    # the 'continue' below would jump over it and the loop would never end
+    for i in 1..4:
+        if i == 3:
+            continue
+
+        total = total + i
+
+    for j in 1...4:
+        total = total + j
+
+    # 6 + 12 + 30 + 7 + 6 + 3 = 64
+    return total + bag.counted()

@@ -94,6 +94,12 @@ level `def key`: from inside the loop the variable answers alone, and from the
 module scope `value` is not there at all. A loop variable also shadows a
 parameter of its name, the same way a local does.
 
+The node a loop variable's candidate points at **moved** on 2026-09-06, and the
+golden is where that shows: record 0040 rewrites `for pairs in 0..10` into an
+ordinary loop, and the variable's candidate is re-pointed at the binding the
+lowering wrote. It still resolves to the same declaration by name, which is
+what this suite is about, and the node number is the proof that the pass ran.
+
 **That the prelude is the last of the dependencies.** Record 0033 makes the
 table carry a list of imports every module is given, and four cases hold it.
 `a_name_comes_from_the_prelude` resolves `println` from a file that writes no

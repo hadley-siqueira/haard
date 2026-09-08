@@ -1,0 +1,56 @@
+# Record 0037, and the whole of what moving 'char*' -> String onto it buys:
+# the literal says **which** constructor it meant, and the emitter reads it
+# instead of leaving C++ to find one of its own.
+#
+# Before 2026-09-08 the golden's literals were 'char*' with no declaration at
+# all: Haard decided *that* it converts and C++ decided *how*, which is record
+# 0034's rule surviving in the emission. Now the choice is here, written down,
+# at the four places a value is given to something.
+#
+# 'from_a_value' is the door that stays **shut**, and the golden's one
+# diagnostic is it: a 'char*' that is not a written literal converts by record
+# 0018's list and by nothing else, and that list knows one class by name --
+# String (record 0023). 'Note' is not it, so a value does not reach one.
+#
+# That asymmetry is deliberate. A written literal is a shape the author asked
+# for; a value converting silently is C++'s converting constructor, which
+# defends itself with 'explicit' and Haard has nothing to defend itself with.
+# Deleting record 0023's named entry -- so that a value reaches no class at
+# all -- is the last step of the migration, and it waits on a way to
+# construct a value with arguments written.
+class Note:
+    text : char*
+
+    def init : void
+        text = ""
+
+    def init : void
+        @from : char*
+
+        text = from
+
+    def init : void
+        @other : Note&
+
+        text = other.text
+
+def takes : i32
+    @n : Note
+
+    return 1
+
+def gives : Note
+    return "returned"
+
+def main : i32
+    @from_a_value : char*
+
+    let bound : Note = "bound"
+    let called = takes("called")
+    let assigned : Note
+
+    assigned = "assigned"
+
+    let value : Note = from_a_value
+
+    return called

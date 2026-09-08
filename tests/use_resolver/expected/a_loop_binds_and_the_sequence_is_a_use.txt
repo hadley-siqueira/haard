@@ -1,3 +1,8 @@
+error: a 'for ... in' binds one name, and this writes 2
+ --> main.hd:3:5
+  |
+3 |     for key, value in pairs:
+  |     ^^^
 error: cannot find 'absent' in this scope
  --> main.hd:5:14
   |

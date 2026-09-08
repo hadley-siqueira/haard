@@ -143,6 +143,13 @@ namespace haard {
             // record 0018's decay
             u32 constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
                                  u32 element, u32 count);
+
+            // the first of those two on its own, which is the only one a
+            // **string** literal can reach: a constructor of one parameter
+            // taking what the literal already is. Record 0023's 'char*'
+            // becoming a String is this, and the choice is written on the
+            // literal for the emitter to read
+            u32 constructed_by_one(u32 node, u32 wanted, u32 own);
             u32 tuple(u32 scope, u32 node, u32 expected);
 
             // the element a container type holds, and INVALID_TYPE for a type

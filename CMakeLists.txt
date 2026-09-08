@@ -90,7 +90,11 @@ set(PRETTY_SRC
 
 set(MODULE_SRC
     src/haard/module/module.cpp
+)
+
+set(SUGAR_SRC
     src/haard/sugar/sugar_lowerer.cpp
+    src/haard/sugar/for_each_lowerer.cpp
 )
 
 set(LOG_SRC
@@ -122,6 +126,7 @@ set(SOURCES
     ${SCANNER_SRC}
     ${PARSER_SRC}
     ${MODULE_SRC}
+    ${SUGAR_SRC}
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_SRC}

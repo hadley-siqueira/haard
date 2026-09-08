@@ -8,10 +8,14 @@
 # C++'s own converting constructor ran it. Haard decided *that* it converts;
 # C++ decided *how*, which is record 0034's rule surviving in the emission.
 #
-# The class is called String on purpose: record 0023 makes this one pair a
-# **named** library relation, and Hadley chose to keep it that way (1a) --
-# the compiler knows this one name, and a user who wants the same for a class
-# of their own writes the overloads by hand.
+# The class is called String on purpose: record 0023 makes a 'char*' **value**
+# reaching one a named library relation, and it still is -- 'let s : String =
+# p' over a 'char* p' is that entry and nothing else.
+#
+# A written **literal** stopped being about the name on 2026-09-08, which is
+# record 0037's mechanism arriving here: a written class type takes a literal
+# by a constructor the compiler picks and **calls**. 'Note' below is the same
+# thing for a class the compiler has never heard of.
 class String:
     data : char*
     size : i32
@@ -44,6 +48,41 @@ class String:
         while text[size] != '\0':
             size = size + 1
 
+# A class the compiler knows nothing about. It has no 'operator=', so
+# assigning a literal to one goes through record 0031's copy assignment --
+# which takes a **reference**, and until 2026-09-08 the emitter handed it a
+# raw 'char*': Haard accepted it and g++ refused it, which is the failure
+# record 0037 exists to prevent
+class Note:
+    text : char*
+    size : i32
+
+    def init : void
+        text = ""
+        size = 0
+
+    def init : void
+        @from : char*
+
+        text = from
+        size = 0
+
+        while from[size] != '\0':
+            size = size + 1
+
+    def init : void
+        @other : Note&
+
+        text = other.text
+        size = other.size
+
+    def length : i32
+        return size
+
+def noted : i32
+    @n : Note
+    return n.length()
+
 def by_reference : i32
     @s : String&
     return s.length()
@@ -75,7 +114,18 @@ def main : i32
     # 4. assigning a char* is the overloaded operator, not a temporary
     built = "abcdefg"
 
-    # 3 + 4 + 5 + 6 + 8 = 26
+    # 5. a class of the reader's own: the same mechanism, and no name in the
+    # compiler. The binding and the argument are constructions the typer
+    # chose, and the assignment is the one that used to be refused by g++
+    let note : Note = "note"
+    let copied : Note
+
+    copied = "copied!"
+
+    let k = noted("noted")
+
+    # 3 + 4 + 5 + 6 + 8 = 26, and 4 + 7 + 5 = 16 more
     let first = (plain[0] - 'a') as i32
 
-    return first + built.length() + n + m + r
+    return (first + built.length() + n + m + r + note.length()
+            + copied.length() + k)

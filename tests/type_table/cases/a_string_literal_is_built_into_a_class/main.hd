@@ -1,0 +1,57 @@
+# Record 0037's mechanism, applied to a string literal (2026-09-08).
+#
+# A literal has no type of its own (record 0018) and a string one falls back
+# to 'char*' when nothing asks (record 0022) -- that is 'plain' below. Where a
+# **class** is asked for, the literal is a construction instead, and what it
+# IS from then on is that class: the golden's 'built' is a Note and not a
+# char* that will be converted later by somebody else.
+#
+# The class is not called String, and that is the point. Record 0023 keeps the
+# name for a 'char*' that is a **value**; a written literal reaches any class
+# that says how to build one of itself out of one, exactly as '[1, 2, 3]'
+# reaches any class with the constructor for it.
+#
+# 'Plain' has no such 'init', so the literal stays a char* and the mistake is
+# reported about the types -- not about a constructor the reader never wrote.
+class Note:
+    text : char*
+
+    def init : void
+        text = ""
+
+    def init : void
+        @from : char*
+
+        text = from
+
+class Plain:
+    value : i32
+
+def takes : i32
+    @n : Note
+    return 1
+
+def ranks : i32
+    @s : char*
+    return 1
+
+def ranks : i32
+    @n : Note
+    return 2
+
+def main : i32
+    # nothing asked, so it is a char*
+    let plain = "abc"
+
+    # a class asked, so it is a construction
+    let built : Note = "abc"
+
+    # at a call the argument is a char* first, so that a 'char*' parameter
+    # still outranks a class one -- and only then a construction
+    let given = takes("abc")
+    let chosen = ranks("abc")
+
+    # and a class that cannot be built from one is a plain mismatch
+    let refused : Plain = "abc"
+
+    return given + chosen

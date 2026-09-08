@@ -274,7 +274,33 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
         return wanted->subject == default_of(caller, argument) ? 0 : 1;
     }
 
+    // Record 0037 at a call. A **written** literal reaching a class parameter
+    // is a construction the typer will pick a constructor for, and here is
+    // where the call has to be able to rank it: one step, which is what
+    // record 0023's 'char*' into a String cost when it was an entry of its
+    // own about a class the compiler knew by NAME. This is that entry with
+    // the name taken out.
+    //
+    // Only a written literal, which is record 0037's rule -- a 'char*' that
+    // is a value still converts by record 0018's list and by nothing else
+    if (is_a_written_literal(caller, argument.node)
+        && coercion.builds_from(caller, parameter, argument.type)) {
+        return 1;
+    }
+
     return coercion.steps(caller, argument.type, parameter);
+}
+
+// A string literal, and only that one for now: the bracketed literals are
+// hoisted into a binding before a call is reached (record 0037's own
+// hoisting), so what arrives here is a name and not a literal at all
+bool OverloadResolver::is_a_written_literal(u32 caller, u32 node) {
+    if (node == 0) {
+        return false;
+    }
+
+    return compilation->get_module(caller)->get_ast()->get_node(node)
+               ->get_kind() == AST_STRING_LITERAL;
 }
 
 // what a literal is when no parameter asks it to be anything: record 0018 for

@@ -82,6 +82,18 @@ namespace haard {
             // 'init' -- there is no method named 'copy'
             bool declares_a_copy(u32 module, u32 candidate);
 
+        public:
+            // Record 0037's mechanism, asked as a **ranking** question:
+            // whether this class says how to build one of itself out of what
+            // is being given, by an 'init' of exactly one parameter.
+            //
+            // It is what lets a call rank a written literal against a class
+            // parameter at all -- the typer picks the constructor once the
+            // overload is known, and this is the same question asked one step
+            // earlier and without the answer being written down. Public
+            // because the OverloadResolver is what asks it
+            bool builds_from(u32 module, u32 wanted, u32 given);
+
             bool is_char_pointer(u32 module, u32 type);
 
             // the standard library's String, which agenda 1.21 needs to name

@@ -108,6 +108,15 @@ namespace haard {
             void set_candidate_type(u32 candidate, u32 type);
             void set_candidate_super(u32 candidate, u32 super);
 
+            // The declaration a candidate points at, when a pass **replaces**
+            // that declaration with another. Record 0040's loop variable is
+            // the one that does: 'for x in xs' declares x with the loop
+            // itself, because from the name there is no way back to the
+            // sequence -- and once the loop has been taken apart, x is an
+            // ordinary binding written inside the body, which is what the
+            // emitter and the second pass of the type phase both read
+            void set_candidate_node(u32 candidate, u32 node);
+
             // the scope a declaration opened, 0 when it opened none. The way
             // from a class to its members, which is what a field access walks
             u32 scope_owned_by(u32 node);

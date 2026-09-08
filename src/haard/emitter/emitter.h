@@ -190,6 +190,12 @@ namespace haard {
             // the const_cast the copy constructor already needs is needed
             // here for the same reason: Haard has no 'const' to write on the
             // parameter (record 0029)
+            // Record 0037: whether this node is a literal the typer turned
+            // into a construction, and the call that builds it. The choice is
+            // read off the literal and never worked out again
+            bool is_a_construction(u32 module, u32 node);
+            bool emit_construction(u32 module, u32 node);
+
             bool emit_conversion(u32 module, u32 holder, u32 wanted,
                                  u32 node);
 

@@ -1,0 +1,12 @@
+an Array of four adds up to 10: ok
+a List of three adds up to 18: ok
+after doubling every element: 20: ok
+a fixed array of three adds up to 60: ok
+1..4 gives 10 and 1...4 gives 6: ok
+a range up to xs.length() walks 4 times: ok
+with a continue and a break: 8: ok
+three by three nested: 180: ok
+
+failures: 0
+--- files:
+--- exit: 0

@@ -219,6 +219,53 @@ bool Coercion::may_be_copied(u32 module, u32 type) {
     return declares_a_copy(entry->module, entry->subject);
 }
 
+bool Coercion::builds_from(u32 module, u32 wanted, u32 given) {
+    TypeTable* types = compilation->get_module(module)->get_types();
+    Type* entry = types->get_type(wanted);
+
+    if (entry->kind != TYPE_NAMED || given == INVALID_TYPE) {
+        return false;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    SymbolTable* table = holder->get_symbols();
+    std::string name = "init";
+    u32 interned = holder->get_strings()->find(hash_name(name), name);
+    u32 body =
+        table->scope_owned_by(table->get_candidate(entry->subject)->ast_node);
+    u32 symbol = interned == INVALID_STRING || body == 0
+                     ? 0
+                     : table->find(body, interned);
+
+    // its own and not a base's, which is record 0026's rule about
+    // construction and the same one the typer's 'constructors_of' follows
+    for (u32 candidate = symbol == 0 ? 0
+                                     : table->get_symbol(symbol)->candidates;
+         candidate != 0;
+         candidate = table->get_candidate(candidate)->next_candidate) {
+        u32 signature = table->get_candidate(candidate)->type;
+
+        if (signature == INVALID_TYPE) {
+            continue;
+        }
+
+        std::vector<u32> written =
+            holder->get_types()->get_arguments(signature);
+
+        // the return type is the last one, per record 0016, so one parameter
+        // is two arguments
+        if (written.size() != 2) {
+            continue;
+        }
+
+        if (builder.translate(module, entry->module, written[0]) == given) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Coercion::declares_a_copy(u32 module, u32 candidate) {
     Module* holder = compilation->get_module(module);
     SymbolTable* table = holder->get_symbols();

@@ -1,0 +1,31 @@
+# The four things record 0040 has no loop for, each reported once and by name.
+#
+# A class that answers none of the three names is reported by the CALL, which
+# is the diagnostic a reader can act on -- 'Thing has no member named
+# iterator' says both what is missing and where to write it.
+#
+# Taking a sequence apart -- 'for key, value in pairs' -- is the one the
+# reference wrote and record 0040 did not decide. It parses, it binds both
+# names, and nothing lowers it yet: one error and not two, though the loop
+# declares two variables and so reaches the pass twice.
+class Thing:
+    value : i32
+
+def main : i32
+    let n = 5
+    let t : Thing
+    let fixed = {1, 2}
+
+    for a in n:
+        n = n + a
+
+    for b in t:
+        n = n + 1
+
+    for key, value in fixed:
+        n = n + 1
+
+    for c not in fixed:
+        n = n + 1
+
+    return n

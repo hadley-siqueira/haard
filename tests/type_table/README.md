@@ -266,6 +266,38 @@ phase is two passes over every module — what each declaration *wrote*, then wh
 each binding was *given*. Folding them back into one fails this case and only
 this case.
 
+## A string literal that is a construction
+
+`a_string_literal_is_built_into_a_class` is record 0037's mechanism carrying
+`char*` → `String` (2026-09-08). The golden is three lines of it: `plain` is a
+`char*` because nothing asked, `built` is a **`Note`** because a class did, and
+`refused` is a plain mismatch because `Plain` says nothing about being built
+from one — the diagnostic is about the types and not about a constructor the
+reader never wrote.
+
+The class is deliberately not called `String`. A written literal reaches any
+class with the `init` for it; the name is still what a `char*` **value** needs
+(record 0023).
+
+## What a loop variable is
+
+`a_loop_variable_is_what_it_walks` is record 0040's contract with the rest of
+the compiler, written as types: `x` over a class is the `T&` its cursor's
+`next` gives back, `f` over a fixed array is the element, `i` over `0..2` is an
+i32, and `k` over `0...count()` is a **u32** — the type of the range's **end**,
+because inference reading the `0` alone would have made it an i32 and the
+comparison a mistake about types nobody wrote.
+
+The locals with unwritable names in that golden — `__c0`, `__i1`, `__e2` — are
+the lowering's own, and they are in the table at all because what it writes is
+an ordinary tree with ordinary declarations in it.
+
+`a_sequence_that_cannot_be_walked` is the other half: four sequences that have
+no loop, each reported **once**. A `for key, value in pairs` reaches the pass
+once per name it binds and must still say one thing; a class that answers none
+of the three names is reported by the **call**, which names the method to
+write.
+
 ## The sabotages
 
 | sabotage | fails |
@@ -306,6 +338,12 @@ this case.
 | only the first candidate of a member name is gathered | 1 |
 | `this` has no type | 1 |
 | `this` is the class and not a pointer to it | 1 |
+| a string literal is never a construction | 1 |
+| a call cannot rank a literal against a class | 1 |
+| the foreach lowering never runs | 2 |
+| the loop variable's candidate keeps pointing at the loop | 2 |
+| a range walks with the type of its start | 1 |
+| a loop is taken apart once per name it binds | 1 |
 | `same` compares only the kind and the argument count | **0** |
 
 The last one is the confirm that follows a hash hit, and **nothing here reaches

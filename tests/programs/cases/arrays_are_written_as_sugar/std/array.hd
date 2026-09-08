@@ -120,6 +120,17 @@ class Array<T>:
         data = bigger
         capacity = wanted
 
+    # Record 0040's three names, and this is the one that has to be written
+    # by hand: there is no way yet to construct a value with arguments, so it
+    # is built with none and its fields are assigned
+    def iterator : ArrayCursor<T>
+        let cursor : ArrayCursor<T>
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
     def add : void
         @value : T
 
@@ -128,3 +139,31 @@ class Array<T>:
 
         data[size] = value
         size = size + 1
+
+# Record 0040. What 'for x in xs' walks with: a cursor of this container's
+# own, so that each walks the way it is fastest -- this one holds a position
+# and the list's follows a link.
+#
+# It holds the CONTAINER and not a copy of its insides: a cursor holding
+# 'data' and 'size' would freeze the array, and a 'reserve' during the loop
+# would leave it pointing at memory that has been freed.
+class ArrayCursor<T>:
+    held : Array<T>*
+    position : i32
+
+    def init : void
+        held = null
+        position = 0
+
+    def has_next : bool
+        return position < held->length()
+
+    # a T& and not a T: the loop variable IS the element, so writing 'x'
+    # writes into the container. A copy would also be refused for an element
+    # that owns something (record 0031)
+    def next : T&
+        let at = position
+
+        position = position + 1
+
+        return (*held)[at]

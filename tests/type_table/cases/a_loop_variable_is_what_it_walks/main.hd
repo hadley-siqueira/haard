@@ -1,0 +1,67 @@
+# Record 0040: what a loop variable IS, is what walking the sequence gives it,
+# and that is decided here rather than by the emitter -- the golden below is
+# the whole of the feature's contract with the rest of the compiler.
+#
+#   over a class      the cursor's 'next', which gives back a reference, so
+#                     writing the variable writes the element
+#   over a fixed array  the element, read through a subscript
+#   over a range      the type of the END, so a range up to a u32 walks with
+#                     a u32 and not with the i32 a bare '0' would be
+#
+# The locals with the unwritable names are this pass's own: '__c' a cursor,
+# '__i' a position, '__e' an end evaluated once. They are declarations like
+# any other by the time this table is filled, which is the point of lowering
+# into an ordinary tree.
+class Bag:
+    data : i32[4]
+    size : i32
+
+    def init : void
+        size = 0
+
+    def iterator : BagCursor
+        let cursor : BagCursor
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
+class BagCursor:
+    held : Bag*
+    position : i32
+
+    def init : void
+        held = null
+        position = 0
+
+    def has_next : bool
+        return position < held->size
+
+    def next : i32&
+        let at = position
+
+        position = position + 1
+
+        return held->data[at]
+
+def count : u32
+    return 3
+
+def main : i32
+    let bag : Bag
+    let fixed = {1, 2, 3}
+
+    for x in bag:
+        let seen = x
+
+    for f in fixed:
+        let taken = f
+
+    for i in 0..2:
+        let counted = i
+
+    for k in 0...count():
+        let far = k
+
+    return 0

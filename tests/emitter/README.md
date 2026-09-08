@@ -99,6 +99,46 @@ its own. It covers all four placements — a constant literal (file-scope
 and one at module level (a global, which is what catches the statics being
 spliced one line too late).
 
+## What the record 0023 case pins, since it grew a second class
+
+**`a_char_pointer_reaching_a_string`** was four examples of Hadley's about the
+one class the compiler knows by name. On 2026-09-08 it grew a `Note`, which is
+the same mechanism for a class the compiler has never heard of (record 0037),
+and it holds two things nothing else does:
+
+- `return h0_1_String("returned")`. The return was the one place the emitted
+  C++ handed a `char*` to something that promised a class and let **C++** find
+  the conversion. It is the only line of the golden that changed when the
+  mechanism moved, which is what says the other three were already writing a
+  construction — with C++ choosing *which* constructor.
+- `copied.m_assign(const_cast<Note&>(static_cast<const Note&>(Note("copied!"))))`.
+  Assigning a literal to a class that has **no** `operator=` goes through
+  record 0031's copy assignment, which takes a reference. The emitter used to
+  hand it the raw `char*`, and **g++ refused it** — a bug shipped since record
+  0031, invisible because both classes in the suites that are assigned a
+  literal declare `operator=`. This suite compiles what it emits, which is why
+  the case catches it.
+
+## What the record 0040 case pins
+
+**`a_foreach_is_a_loop_over_what_it_walks`** — all three shapes of `for x in`
+in one program, and the golden is what a reader would have written by hand: a
+cursor loop over a class, an index loop over a fixed array with the length
+written in, and a plain `for` over each spelling of a range. Four things it
+holds that nothing else can:
+
+- the **braces**. Each loop is a block of its own, so the three walks over the
+  same `bag` declare three cursors and three `x`es and C++ never sees two at
+  once. Without them the file does not compile, which is the failure this
+  suite exists to catch.
+- `int32_t &x = ...` — the loop variable is a **reference**, and the loop that
+  writes `x = x * 2` is why the exit status is what it is.
+- a `continue` inside a lowered range. The step is in the **head** of a C
+  shaped `for`; written at the end of the body it would be jumped over and the
+  program would not stop.
+- a foreach written **inside a generic**, taken apart in the clone with `T`
+  bound and never in the declaration nobody instantiated.
+
 **`a_written_type_takes_a_literal`** — both constructor shapes side by side:
 one parameter taking the `Array` (built into a **name** first, because C++ will
 not bind a temporary to a reference) and two taking a pointer and a count

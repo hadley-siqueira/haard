@@ -85,3 +85,9 @@ That follows correctly from what was decided: only a `for ... in` binds, and a C
 shaped head is an assignment, not a declaration. So `j` has to be introduced by
 a `let` before the loop. It is written into the golden rather than smoothed over,
 because if that is not the intended language then this is the case that says so.
+
+Its golden also carries a diagnostic from a **later** phase, since 2026-09-06:
+record 0040 takes a `for ... in` apart in the type phase and binds **one**
+name, so the `for key, value in pairs` this case writes to prove that two names
+resolve is also a form nothing can lower yet. Both lines are true of the same
+program and the golden keeps both.

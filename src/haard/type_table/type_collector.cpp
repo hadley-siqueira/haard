@@ -15,9 +15,14 @@ void TypeCollector::set_compilation(Compilation* compilation) {
     typer.set_compilation(compilation);
     coercion.set_compilation(compilation);
 
-    // both builders that can reach an instantiation are told who to catch up
+    lowerer.set_compilation(compilation);
+
+    // both builders that can reach an instantiation are told who to catch up,
+    // and so is the one the foreach lowering builds with: 'for x in [1, 2,
+    // 3]' asks an Array cloned mid-sweep for a cursor
     builder.set_collector(this);
     typer.set_collector(this);
+    lowerer.set_collector(this);
 }
 
 bool TypeCollector::collect(u32 index) {
@@ -189,6 +194,45 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
     // 'let' with no type waits for inference, which does not exist
     default:
         break;
+    }
+
+    // Record 0040. A loop variable's candidate points at the **loop**, since
+    // from the name alone there is no way back to the sequence it comes out
+    // of -- so this is where a foreach is taken apart, and what the variable
+    // is, is what the loop it became gives it.
+    //
+    // Here and not in a phase of its own because of the order: the sequence
+    // was typed a moment ago, in the scope that encloses this one, and the
+    // body's own bindings are typed in a moment, after this. A pass over the
+    // whole tree afterwards would be too late for both
+    if (module->get_ast()->get_node(found->ast_node)->get_kind()
+        == AST_FOR_EACH) {
+        u32 loop = found->ast_node;
+
+        // the first pass gives a declaration the type it **wrote**, and a
+        // loop variable writes none. What is walked is a 'let' with no type
+        // as often as not, and that is this pass's answer and not the first
+        // one's
+        if (!given) {
+            return INVALID_TYPE;
+        }
+
+        u32 expected = INVALID_TYPE;
+        u32 binding = lowerer.lower(index, scope, loop, expected);
+
+        // left standing, and reported. Nothing else in the tree changed
+        if (binding == 0) {
+            return INVALID_TYPE;
+        }
+
+        // and from here it is an ordinary binding written inside the body:
+        // the emitter reads a declaration where it declares, and what it was
+        // given is inferred the way every other one is. 'found' is not read
+        // again -- the lowering declares locals of its own, and a candidate
+        // list that grew has moved
+        table->set_candidate_node(candidate, binding);
+
+        return written_or_inferred(binding, scope, expected);
     }
 
     if (!given) {

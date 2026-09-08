@@ -77,6 +77,10 @@ namespace haard {
 
             int match(u32 caller, const Argument& argument, u32 parameter);
 
+            // whether this argument is a literal the source WROTE, which is
+            // what record 0037's rule turns on
+            bool is_a_written_literal(u32 caller, u32 node);
+
             // the builtin a literal is when nothing asks it to be anything
             // else, per records 0018 and 0022. Matching it is what makes one
             // literal match better than another, which is what gives 'char*'

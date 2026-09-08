@@ -1,0 +1,177 @@
+# Record 0040: 'for x in <something>' walks a container by the CURSOR it gives
+# back, and there is one cursor per container so that each walks the way it is
+# fastest. This program walks all four of the things there are to walk and
+# checks what it got.
+#
+#   an Array<T>   its cursor holds a position and indexes
+#   a List<T>     its cursor holds a node and follows the link -- which is the
+#                 whole reason there is a cursor per container: the index form
+#                 would have made this loop O(n squared), silently, over a
+#                 method the author was told is O(n)
+#   a fixed array by the length its type carries, which nothing but the
+#                 compiler knows
+#   a range       a plain loop and no class at all
+#
+# The loop variable is a **reference** to the element, so 'x = x * 2' writes
+# into the container. That is what record 0031 asked for as much as record
+# 0040: a copy of an element that owns something is refused, and a foreach
+# that copied could not walk an Array of them at all.
+#
+# Its exit status is the number of checks that failed.
+
+def check : void
+    @out : File*
+    @what : String
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+def sum_of : i32
+    @xs : i32[]&
+
+    let total = 0
+
+    for x in xs:
+        total = total + x
+
+    return total
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # ---- a class, walked by the three names it answers
+
+    let xs : i32[] = [1, 2, 3, 4]
+    let array_total = 0
+
+    for x in xs:
+        array_total = array_total + x
+
+    let walked = array_total == 10
+
+    check(out, "an Array of four adds up to ${array_total}", walked)
+
+    if not walked:
+        failures = failures + 1
+
+    # ---- a linked list, by a cursor that follows the link and never indexes
+
+    let ns : List<i32> = [5, 6, 7]
+    let list_total = 0
+
+    for n in ns:
+        list_total = list_total + n
+
+    let followed = list_total == 18
+
+    check(out, "a List of three adds up to ${list_total}", followed)
+
+    if not followed:
+        failures = failures + 1
+
+    # ---- the loop variable is the element, not a copy of it
+
+    for x in xs:
+        x = x * 2
+
+    let written = sum_of(xs) == 20
+
+    check(out, "after doubling every element: ${sum_of(xs)}", written)
+
+    if not written:
+        failures = failures + 1
+
+    # ---- a fixed array, whose length is in its type and nowhere else
+
+    let fixed = {10, 20, 30}
+    let fixed_total = 0
+
+    for f in fixed:
+        fixed_total = fixed_total + f
+
+    let counted = fixed_total == 60
+
+    check(out, "a fixed array of three adds up to ${fixed_total}", counted)
+
+    if not counted:
+        failures = failures + 1
+
+    # ---- a range, in both of its spellings: '..' takes its end in and '...'
+    # stops before it
+
+    let inclusive = 0
+    let exclusive = 0
+
+    for i in 1..4:
+        inclusive = inclusive + i
+
+    for j in 1...4:
+        exclusive = exclusive + j
+
+    let both = inclusive == 10 and exclusive == 6
+
+    check(out, "1..4 gives ${inclusive} and 1...4 gives ${exclusive}", both)
+
+    if not both:
+        failures = failures + 1
+
+    # ---- and the end of a range is evaluated once, not once a turn
+
+    let turns = 0
+
+    for k in 0...xs.length():
+        turns = turns + 1
+
+    let once = turns == 4
+
+    check(out, "a range up to xs.length() walks ${turns} times", once)
+
+    if not once:
+        failures = failures + 1
+
+    # ---- break and continue still mean what they say, which is why the step
+    # of a lowered range is a loop head and not a line at the end of the body
+
+    let jumped = 0
+
+    for i in 1..10:
+        if i == 2:
+            continue
+
+        if i == 5:
+            break
+
+        jumped = jumped + i
+
+    let stopped = jumped == 8
+
+    check(out, "with a continue and a break: ${jumped}", stopped)
+
+    if not stopped:
+        failures = failures + 1
+
+    # ---- a loop inside a loop, over two containers, and two loops over one
+
+    let nested = 0
+
+    for n in ns:
+        for f in fixed:
+            nested = nested + f
+
+    let deep = nested == 180
+
+    check(out, "three by three nested: ${nested}", deep)
+
+    if not deep:
+        failures = failures + 1
+
+    out->writeln("")
+    out->writeln("failures: ${failures}")
+
+    return failures

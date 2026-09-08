@@ -763,8 +763,18 @@ void Emitter::emit_statement(u32 module, u32 node) {
     case AST_PASS:
         return;
 
+    // A block written as a statement of another block, which nothing in the
+    // grammar builds: record 0040's foreach becomes one, holding the cursor
+    // and the loop it walks with. It gets its braces, and they are not
+    // decoration -- the loop variable and the cursor live in it, so two
+    // foreach loops in one function declare two 'x'es that C++ never sees at
+    // once
     case AST_BLOCK:
+        line("{");
+        indentation++;
         emit_block(module, node);
+        indentation--;
+        line("}");
         return;
 
     case AST_IF:
@@ -804,7 +814,15 @@ void Emitter::emit_statement(u32 module, u32 node) {
 
         if (value != 0) {
             out << " ";
-            emit_expression(module, value);
+
+            // record 0037: 'return "made"' from a function giving back a
+            // String is a construction, and until 2026-09-08 it was the one
+            // place the emitted C++ leaned on C++'s own conversion -- a
+            // 'char*' returned where a class was promised, with nothing
+            // written at all
+            if (!emit_construction(module, value)) {
+                emit_expression(module, value);
+            }
         }
 
         out << ";\n";
@@ -998,6 +1016,11 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
             && kind_of(module_index, expression) == AST_ARRAY
             && module->get_resolutions()->get(expression)->candidate != 0;
 
+        // and record 0037's string literal is one too, which the branch below
+        // writes as direct initialisation -- 'String s("abc")' and not
+        // 'String s = "abc"', which would be C++ choosing the constructor
+        bool built = is_a_construction(module_index, expression);
+
         if (expression != 0
             && (kind_of(module_index, expression) == AST_LIST || constructs)) {
             emit_array_literal(module_index, expression, type,
@@ -1010,10 +1033,11 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
 
         // record 0023's conversion is a construction, so it is written as one
         // and not as an assignment C++ would have to work out
-        if (expression != 0
-            && type_at(module_index, expression) != type
-            && module->get_types()->get_type(type)->kind == TYPE_NAMED
-            && type_at(module_index, expression) != INVALID_TYPE) {
+        if (built
+            || (expression != 0
+                && type_at(module_index, expression) != type
+                && module->get_types()->get_type(type)->kind == TYPE_NAMED
+                && type_at(module_index, expression) != INVALID_TYPE)) {
             out << "(";
             emit_expression(module_index, expression);
             out << ");\n";
@@ -1694,6 +1718,48 @@ void Emitter::emit_array_literal(u32 module_index, u32 node, u32 type,
 
 // how many parameters this function's signature holds. Record 0016 puts the
 // return type last, so it is one fewer than the arguments
+// Record 0037. A string literal that reached a written class type is a
+// **construction the typer chose**, and it wrote the 'init' it means down on
+// the literal. So the emitter does not work a conversion out from two types:
+// it writes the call, and a class that has no such constructor was reported
+// where the literal was written rather than by g++ afterwards.
+//
+// Only a literal, which is the record's rule: an identifier carries a
+// recorded declaration too, and it is the thing it names and not a
+// construction of it
+bool Emitter::is_a_construction(u32 module_index, u32 node) {
+    if (node == 0 || kind_of(module_index, node) != AST_STRING_LITERAL) {
+        return false;
+    }
+
+    return compilation->get_module(module_index)->get_resolutions()
+               ->get(node)->candidate != 0;
+}
+
+// '<Class>(<the literal>)', which is the only spelling C++ has for naming a
+// constructor -- what makes it a call this compiler can see is that the
+// choice was already made, and not left for C++ to find one of its own
+bool Emitter::emit_construction(u32 module_index, u32 node) {
+    if (!is_a_construction(module_index, node)) {
+        return false;
+    }
+
+    Module* module = compilation->get_module(module_index);
+    u32 type = type_at(module_index, node);
+    Type* entry = module->get_types()->get_type(module->get_types()
+                                                    ->value_of(type));
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    out << name_of(entry->module, entry->subject) << "(";
+    emit_expression(module_index, node);
+    out << ")";
+
+    return true;
+}
+
 bool Emitter::emit_conversion(u32 module_index, u32 holder, u32 wanted,
                               u32 node) {
     u32 given = type_at(module_index, node);
@@ -1713,6 +1779,29 @@ bool Emitter::emit_conversion(u32 module_index, u32 holder, u32 wanted,
 
     if (entry->kind != TYPE_NAMED) {
         return false;
+    }
+
+    // Record 0037's construction, which by now types as the class it builds
+    // -- so the branches below would call it 'the same class' and write
+    // nothing at all, and C++ would be back to finding the conversion itself
+    if (is_a_construction(module_index, node)) {
+        bool into = there->get_type(wanted)->kind == TYPE_REFERENCE;
+        std::string held = name_of(entry->module, entry->subject);
+
+        // a temporary is an rvalue, and C++ will not bind one to a plain
+        // reference
+        if (into) {
+            out << "const_cast<" << held << "&>(static_cast<const " << held
+                << "&>(";
+        }
+
+        emit_construction(module_index, node);
+
+        if (into) {
+            out << "))";
+        }
+
+        return true;
     }
 
     // and the same class is the same **pair**, which record 0016 does write
@@ -1883,23 +1972,27 @@ bool Emitter::emit_copy_assignment(u32 module_index, u32 node) {
     }
 
     u32 right = child_of(module_index, node, 1);
-    bool held = is_an_rvalue(module_index, right);
-    std::string name = declare(module_index, type_at(module_index, left), "");
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+
+    // Record 0031's assignment takes a **reference**, so what the right side
+    // has to become is a reference to the left's class -- and asking for it
+    // that way is what makes the one helper below enough.
+    //
+    // It is the same helper an argument goes through, and it answers both
+    // questions at once: a right side of another type is BUILT into one, and
+    // a value with no name is given one to bind to. 'a = []' and 'a =
+    // gives()' are the second; 's = "abc"' is the first, and until 2026-09-08
+    // it was neither -- the emitter handed a 'char*' straight to a method
+    // taking a 'String&', which Haard accepted (record 0018's list says a
+    // char* fits a String) and **C++ refused**. It compiled here and failed
+    // there, which is the failure record 0037 exists to prevent
+    u32 wanted = types->reference(types->value_of(type_at(module_index, left)));
 
     emit_expression(module_index, left);
     out << (is_pointer(module_index, left) ? "->" : ".") << "m_assign(";
 
-    // record 0031's assignment takes a reference, and C++ will not bind one
-    // to a value that has no name -- 'a = []' and 'a = gives()' are both that
-    if (held) {
-        out << "const_cast<" << name << "&>(static_cast<const " << name
-            << "&>(";
-    }
-
-    emit_expression(module_index, right);
-
-    if (held) {
-        out << "))";
+    if (!emit_conversion(module_index, module_index, wanted, right)) {
+        emit_expression(module_index, right);
     }
 
     out << ")";

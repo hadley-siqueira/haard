@@ -1,6 +1,7 @@
 #ifndef HAARD_TYPE_COLLECTOR_H
 #define HAARD_TYPE_COLLECTOR_H
 
+#include <haard/sugar/for_each_lowerer.h>
 #include <haard/type_table/expression_typer.h>
 #include <map>
 #include <set>
@@ -128,6 +129,15 @@ namespace haard {
             TypeBuilder builder;
             ExpressionTyper typer;
             Coercion coercion;
+
+            // Record 0040, and it runs from here rather than from a phase of
+            // its own in Compilation::build for one reason: the ORDER. A
+            // foreach is taken apart when the loop variable's candidate is
+            // typed, which is where the source wrote it -- after the sequence
+            // it walks and before whatever the body says about the element.
+            // A pass after this one would reach 'let y = x' too late, with x
+            // already typed by nothing and the mark past it
+            ForEachLowerer lowerer;
 
             Module* module;
             u32 index;

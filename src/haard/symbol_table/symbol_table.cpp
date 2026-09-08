@@ -85,6 +85,10 @@ void SymbolTable::set_candidate_super(u32 candidate, u32 super) {
     candidates[candidate].super = super;
 }
 
+void SymbolTable::set_candidate_node(u32 candidate, u32 node) {
+    candidates[candidate].ast_node = node;
+}
+
 u32 SymbolTable::scope_owned_by(u32 node) {
     // scopes are few and this is asked once per field access, so a walk beats
     // a map that would have to be kept in step with the table

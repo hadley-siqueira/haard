@@ -110,6 +110,19 @@ directory, it does, and `make clean` takes it back.
   **unbound generic** to stop being checked: two occurrences of `Node<T>` in
   two generics are two types.
 
+- **`containers_are_walked_by_for_in`** — record 0040, and the four things
+  there are to walk: an `Array<i32>` and a `List<i32>` by the cursor each gives
+  back, a fixed array by the length its type carries, and a range in both of
+  its spellings. It doubles every element through the loop variable, which is
+  what says the variable is a **reference** and not a copy; it walks up to
+  `xs.length()`, which is evaluated once; and it runs a `continue` and a
+  `break` through a lowered loop.
+
+  The two cursors are in the library beside their containers, which is the
+  point of record 0040 having one per container: `ListCursor<T>` follows the
+  link and never indexes, so walking a list is O(n) and not the O(n²) a loop
+  over `l[i]` would have been.
+
 - **`arrays_are_written_as_sugar`** — `Array<T>` written as `i32[]`, in a
   program that imports nothing: Array, String, File and `console()` all arrive
   through the table's `prelude` block. It grows an array past its capacity

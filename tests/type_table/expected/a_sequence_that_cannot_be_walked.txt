@@ -1,0 +1,35 @@
+<unnamed>:
+    Thing  Thing
+    main  i32
+    value  i32
+    n  i32
+    t  Thing
+    fixed  i32[2]
+      <none>
+    b  <none>
+    __c0  <none>
+      <none>
+      <none>
+      <none>
+  17 types interned
+diagnostics:
+error: i32 is not something a 'for ... in' can walk
+  --> main.hd:19:14
+   |
+19 |     for a in n:
+   |              ^
+error: Thing has no member named 'iterator'
+  --> main.hd:22:14
+   |
+22 |     for b in t:
+   |              ^
+error: a 'for ... in' binds one name, and this writes 2
+  --> main.hd:25:5
+   |
+25 |     for key, value in fixed:
+   |     ^^^
+error: a 'for' walks what is written after 'in'
+  --> main.hd:28:11
+   |
+28 |     for c not in fixed:
+   |           ^^^

@@ -1,0 +1,25 @@
+<unnamed>:
+    18    text          char*               -> text
+    19    ""            char*
+    33    text          char*               -> text
+    34    from          char*               -> from
+    49    text          char*               -> text
+    50    other         Note&               -> other
+    51    text          <none>              -> text
+    52    .             char*
+    66    1             i32
+    75    "returned"    Note                -> Note.init  char* -> void
+    94    "bound"       Note                -> Note.init  char* -> void
+    100   takes         <none>              -> takes  Note -> i32
+    102   "called"      Note                -> Note.init  char* -> void
+    103   (             i32
+    114   assigned      Note                -> assigned
+    115   "assigned"    Note                -> Note.init  char* -> void
+    122   from_a_value  char*               -> from_a_value
+    126   called        i32                 -> called
+diagnostics:
+error: expected Note, found char*
+  --> main.hd:54:24
+   |
+54 |     let value : Note = from_a_value
+   |                        ^^^^^^^^^^^^
