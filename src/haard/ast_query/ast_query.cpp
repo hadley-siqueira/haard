@@ -230,6 +230,28 @@ std::vector<u32> AstQuery::get_loop_variables(u32 for_each) {
     return variables;
 }
 
+// A pattern that takes its variant apart is written as a call, so what it
+// binds is that call's arguments -- 'case Click(x, y)' is the shape
+// 'Click(10, 20)' already is, read the other way round
+std::vector<u32> AstQuery::get_captures(u32 one_case) {
+    std::vector<u32> captures;
+    u32 pattern = ast->get_node(one_case)->get_children();
+
+    if (pattern == 0 || ast->get_node(pattern)->get_kind() != AST_CALL) {
+        return captures;
+    }
+
+    u32 arguments = ast->get_node(ast->get_node(pattern)->get_children())
+                        ->get_sibling();
+
+    for (u32 child = arguments == 0 ? 0 : ast->get_node(arguments)->get_children();
+         child != 0; child = ast->get_node(child)->get_sibling()) {
+        captures.push_back(child);
+    }
+
+    return captures;
+}
+
 u32 AstQuery::get_block(u32 node) {
     return find_child(node, AST_BLOCK);
 }

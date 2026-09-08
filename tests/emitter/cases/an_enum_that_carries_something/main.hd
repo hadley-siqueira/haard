@@ -1,0 +1,109 @@
+# An enum whose variants carry something, which is what an enum IS in Haard:
+# a tagged union, and the payload-free one is the case where the union is
+# empty and the tag is the whole value.
+#
+# The C++ is a struct with a tag and an anonymous union, plus a **maker per
+# variant** -- a designated initialiser would be C++20 and this emits C++17,
+# and a call to a maker is what 'Action.Click(10, 20)' already is, so nothing
+# on the expression side had to learn a new shape.
+#
+# The payload is **flattened**: '(i32, i32)' is two fields and two arguments,
+# which is what the constructor's signature says.
+#
+# A switch over one switches over its **tag**, and the labels are the numbers
+# the makers write -- the C rule, a counter an explicit value resets.
+enum Action:
+    Idle
+    Click : (i32, i32)
+    Increment : i32
+    Stop = 40
+
+    # a payload with a **default**: the maker's parameters carry it into the
+    # C++, so 'Move' written with nothing is the maker called with none, and
+    # writing its name alone is a value of the enum rather than a constructor
+    Move : (i32, i32) = (0, 0)
+
+def value_of : i32
+    @a : Action
+
+    switch a:
+        case Idle:
+            return 1
+
+        case Click:
+        case Increment:
+            return 2
+
+        default:
+            return 3
+
+# and taking the payload apart, which is what the tag is for. A pattern binds
+# one name per thing its variant carries, and the names come out of the union
+# member that variant holds
+def sum_of : i32
+    @a : Action
+
+    switch a:
+        case Click(x, y):
+        case Move(x, y):
+            return x + y
+
+        case Increment(n):
+            return n
+
+        default:
+            return 0
+
+# A group may capture too, and every case in it binds the same names for the
+# same types -- Hadley's rule -- so what differs is only which member of the
+# union the value comes out of. That is a question about the tag, and the
+# golden shows it as one conditional per name
+enum Shape:
+    Point
+    Circle : i32
+    Square : i32
+
+def area_of : i32
+    @s : Shape
+
+    switch s:
+        case Point:
+            return 0
+
+        case Circle(r):
+        case Square(r):
+            return r * r
+
+def main : i32
+    # a variant that carries nothing is a value; one that carries something is
+    # a call, qualified by the enum
+    let idle = Action.Idle
+    let click = Action.Click(10, 20)
+
+    # and both are written **bare** as well: a name is looked for as a variant
+    # last of all, so anything else of that name wins and 'Action.Click' is
+    # what to write when it does
+    let bare = Click(1, 2)
+    let quiet = Idle
+    let still = Move
+    let moved = Action.Move(6, 6)
+    let step = Action.Increment(5)
+    let stop = Action.Stop
+
+    # and one is assigned over another, which is a plain struct copy
+    let held = idle
+
+    held = click
+
+    # the subject is bound to a name before a switch that captures, so an
+    # expression with a side effect is read once and not once per name
+    let taken = sum_of(click) + sum_of(step) + sum_of(idle)
+
+    let squares = (area_of(Shape.Circle(3)) + area_of(Shape.Square(4))
+                   + area_of(Shape.Point))
+
+    # 1 + 2 + 2 + 3 + 2 = 10, plus 30 + 5 + 0, plus 9 + 16 + 0, plus 3 + 1,
+    # plus 0 + 12 from the default payload
+    return (value_of(idle) + value_of(click) + value_of(step)
+            + value_of(stop) + value_of(held) + taken + squares
+            + sum_of(bare) + value_of(quiet) + sum_of(still) + sum_of(moved))

@@ -87,6 +87,11 @@ namespace haard {
                                   const std::string& name);
 
             // the candidates of one symbol, appended in declaration order
+            // the variants of the enums a module declares, which is the
+            // last thing a bare name is looked for in
+            void gather_variants(std::vector<Candidacy>& found, u32 module,
+                                 u32 hash, const std::string& name);
+
             void gather(std::vector<Candidacy>& found, u32 module, u32 symbol);
 
             // and what the classes ABOVE this one declare of the same name.

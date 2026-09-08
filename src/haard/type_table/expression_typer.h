@@ -250,6 +250,11 @@ namespace haard {
             // there is no operator to look up
             bool is_an_enum(u32 type);
 
+            // the type a candidate has as a **value**: its own, except for a
+            // variant whose payload has a default, which is a value of its
+            // enum rather than the constructor
+            u32 value_of_candidate(u32 owner, u32 candidate);
+
             // the candidate of the class a type names, looking through one
             // reference. Gives back 0 for anything that has no members
             u32 class_of(u32 type, u32& owner);

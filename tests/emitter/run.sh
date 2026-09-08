@@ -53,6 +53,7 @@ sources=(
     "$root/src/haard/module_finder/module_finder.cpp"
     "$root/src/haard/sugar/sugar_lowerer.cpp"
     "$root/src/haard/sugar/for_each_lowerer.cpp"
+    "$root/src/haard/sugar/switch_lowerer.cpp"
     "$root/src/haard/compilation/compilation.cpp"
     "$root/src/haard/type_table/type_collector.cpp"
     "$root/src/haard/type_table/coercion.cpp"

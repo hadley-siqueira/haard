@@ -950,10 +950,39 @@ u32 ExpressionTyper::identifier(u32 scope, u32 node) {
     // name anyone had written -- an inherited 'wheels : i32' -- was right by
     // construction, and one of a class type would not have been
     return builder.translate(index, found[0].module,
-                             compilation->get_module(found[0].module)
-                                 ->get_symbols()
-                                 ->get_candidate(found[0].candidate)
-                                 ->type);
+                             value_of_candidate(found[0].module,
+                                                found[0].candidate));
+}
+
+// The type a candidate has **as a value**, which is its own except for one
+// shape: a variant whose payload has a default is a constructor that may be
+// called with nothing, so writing its name alone is a value of the enum and
+// not the constructor itself.
+//
+// A variant with no default keeps the signature, and giving it a name without
+// calling it is a constructor as a first-class function -- which nothing has
+// decided and the emitter refuses
+u32 ExpressionTyper::value_of_candidate(u32 owner, u32 candidate) {
+    Module* holder = compilation->get_module(owner);
+    Candidate* found = holder->get_symbols()->get_candidate(candidate);
+    AstQuery query;
+
+    if ((SymbolKind) found->kind != SYMBOL_VARIANT
+        || found->type == INVALID_TYPE
+        || holder->get_types()->get_type(found->type)->kind != TYPE_FUNCTION) {
+        return found->type;
+    }
+
+    query.set_module(holder);
+
+    if (query.get_binding_expression(found->ast_node) == 0) {
+        return found->type;
+    }
+
+    std::vector<u32> written = holder->get_types()->get_arguments(found->type);
+
+    // the return type is the last one, per record 0016
+    return written.back();
 }
 
 // whether this node is a number written down, which record 0018 gives no type
@@ -1472,10 +1501,8 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
     // reader's module: *"Holder has no member named 'x'"* about a Point, and
     // *"F2 has no member named 'x'"* once the reader declared two structs
     return builder.translate(index, found[0].module,
-                             compilation->get_module(found[0].module)
-                                 ->get_symbols()
-                                 ->get_candidate(found[0].candidate)
-                                 ->type);
+                             value_of_candidate(found[0].module,
+                                                found[0].candidate));
 }
 
 // Whether this named type is an enum, which is the one named type that is not

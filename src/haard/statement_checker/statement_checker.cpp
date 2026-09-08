@@ -251,6 +251,16 @@ void StatementChecker::check_switch(u32 node, u32 scope) {
     TypeTable* types = module->get_types();
     Type* entry = types->get_type(types->value_of(given));
 
+    // An integer and a char are switched over by **value**, so there are no
+    // variants to name, nothing to be exhaustive about and no pattern but a
+    // written number. Hadley, 2026-09-08: a String and a tuple come too, and
+    // those become a chain of 'if's rather than a C++ switch
+    if (entry->kind == TYPE_BUILTIN) {
+        check_switch_over_a_value(node, scope, given);
+
+        return;
+    }
+
     if (entry->kind != TYPE_NAMED) {
         report(subject, "a switch walks an enum, and this is "
                             + typer.name_of(given));
@@ -274,7 +284,13 @@ void StatementChecker::check_switch(u32 node, u32 scope) {
 
     std::vector<std::string> variants;
     std::set<std::string> covered;
+    std::vector<std::string> group;
+    std::vector<u32> group_carries;
+    AstQuery query;
+    bool grouped = false;
     bool has_default = false;
+
+    query.set_module(module);
 
     for (u32 member : theirs.get_members(found->ast_node)) {
         variants.push_back(theirs.get_declaration_name(member));
@@ -299,17 +315,50 @@ void StatementChecker::check_switch(u32 node, u32 scope) {
         std::string named = check_pattern(first_child(child), scope,
                                           typer.name_of(given), variants);
 
-        if (named.size() == 0) {
-            continue;
+        if (named.size() > 0) {
+            if (covered.count(named) > 0) {
+                report(first_child(child), "'" + named
+                                               + "' is already covered by this "
+                                                 "switch");
+            }
+
+            covered.insert(named);
         }
 
-        if (covered.count(named) > 0) {
-            report(first_child(child), "'" + named
-                                           + "' is already covered by this "
-                                             "switch");
+        std::vector<u32> carries = carried_of(entry->module, found->ast_node,
+                                              named);
+
+        check_captures(child, carries, named);
+
+        // Hadley's rule, 2026-09-08: cases share a body by the ones above it
+        // having none, and grouping cases that bind **different names** is an
+        // error -- the body would read a name that half the group never bound.
+        // Binding nothing at all in every one of them is the ordinary case
+        // and is not that mistake
+        std::vector<std::string> bound;
+
+        for (u32 capture : query.get_captures(child)) {
+            bound.push_back(std::string(module->get_token_value(
+                module->get_ast()->get_node(capture)->get_token())));
         }
 
-        covered.insert(named);
+        if (grouped && bound != group) {
+            report(child, "these cases share a block and do not bind the same "
+                          "names");
+        } else if (grouped && bound.size() > 0 && carries != group_carries) {
+            report(child, "these cases share a block and bind the same names "
+                          "for different types");
+        }
+
+        group = bound;
+        group_carries = carries;
+        grouped = module->get_ast()->get_node(first_child(child))->get_sibling()
+                  == 0;
+
+        if (!grouped) {
+            group.clear();
+            group_carries.clear();
+        }
     }
 
     // a case with no block runs the block of the one below it, so the last one
@@ -341,6 +390,133 @@ void StatementChecker::check_switch(u32 node, u32 scope) {
     }
 }
 
+// A switch over an integer or a char: every pattern is a **written value** of
+// the subject's type, which is what a C++ 'case' label has to be as well.
+//
+// Nothing is checked for exhaustiveness -- there is no covering every i32 --
+// so a 'default' is what a program writes when it wants one, and not writing
+// one is not a mistake
+void StatementChecker::check_switch_over_a_value(u32 node, u32 scope,
+                                                 u32 given) {
+    u32 subject = first_child(node);
+    BuiltinType which = (BuiltinType) module->get_types()
+                            ->get_type(module->get_types()->value_of(given))
+                            ->subject;
+    bool has_default = false;
+
+    if (which == BUILTIN_BOOL || which == BUILTIN_VOID
+        || which == BUILTIN_F32 || which == BUILTIN_F64) {
+        report(subject, "a switch walks an enum, an integer or a char, and "
+                        "this is " + typer.name_of(given));
+
+        return;
+    }
+
+    u32 last_case = 0;
+
+    for (u32 child = module->get_ast()->get_node(subject)->get_sibling();
+         child != 0; child = module->get_ast()->get_node(child)->get_sibling()) {
+        last_case = child;
+
+        if (kind_of(child) == AST_DEFAULT) {
+            if (has_default) {
+                report(child, "this switch already has a 'default'");
+            }
+
+            has_default = true;
+            continue;
+        }
+
+        u32 pattern = first_child(child);
+
+        // A written number and nothing else, which is C++'s rule for a label
+        // and will stop being this one when a String switch arrives -- that
+        // one is a chain of comparisons and takes any expression
+        if (pattern != 0 && kind_of(pattern) != AST_INTEGER_LITERAL
+            && kind_of(pattern) != AST_CHAR_LITERAL) {
+            report(pattern, "a case over " + typer.name_of(given)
+                                + " is a written value");
+
+            continue;
+        }
+
+        typer.type_of(index, scope, pattern, given);
+    }
+
+    if (last_case != 0 && kind_of(last_case) == AST_CASE
+        && module->get_ast()->get_node(first_child(last_case))->get_sibling()
+               == 0) {
+        report(last_case, "this case has no block, and there is no case after "
+                          "it to share one with");
+    }
+}
+
+// What a pattern takes apart has to be what its variant carries: a name per
+// thing, or none at all. 'case Increment:' is written when the payload is not
+// wanted and is not the same mistake as writing the wrong number of names
+void StatementChecker::check_captures(u32 one_case,
+                                      const std::vector<u32>& carries,
+                                      const std::string& variant) {
+    AstQuery query;
+
+    query.set_module(module);
+
+    std::vector<u32> captures = query.get_captures(one_case);
+
+    if (captures.size() == 0 || variant.size() == 0) {
+        return;
+    }
+
+    if (captures.size() != carries.size()) {
+        report(first_child(one_case),
+               "'" + variant + "' carries " + std::to_string(carries.size())
+                   + (carries.size() == 1 ? " thing" : " things")
+                   + ", and this takes " + std::to_string(captures.size())
+                   + " apart");
+    }
+}
+
+// what a variant carries, in the table of the module that declares the enum
+// -- which is where two cases of one switch may be compared without
+// translating anything, since they name variants of the same enum
+std::vector<u32> StatementChecker::carried_of(u32 holder, u32 declaration,
+                                              const std::string& variant) {
+    std::vector<u32> carries;
+    Module* owner = compilation->get_module(holder);
+    AstQuery theirs;
+
+    if (variant.size() == 0) {
+        return carries;
+    }
+
+    theirs.set_module(owner);
+
+    for (u32 member : theirs.get_members(declaration)) {
+        if (theirs.get_declaration_name(member) != variant) {
+            continue;
+        }
+
+        u32 named = owner->get_symbols()->candidate_of(member);
+        u32 signature = named == 0
+                            ? INVALID_TYPE
+                            : owner->get_symbols()->get_candidate(named)->type;
+
+        if (signature == INVALID_TYPE
+            || owner->get_types()->get_type(signature)->kind != TYPE_FUNCTION) {
+            return carries;
+        }
+
+        carries = owner->get_types()->get_arguments(signature);
+
+        // the return type is the last one, per record 0016
+        carries.pop_back();
+
+        return carries;
+    }
+
+    return carries;
+}
+
 // The variant a pattern names, and an empty string when it names none. Two
 // shapes today: a bare 'Idle' and a written 'Action.Idle', which is the same
 // pair every language with this statement offers -- the short one because the
@@ -356,8 +532,15 @@ std::string StatementChecker::check_pattern(u32 pattern, u32 scope,
 
     u32 named = pattern;
 
-    if (kind_of(pattern) == AST_DOT) {
-        named = module->get_ast()->get_node(first_child(pattern))->get_sibling();
+    // 'case Click(x, y)' takes the variant apart, and what names it is the
+    // callee -- the pattern is the shape a construction already is, read the
+    // other way round
+    if (kind_of(named) == AST_CALL) {
+        named = first_child(named);
+    }
+
+    if (kind_of(named) == AST_DOT) {
+        named = module->get_ast()->get_node(first_child(named))->get_sibling();
     }
 
     if (named == 0 || kind_of(named) != AST_IDENTIFIER) {

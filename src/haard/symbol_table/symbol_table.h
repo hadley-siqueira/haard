@@ -19,6 +19,11 @@ namespace haard {
         SYMBOL_ENUM,
         SYMBOL_UNION,
         SYMBOL_FIELD,
+
+        // a variant of an enum. Not a field: a field is part of every value
+        // of its class, and a variant is one of the shapes the value may be
+        // -- which is also why a bare one is not written 'this->'
+        SYMBOL_VARIANT,
         SYMBOL_VARIABLE,
         SYMBOL_PARAM,
         SYMBOL_GENERIC,

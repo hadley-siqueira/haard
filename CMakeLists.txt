@@ -95,6 +95,7 @@ set(MODULE_SRC
 set(SUGAR_SRC
     src/haard/sugar/sugar_lowerer.cpp
     src/haard/sugar/for_each_lowerer.cpp
+    src/haard/sugar/switch_lowerer.cpp
 )
 
 set(LOG_SRC

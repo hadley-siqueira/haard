@@ -1,30 +1,45 @@
 error: this switch does not cover Down, Left -- every variant, or a 'default'
-  --> main.hd:34:5
+  --> main.hd:45:5
    |
-34 |     switch m:
+45 |     switch m:
    |     ^^^^^^
 error: Movement has no variant named 'Sideways'
-  --> main.hd:40:14
-   |
-40 |         case Sideways:
-   |              ^^^^^^^^
-error: 'Up' is already covered by this switch
   --> main.hd:51:14
    |
-51 |         case Up:
+51 |         case Sideways:
+   |              ^^^^^^^^
+error: 'Up' is already covered by this switch
+  --> main.hd:62:14
+   |
+62 |         case Up:
    |              ^^
-error: a switch walks an enum, and this is i32
-  --> main.hd:58:12
+error: a case over i32 is a written value
+  --> main.hd:70:14
    |
-58 |     switch n:
-   |            ^
+70 |         case Up:
+   |              ^^
 error: this switch already has a 'default'
-  --> main.hd:70:9
-   |
-70 |         default:
-   |         ^^^^^^^
+   --> main.hd:103:9
+    |
+103 |         default:
+    |         ^^^^^^^
 error: this case has no block, and there is no case after it to share one with
-  --> main.hd:79:9
-   |
-79 |         case Left:
-   |         ^^^^
+   --> main.hd:112:9
+    |
+112 |         case Left:
+    |         ^^^^
+error: 'Two' carries 2 things, and this takes 1 apart
+   --> main.hd:127:17
+    |
+127 |         case Two(only):
+    |                 ^
+error: these cases share a block and do not bind the same names
+   --> main.hd:136:9
+    |
+136 |         case One(a):
+    |         ^^^^
+error: these cases share a block and bind the same names for different types
+   --> main.hd:146:9
+    |
+146 |         case Fraction(v):
+    |         ^^^^

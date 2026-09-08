@@ -36,6 +36,22 @@ def value_of : i32
         default:
             return 3
 
+# and over an integer or a char, where a pattern is a **written value**: no
+# variants to name, nothing to be exhaustive about, and the same C++ switch
+def digit_of : i32
+    @c : char
+
+    switch c:
+        case 'a':
+        case 'e':
+            return 1
+
+        case '0':
+            return 2
+
+        default:
+            return 0
+
 def main : i32
     let total = 0
 
@@ -68,6 +84,15 @@ def main : i32
         default:
             total = total + 1
 
-    # 1 + 1 + 2 + 3 + 10 + 100 = 117, and it has to fit in a byte: an exit
-    # status is one
+    total = total + digit_of('a') + digit_of('0') + digit_of('z')
+
+    switch total:
+        case 120:
+            total = total + 1
+
+        default:
+            total = total + 2
+
+    # 1 + 1 + 2 + 3 + 10 + 100 + 1 + 2 + 0 + 1 = 121, and it has to fit in a
+    # byte: an exit status is one
     return total

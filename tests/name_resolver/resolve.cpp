@@ -30,6 +30,7 @@ static const char* kind_name(u8 kind) {
     case SYMBOL_ENUM: return "enum";
     case SYMBOL_UNION: return "union";
     case SYMBOL_FIELD: return "field";
+    case SYMBOL_VARIANT: return "variant";
     case SYMBOL_VARIABLE: return "variable";
     case SYMBOL_PARAM: return "param";
     case SYMBOL_GENERIC: return "generic";

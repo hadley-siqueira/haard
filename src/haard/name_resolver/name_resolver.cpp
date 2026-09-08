@@ -33,7 +33,52 @@ std::vector<Candidacy> NameResolver::resolve(u32 module, u32 scope,
         }
     }
 
+    // And **last**, the variants of the enums in view. Hadley, 2026-09-08:
+    // 'Click(10, 20)' may be written without naming its enum, and a name has
+    // **low priority** as a variant -- anything else called Click wins, and
+    // the author writes 'Action.Click' when that is what they meant.
+    //
+    // Low priority is this position and nothing else: the search only runs
+    // when everything above it found nothing, so no program that resolved
+    // before resolves differently now
+    if (found.size() == 0) {
+        gather_variants(found, module, hash, name);
+
+        for (const Dependency& dependency : importer->get_dependencies()) {
+            gather_variants(found, dependency.module, hash, name);
+        }
+    }
+
     return found;
+}
+
+// every variant of that name declared by an enum of this module. An enum's
+// members live in a scope of the enum's own, so this is the one lookup that
+// reaches inside a declaration on purpose
+void NameResolver::gather_variants(std::vector<Candidacy>& found, u32 module,
+                                   u32 hash, const std::string& name) {
+    Module* owner = compilation->get_module(module);
+    SymbolTable* table = owner->get_symbols();
+    u32 interned = owner->get_strings()->find(hash, name);
+
+    if (interned == INVALID_STRING) {
+        return;
+    }
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        u32 holder = table->get_scope(scope)->owner;
+
+        if (holder == 0
+            || owner->get_ast()->get_node(holder)->get_kind() != AST_ENUM) {
+            continue;
+        }
+
+        u32 symbol = table->find(scope, interned);
+
+        if (symbol != 0) {
+            gather(found, module, symbol);
+        }
+    }
 }
 
 std::vector<Candidacy> NameResolver::resolve_in_module(

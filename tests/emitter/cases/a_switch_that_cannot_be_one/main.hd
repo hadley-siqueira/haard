@@ -1,0 +1,83 @@
+# Record 0043, and Hadley's own words: *pode traduzir para if else se for mais
+# fácil*. An enum, an integer and a char stay a C++ switch, because a jump
+# table is what that statement is for. Everything else is **compared**, and
+# comparing is what 'if' does.
+#
+# So this becomes a chain, and the golden is the chain: the subject bound to a
+# name **once** -- a reference, so nothing is copied and 'switch f():' calls f
+# once -- then one 'if' per group, with the patterns of a group joined by
+# 'or'.
+#
+# What resolves the comparison is the ordinary machinery: 'operator==' on the
+# class (record 0034), found by the statement checker typing an ordinary
+# condition. A subject whose class has no '==' is reported in those words.
+class Name:
+    text : char*
+    size : i32
+
+    def init : void
+        text = ""
+        size = 0
+
+    def init : void
+        @from : char*
+
+        text = from
+        size = 0
+
+        while from[size] != '\0':
+            size = size + 1
+
+    def equals : bool
+        @other : Name&
+
+        if size != other.size:
+            return false
+
+        let i = 0
+
+        while i < size:
+            if text[i] != other.text[i]:
+                return false
+
+            i = i + 1
+
+        return true
+
+    def operator== : bool
+        @other : Name&
+        return equals(other)
+
+def kind_of : i32
+    @n : Name
+
+    switch n:
+        case "ready":
+        case "done":
+            return 1
+
+        case "waiting":
+            return 2
+
+        default:
+            return 3
+
+# and a float, which C++ cannot switch over either
+def scale_of : i32
+    @f : f64
+
+    switch f:
+        case 1.5:
+            return 10
+
+        default:
+            return 20
+
+def main : i32
+    let a = kind_of("ready")
+    let b = kind_of("done")
+    let c = kind_of("waiting")
+    let d = kind_of("other")
+
+    # 1 + 1 + 2 + 3 + 10 + 20 = 37
+    return a + b + c + d + scale_of(1.5) + scale_of(2.5)

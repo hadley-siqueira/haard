@@ -82,7 +82,11 @@ bool Emitter::emit(std::ostream& stream) {
     // of C's stdio. Always included rather than only when one of them is
     // reached -- an unused include costs a program nothing, and asking would
     // mean walking the whole call graph before the first line is written
-    out << "#include <cstdio>\n\n";
+    out << "#include <cstdio>\n";
+
+    // record 00XX: a tagged union whose payload is a class constructs and
+    // destroys the member the tag says is alive, by hand
+    out << "#include <new>\n\n";
 
     emit_forward_declarations();
     emit_types();
@@ -164,26 +168,10 @@ void Emitter::emit_types() {
 
         query.set_module(module);
 
-        // An enum is a set of tags and has no layout to work out, so every
-        // one of them can be written before anything else -- and has to be,
-        // since a field may be of one
-        for (u32 declaration : query.get_declarations()) {
-            if (kind_of(i, declaration) == AST_ENUM) {
-                emit_enum(i, declaration);
-            }
-        }
-    }
-
-    for (u32 i = 0; i < compilation->get_module_count(); i++) {
-        Module* module = compilation->get_module(i);
-        AstQuery query;
-
-        query.set_module(module);
-
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if ((kind == AST_CLASS || kind == AST_STRUCT)
+            if ((kind == AST_CLASS || kind == AST_STRUCT || kind == AST_ENUM)
                 && !is_generic(i, declaration)) {
                 emit_type(i, declaration);
             }
@@ -210,18 +198,16 @@ void Emitter::emit_enum(u32 module_index, u32 declaration) {
 
     query.set_module(module);
 
+    if (carries_a_payload(module_index, declaration)) {
+        emit_tagged_union(module_index, declaration, candidate);
+        return;
+    }
+
     out << "enum class " << name_of(module_index, candidate) << " : int32_t {\n";
 
     for (u32 member : query.get_members(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
-        }
-
-        if (query.get_written_type(member) != 0) {
-            fail("'" + query.get_declaration_name(member)
-                 + "' carries a payload, and an enum that carries one cannot "
-                   "be emitted yet");
-            return;
         }
 
         u32 named = table->candidate_of(member);
@@ -243,6 +229,394 @@ void Emitter::emit_enum(u32 module_index, u32 declaration) {
     out << "};\n\n";
 }
 
+// whether any variant of this enum carries something, which is what decides
+// between the two shapes: a plain 'enum class' when none does, and a tagged
+// union when one does. The author writes one declaration either way, which is
+// what every language with a sum type does and the reason the payload-free
+// enum costs nothing
+bool Emitter::carries_a_payload(u32 module_index, u32 declaration) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) == AST_FIELD
+            && query.get_written_type(member) != 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// The tagged union, which is what an enum is when a variant carries
+// something:
+//
+//     struct Action {
+//         int32_t tag;
+//         union {
+//             struct { int32_t _0; int32_t _1; } Click;
+//         };
+//     };
+//
+//     Action Action_Idle() { Action made; made.tag = 0; return made; }
+//     Action Action_Click(int32_t a0, int32_t a1) { ... }
+//
+// A **maker per variant** rather than a designated initialiser, because that
+// is C++20 and this emits C++17 -- and because a call to one is what
+// 'Action.Click(10, 20)' already is, so nothing in the expression side had to
+// learn a new shape.
+//
+// The payload is **flattened**: a tuple of two is two fields and two
+// arguments, which is what the constructor's signature says and what Rust
+// gives a tuple variant
+void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
+                                u32 candidate) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    AstQuery query;
+    std::string name = name_of(module_index, candidate);
+
+    query.set_module(module);
+
+    out << "struct " << name << " {\n";
+    out << "    int32_t tag;\n";
+    out << "    union {\n";
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD
+            || query.get_written_type(member) == 0) {
+            continue;
+        }
+
+        std::vector<u32> carried = payload_of(module_index, member);
+        u32 named = table->candidate_of(member);
+
+        out << "        struct {";
+
+        for (u32 i = 0; i < carried.size(); i++) {
+            out << " " << declare(module_index, carried[i],
+                                  "_" + std::to_string(i)) << ";";
+        }
+
+        out << " } " << name_of(module_index, named) << ";\n";
+    }
+
+    out << "    };\n";
+
+    // A union whose members are classes has **no** default constructor,
+    // destructor or copy of its own: C++ deletes all three, because it cannot
+    // know which member is alive. The tag knows, so the struct writes them.
+    //
+    // Nothing is generated when no variant carries a class: the union is then
+    // trivially copyable and C++'s own answers are the right ones
+    if (holds_a_class(module_index, declaration)) {
+        emit_union_lifetime(module_index, declaration, name);
+    }
+
+    out << "};\n\n";
+
+    // and one maker per variant, payload or not: a variant is a value of the
+    // enum and this is how one comes into being
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        std::vector<u32> carried = payload_of(module_index, member);
+        u32 named = table->candidate_of(member);
+        std::string maker = name + "_" + name_of(module_index, named);
+
+        std::vector<u32> defaults = defaults_of(module_index, member,
+                                                carried.size());
+
+        out << name << " " << maker << "(";
+
+        for (u32 i = 0; i < carried.size(); i++) {
+            out << (i > 0 ? ", " : "")
+                << declare(module_index, carried[i], "a" + std::to_string(i));
+
+            // Record 0043's default payload, carried into the C++ the way a
+            // parameter's default already is: 'Action.Move' with nothing
+            // written is the maker called with none
+            if (i < defaults.size()) {
+                out << " = ";
+                emit_expression(module_index, defaults[i]);
+            }
+        }
+
+        out << ") {\n";
+        out << "    " << name << " made;\n";
+        out << "    made.tag = " << tag_of(module_index, declaration, member)
+            << ";\n";
+
+        for (u32 i = 0; i < carried.size(); i++) {
+            std::string held = name_of(module_index, named);
+
+            // a class member of the union is not alive until it is
+            // constructed, and 'made' was born with the tag of the first
+            // variant and nothing built
+            if (module->get_types()->get_type(carried[i])->kind
+                == TYPE_NAMED) {
+                out << "    new (&made." << held << "._" << i << ") "
+                    << declare(module_index, carried[i], "") << "(a" << i
+                    << ");\n";
+                continue;
+            }
+
+            out << "    made." << held << "._" << i << " = a" << i << ";\n";
+        }
+
+        out << "    return made;\n";
+        out << "}\n\n";
+    }
+}
+
+// The number a variant's tag holds: the C rule, a counter that an explicitly
+// written value resets. It is asked in two places -- the maker that sets it
+// and the case label that tests it -- and both have to say the same thing,
+// which is why it is one function.
+//
+// A written value on a variant that CARRIES something is not a tag: it is a
+// default payload, which is not written yet
+u32 Emitter::tag_of(u32 module_index, u32 declaration, u32 wanted) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+    u32 tag = 0;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        u32 value = query.get_binding_expression(member);
+
+        if (value != 0 && query.get_written_type(member) == 0) {
+            if (kind_of(module_index, value) != AST_INTEGER_LITERAL) {
+                fail("the tag of '" + query.get_declaration_name(member)
+                     + "' is not a written number");
+                return 0;
+            }
+
+            tag = (u32) std::stoul(text_of(module_index, value));
+        }
+
+        if (member == wanted) {
+            return tag;
+        }
+
+        tag++;
+    }
+
+    return tag;
+}
+
+// whether any variant of this enum carries a class, which is what makes the
+// union's lifetime the struct's business
+bool Emitter::holds_a_class(u32 module_index, u32 declaration) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        for (u32 one : payload_of(module_index, member)) {
+            if (module->get_types()->get_type(one)->kind == TYPE_NAMED) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// The four C++ writes for a union it cannot reason about, plus the two the
+// tag makes possible: '__clear' destroys the member that is alive and
+// '__copy' constructs the one the other value had.
+//
+// 'm_assign' and not a C++ 'operator=', which is record 0034's rule and the
+// same shape a class gets (record 0031): destroy first, then copy
+void Emitter::emit_union_lifetime(u32 module_index, u32 declaration,
+                                  const std::string& name) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    AstQuery query;
+
+    query.set_module(module);
+
+    out << "\n";
+    out << "    " << name << "() { tag = 0; }\n";
+    out << "    " << name << "(const " << name << "& other) { __copy(other); }\n";
+    out << "    ~" << name << "() { __clear(); }\n";
+    out << "    void m_assign(" << name << "& other) {\n";
+    out << "        if (this == &other) {\n            return;\n        }\n";
+    out << "        __clear();\n";
+    out << "        __copy(other);\n";
+    out << "    }\n";
+
+    // what is alive is what the tag says, and only a class has anything to
+    // destroy
+    out << "    void __clear() {\n";
+    out << "        switch (tag) {\n";
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        std::vector<u32> carried = payload_of(module_index, member);
+        std::string held = name_of(module_index, table->candidate_of(member));
+        bool wrote = false;
+
+        for (u32 i = 0; i < carried.size(); i++) {
+            if (module->get_types()->get_type(carried[i])->kind != TYPE_NAMED) {
+                continue;
+            }
+
+            if (!wrote) {
+                out << "        case " << tag_of(module_index, declaration,
+                                                 member) << ":\n";
+                wrote = true;
+            }
+
+            out << "            " << held << "._" << i << ".~"
+                << declare(module_index, carried[i], "") << "();\n";
+        }
+
+        if (wrote) {
+            out << "            break;\n";
+        }
+    }
+
+    out << "        default:\n            break;\n";
+    out << "        }\n";
+    out << "    }\n";
+
+    out << "    void __copy(const " << name << "& other) {\n";
+    out << "        tag = other.tag;\n";
+    out << "        switch (tag) {\n";
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        std::vector<u32> carried = payload_of(module_index, member);
+
+        if (carried.size() == 0) {
+            continue;
+        }
+
+        std::string held = name_of(module_index, table->candidate_of(member));
+
+        out << "        case " << tag_of(module_index, declaration, member)
+            << ":\n";
+
+        for (u32 i = 0; i < carried.size(); i++) {
+            std::string kind = declare(module_index, carried[i], "");
+
+            if (module->get_types()->get_type(carried[i])->kind
+                != TYPE_NAMED) {
+                out << "            " << held << "._" << i << " = other."
+                    << held << "._" << i << ";\n";
+                continue;
+            }
+
+            // const_cast for the reason record 0031 gives: Haard has no
+            // 'const' to write on a copy's parameter, and C++ wants one to
+            // bind the other value here
+            out << "            new (&" << held << "._" << i << ") " << kind
+                << "(const_cast<" << kind << "&>(other." << held << "._" << i
+                << "));\n";
+        }
+
+        out << "            break;\n";
+    }
+
+    out << "        default:\n            break;\n";
+    out << "        }\n";
+    out << "    }\n";
+}
+
+// The default payload of a variant, one expression per thing it carries. It is
+// written as a tuple when the payload is one -- 'Move : (i32, i32) = (0, 0)'
+// -- and as itself when the variant carries one thing, which is the same shape
+// the payload's own type is written in.
+//
+// Empty when there is no default, and empty with a complaint when what was
+// written is not one value per thing carried: a name of a tuple would be, and
+// a tuple is not something this back end can take apart
+std::vector<u32> Emitter::defaults_of(u32 module_index, u32 member,
+                                      u32 carries) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+    std::vector<u32> written;
+
+    query.set_module(module);
+
+    u32 value = query.get_binding_expression(member);
+
+    if (value == 0 || carries == 0) {
+        return written;
+    }
+
+    if (carries == 1 && kind_of(module_index, value) != AST_TUPLE) {
+        written.push_back(value);
+
+        return written;
+    }
+
+    if (kind_of(module_index, value) == AST_TUPLE) {
+        for (u32 child = child_of(module_index, value, 0); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            written.push_back(child);
+        }
+    }
+
+    if (written.size() != carries) {
+        fail("the default payload of '" + query.get_declaration_name(member)
+             + "' is not one value per thing it carries");
+        written.clear();
+    }
+
+    return written;
+}
+
+// What a variant carries, read off the type its candidate was given: a
+// constructor's parameters, which is the payload already flattened by the
+// type phase. Empty for a variant that carries nothing
+std::vector<u32> Emitter::payload_of(u32 module_index, u32 member) {
+    Module* module = compilation->get_module(module_index);
+    u32 candidate = module->get_symbols()->candidate_of(member);
+    std::vector<u32> carried;
+
+    if (candidate == 0) {
+        return carried;
+    }
+
+    u32 signature = module->get_symbols()->get_candidate(candidate)->type;
+
+    if (signature == INVALID_TYPE
+        || module->get_types()->get_type(signature)->kind != TYPE_FUNCTION) {
+        return carried;
+    }
+
+    carried = module->get_types()->get_arguments(signature);
+
+    // the return type is the last one, per record 0016, and here it is the
+    // enum itself
+    carried.pop_back();
+
+    return carried;
+}
+
 void Emitter::emit_type(u32 module_index, u32 declaration) {
     Module* module = compilation->get_module(module_index);
     SymbolTable* table = module->get_symbols();
@@ -251,14 +625,6 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
     AstQuery query;
 
     if (candidate == 0 || emitted.count(key) > 0) {
-        return;
-    }
-
-    // An enum has no layout to work out and is written before anything else,
-    // so a field of one needs nothing from here. Walking into it would also
-    // never come back: a variant that carries nothing IS one of the enum, so
-    // the walk over its members would ask for the enum again
-    if (kind_of(module_index, declaration) == AST_ENUM) {
         return;
     }
 
@@ -272,6 +638,37 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
 
     emitting.insert(key);
     query.set_module(module);
+
+    // An enum is the same walk with a smaller answer: what it needs complete
+    // is whatever its variants **carry**, since the union holds those by
+    // value. A payload-free one needs nothing and could have been written
+    // first; going through here anyway is what keeps one order for everything
+    if (kind_of(module_index, declaration) == AST_ENUM) {
+        for (u32 member : query.get_members(declaration)) {
+            if (kind_of(module_index, member) != AST_FIELD) {
+                continue;
+            }
+
+            for (u32 one : payload_of(module_index, member)) {
+                Type* entry = module->get_types()->get_type(one);
+
+                if (entry->kind != TYPE_NAMED) {
+                    continue;
+                }
+
+                emit_type(entry->module, compilation->get_module(entry->module)
+                                             ->get_symbols()
+                                             ->get_candidate(entry->subject)
+                                             ->ast_node);
+            }
+        }
+
+        emitting.erase(key);
+        emitted.insert(key);
+        emit_enum(module_index, declaration);
+
+        return;
+    }
 
     u32 base = table->get_candidate(candidate)->super;
     std::string inherits;
@@ -1000,11 +1397,53 @@ void Emitter::emit_switch(u32 module_index, u32 node) {
     Module* module = compilation->get_module(module_index);
     u32 subject = child_of(module_index, node, 0);
 
+    u32 holder = module_index;
+    u32 owner = enum_of_type(module_index, subject, holder);
+    bool tagged = owner != 0 && carries_a_payload(holder, owner);
+    bool captures = tagged && captures_anything(module_index, node);
+    std::string held;
+
+    // A switch that takes a payload apart reads its subject **twice** -- once
+    // for the tag and once per name it binds -- so it is bound to a name
+    // first. Without it 'switch f():' would call f once per capture
+    if (captures) {
+        held = "__sw" + std::to_string(constant_count++);
+
+        line("{");
+        indentation++;
+
+        // a **reference** when the subject has a name to refer to, so that
+        // what the cases bind is the value being switched over and not a copy
+        // of it -- and a copy when it does not, since a temporary has to
+        // outlive the switch
+        u32 whole = type_at(module_index, subject);
+
+        if (!is_an_rvalue(module_index, subject)) {
+            whole = module->get_types()->reference(
+                module->get_types()->value_of(whole));
+        }
+
+        out << std::string(indentation * 4, ' ')
+            << declare(module_index, whole, held) << " = ";
+        emit_expression(module_index, subject);
+        out << ";\n";
+    }
+
     out << std::string(indentation * 4, ' ') << "switch (";
-    emit_expression(module_index, subject);
-    out << ") {\n";
+
+    if (captures) {
+        out << held;
+    } else {
+        emit_expression(module_index, subject);
+    }
+
+    // a tagged union is switched over by its **tag**, and a plain enum is the
+    // value itself
+    out << (tagged ? ".tag" : "") << ") {\n";
 
     indentation++;
+
+    std::vector<u32> group;
 
     for (u32 child = module->get_ast()->get_node(subject)->get_sibling();
          child != 0;
@@ -1017,9 +1456,24 @@ void Emitter::emit_switch(u32 module_index, u32 node) {
         } else {
             u32 pattern = child_of(module_index, child, 0);
 
-            out << std::string(indentation * 4, ' ') << "case "
-                << label_of(module_index, subject, pattern) << ":\n";
+            out << std::string(indentation * 4, ' ') << "case ";
 
+            // over an integer or a char the pattern is the value itself, and
+            // over an enum it is a variant that has to be found in it
+            if (is_a_value_switch(module_index, subject)) {
+                emit_expression(module_index, pattern);
+            } else if (tagged) {
+                out << tag_of(holder, owner,
+                              variant_of(holder, owner, module_index,
+                                         name_of_pattern(module_index,
+                                                         pattern)));
+            } else {
+                out << label_of(module_index, subject, pattern);
+            }
+
+            out << ":\n";
+
+            group.push_back(child);
             block = module->get_ast()->get_node(pattern)->get_sibling();
         }
 
@@ -1031,14 +1485,202 @@ void Emitter::emit_switch(u32 module_index, u32 node) {
 
         line("{");
         indentation++;
+
+        // and what the group captures is bound at the top of the body it
+        // shares, one declaration per name
+        emit_captures(module_index, group, held, holder, owner);
+
         emit_block(module_index, block);
         line("break;");
         indentation--;
         line("}");
+
+        group.clear();
     }
 
     indentation--;
     line("}");
+
+    if (captures) {
+        indentation--;
+        line("}");
+    }
+}
+
+// whether any case of this switch takes its variant apart, which is what
+// makes the subject worth binding to a name
+bool Emitter::captures_anything(u32 module_index, u32 node) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    for (u32 child = child_of(module_index, node, 0); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        if (kind_of(module_index, child) == AST_CASE
+            && query.get_captures(child).size() > 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// What a group of cases binds, at the top of the body they share. Every case
+// in the group binds the same names for the same types -- Hadley's rule --
+// so what differs between them is only which member of the union the value
+// comes out of, and that is a question about the tag
+void Emitter::emit_captures(u32 module_index, const std::vector<u32>& group,
+                            const std::string& held, u32 holder, u32 owner) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    AstQuery query;
+
+    if (group.size() == 0 || held.size() == 0) {
+        return;
+    }
+
+    query.set_module(module);
+
+    std::vector<u32> captures = query.get_captures(group.back());
+    u32 scope = table->scope_owned_by(group.back());
+
+    for (u32 i = 0; i < captures.size(); i++) {
+        u32 candidate = capture_of(module_index, scope, captures[i]);
+
+        if (candidate == 0) {
+            fail("a case that binds a name nothing declared");
+            return;
+        }
+
+        out << std::string(indentation * 4, ' ')
+            << declare(module_index, table->get_candidate(candidate)->type,
+                       name_of(module_index, candidate))
+            << " = ";
+
+        // one case in the group is the ordinary shape; several are a question
+        // about the tag, since the value comes out of a different member of
+        // the union in each
+        for (u32 at = 0; at + 1 < group.size(); at++) {
+            out << held << ".tag == "
+                << tag_of(holder, owner,
+                          variant_of(holder, owner, module_index,
+                                     name_of_pattern(module_index,
+                                                     child_of(module_index,
+                                                              group[at], 0))))
+                << " ? " << held << "."
+                << member_of_variant(module_index, holder, owner, group[at])
+                << "._" << i << " : ";
+        }
+
+        out << held << "."
+            << member_of_variant(module_index, holder, owner, group.back())
+            << "._" << i << ";\n";
+    }
+}
+
+// the C++ name of the union member a case's variant holds its payload in
+std::string Emitter::member_of_variant(u32 module_index, u32 holder, u32 owner,
+                                       u32 one_case) {
+    u32 member = variant_of(holder, owner, module_index,
+                            name_of_pattern(module_index,
+                                            child_of(module_index, one_case,
+                                                     0)));
+    u32 candidate = member == 0
+                        ? 0
+                        : compilation->get_module(holder)->get_symbols()
+                              ->candidate_of(member);
+
+    return candidate == 0 ? "0" : name_of(holder, candidate);
+}
+
+// the candidate a capture's name was declared as, found by name in the scope
+// its case owns -- every capture of one case points at the same switch, so
+// the node is not what tells them apart
+u32 Emitter::capture_of(u32 module_index, u32 scope, u32 name) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    std::string wanted = text_of(module_index, name);
+
+    if (scope == 0) {
+        return 0;
+    }
+
+    for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+         symbol = table->get_symbol(symbol)->sibling_or_next) {
+        if (std::string(module->get_strings()->get_text(
+                table->get_symbol(symbol)->name)) != wanted) {
+            continue;
+        }
+
+        return table->get_symbol(symbol)->candidates;
+    }
+
+    return 0;
+}
+
+// the enum declaration an expression's TYPE names -- the switch's subject is a
+// value of one, and not the name of one
+u32 Emitter::enum_of_type(u32 module_index, u32 node, u32& holder) {
+    Module* module = compilation->get_module(module_index);
+    TypeTable* types = module->get_types();
+    u32 given = type_at(module_index, node);
+
+    if (given == INVALID_TYPE) {
+        return 0;
+    }
+
+    Type* entry = types->get_type(types->value_of(given));
+
+    if (entry->kind != TYPE_NAMED) {
+        return 0;
+    }
+
+    Module* owner = compilation->get_module(entry->module);
+
+    if ((SymbolKind) owner->get_symbols()->get_candidate(entry->subject)->kind
+        != SYMBOL_ENUM) {
+        return 0;
+    }
+
+    holder = entry->module;
+
+    return owner->get_symbols()->get_candidate(entry->subject)->ast_node;
+}
+
+// the identifier a pattern names: itself when bare, the right side when
+// written 'Action.Idle', and the callee's when it captures
+u32 Emitter::name_of_pattern(u32 module_index, u32 pattern) {
+    Module* module = compilation->get_module(module_index);
+
+    if (pattern == 0) {
+        return 0;
+    }
+
+    if (kind_of(module_index, pattern) == AST_CALL) {
+        return name_of_pattern(module_index, child_of(module_index, pattern, 0));
+    }
+
+    if (kind_of(module_index, pattern) == AST_DOT) {
+        return module->get_ast()->get_node(child_of(module_index, pattern, 0))
+            ->get_sibling();
+    }
+
+    return pattern;
+}
+
+// whether this switch is over a value rather than over an enum: an integer or
+// a char, whose patterns are written values and need nothing looked up
+bool Emitter::is_a_value_switch(u32 module_index, u32 subject) {
+    Module* module = compilation->get_module(module_index);
+    TypeTable* types = module->get_types();
+    u32 given = type_at(module_index, subject);
+
+    if (given == INVALID_TYPE) {
+        return false;
+    }
+
+    return types->get_type(types->value_of(given))->kind == TYPE_BUILTIN;
 }
 
 // 'Enum::variant', which is the only spelling C++ has for a scoped enumerator.
@@ -1590,10 +2232,20 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
     u32 left = child_of(module, node, 0);
 
     // 'Colour.red' names a variant of a type and not a member of a value, and
-    // C++ spells that with '::'. It is the one '.' whose left side is a TYPE
+    // it is the one '.' whose left side is a TYPE.
+    //
+    // Which C++ it becomes is the enum's shape: a scoped enumerator when
+    // nothing carries a payload, and a call to the variant's **maker** when
+    // something does. A variant that carries nothing is written with its
+    // parentheses here, since nothing else will add them; one that carries
+    // something is the callee of a call that adds its own
     if (!arrow && names_an_enum(module, left)) {
-        out << name_at(module, left) << "::"
-            << name_at(module, child_of(module, node, 1));
+        u32 holder = module;
+        u32 owner = enum_of(module, left, holder);
+        u32 right = child_of(module, node, 1);
+
+        emit_variant(holder, owner, variant_of(holder, owner, module, right),
+                     false);
         return;
     }
 
@@ -1624,6 +2276,88 @@ bool Emitter::names_an_enum(u32 module_index, u32 node) {
                ->get_candidate(found->candidate)->kind == SYMBOL_ENUM;
 }
 
+// What a variant is in C++, which is the enum's shape and nothing about how
+// it was written: a scoped enumerator when nothing in the enum carries a
+// payload, and otherwise a call to the variant's maker -- with its
+// parentheses here when it carries nothing, since no call will add them, and
+// without when it does, since the call around it will
+void Emitter::emit_variant(u32 holder, u32 declaration, u32 member,
+                           bool as_a_call) {
+    Module* owner = compilation->get_module(holder);
+    u32 named = owner->get_symbols()->candidate_of(declaration);
+    u32 candidate = member == 0 ? 0 : owner->get_symbols()->candidate_of(member);
+
+    if (named == 0 || candidate == 0) {
+        fail("a variant of an enum that declares none");
+        return;
+    }
+
+    if (!carries_a_payload(holder, declaration)) {
+        out << name_of(holder, named) << "::" << name_of(holder, candidate);
+        return;
+    }
+
+    // a variant that carries something is the callee of a call that writes
+    // its own parentheses; one written as a value has to be given them, and
+    // a payload with a default is exactly that shape
+    out << name_of(holder, named) << "_" << name_of(holder, candidate)
+        << (as_a_call ? "" : "()");
+}
+
+// the enum a variant's candidate belongs to: the owner of the scope that
+// holds it, which is the way back a bare 'Click' has and a written
+// 'Action.Click' does not need
+u32 Emitter::enum_of_variant(u32 holder, u32 candidate) {
+    SymbolTable* table = compilation->get_module(holder)->get_symbols();
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+                 one = table->get_candidate(one)->next_candidate) {
+                if (one == candidate) {
+                    return table->get_scope(scope)->owner;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+// the declaration of the enum an expression names, and the module it lives in
+u32 Emitter::enum_of(u32 module_index, u32 node, u32& holder) {
+    Module* module = compilation->get_module(module_index);
+    Resolution* found = module->get_resolutions()->get(node);
+
+    if (found->candidate == 0) {
+        return 0;
+    }
+
+    holder = found->module;
+
+    return compilation->get_module(found->module)->get_symbols()
+        ->get_candidate(found->candidate)->ast_node;
+}
+
+// the member of that enum this name means, which is where its payload is read
+// from
+u32 Emitter::variant_of(u32 holder, u32 declaration, u32 module_index,
+                        u32 name) {
+    AstQuery theirs;
+    std::string wanted = text_of(module_index, name);
+
+    theirs.set_module(compilation->get_module(holder));
+
+    for (u32 member : theirs.get_members(declaration)) {
+        if (theirs.get_declaration_name(member) == wanted) {
+            return member;
+        }
+    }
+
+    return 0;
+}
+
 // A bare name that means a field or a method of the class the code is inside
 // -- its own or a base's, record 0020 -- has to be written 'this->' in C++,
 // which has no such lookup for a member from a free position
@@ -1635,6 +2369,22 @@ void Emitter::emit_identifier(u32 module_index, u32 node) {
     if (name.size() == 0) {
         fail("'" + text_of(module_index, node) + "' names no declaration");
         return;
+    }
+
+    // a bare 'Click', which record 0009's search finds last: it is a variant
+    // and not a name, and what it is in C++ is the enum's business
+    if (found->candidate != 0
+        && (SymbolKind) compilation->get_module(found->module)->get_symbols()
+                   ->get_candidate(found->candidate)->kind == SYMBOL_VARIANT) {
+        u32 declaration = enum_of_variant(found->module, found->candidate);
+
+        if (declaration != 0) {
+            emit_variant(found->module, declaration,
+                         compilation->get_module(found->module)->get_symbols()
+                             ->get_candidate(found->candidate)->ast_node,
+                         false);
+            return;
+        }
     }
 
     if (found->module == module_index) {
@@ -1654,8 +2404,27 @@ void Emitter::emit_identifier(u32 module_index, u32 node) {
 void Emitter::emit_call(u32 module_index, u32 node) {
     u32 holder = module_index;
     u32 candidate = called_candidate(module_index, node, holder);
+    u32 callee = child_of(module_index, node, 0);
 
-    emit_expression(module_index, child_of(module_index, node, 0));
+    // a variant of an enum is a maker, and the parentheses about to be
+    // written are its own -- so the callee is written without them
+    if (candidate != 0
+        && (SymbolKind) compilation->get_module(holder)->get_symbols()
+                   ->get_candidate(candidate)->kind == SYMBOL_VARIANT) {
+        u32 declaration = enum_of_variant(holder, candidate);
+
+        if (declaration != 0) {
+            emit_variant(holder, declaration,
+                         compilation->get_module(holder)->get_symbols()
+                             ->get_candidate(candidate)->ast_node,
+                         true);
+            emit_call_arguments(module_index, child_of(module_index, node, 1),
+                                holder, candidate);
+            return;
+        }
+    }
+
+    emit_expression(module_index, callee);
     emit_call_arguments(module_index, child_of(module_index, node, 1), holder,
                         candidate);
 }
@@ -1692,6 +2461,29 @@ u32 Emitter::second_child_of(u32 module, u32 node) {
     return child_of(module, node, 1);
 }
 
+// the name a candidate was declared under, found in the table rather than in
+// the tree. Only a 'case' capture needs it, and it needs it because several
+// of them point at one node
+std::string Emitter::name_in_table(u32 module_index, u32 candidate) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+                 one = table->get_candidate(one)->next_candidate) {
+                if (one == candidate) {
+                    return std::string(module->get_strings()->get_text(
+                        table->get_symbol(symbol)->name));
+                }
+            }
+        }
+    }
+
+    return "";
+}
+
 std::string Emitter::name_of(u32 module, u32 candidate) {
     Module* owner = compilation->get_module(module);
     Candidate* found = owner->get_symbols()->get_candidate(candidate);
@@ -1704,6 +2496,14 @@ std::string Emitter::name_of(u32 module, u32 candidate) {
     // the declaration's name and not its token: a function's token is the
     // 'def' that opened it, which every function in the program shares
     source = query.get_declaration_name(found->ast_node);
+
+    // A 'case' capture points at the **switch**, since from a name there is
+    // no way back to the subject it comes out of -- so the tree says
+    // 'switch' and the name has to come from the symbol that holds it
+    if (owner->get_ast()->get_node(found->ast_node)->get_kind()
+        == AST_SWITCH) {
+        source = name_in_table(module, candidate);
+    }
 
     if (source.size() == 0) {
         source = std::string(owner->get_token_value(
@@ -2347,6 +3147,13 @@ bool Emitter::declares_copy(u32 module_index, u32 type) {
 
     u32 declaration =
         holder->get_symbols()->get_candidate(entry->subject)->ast_node;
+
+    // an enum whose union holds a class writes its own 'm_assign', for the
+    // same reason a class that owns something does: what is there has to be
+    // destroyed before what is coming is built
+    if (kind_of(entry->module, declaration) == AST_ENUM) {
+        return holds_a_class(entry->module, declaration);
+    }
 
     return copy_init_of(entry->module, declaration) != 0;
 }

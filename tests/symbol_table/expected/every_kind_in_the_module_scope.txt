@@ -23,7 +23,7 @@ scope 5  owner Pair  parent 1
     field at node 26
 scope 6  owner Colour  parent 1
   red
-    field at node 33
+    variant at node 33
 scope 7  owner Value  parent 1
   number
     field at node 42

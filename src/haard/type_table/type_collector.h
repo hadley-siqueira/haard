@@ -89,6 +89,23 @@ namespace haard {
 
             // the type a class, a struct or a union derives from, and
             // INVALID_TYPE for everything else
+            // what a variant of an enum carries, flattened: a tuple
+            // payload is its elements, anything else is itself
+            std::vector<u32> payload_of(u32 written, u32 scope);
+
+            // whether a type is a class that owns something, which a union
+            // cannot hold until its lifetime is managed
+            bool owns_something(u32 type);
+
+            // what a 'case' capture is: the thing its variant carries at the
+            // position the name was written in
+            u32 capture_of(u32 switch_node, u32 one_case, u32 candidate,
+                           u32 scope);
+
+            // the name a candidate was declared under, which is the symbol's
+            // and not the candidate's
+            std::string name_of_candidate(u32 scope, u32 candidate);
+
             u32 super_of(u32 candidate, u32 scope);
 
             // Record 0026 runs a class's own 'init' with no arguments wherever

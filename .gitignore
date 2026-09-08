@@ -62,5 +62,3 @@ massif.out.*
 callgrind.out.*
 cachegrind.out.*
 
-# docs
-docs

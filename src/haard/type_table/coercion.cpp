@@ -221,7 +221,12 @@ bool Coercion::may_be_copied(u32 module, u32 type) {
 
 bool Coercion::builds_from(u32 module, u32 wanted, u32 given) {
     TypeTable* types = compilation->get_module(module)->get_types();
-    Type* entry = types->get_type(wanted);
+
+    // through the reference, because what a 'Name&' parameter takes is a Name
+    // and record 0035 makes a reference the thing it names. The temporary it
+    // then needs a name to bind to is the emitter's problem, and it already
+    // writes one
+    Type* entry = types->get_type(types->value_of(wanted));
 
     if (entry->kind != TYPE_NAMED || given == INVALID_TYPE) {
         return false;

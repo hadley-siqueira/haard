@@ -79,6 +79,20 @@ namespace haard {
             // written, and every case names a variant of it
             void check_switch(u32 node, u32 scope);
 
+            // over an integer or a char: a written value per case, and
+            // nothing to be exhaustive about
+            void check_switch_over_a_value(u32 node, u32 scope, u32 given);
+
+            // what a pattern takes apart has to be what its variant carries:
+            // a name per thing, or none at all
+            void check_captures(u32 one_case, const std::vector<u32>& carries,
+                                const std::string& variant);
+
+            // what a variant carries, in the table of the module that
+            // declares the enum
+            std::vector<u32> carried_of(u32 holder, u32 declaration,
+                                        const std::string& variant);
+
             // the variant this pattern names, empty when it names none
             std::string check_pattern(u32 pattern, u32 scope,
                                       const std::string& subject,

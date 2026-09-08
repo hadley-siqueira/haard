@@ -196,6 +196,22 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
         break;
     }
 
+    // A **capture** of a 'case': its candidate points at the switch and its
+    // scope is owned by the case, which is the pair the answer needs. The
+    // switch says which enum, and the case's pattern says which variant and
+    // at which position -- 'case Click(x, y)' binds x to the first thing
+    // Click carries and y to the second
+    if ((SymbolKind) found->kind == SYMBOL_VARIABLE
+        && module->get_ast()->get_node(found->ast_node)->get_kind()
+               == AST_SWITCH) {
+        if (!given) {
+            return INVALID_TYPE;
+        }
+
+        return capture_of(found->ast_node, table->get_scope(scope)->owner,
+                          candidate, scope);
+    }
+
     // Record 0040. A loop variable's candidate points at the **loop**, since
     // from the name alone there is no way back to the sequence it comes out
     // of -- so this is where a foreach is taken apart, and what the variable
@@ -235,22 +251,72 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
         return written_or_inferred(binding, scope, expected);
     }
 
-    // A variant of an enum that carries nothing **is one of the enum**:
-    // 'Colour.red' is a Colour, which is what every language with a sum type
-    // says and what makes the payload-free enum the degenerate case of it.
+    // What a variant of an enum IS, and it is two things.
     //
-    // A variant that carries something is a constructor -- 'click : (i32,
-    // i32)' means 'Action' is built from two i32s -- and that waits on the
-    // record: it is what the payload half of the tagged union is about
-    if ((SymbolKind) found->kind == SYMBOL_FIELD
-        && query.get_written_type(found->ast_node) == 0) {
+    // One that carries nothing **is one of the enum**: 'Colour.red' is a
+    // Colour, which is what makes the payload-free enum the degenerate case
+    // of the tagged union rather than a second feature.
+    //
+    // One that carries something is a **constructor**: 'Click : (i32, i32)'
+    // means Action is built out of two i32s, so its type is a signature and
+    // 'Action.Click(10, 20)' is an ordinary call that gives back an Action.
+    // A tuple payload is **flattened** -- two parameters and not one tuple --
+    // which is the shape Hadley's 'Click(10, 20)' asks for and the one Rust
+    // gives a tuple variant
+    if ((SymbolKind) found->kind == SYMBOL_VARIANT) {
         u32 owner = table->get_scope(scope)->owner;
+        u32 whole = owner == 0 ? INVALID_TYPE
+                               : module->get_types()->named(
+                                     index, table->candidate_of(owner),
+                                     std::vector<u32>());
+        u32 written = query.get_written_type(found->ast_node);
 
-        if (owner != 0
-            && module->get_ast()->get_node(owner)->get_kind() == AST_ENUM) {
-            return module->get_types()->named(index, table->candidate_of(owner),
-                                              std::vector<u32>());
+        if (written == 0 || whole == INVALID_TYPE) {
+            return whole;
         }
+
+        std::vector<u32> carried = payload_of(written, scope);
+
+        for (u32 one : carried) {
+            if (one == INVALID_TYPE) {
+                return INVALID_TYPE;
+            }
+
+            // A variant that carries the enum it belongs to **by value** has
+            // no size: the union would hold something as big as itself.
+            // Hadley, 2026-09-08: write a pointer, and nothing allocates
+            // behind the author's back the way Rust's Box and Swift's
+            // 'indirect' do
+            if (one == whole) {
+                // in the written pass and not in both, since the mark is per
+                // pass and a variant goes through each -- one mistake is one
+                // error
+                if (!given) {
+                    report(name_node_of(found->ast_node),
+                           "a variant cannot carry the enum it belongs to by "
+                           "value: write a pointer");
+                }
+
+                return INVALID_TYPE;
+            }
+
+            // A class that **cannot be copied** cannot be carried either:
+            // the union's copy asks each variant to copy what it holds, so a
+            // class that owns something and says nothing about being copied
+            // (record 0031) would leave the enum with no copy at all
+            if (!coercion.may_be_copied(index, one)) {
+                if (!given) {
+                    report(name_node_of(found->ast_node),
+                           typer.name_of(one)
+                               + " cannot be copied, and a variant that "
+                                 "carries one would have to be");
+                }
+
+                return INVALID_TYPE;
+            }
+        }
+
+        return module->get_types()->function(carried, whole);
     }
 
     if (!given) {
@@ -259,6 +325,225 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
     }
 
     return written_or_inferred(found->ast_node, scope, found->type);
+}
+
+// What a variant carries, flattened: a tuple payload is its elements and
+// anything else is itself. Written out rather than kept as a tuple because a
+// variant is a constructor and 'Click(10, 20)' passes two arguments -- and
+// because a tuple is not a type this back end can write
+// What a capture is: the thing its variant carries at the position the name
+// was written in. 'case Click(x, y)' binds x to the first thing Click carries
+// and y to the second, which is the constructor's signature read the other
+// way round.
+//
+// Two halves and they come from two places: the **switch** says which enum,
+// because its subject is a value of one, and the **case** says which variant
+// and which position. That is why a capture's candidate points at the one and
+// its scope is owned by the other
+u32 TypeCollector::capture_of(u32 switch_node, u32 one_case, u32 candidate,
+                              u32 scope) {
+    Ast* ast = module->get_ast();
+    AstQuery mine;
+    u32 subject = ast->get_node(switch_node)->get_children();
+
+    if (subject == 0 || one_case == 0) {
+        return INVALID_TYPE;
+    }
+
+    mine.set_module(module);
+
+    u32 given = typer.type_of(index, scope, subject, INVALID_TYPE);
+
+    if (given == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(types->value_of(given));
+
+    if (entry->kind != TYPE_NAMED) {
+        return INVALID_TYPE;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    SymbolTable* theirs = holder->get_symbols();
+
+    if ((SymbolKind) theirs->get_candidate(entry->subject)->kind
+        != SYMBOL_ENUM) {
+        return INVALID_TYPE;
+    }
+
+    // which of the names in the pattern this candidate is
+    std::string wanted = name_of_candidate(scope, candidate);
+    std::vector<u32> captures = mine.get_captures(one_case);
+    u32 at = (u32) captures.size();
+
+    for (u32 i = 0; i < captures.size(); i++) {
+        if (std::string(module->get_token_value(
+                ast->get_node(captures[i])->get_token())) == wanted) {
+            at = i;
+            break;
+        }
+    }
+
+    if (at >= captures.size()) {
+        return INVALID_TYPE;
+    }
+
+    // and the variant it takes apart, which is the callee of the pattern
+    u32 pattern = ast->get_node(one_case)->get_children();
+    u32 name = ast->get_node(pattern)->get_kind() == AST_CALL
+                   ? ast->get_node(pattern)->get_children()
+                   : 0;
+
+    if (name != 0 && ast->get_node(name)->get_kind() == AST_DOT) {
+        name = ast->get_node(ast->get_node(name)->get_children())->get_sibling();
+    }
+
+    if (name == 0) {
+        return INVALID_TYPE;
+    }
+
+    std::string variant = std::string(
+        module->get_token_value(ast->get_node(name)->get_token()));
+    AstQuery there;
+
+    there.set_module(holder);
+
+    for (u32 member : there.get_members(
+             theirs->get_candidate(entry->subject)->ast_node)) {
+        if (there.get_declaration_name(member) != variant) {
+            continue;
+        }
+
+        u32 named = theirs->candidate_of(member);
+        u32 signature = named == 0 ? INVALID_TYPE
+                                   : theirs->get_candidate(named)->type;
+
+        if (signature == INVALID_TYPE
+            || holder->get_types()->get_type(signature)->kind
+                   != TYPE_FUNCTION) {
+            return INVALID_TYPE;
+        }
+
+        std::vector<u32> carried =
+            holder->get_types()->get_arguments(signature);
+
+        // the return type is the last one, per record 0016
+        carried.pop_back();
+
+        if (at >= carried.size()) {
+            return INVALID_TYPE;
+        }
+
+        // A **reference** into the value being switched over, and not a copy
+        // of what it holds. It is record 0040's loop variable again and for
+        // the same two reasons: a copy of a payload that owns something is an
+        // allocation per match, and a payload that cannot be copied could not
+        // be taken apart at all
+        return types->reference(
+            builder.translate(index, entry->module, carried[at]));
+    }
+
+    return INVALID_TYPE;
+}
+
+// the name a candidate was declared under, found in the scope it lives in.
+// A candidate knows what it is and where its declaration is, and not what it
+// is called -- the name is the symbol's, one level up
+std::string TypeCollector::name_of_candidate(u32 scope, u32 candidate) {
+    SymbolTable* table = module->get_symbols();
+
+    for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+         symbol = table->get_symbol(symbol)->sibling_or_next) {
+        for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+             one = table->get_candidate(one)->next_candidate) {
+            if (one == candidate) {
+                return std::string(module->get_strings()->get_text(
+                    table->get_symbol(symbol)->name));
+            }
+        }
+    }
+
+    return "";
+}
+
+// whether this type is a class that owns something -- one that declares
+// 'destroy' or says how it is copied. Such a thing in a union needs the
+// union's lifetime managed, which record 0026's machinery does not do yet
+bool TypeCollector::owns_something(u32 type) {
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(types->value_of(type));
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    u32 candidate = entry->subject;
+    AstQuery theirs;
+
+    theirs.set_module(holder);
+
+    u32 declaration = holder->get_symbols()->get_candidate(candidate)->ast_node;
+    std::string own = theirs.get_declaration_name(declaration);
+
+    for (u32 member : theirs.get_members(declaration)) {
+        std::string named = theirs.get_declaration_name(member);
+
+        if (named == "destroy") {
+            return true;
+        }
+
+        if (named != "init") {
+            continue;
+        }
+
+        // a copy 'init' is the one taking this very class (record 0038), and
+        // it makes the copy non-trivial whether or not there is a 'destroy'
+        for (u32 parameter : theirs.get_params(member)) {
+            u32 wrote = theirs.get_written_type(parameter);
+
+            if (wrote != 0
+                && holder->get_ast()->get_node(wrote)->get_kind()
+                       == AST_REFERENCE_TYPE) {
+                wrote = holder->get_ast()->get_node(wrote)->get_children();
+            }
+
+            if (wrote != 0
+                && holder->get_ast()->get_node(wrote)->get_kind()
+                       == AST_NAMED_TYPE) {
+                u32 name = holder->get_ast()->get_node(wrote)->get_children();
+
+                if (name != 0
+                    && std::string(holder->get_token_value(
+                           holder->get_ast()->get_node(name)->get_token()))
+                           == own) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+std::vector<u32> TypeCollector::payload_of(u32 written, u32 scope) {
+    std::vector<u32> carried;
+
+    if (module->get_ast()->get_node(written)->get_kind() == AST_TUPLE_TYPE) {
+        for (u32 child = module->get_ast()->get_node(written)->get_children();
+             child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            carried.push_back(builder.build(index, scope, child));
+        }
+
+        return carried;
+    }
+
+    carried.push_back(builder.build(index, scope, written));
+
+    return carried;
 }
 
 u32 TypeCollector::super_of(u32 candidate, u32 scope) {

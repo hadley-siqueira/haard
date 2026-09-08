@@ -84,6 +84,10 @@ namespace haard {
             // marking them. They go in a scope of the loop's own, with the
             // block below it, so a local of a loop variable's name shadows it
             // the way a local shadows a parameter
+            // a 'case' that captures declares one name per thing the
+            // variant carries, in the scope of the case that owns the block
+            void collect_switch(u32 scope, u32 node);
+
             void collect_loop_variables(u32 scope, u32 for_each);
 
             // a 'let' or a 'const' declares one name per name in its

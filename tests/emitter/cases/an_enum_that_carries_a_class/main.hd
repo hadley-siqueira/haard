@@ -1,0 +1,94 @@
+# A variant that carries a **class which owns memory**, which is the half of a
+# tagged union C++ cannot do on its own: a union whose members are classes has
+# no default constructor, destructor or copy, because C++ cannot know which
+# member is alive.
+#
+# The tag knows. So the struct writes all three, plus the two the tag makes
+# possible -- '__clear' destroys the member that is alive and '__copy'
+# constructs the one the other value had, with placement new. Record 0031's
+# rule again, one level down: destroy first, then copy.
+#
+# A class that owns something and says nothing about being copied is refused
+# instead, by the type phase and by name: the union's copy would have nothing
+# to call.
+class Text:
+    data : char*
+    size : i32
+
+    def init : void
+        data = null
+        size = 0
+
+    def init : void
+        @from : char*
+
+        size = 0
+
+        while from[size] != '\0':
+            size = size + 1
+
+        data = new char[size + 1]
+
+        let i = 0
+
+        while i <= size:
+            data[i] = from[i]
+            i = i + 1
+
+    # record 0038: the copy constructor is the 'init' taking one of these
+    def init : void
+        @other : Text&
+
+        size = other.size
+        data = new char[size + 1]
+
+        let i = 0
+
+        while i <= size:
+            data[i] = other.data[i]
+            i = i + 1
+
+    def destroy : void
+        delete[] data
+
+    def length : i32
+        return size
+
+enum Message:
+    Quit
+    Say : Text
+    Move : (i32, i32)
+
+def size_of : i32
+    @m : Message
+
+    switch m:
+        case Quit:
+            return 0
+
+        # a capture is a **reference** into the value being switched over, so
+        # taking a payload apart copies nothing -- record 0040's loop variable
+        # one construct over
+        case Say(text):
+            return text.length()
+
+        case Move(x, y):
+            return x + y
+
+def main : i32
+    let said = Message.Say("hello")
+    let moved = Move(3, 4)
+    let quit = Quit
+
+    # the copy constructs the member the tag says, and the destructor of each
+    # of these frees exactly one
+    let copied = said
+
+    # and the assignment destroys what was there before it copies
+    let held = Quit
+
+    held = said
+
+    # 5 + 7 + 0 + 5 + 5 = 22
+    return (size_of(said) + size_of(moved) + size_of(quit) + size_of(copied)
+            + size_of(held))

@@ -127,6 +127,19 @@ namespace haard {
             // Haard grouped two patterns under one body
             void emit_switch(u32 module, u32 node);
             std::string label_of(u32 module, u32 subject, u32 pattern);
+
+            // what a group of cases binds at the top of the body it shares,
+            // and the pieces that find it
+            bool captures_anything(u32 module, u32 node);
+            void emit_captures(u32 module, const std::vector<u32>& group,
+                               const std::string& held, u32 holder, u32 owner);
+            std::string member_of_variant(u32 module, u32 holder, u32 owner,
+                                          u32 one_case);
+            u32 capture_of(u32 module, u32 scope, u32 name);
+
+            // the name a candidate was declared under, read out of the table
+            std::string name_in_table(u32 module, u32 candidate);
+            bool is_a_value_switch(u32 module, u32 subject);
             void emit_for(u32 module, u32 node);
             void emit_for_part(u32 module, u32 part);
             void emit_binding(u32 module, u32 node);
@@ -209,7 +222,45 @@ namespace haard {
             // expression is the NAME of one, which is what makes 'Colour.red'
             // a '::' and not a '.'
             void emit_enum(u32 module, u32 declaration);
+
+            // the two shapes an enum takes, and what decides between them:
+            // a plain 'enum class' when no variant carries anything, and a
+            // tag plus a union when one does
+            bool carries_a_payload(u32 module, u32 declaration);
+            void emit_tagged_union(u32 module, u32 declaration, u32 candidate);
+            std::vector<u32> payload_of(u32 module, u32 member);
+
+            // a union whose members are classes has no default constructor,
+            // destructor or copy of its own: the tag knows which member is
+            // alive, so the struct writes all three
+            bool holds_a_class(u32 module, u32 declaration);
+            void emit_union_lifetime(u32 module, u32 declaration,
+                                     const std::string& name);
+
+            // the number a variant's tag holds: the C rule, a counter an
+            // explicit value resets, asked by the maker and by the label
+            u32 tag_of(u32 module, u32 declaration, u32 wanted);
+
+            // the enum an expression's TYPE names, and the identifier a
+            // pattern carries
+            u32 enum_of_type(u32 module, u32 node, u32& holder);
+            u32 name_of_pattern(u32 module, u32 pattern);
             bool names_an_enum(u32 module, u32 node);
+
+            // the enum an expression names and the member of it a name
+            // means, which is how a variant's payload is found
+            u32 enum_of(u32 module, u32 node, u32& holder);
+
+            // what a variant is in C++, and the way back from a bare name to
+            // the enum that declares it
+            void emit_variant(u32 holder, u32 declaration, u32 member,
+                              bool as_a_call);
+
+            // the default payload of a variant, one expression per thing it
+            // carries
+            std::vector<u32> defaults_of(u32 module, u32 member, u32 carries);
+            u32 enum_of_variant(u32 holder, u32 candidate);
+            u32 variant_of(u32 holder, u32 declaration, u32 module, u32 name);
 
             bool is_a_construction(u32 module, u32 node);
             bool emit_construction(u32 module, u32 node);

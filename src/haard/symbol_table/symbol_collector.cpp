@@ -80,7 +80,8 @@ void SymbolCollector::collect_type(u32 scope, u32 declaration,
         if (member_kind == SYMBOL_FUNCTION) {
             collect_function(body, member, "");
         } else {
-            declare(body, query.get_declaration_name(member), SYMBOL_FIELD,
+            declare(body, query.get_declaration_name(member),
+                    kind == SYMBOL_ENUM ? SYMBOL_VARIANT : SYMBOL_FIELD,
                     member);
         }
     }
@@ -132,6 +133,13 @@ void SymbolCollector::collect_statement(u32 scope, u32 node) {
         collect_loop_variables(inside, node);
         break;
 
+    // a 'case' that captures declares its names, and the names of every case
+    // grouped with it: the block belongs to the last of the group and what it
+    // may read is what they all bind
+    case AST_SWITCH:
+        collect_switch(scope, node);
+        return;
+
     // and the C shaped one opens a scope of its own too, for the same reason:
     // its head is where 'for i = 0; ...' declares i, and a loop variable that
     // outlived its loop would be the one place in the language where a name
@@ -166,6 +174,68 @@ void SymbolCollector::collect_closure(u32 scope, u32 closure) {
         }
 
         collect_statement(inside, child);
+    }
+}
+
+// A switch declares nothing of its own, and every 'case' that captures
+// declares one name per thing the variant carries.
+//
+// Where they go is the case that owns the **block**: several cases share one
+// body by the ones above it having none, so the names of the whole group have
+// to be in view inside that body. Hadley's rule, 2026-09-08: grouping cases
+// that bind different names is an error -- which is the StatementChecker's to
+// report, and what makes declaring them here safe.
+//
+// The candidate points at the **switch** and the scope is owned by the
+// **case**, which is how the type phase finds both halves it needs: the
+// subject says which enum, and the pattern says which variant and which
+// position
+void SymbolCollector::collect_switch(u32 scope, u32 node) {
+    Ast* ast = module->get_ast();
+    u32 subject = ast->get_node(node)->get_children();
+    std::vector<u32> pending;
+
+    if (subject == 0) {
+        return;
+    }
+
+    for (u32 child = ast->get_node(subject)->get_sibling(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        if (ast->get_node(child)->get_kind() == AST_DEFAULT) {
+            collect_statement(scope, ast->get_node(child)->get_children());
+            continue;
+        }
+
+        u32 pattern = ast->get_node(child)->get_children();
+        u32 block = pattern == 0 ? 0 : ast->get_node(pattern)->get_sibling();
+
+        for (u32 capture : query.get_captures(child)) {
+            pending.push_back(capture);
+        }
+
+        if (block == 0) {
+            continue;
+        }
+
+        u32 inside = module->get_symbols()->open_scope(scope, child);
+
+        for (u32 capture : pending) {
+            std::string named = std::string(module->get_token_value(
+                ast->get_node(capture)->get_token()));
+
+            // once per name, however many cases of the group bind it: they
+            // all bind the same names for the same types (Hadley's rule), so
+            // what the body reads is one declaration and not one per case
+            if (module->get_symbols()->find(
+                    inside, module->get_strings()->intern(named)) != 0) {
+                continue;
+            }
+
+            declare(inside, named, SYMBOL_VARIABLE, node);
+        }
+
+        pending.clear();
+        collect_statement(inside, block);
     }
 }
 

@@ -111,6 +111,13 @@ namespace haard {
             // not an identifier binds nothing and is left out
             std::vector<u32> get_loop_variables(u32 for_each);
 
+            // the names a 'case' captures, as the identifiers themselves.
+            // Empty for a pattern that names a variant without taking it
+            // apart -- 'case Increment:' is written when the payload is not
+            // wanted, and is not the same mistake as writing the wrong number
+            // of names
+            std::vector<u32> get_captures(u32 one_case);
+
             // the block a 'def' or a closure runs, 0 when it has none
             u32 get_block(u32 node);
 

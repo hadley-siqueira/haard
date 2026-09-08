@@ -1,4 +1,5 @@
 #include <haard/compilation/compilation.h>
+#include <haard/sugar/switch_lowerer.h>
 #include <haard/parser/parser.h>
 #include <haard/scanner/scanner.h>
 #include <haard/string_table/string_table.h>
@@ -351,6 +352,22 @@ void Compilation::collect_types() {
         for (u32 i = 0; i < modules.size(); i++) {
             if (modules[i]->is_parsed()) {
                 grew = types.infer(i) || grew;
+            }
+        }
+
+        // Record 0043. A 'switch' over something C++ cannot switch over
+        // becomes a chain of 'if's, and that needs the subject's type -- so it
+        // runs here, after inference, and what it writes is typed by the round
+        // that follows. It is record 0040's lowering one statement over, and
+        // the loop is what it already needed
+        SwitchLowerer switches;
+
+        switches.set_compilation(this);
+        switches.set_collector(&types);
+
+        for (u32 i = 0; i < modules.size(); i++) {
+            if (modules[i]->is_parsed()) {
+                grew = switches.lower(i) || grew;
             }
         }
 

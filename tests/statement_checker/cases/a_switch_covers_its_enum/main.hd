@@ -9,8 +9,19 @@ enum Movement:
     Down
     Left
 
+enum Holder:
+    Empty
+    One : i32
+    Two : (i32, i32)
+
+enum Given:
+    Number : i32
+    Fraction : f64
+
 def main : i32
     let m = Movement.Up
+    let h = Holder.One(2)
+    let g = Given.Number(1)
     let n = 1
 
     # 1. it covers everything, so it is fine and says nothing
@@ -54,12 +65,34 @@ def main : i32
         default:
             n = 0
 
-    # 6. a subject that is not an enum
+    # 6. over an integer the pattern is a written value, and a name is not one
     switch n:
         case Up:
             n = 1
 
-    # 7. two defaults
+    # 7. and a written one is fine, with no exhaustiveness to answer to
+    switch n:
+        case 1:
+        case 2:
+            n = 0
+
+        case 3:
+            n = 1
+
+    # 8. and what C++ cannot switch over is not refused: it becomes a chain of
+    # comparisons before this phase sees it (record 0043), so what is checked
+    # is the chain -- and a literal that cannot be an f64 is a mistake about
+    # the value
+    let f = 1.5
+
+    switch f:
+        case 1.5:
+            n = 1
+
+        default:
+            n = 2
+
+    # 9. two defaults
     switch m:
         case Up:
             n = 1
@@ -70,12 +103,50 @@ def main : i32
         default:
             n = 3
 
-    # 8. a case with no block and nothing after it to share one with
+    # 10. a case with no block and nothing after it to share one with
     switch m:
         case Up:
             n = 1
 
         case Down:
         case Left:
+
+    # 11. a pattern takes apart what its variant carries, or nothing at all
+    switch h:
+        case Empty:
+            n = 0
+
+        case One(a):
+            n = a
+
+        case Two(a, b):
+            n = a + b
+
+    # 12. and the wrong number of names is reported with both
+    switch h:
+        case Two(only):
+            n = only
+
+        default:
+            n = 0
+
+    # 13. cases that share a block bind the same names, or they do not share
+    switch h:
+        case Empty:
+        case One(a):
+            n = a
+
+        default:
+            n = 0
+
+    # 14. and binding the same name for two different types is the same
+    # mistake one step in
+    switch g:
+        case Number(v):
+        case Fraction(v):
+            n = 1
+
+        default:
+            n = 0
 
     return n

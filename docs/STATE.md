@@ -65,6 +65,21 @@ A non-trivial program compiles clean and its hand-written C++ translation runs
 and gives the right answer, which is what says a transpiler is the right shape
 of backend.
 
+**An enum is a tagged union**, since 2026-09-08 — record 0043, and Hadley's
+semantics and syntax whole. A variant that carries something is a
+**constructor** (`Action.Click(10, 20)`, or bare `Click(10, 20)`, which a name
+in scope wins over); the payload-free enum is the degenerate case and compiles
+to a C++ `enum class`; anything else is a struct with a tag and a union, with a
+maker per variant and — when a payload is a class — a destructor and a copy
+that ask the tag which member is alive.
+
+It is read by **`switch`**, which is a pattern match: **no fall through and no
+`break`**, cases group by writing one with no block, a `case` captures by
+**reference** into the value being switched over, and a switch over an enum is
+**exhaustive or writes `default`**. Over an integer or a char it is a C++
+switch; over a String, a float or any class with `==` it becomes a chain of
+`if`s.
+
 **The standard library's four classes are all written**, since 2026-09-08:
 `Array<T>`, `List<T>`, `String` and now `Hash<K, V>` — record 0042. The Hash is
 **open addressed** (three parallel buffers, linear probing, tombstones, growth
@@ -504,6 +519,11 @@ still record 0023's (a literal into a constructible class costs one step, in
 the **bracketed** literals still reach only a binding, because record 0037's
 own hoisting turns them into a name before a call, a return or an assignment
 is reached. A string literal is not hoisted, which is why it could move.
+
+**The first of the bootstrap's five blockers is gone.** Enums reach the emitter
+now (record 0043), which was 1,934 uses and the largest of them. What is left
+is `main(argc, argv)`, the file system, and whether a generic instantiates a
+method nobody calls.
 
 **Can this compiler be written in Haard yet?** Asked and answered on
 2026-09-08, measured against `src/`:

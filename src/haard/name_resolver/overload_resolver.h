@@ -119,6 +119,10 @@ namespace haard {
             // wrote no default for
             u32 required_of(u32 module, u32 candidate);
 
+            // what a variant carries, which is what it requires when its
+            // payload has no default
+            u32 required_of_variant(u32 module, u32 candidate);
+
             bool fits(u32 caller, const Argument& argument, u32 builtin);
 
         private:

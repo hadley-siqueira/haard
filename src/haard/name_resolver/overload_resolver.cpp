@@ -108,6 +108,21 @@ Overload OverloadResolver::choose(u32 caller,
     return best;
 }
 
+// what a variant carries, which is what it requires when it has no default:
+// the parameters of the constructor its type is
+u32 OverloadResolver::required_of_variant(u32 module, u32 candidate) {
+    Module* owner = compilation->get_module(module);
+    u32 signature = owner->get_symbols()->get_candidate(candidate)->type;
+
+    if (signature == INVALID_TYPE
+        || owner->get_types()->get_type(signature)->kind != TYPE_FUNCTION) {
+        return 0;
+    }
+
+    // the return type is the last one, per record 0016
+    return (u32) owner->get_types()->get_arguments(signature).size() - 1;
+}
+
 bool OverloadResolver::overrides(u32 caller, const Candidacy& derived,
                                  const Candidacy& base) {
     u32 below = holder_of(caller, derived);
@@ -207,8 +222,16 @@ int OverloadResolver::score(u32 caller, const Candidacy& candidacy,
     Candidate* candidate =
         owner->get_symbols()->get_candidate(candidacy.candidate);
 
-    if (candidate->kind != SYMBOL_FUNCTION
-        || candidate->type == INVALID_TYPE) {
+    // A **variant** of an enum is callable when it carries something: its
+    // type is a signature and 'Action.Click(10, 20)' is a call in every way
+    // that matters, which is what keeps the construction out of the typer as
+    // a shape of its own
+    bool callable = candidate->kind == SYMBOL_FUNCTION
+                 || candidate->kind == SYMBOL_VARIANT;
+
+    if (!callable || candidate->type == INVALID_TYPE
+        || compilation->get_module(candidacy.module)->get_types()
+                   ->get_type(candidate->type)->kind != TYPE_FUNCTION) {
         return -1;
     }
 
@@ -321,6 +344,16 @@ u32 OverloadResolver::required_of(u32 module, u32 candidate) {
     u32 required = 0;
 
     query.set_module(owner);
+
+    // Record 0043: a variant whose payload has a **default** may be written
+    // with no arguments at all -- 'Move : (i32, i32) = (0, 0)' answers to
+    // 'Action.Move'. It is one expression for the whole payload and not one
+    // per thing carried, so it is all or nothing
+    if ((SymbolKind) owner->get_symbols()->get_candidate(candidate)->kind
+        == SYMBOL_VARIANT) {
+        return query.get_binding_expression(node) != 0 ? 0 : required_of_variant(
+            module, candidate);
+    }
 
     // a parameter with a default may be left out, which is what makes arity a
     // range and lets two candidates both answer to one count

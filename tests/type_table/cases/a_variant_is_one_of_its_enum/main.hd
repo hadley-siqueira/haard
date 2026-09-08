@@ -10,9 +10,21 @@
 # is nothing to look up. Only '==' and '!=' -- nothing has said an enum is
 # ordered.
 #
-# A variant that carries a payload is a **constructor** and is not decided
-# yet: 'circle' below is what it wrote, and the emitter refuses the enum it
-# belongs to by name rather than writing something else.
+# A variant that carries a payload is a **constructor**: 'circle : i32' means
+# a Shape is built out of an i32, so its type is a signature -- 'i32 -> Shape'
+# in the golden -- and 'Shape.circle(1)' is an ordinary call. A tuple payload
+# is **flattened**, so 'Click : (i32, i32)' takes two arguments and not one
+# tuple, which is the shape Hadley asked for and the one Rust gives a tuple
+# variant.
+#
+# Two payloads are refused, and each says why: one that carries the enum it
+# belongs to **by value** (no size -- write a pointer, and nothing allocates
+# behind the author's back), and one that carries a class that **cannot be
+# copied**, since the union's copy asks each variant to copy what it holds.
+#
+# A class that owns memory and says how it is copied is carried fine: the
+# emitter writes the destructor and the copy that ask the tag which member is
+# alive.
 enum Colour:
     red
     green
@@ -30,6 +42,22 @@ def takes : i32
 
     return 1
 
+class Owner:
+    data : char*
+
+    def init : void
+        data = null
+
+    def destroy : void
+        pass
+
+enum Expr:
+    Number : i32
+    Add : (Expr, Expr)
+
+enum Holder:
+    Held : Owner
+
 def main : i32
     let c = Colour.red
     let same = c == Colour.red
@@ -41,5 +69,6 @@ def main : i32
     p.colour = Colour.green
 
     let empty = Shape.nothing
+    let round = Shape.circle(7)
 
     return given
