@@ -40,5 +40,5 @@
     pointer  Box*
     text  char*
     ranged  <none>
-    symbol  <none>
-  25 types interned
+    a_symbol  symbol
+  26 types interned

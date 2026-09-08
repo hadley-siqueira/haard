@@ -18,7 +18,7 @@
     smaller  <none>
     matched  bool
     mismatched  <none>
-  19 types interned
+  20 types interned
 diagnostics:
 error: Point has no 'operator=='
   --> main.hd:29:19

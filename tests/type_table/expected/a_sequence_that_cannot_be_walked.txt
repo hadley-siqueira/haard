@@ -11,7 +11,7 @@
       <none>
       <none>
       <none>
-  17 types interned
+  18 types interned
 diagnostics:
 error: i32 is not something a 'for ... in' can walk
   --> main.hd:19:14

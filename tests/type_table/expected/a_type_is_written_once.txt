@@ -5,4 +5,4 @@
     c  i32[5]
     d  {i32: i32}
     e  {i32: i32}
-  18 types interned
+  19 types interned

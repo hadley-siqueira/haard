@@ -13,4 +13,4 @@
     c  f64[10]
     a  i32
     a  f64
-  23 types interned
+  24 types interned

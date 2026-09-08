@@ -266,6 +266,18 @@ phase is two passes over every module — what each declaration *wrote*, then wh
 each binding was *given*. Folding them back into one fails this case and only
 this case.
 
+## A symbol is a type of its own
+
+`a_symbol_is_a_type_of_its_own` is record 0041's half of the feature that is
+not the emitter's: `:foo` types as `symbol`, a parameter and a field may be
+one, `s == :foo` is a `bool`, and `s as char*` is how the name comes back.
+
+The two refusals on the golden are the point of it being its own type rather
+than a `char*`: `s == "foo"` is *cannot apply this to symbol and char\**, which
+is record 0018 having no conversion, and `:a + :b` is *a symbol is a name and
+has no arithmetic* — refused in the typer instead of coming out as C++ pointer
+arithmetic.
+
 ## A string literal that is a construction
 
 `a_string_literal_is_built_into_a_class` is record 0037's mechanism carrying
@@ -338,6 +350,8 @@ write.
 | only the first candidate of a member name is gathered | 1 |
 | `this` has no type | 1 |
 | `this` is the class and not a pointer to it | 1 |
+| a symbol is a char* after all | 2 |
+| a symbol has arithmetic | 1 |
 | a string literal is never a construction | 1 |
 | a call cannot rank a literal against a class | 1 |
 | the foreach lowering never runs | 2 |

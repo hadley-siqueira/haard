@@ -56,6 +56,10 @@ namespace haard {
         TK_BOOL,
         TK_VOID,
         TK_CHAR,
+
+        // the type of a ':name'. Not TK_SYMBOL_LITERAL, which is the literal
+        // itself -- this is the word a declaration writes
+        TK_SYMBOL,
         TK_PASS,
         TK_GOTO,
         TK_LABEL,

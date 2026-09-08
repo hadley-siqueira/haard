@@ -8,7 +8,7 @@ app.main:
     through_a_bare_name  i32
     h  lib.holder.Holder
     d  app.main.Derived
-  21 types interned
+  22 types interned
 lib.holder:
     Base  lib.holder.Base
     Holder  lib.holder.Holder
@@ -17,10 +17,10 @@ lib.holder:
     one  inner.point.Point
     many  inner.point.Point*
     n  i32
-  18 types interned
+  19 types interned
 inner.point:
     Point  inner.point.Point
     x  i32
     y  i32
     sum  i32
-  16 types interned
+  17 types interned

@@ -12,7 +12,7 @@
     wrong_arrow  <none>
     too_deep  <none>
     no_members  <none>
-  19 types interned
+  20 types interned
 diagnostics:
 error: Derived has no member named 'missing'
   --> main.hd:12:20

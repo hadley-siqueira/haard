@@ -5,7 +5,7 @@ using namespace haard;
 
 static const char* BUILTIN_NAMES[] = {
     "u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64",
-    "f32", "f64", "bool", "void", "char"
+    "f32", "f64", "bool", "void", "char", "symbol"
 };
 
 // the widest value each integer builtin holds, and 0 for the ones a literal
@@ -83,6 +83,16 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_TRUE:
     case AST_FALSE:
         return module->get_types()->builtin(BUILTIN_BOOL);
+
+    // Record 0041. A symbol is an interned name and its own type: two of them
+    // compare by identity, and neither one compares with a 'char*' at all --
+    // record 0018 has no conversion, so ':foo == "foo"' is a mistake about
+    // types and says so.
+    //
+    // It takes nothing from its context. A symbol IS what it is written as,
+    // which is the one literal in the language that has no other reading
+    case AST_SYMBOL_LITERAL:
+        return module->get_types()->builtin(BUILTIN_SYMBOL);
 
     case AST_IDENTIFIER:
         return identifier(scope, node);
@@ -999,6 +1009,17 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     if (left != right) {
         report(node, "cannot apply this to " + name_of(left) + " and " +
                name_of(right));
+
+        return INVALID_TYPE;
+    }
+
+    // Record 0041: a symbol has no arithmetic. It is a pointer into a table
+    // and adding two of them is a mistake the emitter would otherwise write
+    // out as C++ pointer arithmetic -- the same shape as a class with no
+    // operator, one builtin down
+    if (!comparison && types->get_type(left)->kind == TYPE_BUILTIN
+        && types->get_type(left)->subject == BUILTIN_SYMBOL) {
+        report(node, "a symbol is a name and has no arithmetic");
 
         return INVALID_TYPE;
     }

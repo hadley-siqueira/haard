@@ -21,7 +21,7 @@
     bound  i32
     bound_derived  i32
     sliced  <none>
-  22 types interned
+  23 types interned
 diagnostics:
 error: no 'small' takes these arguments
   --> main.hd:29:19

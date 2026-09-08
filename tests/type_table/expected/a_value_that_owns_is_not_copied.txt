@@ -27,7 +27,7 @@
     d  i32
     e  i32
     f  Plain
-  25 types interned
+  26 types interned
 diagnostics:
 error: Owns cannot be copied, and giving one back by value copies it
   --> main.hd:34:12

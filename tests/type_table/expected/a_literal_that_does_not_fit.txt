@@ -4,7 +4,7 @@
     fine  u8
     wrong  i32
     backwards  f64
-  15 types interned
+  16 types interned
 diagnostics:
 error: 300 does not fit in u8
  --> main.hd:2:22

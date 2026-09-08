@@ -4,7 +4,7 @@
     n  i64
     widened  i64
     mixed  <none>
-  15 types interned
+  16 types interned
 diagnostics:
 error: expected i64, found i32
  --> main.hd:4:25

@@ -15,7 +15,7 @@
     none_at_all  Counter*
     not_a_class  Plain*
     from_the_base  Derived*
-  22 types interned
+  23 types interned
 diagnostics:
 error: every 'init' of Counter takes an argument, and a base cannot be given one
   --> main.hd:17:7

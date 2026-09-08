@@ -119,6 +119,15 @@ and it holds two things nothing else does:
   literal declare `operator=`. This suite compiles what it emits, which is why
   the case catches it.
 
+## What the record 0041 case pins
+
+**`a_symbol_is_an_entry_in_a_table`** — the table itself, and the two things
+that follow from it. `:status` written three times is `__symbols[0]` three
+times, including once as `:'status'`, so `same(a, b)` compiles to `a == b` on
+two pointers; and `s as char*` reads the name back out of the entry, which the
+case counts to get its exit status. The table is `const` twice over and is
+spliced above everything that can name one.
+
 ## What the record 0040 case pins
 
 **`a_foreach_is_a_loop_over_what_it_walks`** — all three shapes of `for x in`

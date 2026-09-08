@@ -16,4 +16,4 @@
     u  Uses
     T  i32
     through  i32
-  23 types interned
+  24 types interned

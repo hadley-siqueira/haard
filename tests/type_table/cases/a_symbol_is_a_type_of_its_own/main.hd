@@ -1,0 +1,39 @@
+# Record 0041: ':foo' has a type, and the type is 'symbol'.
+#
+# It is a builtin like 'bool' and 'char', which is what makes it cross a
+# module boundary for nothing (record 0016 seeds the builtins at fixed
+# indices) and what gives it a name a declaration can write -- 'symbol' is a
+# keyword since 2026-09-08, so a parameter and a field may be one.
+#
+# What it is NOT is a 'char*'. Record 0018 has no conversion, so ':foo ==
+# "foo"' is a mistake about types and says so, which is the Ruby distinction
+# it was asked for: a symbol is a name, a string is bytes. Reading the name
+# back is written, with 'as char*', and that is the only way across.
+#
+# A symbol has no arithmetic either. Two of them compare and nothing else,
+# because what it is underneath -- a pointer into the emitter's table -- is
+# not something a program should be able to do sums on.
+def takes : i32
+    @s : symbol
+
+    return 1
+
+class Message:
+    kind : symbol
+
+def main : i32
+    let s = :foo
+    let same = s == :foo
+    let other = s != :bar
+    let given = takes(:bar)
+    let text = s as char*
+
+    let m : Message
+
+    m.kind = :ready
+
+    # and the two that are refused
+    let mixed = s == "foo"
+    let sum = :a + :b
+
+    return given

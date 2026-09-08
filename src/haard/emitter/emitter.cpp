@@ -8,7 +8,12 @@ using namespace haard;
 static const char* BUILTIN_CPP[] = {
     "uint8_t", "uint16_t", "uint32_t", "uint64_t",
     "int8_t", "int16_t", "int32_t", "int64_t",
-    "float", "double", "bool", "void", "char"
+    "float", "double", "bool", "void", "char",
+
+    // Record 0041. A symbol is a pointer into a table this emitter builds,
+    // and both halves of it are const: the table cannot be written through
+    // and neither can what it points at
+    "const char*"
 };
 
 Emitter::Emitter() {
@@ -59,6 +64,7 @@ bool Emitter::emit(std::ostream& stream) {
     out.str("");
     constants.str("");
     constant_count = 0;
+    symbols.clear();
     error.clear();
     indentation = 0;
     emitted.clear();
@@ -100,7 +106,11 @@ bool Emitter::emit(std::ostream& stream) {
     std::string body = out.str();
 
     out.str("");
-    out << head << constants.str() << body;
+    // Record 0041's table first of the three: a fixed array literal in the
+    // constants below may hold nothing that names a symbol today, and a
+    // global may -- so the one thing everything else can point into is
+    // written before either
+    out << head << emit_symbol_table() << constants.str() << body;
 
     if (error.size() > 0) {
         return false;
@@ -1097,6 +1107,13 @@ void Emitter::emit_expression(u32 module, u32 node) {
         return;
     }
 
+    // Record 0041: the entry, and not the name. Two ':foo' anywhere in the
+    // program are the same pointer, which is what makes comparing two
+    // symbols a comparison of two addresses
+    case AST_SYMBOL_LITERAL:
+        out << "__symbols[" << symbol_entry(text_of(module, node)) << "]";
+        return;
+
     case AST_TRUE:
         out << "true";
         return;
@@ -1718,6 +1735,87 @@ void Emitter::emit_array_literal(u32 module_index, u32 node, u32 type,
 
 // how many parameters this function's signature holds. Record 0016 puts the
 // return type last, so it is one fewer than the arguments
+// Record 0041. A symbol is an interned name: the first time one is written
+// it takes an entry in the table, and every ':foo' after that is the same
+// entry. The name is what the source wrote without its ':' and without the
+// quotes a spaced one carries, so ':foo' and :'foo' are one symbol.
+u32 Emitter::symbol_entry(const std::string& written) {
+    std::string name = written;
+
+    if (name.size() > 0 && name[0] == ':') {
+        name = name.substr(1);
+    }
+
+    if (name.size() >= 2
+        && (name.front() == '\'' || name.front() == '"')
+        && name.back() == name.front()) {
+        name = name.substr(1, name.size() - 2);
+    }
+
+    auto found = symbols.find(name);
+
+    if (found != symbols.end()) {
+        return found->second;
+    }
+
+    u32 entry = (u32) symbols.size();
+
+    symbols[name] = entry;
+
+    return entry;
+}
+
+// The table itself, and both halves of it are const: nothing may write
+// through an entry and nothing may point an entry somewhere else. That is
+// what lets a symbol be compared as a pointer -- the entry for a name is one
+// address for the whole program, whichever module wrote it.
+//
+// Written from the map, which is by name, so the entries come out in the
+// order they were given and not in the order the names sort
+std::string Emitter::emit_symbol_table() {
+    if (symbols.size() == 0) {
+        return "";
+    }
+
+    std::vector<std::string> names(symbols.size());
+
+    for (const std::pair<const std::string, u32>& entry : symbols) {
+        names[entry.second] = entry.first;
+    }
+
+    std::string table = "// record 0041: one entry per symbol, and every "
+                        "':name' is a pointer to one\n";
+
+    table += "static const char* const __symbols[] = {\n";
+
+    for (const std::string& name : names) {
+        table += "    \"";
+
+        // the name as C++ reads it. A symbol written with ' may hold a bare "
+        // and that one has to be escaped; an escape already in it meant
+        // something where it was written and means the same here
+        for (size_t i = 0; i < name.size(); i++) {
+            if (name[i] == '\\' && i + 1 < name.size()) {
+                table += name[i];
+                table += name[i + 1];
+                i++;
+                continue;
+            }
+
+            if (name[i] == '"') {
+                table += "\\\"";
+                continue;
+            }
+
+            table += name[i];
+        }
+
+        table += "\",\n";
+    }
+
+    return table + "};\n\n";
+}
+
 // Record 0037. A string literal that reached a written class type is a
 // **construction the typer chose**, and it wrote the 'init' it means down on
 // the literal. So the emitter does not work a conversion out from two types:

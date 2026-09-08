@@ -4,6 +4,7 @@
 #include <haard/type_table/expression_typer.h>
 #include <ostream>
 #include <set>
+#include <map>
 #include <sstream>
 
 namespace haard {
@@ -193,6 +194,11 @@ namespace haard {
             // Record 0037: whether this node is a literal the typer turned
             // into a construction, and the call that builds it. The choice is
             // read off the literal and never worked out again
+            // Record 0041: the entry this symbol has in the table, made
+            // the first time the name is seen, and the table itself as C++
+            u32 symbol_entry(const std::string& written);
+            std::string emit_symbol_table();
+
             bool is_a_construction(u32 module, u32 node);
             bool emit_construction(u32 module, u32 node);
 
@@ -283,6 +289,13 @@ namespace haard {
             // the fixed arrays a bracket literal is made of, when they are
             // constant. Written above the bodies, which is why the bodies are
             // built into a buffer of their own
+            // Record 0041. Every distinct symbol of the whole program, by
+            // the name it was written with, and the entry it was given in
+            // the table below. One map for the compilation, so ':foo' in two
+            // modules is one entry and one pointer -- which is the whole of
+            // what makes comparing two symbols a pointer comparison
+            std::map<std::string, u32> symbols;
+
             std::ostringstream constants;
             u32 constant_count;
             std::string error;

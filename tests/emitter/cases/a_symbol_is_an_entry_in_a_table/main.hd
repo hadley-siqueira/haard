@@ -1,0 +1,57 @@
+# Record 0041. A symbol is an **interned name**: the emitter builds one fixed
+# table for the whole program, one entry per distinct name, and every ':foo'
+# written anywhere is the pointer to that entry.
+#
+# Two things follow, and the golden below is both of them:
+#
+#   comparing two symbols is comparing two pointers -- as cheap as comparing
+#   two integers, and it is what 'same' compiles to
+#
+#   the entry holds the text, so a symbol can be read back with 'as char*'
+#
+# The table is const twice over: nothing may write through an entry and
+# nothing may point an entry somewhere else.
+def same : bool
+    @a : symbol
+    @b : symbol
+
+    return a == b
+
+# the name a symbol was written with, read back out of the table it points at
+def length_of : i32
+    @s : symbol
+
+    let text = s as char*
+    let n = 0
+
+    while text[n] != '\0':
+        n = n + 1
+
+    return n
+
+def main : i32
+    let a = :status
+    let b = :status
+    let c = :other
+
+    # the three spellings the scanner takes, and the first two are the SAME
+    # symbol: the quotes are how a name with a space is written and not part
+    # of the name
+    let spaced = :'status'
+    let quoted = :"two words"
+
+    if not same(a, b):
+        return 1
+
+    if not same(a, spaced):
+        return 2
+
+    if same(a, c):
+        return 3
+
+    # and a symbol is not a 'char*': ':status' next to "status" is a mistake
+    # about types, which is record 0018 having no conversion. There is no
+    # line here that writes one, because there is no line that could
+
+    # 6 + 9 = 15
+    return length_of(a) + length_of(quoted)

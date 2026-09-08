@@ -69,9 +69,11 @@ def main : i32
     # a shape of its own the way 'i32[]' did. Its cases are in tests/sugar and
     # tests/programs.
     #
-    # and what nothing types yet: a range has no type because nothing has said
-    # whether it is one, and a symbol is nobody has said what -- both wait on
-    # the standard library.
+    # and what nothing types yet: a range, because nothing has said whether it
+    # is a type. A **symbol** was the other one until 2026-09-08 and is not
+    # any more -- record 0041 makes it a builtin of its own, interned by the
+    # emitter into a table, so ':name' types as 'symbol' and two of them
+    # compare as pointers.
     #
     # A template string used to be the third, and is not an expression this
     # phase ever sees any more: record 0032's pass rewrites it into a local
@@ -79,6 +81,6 @@ def main : i32
     # what reaches the typer here is an ordinary identifier. Its own cases are
     # in tests/sugar
     let ranged = 0..10
-    let symbol = :name
+    let a_symbol = :name
 
     return integer

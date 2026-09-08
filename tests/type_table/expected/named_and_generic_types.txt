@@ -23,4 +23,4 @@
     B  Pair<f32, bool>
     first  i32
     second  Pair<f32, bool>
-  22 types interned
+  23 types interned

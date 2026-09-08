@@ -21,7 +21,7 @@
     allowed  Fine
     also_allowed  Aggregate
     given  Needs*
-  23 types interned
+  24 types interned
 diagnostics:
 error: every 'init' of Needs takes an argument, and none is written here
   --> main.hd:37:5

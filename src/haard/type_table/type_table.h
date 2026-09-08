@@ -34,6 +34,13 @@ namespace haard {
         BUILTIN_I8, BUILTIN_I16, BUILTIN_I32, BUILTIN_I64,
         BUILTIN_F32, BUILTIN_F64,
         BUILTIN_BOOL, BUILTIN_VOID, BUILTIN_CHAR,
+
+        // Record 0041. A symbol is an interned name: one entry in a table the
+        // emitter builds, and every ':foo' of the program is the pointer to
+        // it. So it is a builtin like any other here -- what makes it a
+        // symbol and not a 'char*' is that it has its own kind, which is what
+        // keeps ':foo' and "foo" from comparing at all
+        BUILTIN_SYMBOL,
         BUILTIN_COUNT,
     } BuiltinType;
 

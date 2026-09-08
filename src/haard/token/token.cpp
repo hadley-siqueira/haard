@@ -106,6 +106,7 @@ std::string Token::get_kind_as_string() {
         { TK_BOOL, "TK_BOOL" },
         { TK_VOID, "TK_VOID" },
         { TK_CHAR, "TK_CHAR" },
+        { TK_SYMBOL, "TK_SYMBOL" },
         { TK_PASS, "TK_PASS" },
         { TK_GOTO, "TK_GOTO" },
         { TK_LABEL, "TK_LABEL" },

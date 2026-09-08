@@ -1,0 +1,26 @@
+<unnamed>:
+    takes  symbol -> i32
+    Message  Message
+    main  i32
+    s  symbol
+    kind  symbol
+    s  symbol
+    same  bool
+    other  bool
+    given  i32
+    text  char*
+    m  Message
+    mixed  <none>
+    sum  <none>
+  19 types interned
+diagnostics:
+error: cannot apply this to symbol and char*
+  --> main.hd:36:19
+   |
+36 |     let mixed = s == "foo"
+   |                   ^^
+error: a symbol is a name and has no arithmetic
+  --> main.hd:37:18
+   |
+37 |     let sum = :a + :b
+   |                  ^

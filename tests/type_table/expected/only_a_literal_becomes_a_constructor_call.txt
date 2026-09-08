@@ -29,7 +29,7 @@
     init  f64* -> i32 -> void
     from  f64*
     count  i32
-  29 types interned
+  30 types interned
 diagnostics:
 error: expected Held, found Array<i32>
   --> main.hd:31:20

@@ -5,4 +5,4 @@
     flag  bool
     copied  f64
     i  i32
-  15 types interned
+  16 types interned
