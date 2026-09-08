@@ -1358,15 +1358,30 @@ bool Emitter::emit_operator(u32 module_index, u32 node) {
     }
 
     u32 left = child_of(module_index, node, 0);
+    u32 holder = found->module;
+    u32 candidate = found->candidate;
 
     emit_expression(module_index, left);
     out << (is_pointer(module_index, left) ? "->" : ".")
-        << name_of(found->module, found->candidate) << "(";
+        << name_of(holder, candidate) << "(";
 
     u32 right = child_of(module_index, node, 1);
 
+    // An operator is a method (record 0034), so its operand is an argument
+    // and goes through what an argument goes through: a right side of
+    // another type is BUILT into the parameter's, and a value with no name is
+    // given one to bind to.
+    //
+    // Without it 'text == "ready"' handed a 'char*' straight to an
+    // 'operator==' taking a 'String&' -- which Haard accepted and **g++
+    // refused**, the same failure the copy assignment had until 2026-09-08
+    // and found the same way, by a program that had never been written
     if (right != 0) {
-        emit_expression(module_index, right);
+        u32 wanted = raw_parameter_of(holder, candidate, 0);
+
+        if (!emit_conversion(module_index, holder, wanted, right)) {
+            emit_expression(module_index, right);
+        }
     }
 
     out << ")";

@@ -358,6 +358,20 @@ u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right,
             module->get_resolutions()->set_type(arguments[i].node,
                                                 chosen.parameters[i]);
         }
+
+        // Record 0037, and here it is not a nicety: 'binary' types the right
+        // operand against the LEFT before this runs, so a string literal has
+        // already been made a construction of the class on the left -- and
+        // the ranking above then typed it a 'char*' again to rank it. Written
+        // down once more, against the parameter that won, the type and the
+        // constructor on that literal agree again.
+        //
+        // Through the reference, because an 'operator==' takes a 'String&'
+        // and what that takes is a String
+        if (kind_of(arguments[i].node) == AST_STRING_LITERAL) {
+            type_of(index, scope, arguments[i].node,
+                    module->get_types()->value_of(chosen.parameters[i]));
+        }
     }
 
     return chosen.result;
@@ -1225,8 +1239,12 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
             // is known, a class parameter takes it by a constructor this
             // typer picks, the way a written type does at a binding
             if (kind_of(arguments[i].node) == AST_STRING_LITERAL) {
+                // through the reference, since what a 'String&' parameter
+                // takes is a String and record 0035 makes a reference the
+                // thing it names. The temporary it needs a name to bind to is
+                // the emitter's problem and it already writes one
                 type_of(index, scope, arguments[i].node,
-                        chosen.parameters[i]);
+                        module->get_types()->value_of(chosen.parameters[i]));
             }
 
             // Record 0031, and this is the fourth of the four places a value
@@ -1240,6 +1258,26 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
                        name_of(chosen.parameters[i])
                            + " cannot be copied, and this parameter takes one "
                              "by value");
+            }
+        }
+    }
+
+    // Record 0002: what is written inside a generic nobody instantiated is
+    // not a program yet, and this is the first shape that has to say so. An
+    // argument whose type is a type PARAMETER cannot be ranked against
+    // anything -- 'hash_of(key)' inside a 'Hash<K, V>' matches no overload
+    // until K is a type -- so the call waits for the clone, where every
+    // argument is concrete and the same question is asked again and reported.
+    //
+    // The statement checker and the emitter already skip an unbound generic
+    // whole; this is the type phase learning the same rule for the one thing
+    // in it that reports
+    if (chosen.status != OVERLOAD_FOUND) {
+        for (const Argument& argument : arguments) {
+            if (argument.type != INVALID_TYPE
+                && module->get_types()->get_type(argument.type)->kind
+                       == TYPE_GENERIC) {
+                return INVALID_TYPE;
             }
         }
     }

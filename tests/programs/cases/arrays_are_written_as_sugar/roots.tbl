@@ -5,6 +5,7 @@ prelude
     std -> std
     import std.array
     import std.string
+    import std.hash
     import std.file
 
 root std = std

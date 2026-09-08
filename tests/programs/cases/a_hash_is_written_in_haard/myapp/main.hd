@@ -1,0 +1,148 @@
+# Record 0022's fourth class, written in Haard like the other three, and the
+# first one whose key type has to be **asked something**.
+#
+# There are no interfaces (agenda 1.16), so 'how do I hash a K' is an ordinary
+# overload set: 'hash_of' is a free function with one overload per key type,
+# and record 0002's clone resolves the call against the K it was instantiated
+# with. A key type nobody wrote one for is reported at the instantiation, by
+# name -- which is the same answer overloading already gives everything else.
+#
+# It is **open addressed**: three parallel buffers and linear probing, rather
+# than a bucket of linked nodes. One allocation per buffer instead of one per
+# entry, and nothing in the language had to grow for it.
+#
+# Its exit status is the number of checks that failed.
+
+def check : void
+    @out : File*
+    @what : String
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # ---- an i32 key, and a second 'add' of one that is there replaces it
+
+    let ages : Hash<i32, i32>
+
+    ages.add(1, 10)
+    ages.add(2, 20)
+    ages.add(1, 11)
+
+    let replaced = ages.length() == 2 and ages[1] == 11 and ages[2] == 20
+
+    check(out, "two keys, one written twice: ${ages.length()} entries, ages[1] is ${ages[1]}", replaced)
+
+    if not replaced:
+        failures = failures + 1
+
+    # ---- it grows, and everything written before is still there
+
+    let i = 0
+
+    while i < 40:
+        ages.add(i, i * 100)
+        i = i + 1
+
+    let grown = ages.length() == 40 and ages[7] == 700 and ages[39] == 3900
+
+    check(out, "after 40 keys: ${ages.length()} entries, ages[39] is ${ages[39]}", grown)
+
+    if not grown:
+        failures = failures + 1
+
+    # ---- removing leaves a tombstone that a probe walks past
+
+    ages.remove(7)
+
+    let removed = ages.length() == 39 and not ages.has(7) and ages[8] == 800
+
+    check(out, "after removing 7: ${ages.length()} entries, has 7 is ${ages.has(7)}", removed)
+
+    if not removed:
+        failures = failures + 1
+
+    # ---- record 0031: it owns three buffers, so a copy holds its own
+
+    let copied = ages
+
+    copied.add(1000, 1)
+
+    let apart = copied.length() == 40 and ages.length() == 39
+
+    check(out, "a copy is its own: ${copied.length()} against ${ages.length()}", apart)
+
+    if not apart:
+        failures = failures + 1
+
+    # ---- a String key, which is hashed by its bytes and compared by its
+    # own '==' -- and reached from a literal by record 0037
+
+    let by_name : Hash<String, i32>
+
+    by_name.add("hadley", 1)
+    by_name.add("outro", 2)
+    by_name["terceiro"] = 3
+
+    let named = (by_name.length() == 3 and by_name["hadley"] == 1
+                 and by_name["terceiro"] == 3)
+
+    check(out, "three String keys: ${by_name["hadley"]}, ${by_name["outro"]}, ${by_name["terceiro"]}", named)
+
+    if not named:
+        failures = failures + 1
+
+    # ---- a symbol key, which is what a symbol is for: record 0041 makes two
+    # ':ready' one entry in the emitter's table, so hashing one is hashing a
+    # name that cannot be spelled two ways
+
+    let states : Hash<symbol, i32>
+
+    states.add(:ready, 7)
+    states[:done] = 9
+
+    let by_symbol = (states.length() == 2 and states[:ready] == 7
+                     and states[:done] == 9 and not states.has(:missing))
+
+    check(out, "symbols as keys: ${states[:ready]} and ${states[:done]}", by_symbol)
+
+    if not by_symbol:
+        failures = failures + 1
+
+    # ---- record 0040: walking a Hash gives back its KEYS, and the value is
+    # one subscript away
+
+    let total = 0
+
+    for k in by_name:
+        total = total + by_name[k]
+
+    let walked = total == 6
+
+    check(out, "walking the three keys adds their values to ${total}", walked)
+
+    if not walked:
+        failures = failures + 1
+
+    # ---- and a symbol appended to a template string is its name (record 0041)
+
+    let named_state : String = "estado: ${:ready}"
+    let printed = named_state == "estado: ready"
+
+    check(out, "a symbol in a template string: ${named_state}", printed)
+
+    if not printed:
+        failures = failures + 1
+
+    out->writeln("")
+    out->writeln("failures: ${failures}")
+
+    return failures

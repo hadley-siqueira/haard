@@ -6,6 +6,7 @@ prelude
     import std.array
     import std.list
     import std.string
+    import std.hash
     import std.file
 
 root std = std

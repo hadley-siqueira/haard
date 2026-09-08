@@ -1,0 +1,255 @@
+# std/hash.hd -- Hash<K, V>, the fourth of record 0022's four classes.
+import std.array
+import std.string
+
+# How a key becomes a number. There are no interfaces (agenda 1.16) and no
+# way to ask a type for a method, so this is an ordinary overload set: a
+# 'Hash<K, V>' calls 'hash_of(key)' and the clone record 0002 makes resolves
+# it against the K it was instantiated with. A key type nobody wrote one for
+# is reported at the instantiation, by name.
+#
+# Every one of them gives back a NON-NEGATIVE i32, because the bucket is
+# 'hash_of(key) % capacity' and record 0018 has no conversion to make a u32
+# and an i32 one thing.
+# u32 and not i32, because a hash MULTIPLIES and an i32 that overflows is
+# undefined where an unsigned one wraps -- which is the whole of what mixing
+# bits is. The bucket takes it back down, once, in 'slot_of'
+def hash_of : u32
+    @key : i32
+    let mixed = key as u32
+
+    mixed = mixed ^ (mixed >> 16)
+    mixed = mixed * 2246822519
+    mixed = mixed ^ (mixed >> 13)
+
+    return mixed
+
+# FNV-1a, the same one the compiler's own StringTable uses
+def hash_of : u32
+    @key : char*
+    let h : u32 = 2166136261
+    let i = 0
+
+    while key[i] != '\0':
+        h = h ^ (key[i] as u32)
+        h = h * 16777619
+        i = i + 1
+
+    return h
+
+# Record 0041: a symbol is a name and the table holds its text, so two
+# symbols that are one entry hash the same by construction
+def hash_of : u32
+    @key : symbol
+    return hash_of(key as char*)
+
+def hash_of : u32
+    @key : String&
+    return hash_of(key.text())
+
+class Hash<K, V>:
+    keys : K*
+    values : V*
+    states : u8*
+    capacity : i32
+    size : i32
+
+    def init : void
+        capacity = 8
+        size = 0
+        keys = new K[capacity]
+        values = new V[capacity]
+        states = new u8[capacity]
+
+        empty_out()
+
+    def destroy : void
+        delete[] keys
+        delete[] values
+        delete[] states
+
+    def length : i32
+        return size
+
+    def is_empty : bool
+        return size == 0
+
+    def has : bool
+        @key : K
+        return slot_of(key) >= 0
+
+    def add : void
+        @key : K
+        @value : V
+
+        if size * 2 >= capacity:
+            grow()
+
+        let at = slot_of(key)
+
+        if at >= 0:
+            values[at] = value
+            return
+
+        at = free_slot_for(key)
+        keys[at] = key
+        values[at] = value
+        states[at] = 1
+        size = size + 1
+
+    def remove : void
+        @key : K
+
+        let at = slot_of(key)
+
+        if at < 0:
+            return
+
+        states[at] = 2
+        size = size - 1
+
+    def operator[] : V&
+        @key : K
+
+        let at = slot_of(key)
+
+        if at < 0:
+            let nothing : V
+
+            add(key, nothing)
+            at = slot_of(key)
+
+        return values[at]
+
+    # Record 0031: it owns three buffers, so it says how it is copied. Without
+    # this a Hash could not be passed by value, given back or bound from
+    # another one at all
+    def init : void
+        @other : Hash<K, V>&
+
+        capacity = other.capacity
+        size = 0
+        keys = new K[capacity]
+        values = new V[capacity]
+        states = new u8[capacity]
+
+        empty_out()
+
+        let i = 0
+
+        while i < other.capacity:
+            if other.states[i] == 1:
+                add(other.keys[i], other.values[i])
+
+            i = i + 1
+
+    # Record 0040: what 'for k in h' walks. A Hash gives back its KEYS -- the
+    # value is one subscript away and there is no pair type to give back yet
+    def iterator : HashCursor<K, V>
+        let cursor : HashCursor<K, V>
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
+    # what the cursor reads, since a slot is this class's business and not
+    # anybody else's
+    def slot_count : i32
+        return capacity
+
+    def taken_at : bool
+        @at : i32
+        return states[at] == 1
+
+    def key_at : K&
+        @at : i32
+        return keys[at]
+
+    def empty_out : void
+        let i = 0
+
+        while i < capacity:
+            states[i] = 0
+            i = i + 1
+
+    def slot_of : i32
+        @key : K
+
+        let at = (hash_of(key) % (capacity as u32)) as i32
+        let walked = 0
+
+        while walked < capacity:
+            if states[at] == 0:
+                return -1
+
+            if states[at] == 1 and keys[at] == key:
+                return at
+
+            at = (at + 1) % capacity
+            walked = walked + 1
+
+        return -1
+
+    def free_slot_for : i32
+        @key : K
+
+        let at = (hash_of(key) % (capacity as u32)) as i32
+
+        while states[at] == 1:
+            at = (at + 1) % capacity
+
+        return at
+
+    def grow : void
+        let old_keys = keys
+        let old_values = values
+        let old_states = states
+        let old_capacity = capacity
+
+        capacity = capacity * 2
+        size = 0
+        keys = new K[capacity]
+        values = new V[capacity]
+        states = new u8[capacity]
+
+        empty_out()
+
+        let i = 0
+
+        while i < old_capacity:
+            if old_states[i] == 1:
+                add(old_keys[i], old_values[i])
+
+            i = i + 1
+
+        delete[] old_keys
+        delete[] old_values
+        delete[] old_states
+
+
+# Record 0040's cursor for a Hash: a position in the open addressed table,
+# walked past every slot that holds nothing
+class HashCursor<K, V>:
+    held : Hash<K, V>*
+    position : i32
+
+    def init : void
+        held = null
+        position = 0
+
+    def has_next : bool
+        while position < held->slot_count():
+            if held->taken_at(position):
+                return true
+
+            position = position + 1
+
+        return false
+
+    def next : K&
+        let at = position
+
+        position = position + 1
+
+        return held->key_at(at)

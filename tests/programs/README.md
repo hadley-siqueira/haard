@@ -110,6 +110,17 @@ directory, it does, and `make clean` takes it back.
   **unbound generic** to stop being checked: two occurrences of `Node<T>` in
   two generics are two types.
 
+- **`a_hash_is_written_in_haard`** — record 0042, and the fourth class of the
+  standard library. Three key types in one program — `i32`, `String` and a
+  **symbol** — which is what says hashing is an ordinary overload set and not
+  something the compiler knows: `hash_of` is resolved against the K each clone
+  was instantiated with. It grows past four rehashes, probes past a tombstone,
+  checks that a copy holds its own three buffers, and walks its keys with
+  `for k in h`.
+
+  Its last check is a symbol inside a template string, which is
+  `String.append(symbol)` and record 0041's table giving the name back.
+
 - **`containers_are_walked_by_for_in`** — record 0040, and the four things
   there are to walk: an `Array<i32>` and a `List<i32>` by the cursor each gives
   back, a fixed array by the length its type carries, and a range in both of

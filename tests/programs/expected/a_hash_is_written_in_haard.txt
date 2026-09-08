@@ -1,0 +1,12 @@
+two keys, one written twice: 2 entries, ages[1] is 11: ok
+after 40 keys: 40 entries, ages[39] is 3900: ok
+after removing 7: 39 entries, has 7 is false: ok
+a copy is its own: 40 against 39: ok
+three String keys: 1, 2, 3: ok
+symbols as keys: 7 and 9: ok
+walking the three keys adds their values to 6: ok
+a symbol in a template string: estado: ready: ok
+
+failures: 0
+--- files:
+--- exit: 0

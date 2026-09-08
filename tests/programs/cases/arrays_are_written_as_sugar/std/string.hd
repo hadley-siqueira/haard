@@ -211,6 +211,14 @@ class String:
         @value : u32
         append(value as i64)
 
+    # Record 0041: a symbol is a name and the emitter's table holds its text,
+    # so appending one is appending that text. 'as char*' is the only way
+    # across, which is the point of a symbol being its own type
+    def append : void
+        @value : symbol
+
+        append(value as char*)
+
     def append : void
         @value : bool
 
