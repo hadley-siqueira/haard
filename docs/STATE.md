@@ -639,6 +639,38 @@ Four things to know before touching it:
   opt out. The argument for the asymmetry it replaced is kept in record 0046
   rather than deleted with the refusal it used to justify.
 
+**Comparing two containers left the containers**, 2026-09-09 — record 0054.
+`Array<T>` and `List<T>` no longer declare `equals`, `==` or `!=`, and both
+carry a comment saying the absence is the decision. A method of a generic
+class is instantiated **with the class**, so an `equals` comparing two `T`
+made every `T` ever put in one need an `operator==` for a method nobody
+called — which is the whole of why `Array<Token>` did not compile, and the
+bootstrap is `Array<Token>`, `Array<AstNode>` and `Array<Type>`. Measured
+first: **no program in this repository has ever compared two of them**.
+
+**A generic function is instantiated per call**, since the same day, and it
+had **always parsed and never been instantiated**: `callee_of` opened by
+dropping the type arguments, so `f<i32>(3)` was ranked against the unbound
+signature. The Instantiator could always have done it — it clones a
+declaration and asks nothing about its kind. Three things to know:
+
+- **`check_statements` is a loop now.** A call carrying type arguments
+  instantiates, and a call is checked there as often as it is typed in the
+  type phase, so a clone can be born after its module's turn. The checker
+  keeps a set of the declarations it has walked, and reads the declaration
+  list into a **snapshot** before walking — a clone is appended as it is made,
+  so a live walk would reach it in the same round, before the type phase has
+  been through its body.
+- **`UseResolver::use()` writes no resolution.** It resolves a name only to
+  check that it exists; the ResolutionTable is written by the type phase. An
+  afternoon went into resolving a fresh clone's uses before that was measured,
+  and the work was reverted rather than left in looking useful.
+- **One shape is still open**: `let bound = same<i32>(xs, ys)` when the
+  generic's body calls a **method** on the parameter's own type. Written in an
+  `if` it works; with a field access instead of the method it works; with two
+  instantiations, with a generic calling a generic, and with `Array<T>&` it
+  works. Record 0054 says what was tried.
+
 **`main` takes its arguments**, since 2026-09-09 — record 0051, in two shapes
 besides the empty one: C's `(argc, argv)`, and **one list**, `@args :
 String[]`, built in the shim out of `argc` and `argv`. The list form knows

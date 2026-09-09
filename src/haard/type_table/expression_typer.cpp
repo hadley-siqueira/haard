@@ -1861,6 +1861,18 @@ std::vector<Candidacy> ExpressionTyper::instantiated(
         built.push_back(builder.build(index, scope, child));
     }
 
+    // Record 0002, and it is the same guard a written type has: a generic
+    // naming an **unbound** parameter is not an instantiation. 'same<T>(a, b)'
+    // written inside another generic would clone 'same' with T still a
+    // parameter -- a declaration whose body is checked with nothing bound, and
+    // reported about. The clone of the caller asks this again with T a type
+    for (u32 argument : built) {
+        if (argument == INVALID_TYPE
+            || module->get_types()->get_type(argument)->kind == TYPE_GENERIC) {
+            return found;
+        }
+    }
+
     std::vector<Candidacy> answer;
     AstQuery query;
 

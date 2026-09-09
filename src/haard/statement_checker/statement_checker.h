@@ -63,6 +63,9 @@ namespace haard {
             // these arguments
             void set_collector(TypeCollector* collector);
 
+            // whether a module grew a declaration this checker has not seen
+            bool has_more(u32 module);
+
             // checks every statement of this module, logging one error per
             // question that came back wrong
             void check(u32 module);
@@ -72,6 +75,15 @@ namespace haard {
             // INVALID_TYPE outside any function or inside one whose signature
             // could not be built
             void walk(u32 node, u32 scope, u32 result);
+
+        private:
+            // Record 0054. The declarations this checker has already walked,
+            // by module. A clone made **while** statements are being checked
+            // -- which is what 'f<i32>(3)' written in a 'return' does -- is
+            // born after its module's turn, so the phase has to come round
+            // again; and coming round again must not check anything twice, or
+            // every diagnostic in the module comes out twice with it
+            std::map<u32, std::set<u32>> checked;
 
             void check_return(u32 node, u32 scope, u32 result);
 

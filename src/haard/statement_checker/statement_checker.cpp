@@ -70,8 +70,49 @@ void StatementChecker::check(u32 index) {
         }
     }
 
-    walk(module->get_ast()->get_root(), table->get_module_scope(),
-         INVALID_TYPE);
+    // One declaration at a time, and only the ones this module has not been
+    // through, which is what makes a second round cost nothing and report
+    // nothing twice. Record 0054: a clone made while this phase runs is added
+    // to the root and the phase comes round again for it
+    Ast* ast = module->get_ast();
+    std::set<u32>& done = checked[index];
+    std::vector<u32> round;
+
+    // The list is read **before** anything is walked, and that is the whole
+    // of what makes the round work. A clone is appended to the root as it is
+    // made, so walking the list live would reach it in this same round --
+    // before the type phase has been through its body, which is the one thing
+    // the round exists to arrange. Taken as a snapshot, it waits for the next
+    for (u32 declaration = ast->get_node(ast->get_root())->get_children();
+         declaration != 0;
+         declaration = ast->get_node(declaration)->get_sibling()) {
+        if (done.count(declaration) == 0) {
+            round.push_back(declaration);
+        }
+    }
+
+    for (u32 declaration : round) {
+        done.insert(declaration);
+        walk(declaration, table->get_module_scope(), INVALID_TYPE);
+    }
+}
+
+// whether this module has a declaration this checker has not walked, which is
+// how the round above knows to come again
+bool StatementChecker::has_more(u32 index) {
+    Module* holder = compilation->get_module(index);
+    Ast* ast = holder->get_ast();
+    std::set<u32>& done = checked[index];
+
+    for (u32 declaration = ast->get_node(ast->get_root())->get_children();
+         declaration != 0;
+         declaration = ast->get_node(declaration)->get_sibling()) {
+        if (done.count(declaration) == 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void StatementChecker::walk(u32 node, u32 scope, u32 result) {

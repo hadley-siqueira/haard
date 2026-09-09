@@ -1,0 +1,125 @@
+# Record 0054. A generic **function** was parsed since the beginning and never
+# instantiated: 'ExpressionTyper::callee_of' unwrapped the AST_GENERIC_NAME
+# and threw the type arguments away, so 'f<i32>(3)' was ranked against the
+# **unbound** signature -- 'T -> T' -- and an i32 does not match a T. The
+# answer was *no 'f' takes these arguments*.
+#
+# The Instantiator could always have done it: it clones a declaration node and
+# asks nothing about its kind, and 'SymbolCollector::collect_declaration'
+# takes AST_FUNCTION as its first case. Only the caller was missing.
+#
+# Why this matters more than the feature: a method of a generic **class** is
+# instantiated with the class, so an 'equals' comparing two T made every T
+# ever put in an Array need an 'operator==' -- for a method nobody called. A
+# free generic function is instantiated **per call**, so it asks nothing of a
+# T nobody compares. That is where 'Array<T>::equals' went on 2026-09-09, and
+# this file is that function.
+
+class Token:
+    kind : i32
+
+    def init : void
+        kind = 0
+
+    def init : void
+        @k : i32
+
+        kind = k
+
+    def operator== : bool
+        @other : Token&
+
+        return kind == other.kind
+
+# a tiny array, so this case owns everything it uses and the compiler has
+# never heard of any of it
+class Bag<T>:
+    held : T*
+    count : i32
+
+    def init : void
+        held = new T[8]
+        count = 0
+
+    def destroy : void
+        delete[] held
+
+    def add : void
+        @one : T
+
+        held[count] = one
+        count = count + 1
+
+    def length : i32
+        return count
+
+    def at : T&
+        @i : i32
+
+        return held[i]
+
+# the comparison that does NOT live in Bag, and this is the whole point:
+# 'Bag<i32>' costs nothing to a program that never compares two
+def same<T> : bool
+    @a : Bag<T>&
+    @b : Bag<T>&
+
+    if a.length() != b.length():
+        return false
+
+    let i = 0
+
+    while i < a.length():
+        if not (a.at(i) == b.at(i)):
+            return false
+
+        i = i + 1
+
+    return true
+
+# a generic calling a generic, which is the shape that needed the phase to
+# come round twice
+def first_matches<T> : bool
+    @a : Bag<T>&
+    @b : Bag<T>&
+
+    return same<T>(a, b)
+
+def main : i32
+    let xs : Bag<i32>
+    let ys : Bag<i32>
+
+    xs.add(1)
+    xs.add(2)
+    ys.add(1)
+    ys.add(2)
+
+    # Written where the **statement checker** sees it, which is the half the
+    # extra round of phases exists for: the clone is born after that phase's
+    # turn at this module, so the phases come round again for it.
+    #
+    # A 'let bound = same<i32>(xs, ys)' -- inferred by the type phase instead
+    # -- does not work yet when the generic's body calls a method on the
+    # generic parameter's own type, and record 0054 says where that stands
+    if not same<i32>(xs, ys):
+        return 1
+
+    ys.add(3)
+
+    if same<i32>(xs, ys):
+        return 2
+
+    # the same function over a class of the reader's own
+    let ts : Bag<Token>
+    let us : Bag<Token>
+
+    ts.add(Token(7))
+    us.add(Token(7))
+
+    if not first_matches<Token>(ts, us):
+        return 3
+
+    # and 'Bag<Token>' itself never needed an 'operator==' to exist: the one
+    # above is used, and a Bag of something that has none would compile as
+    # long as nothing compares two
+    return 42

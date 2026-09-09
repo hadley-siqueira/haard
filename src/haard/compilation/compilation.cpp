@@ -418,9 +418,53 @@ void Compilation::check_statements() {
 
     statements.set_collector(collector.get());
 
-    for (u32 i = 0; i < modules.size(); i++) {
-        if (modules[i]->is_parsed()) {
-            statements.check(i);
+    // Record 0054, and it is the module loop's shape a fourth time.
+    //
+    // A call carrying type arguments **instantiates**, and a call is checked
+    // here as often as it is typed in the type phase -- 'return f<i32>(3)'
+    // reaches only this one. So a clone can be born in the middle of this
+    // phase, after its module's turn has passed, and nothing would ever type
+    // its body or check its statements: the emitter then said *'a' names no
+    // declaration* about a parameter written two lines above it.
+    //
+    // So the phases come round again for whatever grew. The type phase knows
+    // what is new by its own mark and does nothing when nothing is; the
+    // checker keeps a set of the declarations it has walked, so a second
+    // round costs nothing and no diagnostic comes out twice.
+    //
+    // It terminates for the reason the outer module loop does: a round can
+    // only add finitely many clones, since record 0002's instantiation is
+    // memoised by (declaration, arguments) and its nesting is capped
+    bool grew = true;
+
+    while (grew) {
+        grew = false;
+
+        for (u32 i = 0; i < modules.size(); i++) {
+            if (modules[i]->is_parsed()) {
+                statements.check(i);
+            }
+        }
+
+        for (u32 i = 0; i < modules.size(); i++) {
+            if (!modules[i]->is_parsed()) {
+                continue;
+            }
+
+            if (statements.has_more(i)) {
+                grew = true;
+            }
+        }
+
+        // and the clones that grew need the type phase before the next round
+        // of checking reads their bodies
+        if (grew) {
+            for (u32 i = 0; i < modules.size(); i++) {
+                if (modules[i]->is_parsed()) {
+                    collector->catch_up(i);
+                    collector->infer(i);
+                }
+            }
         }
     }
 }
