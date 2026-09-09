@@ -87,6 +87,13 @@ to a C++ `enum class`; anything else is a struct with a tag and a union, with a
 maker per variant and — when a payload is a class — a destructor and a copy
 that ask the tag which member is alive.
 
+Two of them compare with `==`, which the emitter writes as a `__equals` on the
+struct: the tag first, then the payload, and a class payload by the
+`operator==` it wrote. A class that wrote none simply leaves the enum without
+`__equals` — the enum is still built, matched and destroyed like any other, and
+only **comparing** two of them is refused, at the comparison and by name
+(`tests/emitter/cases/an_enum_that_cannot_be_compared`).
+
 It is read by **`switch`**, which is a pattern match: **no fall through and no
 `break`**, cases group by writing one with no block, a `case` captures by
 **reference** into the value being switched over, and a switch over an enum is

@@ -1,0 +1,6 @@
+# The standard library. It depends on nobody: record 0030's eight native
+# functions are the floor, and everything above them is Haard.
+{
+    name: "std",
+    version: "1.0"
+}

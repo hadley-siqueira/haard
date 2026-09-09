@@ -1,0 +1,19 @@
+import std.string
+import geometry.shape
+
+def described : String
+    @s : Shape
+
+    switch s:
+        case Point:
+            return "a point, with no area"
+
+        case Circle(r):
+            let out : String = "a circle of radius ${r}, area ${area_of(s)}"
+
+            return out
+
+        case Rect(w, h):
+            let out : String = "a ${w}x${h} rectangle, area ${area_of(s)}"
+
+            return out

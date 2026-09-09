@@ -11,6 +11,22 @@ struct h0_1_Action {
         struct { int32_t _0; } h0_4_Increment;
         struct { int32_t _0; int32_t _1; } h0_6_Move;
     };
+
+    bool __equals(const h0_1_Action& other) const {
+        if (tag != other.tag) {
+            return false;
+        }
+        switch (tag) {
+        case 1:
+            return h0_3_Click._0 == other.h0_3_Click._0 && h0_3_Click._1 == other.h0_3_Click._1;
+        case 2:
+            return h0_4_Increment._0 == other.h0_4_Increment._0;
+        case 41:
+            return h0_6_Move._0 == other.h0_6_Move._0 && h0_6_Move._1 == other.h0_6_Move._1;
+        default:
+            return true;
+        }
+    }
 };
 
 h0_1_Action h0_1_Action_h0_2_Idle() {
@@ -54,6 +70,20 @@ struct h0_14_Shape {
         struct { int32_t _0; } h0_16_Circle;
         struct { int32_t _0; } h0_17_Square;
     };
+
+    bool __equals(const h0_14_Shape& other) const {
+        if (tag != other.tag) {
+            return false;
+        }
+        switch (tag) {
+        case 1:
+            return h0_16_Circle._0 == other.h0_16_Circle._0;
+        case 2:
+            return h0_17_Square._0 == other.h0_17_Square._0;
+        default:
+            return true;
+        }
+    }
 };
 
 h0_14_Shape h0_14_Shape_h0_15_Point() {
@@ -151,19 +181,26 @@ int32_t h0_18_area_of(h0_14_Shape h0_19_s) {
 }
 
 int32_t h0_21_main() {
-    h0_1_Action h0_22_idle = h0_1_Action_h0_2_Idle();
-    h0_1_Action h0_23_click = h0_1_Action_h0_3_Click(10, 20);
-    h0_1_Action h0_24_bare = h0_1_Action_h0_3_Click(1, 2);
-    h0_1_Action h0_25_quiet = h0_1_Action_h0_2_Idle();
-    h0_1_Action h0_26_still = h0_1_Action_h0_6_Move();
-    h0_1_Action h0_27_moved = h0_1_Action_h0_6_Move(6, 6);
-    h0_1_Action h0_28_step = h0_1_Action_h0_4_Increment(5);
-    h0_1_Action h0_29_stop = h0_1_Action_h0_5_Stop();
-    h0_1_Action h0_30_held = h0_22_idle;
-    h0_30_held = h0_23_click;
-    int32_t h0_31_taken = h0_9_sum_of(h0_23_click) + h0_9_sum_of(h0_28_step) + h0_9_sum_of(h0_22_idle);
-    int32_t h0_32_squares = (h0_18_area_of(h0_14_Shape_h0_16_Circle(3)) + h0_18_area_of(h0_14_Shape_h0_17_Square(4)) + h0_18_area_of(h0_14_Shape_h0_15_Point()));
-    return (h0_7_value_of(h0_22_idle) + h0_7_value_of(h0_23_click) + h0_7_value_of(h0_28_step) + h0_7_value_of(h0_29_stop) + h0_7_value_of(h0_30_held) + h0_31_taken + h0_32_squares + h0_9_sum_of(h0_24_bare) + h0_7_value_of(h0_25_quiet) + h0_9_sum_of(h0_26_still) + h0_9_sum_of(h0_27_moved));
+    bool h0_22_same = h0_1_Action_h0_3_Click(1, 2).__equals(h0_1_Action_h0_3_Click(1, 2));
+    bool h0_23_apart = !h0_1_Action_h0_3_Click(1, 2).__equals(h0_1_Action_h0_3_Click(1, 3));
+    bool h0_24_tags = h0_1_Action_h0_2_Idle().__equals(h0_1_Action_h0_2_Idle());
+    bool h0_25_compared = h0_22_same && h0_23_apart && h0_24_tags;
+    h0_1_Action h0_26_idle = h0_1_Action_h0_2_Idle();
+    h0_1_Action h0_27_click = h0_1_Action_h0_3_Click(10, 20);
+    h0_1_Action h0_28_bare = h0_1_Action_h0_3_Click(1, 2);
+    h0_1_Action h0_29_quiet = h0_1_Action_h0_2_Idle();
+    h0_1_Action h0_30_still = h0_1_Action_h0_6_Move();
+    h0_1_Action h0_31_moved = h0_1_Action_h0_6_Move(6, 6);
+    h0_1_Action h0_32_step = h0_1_Action_h0_4_Increment(5);
+    h0_1_Action h0_33_stop = h0_1_Action_h0_5_Stop();
+    h0_1_Action h0_34_held = h0_26_idle;
+    h0_34_held = h0_27_click;
+    int32_t h0_35_taken = h0_9_sum_of(h0_27_click) + h0_9_sum_of(h0_32_step) + h0_9_sum_of(h0_26_idle);
+    int32_t h0_36_squares = (h0_18_area_of(h0_14_Shape_h0_16_Circle(3)) + h0_18_area_of(h0_14_Shape_h0_17_Square(4)) + h0_18_area_of(h0_14_Shape_h0_15_Point()));
+    if (!h0_25_compared) {
+        return 1;
+    }
+    return (h0_7_value_of(h0_26_idle) + h0_7_value_of(h0_27_click) + h0_7_value_of(h0_32_step) + h0_7_value_of(h0_33_stop) + h0_7_value_of(h0_34_held) + h0_35_taken + h0_36_squares + h0_9_sum_of(h0_28_bare) + h0_7_value_of(h0_29_quiet) + h0_9_sum_of(h0_30_still) + h0_9_sum_of(h0_31_moved));
 }
 
 int main() {

@@ -305,12 +305,19 @@ void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
 
     out << "    };\n";
 
-    // A union whose members are classes has **no** default constructor,
-    // destructor or copy of its own: C++ deletes all three, because it cannot
-    // know which member is alive. The tag knows, so the struct writes them.
+    out << "\n";
+
+    // Every tagged union carries its own comparison: two of them are equal
+    // when they are the same variant carrying the same things, and C++ has no
+    // '==' for a struct with a union in it
+    emit_union_equality(module_index, declaration, name);
+
+    // And a union whose members are classes has **no** default constructor,
+    // destructor or copy either: C++ deletes all three, because it cannot know
+    // which member is alive. The tag knows, so the struct writes them.
     //
-    // Nothing is generated when no variant carries a class: the union is then
-    // trivially copyable and C++'s own answers are the right ones
+    // None of that is generated when no variant carries a class: the union is
+    // then trivially copyable and C++'s own answers are the right ones
     if (holds_a_class(module_index, declaration)) {
         emit_union_lifetime(module_index, declaration, name);
     }
@@ -437,12 +444,132 @@ bool Emitter::holds_a_class(u32 module_index, u32 declaration) {
     return false;
 }
 
+// Whether two of this enum can be compared at all: a payload that is a class
+// is compared by the 'operator==' it wrote, and a class that wrote none leaves
+// nothing to compare it with. The reason comes back in words, because the
+// place it is worth saying is the comparison and not the declaration
+bool Emitter::union_compares(u32 module_index, u32 declaration,
+                             std::string& why) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        for (u32 carried : payload_of(module_index, member)) {
+            Type* entry = module->get_types()->get_type(carried);
+
+            if (entry->kind != TYPE_NAMED) {
+                continue;
+            }
+
+            Module* owner = compilation->get_module(entry->module);
+            u32 candidate = owner->get_symbols()
+                                ->get_candidate(entry->subject)->ast_node;
+
+            if (member_named(entry->module, candidate, "operator==") == 0) {
+                why = "'" + query.get_declaration_name(member) + "' carries "
+                    + declare(module_index, carried, "")
+                    + ", which has no 'operator==', so two of this enum "
+                      "cannot be compared";
+
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 // The four C++ writes for a union it cannot reason about, plus the two the
 // tag makes possible: '__clear' destroys the member that is alive and
 // '__copy' constructs the one the other value had.
 //
 // 'm_assign' and not a C++ 'operator=', which is record 0034's rule and the
 // same shape a class gets (record 0031): destroy first, then copy
+void Emitter::emit_union_equality(u32 module_index, u32 declaration,
+                                  const std::string& name) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    AstQuery query;
+    std::string why;
+
+    query.set_module(module);
+
+    // An enum carrying a class that cannot be compared simply has no
+    // '__equals'. It is still a perfectly good enum -- it is built, matched
+    // and destroyed like any other -- and only **comparing** two of them is
+    // out of reach, so that is where the diagnostic belongs
+    if (!union_compares(module_index, declaration, why)) {
+        return;
+    }
+
+    // Two of these are equal when they are the same variant carrying the same
+    // things. A payload compares with '==', which is the class's own when it
+    // is one
+    out << "    bool __equals(const " << name << "& other) const {\n";
+    out << "        if (tag != other.tag) {\n";
+    out << "            return false;\n";
+    out << "        }\n";
+    out << "        switch (tag) {\n";
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        std::vector<u32> carried = payload_of(module_index, member);
+
+        if (carried.size() == 0) {
+            continue;
+        }
+
+        std::string held = name_of(module_index, table->candidate_of(member));
+
+        out << "        case " << tag_of(module_index, declaration, member)
+            << ":\n";
+        out << "            return ";
+
+        for (u32 i = 0; i < carried.size(); i++) {
+            out << (i > 0 ? " && " : "");
+
+            Type* entry = module->get_types()->get_type(carried[i]);
+
+            // a class is compared by the 'operator==' it wrote, which record
+            // 0034 emits as a method and not as C++'s own operator -- and the
+            // const_cast is the one record 0031 already writes, for the same
+            // reason: Haard has no 'const' to put on the parameter
+            if (entry->kind == TYPE_NAMED) {
+                Module* owner = compilation->get_module(entry->module);
+                u32 candidate = owner->get_symbols()
+                                    ->get_candidate(entry->subject)->ast_node;
+                u32 compare = member_named(entry->module, candidate,
+                                           "operator==");
+                std::string kind = declare(module_index, carried[i], "");
+
+                out << "const_cast<" << kind << "&>(" << held << "._" << i
+                    << ")." << name_of(entry->module, compare) << "(const_cast<"
+                    << kind << "&>(other." << held << "._" << i << "))";
+                continue;
+            }
+
+            out << held << "._" << i << " == other." << held << "._" << i;
+        }
+
+        out << ";\n";
+    }
+
+    // every variant that carries nothing is the same as itself
+    out << "        default:\n            return true;\n";
+    out << "        }\n";
+    out << "    }\n";
+
+}
+
 void Emitter::emit_union_lifetime(u32 module_index, u32 declaration,
                                   const std::string& name) {
     Module* module = compilation->get_module(module_index);
@@ -451,7 +578,6 @@ void Emitter::emit_union_lifetime(u32 module_index, u32 declaration,
 
     query.set_module(module);
 
-    out << "\n";
     out << "    " << name << "() { tag = 0; }\n";
     out << "    " << name << "(const " << name << "& other) { __copy(other); }\n";
     out << "    ~" << name << "() { __clear(); }\n";
@@ -1669,6 +1795,37 @@ u32 Emitter::name_of_pattern(u32 module_index, u32 pattern) {
     return pattern;
 }
 
+// 'a.__equals(b)', when both sides are an enum whose variants carry
+// something. A plain 'enum class' is compared by C++ itself, and everything
+// else falls through to the operator it was written with
+bool Emitter::emit_union_comparison(u32 module_index, u32 node, bool negated) {
+    u32 left = child_of(module_index, node, 0);
+    u32 holder = module_index;
+    u32 owner = enum_of_type(module_index, left, holder);
+
+    if (owner == 0 || !carries_a_payload(holder, owner)) {
+        return false;
+    }
+
+    std::string why;
+
+    // the enum is compared here, so here is where a payload with no
+    // 'operator==' is worth reporting -- the declaration itself was fine
+    if (!union_compares(holder, owner, why)) {
+        fail(why);
+
+        return true;
+    }
+
+    out << (negated ? "!" : "");
+    emit_expression(module_index, left);
+    out << ".__equals(";
+    emit_expression(module_index, child_of(module_index, node, 1));
+    out << ")";
+
+    return true;
+}
+
 // whether this switch is over a value rather than over an enum: an integer or
 // a char, whose patterns are written values and need nothing looked up
 bool Emitter::is_a_value_switch(u32 module_index, u32 subject) {
@@ -2062,8 +2219,24 @@ void Emitter::emit_expression(u32 module, u32 node) {
     case AST_LOGICAL_NOT:
     case AST_LOGICAL_NOT_OPERATOR: emit_unary(module, node, "!"); return;
 
-    case AST_EQUAL: emit_binary(module, node, "=="); return;
-    case AST_NOT_EQUAL: emit_binary(module, node, "!="); return;
+    // Two enums compare by being the same variant carrying the same things,
+    // and a tagged union has no C++ '==' -- the struct carries a comparison
+    // this emitter wrote, for the same reason it carries a destructor
+    case AST_EQUAL:
+        if (emit_union_comparison(module, node, false)) {
+            return;
+        }
+
+        emit_binary(module, node, "==");
+        return;
+
+    case AST_NOT_EQUAL:
+        if (emit_union_comparison(module, node, true)) {
+            return;
+        }
+
+        emit_binary(module, node, "!=");
+        return;
     case AST_LESS_THAN: emit_binary(module, node, "<"); return;
     case AST_GREATER_THAN: emit_binary(module, node, ">"); return;
     case AST_LESS_THAN_OR_EQUAL: emit_binary(module, node, "<="); return;

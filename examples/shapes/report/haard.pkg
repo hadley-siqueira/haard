@@ -1,0 +1,11 @@
+# a library that needs another one, and says so itself -- the app below never
+# had to know
+{
+    name: "report",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../../../std"},
+        {name: "geometry", path: "../geometry"}
+    ]
+}

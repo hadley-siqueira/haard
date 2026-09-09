@@ -1,0 +1,12 @@
+{
+    name: "app",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../../../std"},
+        {name: "geometry", path: "../geometry"},
+        {name: "report", path: "../report"}
+    ],
+
+    prelude: ["std.array", "std.string", "std.file"]
+}

@@ -140,6 +140,10 @@ namespace haard {
             // the name a candidate was declared under, read out of the table
             std::string name_in_table(u32 module, u32 candidate);
             bool is_a_value_switch(u32 module, u32 subject);
+
+            // 'a.__equals(b)' when both sides are a tagged union, which has
+            // no C++ '==' of its own
+            bool emit_union_comparison(u32 module, u32 node, bool negated);
             void emit_for(u32 module, u32 node);
             void emit_for_part(u32 module, u32 part);
             void emit_binding(u32 module, u32 node);
@@ -236,6 +240,15 @@ namespace haard {
             bool holds_a_class(u32 module, u32 declaration);
             void emit_union_lifetime(u32 module, u32 declaration,
                                      const std::string& name);
+
+            // the comparison a tagged union carries when it can: the same
+            // variant, carrying the same things
+            void emit_union_equality(u32 module, u32 declaration,
+                                     const std::string& name);
+
+            // whether it can -- a class payload with no 'operator==' leaves
+            // nothing to compare it with, and says so in words
+            bool union_compares(u32 module, u32 declaration, std::string& why);
 
             // the number a variant's tag holds: the C rule, a counter an
             // explicit value resets, asked by the maker and by the label

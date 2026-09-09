@@ -1,0 +1,15 @@
+import geometry.shape
+import report.lines
+
+def main : i32
+    let out = console()
+    let shapes : Shape[] = [Point, Circle(2), Rect(3, 4)]
+    let total = 0
+
+    for s in shapes:
+        out->writeln(described(s))
+        total = total + area_of(s)
+
+    out->writeln("total area: ${total}")
+
+    return 0

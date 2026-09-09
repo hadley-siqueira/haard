@@ -1,0 +1,1 @@
+cannot emit: 'Dot' carries h0_1_Word, which has no 'operator==', so two of this enum cannot be compared

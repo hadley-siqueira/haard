@@ -1,0 +1,21 @@
+# A shape is one of three things, and never anything else: that is what an
+# enum is in Haard -- a tagged union, and the compiler knows which of the
+# three a value is.
+enum Shape:
+    Point
+    Circle : i32
+    Rect : (i32, i32)
+
+def area_of : i32
+    @s : Shape
+
+    switch s:
+        case Point:
+            return 0
+
+        case Circle(r):
+            # 3 is close enough to pi for an example
+            return 3 * r * r
+
+        case Rect(w, h):
+            return w * h

@@ -1,0 +1,12 @@
+# The only file written by hand. It says what this program is and what it
+# needs; 'hdc' finds it by looking at and above the file it is given.
+{
+    name: "hello",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../../std"}
+    ],
+
+    prelude: ["std.string", "std.file"]
+}
