@@ -8,9 +8,15 @@
 # C++'s own converting constructor ran it. Haard decided *that* it converts;
 # C++ decided *how*, which is record 0034's rule surviving in the emission.
 #
-# The class is called String on purpose: record 0023 makes a 'char*' **value**
-# reaching one a named library relation, and it still is -- 'let s : String =
-# p' over a 'char* p' is that entry and nothing else.
+# The class is called String on purpose, and until 2026-09-09 that mattered:
+# record 0023 made a 'char*' **value** reaching one a named library relation,
+# an entry on record 0018's list that knew this one class by its name.
+#
+# That entry is gone and a value still converts. What replaced it asks the
+# class instead of reading its name -- does it declare an 'init' taking one of
+# these -- so this class is called String for the history and for nothing the
+# compiler reads. 'Note' below has always been the proof of that for a
+# literal; since today it is the proof for a value too.
 #
 # A written **literal** stopped being about the name on 2026-09-08, which is
 # record 0037's mechanism arriving here: a written class type takes a literal
@@ -124,8 +130,19 @@ def main : i32
 
     let k = noted("noted")
 
-    # 3 + 4 + 5 + 6 + 8 = 26, and 4 + 7 + 5 = 16 more
+    # 6. and the 'char*' **value**, which is the half record 0023 stood in
+    # for. It converts by the constructor now and by no name at all, so a
+    # temporary is built and passed -- and 'Note', which the compiler has
+    # never heard of, takes one exactly the same way
+    let from_value = by_value(plain)
+    let noted_value = noted(plain)
+
+    # written by hand, which is the other spelling of the same line and the
+    # same C++. Record 0045 is what made it writable
+    let by_hand = by_value(String(plain))
+
+    # 3 + 4 + 5 + 6 + 8 = 26, and 4 + 7 + 5 = 16 more, and "abc" is 3 again
     let first = (plain[0] - 'a') as i32
 
     return (first + built.length() + n + m + r + note.length()
-            + copied.length() + k)
+            + copied.length() + k + from_value + noted_value + by_hand)

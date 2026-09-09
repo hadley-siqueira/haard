@@ -44,6 +44,20 @@ namespace haard {
             // reported. The clone has to be typed the moment it is made
             void catch_up(u32 module);
 
+            // Record 0045, and it is the half of catch_up that a clone made
+            // in the module being walked needs. 'Box<i32>(7)' instantiates
+            // while module 0 is mid-walk, so catch_up returns at once -- the
+            // walk will reach the clone, but on a later round, and the
+            // construction is asking for its 'init' NOW. So this one
+            // signature is built here.
+            //
+            // Safe to repeat, which is what makes it a request and not a
+            // pass: signature_of reads the tree and interns, so the walk
+            // builds the same answer again when its turn comes. What must not
+            // repeat -- require_default_construction, which reports -- stays
+            // with the walk
+            void type_signature_now(u32 module, u32 candidate);
+
             TypeCollector();
 
         public:

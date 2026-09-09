@@ -62,6 +62,24 @@ namespace haard {
             // same in every module, which is what that decision bought
             u32 translate(u32 into, u32 from, u32 type);
 
+            // Record 0045. The type a **callee** names, for a construction:
+            // 'String("abc")' is written as a call, so the name arrives as an
+            // expression node -- an identifier, a scope, or the name and
+            // arguments of a generic -- and never as an AST_NAMED_TYPE.
+            //
+            // Those are the same two parts an AST_NAMED_TYPE holds, in the
+            // same order, so this is that node's own builder reached without
+            // the node: nothing is synthesised into the tree, and a written
+            // generic instantiates here exactly as it does in a type
+            u32 build_written_name(u32 module, u32 scope, u32 name,
+                                   u32 arguments);
+
+            // Whether this candidate set names a **type** rather than a set
+            // of overloads, and which declaration it is. Public for record
+            // 0045: a call has to ask before it ranks, because a type answers
+            // to no signature and would score -1 against every argument
+            u32 type_symbol(const std::vector<Candidacy>& found, u32& owner);
+
         private:
             // the two above, with the members set. The public pair saves
             // and puts back what the caller was looking at, so that an
@@ -73,10 +91,10 @@ namespace haard {
 
             u32 build_named(u32 module, u32 scope, u32 node);
 
-            // the declaration a type name means: a class, a struct, an
-            // enum, a union or a generic parameter. Anything else of that
-            // name is not a type, and a candidate set may hold both
-            u32 type_symbol(const std::vector<Candidacy>& found, u32& owner);
+            // the body both of them share: the name and its arguments, with
+            // the members already pointing at the module being read
+            u32 build_written_name_here(u32 module, u32 scope, u32 name,
+                                        u32 arguments);
 
             // 'T[n]' keeps n as a value. Only an integer literal can be read
             // today: a 'const N' length needs constant evaluation, which does

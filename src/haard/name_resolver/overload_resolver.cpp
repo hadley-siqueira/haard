@@ -313,20 +313,12 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
         return wanted->subject == default_of(caller, argument) ? 0 : 1;
     }
 
-    // Record 0037 at a call. A **written** literal reaching a class parameter
-    // is a construction the typer will pick a constructor for, and here is
-    // where the call has to be able to rank it: one step, which is what
-    // record 0023's 'char*' into a String cost when it was an entry of its
-    // own about a class the compiler knew by NAME. This is that entry with
-    // the name taken out.
-    //
-    // Only a written literal, which is record 0037's rule -- a 'char*' that
-    // is a value still converts by record 0018's list and by nothing else
-    if (is_a_written_literal(caller, argument.node)
-        && coercion.builds_from(caller, parameter, argument.type)) {
-        return 1;
-    }
-
+    // Record 0037's construction used to be ranked here, and only for a
+    // **written** literal -- because a 'char*' value converted by a different
+    // rule, an entry on record 0018's list that knew String by name. Since
+    // 2026-09-09 there is one rule for both and it lives on the list, so a
+    // call asks the same question the other three places ask and this is one
+    // line again
     return coercion.steps(caller, argument.type, parameter);
 }
 

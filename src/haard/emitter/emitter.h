@@ -275,6 +275,11 @@ namespace haard {
             u32 enum_of_variant(u32 holder, u32 candidate);
             u32 variant_of(u32 holder, u32 declaration, u32 module, u32 name);
 
+            // Record 0045: a call whose callee names a type, which is a
+            // construction the source wrote rather than one the compiler
+            // decided on
+            bool is_a_constructing_call(u32 module, u32 node);
+
             bool is_a_construction(u32 module, u32 node);
             bool emit_construction(u32 module, u32 node);
 

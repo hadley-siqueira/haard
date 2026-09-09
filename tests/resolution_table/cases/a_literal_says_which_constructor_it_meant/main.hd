@@ -7,17 +7,22 @@
 # 0034's rule surviving in the emission. Now the choice is here, written down,
 # at the four places a value is given to something.
 #
-# 'from_a_value' is the door that stays **shut**, and the golden's one
-# diagnostic is it: a 'char*' that is not a written literal converts by record
-# 0018's list and by nothing else, and that list knows one class by name --
-# String (record 0023). 'Note' is not it, so a value does not reach one.
+# 'from_a_value' was the door that stayed **shut**, and this case's golden
+# used to carry the diagnostic that said so: a 'char*' that was not a written
+# literal converted by record 0018's list and by nothing else, and that list
+# knew one class by name -- String (record 0023). 'Note' was not it.
 #
-# That asymmetry is deliberate. A written literal is a shape the author asked
-# for; a value converting silently is C++'s converting constructor, which
-# defends itself with 'explicit' and Haard has nothing to defend itself with.
-# Deleting record 0023's named entry -- so that a value reaches no class at
-# all -- is the last step of the migration, and it waits on a way to
-# construct a value with arguments written.
+# **Hadley opened it on 2026-09-09.** A value reaching a class the class can
+# be constructed from is one entry on the list now, and the entry knows no
+# name: it asks the class whether it declares an 'init' taking one of these,
+# which is the same question a written literal asks. So the last line below
+# resolves, and it resolves to the same 'init' the literal three lines above
+# it does -- which is what this golden shows.
+#
+# What that costs is written down and is C++'s own cost: this is the
+# converting constructor, and C++ defends itself against it with 'explicit',
+# which Haard does not have. Every one-argument 'init' in a program is an
+# implicit conversion into its class.
 class Note:
     text : char*
 

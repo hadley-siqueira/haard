@@ -1,16 +1,31 @@
-# Agenda 1.21. Record 0022 makes a string literal a 'char*' when nothing asks,
-# and agenda 1.21 puts 'char* -> String' on record 0018's list. Between them a
-# call with both overloads in view is not ambiguous: 'char*' is exact and
-# 'String' is one step away, so 'char* first' is what the list says rather
-# than an exception written into the ranking.
+# Agenda 1.21, and the ranking it asked for outlived the entry it was written
+# about. Record 0022 makes a string literal a 'char*' when nothing asks, and a
+# written literal reaching a class is a construction (record 0037) costing one
+# step. So a call with both overloads in view is not ambiguous: 'char*' is
+# exact and 'String' is a step away, and 'char* first' falls out of the
+# ranking rather than being written into it as an exception.
 #
 # The golden prints the signature that won, which is the whole point of the
 # case -- both would have resolved, and only one of them is right.
+#
+# Since record 0045 the LAST two lines are the other half of it. A 'char*'
+# **value** is not a String and does not become one: record 0018's list lost
+# its two entries about this class on 2026-09-09, so the conversion is written
+# by hand and 'String(text)' is what writes it. What the golden shows is that
+# the written one resolves to the same 'only_string' the literal does.
 
 class String:
     data : char*
     size : u64
     capacity : u64
+
+    # record 0037 needs it: a written literal reaches a class by an 'init'
+    # this compiler picks, and there is no entry that knows 'String' by name
+    # any more
+    def init : void
+        @text : char*
+
+        data = text
 
 def write : void
     @s : char*
@@ -29,5 +44,5 @@ def main : i32
     write("abc")
     write(text)
     only_string("abc")
-    only_string(text)
+    only_string(String(text))
     return 0

@@ -11,6 +11,17 @@
 # part of a Derived and discards the rest, which is the slicing the list keeps
 # off itself, and which 'let sliced : Base = d' below is already refused for.
 # The two lines now say the same thing, which they did not before.
+#
+# Amended again 2026-09-09, twice in one day and ending where it started. The
+# two entries that named 'String' were deleted (record 0045) and then replaced
+# by one that names **nothing**: a value reaching a class the class can be
+# constructed from. So 'char*' into a String converts at all four places
+# again, and the reason is no longer the class's name -- it is that String
+# declares an 'init' taking one.
+#
+# 'Buffer' below is what makes that visible. It has the same fields and no
+# 'init', and it is the only one of the two still refused. Before today the
+# difference between them was their names.
 
 class Base:
     tag : i32
@@ -22,8 +33,15 @@ class String:
     data : char*
     size : u64
 
-# the same fields and not the same class: 'char*' reaches String because the
-# language names String, not because a class holds a 'char*'
+    def init : void
+        @text : char*
+
+        data = text
+        size = 0
+
+# the same fields and **no 'init'**, which since record 0045 is the whole of
+# the difference. Until then this class differed from the one above by its
+# name, because the name was what record 0018's list carried
 class Buffer:
     data : char*
     size : u64
@@ -44,9 +62,15 @@ def widen : i64
     @n : i32
     return n
 
+# the list, asked by a return. Writing it is the other spelling and record
+# 0045 is what made it writable; both reach the same 'init'
 def as_string : String
     @text : char*
     return text
+
+def as_string_written : String
+    @text : char*
+    return String(text)
 
 def as_char_pointer : char*
     @s : String
@@ -62,6 +86,7 @@ def main : i32
     let bound : Base& = d
     let sliced : Base = d
     let built : String = text
+    let built_by_hand : String = String(text)
     let unbuilt : char* = s
     let wrong : Buffer = text
     b = d
@@ -72,5 +97,6 @@ def main : i32
     n = m
 
     s = text
+    s = String(text)
     text = s
     return 0

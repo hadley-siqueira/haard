@@ -1,0 +1,113 @@
+# Record 0045, in the suite whose verdict is the exit status of the binary it
+# built. What the type phase decided is in tests/type_table; what this checks
+# is that the C++ written for it compiles and runs, which is the half a golden
+# cannot show.
+#
+# The shape being checked is that the value is a **temporary written in
+# place** and not a hoisted local. Records 0032 and 0037 hoist, and hoisting
+# is exactly what keeps a bracketed literal from reaching a call -- so the
+# lines below that matter most are the ones where a construction is an
+# argument, a return and the right side of an assignment, which a hoisted one
+# would have had to refuse.
+#
+# C++ has the same spelling, which is what makes this free: 'Box(7)' is
+# 'h0_Box(7)', and a temporary bound to a 'Box&' parameter gets the cast the
+# emitter was already writing when it decided a conversion on its own.
+
+class Box:
+    v : i32
+
+    def init : void
+        v = 0
+
+    def init : void
+        @n : i32
+
+        v = n
+
+    def init : void
+        @other : Box&
+
+        v = other.v
+
+    def value : i32
+        return v
+
+# no 'init', so record 0026 makes it an aggregate: 'Point()' takes nothing
+class Point:
+    x : i32
+    y : i32
+
+    def sum : i32
+        return x + y
+
+class Pair<A, B>:
+    a : A
+    b : B
+
+    def init : void
+        @first : A
+        @second : B
+
+        a = first
+        b = second
+
+    def total : i32
+        return a + b
+
+# by value and by reference, which are the two ways a temporary reaches a
+# parameter and the second is the one C++ will not do on its own
+def by_value : i32
+    @b : Box
+
+    return b.value()
+
+def by_reference : i32
+    @b : Box&
+
+    return b.value()
+
+# a construction as a return, which is the place a hoisted local could not
+# have reached without a name to give it
+def gives : Box
+    @n : i32
+
+    return Box(n)
+
+def main : i32
+    let total = 0
+
+    # 1. a binding
+    let one = Box(1)
+
+    total = total + one.value()
+
+    # 2. an argument, by value and by reference alike
+    total = total + by_value(Box(2))
+    total = total + by_reference(Box(4))
+
+    # 3. a return, read straight off the temporary
+    total = total + gives(8).value()
+
+    # 4. an assignment, which is record 0031's copy and not a construction of
+    # the binding
+    let assigned = Box()
+
+    assigned = Box(16)
+    total = total + assigned.value()
+
+    # an aggregate, and a generic written with its arguments -- 'Pair<i32,
+    # i32>(32, 64)' instantiates the clone before it looks for an 'init', the
+    # way a written type does at a binding. 'new Pair<i32, i32>(1, 2)' was
+    # refused until the same day, and by the same hole
+    let p = Point()
+    let pair = Pair<i32, i32>(32, 64)
+
+    total = total + p.sum() + pair.total()
+
+    # and the conversion, which is what a builtin callee is
+    let half = f64(total) / 2.0
+    let back = i32(half)
+
+    # 1 + 2 + 4 + 8 + 16 + 0 + 96 = 127, and half of it back is 63
+    return back

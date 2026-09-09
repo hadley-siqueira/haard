@@ -1,0 +1,72 @@
+<unnamed>:
+    Box  Box
+    Point  Point
+    Pair  Pair
+    Colour  Colour
+    takes  Box -> void
+    gives  Box
+    main  i32
+    refusals  void
+    Pair  <none>
+    v  i32
+    init  void
+    init  i32 -> void
+    n  i32
+    x  i32
+    y  i32
+    A  A
+    B  B
+    a  A
+    b  B
+    init  A -> B -> void
+    first  A
+    second  B
+    Red  Colour
+    Green  Colour
+    b  Box
+    empty  Box
+    built  Box
+    aggregate  Point
+    generic  Pair<i32, i32>
+    converted  i32
+    widened  f64
+    assigned  Box
+    a  <none>
+    b  Box
+    c  Point
+    d  <none>
+    e  <none>
+    A  i32
+    B  i32
+    a  i32
+    b  i32
+    init  i32 -> i32 -> void
+    first  i32
+    second  i32
+  29 types interned
+diagnostics:
+error: Colour is built from one of its variants, so this needs the variant's name after a '.'
+  --> main.hd:88:13
+   |
+88 |     let a = Colour(1)
+   |             ^^^^^^
+error: no 'init' of Box takes these arguments
+  --> main.hd:92:16
+   |
+92 |     let b = Box(1, 2, 3)
+   |                ^
+error: Point declares no 'init', so it takes no arguments here
+  --> main.hd:96:18
+   |
+96 |     let c = Point(1, 2)
+   |                  ^
+error: 'i32' converts one value, and 0 were written
+   --> main.hd:100:13
+    |
+100 |     let d = i32()
+    |             ^^^
+error: 'i32' converts one value, and 2 were written
+   --> main.hd:101:13
+    |
+101 |     let e = i32(1, 2)
+    |             ^^^

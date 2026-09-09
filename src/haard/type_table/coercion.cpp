@@ -105,33 +105,28 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
                    : -1;
     }
 
-    // Agenda 1.21, Hadley 2026-09-03: a 'char*' where a 'String' was asked
-    // for. It is the first entry on record 0018's list that is a **library**
-    // relation and not a language one, and the only one that is not free --
-    // it names a class the compiler otherwise knows nothing about, and it runs
-    // String's constructor, which allocates and copies.
+    // A value reaching a class that can be **constructed** from it, which is
+    // record 0037's mechanism becoming an entry on the list instead of a rule
+    // about a call. Hadley, 2026-09-09.
     //
-    // Costing one, and that is the whole of the ranking agenda 1.21 asked for:
-    // record 0022 makes a string literal a 'char*' when nothing asks, so with
-    // both 'write(char*)' and 'write(String)' in view the first is exact and
-    // the second is a step away. 'char* first' falls out of the list instead
-    // of being written into the ranking as an exception
-    if (is_char_pointer(module, given) && is_string(module, wanted)) {
-        return 1;
-    }
-
-    // And the same thing where a **reference** to a String was asked for.
-    // Hadley, 2026-09-06: 'foo("abc")' against 'foo(@s : String&)' builds a
-    // String and passes it, which is one construction and not two steps -- so
-    // this is one entry of its own and NOT record 0018's list learning to
-    // compose. Whether it should compose is still open (record 0035).
+    // This is the third thing to stand here. Agenda 1.21 wrote two entries
+    // that knew 'String' by its **name**; record 0045 deleted them, and
+    // deleting them took 'takes(p)' with it, which was not the intent. What
+    // is here now knows no name at all: it asks the class whether it declares
+    // an 'init' taking one of these, which is exactly the question record
+    // 0037 asks about a written literal. So the property record 0045 bought
+    // survives -- there is nothing on this list the compiler has to know a
+    // class by name to do -- and a 'char*' value converts again, by the
+    // constructor and a temporary rather than by the compiler knowing which
+    // class it is.
     //
-    // Costing two, so that a 'foo(String&)' next to a 'foo(char*)' still gives
-    // the literal to the second: what took a step outranks what took none, and
-    // this took one more than the entry above
-    if (is_char_pointer(module, given) && to->kind == TYPE_REFERENCE
-        && is_string(module, types->get_argument(to->first_argument))) {
-        return 2;
+    // The two costs are the old pair's and they are what keeps a call
+    // unambiguous: with both 'takes(String)' and 'takes(String&)' in view, a
+    // temporary has to have somewhere to go, and by value is where C++ sends
+    // it -- there, because a temporary cannot bind to a plain reference at
+    // all; here, because taking one costs a step more
+    if (builds_from(module, wanted, given)) {
+        return to->kind == TYPE_REFERENCE ? 2 : 1;
     }
 
     return -1;
@@ -162,39 +157,6 @@ int Coercion::climb(u32 module, u32 from, u32 to) {
     }
 
     return -1;
-}
-
-bool Coercion::is_char_pointer(u32 module, u32 type) {
-    TypeTable* types = compilation->get_module(module)->get_types();
-    Type* entry = types->get_type(type);
-
-    if (entry->kind != TYPE_POINTER) {
-        return false;
-    }
-
-    Type* pointed =
-        types->get_type(types->get_argument(entry->first_argument));
-
-    return pointed->kind == TYPE_BUILTIN && pointed->subject == BUILTIN_CHAR;
-}
-
-bool Coercion::is_string(u32 module, u32 type) {
-    TypeTable* types = compilation->get_module(module)->get_types();
-    Type* entry = types->get_type(type);
-
-    // a generic instantiation is not it: record 0022 says String is the one
-    // class of the standard library that is not generic
-    if (entry->kind != TYPE_NAMED || entry->argument_count > 0) {
-        return false;
-    }
-
-    Module* holder = compilation->get_module(entry->module);
-    Candidate* found = holder->get_symbols()->get_candidate(entry->subject);
-    AstQuery query;
-
-    query.set_module(holder);
-
-    return query.get_declaration_name(found->ast_node) == "String";
 }
 
 bool Coercion::may_be_copied(u32 module, u32 type) {

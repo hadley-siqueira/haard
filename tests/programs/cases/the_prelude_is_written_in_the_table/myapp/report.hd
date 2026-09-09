@@ -12,7 +12,10 @@ def tagged : String
     @what : char*
     @value : i32
 
-    let line : String = what
+    # written, since record 0045: a 'char*' **value** is not a String and
+    # does not become one. A written literal still would -- record 0037 --
+    # and this is a parameter
+    let line : String = String(what)
 
     line.append(" = ")
     line.append(value)

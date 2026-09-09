@@ -206,6 +206,17 @@ namespace haard {
             // twelfth
             u32 call(u32 scope, u32 node);
 
+            // Record 0045. A call whose callee names a **type** is not a call
+            // at all: it is a construction, and its candidates are that
+            // type's 'init's rather than a set of overloads. Gives back
+            // INVALID_TYPE when the callee names no type, which is the
+            // ordinary call and the common case.
+            //
+            // 'built' says whether it decided anything, since a construction
+            // that could not be built answers INVALID_TYPE too
+            u32 construction(u32 scope, u32 node, u32 callee, u32 list,
+                             bool& built);
+
             // the candidates a callee names: a bare name, one of the two
             // qualified forms, or a member of whatever is on the left of a
             // '.' or a '->'
@@ -279,6 +290,11 @@ namespace haard {
             // record 0031's question, asked at the fourth of the four places
             // a value is given to something
             Coercion coercion;
+
+            // Record 0045: a construction may reach a clone the walk has not
+            // typed yet, and asking for that one signature is the only thing
+            // this is for
+            TypeCollector* collector;
 
             Module* module;
             u32 index;

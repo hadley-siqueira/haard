@@ -1,0 +1,143 @@
+def conversions : void
+    @x : i32
+    @f : f64
+    let a = i32(f)
+    let b = f64(x)
+    let c = u8(x)
+    let d = char(x)
+    let e = bool(x)
+def nested : void
+    @x : f64
+    let a = i32(i64(x))
+    let b = takes(i32(x), 1)
+def types_are_unchanged : i32
+    @n : i32
+    @p : char*
+    @xs : f64[3]
+    return n
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'conversions'
+    function_return_type
+      builtin_type 'void'
+    param '@'
+      binding_name
+        identifier 'x'
+      binding_type
+        builtin_type 'i32'
+    param '@'
+      binding_name
+        identifier 'f'
+      binding_type
+        builtin_type 'f64'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            call '('
+              builtin_type 'i32'
+              arguments '('
+                identifier 'f'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            call '('
+              builtin_type 'f64'
+              arguments '('
+                identifier 'x'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            call '('
+              builtin_type 'u8'
+              arguments '('
+                identifier 'x'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'd'
+          binding_expression
+            call '('
+              builtin_type 'char'
+              arguments '('
+                identifier 'x'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'e'
+          binding_expression
+            call '('
+              builtin_type 'bool'
+              arguments '('
+                identifier 'x'
+  function 'def'
+    binding_name
+      identifier 'nested'
+    function_return_type
+      builtin_type 'void'
+    param '@'
+      binding_name
+        identifier 'x'
+      binding_type
+        builtin_type 'f64'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            call '('
+              builtin_type 'i32'
+              arguments '('
+                call '('
+                  builtin_type 'i64'
+                  arguments '('
+                    identifier 'x'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            call '('
+              identifier 'takes'
+              arguments '('
+                call '('
+                  builtin_type 'i32'
+                  arguments '('
+                    identifier 'x'
+                integer '1'
+  function 'def'
+    binding_name
+      identifier 'types_are_unchanged'
+    function_return_type
+      builtin_type 'i32'
+    param '@'
+      binding_name
+        identifier 'n'
+      binding_type
+        builtin_type 'i32'
+    param '@'
+      binding_name
+        identifier 'p'
+      binding_type
+        pointer_type '*'
+          builtin_type 'char'
+    param '@'
+      binding_name
+        identifier 'xs'
+      binding_type
+        array_type '['
+          builtin_type 'f64'
+          integer '3'
+    block
+      return 'return'
+        identifier 'n'
+--- round trip: ok

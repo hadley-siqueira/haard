@@ -59,6 +59,46 @@ void TypeCollector::catch_up(u32 module_index) {
     scope_of = held_scope_of;
 }
 
+void TypeCollector::type_signature_now(u32 module_index, u32 candidate) {
+    Module* holder = compilation->get_module(module_index);
+    SymbolTable* table = holder->get_symbols();
+    Candidate* found = table->get_candidate(candidate);
+
+    if (found->kind != SYMBOL_FUNCTION || found->type != INVALID_TYPE) {
+        return;
+    }
+
+    // the walk keeps its subject in members, and this is asked from inside
+    // one, so what it was looking at is put back afterwards
+    u32 held_index = index;
+    Module* held_module = module;
+    std::map<u32, u32> held_scope_of = scope_of;
+
+    index = module_index;
+    module = holder;
+    scope_of.clear();
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        u32 owner = table->get_scope(scope)->owner;
+
+        if (owner != 0) {
+            scope_of[owner] = scope;
+        }
+    }
+
+    u32 body = scope_of.count(found->ast_node) > 0 ? scope_of[found->ast_node]
+                                                   : 0;
+
+    if (body != 0) {
+        table->set_candidate_type(candidate, signature_of(found->ast_node,
+                                                          body));
+    }
+
+    index = held_index;
+    module = held_module;
+    scope_of = held_scope_of;
+}
+
 bool TypeCollector::walk(u32 index, bool given) {
     this->index = index;
     module = compilation->get_module(index);

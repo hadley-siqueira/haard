@@ -1,0 +1,101 @@
+# Record 0045, and what it settles is that a construction is a **call whose
+# callee names a type**. No node kind was added and nothing is written into
+# the tree: 'Box(7)' parses as the call it looks like, and the difference is
+# found in the type phase, by asking what the name means before anything is
+# ranked.
+#
+# Until 2026-09-09 every one of the good lines below was *no 'Box' takes these
+# arguments* -- true, since a class answers to no signature and scores -1
+# against every argument, and about a question nobody had asked. A class could
+# only be built where the compiler decided to build one: a written type at a
+# binding (record 0037), or a 'new' (record 0026).
+#
+# The golden is the type of every binding. What it has to show is that the
+# answer is the class itself and not a pointer to one, which is the whole
+# difference from 'new', and that a written generic instantiates here exactly
+# as it does in a written type.
+
+class Box:
+    v : i32
+
+    def init : void
+        v = 0
+
+    def init : void
+        @n : i32
+
+        v = n
+
+# no 'init' at all, which record 0026 makes an aggregate. 'Point()' is still a
+# construction: it takes nothing because there is nothing to take
+class Point:
+    x : i32
+    y : i32
+
+class Pair<A, B>:
+    a : A
+    b : B
+
+    def init : void
+        @first : A
+        @second : B
+
+        a = first
+        b = second
+
+enum Colour:
+    Red
+    Green
+
+def takes : void
+    @b : Box
+
+    pass
+
+def gives : Box
+    return Box(3)
+
+def main : i32
+    # the four shapes, and every one of them is the class and not a pointer
+    let empty = Box()
+    let built = Box(7)
+    let aggregate = Point()
+    let generic = Pair<i32, i32>(1, 2)
+
+    # 'i32(x)' is the one construction that is a conversion: a builtin has no
+    # 'init' to choose, so Hadley 2026-09-09 makes it the second spelling of
+    # 'x as i32'
+    let converted = i32(3.5)
+    let widened = f64(built.v)
+
+    # and the four places a value is given to something, which is what a
+    # temporary written in place buys and a hoisted one would not: records
+    # 0032 and 0037 hoist, and hoisting is what keeps a bracketed literal from
+    # reaching a call
+    takes(Box(1))
+
+    let assigned = Box()
+
+    assigned = Box(2)
+
+    return gives().v
+
+# ---- and what it refuses, each exactly once
+
+def refusals : void
+    # an enum is built from one of its variants, each of which is callable
+    # already (record 0043). The bare name is the type and never a value
+    let a = Colour(1)
+
+    # a class whose 'init's take other things. Reported about the 'init' and
+    # not about the name, because the name was right
+    let b = Box(1, 2, 3)
+
+    # an aggregate takes nothing, and saying so is the difference between
+    # naming the mistake and letting the arguments evaporate
+    let c = Point(1, 2)
+
+    # a cast converts one value. 'i32()' and 'i32(a, b)' are neither a
+    # conversion nor anything else
+    let d = i32()
+    let e = i32(1, 2)

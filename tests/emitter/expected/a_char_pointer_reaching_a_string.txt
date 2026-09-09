@@ -67,8 +67,11 @@ int32_t h0_26_main() {
     h0_10_Note h0_33_copied;
     h0_33_copied.m_assign(const_cast<h0_10_Note&>(static_cast<const h0_10_Note&>(h0_10_Note("copied!"))));
     int32_t h0_34_k = h0_19_noted(h0_10_Note("noted"));
-    int32_t h0_35_first = (int32_t)((h0_27_plain[0] - 'a'));
-    return (h0_35_first + h0_28_built.m_length() + h0_29_n + h0_30_m + h0_31_r + h0_32_note.m_length() + h0_33_copied.m_length() + h0_34_k);
+    int32_t h0_35_from_value = h0_23_by_value(h0_1_String(h0_27_plain));
+    int32_t h0_36_noted_value = h0_19_noted(h0_10_Note(h0_27_plain));
+    int32_t h0_37_by_hand = h0_23_by_value(h0_1_String(h0_27_plain));
+    int32_t h0_38_first = (int32_t)((h0_27_plain[0] - 'a'));
+    return (h0_38_first + h0_28_built.m_length() + h0_29_n + h0_30_m + h0_31_r + h0_32_note.m_length() + h0_33_copied.m_length() + h0_34_k + h0_35_from_value + h0_36_noted_value + h0_37_by_hand);
 }
 
 void h0_1_String::m_init() {
@@ -159,4 +162,4 @@ h0_10_Note::~h0_10_Note() {
 int main() {
     return h0_26_main();
 }
---- exit: 42
+--- exit: 51

@@ -2128,6 +2128,26 @@ u32 Parser::parse_primary_expression() {
         return builder.make_this(matched);
     }
 
+    // Record 0045: 'i32(x)'. A builtin is a keyword and never an identifier,
+    // so it could not stand where a callee goes and the primary rule reported
+    // *expected an expression, found 'i32'*. It is read as the type node it
+    // is, and the postfix rule wraps it into the call it is written as -- so
+    // the printer writes it back exactly as it was written, which an
+    // AST_CAST built here would not.
+    //
+    // The '(' is required. A builtin on its own is a type and not a value,
+    // and taking one here would turn 'i32' alone into an expression that
+    // nothing after this could say anything useful about
+    if (is_builtin_type(current().get_kind()) && on_same_line()
+        && tokens->get_token(current_token + 1).get_kind()
+               == TK_LEFT_PARENTHESIS) {
+        u32 token = current_token;
+
+        advance();
+
+        return builder.make_builtin_type(token);
+    }
+
     if (lookahead_on_same_line(TK_TEMPLATE_STRING_BEGIN)) {
         return parse_template_string();
     }

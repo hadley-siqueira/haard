@@ -1,14 +1,17 @@
 <unnamed>:
-    73    write         <none>              -> write  char* -> void
-    75    "abc"         char*
-    76    (             void
-    77    write         <none>              -> write  char* -> void
-    79    text          char*               -> text
-    80    (             void
-    81    only_string   <none>              -> only_string  String -> void
-    83    "abc"         char*
-    84    (             void
-    85    only_string   <none>              -> only_string  String -> void
-    87    text          char*               -> text
-    88    (             void
-    89    0             i32
+    34    data          char*               -> data
+    35    text          char*               -> text
+    88    write         <none>              -> write  char* -> void
+    90    "abc"         char*
+    91    (             void
+    92    write         <none>              -> write  char* -> void
+    94    text          char*               -> text
+    95    (             void
+    96    only_string   <none>              -> only_string  String -> void
+    98    "abc"         String              -> String.init  char* -> void
+    99    (             void
+    100   only_string   <none>              -> only_string  String -> void
+    104   text          char*               -> text
+    105   (             String              -> String.init  char* -> void
+    106   (             void
+    107   0             i32

@@ -1,0 +1,39 @@
+# Record 0045. A builtin is a keyword and never an identifier, so it could not
+# stand where a callee goes: 'i32(x)' was *expected an expression, found
+# 'i32'*, which is the primary rule reporting a token it had no branch for.
+#
+# It is read as the type node it is and the postfix rule wraps it into the
+# call it was written as. That is the whole of the parser's part, and it is
+# why the printer below writes it back unchanged -- an AST_CAST built here
+# would have come out as 'x as i32' instead, which is a different program on
+# the page even when it is the same one in the tree.
+#
+# The '(' is required, which is the line the last function checks: a builtin
+# on its own is a type and not a value.
+
+def conversions : void
+    @x : i32
+    @f : f64
+
+    let a = i32(f)
+    let b = f64(x)
+    let c = u8(x)
+    let d = char(x)
+    let e = bool(x)
+
+# nested, and as an argument -- the postfix rule is the ordinary one, so a
+# construction goes wherever a call goes
+def nested : void
+    @x : f64
+
+    let a = i32(i64(x))
+    let b = takes(i32(x), 1)
+
+# and the type positions are untouched: the same words are still types where a
+# type is written, which is what makes the '(' the whole of the difference
+def types_are_unchanged : i32
+    @n : i32
+    @p : char*
+    @xs : f64[3]
+
+    return n

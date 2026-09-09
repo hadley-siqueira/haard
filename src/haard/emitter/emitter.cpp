@@ -2583,6 +2583,36 @@ void Emitter::emit_call(u32 module_index, u32 node) {
     u32 candidate = called_candidate(module_index, node, holder);
     u32 callee = child_of(module_index, node, 0);
 
+    // Record 0045, and it is the same shape the variant below is: a call
+    // whose callee names a TYPE writes the type's own name and then the
+    // parentheses about to be written are the constructor's.
+    //
+    // The 'init' the typer chose is written on the CALL and not on the name,
+    // the way record 0026 writes it on a 'new' -- so it is read here and
+    // handed to the arguments, which is what converts them
+    if (is_a_constructing_call(module_index, node)) {
+        Module* holding = compilation->get_module(module_index);
+        u32 made = type_at(module_index, node);
+        Type* entry = holding->get_types()->get_type(made);
+        Resolution* chosen = holding->get_resolutions()->get(node);
+
+        // 'i32(x)'. A builtin has no constructor to call, so this is the cast
+        // it is, written exactly as an 'x as i32' is written
+        if (entry->kind == TYPE_BUILTIN) {
+            out << "(" << type_name(module_index, made) << ")(";
+            emit_expression(module_index,
+                            child_of(module_index,
+                                     child_of(module_index, node, 1), 0));
+            out << ")";
+            return;
+        }
+
+        out << name_of(entry->module, entry->subject);
+        emit_call_arguments(module_index, child_of(module_index, node, 1),
+                            chosen->module, chosen->candidate);
+        return;
+    }
+
     // a variant of an enum is a maker, and the parentheses about to be
     // written are its own -- so the callee is written without them
     if (candidate != 0
@@ -3032,6 +3062,48 @@ std::string Emitter::emit_symbol_table() {
 // Only a literal, which is the record's rule: an identifier carries a
 // recorded declaration too, and it is the thing it names and not a
 // construction of it
+// Record 0045's other shape, and the one the source WRITES: a call whose
+// callee names a type. What says so is the type of the call node itself --
+// an ordinary call is typed by the return of what it called, and this one is
+// typed as the thing it builds, which is the callee.
+//
+// Told apart by the callee, because that is what the record is about. A name
+// that is a type is one of three nodes and never a '.' or a '->': record
+// 0043's 'Action.Click(1, 2)' is a variant, and it keeps the path it had
+bool Emitter::is_a_constructing_call(u32 module_index, u32 node) {
+    if (node == 0 || kind_of(module_index, node) != AST_CALL) {
+        return false;
+    }
+
+    u32 callee = child_of(module_index, node, 0);
+    AstNodeKind kind = kind_of(module_index, callee);
+
+    if (kind == AST_BUILTIN_TYPE) {
+        return true;
+    }
+
+    if (kind != AST_IDENTIFIER && kind != AST_SCOPE
+        && kind != AST_GENERIC_NAME) {
+        return false;
+    }
+
+    Module* module = compilation->get_module(module_index);
+    u32 made = type_at(module_index, node);
+
+    if (made == INVALID_TYPE) {
+        return false;
+    }
+
+    // the callee names a type when what the CALLEE resolved to is the same
+    // declaration the call was typed as. A function giving back one of these
+    // resolved to the function instead, which is the ordinary call
+    Type* entry = module->get_types()->get_type(made);
+    Resolution* named = module->get_resolutions()->get(
+        kind == AST_GENERIC_NAME ? child_of(module_index, callee, 0) : callee);
+
+    return entry->kind == TYPE_NAMED && named->candidate == 0;
+}
+
 bool Emitter::is_a_construction(u32 module_index, u32 node) {
     if (node == 0 || kind_of(module_index, node) != AST_STRING_LITERAL) {
         return false;

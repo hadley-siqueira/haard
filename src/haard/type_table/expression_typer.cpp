@@ -1,5 +1,6 @@
 #include <haard/string_table/string_table.h>
 #include <haard/type_table/expression_typer.h>
+#include <haard/type_table/type_collector.h>
 
 using namespace haard;
 
@@ -28,11 +29,14 @@ static u64 limit_of(BuiltinType which) {
 
 ExpressionTyper::ExpressionTyper() {
     compilation = nullptr;
+    collector = nullptr;
     module = nullptr;
     index = 0;
 }
 
 void ExpressionTyper::set_collector(TypeCollector* collector) {
+    this->collector = collector;
+
     builder.set_collector(collector);
 }
 
@@ -560,6 +564,18 @@ std::vector<Candidacy> ExpressionTyper::constructors_of(u32 type, u32& owner) {
                                      : table->get_symbol(symbol)->candidates;
          candidate != 0;
          candidate = table->get_candidate(candidate)->next_candidate) {
+        // Record 0045. A clone instantiated in the module being walked has
+        // no signatures yet -- its turn comes on a later round of the same
+        // walk, and catch_up steps aside for exactly that reason. So an
+        // 'init' with no signature is asked for here, before it is ranked:
+        // without this 'new Box<i32>(7)' was *no 'init' of Box<i32> takes
+        // these arguments* about an 'init' that takes precisely those, and
+        // it had been so since generics landed
+        if (collector != nullptr
+            && table->get_candidate(candidate)->type == INVALID_TYPE) {
+            collector->type_signature_now(owner, candidate);
+        }
+
         if (table->get_candidate(candidate)->kind == SYMBOL_FUNCTION) {
             found.push_back(Candidacy{owner, candidate});
         }
@@ -1254,6 +1270,18 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
 u32 ExpressionTyper::call(u32 scope, u32 node) {
     u32 callee = first_child(node);
     u32 list = second_child(node);
+    bool built = false;
+
+    // Record 0045, and it is asked before anything is ranked: a type answers
+    // to no signature, so a class among the candidates scores -1 against
+    // every argument and 'String("abc")' came out as *no 'String' takes these
+    // arguments* -- true, and about a question nobody had asked
+    u32 made = construction(scope, node, callee, list, built);
+
+    if (built) {
+        return made;
+    }
+
     std::vector<Candidacy> candidates = callee_of(scope, callee);
     std::vector<Argument> arguments;
 
@@ -1367,6 +1395,117 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
     }
 
     return chosen.result;
+}
+
+// Record 0045, and the shape it settles is that a construction is a **call
+// whose callee names a type**. Nothing new is written into the tree and no
+// node kind is added: 'String("abc")' parses as the call it looks like, and
+// the difference is found here, by asking what the name means before anything
+// is ranked.
+//
+// What it gives back is the type itself, and the value is a temporary the
+// emitter writes in place -- 'String(p)' in C++, which is the same text the
+// emitter was already writing for record 0023's conversion when it decided
+// one on its own. So this works in all four places a value is given to
+// something, and is not hoisted the way records 0032 and 0037 hoist: hoisting
+// is exactly what keeps a bracketed literal from reaching a call, and
+// reaching a call is what this is for
+u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
+                                  bool& built) {
+    built = false;
+
+    if (callee == 0) {
+        return INVALID_TYPE;
+    }
+
+    AstNodeKind kind = kind_of(callee);
+
+    // 'i32(x)'. A builtin names a type and has no 'init' to choose, so this
+    // one construction is a **conversion**, and Hadley 2026-09-09 makes it
+    // the second spelling of 'x as i32' rather than a shape of its own. It is
+    // the parser that lets a builtin stand where a callee goes
+    if (kind == AST_BUILTIN_TYPE) {
+        u32 made = builder.build(index, scope, callee);
+        u32 count = 0;
+
+        built = true;
+
+        for (u32 child = list == 0 ? 0 : first_child(list); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            // typed for the recording's sake and not for the answer, which is
+            // what ExpressionTyper::cast does with the same expression
+            type_of(index, scope, child, INVALID_TYPE);
+            count++;
+        }
+
+        // 'i32()' and 'i32(a, b)' are neither a conversion nor anything else.
+        // A cast has exactly one thing to convert
+        if (count != 1) {
+            report(callee, "'" + name_of(made) + "' converts one value, and "
+                   + std::to_string(count) + " were written");
+
+            return INVALID_TYPE;
+        }
+
+        return made;
+    }
+
+    // the three shapes a name reaches an expression in. A '.' or a '->' is
+    // not among them on purpose: 'Action.Click(1, 2)' is record 0043's
+    // variant, which is callable already and must keep going down the
+    // ordinary path
+    if (kind != AST_IDENTIFIER && kind != AST_SCOPE
+        && kind != AST_GENERIC_NAME) {
+        return INVALID_TYPE;
+    }
+
+    std::vector<Candidacy> found = callee_of(scope, callee);
+    u32 owner = index;
+    u32 symbol = builder.type_symbol(found, owner);
+
+    // the ordinary call, and the common one. A name that is a function, or
+    // that is nothing at all, is not this record's business -- the path below
+    // reports it exactly as it did before
+    if (symbol == 0) {
+        return INVALID_TYPE;
+    }
+
+    built = true;
+
+    // The name and its arguments, which are the two parts an AST_NAMED_TYPE
+    // holds and in the same order. So a written generic instantiates here for
+    // free: 'Pair<i32, i32>(1, 2)' builds the clone before it looks for an
+    // 'init', the way a written type does at a binding
+    u32 name = kind == AST_GENERIC_NAME ? first_child(callee) : callee;
+    u32 arguments = kind == AST_GENERIC_NAME ? second_child(callee) : 0;
+    u32 made = builder.build_written_name(index, scope, name, arguments);
+
+    if (made == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    // Record 0002 again: 'T(x)' inside a generic nobody instantiated is not a
+    // program yet. T is a parameter and not a class, so it has no 'init' and
+    // saying so would report a mistake about a body that is fine. The clone
+    // asks the same question with T bound, and reports it there
+    if (module->get_types()->get_type(made)->kind == TYPE_GENERIC) {
+        return made;
+    }
+
+    // Record 0043: an enum is built from one of its variants, each of which
+    // is callable already. The bare name is the type and never a value, and
+    // saying that it declares no 'init' would be true and useless
+    if (compilation->get_module(owner)->get_symbols()
+            ->get_candidate(symbol)->kind == SYMBOL_ENUM) {
+        report(name, name_of(made) + " is built from one of its variants, so "
+               "this needs the variant's name after a '.'");
+
+        return INVALID_TYPE;
+    }
+
+    initialisation(scope, node, made, list);
+
+    return made;
 }
 
 std::vector<Candidacy> ExpressionTyper::members_of(u32 left, u32 name,

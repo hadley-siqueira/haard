@@ -94,19 +94,7 @@ namespace haard {
             // because the OverloadResolver is what asks it
             bool builds_from(u32 module, u32 wanted, u32 given);
 
-            bool is_char_pointer(u32 module, u32 type);
 
-            // the standard library's String, which agenda 1.21 needs to name
-            // and no record has given the compiler a way to find yet.
-            //
-            // By its **name**, and knowingly: record 0017 already has the
-            // compiler knowing the name 'Array' and nothing else about it, so
-            // this is the same kind of knowledge and not a new one. When the
-            // prelude exists this becomes identity against the declaration it
-            // holds, and a program that declares its own String stops
-            // answering to a string literal -- which is the tightening record
-            // 0017's lookup order already promises for 'Array'
-            bool is_string(u32 module, u32 type);
 
         private:
             Compilation* compilation;

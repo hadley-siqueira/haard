@@ -69,6 +69,29 @@ A non-trivial program compiles clean and its hand-written C++ translation runs
 and gives the right answer, which is what says a transpiler is the right shape
 of backend.
 
+**A construction can be written**, since 2026-09-09 — record 0045.
+`String("abc")`, `Point()`, `Pair<i32, i32>(1, 2)` and `i32(x)` all build what
+they name, and a construction is **a call whose callee names a type**: no node
+kind was added and no pass runs, `ExpressionTyper::call` asks what the name
+means before anything is ranked and branches to record 0026's own
+`initialisation`. The value is a **temporary written in place**, so it reaches
+a call, a return and an assignment — which is the half records 0032 and 0037
+cannot reach, because they hoist.
+
+It **deleted** record 0023's two entries in the same work, and record 0046
+replaced them the same day with one that names **nothing**: a value reaching a
+class it can be constructed from converts, by the class's own `init` and a
+temporary. So `takes(p)` works again, `String(p)` is the same thing written
+out loud — byte for byte the same C++ — and record 0018's list still names no
+library class.
+
+**There is a standard library and there are examples, at the repository root**,
+since 2026-09-08. `std/` is the canonical library — seven modules, all Haard —
+and `examples/` holds two runnable programs: `hello`, which is `import std.io`
+and one `println`, and `shapes`, an application and two libraries that reach
+each other through their manifests. Both are in the README, and both were run
+before it was written.
+
 **A program can be built from its manifests**, since 2026-09-08 — record 0044.
 `haard.pkg` is a **Haard literal** (`{name: "myapp", dependencies: [{name:
 "std", path: "../std"}], prelude: [...]}`), read by `Parser::parse_value` — an
@@ -123,7 +146,10 @@ since 2026-09-08 — record 0037's mechanism, now carrying `char*` → `String`
 too. The typer picks the `init` and writes it on the literal; the emitter
 writes that call at a binding, a call, a return and an assignment. The name
 `String` no longer matters for a literal — any class with an `init(char*)` is
-reached — while a `char*` **value** is still record 0023's named entry.
+reached — and since 2026-09-09 it does not matter for a **value** either:
+records 0045 and 0046 replaced the named entry with one that asks the class
+for a constructor, so a `char*` value reaches any class with an `init(char*)`
+and reaches no other.
 
 It found a bug shipped since record 0031: `s = "abc"` on a class with no
 `operator=` emitted `s.m_assign("abc")`, which **g++ refused** — the tenth
@@ -503,7 +529,10 @@ be**: what one would hold is what a String holds.
 **Record 0023's coercion runs for the first time.** `let hello : String =
 "hello"` works, and it falls out of record 0026 emitting `init` as a C++
 constructor of one argument — which is what an implicit conversion is over
-there.
+there. The entry it ran through is gone since 2026-09-09 (records 0045 and
+0046) and that line still works twice over: a written **literal** is record
+0037's construction and never was the entry, and a value now converts by the
+constructor too.
 
 **Record 0018's list gained a fourth entry**: a value where a **reference** to
 it was expected. It had none, so a `&` parameter could not be passed a value —
@@ -550,6 +579,104 @@ other end, and a user's class inside a `${}` is settled too, found by a
 constant evaluation, and the whole of track 3 (the `.hdm` blob) is untouched.
 
 ## Read this first next session
+
+**A construction is a call whose callee names a type**, since 2026-09-09 —
+record 0045, and four things are worth knowing before touching it:
+
+- **It is decided in the type phase and nowhere else.** `ExpressionTyper::call`
+  asks `TypeBuilder::type_symbol` about the callee's candidates *before* it
+  ranks, because a class answers to no signature and scored −1 against every
+  argument — which is why `String("abc")` was *no 'String' takes these
+  arguments*. The callee's two parts go to `TypeBuilder::build_written_name`,
+  which is `build_named`'s body reached without an `AST_NAMED_TYPE` node, so a
+  written generic instantiates for free.
+- **The temporary is not hoisted, and that is deliberate.** Records 0032 and
+  0037 hoist, and hoisting is exactly why a bracketed literal still reaches
+  only a binding. The emitter writes `String(p)` in place — the same text it
+  was already writing when it decided a conversion on its own — and C++17's
+  guaranteed elision means even an uncopyable class constructs here.
+- **`i32(x)` cost the parser one branch.** A builtin is a keyword and could not
+  stand where a callee goes. It is read as the `AST_BUILTIN_TYPE` node it is
+  and the postfix rule wraps it into a call — **not** into an `AST_CAST`, which
+  would print back as `x as i32` and break the printer's round trip.
+- **`new Box<i32>(7)` had never worked**, since generics landed, and nothing
+  had written it. A clone made in the module being walked has no signatures
+  yet and `catch_up` steps aside for precisely that reason, so an `init` read
+  `INVALID_TYPE` and scored −1. `TypeCollector::type_signature_now` builds the
+  one signature on demand; it is a request and not a pass, and safe to repeat
+  because `signature_of` is pure.
+
+**A conversion into a class is a constructor the compiler calls**, since
+2026-09-09 — record 0046, which amends 0045 the same day. Record 0023's two
+**named** entries are gone for good, and so is `Coercion::is_string`, which
+compared a declaration's name to the text `"String"`. What stands in their
+place knows no name:
+
+```cpp
+if (builds_from(module, wanted, given)) {
+    return to->kind == TYPE_REFERENCE ? 2 : 1;
+}
+```
+
+Four things to know before touching it:
+
+- **It is on the list, so all four places ask it.** A call, a return, a
+  binding and an assignment reach `Coercion::steps`. That is why
+  `OverloadResolver::match` lost its special case for a written literal and is
+  one line again — a literal and a value are the same question now, and the
+  node kind stopped mattering.
+- **The two costs are load-bearing.** By value one, by reference two, which is
+  agenda 1.21's pair kept. With both `takes(String)` and `takes(String&)` in
+  view a `char*` picks the by-value one, exactly as C++ does. Making them
+  equal was tried and reports *this call matches more than one 'takes'
+  equally well*.
+- **The emitter needed nothing.** The tail of `emit_conversion` already writes
+  `Class(expr)` from the two types. `by_value(plain)` and
+  `by_value(String(plain))` emit byte-identical C++, which is the case
+  `tests/emitter/cases/a_char_pointer_reaching_a_string` now shows.
+- **This is C++'s converting constructor and there is no `explicit`.** Every
+  one-argument `init` is an implicit conversion into its class and nothing can
+  opt out. The argument for the asymmetry it replaced is kept in record 0046
+  rather than deleted with the refusal it used to justify.
+
+**The standard library moved, on 2026-09-08, and Hadley asked for it.**
+`std.io` is now `print` and `println` — free functions, overloaded on `char*`,
+`String&`, `char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol` — and the
+eight natives moved to **`std.low_io`**. A program prints with `import std.io`
+and `println("hello, world!")`, and never with `let out = console()` first.
+Three things to know before touching it:
+
+- The emitter matches **one string**: `Emitter::native_body`'s
+  `module->get_name() != "std.low_io"`. That is the whole of the rename in the
+  compiler, and pointing it back at `"std.io"` breaks
+  `tests/emitter/cases/input_and_output` immediately.
+- **`print` stands on the natives and not on `File`**, because `console()`
+  builds a `File` with `new` and hands back the pointer — a `print` written
+  over it would leak one per call. `std.file` is unchanged and puts the same
+  names on a `File`.
+- **The library is at the repository root, in `std/`**, and every test case
+  that needs it carries its **own copy** under `cases/<name>/std/`. Several of
+  those copies are deliberately **trimmed** — an older `String` with no
+  `operator==`, a `File` with no `String` overloads — so a change to `std/`
+  is not a `cp` over all of them. `tests/programs/cases/*/std` and
+  `tests/emitter/cases/input_and_output/std` are the ones that hold the real
+  natives; the `std/io.hd` files under `tests/name_resolver`,
+  `tests/module_finder` and `tests/compilation` are unrelated toys.
+
+**Two enums compare with `__equals`**, written on the struct by the emitter:
+the tag first, then the payload, and a class payload by the `operator==` it
+wrote. A class that wrote none leaves the enum **without** `__equals` — the
+enum is still built, matched and destroyed like any other, and only comparing
+two of them is refused, at the **comparison** and by name. That is
+`Emitter::union_compares`, and the two cases that pin it are
+`an_enum_that_carries_a_class` (emits, no `__equals`) and
+`an_enum_that_cannot_be_compared` (the refusal is the golden).
+
+**The README is current**, rewritten 2026-09-08, and every snippet in it was
+compiled and run before it was written. It is the best short tour of what the
+language does today; `examples/hello` and `examples/shapes` are in it, both
+runnable, and `examples/shapes` is a program made of an app and two libraries
+that find each other through their manifests.
 
 **`char*` → `String` is on record 0037's mechanism** for a written literal,
 since 2026-09-08. Two things to know before touching it: the **ranking** is
@@ -802,14 +929,15 @@ in the meantime.
      design written down) and a **closure that types**, which is what `each`
      and `map` wait on.
    - ~~**Migrating `char*` → `String` onto record 0037's mechanism**~~ —
-     **done 2026-09-08** for a written **literal**, which is the half that
-     needed no new syntax: the typer picks the `init` and the emitter writes
-     the call, at all four places. What is left is deleting record 0023's
-     named entry so a `char*` **value** reaches no class either, and that
-     needs `String(p)` writable by hand — the `T(args)` gap record 0040 also
-     ran into.
+     **done 2026-09-08** for a written **literal**, and **finished
+     2026-09-09** by records 0045 and 0046 together: `T(args)` is writable
+     (which closes the gap record 0040 also ran into), the named entries are
+     deleted, and a **value** converts by an entry that asks the class for a
+     constructor instead of reading its name. A literal and a value are one
+     question now.
    - **Whether record 0018's list composes**, which record 0035 left open:
-     `char*` → `String&` needs two entries and gets none.
+     `char*` → `String&` needs two entries and gets none. It is the only
+     question left on that list, now that the library entries are gone.
 5. Agenda **5.6** — `def init : i32`, a constructor that gives something back,
    which nothing reports. One check, and it belongs with the override
    checker's family. **5.5 is closed** (record 0028). And **1.23** (what a

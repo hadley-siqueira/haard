@@ -17,9 +17,3 @@
     115   "assigned"    Note                -> Note.init  char* -> void
     122   from_a_value  char*               -> from_a_value
     126   called        i32                 -> called
-diagnostics:
-error: expected Note, found char*
-  --> main.hd:54:24
-   |
-54 |     let value : Note = from_a_value
-   |                        ^^^^^^^^^^^^

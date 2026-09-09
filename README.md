@@ -497,6 +497,16 @@ class Point:
 written `class Square(Shape):`. An operator is a method: `operator+`,
 `operator==`, `operator[]`, `operator=`.
 
+A construction is written as a call on the type's own name, and it is a value
+and not a pointer — `new` is what gives a pointer back:
+
+```haard
+let origin = Point()               # a value, built here
+let pair = Pair<i32, i32>(1, 2)    # a generic, written with its arguments
+let text = String("from a char*")  # nothing converts on its own; this asks
+let n = i32(3.5)                   # a builtin, and the same as '3.5 as i32'
+```
+
 ### Enums, and the switch that reads them
 
 An enum is a **tagged union**: a value is exactly one of its variants, and a

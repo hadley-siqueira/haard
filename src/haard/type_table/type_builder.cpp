@@ -216,8 +216,30 @@ u32 TypeBuilder::translate(u32 into, u32 from, u32 type) {
 }
 
 u32 TypeBuilder::build_named(u32 index, u32 scope, u32 node) {
-    u32 name = first_child(node);
-    u32 arguments = second_child(node);
+    return build_written_name_here(index, scope, first_child(node),
+                                   second_child(node));
+}
+
+// see build(): this one re-enters through the instantiation below too, so it
+// saves what the caller was looking at and puts it back
+u32 TypeBuilder::build_written_name(u32 index, u32 scope, u32 name,
+                                    u32 arguments) {
+    u32 held_index = this->index;
+    Module* held_module = module;
+
+    this->index = index;
+    module = compilation->get_module(index);
+
+    u32 answer = build_written_name_here(index, scope, name, arguments);
+
+    this->index = held_index;
+    module = held_module;
+
+    return answer;
+}
+
+u32 TypeBuilder::build_written_name_here(u32 index, u32 scope, u32 name,
+                                         u32 arguments) {
     std::vector<Candidacy> found;
     std::string text;
 
