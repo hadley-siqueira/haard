@@ -1,6 +1,6 @@
 # 0054 — A generic function is instantiated per call
 
-Status: **decided and mostly built**, 2026-09-09. Hadley's, and it came out of
+Status: **decided and built**, 2026-09-09. Hadley's, and it came out of
 asking why `Array<T>` had an `operator==` at all.
 
 | | |
@@ -9,7 +9,7 @@ asking why `Array<T>` had an `operator==` at all.
 | Comparing two containers belongs in a **free generic function** | **decided**, Hadley |
 | `f<i32>(3)` instantiates the function, by the machinery that already existed | **built** |
 | The phases **come round again** for a clone born while they run | **built** |
-| One shape is still open: a `let`-inferred call whose body calls a method on `Bag<T>` | **open** |
+| `catch_up` must not run the **written** pass over what inference finished | **found by investigating** |
 
 ## The question that started it
 
@@ -118,27 +118,55 @@ written by the **type phase**. An afternoon went into resolving a fresh
 clone's uses before that was measured, and the work was reverted rather than
 left in looking useful. A clone needs its body **typed**, not resolved.
 
-## What is still open
-
-One shape does not work:
+## The one shape that stayed open, and what it was
 
 ```haard
-let bound = same<i32>(xs, ys)     # inferred by the type phase
+let bound = same<i32>(xs, ys)
 ```
 
-when `same<T>`'s body calls a **method** on `Bag<T>` — `a.at(i)`. Written as
-`if same<i32>(xs, ys)` it works; with `a.held[i]` instead of `a.at(i)` it
-works; with two different instantiations it works; with a generic calling a
-generic it works; with `Array<T>&` and `a.length()` it works. It is the
-combination, and it is not understood yet.
+— when `same<T>`'s body writes `let i = 0` and then `a.at(i)` — was *no 'at'
+takes these arguments*, about an index written three lines above it. Written
+in an `if` it worked; with `a.held[i]` instead of the method it worked; with
+one instantiation it worked. Only the combination failed, which is why reading
+it did not find it.
 
-What is measured and passing is in
-`tests/emitter/cases/a_generic_function_is_instantiated_per_call`, whose
-verdict is the exit status of the binary it built.
+**Delta debugging did.** A minimiser over the failing file, with the predicate
+*exactly two errors and both about `at`*, cut it to a program whose only
+unusual part was that the index was a **local** rather than the literal `0`.
+From there the argument's type was printed at the point of failure:
 
-The likely shape of the answer, for whoever picks it up: the clone is made
-during **inference**, and what is not typed by the time its body is checked is
-a method of the *other* clone it names. Every bug of this family today has had
-the same cause — a clone made after a phase never gets that phase — and this
-record added the round that fixes it for the statement checker. This one is
-one layer in from there.
+```
+DEBUG arg: type=0 name=<none> literal=0
+DEBUG cand: module=0 cand=24 type=32
+```
+
+The candidate had a signature and the argument had no type at all — so `i` had
+never been inferred. Tracing the walks gave the order:
+
+```
+walk given=1 done=0  count=31    inference types 1..36; the clone's 'i' is i32
+walk given=0 done=31 count=41    the WRITTEN pass runs over 31..41 again
+DEBUG arg: type=0                and 'i' is back to nothing
+walk given=1 done=36 count=41    inference arrives too late
+```
+
+`TypeCollector::catch_up` ran `walk(index, false)` — the written pass — over
+every candidate past the `collected` mark. Once inference has run, that mark
+is behind, so the pass re-types clones the inferred pass had already
+**finished**, and what a `let i = 0` writes is nothing.
+
+`Compilation::collect_types` already carries that exact sentence, about why
+its two loops are not nested:
+
+> running 'collect' again over a clone would overwrite what was inferred with
+> what was written, and what a 'let i = 0' writes is nothing
+
+This is the same trap reached from the other side. `catch_up` never really
+walked before, because every caller was inside the type phase and it steps
+aside for a walk already running — and a call carrying type arguments
+instantiates from the **statement checker**, where no walk is running and it
+really walks.
+
+The fix is one line: after inference has run for a module, `catch_up` uses
+`walk(index, true)`, which gives a declaration **both** passes in order. A
+fresh clone is still fully typed, and a finished one is left alone.

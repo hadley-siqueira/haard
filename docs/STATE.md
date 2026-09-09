@@ -665,11 +665,16 @@ declaration and asks nothing about its kind. Three things to know:
   check that it exists; the ResolutionTable is written by the type phase. An
   afternoon went into resolving a fresh clone's uses before that was measured,
   and the work was reverted rather than left in looking useful.
-- **One shape is still open**: `let bound = same<i32>(xs, ys)` when the
-  generic's body calls a **method** on the parameter's own type. Written in an
-  `if` it works; with a field access instead of the method it works; with two
-  instantiations, with a generic calling a generic, and with `Array<T>&` it
-  works. Record 0054 says what was tried.
+- **`catch_up` must not run the written pass over what inference finished.**
+  It ran `walk(index, false)` over every candidate past the `collected` mark,
+  and once inference has run that mark is behind — so a clone the inferred
+  pass had already finished was re-typed with what it **wrote**, and what a
+  `let i = 0` writes is nothing. `Compilation::collect_types` carries that
+  exact sentence about why its two loops are not nested; this is the same trap
+  from the other side, and it only appeared because a call with type arguments
+  instantiates from the **statement checker**, where no walk is running and
+  `catch_up` really walks. After inference, it uses `walk(index, true)`, which
+  gives a declaration both passes in order.
 
 **`main` takes its arguments**, since 2026-09-09 — record 0051, in two shapes
 besides the empty one: C's `(argc, argv)`, and **one list**, `@args :

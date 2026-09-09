@@ -94,15 +94,23 @@ def main : i32
     ys.add(1)
     ys.add(2)
 
-    # Written where the **statement checker** sees it, which is the half the
-    # extra round of phases exists for: the clone is born after that phase's
-    # turn at this module, so the phases come round again for it.
+    # The two ways a call reaches the compiler, and they are different
+    # phases: a 'let' with no written type is inferred by the **type phase**,
+    # and an 'if' is only ever seen by the **statement checker**. Both make a
+    # clone, and each found a different hole.
     #
-    # A 'let bound = same<i32>(xs, ys)' -- inferred by the type phase instead
-    # -- does not work yet when the generic's body calls a method on the
-    # generic parameter's own type, and record 0054 says where that stands
-    if not same<i32>(xs, ys):
+    # The 'let' is the one that found the worse of the two: 'catch_up' ran the
+    # **written** pass over clones the inferred pass had already finished, so
+    # the 'let i = 0' inside 'same' was set back to nothing and 'a.at(i)' was
+    # *no 'at' takes these arguments* -- about an index written three lines
+    # above it
+    let bound = same<i32>(xs, ys)
+
+    if not bound:
         return 1
+
+    if not same<i32>(xs, ys):
+        return 4
 
     ys.add(3)
 

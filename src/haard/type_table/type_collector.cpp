@@ -46,13 +46,25 @@ void TypeCollector::catch_up(u32 module_index) {
     Module* held_module = module;
     std::map<u32, u32> held_scope_of = scope_of;
 
-    // the **written** pass, and not the inferred one. What a caller needs of
-    // a fresh clone is its methods' signatures, and a signature is written --
-    // 'xs.length()' resolves against parameters and a return type. Its local
-    // bindings can wait for the ordinary sweep, and must: typing them now
-    // would mark them done before what they depend on exists, and nothing
-    // retries a candidate the mark has passed
-    walk(module_index, false);
+    // The **written** pass while the type phase is still on its first loop:
+    // what a caller needs of a fresh clone is its methods' signatures, and a
+    // signature is written. Its local bindings wait for the ordinary sweep.
+    //
+    // But once inference has run for this module, the written pass **must
+    // not** run over it again. 'walk(index, false)' takes every candidate
+    // past the 'collected' mark, which by then includes clones the inferred
+    // pass has already finished -- and re-typing those with what they WROTE
+    // sets a 'let i = 0' back to nothing. That is the sentence
+    // 'Compilation::collect_types' already carries about not nesting its two
+    // loops, and this is the same trap reached from the other side: a call
+    // carrying type arguments instantiates from the statement checker, where
+    // no walk is running and this one really walks.
+    //
+    // 'walk(index, true)' is the right pass then. It gives a declaration
+    // **both** passes, in order, exactly for a clone made after the first
+    // loop -- so a fresh one is still fully typed and a finished one is left
+    // alone
+    walk(module_index, inferred.count(module_index) > 0);
 
     index = held_index;
     module = held_module;
