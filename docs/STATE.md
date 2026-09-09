@@ -6,7 +6,11 @@ do next.
 
 ## What `hdc` does today
 
-`hdc file.hd` — one file, imports not followed.
+`hdc file.hd` — one file, imports not followed, when no `haard.pkg` is at or
+above it.
+`hdc entry.hd` — the whole program, when one is: the nearest manifest is found
+and read (record 0044).
+`hdc --pkg app/haard.pkg entry.hd` — the same, said out loud.
 `hdc --roots table.tbl entry.hd` — the program and everything it reaches.
 `--pretty-print` writes the source back from the tree; `--tokens` dumps the
 token stream; `--emit-cpp` writes the program as C++.
@@ -64,6 +68,16 @@ assignment — including `char*` to `String`.
 A non-trivial program compiles clean and its hand-written C++ translation runs
 and gives the right answer, which is what says a transpiler is the right shape
 of backend.
+
+**A program can be built from its manifests**, since 2026-09-08 — record 0044.
+`haard.pkg` is a **Haard literal** (`{name: "myapp", dependencies: [{name:
+"std", path: "../std"}], prelude: [...]}`), read by `Parser::parse_value` — an
+entry point of its own — so there is no parser to write and a typo in a
+manifest is a diagnostic with a caret. `hdc --pkg` follows the path
+dependencies, reads each library's own manifest and builds record 0010's table
+itself; nothing below the finder can tell which of the two was read. Versions,
+a registry and a lock file stay open, and a dependency asked for by version is
+refused by name.
 
 **An enum is a tagged union**, since 2026-09-08 — record 0043, and Hadley's
 semantics and syntax whole. A variant that carries something is a

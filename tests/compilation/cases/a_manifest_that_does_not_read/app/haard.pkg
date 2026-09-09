@@ -1,0 +1,7 @@
+# Every mistake here is a diagnostic **in the manifest**, with a caret, for
+# free: it went through the same scanner, the same parser and the same logger
+# as any Haard file. That is what reading it as a Haard literal buys.
+{
+    name: "app",
+    prelide: ["std.io"]
+}

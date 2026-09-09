@@ -54,6 +54,11 @@ set(MODULE_FINDER_SRC
     src/haard/module_finder/module_finder.cpp
 )
 
+set(MANIFEST_SRC
+    src/haard/manifest/manifest.cpp
+    src/haard/manifest/package_loader.cpp
+)
+
 set(NAME_RESOLVER_SRC
     src/haard/name_resolver/name_resolver.cpp
     src/haard/name_resolver/use_resolver.cpp
@@ -118,6 +123,7 @@ set(SOURCES
     ${TYPE_TABLE_SRC}
     ${RESOLUTION_TABLE_SRC}
     ${MODULE_FINDER_SRC}
+    ${MANIFEST_SRC}
     ${COMPILATION_SRC}
     ${NAME_RESOLVER_SRC}
     ${EMITTER_SRC}

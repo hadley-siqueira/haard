@@ -1,0 +1,5 @@
+# the standard library says what it is, and needs nothing
+{
+    name: "std",
+    version: "1.0"
+}

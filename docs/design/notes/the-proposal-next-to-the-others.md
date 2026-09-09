@@ -9,7 +9,8 @@ to what the compiler is handed**, and is honest about what the proposal costs.
 
 The proposal, in one line: a **per-root table** generated from per-library
 manifests, handed to `hdc`, which searches nothing. Worked example in
-`exemplo/`.
+[what-a-package-manifest-would-hold.md](what-a-package-manifest-would-hold.md),
+and in `tests/compilation/cases/two_versions_of_one_library` as a case.
 
 ## The five stages, side by side
 

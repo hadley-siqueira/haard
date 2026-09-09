@@ -28,6 +28,17 @@ namespace haard {
             // parses the tokens in the module, gives back the root node
             u32 parse();
 
+            // A file that is **one value** and not a list of declarations,
+            // which is what a manifest is: 'haard.pkg' opens with '{' and
+            // holds a literal to the end of the file.
+            //
+            // It is the same parser, entered one rule down -- the same
+            // scanner, the same line rule, the same panic and the same
+            // diagnostics with a caret in the manifest. Zig reads its
+            // 'build.zig.zon' the same way: the language's own literal
+            // syntax, and no type checker anywhere near it
+            u32 parse_value();
+
         private:
             // what a body holds. The three of them share one loop, because the
             // recovery point, the 'pass' rule and the empty-body error do not

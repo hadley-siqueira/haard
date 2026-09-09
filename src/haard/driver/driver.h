@@ -21,6 +21,10 @@ namespace haard {
 
         private:
             bool read_arguments(int argc, char* argv[]);
+
+            // the nearest 'haard.pkg' at or above a file, empty when there
+            // is none. The one thing this program looks for on disk
+            std::string manifest_above(const std::string& file);
             void print_usage(std::ostream& out);
 
             int compile();
@@ -32,6 +36,9 @@ namespace haard {
 
             std::string path;
             std::string roots;
+
+            // the manifest, when the roots came from one instead of a table
+            std::string package;
             std::string program;
             bool show_help;
             bool show_tokens;

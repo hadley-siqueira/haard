@@ -1,0 +1,15 @@
+import std.string
+
+def area_of : i32
+    @w : i32
+    @h : i32
+
+    return w * h
+
+def described : String
+    @w : i32
+    @h : i32
+
+    let out : String = "${w}x${h} = ${area_of(w, h)}"
+
+    return out

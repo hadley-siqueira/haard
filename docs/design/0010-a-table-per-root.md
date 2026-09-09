@@ -1,6 +1,9 @@
 # 0010 — A table per root: the compiler is told, and it is told once per root
 
-Status: **decided**, 2026-09-01. Confirmed by Hadley after reading `exemplo/`.
+Status: **decided**, 2026-09-01. Confirmed by Hadley after reading the worked
+example, which lived in `exemplo/` until 2026-09-08 and is now
+[notes/what-a-package-manifest-would-hold.md](notes/what-a-package-manifest-would-hold.md)
+plus `tests/compilation/cases/two_versions_of_one_library`.
 
 This record was first written on the same day as *partly decided*, against the
 ledger's usual rule, because two halves were settled while a third was not. The
@@ -68,7 +71,8 @@ as a *policy* — see below.
 
 ## Decided: B, a table per root
 
-Demonstrated in `exemplo/` at the repository root:
+Demonstrated in `tests/compilation/cases/two_versions_of_one_library`, whose
+golden holds both versions of one library in one compilation:
 
 ```
 root ../sys/zip/1.0 = zip
@@ -163,7 +167,10 @@ agenda 3.4 depends on being stable.
 - **Version resolution.** `hdc` never sees a version — the table holds paths
   only — so this can be designed later without touching the resolver. Zig's
   content-hash-as-identity and Go's MVS both stay reachable. The `haard.pkg`
-  sketch in `exemplo/` is where it will land, and it is not decided.
+  sketch is where it will land, it is **not decided**, and it is written down in
+  [notes/what-a-package-manifest-would-hold.md](notes/what-a-package-manifest-would-hold.md)
+  — rescued from `exemplo/` on 2026-09-08, when that directory stopped holding
+  anything the suites do not.
 - **`--root name=path` on the command line**, the develop-together escape hatch
   that the survey found every ecosystem eventually needs. It is a convenience
   over the same mechanism and changes nothing in this record; it can be added

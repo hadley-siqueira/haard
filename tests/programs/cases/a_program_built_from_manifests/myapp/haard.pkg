@@ -1,0 +1,15 @@
+# Record 0044. The only file written by hand: a Haard literal, opening with
+# '{', that says what this program is and what it needs. There is no roots
+# table in this case -- 'hdc --pkg' reads this and the manifests it reaches,
+# and builds one.
+{
+    name: "myapp",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../std"},
+        {name: "shapes", path: "../shapes"}
+    ],
+
+    prelude: ["std.array", "std.string", "std.list", "std.hash", "std.file"]
+}

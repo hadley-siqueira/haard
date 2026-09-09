@@ -42,6 +42,8 @@ sources=(
     "$root/src/haard/ast/ast_node.cpp"
     "$root/src/haard/ast_query/ast_query.cpp"
     "$root/src/haard/module_finder/module_finder.cpp"
+    "$root/src/haard/manifest/manifest.cpp"
+    "$root/src/haard/manifest/package_loader.cpp"
     "$root/src/haard/sugar/sugar_lowerer.cpp"
     "$root/src/haard/sugar/for_each_lowerer.cpp"
     "$root/src/haard/sugar/switch_lowerer.cpp"

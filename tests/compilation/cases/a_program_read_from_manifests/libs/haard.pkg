@@ -1,0 +1,7 @@
+# a library says what IT needs, and the app never had to know
+{
+    name: "libs",
+    version: "0.1",
+
+    dependencies: [{name: "std", path: "../std"}]
+}

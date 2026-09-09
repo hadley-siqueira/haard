@@ -1,0 +1,5 @@
+manifest error: error: 'prelide' is not something a manifest holds
+ --> cases/a_manifest_that_does_not_read/app/haard.pkg:6:5
+  |
+6 |     prelide: ["std.io"]
+  |     ^^^^^^^

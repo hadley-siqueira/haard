@@ -1,0 +1,15 @@
+# Record 0044: the manifest is a Haard literal, and the file opens with '{'.
+#
+# It is the only file written by hand -- there is no roots table in this case,
+# and the loader builds one out of this file and the manifests it reaches.
+{
+    name: "app",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../std"},
+        {name: "libs", path: "../libs"}
+    ],
+
+    prelude: ["std.io"]
+}

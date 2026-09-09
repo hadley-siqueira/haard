@@ -2,6 +2,7 @@
 #define HAARD_MODULE_FINDER_H
 
 #include <haard/haard.h>
+#include <map>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -90,6 +91,18 @@ namespace haard {
             // Reads the table written by record 0010. False leaves the finder
             // empty and the reason in get_error()
             bool load(const std::filesystem::path& table);
+
+            // The same shape, filled by a caller that read something else --
+            // a manifest (record 0044), or one day a command line. This class
+            // holds what a root is; neither of those does.
+            //
+            // 'open_root' gives the block its own name back, which is record
+            // 0010's '= name' line and not a rule of its own
+            void clear();
+            u32 open_root(const std::string& name,
+                          const std::filesystem::path& path);
+            bool see(u32 root, const std::string& name, u32 target);
+            bool give_everyone(u32 root, const std::string& name);
             const std::string& get_error();
 
         public:

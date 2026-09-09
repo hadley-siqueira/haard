@@ -37,6 +37,10 @@ namespace haard {
             // Without a table the compilation is one file and its imports are
             // not followed, which is what 'hdc file.hd' has always done
             bool set_roots(const std::filesystem::path& table);
+
+            // the same, read from the program's manifest and the manifests it
+            // reaches. Nothing below tells the two apart
+            bool set_package(const std::filesystem::path& file);
             const std::string& get_error();
 
             // Stop once the entry file has been scanned and parsed, running

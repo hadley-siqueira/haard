@@ -108,16 +108,88 @@ const std::string& ModuleFinder::get_error() {
     return error;
 }
 
+// The three calls that fill this class without a table: a root, what a root
+// sees, and one import every module is given. Record 0010's table is one
+// caller of them and a manifest is another, which is why they are here rather
+// than inside either -- this class holds the shape and neither of them does.
+//
+// It stays true to what this class refuses to do: it opens no file, reads no
+// manifest and logs nothing. A caller that has a syntax to parse parses it
+u32 ModuleFinder::open_root(const std::string& name,
+                            const std::filesystem::path& path) {
+    Root made;
+
+    made.name = name;
+
+    // normalised, because a root's path is compared against a file's by
+    // prefix and the file arrives normalised
+    made.path = normalize(path);
+
+    roots.push_back(made);
+
+    u32 root = (u32) roots.size() - 1;
+
+    // record 0010's '= name' line: a library spells its own name in full, and
+    // that name means itself
+    roots[root].visible_names.push_back(name);
+    roots[root].visible_roots.push_back(root);
+
+    return root;
+}
+
+bool ModuleFinder::see(u32 root, const std::string& name, u32 target) {
+    if (root >= roots.size() || target >= roots.size()
+        || visible_root(root, name) != INVALID_ROOT) {
+        return false;
+    }
+
+    roots[root].visible_names.push_back(name);
+    roots[root].visible_roots.push_back(target);
+
+    return true;
+}
+
+// what every module of the program is given, resolved from the root that
+// wrote it (record 0033). False when the name reaches no file, and the caller
+// says so in its own words -- it is the one that knows where the name came
+// from
+bool ModuleFinder::give_everyone(u32 root, const std::string& name) {
+    if (root >= roots.size()) {
+        return false;
+    }
+
+    FindResult result = find(root, name);
+
+    if (result.status != FIND_OK) {
+        return false;
+    }
+
+    prelude.push_back(PreludeImport{result.path, result.root});
+
+    return true;
+}
+
+void ModuleFinder::clear() {
+    roots.clear();
+    prelude.clear();
+    error.clear();
+    block = INVALID_ROOT;
+    prelude_block = INVALID_ROOT;
+    table_name.clear();
+}
+
 u32 ModuleFinder::root_of_file(const std::filesystem::path& file) {
     std::filesystem::path target = normalize(file);
     u32 best = INVALID_ROOT;
     size_t length = 0;
 
     for (size_t i = 0; i < roots.size(); i++) {
-        // the prelude block has no directory (record 0033), and starts_with
-        // is true of every file for an empty one -- so without this it would
-        // claim every file that no real root covers
-        if (i == prelude_block) {
+        // A root with no directory claims nothing: 'starts_with' is true of
+        // every file for an empty path. The table's prelude block is that
+        // root (record 0033), and asking about the **path** rather than about
+        // which block it is, is what lets a manifest's prelude belong to a
+        // real root -- there, the program's own
+        if (roots[i].path.empty()) {
             continue;
         }
 

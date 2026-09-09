@@ -1,0 +1,45 @@
+# A program in three directories -- myapp, shapes and std -- each with its own
+# 'haard.pkg' and none of them naming a file of another. What the compiler is
+# handed is still record 0010's table of roots; what changed is who wrote it.
+import shapes.area
+
+def check : void
+    @out : File*
+    @what : String
+    @ok : bool
+
+    out->write(what)
+
+    if ok:
+        out->writeln(": ok")
+    else:
+        out->writeln(": FAILED")
+
+def main : i32
+    let out = console()
+    let failures = 0
+
+    # the library in the other directory, reached by the name the manifest
+    # gave it
+    let twelve = area_of(3, 4)
+    let counted = twelve == 12
+
+    check(out, "shapes.area_of(3, 4) is ${twelve}", counted)
+
+    if not counted:
+        failures = failures + 1
+
+    # and the prelude, which is the program's own manifest speaking: String
+    # and File are in view here without an import
+    let said = described(3, 4)
+    let told = said == "3x4 = 12"
+
+    check(out, "and it describes itself: ${said}", told)
+
+    if not told:
+        failures = failures + 1
+
+    out->writeln("")
+    out->writeln("failures: ${failures}")
+
+    return failures

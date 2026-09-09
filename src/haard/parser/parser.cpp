@@ -141,6 +141,30 @@ u32 Parser::parse() {
     return parse_module();
 }
 
+// A whole file that is one value. The reset above is shared, and what differs
+// is only which rule is entered and that nothing may follow: a manifest is a
+// literal and then the end of the file
+u32 Parser::parse_value() {
+    current_token = 0;
+    matched = 0;
+    statement_first_token = 0;
+    panic = false;
+    open_brackets = 0;
+
+    indentation_stack.clear();
+    indentation_stack.push_back(0);
+
+    begin_statement();
+
+    u32 node = parse_expression();
+
+    if (!panic && !lookahead(TK_EOF)) {
+        error_found("the end of the file", false);
+    }
+
+    return node;
+}
+
 //   module := declaration*
 u32 Parser::parse_module() {
     u32 node = builder.make_module();

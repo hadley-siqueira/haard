@@ -1,0 +1,10 @@
+# a library of its own, in a directory of its own, saying what IT needs -- the
+# app below never had to know that this uses std
+{
+    name: "shapes",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../std"}
+    ]
+}

@@ -3,8 +3,11 @@
 //
 //   build <case directory>
 //
-// The directory holds 'table.tbl' (or 'generated/table.tbl', or neither),
-// 'entry' naming the file to start from, and the project's sources. For every
+// The directory holds 'table.tbl' (or 'generated/table.tbl', or a
+// 'haard.pkg', or none of them), 'entry' naming the file to start from, and
+// the project's sources. A case with a manifest is read through it -- record
+// 0044's loader, which fills the same finder the table fills, so both kinds
+// of case print the same golden. For every
 // module that was loaded the golden carries its name, its file, the imports
 // its source wrote and what it declares -- the last one is the proof that the
 // file was not merely found but scanned and parsed.
@@ -114,10 +117,26 @@ int main(int argc, char* argv[]) {
         table = directory / "table.tbl";
     }
 
-    // a case with no table at all is the single file compilation the driver
-    // has always done, and its imports are not followed
+    // beside the entry file, which is where a manifest sits: a library is a
+    // directory with its sources and its 'haard.pkg' in it
+    std::ifstream naming(directory / "entry");
+    std::string named;
+
+    std::getline(naming, named);
+
+    std::filesystem::path manifest =
+        (directory / named).parent_path() / "haard.pkg";
+
+    // a case with no table and no manifest at all is the single file
+    // compilation the driver has always done, and its imports are not followed
     if (std::filesystem::exists(table) && !compilation.set_roots(table)) {
         std::cout << "table error: " << compilation.get_error() << '\n';
+        return 0;
+    }
+
+    if (std::filesystem::exists(manifest)
+        && !compilation.set_package(manifest)) {
+        std::cout << "manifest error: " << compilation.get_error() << '\n';
         return 0;
     }
 

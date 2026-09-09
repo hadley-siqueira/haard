@@ -1,0 +1,6 @@
+shapes.area_of(3, 4) is 12: ok
+and it describes itself: 3x4 = 12: ok
+
+failures: 0
+--- files:
+--- exit: 0

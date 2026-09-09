@@ -1,0 +1,13 @@
+modules:
+    0 app.main  app/main.hd
+        imports libs.geometry
+        depends on 1 libs.geometry
+        depends on 2 std.io
+        declares main
+    1 libs.geometry  libs/geometry.hd
+        imports std.io
+        depends on 2 std.io
+        declares area
+    2 std.io  std/io.hd
+        declares println
+--- parsed alone: every module matches

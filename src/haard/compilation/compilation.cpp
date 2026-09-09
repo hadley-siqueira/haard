@@ -1,4 +1,5 @@
 #include <haard/compilation/compilation.h>
+#include <haard/manifest/package_loader.h>
 #include <haard/sugar/switch_lowerer.h>
 #include <haard/parser/parser.h>
 #include <haard/scanner/scanner.h>
@@ -30,6 +31,18 @@ bool Compilation::set_roots(const std::filesystem::path& table) {
 
     if (!has_table) {
         error = finder.get_error();
+    }
+
+    return has_table;
+}
+
+bool Compilation::set_package(const std::filesystem::path& file) {
+    PackageLoader packages;
+
+    has_table = packages.load(finder, file);
+
+    if (!has_table) {
+        error = packages.get_error();
     }
 
     return has_table;

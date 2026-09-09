@@ -32,6 +32,36 @@ int Driver::run(int argc, char* argv[]) {
     return compile();
 }
 
+// The nearest 'haard.pkg' at or above this file, and an empty string when
+// there is none. Upward until the path stops changing, which is the root
+std::string Driver::manifest_above(const std::string& file) {
+    std::error_code failed;
+    std::filesystem::path at =
+        std::filesystem::weakly_canonical(std::filesystem::path(file), failed);
+
+    if (failed) {
+        at = std::filesystem::path(file);
+    }
+
+    at = at.parent_path();
+
+    while (true) {
+        std::filesystem::path here = at / "haard.pkg";
+
+        if (std::filesystem::exists(here)) {
+            return here.string();
+        }
+
+        std::filesystem::path above = at.parent_path();
+
+        if (above == at || above.empty()) {
+            return "";
+        }
+
+        at = above;
+    }
+}
+
 bool Driver::read_arguments(int argc, char* argv[]) {
     if (argc > 0) {
         // the name it was called by, without the directory: 'hdc: ...' reads
@@ -53,6 +83,13 @@ bool Driver::read_arguments(int argc, char* argv[]) {
             emit_cpp = true;
         } else if (argument == "--pretty-print") {
             show_pretty_print = true;
+        } else if (argument == "--pkg") {
+            if (i + 1 >= argc) {
+                std::cerr << program << ": --pkg needs the manifest's path\n";
+                return false;
+            }
+
+            package = argv[++i];
         } else if (argument == "--roots") {
             if (i + 1 >= argc) {
                 std::cerr << program << ": --roots needs the table's path\n";
@@ -82,6 +119,11 @@ void Driver::print_usage(std::ostream& out) {
         << "      --tokens        dump the token stream\n"
         << "      --emit-cpp      write the program as C++, for a C++ compiler\n"
         << "      --pretty-print  print the source back from the ast\n"
+        << "      --pkg <file>    the manifest ('haard.pkg'), which says what\n"
+        << "                      this library is and what it needs. hdc\n"
+        << "                      reads it and the manifests it reaches.\n"
+        << "                      Without it, the nearest one at or above the\n"
+        << "                      input file is used\n"
         << "      --roots <file>  the roots table. Without it the imports of\n"
         << "                      the input file are not followed\n";
 }
@@ -90,6 +132,31 @@ void Driver::print_usage(std::ostream& out) {
 // entry file, follows its imports and holds every module it reached. What is
 // left here is where the output goes and what the exit code is
 int Driver::compile() {
+    // Neither was written, so the manifest is looked for: beside the entry
+    // file first, and then upward, the way git finds '.git' and cargo finds
+    // 'Cargo.toml'. A program in three directories is then built by naming
+    // one file, which is what a person does all day.
+    //
+    // It is the Driver that searches and nothing below it. Record 0010's rule
+    // is about **imports** -- those never search -- and this is one file
+    // found once, before any of that starts. The same discipline that keeps
+    // getenv here keeps this here
+    if (package.size() == 0 && roots.size() == 0) {
+        package = manifest_above(path);
+    }
+
+    if (package.size() > 0 && roots.size() > 0) {
+        std::cerr << program
+                  << ": --pkg and --roots say the same thing two ways; "
+                     "write one\n";
+        return false;
+    }
+
+    if (package.size() > 0 && !compilation.set_package(package)) {
+        std::cerr << compilation.get_error() << "\n";
+        return false;
+    }
+
     if (roots.size() > 0 && !compilation.set_roots(roots)) {
         std::cerr << program << ": " << compilation.get_error() << '\n';
         return 2;
