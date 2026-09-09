@@ -2,7 +2,15 @@
 #
 # A class that answers none of the three names is reported by the CALL, which
 # is the diagnostic a reader can act on -- 'Thing has no member named
-# iterator' says both what is missing and where to write it.
+# iterator' says both what is missing and where to write it. The loop is then
+# left standing and **no cursor local is declared**: one would be a candidate
+# of its own, and the collector would type that same call a second time.
+#
+# It read as one error before record 0056 too, and by accident -- the local
+# was declared, and 'TypeCollector::walk' skipped exactly one new candidate
+# per round, which is the one it was. That is why the dump below has no
+# '__c0' in it any more, and why 'b' is still the unnamed loop variable it
+# was: nothing re-pointed it at a binding, because there is no binding.
 #
 # Taking a sequence apart -- 'for key, value in pairs' -- is the one the
 # reference wrote and record 0040 did not decide. It parses, it binds both

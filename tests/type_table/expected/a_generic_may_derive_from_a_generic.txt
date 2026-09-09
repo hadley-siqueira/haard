@@ -1,0 +1,30 @@
+<unnamed>:
+    Base  Base
+    Derived  Derived
+    Deeper  Deeper
+    main  i32
+    Derived  Derived<i32>
+    Base  Base<i32>
+    Deeper  Deeper<i32>
+    T  T
+    value  T
+    init  void
+    get  T
+    T  T
+    tag  i32
+    twice  T
+    T  T
+    thrice  T
+    d  Derived<i32>
+    held  Base<i32>*
+    deep  Deeper<i32>
+    T  i32
+    tag  i32
+    twice  i32
+    T  i32
+    value  i32
+    init  void
+    get  i32
+    T  i32
+    thrice  i32
+  35 types interned

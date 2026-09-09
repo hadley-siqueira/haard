@@ -857,7 +857,12 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
     for (u32 member : query.get_members(declaration)) {
         if (kind_of(module_index, member) == AST_FIELD) {
             emit_field(module_index, member);
-        } else if (kind_of(module_index, member) == AST_FUNCTION) {
+        } else if (kind_of(module_index, member) == AST_FUNCTION
+                   && !is_generic(module_index, member)) {
+            // Record 0055. A generic METHOD is skipped for the same reason a
+            // generic class is: it is not a method, it is what one is made
+            // from, and its clones are members of this same body -- appended
+            // by the instantiator, so this loop reaches them here
             emit_method_declaration(module_index, member);
         }
     }
@@ -1248,7 +1253,8 @@ void Emitter::emit_bodies() {
             }
 
             for (u32 member : query.get_members(declaration)) {
-                if (kind_of(i, member) == AST_FUNCTION) {
+                if (kind_of(i, member) == AST_FUNCTION
+                    && !is_generic(i, member)) {
                     emit_function_body(i, member, declaration);
                 }
             }
@@ -2679,6 +2685,14 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
     out << (arrow ? "->" : ".");
 
     u32 right = child_of(module, node, 1);
+
+    // record 0055's generic method: the type arguments were the type phase's
+    // business and what is left is the name they picked a clone with, which
+    // is what carries the resolution
+    if (kind_of(module, right) == AST_GENERIC_NAME) {
+        right = child_of(module, right, 0);
+    }
+
     std::string name = name_at(module, right);
 
     out << (name.size() > 0 ? name : text_of(module, right));
@@ -2998,6 +3012,26 @@ std::string Emitter::name_of(u32 module, u32 candidate) {
     if (source.size() == 0) {
         source = std::string(owner->get_token_value(
             owner->get_ast()->get_node(found->ast_node)->get_token()));
+    }
+
+    // Record 0055. A method is named by its own name and its parameters and
+    // by nothing else, which is what makes an override carry one C++ name --
+    // and a clone of a generic method is a copy of the declaration, token and
+    // all, so every instantiation of one would answer to that same name.
+    // 'make<i32>' and 'make<f64>' differ in nothing a parameter can show.
+    //
+    // The symbol table holds the name that IS one per instantiation: record
+    // 0002's unwritable 'make#3', the argument by its type index in the module
+    // that declares it -- which is the module this is always asked with, so
+    // the definition and every call site write the same thing. The cleaner
+    // below turns the '#' into an underscore
+    if (holder_of(module, candidate) != 0
+        && owner->get_instantiation(candidate) != nullptr) {
+        std::string bound = name_in_table(module, candidate);
+
+        if (bound.size() > 0) {
+            source = bound;
+        }
     }
 
     // the source name is carried only so a reader of the C++ can find their

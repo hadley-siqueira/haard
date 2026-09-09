@@ -77,6 +77,9 @@ void StatementChecker::check(u32 index) {
     Ast* ast = module->get_ast();
     std::set<u32>& done = checked[index];
     std::vector<u32> round;
+    AstQuery query;
+
+    query.set_module(module);
 
     // The list is read **before** anything is walked, and that is the whole
     // of what makes the round work. A clone is appended to the root as it is
@@ -88,12 +91,32 @@ void StatementChecker::check(u32 index) {
          declaration = ast->get_node(declaration)->get_sibling()) {
         if (done.count(declaration) == 0) {
             round.push_back(declaration);
+            continue;
+        }
+
+        // Record 0055: the clone of a generic **method** is appended to its
+        // class's body and not to the root, so a class this phase has already
+        // walked is where the new declaration turns up. The class stays done
+        // -- walking it again would report everything in it twice -- and the
+        // member is the round's subject on its own
+        for (u32 member : query.get_members(declaration)) {
+            if (done.count(member) == 0) {
+                round.push_back(member);
+            }
         }
     }
 
-    for (u32 declaration : round) {
-        done.insert(declaration);
-        walk(declaration, table->get_module_scope(), INVALID_TYPE);
+    for (u32 node : round) {
+        done.insert(node);
+
+        // and the members with it, since walking a class walks its body: what
+        // is in the tree NOW is checked by this walk, and only what is added
+        // afterwards is left for a round to come
+        for (u32 member : query.get_members(node)) {
+            done.insert(member);
+        }
+
+        walk(node, table->get_module_scope(), INVALID_TYPE);
     }
 }
 
@@ -103,12 +126,22 @@ bool StatementChecker::has_more(u32 index) {
     Module* holder = compilation->get_module(index);
     Ast* ast = holder->get_ast();
     std::set<u32>& done = checked[index];
+    AstQuery query;
+
+    query.set_module(holder);
 
     for (u32 declaration = ast->get_node(ast->get_root())->get_children();
          declaration != 0;
          declaration = ast->get_node(declaration)->get_sibling()) {
         if (done.count(declaration) == 0) {
             return true;
+        }
+
+        // record 0055's clone, which grew inside a class instead of beside it
+        for (u32 member : query.get_members(declaration)) {
+            if (done.count(member) == 0) {
+                return true;
+            }
         }
     }
 

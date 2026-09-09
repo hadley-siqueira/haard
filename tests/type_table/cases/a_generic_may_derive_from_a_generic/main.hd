@@ -1,0 +1,42 @@
+# Record 0056. 'class Derived<T>(Base<T>)' works, and the machinery it needs
+# was already there: record 0002 makes a use of a generic name a **clone**,
+# and the clone resolves the same written 'Base<T>' in its own scope, where
+# 'T' is a type. So its super is an ordinary instantiation and everything
+# above it is ordinary inheritance.
+#
+# What stopped it was one character in 'TypeCollector::walk'. The guard read
+# 'candidate <= done', where 'done' is one **past** the last index the pass
+# finished -- so every round skipped exactly one new declaration, and a class
+# cloned from a generic is the declaration that lands there. Its 'super' was
+# never built at all, and INVALID_TYPE is how the rest of the compiler spells
+# *no base*: the inherited member was invisible and the upcast was refused.
+#
+# The golden is the types, and it is the whole of the proof: 'twice' answers
+# 'i32' because 'value' was found in the base, and 'held' is a 'Base<i32>*'
+# because '&d' converted.
+class Base<T>:
+    value : T
+
+    def init : void
+        pass
+
+    def get : T
+        return value
+
+class Derived<T>(Base<T>):
+    tag : i32
+
+    def twice : T
+        return value + value
+
+# and one more level, since a chain is what single inheritance is
+class Deeper<T>(Derived<T>):
+    def thrice : T
+        return value + value + value
+
+def main : i32
+    let d : Derived<i32>
+    let held : Base<i32>* = &d
+    let deep : Deeper<i32>
+
+    return d.twice() + held->get() + deep.thrice() + d.tag

@@ -1,6 +1,6 @@
 # Where the compiler is
 
-Written 2026-09-02, last brought up to date 2026-09-08. The agenda of
+Written 2026-09-02, last brought up to date 2026-09-09. The agenda of
 *decisions* is `design/README.md`; this is the state of the *code*, and what to
 do next.
 
@@ -580,6 +580,71 @@ constant evaluation, and the whole of track 3 (the `.hdm` blob) is untouched.
 
 ## Read this first next session
 
+**A generic method is instantiated per call**, since 2026-09-09 — record 0055,
+and it is record 0054's other half. `b.take<i32>(3)` did not **parse**: a type
+argument list was read after a bare name and never after a `.`. That branch is
+one line, shared with the bare name in `Parser::parse_generic_name`, and behind
+it were four holes worth knowing about before touching any of this:
+
+- **A method's clone lives in its class's body.** `Instantiator::instantiate`
+  appended every clone to the module root, which for a method makes a free
+  function: it loses the `this` its body reads and the call looks for a member
+  the class does not have. The emitter wrote `b.class(3)` — `class`, because
+  the node it fell back to carries token 0 and token 0 is the first word of the
+  file.
+- **The statement checker keeps its walked set by declaration, and a method
+  clone does not grow at the root.** It grows inside a class the phase has
+  already walked, so nothing typed its body. `has_more` and the round ask about
+  members now. **Only a call the statement checker sees needs this** — a call
+  inside a `let` is made while the type phase walks — which is why the first
+  version of the test case did not prove it and the case writes one inside an
+  `if`.
+- **A clone is named in C++ by the name record 0002 already made unique.** A
+  method is named by its own name and its parameters (record 0020, so an
+  override carries one C++ name) and a clone copies the declaration's token, so
+  `first<i32>` and `first<i64>` were **one** name for two methods differing
+  only in what they give back. g++ refuses that. The name comes from the symbol
+  table now — `first#7` — and only for a **method**: a free function was unique
+  already and record 0054's output is byte for byte what it was.
+- **A generic method nobody calls is not emitted**, for the reason a generic
+  class is not. `emit_bodies` walked a class's members without asking.
+
+A list written where there is no call — `b.take<i32>`, `b.n<i32>` — is refused
+by name. One written on a call to something that is **not** generic is silently
+ignored, for a method and a free function alike; changing that is one decision
+about both.
+
+**A generic may derive from a generic**, since the same day — record 0056, and
+it is worth reading before touching the type phase, because what stopped it was
+**one character**:
+
+```cpp
+if (candidate <= done || candidate >= count) {   // '<=' skipped one per round
+```
+
+`done` is the last index the pass finished, so the first **new** candidate sits
+at `done` itself and every round skipped it. A **class** cloned from a generic
+is the declaration that lands there, and `super_of` runs nowhere else — so its
+`Candidate::super` was never built and stayed `INVALID_TYPE`, which the rest of
+the compiler reads as *no base*. That was the whole of *cannot find 'value' in
+this scope* and *expected Base<i32>*, found Derived<i32>*.
+
+A refusal was decided and **withdrawn the same day** on a cost estimate that
+was never measured. The record keeps both halves, and the rule: measure the
+mechanism before deciding it cannot carry a feature.
+
+Fixing the guard uncovered one thing worth knowing: a refused `for x in t`
+**built its lowering anyway**, declaring `let __c0 = t.iterator()` whose
+expression the collector then typed a second time. It read as one error only
+because that local was the candidate the off-by-one skipped.
+`ForEachLowerer::over_a_cursor` refuses now and puts the container's sibling
+back.
+
+**`def init : i32` is reported**, since the same day — agenda 5.6 closed, in
+the OverrideChecker, which is the phase that already reads a signature and
+reports about a declaration. It answers whether it reported so the override
+half is not asked about the same method, and one mistake reads as one error.
+
 **A construction is a call whose callee names a type**, since 2026-09-09 —
 record 0045, and four things are worth knowing before touching it:
 
@@ -1071,10 +1136,29 @@ in the meantime.
 
 0. ~~`main(argc, argv)`~~ — **done 2026-09-09**, record 0051, and in two
    shapes. ~~`super`~~ — **done**, record 0053. ~~A range that types~~ —
-   **done**, record 0052. The front end's remaining gaps are a **closure that
-   types** (the biggest, and nothing in `type_table/` has ever seen an
-   `AST_CLOSURE`), the decision about **whether a generic instantiates a
-   method nobody calls**, and the two deferred subjects, 1.23 and 1.26.
+   **done**, record 0052. ~~A generic **method** call~~ — **done**, record
+   0055. ~~`class Derived<T>(Base<T>)`~~ — **works**, record 0056, and the
+   blocker was an off-by-one and not the design. ~~`def init : i32`~~ —
+   **reported**, agenda 5.6.
+
+   What is left in the front end, in order:
+
+   1. **A closure that types** — the biggest by far, and the only one that
+      needs a decision before any code. `AST_CLOSURE` is in the parser, the
+      builder, the printer and the symbol collector, and the statement checker
+      only says *I do not know what this gives back*. **Nothing in
+      `type_table/` has ever seen one.** `each` and `map` wait on it.
+   2. **A generic called without written type arguments** — `f(3)` and
+      `b.take(3)` alike, which need the parameter types unified against the
+      argument types. There is no unification in the compiler at all. One
+      subject for the function and the method, since record 0055 made them one
+      mechanism.
+   3. The small ones: `T&&` does not parse (1.15), record 0018's list does not
+      compose (`char*` → `String&`), the three template-string refusals are
+      loosenable and additive, a constant inside a **type** cannot be
+      evaluated, and a **tuple as a value** types but does not emit.
+   4. Deferred on purpose, with the design written down: 1.23 (`{key: value}`)
+      and 1.26 (`const`). Do not re-derive either.
 
 1. **More real Haard.** `tests/programs/` is the newest suite and the only one
    that runs the flow a **user** runs: the real `hdc` binary, through each

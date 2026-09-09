@@ -161,6 +161,30 @@ u32 ForEachLowerer::over_a_cursor(u32 scope, u32 for_each, u32 variable,
     // typed in a moment out of '__cN.next()' -- and the round of inference
     // that would reach this declaration on its own comes after that
     u32 type = typer.type_of(index, scope, made, INVALID_TYPE);
+
+    // The class answers no 'iterator', which the typer has just said in the
+    // words a reader can act on. Nothing is built on top of that: a local
+    // declared here is a candidate of its own, and the collector would reach
+    // it and type this same call a **second** time -- one mistake read as
+    // two. The loop is left standing, which is what every other refusal in
+    // this pass does.
+    //
+    // It came out as one error only because 'TypeCollector::walk' skipped
+    // exactly one new candidate per round, and this local was it. Record 0056
+    // fixed that off-by-one and this is what it uncovered
+    if (type == INVALID_TYPE) {
+        // and the container goes back to being what it was. 'call_on' made
+        // the synthetic 'iterator' its **sibling**, and the 'in' node still
+        // holds the container as a child -- so a walk of the standing loop
+        // would reach a name this pass invented and report that it names
+        // nothing. The call above is left where it is, unreachable from the
+        // root, which is what every node this pass builds and does not use
+        // already is
+        module->get_ast()->get_node(container)->set_sibling(0);
+
+        return 0;
+    }
+
     u32 cursor = make_local(scope, name, made, type);
 
     u32 token = module->add_synthetic_token(TK_WHILE, "while", like);

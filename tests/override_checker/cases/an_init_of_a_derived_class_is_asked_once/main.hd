@@ -1,0 +1,7 @@
+class Shape:
+    def init : void
+        pass
+
+class Square(Shape):
+    def init : i32
+        return 0

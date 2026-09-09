@@ -1,0 +1,15 @@
+# Record 0055, and the rule it inherits from record 0002: the clone lives in
+# the module that **declared** the generic and never in the one that used it.
+# So both instantiations below are members of this class, in this module, and
+# the app names them by a name this module's own type indices made -- which is
+# what keeps the definition and the call site writing the same C++ word.
+class Box:
+    n : i32
+
+    def init : void
+        n = 5
+
+    def take<T> : T
+        @x : T
+
+        return x

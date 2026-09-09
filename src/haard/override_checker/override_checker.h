@@ -44,6 +44,19 @@ namespace haard {
             // every method of this class, against the classes above it
             void check_class(u32 candidate);
 
+            // Agenda 5.6: an 'init' or a 'destroy' that gives something
+            // back. Asked of every class and not only of a derived one --
+            // there is no base in the question -- and it lives here because
+            // this is the phase that reads a signature and reports about the
+            // declaration rather than about a use.
+            //
+            // Answers whether it reported, so that the override half is not
+            // asked about the same method: 'init' takes part in the base chain
+            // like any other method, so a derived class writing 'def init :
+            // i32' over a base's 'def init' is BOTH this and a return type
+            // that does not covary, and one mistake reads as one error
+            bool check_construction(u32 candidate);
+
             // every class above this one, nearest first. Single inheritance
             // makes it a chain and never a search, and a class reached twice
             // is a cycle in the bases -- which nothing rejects yet, so the

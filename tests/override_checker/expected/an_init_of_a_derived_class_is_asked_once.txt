@@ -1,0 +1,5 @@
+error: an 'init' gives back nothing, and this gives back i32
+ --> main.hd:6:9
+  |
+6 |     def init : i32
+  |         ^^^^

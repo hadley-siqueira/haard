@@ -70,6 +70,11 @@ namespace haard {
             // for a body that is only 'pass'
             std::vector<u32> get_members(u32 declaration);
 
+            // the body node itself, which is what something ADDING a member
+            // needs and get_members cannot give: 0 when the declaration has
+            // no body. Record 0055's clone of a generic method is added here
+            u32 get_type_body(u32 declaration);
+
             // the parameters of a 'def', in source order. They are children
             // of the function and not of its block: a parameter is written on
             // a line of its own inside the function, and Parser::parse_function

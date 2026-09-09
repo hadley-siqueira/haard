@@ -50,10 +50,10 @@ void OverrideChecker::check_class(u32 candidate) {
     u32 super = found->super;
 
     // a class with no base overrides nothing, and one whose base could not be
-    // built was reported where the base was written
-    if (super == INVALID_TYPE) {
-        return;
-    }
+    // built was reported where the base was written. It is not a reason to
+    // stop, though: agenda 5.6's question is about a method on its own and is
+    // asked of every class, base or no base
+    bool derived = super != INVALID_TYPE;
 
     u32 body = table->scope_owned_by(found->ast_node);
 
@@ -72,6 +72,10 @@ void OverrideChecker::check_class(u32 candidate) {
             // of memory, and nothing in the source says which. There is no
             // rule that makes that useful, so it is an error and not shadowing
             if (table->get_candidate(method)->kind == SYMBOL_FIELD) {
+                if (!derived) {
+                    continue;
+                }
+
                 Candidacy owner = declared_above(method, super);
 
                 if (owner.candidate != 0) {
@@ -85,6 +89,14 @@ void OverrideChecker::check_class(u32 candidate) {
 
             if (table->get_candidate(method)->kind != SYMBOL_FUNCTION
                 || table->get_candidate(method)->type == INVALID_TYPE) {
+                continue;
+            }
+
+            if (check_construction(method)) {
+                continue;
+            }
+
+            if (!derived) {
                 continue;
             }
 
@@ -107,6 +119,43 @@ void OverrideChecker::check_class(u32 candidate) {
                        + ", and gives back " + name_of(mine));
         }
     }
+}
+
+// Agenda 5.6. Record 0026 makes 'init' and 'destroy' ordinary methods, and
+// that is what left this open: an ordinary method may give something back, and
+// these two are run by something that has nowhere to put it. The constructor
+// the emitter writes calls 'init' and drops the answer; 'destroy' is called
+// from a destructor, which in C++ cannot even be asked. So a written return
+// type is not a thing the compiler can honour and it is said so about.
+//
+// Only the return. What they take is what tells two 'init's apart -- record
+// 0038 makes the copy constructor an 'init' of one parameter -- and 'destroy'
+// taking arguments is a method nobody can call, which is a different question
+// nobody has asked
+bool OverrideChecker::check_construction(u32 candidate) {
+    SymbolTable* table = module->get_symbols();
+    std::string name = query.get_declaration_name(
+        table->get_candidate(candidate)->ast_node);
+
+    if (name != "init" && name != "destroy") {
+        return false;
+    }
+
+    u32 result = result_of(index, candidate);
+
+    // a signature with a part that would not build is poisoned whole -- record
+    // 0016 -- and was reported where the part was written
+    if (result == INVALID_TYPE
+        || result == module->get_types()->builtin(BUILTIN_VOID)) {
+        return false;
+    }
+
+    report(name_node_of(table->get_candidate(candidate)->ast_node),
+           std::string(name == "init" ? "an '" : "a '") + name
+               + "' gives back nothing, and this gives back "
+               + name_of(result));
+
+    return true;
 }
 
 std::vector<Candidacy> OverrideChecker::bases_of(u32 super) {

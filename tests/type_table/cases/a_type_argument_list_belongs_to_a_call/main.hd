@@ -1,0 +1,30 @@
+# Record 0055. The parser reads a type argument list after any '.', which is
+# what makes 'b.take<i32>(3)' a call of a generic method -- and it means the
+# same list can be written where there is no call to instantiate for.
+#
+# There is no value in this language that is a method, so a list written there
+# names nothing. It is reported rather than resolved to the member with the
+# list quietly dropped, which is what 'b.n<i32>' would otherwise be: a field
+# read, and two written words the compiler never looked at.
+#
+# The arity of the list is the Instantiator's own question and is asked here
+# for a method exactly as it is for a class or a free function.
+class Box:
+    n : i32
+
+    def take<T> : T
+        @x : T
+
+        return x
+
+def main : i32
+    let b : Box
+
+    # the two that are refused
+    let held = b.take<i32>
+    let field = b.n<i32>
+
+    # and the one that is not: written arity is what the declaration takes
+    let wrong = b.take<i32, f64>(1)
+
+    return b.take<i32>(3)

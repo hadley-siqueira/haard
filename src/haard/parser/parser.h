@@ -121,6 +121,12 @@ namespace haard {
             u32 parse_primary_type();
             u32 parse_named_type();
             u32 parse_generic_arguments();
+
+            // wraps a name into an AST_GENERIC_NAME when a type argument list
+            // is glued to it, and answers the name untouched when none is.
+            // Written once because two places read one: a bare name, and the
+            // member after a '.' or a '->' -- record 0055's generic method
+            u32 parse_generic_name(u32 name);
             u32 parse_type_postfix(u32 type);
 
             // consumes one '>', carving it out of a '>>' or a '>>>' when the

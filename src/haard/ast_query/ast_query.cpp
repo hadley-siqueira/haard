@@ -125,6 +125,10 @@ std::vector<u32> AstQuery::get_declarations() {
     return declarations;
 }
 
+u32 AstQuery::get_type_body(u32 declaration) {
+    return find_child(declaration, AST_TYPE_BODY);
+}
+
 std::vector<u32> AstQuery::get_members(u32 declaration) {
     std::vector<u32> members;
     u32 body = find_child(declaration, AST_TYPE_BODY);

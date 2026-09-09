@@ -1363,9 +1363,12 @@ u32 ExpressionTyper::name_of_callee(u32 node) {
     }
 
     // a dot and an arrow carry no text of their own, so the name being called
-    // is the right side
+    // is the right side -- and since record 0055 that side may carry a type
+    // argument list of its own, which is 'b.wrap<i32>(3)'
     if (kind_of(node) == AST_DOT || kind_of(node) == AST_ARROW) {
-        return second_child(node);
+        u32 right = second_child(node);
+
+        return kind_of(right) == AST_GENERIC_NAME ? first_child(right) : right;
     }
 
     // '::' carries none either. One child is '::name' and two are
@@ -1423,6 +1426,14 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
         u32 left = type_of(index, scope, first_child(node), INVALID_TYPE);
         u32 name = second_child(node);
 
+        // Record 0055: 'b.wrap<i32>(3)'. The arguments hang off the name on
+        // the right of the dot, and everything below this reads a plain name
+        // -- the lookup is by text, and the text is the identifier's
+        if (kind_of(name) == AST_GENERIC_NAME) {
+            written = second_child(name);
+            name = first_child(name);
+        }
+
         if (left == INVALID_TYPE || name == 0) {
             return std::vector<Candidacy>();
         }
@@ -1449,9 +1460,14 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
         if (found.size() == 0) {
             report(name, name_of(left) + " has no member named '" +
                    text_of(name) + "'");
+
+            return found;
         }
 
-        return found;
+        // and record 0055's clone, made from what the set holds and the
+        // arguments written after the name: a generic method is instantiated
+        // per call exactly as record 0054's free function is
+        return instantiated(scope, name, written, found);
     }
 
     return std::vector<Candidacy>();
@@ -2014,6 +2030,20 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
     u32 name = second_child(node);
 
     if (left == INVALID_TYPE || name == 0) {
+        return INVALID_TYPE;
+    }
+
+    // Record 0055, and this is the member access that is NOT a call: the
+    // parser reads a glued type argument list after any '.', and the only
+    // thing one can mean is the clone a call is about to be ranked against.
+    // Written anywhere else it names nothing -- there is no value in this
+    // language that is a method -- so it is said so about rather than
+    // resolved to the member and the list quietly dropped, which is what
+    // 'b.n<i32>' would otherwise be
+    if (kind_of(name) == AST_GENERIC_NAME) {
+        report(first_child(name),
+               "a type argument list belongs to a call, and this is not one");
+
         return INVALID_TYPE;
     }
 

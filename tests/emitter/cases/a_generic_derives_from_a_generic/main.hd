@@ -1,0 +1,86 @@
+# Record 0056, and the verdict is the exit status: a generic deriving from a
+# generic compiles, inherits, dispatches and runs.
+#
+# The clone of 'Derived<i32>' has 'Base#i32' for a base, which is an ordinary
+# class, so the C++ that comes out is an ordinary 'struct Derived : public
+# Base' and every rule about it is a rule that already existed -- the
+# override is found by name and parameters (record 0020), the upcast through
+# a pointer is record 0018's list, and the base's 'init' runs first because
+# record 0026 emits it as a C++ constructor.
+#
+# It never worked before, and not for any reason about generics: the guard in
+# 'TypeCollector::walk' read 'candidate <= done' and skipped exactly one new
+# declaration per round. A class cloned from a generic is the one that lands
+# on that boundary, so its 'super' was never built.
+class Base<T>:
+    value : T
+    built : i32
+
+    def init : void
+        built = 1
+
+    def get : T
+        return value
+
+    def set : void
+        @v : T
+
+        value = v
+
+    # overridden below, so the vtable is part of what this case checks
+    def describe : i32
+        return 10
+
+class Derived<T>(Base<T>):
+    tag : i32
+
+    def init : void
+        tag = 7
+
+    def twice : T
+        return value + value
+
+    def describe : i32
+        return 20
+
+class Deeper<T>(Derived<T>):
+    def thrice : T
+        return value + value + value
+
+def main : i32
+    let d : Derived<i32>
+    let deep : Deeper<i32>
+
+    d.set(20)
+    deep.set(1)
+
+    # the inherited member, read by a bare name inside a method of the derived
+    if d.twice() != 40:
+        return 1
+
+    # two levels up the chain
+    if deep.thrice() != 3:
+        return 2
+
+    # the base's own 'init' ran, and it is the base's field that says so
+    if d.built != 1:
+        return 3
+
+    # the upcast, and the override reached through it
+    let held : Base<i32>* = &d
+
+    if held->get() != 20:
+        return 4
+
+    if held->describe() != 20:
+        return 5
+
+    # and the base's own method where nothing overrode it
+    let plain : Base<i32>
+
+    plain.set(3)
+
+    if plain.describe() != 10:
+        return 6
+
+    return d.twice() + deep.thrice() + d.tag + plain.get()

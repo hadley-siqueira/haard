@@ -1,0 +1,10 @@
+error: an 'init' gives back nothing, and this gives back i32
+ --> main.hd:4:9
+  |
+4 |     def init : i32
+  |         ^^^^
+error: a 'destroy' gives back nothing, and this gives back bool
+ --> main.hd:8:9
+  |
+8 |     def destroy : bool
+  |         ^^^^^^^

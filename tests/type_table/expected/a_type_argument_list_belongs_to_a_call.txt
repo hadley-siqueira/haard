@@ -1,0 +1,31 @@
+<unnamed>:
+    Box  Box
+    main  i32
+    n  i32
+    take  T -> T
+    take  i32 -> i32
+    T  T
+    x  T
+    b  Box
+    held  <none>
+    field  <none>
+    wrong  <none>
+    T  i32
+    x  i32
+  22 types interned
+diagnostics:
+error: a type argument list belongs to a call, and this is not one
+  --> main.hd:24:18
+   |
+24 |     let held = b.take<i32>
+   |                  ^^^^
+error: a type argument list belongs to a call, and this is not one
+  --> main.hd:25:19
+   |
+25 |     let field = b.n<i32>
+   |                   ^
+error: 'take' takes 1 type argument, and 2 were written
+  --> main.hd:28:19
+   |
+28 |     let wrong = b.take<i32, f64>(1)
+   |                   ^^^^

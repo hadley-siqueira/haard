@@ -2040,12 +2040,12 @@ u32 Parser::parse_postfix_expression() {
         // compiler picked, and reading the member moves 'matched'
         if (match_on_same_line(TK_DOT)) {
             u32 oper = matched;
-            u32 member = parse_identifier();
+            u32 member = parse_generic_name(parse_identifier());
 
             node = builder.make_binary_operator(AST_DOT, oper, node, member);
         } else if (match_on_same_line(TK_ARROW)) {
             u32 oper = matched;
-            u32 member = parse_identifier();
+            u32 member = parse_generic_name(parse_identifier());
 
             node = builder.make_binary_operator(AST_ARROW, oper, node, member);
         } else if (lookahead_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
@@ -2171,22 +2171,7 @@ u32 Parser::parse_primary_expression() {
 
     if (lookahead_on_same_line(TK_SCOPE)
         || lookahead_on_same_line(TK_IDENTIFIER)) {
-        u32 name = parse_scope();
-
-        // 'make<i32>()' — a generic called with its types written out. The
-        // list is only read when the '<' is glued to the name, which is the
-        // spacing rule doing the disambiguating: spaced, it is a comparison
-        // and belongs to the relational level instead.
-        //
-        // Only a name takes one. A literal cannot, which is what keeps the
-        // relational level's own check reachable for '1 < 2' written glued.
-        if (name != 0
-            && lookahead_on_same_line(TK_LESS_THAN)
-            && glued_to_previous()) {
-            return builder.make_generic_name(name, parse_generic_arguments());
-        }
-
-        return name;
+        return parse_generic_name(parse_scope());
     }
 
     // reported here rather than left to the scope rule, which would say it
@@ -2195,6 +2180,24 @@ u32 Parser::parse_primary_expression() {
     error_found("an expression", true);
 
     return 0;
+}
+
+// 'make<i32>()' — a generic called with its types written out, and since
+// record 0055 'b.wrap<i32>(3)' as well. The list is only read when the '<' is
+// glued to the name, which is the spacing rule doing the disambiguating:
+// spaced, it is a comparison and belongs to the relational level instead.
+//
+// Only a name takes one. A literal cannot, which is what keeps the relational
+// level's own check reachable for '1 < 2' written glued.
+//
+//   generic_name := name generic_arguments?
+u32 Parser::parse_generic_name(u32 name) {
+    if (name == 0 || !lookahead_on_same_line(TK_LESS_THAN)
+        || !glued_to_previous()) {
+        return name;
+    }
+
+    return builder.make_generic_name(name, parse_generic_arguments());
 }
 
 // The parentheses are kept in the tree as a node of their own, rather than

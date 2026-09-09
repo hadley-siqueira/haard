@@ -1,0 +1,117 @@
+# Record 0055. A generic **method** is instantiated per call, exactly as
+# record 0054's free function is, and until this record 'b.take<i32>(3)' did
+# not even parse: the type argument list was read after a bare name and never
+# after a '.'.
+#
+# Three things had to be true for it to mean anything, and each was a hole:
+#
+# 1. The clone goes **into its class's body**. The Instantiator appended every
+#    clone to the root, which for a method makes a free function: it loses the
+#    'this' its body reads and the call looks for a member the class does not
+#    have. It came out as 'b.class(3)'.
+#
+# 2. The statement checker keeps a set of the declarations it has walked, and
+#    it kept it by **root declaration**. A clone that grows inside a class the
+#    phase had already walked was never reached, so its body was never typed
+#    and the emitter said *'x' names no declaration* about a parameter written
+#    two lines above it.
+#
+# 3. A method is named in C++ by its own name and its parameters -- record
+#    0020, so that an override carries one name -- and a clone is a copy of
+#    the declaration, token and all. So 'first<i32>' and 'first<i64>' below
+#    would both have been 'm_first', two C++ methods of one class with one
+#    name and different return types. The name now comes from the symbol
+#    table, where record 0002 already made it unique.
+class Box:
+    n : i32
+
+    def init : void
+        n = 40
+
+    def take<T> : T
+        @x : T
+
+        return x
+
+    # nothing in the signature mentions the type argument except the return,
+    # which is what makes the mangled name the whole of the difference
+    def first<T> : T
+        @xs : T*
+
+        return xs[0]
+
+    # and one nobody calls, which is not a method at all: it is what one is
+    # made from, so nothing is written for it -- exactly as nothing is written
+    # for a generic class nobody names. Before record 0055 the emitter walked
+    # a class's members without asking, and wrote a body naming a type
+    # parameter nothing bound: 'this type cannot be emitted yet', about a
+    # method the program never mentions
+    def unused<T> : T
+        @x : T
+
+        return x
+
+# a generic method of a generic CLASS, which is the shape that is a clone
+# inside a clone: 'pair_with' is cloned into 'Bag#i32', which was itself
+# cloned into this module a moment earlier
+class Bag<T>:
+    held : T
+
+    def init : void
+        pass
+
+    def keep : void
+        @value : T
+
+        held = value
+
+    def pair_with<R> : T
+        @other : R
+
+        return held
+
+def main : i32
+    let b : Box
+    let ints = new i32[2]
+    let longs = new i64[2]
+
+    ints[0] = 2
+    longs[0] = 60
+
+    # two instantiations of one method, and the arguments are what tells the
+    # two C++ names apart
+    let a : i32 = b.first<i32>(ints)
+    let c : i64 = b.first<i64>(longs)
+
+    delete[] ints
+    delete[] longs
+
+    # and the ordinary shape, where the parameter carries T as well
+    let d : i32 = b.take<i32>(-11)
+
+    # through a pointer, and on a generic class
+    let bag : Bag<i32>* = new Bag<i32>()
+
+    bag->keep(7)
+
+    let e : i32 = bag->pair_with<f64>(0.5)
+    let f : i32 = bag->pair_with<i64>(3)
+
+    delete bag
+
+    # The two ways a call reaches the compiler, and they are different phases
+    # -- record 0054's lesson, and it is the one that makes the round above
+    # necessary. Every call so far is inside a 'let', which the **type phase**
+    # walks; an 'if' and a 'return' are only ever seen by the **statement
+    # checker**, and a clone born there grows inside a class that phase has
+    # already walked.
+    #
+    # Without the round, the clone's body is never typed and the emitter says
+    # *'x' names no declaration* about a parameter written two lines above it
+    if b.take<i8>(1) != 1:
+        return 1
+
+    if b.take<u8>(2) != 2:
+        return 2
+
+    return a + (c as i32) + d + e + f + b.n

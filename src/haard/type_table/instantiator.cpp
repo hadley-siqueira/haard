@@ -58,8 +58,33 @@ u32 Instantiator::instantiate(u32 caller, u32 node, u32 owner, u32 candidate,
 
     AstBuilder builder;
     SymbolCollector collector;
-    u32 root = host->get_ast()->get_root();
     std::string name = query.get_declaration_name(declaration);
+
+    // Record 0055. **Beside the declaration it was cloned from**, which for a
+    // generic method is the body of its class and not the root. Appending a
+    // method to the root makes it a free function: it loses the 'this' its
+    // body reads, the emitter writes it outside the struct, and the call that
+    // asked for it looks for a member the class does not have.
+    //
+    // The same two rules as ever hold either way -- the clone lives in the
+    // module that DECLARED the generic, under a name no source can write --
+    // and this is only about which scope in that module
+    u32 into = host->get_ast()->get_root();
+    u32 where = table->get_module_scope();
+    u32 inside = table->scope_owned_by(declaration);
+    u32 around = inside == 0 ? 0 : table->get_scope(inside)->parent;
+    u32 holder = around == 0 ? 0 : table->get_scope(around)->owner;
+
+    if (holder != 0) {
+        u32 body = query.get_type_body(holder);
+
+        // a scope with an owner that is not a type body is nothing this knows
+        // how to add to, and the root is where every other clone goes
+        if (body != 0) {
+            into = body;
+            where = around;
+        }
+    }
 
     // the arguments by their index in this module's table, which is the one
     // thing that is both unique and unwritable
@@ -72,11 +97,12 @@ u32 Instantiator::instantiate(u32 caller, u32 node, u32 owner, u32 candidate,
     u32 copy = builder.clone(declaration);
 
     // a declaration is a child of the root and never deeper, which is what
-    // every walk after this one assumes
-    builder.add_child(root, 0, copy);
+    // every walk after this one assumes -- and a method is a child of a type
+    // body, which is what the walk over a class's members assumes
+    builder.add_child(into, 0, copy);
 
     collector.set_module(host);
-    collector.collect_declaration(table->get_module_scope(), copy, name);
+    collector.collect_declaration(where, copy, name);
 
     u32 made = table->candidate_of(copy);
 

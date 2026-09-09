@@ -1,0 +1,8 @@
+# Record 0055. A type argument list is read after a '.' and a '->' too, and by
+# the same spacing rule: glued, it opens the list; spaced, it is a comparison
+# and belongs to the relational level.
+def main : i32
+    let a = b.make<i32>()
+    let c = p->make<Array<u8>>(1, 2)
+    let d = b.field < limit
+    return 0

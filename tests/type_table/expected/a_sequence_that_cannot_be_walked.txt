@@ -6,30 +6,29 @@
     t  Thing
     fixed  i32[2]
       <none>
-    b  <none>
-    __c0  <none>
+      <none>
       <none>
       <none>
       <none>
   20 types interned
 diagnostics:
 error: i32 is not something a 'for ... in' can walk
-  --> main.hd:19:14
+  --> main.hd:27:14
    |
-19 |     for a in n:
+27 |     for a in n:
    |              ^
 error: Thing has no member named 'iterator'
-  --> main.hd:22:14
+  --> main.hd:30:14
    |
-22 |     for b in t:
+30 |     for b in t:
    |              ^
 error: a 'for ... in' binds one name, and this writes 2
-  --> main.hd:25:5
+  --> main.hd:33:5
    |
-25 |     for key, value in fixed:
+33 |     for key, value in fixed:
    |     ^^^
 error: a 'for' walks what is written after 'in'
-  --> main.hd:28:11
+  --> main.hd:36:11
    |
-28 |     for c not in fixed:
+36 |     for c not in fixed:
    |           ^^^

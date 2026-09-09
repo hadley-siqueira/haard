@@ -194,7 +194,13 @@ bool TypeCollector::walk(u32 index, bool given) {
                      candidate != 0;
                      candidate =
                          table->get_candidate(candidate)->next_candidate) {
-                    if (candidate <= done || candidate >= count) {
+                    // 'done' is the last index this pass has finished, so
+                    // the first NEW candidate is 'done' itself: written '<='
+                    // this skipped exactly one declaration per round, forever
+                    // -- and a class cloned from a generic lands on that
+                    // boundary, which is why its 'super' was never built at
+                    // all (record 0056)
+                    if (candidate < done || candidate >= count) {
                         continue;
                     }
 
@@ -664,10 +670,18 @@ u32 TypeCollector::super_of(u32 candidate, u32 scope) {
 
     // built in the scope the declaration opened, so 'class Box<T>(Holder<T>)'
     // has its own generic parameter in view
-    return builder.build(index, scope_of.count(found->ast_node) > 0
-                                    ? scope_of[found->ast_node]
-                                    : scope,
-                         written);
+    u32 base = builder.build(index, scope_of.count(found->ast_node) > 0
+                                        ? scope_of[found->ast_node]
+                                        : scope,
+                             written);
+
+    // Record 0056: 'class Derived<T>(Base<T>)' asks nothing special of this.
+    // TypeBuilder gives back the generic declaration written down when an
+    // argument is still a parameter -- which is what the ORIGINAL's super is,
+    // and it is never read, since record 0002 makes a use of a generic name
+    // the clone. The clone resolves this same node in its own scope, where 'T'
+    // is a type, and gets a real instantiation
+    return base;
 }
 
 u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written) {

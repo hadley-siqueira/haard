@@ -1,0 +1,21 @@
+class Counter:
+    n : i32
+
+    def init : i32
+        n = 0
+        return n
+
+    def destroy : bool
+        return true
+
+class Quiet:
+    n : i32
+
+    def init : void
+        n = 1
+
+    def destroy : void
+        n = 0
+
+    def read : i32
+        return n
