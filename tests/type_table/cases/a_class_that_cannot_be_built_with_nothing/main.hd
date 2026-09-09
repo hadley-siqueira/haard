@@ -12,6 +12,12 @@
 # a field held by value, a base, and a binding. A global is the same rule as
 # the binding and is here too.
 #
+# **The base has a fix the other two do not**, since record 0053: writing
+# `super(...)` in every `init` of the derived class. So 'ByBase' below is
+# still reported -- it writes no 'init' at all, and there is nowhere to put
+# one -- while 'BySuper' is not, and the golden's silence about it is the
+# whole of what that record bought.
+#
 # Hadley, 2026-09-05: a class that wrote **no** 'init' is not this case and
 # never was. C++ builds it for nothing and its implicit constructor runs the
 # constructors of its class-typed fields down the whole chain -- so there is
@@ -38,6 +44,25 @@ class ByField:
 
 class ByBase(Needs):
     tag : i32
+
+# Record 0053, and the same base: an 'init' that hands the base what it needs.
+# Nothing is reported about this one
+class BySuper(Needs):
+    tag : i32
+
+    def init : void
+        super(7)
+
+        tag = 0
+
+# and one that derives from the same base and writes an 'init' that does NOT
+# call super, which is reported for the reason ByBase is: the base is left
+# with nothing
+class ForgotSuper(Needs):
+    tag : i32
+
+    def init : void
+        tag = 0
 
 class HoldsFine:
     ok : Fine

@@ -84,9 +84,8 @@ types**, which went up by two in every case, and the emitter's goldens carry
 `m_poke_b14` because `char` moved from 12 to 14. The emitted programs still
 compile and still give the same exit status, which is that suite's verdict.
 
-## What is not decided here
+## And `sizeof` gives back a `usize`
 
-Whether `sizeof` should give back a `usize` instead of a `u64`. It gives a
-`u64` today and this record did not change it. On every target Haard emits for
-they are the same width, so nothing is wrong; on the day one of them is not,
-`sizeof` is answering with the wrong one.
+It gave a `u64`, which is the same width on every target Haard emits for and
+the wrong answer on the day one of them is not. Changed the same day, at
+Hadley's asking, and the only thing it moved was one line of one golden.

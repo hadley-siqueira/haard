@@ -999,6 +999,43 @@ void Emitter::emit_argument_names(u32 module_index, u32 node) {
 // reaches the class being built and not the one that will exist, which is a
 // C++ trap. Naming the class means the call is exactly the one this class
 // wrote, and the base's own constructor has already run its own
+// Whether this class writes an 'init' that **answers to no arguments**, which
+// is the one a derived class binds to for free.
+//
+// Not 'takes no parameters': record 0012 makes arity a range, so an
+// 'init(@count : i32 = 3)' answers to none as well, and the emitter writes it
+// with the default so C++ agrees. Counting written parameters instead of
+// required ones added a second do-nothing constructor beside it, and the two
+// were ambiguous -- which deleted the implicit default of every class derived
+// from it, in C++ and not in Haard
+bool Emitter::declares_a_nullary_init(u32 module_index, u32 declaration) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FUNCTION
+            || query.get_declaration_name(member) != "init") {
+            continue;
+        }
+
+        u32 required = 0;
+
+        for (u32 param : query.get_params(member)) {
+            if (query.get_binding_expression(param) == 0) {
+                required++;
+            }
+        }
+
+        if (required == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void Emitter::emit_structors(u32 module_index, u32 declaration,
                              const std::string& holder, bool bodies) {
     Module* module = compilation->get_module(module_index);
@@ -1048,6 +1085,21 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
     // back into that state before calling it -- and the guard is for 'a = a',
     // which would otherwise free what it is about to read
     u32 copy = copy_init_of(module_index, declaration);
+
+    // Record 0053. A class whose every 'init' takes an argument declares no
+    // C++ default constructor, so a class derived from it could not be built
+    // at all -- C++ builds the base sub-object before the derived body runs,
+    // and 'super(...)' is what fills it in afterwards. This is the empty one
+    // it binds to, and leaving the fields alone is exactly record 0026's rule
+    // about a field with no value written
+    if (member_named(module_index, declaration, "init") != 0
+        && !declares_a_nullary_init(module_index, declaration)) {
+        if (bodies) {
+            out << holder << "::" << holder << "() {\n}\n\n";
+        } else {
+            line(holder + "();");
+        }
+    }
 
     if (!bodies) {
         if (copy != 0) {
@@ -1337,9 +1389,34 @@ std::string Emitter::name_at_param(u32 module_index, u32 parameter) {
     return candidate == 0 ? "" : name_of(module_index, candidate);
 }
 
+// The method a class declares under this name, its own and not a base's. The
+// emitter asks a class for a name in exactly one place -- record 0051's
+// argument list -- and it asks the way record 0040's 'for ... in' asks for
+// 'iterator': by name, so no library class is known here by its type
+u32 Emitter::method_named(u32 module_index, u32 declaration,
+                          const std::string& wanted) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    u32 body = table->scope_owned_by(
+        table->get_candidate(declaration)->ast_node);
+    u32 interned = module->get_strings()->find(hash_name(wanted), wanted);
+
+    if (body == 0 || interned == INVALID_STRING) {
+        return 0;
+    }
+
+    u32 symbol = table->find(body, interned);
+
+    return symbol == 0 ? 0 : table->get_symbol(symbol)->candidates;
+}
+
 // Haard's entry point is a 'def main' of the entry module, which is module 0.
 // C++ wants its own signature, so the shim is the one function here that no
-// Haard source wrote
+// Haard source wrote.
+//
+// Record 0051: there are three of them, told apart by what 'main' takes.
+// Nothing is overloaded here -- the program declares one 'main' and this picks
+// the shim that fits it
 void Emitter::emit_main() {
     Module* module = compilation->get_module(0);
     AstQuery query;
@@ -1353,17 +1430,142 @@ void Emitter::emit_main() {
 
         u32 candidate = module->get_symbols()->candidate_of(function);
 
-        if (candidate == 0 || query.get_params(function).size() > 0) {
+        if (candidate == 0) {
             continue;
         }
 
-        out << "int main() {\n    return " << name_of(0, candidate)
-            << "();\n}\n";
+        u32 count = (u32) query.get_params(function).size();
 
-        return;
+        if (count == 0) {
+            out << "int main() {\n    return " << name_of(0, candidate)
+                << "();\n}\n";
+
+            return;
+        }
+
+        if (count == 2 && emit_main_with_argv(candidate)) {
+            return;
+        }
+
+        if (count == 1 && emit_main_with_a_list(candidate)) {
+            return;
+        }
     }
 
-    fail("the entry module declares no 'main' that takes nothing");
+    fail("the entry module declares no 'main' that takes nothing, an "
+         "(i32, char**), or one list of arguments");
+}
+
+// 'def main : i32 / @argc : i32 / @argv : char**' -- C's own pair, handed
+// straight through. Nothing is built and nothing is freed
+bool Emitter::emit_main_with_argv(u32 candidate) {
+    Module* module = compilation->get_module(0);
+    std::vector<u32> written =
+        module->get_types()->get_arguments(
+            module->get_symbols()->get_candidate(candidate)->type);
+    TypeTable* types = module->get_types();
+
+    if (written.size() != 3) {
+        return false;
+    }
+
+    Type* first = types->get_type(written[0]);
+    Type* second = types->get_type(written[1]);
+
+    if (first->kind != TYPE_BUILTIN
+        || !is_a_whole_number((BuiltinType) first->subject)
+        || second->kind != TYPE_POINTER) {
+        return false;
+    }
+
+    Type* once = types->get_type(types->get_argument(second->first_argument));
+
+    if (once->kind != TYPE_POINTER
+        || types->get_type(types->get_argument(once->first_argument))->subject
+               != BUILTIN_CHAR) {
+        return false;
+    }
+
+    out << "int main(int argc, char **argv) {\n    return "
+        << name_of(0, candidate) << "(("
+        << type_name(0, written[0]) << ") argc, argv);\n}\n";
+
+    return true;
+}
+
+// 'def main : i32 / @args : String[]' -- one list, built here out of argc and
+// argv. The class is asked for 'add' **by name**, the way record 0040 asks a
+// container for 'iterator', so nothing about 'Array' or 'String' is known in
+// this file: what the list holds is whatever 'add' takes, and it is built from
+// the 'char*' by record 0045's construction
+bool Emitter::emit_main_with_a_list(u32 candidate) {
+    Module* module = compilation->get_module(0);
+    TypeTable* types = module->get_types();
+    std::vector<u32> written = types->get_arguments(
+        module->get_symbols()->get_candidate(candidate)->type);
+
+    if (written.size() != 2) {
+        return false;
+    }
+
+    Type* holder = types->get_type(types->value_of(written[0]));
+
+    if (holder->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    u32 adder = method_named(holder->module, holder->subject, "add");
+
+    if (adder == 0) {
+        fail(type_name(0, written[0]) + " declares no 'add', so 'main' cannot "
+             "be given its arguments as one of them");
+        return true;
+    }
+
+    Module* owner = compilation->get_module(holder->module);
+    std::vector<u32> takes = owner->get_types()->get_arguments(
+        owner->get_symbols()->get_candidate(adder)->type);
+
+    if (takes.size() != 2) {
+        fail("'add' takes one argument where 'main' needs it to take the "
+             "text of one");
+        return true;
+    }
+
+    Type* element = owner->get_types()->get_type(
+        owner->get_types()->value_of(takes[0]));
+
+    if (element->kind != TYPE_NAMED) {
+        fail("'add' does not take a class, so 'main' has nothing to build an "
+             "argument out of");
+        return true;
+    }
+
+    // Record 0031, asked here because the shim is the one call in the program
+    // that no Haard source wrote -- so nothing else was going to ask it. A
+    // class that owns something and has not said how it is copied cannot be
+    // handed over by value, and handing it over anyway is a double free that
+    // g++ writes without a word
+    if (types->get_type(written[0])->kind != TYPE_REFERENCE
+        && member_named(holder->module, holder->subject, "destroy") != 0
+        && copy_init_of(holder->module, holder->subject) == 0) {
+        fail(type_name(0, written[0]) + " owns something and says nothing "
+             "about being copied, so 'main' cannot take it by value");
+        return true;
+    }
+
+    std::string list = name_of(holder->module, holder->subject);
+    std::string one = name_of(element->module, element->subject);
+
+    out << "int main(int argc, char **argv) {\n"
+        << "    " << list << " args;\n\n"
+        << "    for (int i = 0; i < argc; i++) {\n"
+        << "        args." << name_of(holder->module, adder)
+        << "(" << one << "(argv[i]));\n"
+        << "    }\n\n"
+        << "    return " << name_of(0, candidate) << "(args);\n}\n";
+
+    return true;
 }
 
 void Emitter::emit_block(u32 module, u32 node) {
@@ -2282,6 +2484,37 @@ void Emitter::emit_expression(u32 module, u32 node) {
         out << ")";
         return;
 
+    // Record 0052: a range written as a value is a construction of the class
+    // the typer built for it. 'stop' is one past the end, so the inclusive
+    // spelling -- which is the one '..' is -- adds the step, and the
+    // exclusive one is already there
+    case AST_INCLUSIVE_RANGE:
+    case AST_EXCLUSIVE_RANGE: {
+        u32 made = type_at(module, node);
+        Type* entry = compilation->get_module(module)->get_types()
+                          ->get_type(made);
+
+        if (entry->kind != TYPE_NAMED) {
+            fail("a range whose type was never built");
+            return;
+        }
+
+        out << name_of(entry->module, entry->subject) << "(";
+        emit_expression(module, child_of(module, node, 0));
+        out << ", ";
+
+        if (kind_of(module, node) == AST_INCLUSIVE_RANGE) {
+            out << "(";
+            emit_expression(module, child_of(module, node, 1));
+            out << ") + 1";
+        } else {
+            emit_expression(module, child_of(module, node, 1));
+        }
+
+        out << ", 1)";
+        return;
+    }
+
     // record 0026: the arguments are the 'init' the type phase chose, and C++
     // reaches it the same way -- the constructor this emitter wrote for that
     // 'init' has the same parameters
@@ -2591,6 +2824,40 @@ void Emitter::emit_call(u32 module_index, u32 node) {
     u32 holder = module_index;
     u32 candidate = called_candidate(module_index, node, holder);
     u32 callee = child_of(module_index, node, 0);
+
+    // Record 0053. 'super(...)' is the base's own 'init', called qualified so
+    // that it is exactly the base's and not an override of it -- the same
+    // reason record 0026's constructors name their class. What runs it is
+    // this body, after C++ has already built the base sub-object with the
+    // do-nothing default constructor 'emit_structors' writes for it
+    if (kind_of(module_index, callee) == AST_SUPER) {
+        Module* holding = compilation->get_module(module_index);
+        Resolution* chosen = holding->get_resolutions()->get(node);
+
+        if (chosen->candidate == 0) {
+            fail("a 'super' whose 'init' was never chosen");
+            return;
+        }
+
+        // 'holder_of' gives back the declaration's **node**, and 'name_of'
+        // wants its candidate. Handing the node straight over named whatever
+        // candidate sat at that index -- which here was Circle itself, so the
+        // 'init' called itself and the program overflowed its stack
+        u32 base = compilation->get_module(chosen->module)->get_symbols()
+                       ->candidate_of(holder_of(chosen->module,
+                                                chosen->candidate));
+
+        if (base == 0) {
+            fail("a 'super' whose base could not be named");
+            return;
+        }
+
+        out << "this->" << name_of(chosen->module, base) << "::"
+            << name_of(chosen->module, chosen->candidate);
+        emit_call_arguments(module_index, child_of(module_index, node, 1),
+                            chosen->module, chosen->candidate);
+        return;
+    }
 
     // Record 0045, and it is the same shape the variant below is: a call
     // whose callee names a TYPE writes the type's own name and then the
@@ -3247,6 +3514,13 @@ bool Emitter::is_an_rvalue(u32 module_index, u32 node) {
     // here: every other is hoisted into a binding and arrives as a name
     case AST_LIST:
     case AST_ARRAY:
+
+    // Record 0052: a range written as a value is one too, and it is not
+    // hoisted -- it is a construction the emitter writes in place, so it
+    // arrives here as itself. Without this 'Array<i32>(2..6)' handed a
+    // temporary to a 'Range&' and g++ refused it
+    case AST_INCLUSIVE_RANGE:
+    case AST_EXCLUSIVE_RANGE:
         return true;
 
     case AST_PARENTHESIS:

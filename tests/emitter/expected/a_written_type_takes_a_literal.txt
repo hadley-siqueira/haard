@@ -14,6 +14,7 @@ struct h0_30_Held {
     virtual int32_t m_total();
     h0_30_Held(h0_44_Array &h0_35_from);
     h0_30_Held(int32_t *h0_38_from, int32_t h0_39_size);
+    h0_30_Held();
     virtual ~h0_30_Held();
 };
 
@@ -75,6 +76,9 @@ h0_30_Held::h0_30_Held(h0_44_Array &h0_35_from) {
 
 h0_30_Held::h0_30_Held(int32_t *h0_38_from, int32_t h0_39_size) {
     this->h0_30_Held::m_init_pb6_b6(h0_38_from, h0_39_size);
+}
+
+h0_30_Held::h0_30_Held() {
 }
 
 h0_30_Held::~h0_30_Held() {

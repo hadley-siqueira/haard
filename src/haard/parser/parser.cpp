@@ -2129,6 +2129,13 @@ u32 Parser::parse_primary_expression() {
         return builder.make_this(matched);
     }
 
+    // Record 0053: 'super', which is only ever a callee. The postfix rule
+    // wraps it into the call it is written as, exactly as it does a name, so
+    // nothing here knows that a call is coming
+    if (match_on_same_line(TK_SUPER)) {
+        return builder.make_super(matched);
+    }
+
     // Record 0045: 'i32(x)'. A builtin is a keyword and never an identifier,
     // so it could not stand where a callee goes and the primary rule reported
     // *expected an expression, found 'i32'*. It is read as the type node it

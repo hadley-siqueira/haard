@@ -117,6 +117,21 @@ namespace haard {
                                 const std::string& holder, bool bodies);
             void emit_main();
 
+            // Record 0051's other two entry points, each answering whether it
+            // fits the 'main' it was handed
+            bool emit_main_with_argv(u32 candidate);
+            bool emit_main_with_a_list(u32 candidate);
+
+            // a method a class declares under this name, its own and not a
+            // base's
+            u32 method_named(u32 module, u32 declaration,
+                             const std::string& wanted);
+
+            // Record 0053: whether a class writes an 'init' taking nothing,
+            // which decides whether it needs a do-nothing C++ default
+            // constructor for a derived class to bind to
+            bool declares_a_nullary_init(u32 module, u32 declaration);
+
             void emit_statement(u32 module, u32 node);
             void emit_block(u32 module, u32 node);
             void emit_if(u32 module, u32 node);

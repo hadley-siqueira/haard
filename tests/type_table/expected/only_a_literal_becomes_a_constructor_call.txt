@@ -3,7 +3,7 @@
     Held  Held
     main  i32
     Array  Array<i32>
-    Array  <none>
+    Array  Array<f64>
     T  T
     size  i32
     init  void

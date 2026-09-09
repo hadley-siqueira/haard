@@ -35,6 +35,7 @@ namespace haard {
         TK_BREAK,
         TK_YIELD,
         TK_THIS,
+        TK_SUPER,
         TK_NULL,
         TK_NEW,
         TK_DELETE,

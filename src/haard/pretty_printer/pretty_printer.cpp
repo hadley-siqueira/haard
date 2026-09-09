@@ -431,6 +431,7 @@ void PrettyPrinter::print_node(u32 node) {
             print_literal(node);
             break;
 
+        case AST_SUPER:
         case AST_THIS:
             print_this(node);
             break;

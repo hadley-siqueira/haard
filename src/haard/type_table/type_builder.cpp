@@ -362,8 +362,16 @@ u32 TypeBuilder::build_written_name_here(u32 index, u32 scope, u32 name,
         }
 
         // and the clone is typed now, not on a sweep that may already have
-        // passed the module asking the question
+        // passed the module asking the question.
+        //
+        // Its own class candidate first, and record 0052 is why: 'catch_up'
+        // steps aside when the clone was made in the module being walked, and
+        // then nothing had given the clone a type at all -- so 'this' inside
+        // its own methods read INVALID_TYPE and came out as '<none>*'. It
+        // only showed when the generic was declared in the module that
+        // instantiated it; from another module the walk had already run
         if (collector != nullptr) {
+            collector->type_signature_now(owner, made);
             collector->catch_up(owner);
         }
 
@@ -414,8 +422,14 @@ u32 TypeBuilder::build_generic_here(u32 index, u32 scope, u32 at,
 
     // the clone is typed now and not on a sweep that may already have passed
     // the module asking the question -- this is the path a bracket literal
-    // takes, and 'let xs = [1, 2, 3]' then 'xs.length()' is what it costs
+    // takes, and 'let xs = [1, 2, 3]' then 'xs.length()' is what it costs.
+    //
+    // Record 0052: its own candidate and its methods' signatures first, for
+    // the reason the other instantiation does it -- 'catch_up' steps aside
+    // when the clone was made in the module being walked, and then nothing
+    // has typed the clone at all
     if (collector != nullptr) {
+        collector->type_signature_now(owner, made);
         collector->catch_up(owner);
     }
 

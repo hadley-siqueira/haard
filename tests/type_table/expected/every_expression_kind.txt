@@ -35,7 +35,7 @@
     post  i32
     converted  f64
     allocated  Box*
-    measured  u64
+    measured  usize
     parenthesised  i32
     tuple  (i32, f64)
     array  i32[3]
@@ -44,3 +44,9 @@
     ranged  <none>
     a_symbol  symbol
   29 types interned
+diagnostics:
+error: a range is a Range<T>, and 'Range' names nothing here
+  --> main.hd:91:19
+   |
+91 |     let ranged = 0..10
+   |                   ^^

@@ -1,0 +1,72 @@
+# Record 0053's 'super'. Until 2026-09-09 a class whose every 'init' took an
+# argument could not be derived from **at all**: record 0026 runs a base's
+# 'init' with nothing wherever a derived value comes into being, and there was
+# nowhere to write what the base needs. The diagnostic said so and named no
+# way out.
+#
+# Two things about the C++ this becomes are worth knowing:
+#
+# - the call is **qualified**, 'this->Base::m_init_...(x)', for the same
+#   reason record 0026's constructors name their class: an unqualified call
+#   would reach an override and not the base's own.
+# - the base sub-object is built by C++ **before** this body runs, with the
+#   do-nothing default constructor the emitter now writes for a class that
+#   declares no 'init' answering to no arguments. 'super' fills it in
+#   afterwards, which is why the fields are read back below rather than taken
+#   on trust.
+
+class Shape:
+    sides : i32
+    tag : i32
+
+    def init : void
+        @count : i32
+
+        sides = count
+        tag = 0
+
+    def init : void
+        @count : i32
+        @which : i32
+
+        sides = count
+        tag = which
+
+    def describe : i32
+        return sides * 10 + tag
+
+class Square(Shape):
+    side : i32
+
+    def init : void
+        @length : i32
+
+        # the base's two-argument 'init', chosen by the arguments written --
+        # record 0026's own machinery ranks it, so writing three here is
+        # reported the way any other call is
+        super(4, 2)
+
+        side = length
+
+    def describe : i32
+        return sides * 10 + tag + side
+
+# and a class deriving from the same base through an 'init' that picks the
+# other overload
+class Line(Shape):
+    def init : void
+        super(2)
+
+def main : i32
+    let s = Square(7)
+    let l = Line()
+
+    # 4 * 10 + 2 + 7 = 49, and the base's own describe over the same fields is
+    # 42 -- so the override is reached and the base's fields were written
+    if s.sides != 4 or s.tag != 2 or s.side != 7:
+        return 1
+
+    if l.sides != 2 or l.tag != 0:
+        return 2
+
+    return s.describe() + l.describe()

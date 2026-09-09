@@ -452,6 +452,12 @@ u32 AstBuilder::make_this(u32 token) {
     return make_node(AST_THIS, token);
 }
 
+// Record 0053. 'super' is written only as a callee -- 'super(x)' -- so it
+// carries nothing but its token and the call around it holds the arguments
+u32 AstBuilder::make_super(u32 token) {
+    return make_node(AST_SUPER, token);
+}
+
 u32 AstBuilder::make_list(u32 token) {
     return make_node(AST_LIST, token);
 }

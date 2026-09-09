@@ -639,6 +639,54 @@ Four things to know before touching it:
   opt out. The argument for the asymmetry it replaced is kept in record 0046
   rather than deleted with the refusal it used to justify.
 
+**`main` takes its arguments**, since 2026-09-09 — record 0051, in two shapes
+besides the empty one: C's `(argc, argv)`, and **one list**, `@args :
+String[]`, built in the shim out of `argc` and `argv`. The list form knows
+**no library class** — it asks the parameter's class for `add` by name, the
+way record 0040 asks a container for `iterator` — so a reader's own two
+classes work exactly as `Array<String>` does. It found one thing worth
+keeping: **the shim is the one call in a program that no Haard source wrote**,
+so it is also the one place that has to ask record 0031's question itself. A
+first draft handed a list that owns memory over by value and the result was a
+double free g++ wrote without a word.
+
+**`super(...)` gives a base its arguments**, since 2026-09-09 — record 0053,
+and before it a class whose every `init` took an argument could not be derived
+from at all. Three things to know:
+
+- **It may be written anywhere in an `init`**, not only first — refusing
+  otherwise would be the compiler guessing at intent. But **every** `init` of
+  the class must write one, and a class that declares none is still refused,
+  because there is nowhere to put it.
+- **A class whose `init`s all take arguments now gets a do-nothing C++ default
+  constructor**, which is what the derived class's base sub-object binds to
+  before `super` fills it in. Getting that right needed *takes no parameters*
+  to become **answers to no arguments** — record 0012's arity-as-a-range — or
+  an `init(@count : i32 = 3)` got a second empty constructor beside it and the
+  two were ambiguous, deleting the implicit default of every class derived
+  from it.
+- **`holder_of` gives back a declaration's node and `name_of` wants its
+  candidate.** Handing the node over named whatever candidate sat at that
+  index, so the derived `init` called itself and the program overflowed its
+  stack. The emitter suite caught it as a segmentation fault.
+
+**A range is a value**, since 2026-09-09 — record 0052. `0..10` was the last
+expression kind that typed to nothing, and it is a **`Range<T>`** now:
+`std/range.hd`, start, stop and step, with `stop` one past the end the way
+Python's is. **Inside a `for ... in` none of that happens** — record 0040
+reads the node as syntax and writes a plain loop, so walking a range still
+allocates nothing.
+
+It found a bug with nothing to do with ranges: **a generic cloned during
+inference, in the module that declared it, was never given its own type**, so
+`this` inside the clone's own methods came out as `<none>*`. From another
+module it never showed, because the walk had already run, and a written type
+never showed either, because that clone is made during collection. It needed a
+generic declared and instantiated in one module and inferred rather than
+written, and nobody had done that. `TypeCollector::type_signature_now` types a
+class candidate too now — its own type and its methods' signatures — and
+`TypeBuilder` calls it at **both** places an instantiation happens.
+
 **`isize` and `usize` exist**, since 2026-09-09 — record 0050, and they emit
 `intptr_t` and `uintptr_t`. The signed one is **not** `size`: that was asked
 for and measured first, and `size` is the field name of `String`, `List`,
@@ -983,6 +1031,13 @@ in the meantime.
 0. ~~The C++ emitter~~, ~~`init` and `destroy`~~ and ~~generics~~ — **done**,
    records 0025, 0026 and 0002. What the emitter still refuses it says so
    about, by name.
+
+0. ~~`main(argc, argv)`~~ — **done 2026-09-09**, record 0051, and in two
+   shapes. ~~`super`~~ — **done**, record 0053. ~~A range that types~~ —
+   **done**, record 0052. The front end's remaining gaps are a **closure that
+   types** (the biggest, and nothing in `type_table/` has ever seen an
+   `AST_CLOSURE`), the decision about **whether a generic instantiates a
+   method nobody calls**, and the two deferred subjects, 1.23 and 1.26.
 
 1. **More real Haard.** `tests/programs/` is the newest suite and the only one
    that runs the flow a **user** runs: the real `hdc` binary, through each

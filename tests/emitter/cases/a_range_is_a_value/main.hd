@@ -1,0 +1,97 @@
+# Record 0052. '0..10' was the last expression kind that typed to nothing, and
+# what it types to now is a class -- the same shape a bracket literal has,
+# and found by the same mechanism: 'Range' is looked for **by name** in the
+# scope the range was written in, so the class below is this file's own and
+# the compiler has never heard of it. std/range.hd is the one the prelude
+# gives a program that writes no import.
+#
+# Two things this case exists to pin:
+#
+# - 'stop' is one past the end, so '..' arrives with the end plus one and
+#   '...' arrives with the end. The two lengths below are what says so.
+# - **inside a 'for ... in' none of this happens.** Record 0040 reads the two
+#   node kinds as syntax and writes a plain loop with no object at all, which
+#   is why walking a range still allocates nothing. The last loop is that one,
+#   and the golden's C++ above it holds a bare 'for' and no Range.
+
+class Range<T>:
+    start : T
+    stop : T
+    step : T
+
+    def init : void
+        start = 0
+        stop = 0
+        step = 1
+
+    def init : void
+        @first : T
+        @past : T
+        @by : T
+
+        start = first
+        stop = past
+        step = by
+
+    def length : i32
+        if stop <= start:
+            return 0
+
+        return ((stop - start) + (step - 1)) / step as i32
+
+    def at : T
+        @i : i32
+
+        return start + (i as T) * step
+
+    def iterator : RangeCursor<T>
+        let cursor : RangeCursor<T>
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
+
+class RangeCursor<T>:
+    held : Range<T>*
+    position : i32
+
+    def init : void
+        held = null
+        position = 0
+
+    def has_next : bool
+        return position < held->length()
+
+    # a T and not a T&: there is nothing to write through, because the values
+    # do not exist until they are asked for
+    def next : T
+        let at = position
+
+        position = position + 1
+
+        return held->at(at)
+
+def main : i32
+    let inclusive = 0..4
+    let exclusive = 0...4
+
+    # 5 and 4, which is the whole of the difference between the two spellings
+    if inclusive.length() != 5 or exclusive.length() != 4:
+        return 1
+
+    if inclusive.at(0) != 0 or inclusive.at(4) != 4:
+        return 2
+
+    let total = 0
+
+    for v in inclusive:
+        total = total + v
+
+    # and a range in a for, which is the loop and not the class
+    for i in 1..3:
+        total = total + i
+
+    # 0+1+2+3+4 = 10, and 1+2+3 = 6
+    return total + 26

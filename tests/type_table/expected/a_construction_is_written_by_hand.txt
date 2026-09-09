@@ -7,7 +7,7 @@
     gives  Box
     main  i32
     refusals  void
-    Pair  <none>
+    Pair  Pair<i32, i32>
     v  i32
     init  void
     init  i32 -> void

@@ -1,0 +1,69 @@
+# Record 0051, the second entry point: 'main' takes its arguments as one list.
+#
+# What makes this one worth having is that the emitter knows **no library
+# class** to write it. It asks the parameter's class for 'add' by name -- the
+# way record 0040 asks a container for 'iterator' -- and builds each element
+# out of the 'char*' by record 0045's construction. So the class below is the
+# reader's own, the compiler has never heard of it, and the shim is the same
+# one 'String[]' gets.
+#
+# The suite runs the binary with no arguments, so the list holds one: the
+# path, which is not printed because it differs on every machine.
+class Word:
+    text : char*
+    size : i32
+
+    def init : void
+        text = ""
+        size = 0
+
+    def init : void
+        @from : char*
+
+        text = from
+        size = 0
+
+        while from[size] != '\0':
+            size = size + 1
+
+    def length : i32
+        return size
+
+# It owns nothing on purpose: the shim hands the list to 'main' **by value**,
+# and record 0031 makes a class that owns something and says nothing about
+# being copied impossible to hand over that way. The emitter asks that
+# question about this parameter, since the shim is the one call in a program
+# that no Haard source wrote -- an earlier draft of this case owned a 'new
+# Word[8]', and what came out was a double free g++ wrote without a word
+class Words:
+    held : Word[8]
+    count : i32
+
+    def init : void
+        count = 0
+
+    def add : void
+        @one : Word
+
+        held[count] = one
+        count = count + 1
+
+    def length : i32
+        return count
+
+    def at : Word&
+        @i : i32
+
+        return held[i]
+
+def main : i32
+    @args : Words
+
+    # one argument, the path, and its text is not empty
+    if args.length() != 1:
+        return 1
+
+    if args.at(0).length() == 0:
+        return 2
+
+    return args.length() + 41

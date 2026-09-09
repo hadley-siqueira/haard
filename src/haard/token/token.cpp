@@ -91,6 +91,7 @@ std::string Token::get_kind_as_string() {
         { TK_BREAK, "TK_BREAK" },
         { TK_YIELD, "TK_YIELD" },
         { TK_THIS, "TK_THIS" },
+        { TK_SUPER, "TK_SUPER" },
         { TK_NULL, "TK_NULL" },
         { TK_NEW, "TK_NEW" },
         { TK_DELETE, "TK_DELETE" },

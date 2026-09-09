@@ -3,6 +3,8 @@
     Fine  Fine
     ByField  ByField
     ByBase  ByBase
+    BySuper  BySuper
+    ForgotSuper  ForgotSuper
     HoldsFine  HoldsFine
     Aggregate  Aggregate
     global_one  Needs
@@ -15,31 +17,40 @@
     count  i32
     field  Needs
     tag  i32
+    tag  i32
+    init  void
+    tag  i32
+    init  void
     ok  Fine
     held  HoldsFine
     local  Needs
     allowed  Fine
     also_allowed  Aggregate
     given  Needs*
-  26 types interned
+  29 types interned
 diagnostics:
 error: every 'init' of Needs takes an argument, and none is written here
-  --> main.hd:37:5
+  --> main.hd:43:5
    |
-37 |     field : Needs
+43 |     field : Needs
    |     ^^^^^
-error: every 'init' of Needs takes an argument, and a base cannot be given one
-  --> main.hd:39:7
+error: every 'init' of Needs takes an argument, and no 'init' of this class writes 'super(...)'
+  --> main.hd:45:7
    |
-39 | class ByBase(Needs):
+45 | class ByBase(Needs):
    |       ^^^^^^
-error: every 'init' of Needs takes an argument, and none is written here
-  --> main.hd:50:5
+error: every 'init' of Needs takes an argument, and no 'init' of this class writes 'super(...)'
+  --> main.hd:61:7
    |
-50 | let global_one : Needs
+61 | class ForgotSuper(Needs):
+   |       ^^^^^^^^^^^
+error: every 'init' of Needs takes an argument, and none is written here
+  --> main.hd:75:5
+   |
+75 | let global_one : Needs
    |     ^^^^^^^^^^
 error: every 'init' of Needs takes an argument, and none is written here
-  --> main.hd:53:9
+  --> main.hd:78:9
    |
-53 |     let local : Needs
+78 |     let local : Needs
    |         ^^^^^

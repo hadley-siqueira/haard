@@ -238,6 +238,20 @@ namespace haard {
             u32 construction(u32 scope, u32 node, u32 callee, u32 list,
                              bool& built);
 
+            // Record 0053. 'super(...)' inside an 'init': the candidates are
+            // the BASE's 'init's, and what it gives back is void, because a
+            // constructor gives nothing back
+            u32 super_call(u32 scope, u32 node, u32 callee, u32 list);
+
+            // Record 0052. '0..10' as a **value**, which is a 'Range<T>'.
+            // Inside a 'for ... in' it never reaches here: record 0040's
+            // lowering reads the node as syntax and writes a plain loop
+            u32 range(u32 scope, u32 node);
+
+            // the class whose body this scope is inside, walking out. 0 when
+            // the expression is not inside one
+            u32 enclosing_class(u32 scope);
+
             // the candidates a callee names: a bare name, one of the two
             // qualified forms, or a member of whatever is on the left of a
             // '.' or a '->'

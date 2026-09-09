@@ -27,6 +27,7 @@ struct h3_1_Tracker {
     virtual void m_init_pb6(int32_t *h3_4_where);
     virtual void m_destroy();
     h3_1_Tracker(int32_t *h3_4_where);
+    h3_1_Tracker();
     virtual ~h3_1_Tracker();
 };
 
@@ -85,6 +86,9 @@ void h3_1_Tracker::m_destroy() {
 
 h3_1_Tracker::h3_1_Tracker(int32_t *h3_4_where) {
     this->h3_1_Tracker::m_init_pb6(h3_4_where);
+}
+
+h3_1_Tracker::h3_1_Tracker() {
 }
 
 h3_1_Tracker::~h3_1_Tracker() {

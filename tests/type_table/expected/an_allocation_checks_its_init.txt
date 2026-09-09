@@ -17,7 +17,7 @@
     from_the_base  Derived*
   25 types interned
 diagnostics:
-error: every 'init' of Counter takes an argument, and a base cannot be given one
+error: every 'init' of Counter takes an argument, and no 'init' of this class writes 'super(...)'
   --> main.hd:17:7
    |
 17 | class Derived(Counter):

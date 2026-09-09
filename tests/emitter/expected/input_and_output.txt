@@ -15,6 +15,7 @@ struct h1_1_File {
     virtual bool m_at_end();
     virtual void m_close();
     h1_1_File(int8_t *h1_4_where);
+    h1_1_File();
     virtual ~h1_1_File();
 };
 
@@ -140,6 +141,9 @@ void h1_1_File::m_close() {
 
 h1_1_File::h1_1_File(int8_t *h1_4_where) {
     this->h1_1_File::m_init_pb4(h1_4_where);
+}
+
+h1_1_File::h1_1_File() {
 }
 
 h1_1_File::~h1_1_File() {

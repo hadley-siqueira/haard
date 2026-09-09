@@ -10,6 +10,8 @@
 # Record 0034's operators are how it is read and compared. They are ordinary
 # methods with names no source can write, so nothing outside this file can
 # call one by name and nothing inside the compiler has a case for them.
+import std.range
+
 class Array<T>:
     data : T*
     size : i32
@@ -47,6 +49,25 @@ class Array<T>:
     # There is no method named 'copy'. Its own buffer, and the elements copied one
     # at a time -- which is what makes an Array of a class that owns something
     # work, since each element's own 'copy' runs
+    # Record 0052: an Array built out of a Range, which is what turns the
+    # values a range only describes into values that exist. 'Array<i32>(0..9)'
+    # is the written form, and the range is walked by the same 'at' a loop
+    # over it would use
+    def init : void
+        @from : Range<T>&
+
+        data = null
+        size = 0
+        capacity = 0
+
+        reserve(from.length())
+
+        let i = 0
+
+        while i < from.length():
+            add(from.at(i))
+            i = i + 1
+
     def init : void
         @other : Array<T>&
 

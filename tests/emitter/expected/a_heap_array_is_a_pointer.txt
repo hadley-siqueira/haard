@@ -14,6 +14,7 @@ struct h0_1_String {
     virtual int32_t m_length();
     virtual char m_at_b6(int32_t h0_11_i);
     h0_1_String(char *h0_6_text);
+    h0_1_String();
     virtual ~h0_1_String();
 };
 
@@ -64,6 +65,9 @@ char h0_1_String::m_at_b6(int32_t h0_11_i) {
 
 h0_1_String::h0_1_String(char *h0_6_text) {
     this->h0_1_String::m_init_pb14(h0_6_text);
+}
+
+h0_1_String::h0_1_String() {
 }
 
 h0_1_String::~h0_1_String() {

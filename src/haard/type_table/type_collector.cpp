@@ -64,7 +64,52 @@ void TypeCollector::type_signature_now(u32 module_index, u32 candidate) {
     SymbolTable* table = holder->get_symbols();
     Candidate* found = table->get_candidate(candidate);
 
-    if (found->kind != SYMBOL_FUNCTION || found->type != INVALID_TYPE) {
+    if (found->type != INVALID_TYPE) {
+        return;
+    }
+
+    // A class, a struct, an enum or a union is its own type and needs no
+    // scope to say so, which is what makes this the whole of the second half:
+    // 'this' inside a clone's method reads the class candidate's type, and a
+    // clone made mid-inference has not been given one yet. It came out as
+    // '<none>*' and an assignment to a 'Span<i32>*' was refused -- about a
+    // method of a class that is fine
+    switch ((SymbolKind) found->kind) {
+    case SYMBOL_CLASS:
+    case SYMBOL_STRUCT:
+    case SYMBOL_ENUM:
+    case SYMBOL_UNION: {
+        table->set_candidate_type(
+            candidate,
+            holder->get_types()->named(module_index, candidate,
+                                       std::vector<u32>()));
+
+        // and its methods' signatures, which is what a caller needs of a
+        // fresh clone -- the same sentence catch_up's own comment uses about
+        // the written pass. 'for v in it' asks a container for 'iterator' the
+        // moment the clone exists, and a signature that is not there yet
+        // reads as *no 'iterator' takes these arguments*
+        u32 body = table->scope_owned_by(
+            table->get_candidate(candidate)->ast_node);
+
+        for (u32 symbol = body == 0 ? 0 : table->get_scope(body)->symbols;
+             symbol != 0; symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+                 one = table->get_candidate(one)->next_candidate) {
+                if (table->get_candidate(one)->kind == SYMBOL_FUNCTION
+                    && table->get_candidate(one)->type == INVALID_TYPE) {
+                    type_signature_now(module_index, one);
+                }
+            }
+        }
+
+        return;
+    }
+
+    case SYMBOL_FUNCTION:
+        break;
+
+    default:
         return;
     }
 
@@ -714,10 +759,9 @@ void TypeCollector::require_default_construction(u32 candidate) {
     case SYMBOL_STRUCT:
     case SYMBOL_UNION:
         wanted = found->super;
-        // and it names why this one cannot be fixed where the others can:
-        // record 0026 leaves 'super(...)' undecided, so there is nowhere to
-        // write a base's arguments even when the author knows them
-        where = "a base cannot be given one";
+        // Record 0053 gave this one a fix the others do not have: writing
+        // 'super(...)' in every 'init' of this class. So the message names it
+        where = "no 'init' of this class writes 'super(...)'";
         break;
 
     // a field held by value and a binding with no expression both come into
@@ -742,6 +786,15 @@ void TypeCollector::require_default_construction(u32 candidate) {
         return;
     }
 
+    // Record 0053, and this is the whole of what 'super' bought: a base that
+    // takes arguments is fine when every 'init' of this class hands it some.
+    // The comment above used to end 'a base cannot be given one', and that is
+    // the sentence this line retires
+    if (found->kind != SYMBOL_FIELD && found->kind != SYMBOL_VARIABLE
+        && every_init_calls_super(candidate)) {
+        return;
+    }
+
     Type* entry = module->get_types()->get_type(wanted);
     Module* holder = compilation->get_module(entry->module);
     AstQuery theirs;
@@ -754,6 +807,61 @@ void TypeCollector::require_default_construction(u32 candidate) {
                      holder->get_symbols()->get_candidate(entry->subject)
                          ->ast_node)
                + " takes an argument, and " + where);
+}
+
+bool TypeCollector::every_init_calls_super(u32 declaration) {
+    SymbolTable* table = module->get_symbols();
+    AstQuery query;
+    u32 written = 0;
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(
+             table->get_candidate(declaration)->ast_node)) {
+        if (module->get_ast()->get_node(member)->get_kind() != AST_FUNCTION
+            || query.get_declaration_name(member) != "init") {
+            continue;
+        }
+
+        written++;
+
+        if (!holds_a_super_call(member)) {
+            return false;
+        }
+    }
+
+    return written > 0;
+}
+
+// Anywhere in the body, and not only as its first statement: 'super' inside
+// an 'if' is a program a reader can follow, and refusing it would be the
+// compiler guessing at intent -- record 0047. What C++ guarantees about the
+// base running first is kept a different way: the base sub-object is built by
+// C++ before this body runs at all, and 'super' fills it in
+bool TypeCollector::holds_a_super_call(u32 node) {
+    Ast* ast = module->get_ast();
+
+    if (node == 0) {
+        return false;
+    }
+
+    if (ast->get_node(node)->get_kind() == AST_CALL) {
+        u32 callee = ast->get_node(node)->get_children();
+
+        if (callee != 0
+            && ast->get_node(callee)->get_kind() == AST_SUPER) {
+            return true;
+        }
+    }
+
+    for (u32 child = ast->get_node(node)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        if (holds_a_super_call(child)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool TypeCollector::builds_with_nothing(u32 type) {

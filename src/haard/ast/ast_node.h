@@ -126,6 +126,7 @@ namespace haard {
         AST_FALSE,
         AST_NULL_LITERAL,
         AST_THIS,
+        AST_SUPER,
         AST_LIST,
         AST_ARRAY,
         AST_HASH,

@@ -150,6 +150,7 @@ namespace haard {
             // 'this' and the four bracketed forms. The three that hold a
             // list are born empty and grow, like every other list node here
             u32 make_this(u32 token);
+            u32 make_super(u32 token);
             u32 make_list(u32 token);
             u32 make_array(u32 token);
             u32 make_hash(u32 token);

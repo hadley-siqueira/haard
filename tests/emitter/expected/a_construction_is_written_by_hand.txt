@@ -34,6 +34,7 @@ struct h0_36_Pair {
     virtual void m_init_b6_b6(int32_t h0_42_first, int32_t h0_43_second);
     virtual int32_t m_total();
     h0_36_Pair(int32_t h0_42_first, int32_t h0_43_second);
+    h0_36_Pair();
     virtual ~h0_36_Pair();
 };
 
@@ -134,6 +135,9 @@ int32_t h0_36_Pair::m_total() {
 
 h0_36_Pair::h0_36_Pair(int32_t h0_42_first, int32_t h0_43_second) {
     this->h0_36_Pair::m_init_b6_b6(h0_42_first, h0_43_second);
+}
+
+h0_36_Pair::h0_36_Pair() {
 }
 
 h0_36_Pair::~h0_36_Pair() {

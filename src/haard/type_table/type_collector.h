@@ -44,12 +44,13 @@ namespace haard {
             // reported. The clone has to be typed the moment it is made
             void catch_up(u32 module);
 
-            // Record 0045, and it is the half of catch_up that a clone made
-            // in the module being walked needs. 'Box<i32>(7)' instantiates
-            // while module 0 is mid-walk, so catch_up returns at once -- the
-            // walk will reach the clone, but on a later round, and the
-            // construction is asking for its 'init' NOW. So this one
-            // signature is built here.
+            // Records 0045 and 0052, and it is the half of catch_up that a
+            // clone made in the module being walked needs. 'Box<i32>(7)'
+            // instantiates while module 0 is mid-walk, so catch_up returns at
+            // once -- the walk will reach the clone, but on a later round,
+            // and the construction is asking for its 'init' NOW. So this one
+            // candidate is typed here: a function's signature, or a class's
+            // own type, which is what 'this' inside its methods reads.
             //
             // Safe to repeat, which is what makes it a request and not a
             // pass: signature_of reads the tree and interns, so the walk
@@ -146,6 +147,15 @@ namespace haard {
             // whether a value of this type can come into being with no
             // arguments written. True for everything that is not a class
             bool builds_with_nothing(u32 type);
+
+            // Record 0053. Whether this class writes 'super(...)' in every
+            // 'init' it declares, which is what lets it derive from a base
+            // that can only be built with arguments. A class that declares no
+            // 'init' at all answers false: there is nowhere to write one
+            bool every_init_calls_super(u32 declaration);
+
+            // whether this subtree holds a call whose callee is 'super'
+            bool holds_a_super_call(u32 node);
 
             // the identifier a declaration was named with, which is where a
             // diagnostic about the declaration points. NOT the written type:

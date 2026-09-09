@@ -191,6 +191,10 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_CAST:
         return cast(scope, node);
 
+    case AST_INCLUSIVE_RANGE:
+    case AST_EXCLUSIVE_RANGE:
+        return range(scope, node);
+
     case AST_NEW:
         return allocation(scope, node);
 
@@ -199,7 +203,10 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_SIZEOF:
         type_of(index, scope, first_child(node), INVALID_TYPE);
 
-        return module->get_types()->builtin(BUILTIN_U64);
+        // Record 0050: a size is a 'usize', which is what that builtin is for.
+        // It gave back a 'u64' until 2026-09-09, which is the same width
+        // everywhere Haard emits for and the wrong answer the day it is not
+        return module->get_types()->builtin(BUILTIN_USIZE);
 
     // Nothing typed a 'delete' until 2026-09-03 -- 'delete 5' passed in
     // silence -- and the emitter found it by refusing to name an operand the
@@ -517,6 +524,15 @@ bool ExpressionTyper::may_cast(u32 from, u32 to) {
 
     Type* source = types->get_type(from);
     Type* target = types->get_type(to);
+
+    // Record 0002 again: inside a generic nobody instantiated, 'i as T' is
+    // not a program yet -- T is a parameter and not a type, so no list can
+    // answer about it. The clone asks the same question with T bound, and
+    // reports it there. Without this, 'std/range.hd' could not write the one
+    // cast it needs
+    if (source->kind == TYPE_GENERIC || target->kind == TYPE_GENERIC) {
+        return true;
+    }
 
     // A number to a number, in either direction and losing whatever it
     // loses. Record 0048 keeps every one of these OFF the implicit list, so
@@ -1432,6 +1448,13 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
     u32 list = second_child(node);
     bool built = false;
 
+    // Record 0053, and it is asked first because 'super' names nothing the
+    // resolver could find: it is the base of the class this body is inside,
+    // which is a question about the scope and not about a name
+    if (callee != 0 && kind_of(callee) == AST_SUPER) {
+        return super_call(scope, node, callee, list);
+    }
+
     // Record 0045, and it is asked before anything is ranked: a type answers
     // to no signature, so a class among the candidates scores -1 against
     // every argument and 'String("abc")' came out as *no 'String' takes these
@@ -1683,6 +1706,131 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
     return made;
 }
 
+// Record 0053. Before it, a class whose every 'init' took an argument could
+// not be derived from at all: the base runs before the derived's own body and
+// there was nowhere to write what it takes. 'super(...)' is that place.
+//
+// It is not a name and does not go through the resolver. What it means is the
+// base of the class this body is inside, so it is answered from the scope --
+// which is also what makes it an error outside a class and outside an 'init'
+// Record 0052. A range written where a value goes is a 'Range<T>', built the
+// way a bracketed literal is built: the element type is what a pass before the
+// type phase cannot know, so the clone is asked for here.
+//
+// It does not reach this function inside a 'for ... in'. Record 0040's
+// lowering reads the two node kinds as **syntax** and writes a C shaped loop
+// with no object at all, which is why walking a range still costs nothing
+u32 ExpressionTyper::range(u32 scope, u32 node) {
+    TypeTable* types = module->get_types();
+    u32 first = first_child(node);
+    u32 second = second_child(node);
+
+    // whichever side is a written number waits for the other, which is what
+    // 'binary' does and for the same reason: '0..big' and 'big..0' have to
+    // give the same answer
+    u32 left;
+    u32 right;
+
+    if (is_untyped_literal(kind_of(first))
+        && !is_untyped_literal(kind_of(second))) {
+        right = type_of(index, scope, second, INVALID_TYPE);
+        left = type_of(index, scope, first, types->value_of(right));
+    } else {
+        left = type_of(index, scope, first, INVALID_TYPE);
+        right = type_of(index, scope, second, types->value_of(left));
+    }
+
+    if (left == INVALID_TYPE || right == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    left = types->value_of(left);
+    right = types->value_of(right);
+
+    // A range counts, so both ends are whole numbers and they are the same
+    // one. Record 0048 keeps every numeric conversion off the implicit list,
+    // so there is nothing here that would make two of them meet
+    if (!is_a_number(left) || !is_a_number(right)
+        || types->get_type(left)->subject == BUILTIN_F32
+        || types->get_type(left)->subject == BUILTIN_F64) {
+        report(node, "a range counts, and " + name_of(left)
+               + " is not a whole number");
+
+        return INVALID_TYPE;
+    }
+
+    if (left != right) {
+        report(node, "a range's two ends are the same type, and these are "
+               + name_of(left) + " and " + name_of(right));
+
+        return INVALID_TYPE;
+    }
+
+    u32 made = builder.build_generic(index, scope, node, "Range", {left});
+
+    if (made == INVALID_TYPE) {
+        report(node, "a range is a Range<T>, and 'Range' names nothing here");
+
+        return INVALID_TYPE;
+    }
+
+    return made;
+}
+
+u32 ExpressionTyper::super_call(u32 scope, u32 node, u32 callee, u32 list) {
+    u32 inside = enclosing_class(scope);
+    TypeTable* types = module->get_types();
+
+    if (inside == 0) {
+        report(callee, "'super' names the base of a class, and this is not "
+               "inside one");
+
+        return INVALID_TYPE;
+    }
+
+    u32 base = module->get_symbols()->get_candidate(inside)->super;
+
+    if (base == INVALID_TYPE) {
+        report(callee, "'super' names the base of a class, and this class "
+               "derives from nothing");
+
+        return INVALID_TYPE;
+    }
+
+    // the base's own 'init's, which is exactly what a 'new Base(...)' asks
+    // for -- so the arguments are ranked, reported and recorded by record
+    // 0026's own machinery and nothing here repeats it
+    initialisation(scope, node, base, list);
+
+    // a constructor gives nothing back, and 'let x = super(1)' should say so
+    // rather than name a type
+    return types->builtin(BUILTIN_VOID);
+}
+
+u32 ExpressionTyper::enclosing_class(u32 scope) {
+    SymbolTable* table = module->get_symbols();
+
+    while (scope != 0) {
+        u32 owner = table->get_scope(scope)->owner;
+
+        if (owner != 0) {
+            u32 candidate = table->candidate_of(owner);
+            SymbolKind kind = candidate == 0
+                                  ? SYMBOL_NONE
+                                  : (SymbolKind)
+                                        table->get_candidate(candidate)->kind;
+
+            if (kind == SYMBOL_CLASS || kind == SYMBOL_STRUCT) {
+                return candidate;
+            }
+        }
+
+        scope = table->get_scope(scope)->parent;
+    }
+
+    return 0;
+}
+
 std::vector<Candidacy> ExpressionTyper::members_of(u32 left, u32 name,
                                                   u32& owner) {
     return members_named(left, text_of(name), owner);
@@ -1761,9 +1909,18 @@ u32 ExpressionTyper::this_type(u32 scope) {
         case AST_CLASS:
         case AST_STRUCT:
         case AST_UNION:
-        case AST_ENUM:
+        case AST_ENUM: {
+            u32 holder = table->candidate_of(owner);
+
+            // Record 0052: a clone made mid-inference used to arrive here
+            // with no type of its own, so 'this' inside its methods came out
+            // as '<none>*'. The clone is typed where it is **made** now --
+            // TypeBuilder asks the collector the moment the instantiator
+            // hands one back -- and this reads it back
             return module->get_types()->pointer(
-                table->get_candidate(table->candidate_of(owner))->type);
+                holder == 0 ? INVALID_TYPE
+                            : table->get_candidate(holder)->type);
+        }
 
         default:
             break;
