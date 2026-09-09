@@ -257,6 +257,16 @@ namespace haard {
             // '.' or a '->'
             std::vector<Candidacy> callee_of(u32 scope, u32 node);
 
+            // Record 0054. 'f<i32>(3)': every candidate that is a generic
+            // **function** replaced by its clone, so the ranking that follows
+            // reads an ordinary signature. A candidate that is not generic is
+            // left alone, so a non-generic overload of the same name still
+            // competes
+            std::vector<Candidacy> instantiated(u32 scope, u32 at,
+                                                u32 arguments,
+                                                const std::vector<Candidacy>&
+                                                    found);
+
             // Everything a name means inside a class and its bases, as
             // candidates rather than as one type. A field access wants the
             // type and a method call wants the set, and they are the same walk

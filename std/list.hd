@@ -143,31 +143,17 @@ class List<T>:
 
         return cursor
 
-    def equals : bool
-        @other : List<T>&
-
-        if size != other.size:
-            return false
-
-        let here = head
-        let there = other.head
-
-        while here != null:
-            if not (here->value == there->value):
-                return false
-
-            here = here->next
-            there = there->next
-
-        return true
-
-    def operator== : bool
-        @other : List<T>&
-        return equals(other)
-
-    def operator!= : bool
-        @other : List<T>&
-        return not equals(other)
+    # Comparing two of these is NOT here, and its absence is the decision.
+    #
+    # A method of a generic class is instantiated **with the class**, so an
+    # 'equals' that compares two T made every T ever put in one of these need
+    # an 'operator==' -- for a method nobody called. 'List<Token>' over a
+    # plain class was *Token has no 'operator=='*, pointing into this file, at
+    # a line the reader never opened. Measured 2026-09-09: nothing in the
+    # whole repository has ever compared two of these.
+    #
+    # Where it belongs is a **free generic function**, instantiated per call,
+    # which asks nothing of a T nobody compares. Record 0054.
 
 
 # Record 0040's cursor for a linked list: a node pointer, and 'next' follows

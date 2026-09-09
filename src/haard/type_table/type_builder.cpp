@@ -381,6 +381,37 @@ u32 TypeBuilder::build_written_name_here(u32 index, u32 scope, u32 name,
     return module->get_types()->named(owner, symbol, built);
 }
 
+u32 TypeBuilder::instantiate_written(u32 index, u32 scope, u32 at, u32 owner,
+                                     u32 candidate,
+                                     const std::vector<u32>& arguments) {
+    std::vector<u32> translated;
+
+    for (u32 argument : arguments) {
+        if (argument == INVALID_TYPE) {
+            return 0;
+        }
+
+        translated.push_back(translate(owner, index, argument));
+    }
+
+    u32 made = instantiator.instantiate(index, at, owner, candidate,
+                                        translated);
+
+    if (made == 0) {
+        return 0;
+    }
+
+    // the clone's own signature, now and not on a sweep that may have passed
+    // -- record 0052's lesson, and here it is the whole point: the call is
+    // about to be ranked against exactly this
+    if (collector != nullptr) {
+        collector->type_signature_now(owner, made);
+        collector->catch_up(owner);
+    }
+
+    return made;
+}
+
 u32 TypeBuilder::build_generic(u32 index, u32 scope, u32 at,
                                const std::string& name,
                                const std::vector<u32>& arguments) {

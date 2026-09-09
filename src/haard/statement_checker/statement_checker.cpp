@@ -1,4 +1,5 @@
 #include <haard/statement_checker/statement_checker.h>
+#include <haard/type_table/type_collector.h>
 
 using namespace haard;
 
@@ -34,6 +35,10 @@ StatementChecker::StatementChecker() {
     compilation = nullptr;
     module = nullptr;
     index = 0;
+}
+
+void StatementChecker::set_collector(TypeCollector* collector) {
+    typer.set_collector(collector);
 }
 
 void StatementChecker::set_compilation(Compilation* compilation) {

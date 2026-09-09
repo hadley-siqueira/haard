@@ -10,8 +10,6 @@
 # Record 0034's operators are how it is read and compared. They are ordinary
 # methods with names no source can write, so nothing outside this file can
 # call one by name and nothing inside the compiler has a case for them.
-import std.range
-
 class Array<T>:
     data : T*
     size : i32
@@ -49,25 +47,6 @@ class Array<T>:
     # There is no method named 'copy'. Its own buffer, and the elements copied one
     # at a time -- which is what makes an Array of a class that owns something
     # work, since each element's own 'copy' runs
-    # Record 0052: an Array built out of a Range, which is what turns the
-    # values a range only describes into values that exist. 'Array<i32>(0..9)'
-    # is the written form, and the range is walked by the same 'at' a loop
-    # over it would use
-    def init : void
-        @from : Range<T>&
-
-        data = null
-        size = 0
-        capacity = 0
-
-        reserve(from.length())
-
-        let i = 0
-
-        while i < from.length():
-            add(from.at(i))
-            i = i + 1
-
     def init : void
         @other : Array<T>&
 
@@ -92,37 +71,23 @@ class Array<T>:
 
     # An ordinary method under the two operators below, because an operator's
     # name is not writable and so neither of them can call the other
-    def equals : bool
-        @other : Array<T>&
-
-        if size != other.size:
-            return false
-
-        let i = 0
-
-        while i < size:
-            # '==' on the elements and not '!=': T may overload only one of
-            # them, and every T that overloads either overloads this one
-            if not (data[i] == other.data[i]):
-                return false
-
-            i = i + 1
-
-        return true
+    # Comparing two of these is NOT here, and its absence is the decision.
+    #
+    # A method of a generic class is instantiated **with the class**, so an
+    # 'equals' that compares two T made every T ever put in one of these need
+    # an 'operator=='  -- for a method nobody called. 'Array<Token>' over a
+    # plain class was *Token has no 'operator=='*, pointing into this file at
+    # a line the reader never opened. Measured 2026-09-09: nothing in the
+    # whole repository has ever compared two of these.
+    #
+    # Where it belongs is a **free generic function**, instantiated per call,
+    # which asks nothing of a T nobody compares. Record 0054.
 
     # Record 0034. It gives back a REFERENCE, which is what makes 'xs[0]' and
     # 'xs[0] = 9' the same method -- reading one and writing through it
     def operator[] : T&
         @i : i32
         return data[i]
-
-    def operator== : bool
-        @other : Array<T>&
-        return equals(other)
-
-    def operator!= : bool
-        @other : Array<T>&
-        return not equals(other)
 
     def reserve : void
         @wanted : i32

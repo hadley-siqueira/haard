@@ -74,6 +74,18 @@ namespace haard {
             u32 build_written_name(u32 module, u32 scope, u32 name,
                                    u32 arguments);
 
+            // Record 0054. The clone of a declaration whose candidate is
+            // already known, with the type arguments already built in the
+            // CALLER's table -- translated on the way in, since the clone is
+            // made where the declaration is.
+            //
+            // 'build_written_name' is the same thing reached from a written
+            // type. This one is reached from a **call**, which is the half
+            // that was never wired: nothing ever instantiated a function
+            u32 instantiate_written(u32 module, u32 scope, u32 at, u32 owner,
+                                    u32 candidate,
+                                    const std::vector<u32>& arguments);
+
             // Whether this candidate set names a **type** rather than a set
             // of overloads, and which declaration it is. Public for record
             // 0045: a call has to ask before it ranks, because a type answers

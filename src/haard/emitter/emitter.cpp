@@ -2327,6 +2327,13 @@ void Emitter::emit_expression(u32 module, u32 node) {
         out << "nullptr";
         return;
 
+    // Record 0054. The type arguments were the type phase's business and are
+    // gone by now: what this call means is the clone, and the clone's name is
+    // written on the name node underneath
+    case AST_GENERIC_NAME:
+        emit_expression(module, child_of(module, node, 0));
+        return;
+
     case AST_THIS:
         out << "this";
         return;
@@ -3546,6 +3553,14 @@ u32 Emitter::called_candidate(u32 module_index, u32 call, u32& holder) {
         }
 
         if (kind == AST_PARENTHESIS) {
+            at = child_of(module_index, at, 0);
+            continue;
+        }
+
+        // Record 0054: 'f<i32>(3)' hangs the name under an AST_GENERIC_NAME,
+        // and the resolution is written on the **name** -- the type phase
+        // unwraps it the same way to find where to point
+        if (kind == AST_GENERIC_NAME) {
             at = child_of(module_index, at, 0);
             continue;
         }

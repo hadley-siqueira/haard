@@ -1381,14 +1381,25 @@ u32 ExpressionTyper::name_of_callee(u32 node) {
 }
 
 std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
-    // a call written with explicit generic arguments has an AST_GENERIC_NAME
-    // for a callee, and the name is its first child
+    // A call written with explicit generic arguments has an AST_GENERIC_NAME
+    // for a callee, and the name is its first child.
+    //
+    // Record 0054: the arguments used to be dropped here, which is the whole
+    // of why 'f<i32>(3)' was *no 'f' takes these arguments*. The call was
+    // ranked against the **unbound** signature -- 'i32 -> T -> Node*' -- and
+    // an i32 does not match a T. Nothing ever instantiated a function; the
+    // Instantiator was always able to, since it clones a declaration and asks
+    // nothing about its kind
+    u32 written = 0;
+
     if (kind_of(node) == AST_GENERIC_NAME) {
+        written = second_child(node);
         node = first_child(node);
     }
 
     if (kind_of(node) == AST_IDENTIFIER) {
-        return resolver.resolve(index, scope, text_of(node));
+        return instantiated(scope, node, written,
+                            resolver.resolve(index, scope, text_of(node)));
     }
 
     if (kind_of(node) == AST_SCOPE) {
@@ -1396,11 +1407,14 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
         u32 second = module->get_ast()->get_node(first)->get_sibling();
 
         if (second == 0) {
-            return resolver.resolve_at_module(index, text_of(first));
+            return instantiated(scope, first, written,
+                                resolver.resolve_at_module(index,
+                                                           text_of(first)));
         }
 
-        return resolver.resolve_qualified(index, text_of(first),
-                                          text_of(second));
+        return instantiated(scope, second, written,
+                            resolver.resolve_qualified(index, text_of(first),
+                                                       text_of(second)));
     }
 
     // a method call: the same walk a field access does, giving back the set
@@ -1829,6 +1843,59 @@ u32 ExpressionTyper::enclosing_class(u32 scope) {
     }
 
     return 0;
+}
+
+std::vector<Candidacy> ExpressionTyper::instantiated(
+    u32 scope, u32 at, u32 arguments,
+    const std::vector<Candidacy>& found) {
+    if (arguments == 0) {
+        return found;
+    }
+
+    // built in THIS module's table, and translated on the way into the
+    // declaring one -- record 0016, and 'instantiate_written' does it
+    std::vector<u32> built;
+
+    for (u32 child = first_child(arguments); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        built.push_back(builder.build(index, scope, child));
+    }
+
+    std::vector<Candidacy> answer;
+    AstQuery query;
+
+    for (const Candidacy& candidacy : found) {
+        Module* owner = compilation->get_module(candidacy.module);
+        Candidate* one = owner->get_symbols()->get_candidate(candidacy.candidate);
+
+        query.set_module(owner);
+
+        // Only a generic FUNCTION. A generic class reaching here is record
+        // 0045's construction, which took its own path before this; a
+        // candidate with no type parameters is left exactly as it was, so an
+        // ordinary overload of the same name still competes and the arity
+        // error it would give is the one the reader wants
+        if (one->kind != SYMBOL_FUNCTION
+            || query.get_generic_parameters(one->ast_node).size() == 0) {
+            answer.push_back(candidacy);
+            continue;
+        }
+
+        u32 made = builder.instantiate_written(index, scope, at,
+                                               candidacy.module,
+                                               candidacy.candidate, built);
+
+        if (made != 0) {
+            Candidacy clone;
+
+            clone.module = candidacy.module;
+            clone.candidate = made;
+
+            answer.push_back(clone);
+        }
+    }
+
+    return answer;
 }
 
 std::vector<Candidacy> ExpressionTyper::members_of(u32 left, u32 name,

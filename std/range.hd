@@ -14,6 +14,8 @@
 # 'length' a subtraction. The two spellings the language has both come here
 # through the same field: '0..10' is written inclusive, so it arrives as a
 # stop of 11, and '0...10' arrives as 10.
+import std.array
+
 class Range<T>:
     start : T
     stop : T
@@ -106,6 +108,26 @@ class Range<T>:
         @other : Range<T>&
         return (start != other.start or stop != other.stop
                 or step != other.step)
+
+    # The values a range only describes, made into values that exist.
+    #
+    # It is a **method on the Range** and not an 'init' on the Array, which is
+    # where it was for an afternoon: a parameter of type 'Range<T>' inside
+    # 'Array<T>' makes every 'Array<X>' instantiate 'Range<X>', and a Range
+    # demands of its X four comparisons, a subtraction and a cast from i32.
+    # That took 'Array<Token>' from one diagnostic to twenty-seven.
+    #
+    # This way round costs nothing that is not asked for: a Range is only ever
+    # made of whole numbers, and an Array asks nothing of those they cannot do
+    def to_array : Array<T>
+        let made : Array<T>
+        let i = 0
+
+        while i < length():
+            made.add(at(i))
+            i = i + 1
+
+        return made
 
     # record 0040's three names, so 'for x in r' walks a range held in a
     # binding exactly as it walks a container

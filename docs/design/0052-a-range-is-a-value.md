@@ -7,7 +7,7 @@ Status: **decided and built**, 2026-09-09. Hadley's.
 | `0..10` written anywhere but a `for` is a **`Range<T>`** | **decided**, Hadley |
 | It holds a **start, a stop and a step**, like Python's | **decided**, Hadley |
 | `stop` is **one past the end**, so `..` arrives with the end plus one | **decided while writing it** |
-| An `Array<T>` is built from one by a **constructor** | **decided**, Hadley |
+| An `Array<T>` is made from one by `Range<T>::to_array()` | **decided**, Hadley |
 | Inside a `for ... in` **nothing of this happens** | **kept** from record 0040 |
 
 ## What was missing
@@ -60,9 +60,26 @@ same rule. So a program that declares its own `Range` gets its own, a program
 that writes no import is told *a range is a Range<T>, and 'Range' names
 nothing here*, and the compiler knows the name and nothing else about it.
 
-`Array<T>` gained an `init(@from : Range<T>&)`, so `Array<i32>(2..6)` is the
-written form of turning the values a range only describes into values that
-exist.
+### The conversion is a method on the Range
+
+`(2..6).to_array()` turns the values a range only describes into values that
+exist, and it lives on **Range** rather than as an `init` on `Array`.
+
+It was an `init` on `Array<T>` for an afternoon, and the cost was measured
+rather than guessed: a parameter of type `Range<T>` written inside `Array<T>`
+makes **every** `Array<X>` instantiate `Range<X>`, and a `Range` demands of
+its `X` four comparisons, a subtraction, a remainder and a cast from `i32`.
+`Array<Token>` went from **one** diagnostic to **twenty-seven**, none of which
+the reader's program had anything to do with.
+
+This way round costs nothing that is not asked for: a `Range` is only ever
+made of whole numbers, and an `Array` asks nothing of those that they cannot
+do. Hadley, 2026-09-09: *better to put a method on Range that gives back an
+Array and let the programmer call it explicitly.*
+
+**The general shape is worth keeping**: writing a generic's type as a
+parameter or a return inside another generic makes the second's demands the
+first's, for every instantiation, whether or not the method is ever called.
 
 ## What writing it found, and it had nothing to do with ranges
 

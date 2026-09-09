@@ -308,7 +308,11 @@ void Compilation::collect_symbols(u32 index) {
 }
 
 void Compilation::collect_types() {
-    TypeCollector types;
+    if (collector == nullptr) {
+        collector.reset(new TypeCollector());
+    }
+
+    TypeCollector& types = *collector;
     ImplicitCollector implicit;
     bool grew;
 
@@ -403,6 +407,16 @@ void Compilation::check_statements() {
     StatementChecker statements;
 
     statements.set_compilation(this);
+
+    // Record 0054: a call with written type arguments instantiates, and it is
+    // typed here as often as in the type phase. It is **the** collector and
+    // never a new one -- see the member's own comment
+    if (collector == nullptr) {
+        collector.reset(new TypeCollector());
+        collector->set_compilation(this);
+    }
+
+    statements.set_collector(collector.get());
 
     for (u32 i = 0; i < modules.size(); i++) {
         if (modules[i]->is_parsed()) {

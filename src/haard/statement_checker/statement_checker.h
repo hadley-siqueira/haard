@@ -6,6 +6,7 @@
 #include <map>
 
 namespace haard {
+    class TypeCollector;
     // Checks the statements of a module against the types around them, which
     // until now nothing did: every expression kind typed, but the typer was
     // only ever *called* on a binding's initialiser, so 'def f : i32' with
@@ -53,6 +54,14 @@ namespace haard {
 
         public:
             void set_compilation(Compilation* compilation);
+
+            // Record 0054. A call is typed HERE as often as it is typed in
+            // the type phase -- 'return f<i32>(3)' never reaches that one --
+            // and a call with written type arguments has to be able to
+            // instantiate. Without this the clone was made and never typed,
+            // so the ranking read a signature of 0 and said no overload took
+            // these arguments
+            void set_collector(TypeCollector* collector);
 
             // checks every statement of this module, logging one error per
             // question that came back wrong

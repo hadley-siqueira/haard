@@ -4,12 +4,14 @@
 #include <haard/ast_query/ast_query.h>
 #include <haard/module_finder/module_finder.h>
 #include <haard/module/module.h>
+#include <memory>
 #include <map>
 #include <ostream>
 #include <string>
 #include <vector>
 
 namespace haard {
+    class TypeCollector;
     // Every module of one program, and the loop that finds them.
     //
     // The loop is the whole class: load a file, ask what it imports, resolve
@@ -135,6 +137,16 @@ namespace haard {
             void report(Module* module, u32 import, const std::string& message);
 
         private:
+            // Record 0054. The one TypeCollector of the whole compilation,
+            // and it has to be one: 'catch_up' re-walks a module that grew,
+            // and it decides what is new by a mark it keeps. A second
+            // collector starts with that mark at zero, so its first catch_up
+            // re-walks the module in the **written** pass and overwrites
+            // every inferred binding with nothing. The statement checker
+            // instantiates now (a call may carry type arguments), so it needs
+            // this one and not one of its own
+            std::unique_ptr<TypeCollector> collector;
+
             ModuleFinder finder;
             AstQuery query;
 
