@@ -3,7 +3,7 @@ app.main:
     p  lib.shapes.Point*
     q  lib.shapes.Point*
     bad  <none>
-  18 types interned
+  20 types interned
 lib.shapes:
     Point  lib.shapes.Point
     make  i32 -> lib.shapes.Point*
@@ -11,7 +11,7 @@ lib.shapes:
     x  i32
     x  i32
     p  lib.shapes.Point*
-  19 types interned
+  21 types interned
 diagnostics:
 error: no 'wrap' takes these arguments
  --> app/main.hd:6:15

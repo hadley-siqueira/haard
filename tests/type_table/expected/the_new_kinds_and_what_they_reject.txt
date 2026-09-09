@@ -14,7 +14,7 @@
     deref_array  <none>
     index_a_number  <none>
     p  i32*
-  21 types interned
+  23 types interned
 diagnostics:
 error: an array literal is an Array<T>, and 'Array' names nothing here
   --> main.hd:18:26

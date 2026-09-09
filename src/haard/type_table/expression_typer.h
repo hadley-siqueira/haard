@@ -106,6 +106,27 @@ namespace haard {
             // question and not this phase's
             u32 cast(u32 scope, u32 node);
 
+            // Record 0049's closed list: whether 'from as to' is one of the
+            // casts the language has. Nothing was checked at all until
+            // 2026-09-09 -- 'pt as i32' over a class passed 'hdc' and died in
+            // g++, which is the shape this project has found ten times
+            bool may_cast(u32 from, u32 to);
+
+            // a builtin that holds a number: the integers, the two floats,
+            // 'char' and 'bool'. Not 'void', which holds nothing, and not
+            // 'symbol', which is a name (record 0041)
+            bool is_a_number(u32 type);
+
+            // an integer wide enough to hold a pointer, which is i64 or u64.
+            // Haard has no target model, so sixty-four is an assumption
+            bool holds_a_pointer(u32 type);
+
+            // whether these two name classes one of which derives from the
+            // other, seen through however many pointers or references. Both
+            // directions: going down is what a program does when it knows
+            // more than the type says, and nothing checks it at run time
+            bool one_derives_from_the_other(u32 from, u32 to);
+
             // 'new T' and 'new T(a, b)' give back a T*. The arguments are
             // typed and nothing yet connects them to an 'init'
             u32 allocation(u32 scope, u32 node);

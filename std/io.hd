@@ -74,6 +74,54 @@ def print : void
     built.append(value)
     print(built.text())
 
+# The narrow ones widen and hand over, which is what the String's own 'append'
+# does with the same six. They are here for the same reason: a program that
+# holds an i8 has to be able to print one, and until 2026-09-09 'println(n)'
+# over anything but i32, i64, u32 or f64 was *no 'println' takes these
+# arguments* about a whole number
+def print : void
+    @value : i8
+    print(value as i32)
+
+def print : void
+    @value : i16
+    print(value as i32)
+
+def print : void
+    @value : u8
+    print(value as u32)
+
+def print : void
+    @value : u16
+    print(value as u32)
+
+def print : void
+    @value : f32
+    print(value as f64)
+
+# Record 0050's pair, which the String knows how to write
+def print : void
+    @value : isize
+    print(value as i64)
+
+def print : void
+    @value : usize
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+# u64 has nothing wider to widen into, so it goes through the String, which is
+# where its own digits are written
+def print : void
+    @value : u64
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
 def print : void
     @value : bool
 
@@ -136,6 +184,54 @@ def println : void
 
 def println : void
     @value : f64
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : i8
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : i16
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u8
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u16
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u64
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : f32
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : isize
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : usize
 
     print(value)
     print('\n')

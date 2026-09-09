@@ -36,9 +36,9 @@ The variant matters: this is FNV-1**a**, which xors before it multiplies. FNV-1
 does the two in the other order and gives different numbers for the same input.
 
 **And the function is written in the compiler's own source, not called out to
-the standard library.** Hadley, 2026-09-02: *"é até bom que a função de hash
-faça parte do código fonte do compilador ao invés de depender de função externa
-da std."* The five lines above are the whole implementation and the whole
+the standard library.** Hadley, 2026-09-02: *"it is actually good that the hash
+function is part of the compiler's own source rather than depending on an
+outside function from the standard library."* The five lines above are the whole implementation and the whole
 specification at the same time, which is what a second implementation needs.
 
 ## Why a weak hash is the right choice here

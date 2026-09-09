@@ -1,0 +1,127 @@
+# Record 0049. Until 2026-09-09 'ExpressionTyper::cast' typed its operand for
+# the record's sake, gave back the written type, and checked **nothing** -- so
+# 'as' was C's cast: every pair written was accepted, and what caught the
+# nonsense was g++, reporting in mangled names about a line nobody wrote.
+#
+# The list was written from what the whole repository actually casts: 21
+# distinct pairs, measured by instrumenting this function and compiling
+# examples/, all thirteen test programs and every case of nine suites. Twenty
+# of the twenty-one are between numeric builtins and the twenty-first is
+# 'symbol' to 'char*'. What is on the list and had no case yet is the pointer
+# work a compiler written in Haard needs.
+#
+# The golden is the type of every binding, so the good half reads as the list
+# itself and the refusals are underneath it.
+
+class Shape:
+    tag : i32
+
+class Circle(Shape):
+    radius : i32
+
+# no relation to either, which is what makes it the refusals' subject
+class Point:
+    x : i32
+    y : i32
+
+def allowed : void
+    @n : i32
+    @big : i64
+    @f : f64
+    @p : char*
+    @pp : i32**
+    @s : symbol
+    @shape : Shape*
+    @circle : Circle*
+    @shape_ref : Shape&
+    @circle_ref : Circle&
+
+    # a number to a number, in either direction and losing what it loses.
+    # Record 0048 keeps every one of these off the implicit list, so this is
+    # the only way across and it is written every time
+    let widened = n as i64
+    let narrowed = big as i32
+    let floated = n as f64
+    let truncated = f as i32
+    let unsigned = n as u32
+    let asked = n as bool
+    let lettered = n as char
+
+    # the same type written out. Pointless, and pointless is not wrong
+    let itself = n as i32
+
+    # a pointer to a pointer, which is reading one address as something else
+    let bytes = p as i8*
+    let flattened = pp as i32*
+
+    # a pointer and a whole number, either way, and the number has to be one
+    # a pointer FITS IN -- sixty-four bits, which is an assumption Haard has
+    # nowhere to write down and the first line to change the day it emits for
+    # something narrower
+    let address = p as i64
+    let unsigned_address = p as u64
+    let back = big as char*
+
+    # up and down a chain of bases, through a pointer or a reference. Going
+    # down is what a program does when it knows more than the type says, and
+    # nothing checks it at run time
+    let up = circle as Shape*
+    let down = shape as Circle*
+    let up_by_reference = circle_ref as Shape&
+    let down_by_reference = shape_ref as Circle&
+
+    # record 0041, and the one way across
+    let text = s as char*
+
+    # and record 0045's other spelling of the same conversion, which emits
+    # the same C++ and therefore asks the same list. 'i64(n)' and 'n as i64'
+    # are one thing written two ways, and record 0049 kept both
+    let by_construction = i64(n)
+    let address_again = i64(p)
+
+def refused : void
+    @n : i32
+    @f : f64
+    @p : char*
+    @s : symbol
+    @point : Point&
+    @shape : Shape*
+
+    # a class is not a number, in either direction
+    let a = point as i32
+    let b = n as Point
+
+    # nor is a pointer one
+    let c = p as Point
+
+    # a symbol is a name and not a number: 'char*' is the only way across
+    let d = s as i32
+
+    # two classes with no chain between them
+    let e = point as Shape&
+
+    # only a WHOLE number reaches a pointer
+    let g = f as char*
+
+    # and only one a pointer fits in. This pair was on the list for an
+    # afternoon: it passed 'hdc' and g++ answered *cast from 'char*' to
+    # 'int32_t' loses precision*, which is the hole this record closes,
+    # found inside the record's own list
+    let j = p as i32
+    let k = n as char*
+
+    # and the same two pairs in record 0045's spelling. Leaving this one
+    # unchecked would have made the whole list a suggestion: 'i32(p)' says
+    # exactly what 'p as i32' says
+    let m = i32(p)
+    let o = i32(point)
+
+    # and a class by **value** is not reached this way at all, even up a chain
+    # it really is on: casting one would copy the base part and discard the
+    # rest, which is the slicing record 0018 refuses everywhere else. Through
+    # a pointer or a reference it is allowed, and those are above
+    let h = shape as Shape
+
+    let solid : Circle
+
+    let i = solid as Shape

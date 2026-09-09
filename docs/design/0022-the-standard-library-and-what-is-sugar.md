@@ -37,8 +37,8 @@ applied to the one import nobody writes.
 | `"abc"` | `char*` |
 | a template string | `String` |
 
-**A string literal is a `char*` first.** *"Primeiro tentar interpretar como
-char\*. Se não for possível, virar String."* — Hadley, 2026-09-02. So it is
+**A string literal is a `char*` first.** *"First try to read it as a
+`char*`. If that is not possible, make it a String."* — Hadley, 2026-09-02. So it is
 record 0018's first rule again: a literal takes what its context asks for, and
 `char*` is what it is when nothing asks. A template string is always a
 `String`, because it has to be built at run time.

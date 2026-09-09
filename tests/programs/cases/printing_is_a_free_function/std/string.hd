@@ -210,6 +210,49 @@ class String:
         @value : u32
         append(value as i64)
 
+    # The narrow ones borrow the i64 above, which every value of theirs fits
+    # in. They are here because a program that holds an i8 has to be able to
+    # print one -- without them 'println(n)' and '${n}' were both *no
+    # 'append' takes these arguments* about a whole number
+    def append : void
+        @value : i8
+        append(value as i64)
+
+    def append : void
+        @value : i16
+        append(value as i64)
+
+    def append : void
+        @value : u8
+        append(value as i64)
+
+    def append : void
+        @value : u16
+        append(value as i64)
+
+    # Record 0050. 'isize' borrows the i64 above, which it is the same width
+    # as everywhere Haard emits for. 'usize' cannot, for the reason u64
+    # cannot, so it borrows that one instead
+    def append : void
+        @value : isize
+        append(value as i64)
+
+    def append : void
+        @value : usize
+        append(value as u64)
+
+    # u64 is the one that cannot borrow it: a value past i64's largest would
+    # come out negative, which is the one bug a delegation like the ones above
+    # can have. So it walks its own digits, and there is no sign to write
+    def append : void
+        @value : u64
+        let digits = "0123456789"
+
+        if value >= 10:
+            append(value / 10)
+
+        append(digits[(value % 10) as i32])
+
     # Record 0041: a symbol is a name and the emitter's table holds its text,
     # so appending one is appending that text. 'as char*' is the only way
     # across, which is the point of a symbol being its own type
@@ -225,6 +268,10 @@ class String:
             append("true")
         else:
             append("false")
+
+    def append : void
+        @value : f32
+        append(value as f64)
 
     # Six places after the point and no rounding: simple on purpose, because
     # what a float should look like as text is a decision nobody has taken

@@ -62,6 +62,8 @@ namespace haard {
 
         // the type of a ':name'. Not TK_SYMBOL_LITERAL, which is the literal
         // itself -- this is the word a declaration writes
+        TK_ISIZE,
+        TK_USIZE,
         TK_SYMBOL,
         TK_PASS,
         TK_GOTO,

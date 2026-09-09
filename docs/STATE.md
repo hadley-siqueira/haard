@@ -639,6 +639,92 @@ Four things to know before touching it:
   opt out. The argument for the asymmetry it replaced is kept in record 0046
   rather than deleted with the refusal it used to justify.
 
+**`isize` and `usize` exist**, since 2026-09-09 — record 0050, and they emit
+`intptr_t` and `uintptr_t`. The signed one is **not** `size`: that was asked
+for and measured first, and `size` is the field name of `String`, `List`,
+`Hash` and `Array` — **727 uses** here, and every program with such a field
+would have stopped parsing. Two things to know before adding another builtin,
+because both bit:
+
+- **Three places asked *is this a whole number* positionally**, by writing
+  `which <= BUILTIN_I64`. Two integers added after `i64` would have been
+  silently classified as not-integers. They are one function now,
+  `is_a_whole_number`, next to the enum.
+- **`tests/type_table/types.cpp` and `tests/resolution_table/resolutions.cpp`
+  keep their own copy of the builtin name table**, indexed by the enum and
+  built from nothing. The whole type_table suite failed reporting `f64` as
+  `void`. They are still copies; a third would break the same way.
+
+Two goldens moved for reasons with no meaning in them, both checked line by
+line: type_table counts **interned types**, up two everywhere, and the
+emitter's **mangled names** encode the builtin index, so `m_poke_b12` became
+`m_poke_b14`.
+
+**`as` is a closed list**, since 2026-09-09 — record 0049, and until that day
+it checked **nothing**. `ExpressionTyper::cast` typed its operand for the
+record's sake and gave back the written type, so `pt as i32` over a class
+passed `hdc` and died in g++ with a mangled name, about a line nobody wrote.
+The list fits in a sentence: **a number to a number, a pointer to a pointer, a
+pointer and a whole number it fits in, up or down a chain of bases through a
+pointer or a reference, and a `symbol` to a `char*`.** Four things to know:
+
+- **It was measured, not imagined.** The typer was instrumented to dump every
+  `(from, to)` pair and run over `examples/`, all thirteen test programs and
+  every case of nine suites: **21 distinct pairs**, twenty of them between
+  numeric builtins. Nothing that compiled before stopped compiling.
+- **A class by value is never reached by a cast**, even up a chain it really
+  is on — that is slicing. Through a pointer or a reference it is allowed.
+- **Sixty-four bits is assumed.** A pointer converts only to `i64` or `u64`,
+  because `p as i32` was on the list for an afternoon and g++ answered *loses
+  precision*. Haard has no target model, so `holds_a_pointer` is the first
+  line to change the day it emits for something narrower.
+- **Record 0045's spelling asks the same list.** `i32(p)` and `p as i32` are
+  one conversion written two ways and emit the same C++, so leaving the
+  construction branch unchecked would have made the list a suggestion. Both
+  are pinned side by side in
+  `tests/type_table/cases/a_cast_is_a_closed_list`.
+
+**`print` and `println` cover every builtin**, since 2026-09-09. They covered
+`i32`, `i64`, `u32` and `f64` and nothing else, so a program holding an `i8`
+could not print one. Six were added — `i8`, `i16`, `u8`, `u16`, `u64`, `f32` —
+and the same six went into `String.append`, which is the layer `${}` reaches
+and where the hole really was. **`u64` has its own digits**: the other five
+widen and hand over, and past `i64`'s largest that would come out negative,
+which is what the golden of `printing_is_a_free_function` shows.
+
+**Read record 0047 before proposing that the compiler refuse something.** It
+decides no mechanism: it writes down the **stance**, after a conversation in
+which four programs that Haard compiles and C++ refuses were each put to
+Hadley and each kept. The rule is *the compiler refuses when it cannot decide,
+not when it disapproves* — so a write lost through a temporary, a dangling
+reference given back from a `T&`, and a raw `i8*` becoming a `File` are the
+author's to avoid, while an ambiguous call is refused because *I cannot tell
+which* is a fact about the compiler rather than a guess about intent.
+
+**Agenda 1.37 — which *pairs* of types may convert — was opened and closed the
+same day**, record 0048, and the decision is that **nothing changes**: the
+builtin half of record 0018's list stays empty, a one-argument `init` stays a
+conversion, and **no marker is added**. There is no code for it; the record
+exists so the next person to notice that an `i8*` becomes a `File` finds an
+answer instead of an oversight.
+
+Three things it measured are worth keeping:
+
+- **The whole standard library reaches exactly two class conversions** —
+  `char*` → `String`, intended, and `i8*` → `File`, the accident. Every other
+  one-argument `init` is unreachable: `builds_from` needs the parameter type
+  **exactly**, and `Coercion::steps` reads a reference *before* asking it, so
+  `List<T>`'s `init(@from : Array<T>&)` can never be reached from an
+  `Array<i32>&`.
+- **Two of sixteen casts** in `std/` would have disappeared under lossless
+  widening. The rest are narrowing, sign changes, `symbol` → `char*`, or
+  `i64` → `f64`, which is widening by the letter and lossy in fact.
+- **The reversibility is asymmetric**, and this is the part a later session
+  needs: lossless widening and an opt-out `explicit` both break nothing if
+  added later, while an opt-in marker breaks every unmarked conversion and
+  gets more expensive with every class written. Two doors stay open for free;
+  the third narrows.
+
 **The standard library moved, on 2026-09-08, and Hadley asked for it.**
 `std.io` is now `print` and `println` — free functions, overloaded on `char*`,
 `String&`, `char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol` — and the

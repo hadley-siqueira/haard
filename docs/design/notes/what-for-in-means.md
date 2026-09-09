@@ -188,8 +188,8 @@ rewritten. What A costs if abandoned is the compiler work, not the programs.
 
 ## Decided, 2026-09-06
 
-**B**, and **one cursor per container** — Hadley: *iterador por container para
-conseguir iterar de forma mais eficaz possível*. So `ListCursor<T>` follows
+**B**, and **one cursor per container** — Hadley: *"one iterator per
+container, so that iterating can be as efficient as it can possibly be."* So `ListCursor<T>` follows
 `next` and `ArrayCursor<T>` holds a position, and neither pays for the other's
 shape. A single generic cursor over a `length()`/`at(i)` convention was on the
 table and was rejected for the same reason A was: it indexes.

@@ -27,8 +27,8 @@ implicit, not even a module's last segment**, on the argument that a name nobody
 wrote is a name nobody can grep for. But `i32[]` writes no import and has to
 find `Array` anyway.
 
-Hadley, 2026-09-02: *"Vamos com prelúdio: Array vem de um módulo sempre
-carregado."*
+Hadley, 2026-09-02: *"Let us go with a prelude: Array comes from a module that
+is always loaded."*
 
 ## Decision
 

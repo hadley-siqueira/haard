@@ -69,8 +69,8 @@ every literal a type it has when nothing asks — an `i32`, an `f64` — and rec
 costs **0**; being asked to be anything else it fits costs **1**.
 
 This is what makes `write("abc")` pick `write(char*)` over `write(String)`:
-`char*` is exact and `String` is a step away. *"Primeiro tentar `char*`, se não
-for possível virar String"* — Hadley, 2026-09-02 — falls out of the two lists
+`char*` is exact and `String` is a step away. *"First try `char*`; if that is not
+possible, become a String"* — Hadley, 2026-09-02 — falls out of the two lists
 instead of being written into the ranking as an exception about strings.
 
 It is **rule 5's integer again**, over the default instead of over an

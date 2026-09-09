@@ -7,7 +7,7 @@
     b  i32
     both  <none>
     only_one  i32
-  18 types interned
+  20 types interned
 diagnostics:
 error: this call matches more than one 'pick' equally well
   --> main.hd:13:16

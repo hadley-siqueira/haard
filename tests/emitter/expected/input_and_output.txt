@@ -8,9 +8,9 @@ struct h1_1_File;
 struct h1_1_File {
     int8_t *h1_2_handle;
     virtual void m_init_pb4(int8_t *h1_4_where);
-    virtual void m_write_b12(char h1_6_c);
-    virtual void m_write_pb12(char *h1_8_text);
-    virtual void m_writeln_pb12(char *h1_11_text);
+    virtual void m_write_b14(char h1_6_c);
+    virtual void m_write_pb14(char *h1_8_text);
+    virtual void m_writeln_pb14(char *h1_11_text);
     virtual char m_read();
     virtual bool m_at_end();
     virtual void m_close();
@@ -38,23 +38,23 @@ int8_t * h2_16___io_stderr();
 
 void h0_1_write_digit(h1_1_File *h0_2_where, int32_t h0_3_value) {
     char *h0_4_digits = "0123456789";
-    h0_2_where->m_write_b12(h0_4_digits[h0_3_value]);
+    h0_2_where->m_write_b14(h0_4_digits[h0_3_value]);
 }
 
 int32_t h0_5_main() {
     h1_1_File *h0_6_out = h1_15_console();
-    h0_6_out->m_writeln_pb12("hello from Haard");
+    h0_6_out->m_writeln_pb14("hello from Haard");
     h1_1_File *h0_7_f = h1_21_open_write("round.txt");
     if (h0_7_f == nullptr) {
-        h0_6_out->m_writeln_pb12("could not open for writing");
+        h0_6_out->m_writeln_pb14("could not open for writing");
         return 1;
     }
-    h0_7_f->m_writeln_pb12("first line");
-    h0_7_f->m_writeln_pb12("second");
+    h0_7_f->m_writeln_pb14("first line");
+    h0_7_f->m_writeln_pb14("second");
     h0_7_f->m_close();
     h1_1_File *h0_8_back = h1_18_open_read("round.txt");
     if (h0_8_back == nullptr) {
-        h0_6_out->m_writeln_pb12("could not open for reading");
+        h0_6_out->m_writeln_pb14("could not open for reading");
         return 2;
     }
     int32_t h0_9_count = 0;
@@ -68,12 +68,12 @@ int32_t h0_5_main() {
         h0_11_c = h0_8_back->m_read();
     }
     h0_8_back->m_close();
-    h0_6_out->m_write_pb12("read back ");
+    h0_6_out->m_write_pb14("read back ");
     h0_1_write_digit(h0_6_out, h0_10_lines);
-    h0_6_out->m_write_pb12(" lines and ");
+    h0_6_out->m_write_pb14(" lines and ");
     h0_1_write_digit(h0_6_out, h0_9_count / 10);
     h0_1_write_digit(h0_6_out, h0_9_count % 10);
-    h0_6_out->m_writeln_pb12(" characters");
+    h0_6_out->m_writeln_pb14(" characters");
     return h0_9_count;
 }
 
@@ -109,11 +109,11 @@ void h1_1_File::m_init_pb4(int8_t *h1_4_where) {
     this->h1_2_handle = h1_4_where;
 }
 
-void h1_1_File::m_write_b12(char h1_6_c) {
+void h1_1_File::m_write_b14(char h1_6_c) {
     h2_9___io_write(this->h1_2_handle, h1_6_c);
 }
 
-void h1_1_File::m_write_pb12(char *h1_8_text) {
+void h1_1_File::m_write_pb14(char *h1_8_text) {
     int32_t h1_9_i = 0;
     while (h1_8_text[h1_9_i] != '\0') {
         h2_9___io_write(this->h1_2_handle, h1_8_text[h1_9_i]);
@@ -121,8 +121,8 @@ void h1_1_File::m_write_pb12(char *h1_8_text) {
     }
 }
 
-void h1_1_File::m_writeln_pb12(char *h1_11_text) {
-    this->m_write_pb12(h1_11_text);
+void h1_1_File::m_writeln_pb14(char *h1_11_text) {
+    this->m_write_pb14(h1_11_text);
     h2_9___io_write(this->h1_2_handle, '\n');
 }
 

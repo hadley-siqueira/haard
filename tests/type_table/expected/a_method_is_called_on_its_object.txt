@@ -18,4 +18,4 @@
     sugar  f64
     inherited  i32
     arrow  i32
-  22 types interned
+  24 types interned

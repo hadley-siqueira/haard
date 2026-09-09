@@ -4,8 +4,8 @@ Status: **decided and being built**, 2026-09-08. Hadley gave the semantics and
 every piece of syntax; this records what was decided, what it compiles to, and
 what is not written yet.
 
-> Os enums em haard são tipo soma, tagged union, algebraic data types em termos
-> de semântica.
+> Enums in Haard are sum types, tagged unions, algebraic data types as far as
+> the semantics go.
 
 | | |
 |---|---|
@@ -41,7 +41,7 @@ let a = Action.Click(10, 20)
 let b = Click(10, 20)          # bare, and low priority
 ```
 
-*"Qualquer coisa no escopo atual que se chame Click prevalece."* So the bare
+*"Anything in the current scope called Click wins."* So the bare
 form is looked for **last**, after the scope chain and after the imports, in
 `NameResolver::resolve` — which means no program that resolved before resolves
 differently now, and `Action.Click` is what to write when something else wins.
@@ -194,7 +194,7 @@ conditional on the tag per name.
 
 ## A switch that cannot be one
 
-*"Pode traduzir para if else se for mais fácil."* An enum, an integer and a
+*"You may translate it to if/else if that is easier."* An enum, an integer and a
 char stay a C++ switch, because a jump table is what that statement is for.
 **Everything else becomes a chain**, in a pass of its own (`SwitchLowerer`)
 that runs in the type phase after inference — it has to know what it is

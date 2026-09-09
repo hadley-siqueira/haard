@@ -12,7 +12,7 @@ struct h0_1_Owner {
     virtual void m_init_rn0c1(h0_1_Owner &h0_6_other);
     virtual void m_destroy();
     virtual char m_first();
-    virtual void m_poke_b12(char h0_11_c);
+    virtual void m_poke_b14(char h0_11_c);
     h0_1_Owner();
     h0_1_Owner(h0_1_Owner &h0_6_other);
     h0_1_Owner(const h0_1_Owner& other);
@@ -31,7 +31,7 @@ char h0_12_by_value(h0_1_Owner h0_13_o) {
 
 h0_1_Owner h0_14_gives_back() {
     h0_1_Owner h0_15_made;
-    h0_15_made.m_poke_b12('z');
+    h0_15_made.m_poke_b14('z');
     return h0_15_made;
 }
 
@@ -43,7 +43,7 @@ int32_t h0_16_main() {
     h0_1_Owner h0_21_bound = h0_17_original;
     h0_18_target.m_assign(h0_17_original);
     h0_18_target.m_assign(h0_18_target);
-    h0_21_bound.m_poke_b12('c');
+    h0_21_bound.m_poke_b14('c');
     bool h0_22_independent = (h0_17_original.m_first() == 'a' && h0_21_bound.m_first() == 'c' && h0_18_target.m_first() == 'a' && h0_20_returned.m_first() == 'z' && h0_19_through_a_call == 'a');
     if (!h0_22_independent) {
         return 1;
@@ -77,7 +77,7 @@ char h0_1_Owner::m_first() {
     return this->h0_2_data[0];
 }
 
-void h0_1_Owner::m_poke_b12(char h0_11_c) {
+void h0_1_Owner::m_poke_b14(char h0_11_c) {
     this->h0_2_data[0] = h0_11_c;
 }
 

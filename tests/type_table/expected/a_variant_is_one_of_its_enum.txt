@@ -27,7 +27,7 @@
     p  Pen
     empty  Shape
     round  Shape
-  27 types interned
+  29 types interned
 diagnostics:
 error: a variant cannot carry the enum it belongs to by value: write a pointer
   --> main.hd:56:5

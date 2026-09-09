@@ -6,6 +6,7 @@ using namespace haard;
 
 static const char* BUILTIN_NAMES[] = {
     "u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64",
+    "isize", "usize",
     "f32", "f64", "bool", "void", "char", "symbol"
 };
 
@@ -21,6 +22,13 @@ static u64 limit_of(BuiltinType which) {
     case BUILTIN_I16: return 0x7fff;
     case BUILTIN_I32: return 0x7fffffff;
     case BUILTIN_I64: return 0x7fffffffffffffffULL;
+
+    // Record 0050: the size of a pointer, which Haard assumes is 64 bits --
+    // the same assumption record 0049's 'holds_a_pointer' makes, and the
+    // same line to change on the day it emits for something narrower
+    case BUILTIN_ISIZE: return 0x7fffffffffffffffULL;
+    case BUILTIN_USIZE: return 0xffffffffffffffffULL;
+
     default: break;
     }
 
@@ -469,9 +477,159 @@ u32 ExpressionTyper::dereference(u32 scope, u32 node) {
 u32 ExpressionTyper::cast(u32 scope, u32 node) {
     // typed for the recording's sake and not for the answer: what a cast is,
     // is what it was written as
-    type_of(index, scope, first_child(node), INVALID_TYPE);
+    u32 from = type_of(index, scope, first_child(node), INVALID_TYPE);
+    u32 to = builder.build(index, scope, second_child(node));
 
-    return builder.build(index, scope, second_child(node));
+    // Record 0049. Until 2026-09-09 this function ended one line above and
+    // 'as' meant C's cast: it accepted every pair written, and the backstop
+    // was g++, reporting in mangled names about a line nobody wrote. What is
+    // checked here is a closed list, and a pair that is not on it is refused
+    // by name -- which is not the compiler disapproving (record 0047) but the
+    // compiler saying there is no such cast
+    // Pointed at the 'as' and not at the type written after it: a composite
+    // type node carries token 0, so a caret aimed at a named type lands on
+    // the first word of the file. The parser hangs the 'as' on the cast node
+    // itself, and that is a real token every time
+    if (from != INVALID_TYPE && to != INVALID_TYPE && !may_cast(from, to)) {
+        report(node, "there is no cast from " + name_of(from) + " to "
+               + name_of(to));
+
+        return INVALID_TYPE;
+    }
+
+    return to;
+}
+
+// The list, and it fits in a sentence: a number to a number, a pointer to a
+// pointer, a pointer and a whole number either way, up or down a chain of
+// bases through a pointer or a reference, and a symbol to a 'char*'.
+//
+// It was written from what the whole repository actually casts -- 21 distinct
+// pairs, measured -- plus the pointer work a compiler written in Haard needs
+// and no case had yet written. Nothing that compiled before this stopped
+bool ExpressionTyper::may_cast(u32 from, u32 to) {
+    TypeTable* types = module->get_types();
+
+    // the same type written out. Pointless, and pointless is not wrong
+    if (from == to) {
+        return true;
+    }
+
+    Type* source = types->get_type(from);
+    Type* target = types->get_type(to);
+
+    // A number to a number, in either direction and losing whatever it
+    // loses. Record 0048 keeps every one of these OFF the implicit list, so
+    // this is the only way across and it is written every time
+    if (is_a_number(from) && is_a_number(to)) {
+        return true;
+    }
+
+    bool from_pointer = source->kind == TYPE_POINTER;
+    bool to_pointer = target->kind == TYPE_POINTER;
+
+    // A pointer to a pointer: reading the same address as something else,
+    // which is C's answer and what a compiler's own memory needs
+    if (from_pointer && to_pointer) {
+        return true;
+    }
+
+    // A pointer and a whole number, either way, and the number has to be one
+    // a pointer FITS IN. 'p as i32' was on this list for an afternoon and it
+    // is the hole this record exists to close, one level in: it passed 'hdc'
+    // and g++ answered *cast from 'char*' to 'int32_t' loses precision*.
+    //
+    // Sixty-four bits, which Haard has nowhere to write down: there is no
+    // target model, no word size, and the emitter names its integers after
+    // <cstdint> and lets the C++ compiler place them. So this is an
+    // assumption and not a fact, and it is the first line to change on the
+    // day Haard is asked to emit for something narrower
+    if ((from_pointer && holds_a_pointer(to))
+        || (to_pointer && holds_a_pointer(from))) {
+        return true;
+    }
+
+    // Record 0041: a symbol is a name and the emitter's table holds its text,
+    // so this is the one way across and it is one way only
+    if (source->kind == TYPE_BUILTIN && source->subject == BUILTIN_SYMBOL
+        && to_pointer
+        && types->get_type(types->get_argument(target->first_argument))
+                   ->subject == BUILTIN_CHAR) {
+        return true;
+    }
+
+    return one_derives_from_the_other(from, to);
+}
+
+bool ExpressionTyper::holds_a_pointer(u32 type) {
+    Type* entry = module->get_types()->get_type(type);
+
+    // 'size' and 'usize' are this question's own answer -- record 0050 makes
+    // them the width of a pointer by definition, which is what they are for.
+    // 'i64' and 'u64' are here because sixty-four is what Haard assumes, and
+    // they were on the list before the pair existed
+    return entry->kind == TYPE_BUILTIN
+        && (entry->subject == BUILTIN_ISIZE || entry->subject == BUILTIN_USIZE
+            || entry->subject == BUILTIN_I64
+            || entry->subject == BUILTIN_U64);
+}
+
+bool ExpressionTyper::is_a_number(u32 type) {
+    Type* entry = module->get_types()->get_type(type);
+
+    if (entry->kind != TYPE_BUILTIN) {
+        return false;
+    }
+
+    switch ((BuiltinType) entry->subject) {
+    case BUILTIN_U8: case BUILTIN_U16: case BUILTIN_U32: case BUILTIN_U64:
+    case BUILTIN_I8: case BUILTIN_I16: case BUILTIN_I32: case BUILTIN_I64:
+    case BUILTIN_ISIZE: case BUILTIN_USIZE:
+    case BUILTIN_F32: case BUILTIN_F64:
+    case BUILTIN_BOOL: case BUILTIN_CHAR:
+        return true;
+
+    default:
+        break;
+    }
+
+    // 'void' holds nothing and 'symbol' is a name, not a number
+    return false;
+}
+
+// Through however many pointers and references, and the same count on both
+// sides: a 'Circle**' is a 'Shape**' by the same argument a 'Circle*' is a
+// 'Shape*', and a 'Circle' by value is neither -- casting a value would copy
+// the base part and discard the rest, which record 0018 calls slicing and
+// refuses everywhere else
+bool ExpressionTyper::one_derives_from_the_other(u32 from, u32 to) {
+    TypeTable* types = module->get_types();
+    u32 depth = 0;
+
+    while (true) {
+        Type* source = types->get_type(from);
+        Type* target = types->get_type(to);
+        bool source_wraps = source->kind == TYPE_POINTER
+                         || source->kind == TYPE_REFERENCE;
+        bool target_wraps = target->kind == TYPE_POINTER
+                         || target->kind == TYPE_REFERENCE;
+
+        if (!source_wraps || !target_wraps) {
+            break;
+        }
+
+        from = types->get_argument(source->first_argument);
+        to = types->get_argument(target->first_argument);
+        depth++;
+    }
+
+    // a class by value is not reached this way, which is the slicing above
+    if (depth == 0) {
+        return false;
+    }
+
+    return coercion.climb(index, from, to) >= 0
+        || coercion.climb(index, to, from) >= 0;
 }
 
 u32 ExpressionTyper::allocation(u32 scope, u32 node) {
@@ -514,7 +672,8 @@ u32 ExpressionTyper::allocation(u32 scope, u32 node) {
             // how many of something is a whole number of them. An f64 or a
             // class here is a mistake, and C++ would say so about a line
             // nobody wrote
-            if (entry->kind != TYPE_BUILTIN || entry->subject > BUILTIN_I64) {
+            if (entry->kind != TYPE_BUILTIN
+        || !is_a_whole_number((BuiltinType) entry->subject)) {
                 report(length, "a length is a whole number, and this is "
                        + name_of(counted));
             }
@@ -1139,7 +1298,8 @@ u32 ExpressionTyper::bitwise(u32 scope, u32 node, u32 expected) {
 
     // BUILTIN_CHAR is a character and not a width to shift, and BUILTIN_BOOL
     // has 'and' and 'or' of its own
-    if (entry->kind != TYPE_BUILTIN || entry->subject > BUILTIN_I64) {
+    if (entry->kind != TYPE_BUILTIN
+        || !is_a_whole_number((BuiltinType) entry->subject)) {
         report(node, "bits are for a whole number, and this is "
                + name_of(result));
 
@@ -1427,6 +1587,8 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
     if (kind == AST_BUILTIN_TYPE) {
         u32 made = builder.build(index, scope, callee);
         u32 count = 0;
+        u32 from = INVALID_TYPE;
+        u32 at = 0;
 
         built = true;
 
@@ -1434,7 +1596,8 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
              child = module->get_ast()->get_node(child)->get_sibling()) {
             // typed for the recording's sake and not for the answer, which is
             // what ExpressionTyper::cast does with the same expression
-            type_of(index, scope, child, INVALID_TYPE);
+            from = type_of(index, scope, child, INVALID_TYPE);
+            at = child;
             count++;
         }
 
@@ -1443,6 +1606,18 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
         if (count != 1) {
             report(callee, "'" + name_of(made) + "' converts one value, and "
                    + std::to_string(count) + " were written");
+
+            return INVALID_TYPE;
+        }
+
+        // Record 0049's list, asked here as well. This spelling and 'as' are
+        // the same conversion and emit the same C++, so they have to refuse
+        // the same pairs -- leaving this one unchecked would have made the
+        // list a suggestion, since 'i32(p)' says what 'p as i32' says
+        if (from != INVALID_TYPE && made != INVALID_TYPE
+            && !may_cast(from, made)) {
+            report(at, "there is no cast from " + name_of(from) + " to "
+                   + name_of(made));
 
             return INVALID_TYPE;
         }

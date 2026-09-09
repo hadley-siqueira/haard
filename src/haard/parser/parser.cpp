@@ -82,6 +82,7 @@ static bool is_builtin_type(TokenKind kind) {
         case TK_U8: case TK_U16: case TK_U32: case TK_U64:
         case TK_I8: case TK_I16: case TK_I32: case TK_I64:
         case TK_F32: case TK_F64:
+        case TK_ISIZE: case TK_USIZE:
         case TK_BOOL: case TK_VOID: case TK_CHAR: case TK_SYMBOL:
             return true;
 

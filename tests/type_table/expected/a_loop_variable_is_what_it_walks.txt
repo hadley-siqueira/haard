@@ -28,4 +28,4 @@
     k  u32
     __e3  u32
     far  u32
-  27 types interned
+  29 types interned

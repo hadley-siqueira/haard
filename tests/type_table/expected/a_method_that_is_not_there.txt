@@ -7,7 +7,7 @@
     absent  <none>
     wrong  <none>
     outside  <none>
-  18 types interned
+  20 types interned
 diagnostics:
 error: Thing has no member named 'missing'
  --> main.hd:8:20

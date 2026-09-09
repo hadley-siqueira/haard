@@ -3,7 +3,7 @@
 using namespace haard;
 
 static bool is_integer(BuiltinType which) {
-    return which <= BUILTIN_I64;
+    return is_a_whole_number(which);
 }
 
 static bool is_float(BuiltinType which) {

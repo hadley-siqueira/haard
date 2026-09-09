@@ -18,7 +18,7 @@
     given  i32
     chosen  i32
     refused  Plain
-  23 types interned
+  25 types interned
 diagnostics:
 error: expected Plain, found char*
   --> main.hd:55:27

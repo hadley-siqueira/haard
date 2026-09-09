@@ -9,7 +9,7 @@ struct h0_1_String {
     char *h0_2_data;
     int32_t h0_3_size;
     int32_t h0_4_capacity;
-    virtual void m_init_pb12(char *h0_6_text);
+    virtual void m_init_pb14(char *h0_6_text);
     virtual void m_destroy();
     virtual int32_t m_length();
     virtual char m_at_b6(int32_t h0_11_i);
@@ -35,7 +35,7 @@ int32_t h0_12_main() {
     return h0_14_n + h0_15_score;
 }
 
-void h0_1_String::m_init_pb12(char *h0_6_text) {
+void h0_1_String::m_init_pb14(char *h0_6_text) {
     this->h0_3_size = 0;
     while (h0_6_text[this->h0_3_size] != '\0') {
         this->h0_3_size = this->h0_3_size + 1;
@@ -63,7 +63,7 @@ char h0_1_String::m_at_b6(int32_t h0_11_i) {
 }
 
 h0_1_String::h0_1_String(char *h0_6_text) {
-    this->h0_1_String::m_init_pb12(h0_6_text);
+    this->h0_1_String::m_init_pb14(h0_6_text);
 }
 
 h0_1_String::~h0_1_String() {

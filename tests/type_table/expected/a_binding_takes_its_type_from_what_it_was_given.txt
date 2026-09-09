@@ -9,4 +9,4 @@
     sum  i32
     mixed  i64
     flag  bool
-  16 types interned
+  18 types interned

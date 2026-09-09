@@ -27,7 +27,7 @@
     init  i32* -> i32 -> void
     from  i32*
     count  i32
-  28 types interned
+  30 types interned
 diagnostics:
 error: nothing here says what this is empty of, so write the type it is being given to
   --> main.hd:38:13

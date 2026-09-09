@@ -26,6 +26,45 @@ def main : i32
 
     println(s)
 
+    # The six narrow builtins, added 2026-09-09. Until then a program that
+    # held an i8 could not print one: print and append covered i32, i64, u32
+    # and f64 and nothing else, so 'println(n)' over the other six was *no
+    # 'println' takes these arguments* about a whole number.
+    #
+    # 'u64' is the one that matters here, and the value is its largest on
+    # purpose: the other five widen and hand over, and this one cannot -- past
+    # i64's largest it would come out negative, which is what the golden below
+    # would show
+    let narrow_signed : i8 = 12
+    let narrow_short : i16 = 1234
+    let narrow_byte : u8 = 250
+    let narrow_word : u16 = 65000
+    let widest : u64 = 18446744073709551615
+    let single : f32 = 1.5
+
+    println(narrow_signed)
+    println(narrow_short)
+    println(narrow_byte)
+    println(narrow_word)
+    println(widest)
+    println(single)
+
+    # Record 0050's pair, the width of a pointer. 'usize' is the one that
+    # matters here and the value is its largest, for the reason 'u64' above
+    # is: it cannot borrow the signed path, and past i64's largest it would
+    # come out negative
+    let signed_word : isize = 0 - 42
+    let unsigned_word : usize = 18446744073709551615
+
+    println(signed_word)
+    println(unsigned_word)
+
+    # and the same six through a template, which reaches String's 'append'
+    # rather than 'print' -- the same hole, one layer down
+    let every : String = "${narrow_signed} ${narrow_short} ${narrow_byte} ${narrow_word} ${widest} ${single} ${signed_word} ${unsigned_word}"
+
+    println(every)
+
     # and the same list without the newline, so the line below is written by
     # six calls and one println
     print("six")

@@ -10,9 +10,9 @@ struct h0_1_String {
     char *h0_2_data;
     int32_t h0_3_size;
     virtual void m_init();
-    virtual void m_init_pb12(char *h0_6_text);
+    virtual void m_init_pb14(char *h0_6_text);
     virtual int32_t m_length();
-    virtual void m_operator_eq_pb12(char *h0_9_text);
+    virtual void m_operator_eq_pb14(char *h0_9_text);
     h0_1_String();
     h0_1_String(char *h0_6_text);
     virtual ~h0_1_String();
@@ -22,7 +22,7 @@ struct h0_10_Note {
     char *h0_11_text;
     int32_t h0_12_size;
     virtual void m_init();
-    virtual void m_init_pb12(char *h0_15_from);
+    virtual void m_init_pb14(char *h0_15_from);
     virtual void m_init_rn0c10(h0_10_Note &h0_17_other);
     virtual int32_t m_length();
     h0_10_Note();
@@ -62,7 +62,7 @@ int32_t h0_26_main() {
     int32_t h0_29_n = h0_21_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_1_String("abcde"))));
     int32_t h0_30_m = h0_23_by_value(h0_1_String("abcdef"));
     int32_t h0_31_r = h0_21_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_25_gives())));
-    h0_28_built.m_operator_eq_pb12("abcdefg");
+    h0_28_built.m_operator_eq_pb14("abcdefg");
     h0_10_Note h0_32_note("note");
     h0_10_Note h0_33_copied;
     h0_33_copied.m_assign(const_cast<h0_10_Note&>(static_cast<const h0_10_Note&>(h0_10_Note("copied!"))));
@@ -79,7 +79,7 @@ void h0_1_String::m_init() {
     this->h0_3_size = 0;
 }
 
-void h0_1_String::m_init_pb12(char *h0_6_text) {
+void h0_1_String::m_init_pb14(char *h0_6_text) {
     this->h0_2_data = h0_6_text;
     this->h0_3_size = 0;
     while (h0_6_text[this->h0_3_size] != '\0') {
@@ -91,7 +91,7 @@ int32_t h0_1_String::m_length() {
     return this->h0_3_size;
 }
 
-void h0_1_String::m_operator_eq_pb12(char *h0_9_text) {
+void h0_1_String::m_operator_eq_pb14(char *h0_9_text) {
     this->h0_2_data = h0_9_text;
     this->h0_3_size = 0;
     while (h0_9_text[this->h0_3_size] != '\0') {
@@ -104,7 +104,7 @@ h0_1_String::h0_1_String() {
 }
 
 h0_1_String::h0_1_String(char *h0_6_text) {
-    this->h0_1_String::m_init_pb12(h0_6_text);
+    this->h0_1_String::m_init_pb14(h0_6_text);
 }
 
 h0_1_String::~h0_1_String() {
@@ -115,7 +115,7 @@ void h0_10_Note::m_init() {
     this->h0_12_size = 0;
 }
 
-void h0_10_Note::m_init_pb12(char *h0_15_from) {
+void h0_10_Note::m_init_pb14(char *h0_15_from) {
     this->h0_11_text = h0_15_from;
     this->h0_12_size = 0;
     while (h0_15_from[this->h0_12_size] != '\0') {
@@ -137,7 +137,7 @@ h0_10_Note::h0_10_Note() {
 }
 
 h0_10_Note::h0_10_Note(char *h0_15_from) {
-    this->h0_10_Note::m_init_pb12(h0_15_from);
+    this->h0_10_Note::m_init_pb14(h0_15_from);
 }
 
 h0_10_Note::h0_10_Note(h0_10_Note &h0_17_other) {

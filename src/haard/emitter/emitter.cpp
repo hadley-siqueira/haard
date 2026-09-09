@@ -3,11 +3,20 @@
 
 using namespace haard;
 
-// the thirteen builtins as C++ writes them. 'char' is the language's own and
-// not a stand-in for i8, so it stays 'char'
+// the builtins as C++ writes them. 'char' is the language's own and not a
+// stand-in for i8, so it stays 'char'
 static const char* BUILTIN_CPP[] = {
     "uint8_t", "uint16_t", "uint32_t", "uint64_t",
     "int8_t", "int16_t", "int32_t", "int64_t",
+
+    // Record 0050. The pair from <cstdint> that is defined as wide as a
+    // pointer, and not <cstddef>'s size_t and ptrdiff_t: what makes these two
+    // worth having is that a pointer fits in them, and intptr_t says exactly
+    // that where size_t says 'as big as the biggest object'. They are the
+    // same width everywhere that matters and this one is the promise Haard
+    // is making
+    "intptr_t", "uintptr_t",
+
     "float", "double", "bool", "void", "char",
 
     // Record 0041. A symbol is a pointer into a table this emitter builds,

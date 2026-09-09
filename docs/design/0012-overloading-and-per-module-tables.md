@@ -24,8 +24,8 @@ question that eleven records had never asked: **can two functions in one module
 share a name?** Record 0009 settled what happens when two *imports* bring the
 same name and said nothing about two `def`s in one file.
 
-Hadley, 2026-09-01: *"haard tem sim sobrecarga de funções (com ou sem
-parâmetros genéricos). As tabelas serão por módulo."*
+Hadley, 2026-09-01: *"Haard does have function overloading (with or without
+generic parameters). The tables will be per module."*
 
 ## Decided: overloading exists
 
@@ -148,8 +148,8 @@ the span of its members so the filter is cheap.
 
 ## Open, and it is now its own subject: the logic of implicit conversion
 
-Hadley, 2026-09-01: Haard **has** implicit conversion, *"mas não vamos fazer
-como C++, será outra lógica."*
+Hadley, 2026-09-01: Haard **has** implicit conversion, *"but we are not doing
+it the way C++ does; it will be a different logic."*
 
 That matters here because overload resolution has to rank candidates by it: with
 no implicit conversion at all, resolution is exact match on the parameter type

@@ -2,14 +2,13 @@
 
 Status: **decided and implemented**, 2026-09-08. Hadley gave the design whole:
 
-> `:símbolo` deve ser um ponteiro pra char gerado no emissor que aponta sempre
-> para o mesmo local. É a mesma ideia de ruby: um simbolo sempre aponta para o
-> mesmo local internamente. Deve ser imutável. No emissor de C++ deve ser
-> gerada uma tabela fixa e imutável e os ponteiros representando os symbols
-> apontam para a entrada respectiva dessa tabela. Assim, todo symbol `:foo` por
-> exemplo vai apontar para a entrada `foo` nessa tabela. Assim comparação de
-> symbols fica tão rápido quanto fazer um `u32 == u32` e a tabela permite
-> recuperar a representação em `char*` do symbol.
+> `:symbol` should be a pointer to char, generated in the emitter, that always
+> points at the same place. It is Ruby's idea: internally, a symbol always
+> points at the same place. It must be immutable. The C++ emitter should
+> generate a fixed, immutable table, and the pointers standing for symbols
+> point at their own entry in it. So every `:foo`, say, points at the `foo`
+> entry of that table. Comparing two symbols is then as fast as a `u32 == u32`,
+> and the table makes it possible to recover a symbol's `char*` text.
 
 | | |
 |---|---|
@@ -72,7 +71,7 @@ So a symbol is **its own builtin**, `BUILTIN_SYMBOL`, represented as a
 
 - `:foo == "foo"` is *cannot apply this to symbol and char\**
 - a symbol reaches a `char*` parameter only by being written across, `s as
-  char*`, which is the "recuperar a representação" half of the design
+  char*`, which is the "recover a symbol's text" half of the design
 - `:a + :b` is *a symbol is a name and has no arithmetic*, refused in the typer
   rather than emitted as C++ pointer arithmetic
 

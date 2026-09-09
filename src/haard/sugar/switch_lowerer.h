@@ -11,8 +11,8 @@ namespace haard {
     class TypeCollector;
 
     // Record 0043. A 'switch' over something C++ cannot switch over becomes a
-    // chain of 'if's, which Hadley asked for in those words: *pode traduzir
-    // para if else se for mais fácil*.
+    // chain of 'if's, which Hadley asked for in those words: *you may
+    // translate it to if/else if that is easier*.
     //
     // An enum, an integer and a char stay a C++ switch -- a jump table is what
     // that statement is for. Everything else is compared, and comparing is

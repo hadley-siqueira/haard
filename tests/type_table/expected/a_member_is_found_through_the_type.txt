@@ -12,4 +12,4 @@
     sugar_inherited  i32
     explicit  f64
     deep  i32
-  19 types interned
+  21 types interned

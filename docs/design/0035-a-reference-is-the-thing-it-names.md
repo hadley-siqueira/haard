@@ -5,7 +5,7 @@ Status: **decided and implemented**, 2026-09-06. It **amends record
 [0031](0031-what-copying-a-value-means.md) was the first — and it amends what
 an assignment to a reference means.
 
-Hadley, 2026-09-06: *"Implemente também T& com semântica parecida com C++."*
+Hadley, 2026-09-06: *"Implement `T&` too, with semantics close to C++'s."*
 
 | | |
 |---|---|

@@ -43,7 +43,7 @@
     init  i32 -> i32 -> void
     first  i32
     second  i32
-  29 types interned
+  31 types interned
 diagnostics:
 error: Colour is built from one of its variants, so this needs the variant's name after a '.'
   --> main.hd:88:13

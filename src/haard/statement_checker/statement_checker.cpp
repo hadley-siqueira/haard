@@ -593,7 +593,7 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
     }
 
     // Assigning to a reference writes THROUGH it, as in C++ (Hadley,
-    // 2026-09-06: 'implemente T& com semântica parecida com C++'). What is
+    // 2026-09-06: 'implement T& too, with semantics close to C++'s'). What is
     // being assigned is the thing it names, so that is what the right side is
     // asked to be and what record 0031's question is about.
     //

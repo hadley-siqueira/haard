@@ -51,6 +51,8 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"bool", TK_BOOL},
         {"void", TK_VOID},
         {"char", TK_CHAR},
+        {"isize", TK_ISIZE},
+        {"usize", TK_USIZE},
         {"symbol", TK_SYMBOL},
         {"pass", TK_PASS},
         {"goto", TK_GOTO},

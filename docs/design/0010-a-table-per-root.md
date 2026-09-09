@@ -40,8 +40,8 @@ This is Family 1 in `notes/how-other-languages-resolve-imports.md` — Rust's
 
 ## Decided: A is rejected
 
-Hadley, 2026-09-01: *"Definitivamente não usaremos A pois não quero que seja
-como é em C++."*
+Hadley, 2026-09-01: *"We are definitely not using A, because I do not want it
+to be the way it is in C++."*
 
 **The reason it is rejected is real, and the reason given is not quite the
 mechanism.** This distinction has to survive into the future or someone will

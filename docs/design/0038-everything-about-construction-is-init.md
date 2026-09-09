@@ -15,11 +15,11 @@ one record because the second is what made the first show.
 
 Hadley, 2026-09-06:
 
-> *No futuro, deve-se ter apenas init e destroy. O init é que deve ser
-> sobrecarregado recebendo uma outra string e, de fato, funcionando como
-> construtor cópia. (...) Ou seja, tudo o que for relacionado a construtor é no
-> método init. Não tem construtor nomeado com copy, ou com from ou nada do
-> tipo. Sempre init.*
+> *In the future there should be only `init` and `destroy`. It is `init` that
+> should be overloaded to take another string and, in fact, work as the copy
+> constructor. (...) That is, everything to do with construction is in the
+> `init` method. There is no constructor named `copy`, or `from`, or anything
+> of the sort. Always `init`.*
 
 Record [0031](0031-what-copying-a-value-means.md) gave the family a third
 member called `copy`. It is retired: **the copy constructor is the `init`
@@ -94,9 +94,9 @@ Three options were put: the pair by name (**1a**), any class with a matching
 one-parameter constructor (1b), and 1b with the class opting in (1c). Hadley
 chose **1a**:
 
-> *O usuário sempre pode criar um método sobrecarregado e internamente chamar
-> outro. (...) deixe o programador converter e/ou sobrecarregar manualmente
-> conforme achar necessário.*
+> *The user can always write an overloaded method and call another one from
+> inside it. (...) let the programmer convert and/or overload by hand as they
+> see fit.*
 
 So `Coercion::is_string` stays, the compiler knows this one name, and a `Path`
 that wants the same writes `abrir(Path)`, `abrir(char*)` and `abrir(String&)`

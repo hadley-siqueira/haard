@@ -30,8 +30,8 @@ a `char*` does not become a `String` and this call matches nothing.
 
 ### 1. The literal — already answered, mechanically
 
-Hadley, 2026-09-02: *"primeiro tentar interpretar como char\*. Se não for
-possível, virar String."*
+Hadley, 2026-09-02: *"first try to read it as a `char*`. If that is not
+possible, make it a String."*
 
 That is record 0018's **first rule**, the one that already makes `f(3)` work
 against a `u8` parameter: a literal has no type of its own and takes what the

@@ -76,8 +76,8 @@ marked.
   on every method, which is the semantics and costs a vtable pointer per class.
   Narrowing that to only-what-is-overridden is an optimisation that needs the
   whole program, and record 0015 already says what to do when the answer cannot
-  be cached: **rebuild the module whole**. Hadley, 2026-09-02: *"se der para
-  fazer cache, ótimo, se não, recompile por precaução."*
+  be cached: **rebuild the module whole**. Hadley, 2026-09-02: *"if a cache can be
+  had, good; if not, rebuild to be safe."*
 - **A cycle in the bases would make the walk run forever.** Nothing rejects one
   yet (agenda 1.10 decided type cycles by value, not this), so `gather_bases`
   stops at a class it has already reached. That is not a diagnostic and does

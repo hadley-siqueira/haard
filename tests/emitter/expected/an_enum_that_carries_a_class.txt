@@ -9,7 +9,7 @@ struct h0_1_Text {
     char *h0_2_data;
     int32_t h0_3_size;
     virtual void m_init();
-    virtual void m_init_pb12(char *h0_6_from);
+    virtual void m_init_pb14(char *h0_6_from);
     virtual void m_init_rn0c1(h0_1_Text &h0_9_other);
     virtual void m_destroy();
     virtual int32_t m_length();
@@ -129,7 +129,7 @@ void h0_1_Text::m_init() {
     this->h0_3_size = 0;
 }
 
-void h0_1_Text::m_init_pb12(char *h0_6_from) {
+void h0_1_Text::m_init_pb14(char *h0_6_from) {
     this->h0_3_size = 0;
     while (h0_6_from[this->h0_3_size] != '\0') {
         this->h0_3_size = this->h0_3_size + 1;
@@ -165,7 +165,7 @@ h0_1_Text::h0_1_Text() {
 }
 
 h0_1_Text::h0_1_Text(char *h0_6_from) {
-    this->h0_1_Text::m_init_pb12(h0_6_from);
+    this->h0_1_Text::m_init_pb14(h0_6_from);
 }
 
 h0_1_Text::h0_1_Text(h0_1_Text &h0_9_other) {

@@ -3,11 +3,11 @@
 Status: **decided and implemented**, 2026-09-06. Hadley, asked whether `a[i]`
 on a class should be an `at` convention or real operator overloading:
 
-> *"Sobre o at() ou sobrecarga de operadores, seguir a sintaxe proposta de
-> sobrecarga de operador e implementar como sobrecarga de operadores. Ao
-> implementar sobrecarga de operadores, o emissor de C++ não deve se aproveitar
-> que C++ tem sobrecarga de operadores nativo. O compilador haard deve
-> transformar a sobrecarga em uma função e o emitter de C++ usar essa função."*
+> *"On `at()` versus operator overloading: follow the proposed operator
+> overloading syntax and implement it as operator overloading. When
+> implementing it, the C++ emitter must not take advantage of C++ having
+> operator overloading of its own. The Haard compiler should turn the overload
+> into a function, and the C++ emitter should use that function."*
 
 | | |
 |---|---|

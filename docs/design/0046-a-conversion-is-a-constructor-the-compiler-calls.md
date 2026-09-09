@@ -4,9 +4,8 @@ Status: **decided and built**, 2026-09-09. Hadley's, and it amends
 [0045](0045-a-construction-is-a-call-that-names-a-type.md) the same day 0045
 was written.
 
-> Eu quero que `takes(p)` funcione. Deve ser declarado um temporário String a
-> partir de `p` passando `p` para o construtor de String e então passando para
-> `takes`.
+> I want `takes(p)` to work. A temporary String should be declared out of `p`,
+> by handing `p` to String's constructor, and then passed to `takes`.
 
 | | |
 |---|---|

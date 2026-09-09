@@ -1,7 +1,8 @@
 # 0042 — `Hash<K, V>`, and what a generic body may ask of its parameter
 
-Status: **decided and implemented**, 2026-09-08. Hadley: *implemente a classe
-`Hash<K, V>` e coloque ela como parte do prelúdio que nem é Array, String etc.*
+Status: **decided and implemented**, 2026-09-08. Hadley: *"implement the
+`Hash<K, V>` class and put it in the prelude the way Array, String and the rest
+are."*
 
 | | |
 |---|---|

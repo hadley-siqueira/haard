@@ -54,8 +54,8 @@ A `Cursor<C, T>` over a `length()`/`at(i)` convention would be written once and
 serve everything — and it would index, which is the same O(n²) on a list
 wearing a different hat.
 
-Hadley, 2026-09-06: *iterador por container para conseguir iterar de forma mais
-eficaz possível.* So `ListCursor<T>` holds a `Node<T>*` and follows `next`,
+Hadley, 2026-09-06: *"one iterator per container, so that iterating can be as
+efficient as it can possibly be."* So `ListCursor<T>` holds a `Node<T>*` and follows `next`,
 `ArrayCursor<T>` holds a position, and each is as fast as its container can be.
 
 ## What a cursor holds
@@ -126,9 +126,9 @@ answer.
 
 ## A fixed array is iterable
 
-Hadley, 2026-09-06: *deve ser iterável sim; o compilador deve ser capaz de
-verificar qual o tamanho do array fixo em tempo de compilação e gerar o laço
-apropriado.*
+Hadley, 2026-09-06: *"it should be iterable, yes; the compiler should be able
+to work out the fixed array's length at compile time and generate the right
+loop."*
 
 He is right and the earlier draft's reasoning was wrong. It said a syntactic
 pass cannot see that `fixed : i32[3]` is a fixed array — true of the **pass**,

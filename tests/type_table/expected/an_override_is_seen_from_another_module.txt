@@ -7,7 +7,7 @@ app.main:
     c  lib.vehicle.Car
     mine  i32
     back  lib.vehicle.Car*
-  21 types interned
+  23 types interned
 lib.vehicle:
     Vehicle  lib.vehicle.Vehicle
     Car  lib.vehicle.Car
@@ -17,4 +17,4 @@ lib.vehicle:
     doors  i32
     describe  i32
     self  lib.vehicle.Car*
-  22 types interned
+  24 types interned

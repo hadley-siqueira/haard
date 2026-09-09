@@ -13,8 +13,8 @@ signatures, so that a comment would not rebuild every dependent. Record 0006
 asked for the hash of a star import's expansion in the cache key. Agenda 3.4 was
 accumulating hashes.
 
-Hadley, 2026-09-02, stopping it: *"se der pra fazer cache, ótimo. Se não der,
-recompile por precaução. O objetivo é manter o código do compilador simples."*
+Hadley, 2026-09-02, stopping it: *"if a cache can be had, good. If not,
+rebuild to be safe. The goal is to keep the compiler's own code simple."*
 
 The scenario that actually matters is worth writing down, because it is the one
 every rule below is measured against: **a programmer downloads dependencies,

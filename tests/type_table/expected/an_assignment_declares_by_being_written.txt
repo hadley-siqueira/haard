@@ -10,4 +10,4 @@
     n  i32
     inner  i32
     i  i32
-  19 types interned
+  21 types interned

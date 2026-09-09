@@ -32,6 +32,17 @@ namespace haard {
     typedef enum BuiltinType {
         BUILTIN_U8, BUILTIN_U16, BUILTIN_U32, BUILTIN_U64,
         BUILTIN_I8, BUILTIN_I16, BUILTIN_I32, BUILTIN_I64,
+
+        // Record 0050. Two whole numbers the width of a pointer: 'isize' is
+        // signed and 'usize' is not. Named after Rust's pair, and not 'size'
+        // and 'usize', because 'size' is the field name of String, List, Hash
+        // and Array -- a keyword there would have cost 727 renames in this
+        // repository and broken every program that ever wrote one. They sit with the integers because
+        // three checks in the compiler ask 'is this a whole number' by
+        // comparing against the last of them -- see is_a_whole_number below,
+        // which is where that question lives now
+        BUILTIN_ISIZE, BUILTIN_USIZE,
+
         BUILTIN_F32, BUILTIN_F64,
         BUILTIN_BOOL, BUILTIN_VOID, BUILTIN_CHAR,
 
@@ -43,6 +54,15 @@ namespace haard {
         BUILTIN_SYMBOL,
         BUILTIN_COUNT,
     } BuiltinType;
+
+    // Whether a builtin holds a whole number. Written as a function because
+    // it used to be written as 'which <= BUILTIN_I64' in three places, and
+    // record 0050 added two integers that would have had to go before i64 in
+    // the enum to keep those three right -- a position standing in for a
+    // meaning, which is the shape that breaks the next time anyone adds one
+    inline bool is_a_whole_number(BuiltinType which) {
+        return which <= BUILTIN_USIZE;
+    }
 
     struct Type {
         u8 kind;

@@ -4,6 +4,6 @@
 # which byte is a tab is not the same question as which character is. The last
 # line puts utf8 *inside* the token the caret spans, so its width is counted in
 # characters as well
-let café = 0xZZ
-let médio	= 0oPQ
-let ação = 'não fechada
+let naïve = 0xZZ
+let größe	= 0oPQ
+let œuvre = 'unterminated ü

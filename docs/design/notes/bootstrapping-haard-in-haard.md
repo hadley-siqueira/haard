@@ -1,8 +1,9 @@
 # Can `hdc` be written in Haard yet?
 
-Written 2026-09-08, at Hadley's asking: *no estado atual do compilador (haard →
-transpile → c++ → binary) já seria possível implementar o compilador haard no
-próprio haard? Quais estruturas ainda precisam ser implementadas?*
+Written 2026-09-08, at Hadley's asking: *"in the compiler's current state
+(haard → transpile → c++ → binary), would it already be possible to implement
+the Haard compiler in Haard itself? Which structures still need to be
+implemented?"*
 
 Everything below was **measured against `src/`**, and every claim about what
 Haard does or does not do was **run through `hdc`** rather than remembered.

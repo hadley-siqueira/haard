@@ -9,7 +9,7 @@ struct h0_1_Name {
     char *h0_2_text;
     int32_t h0_3_size;
     virtual void m_init();
-    virtual void m_init_pb12(char *h0_6_from);
+    virtual void m_init_pb14(char *h0_6_from);
     virtual bool m_equals_rn0c1(h0_1_Name &h0_8_other);
     virtual bool m_operator_eq_eq_rn0c1(h0_1_Name &h0_11_other);
     h0_1_Name();
@@ -62,7 +62,7 @@ void h0_1_Name::m_init() {
     this->h0_3_size = 0;
 }
 
-void h0_1_Name::m_init_pb12(char *h0_6_from) {
+void h0_1_Name::m_init_pb14(char *h0_6_from) {
     this->h0_2_text = h0_6_from;
     this->h0_3_size = 0;
     while (h0_6_from[this->h0_3_size] != '\0') {
@@ -93,7 +93,7 @@ h0_1_Name::h0_1_Name() {
 }
 
 h0_1_Name::h0_1_Name(char *h0_6_from) {
-    this->h0_1_Name::m_init_pb12(h0_6_from);
+    this->h0_1_Name::m_init_pb14(h0_6_from);
 }
 
 h0_1_Name::~h0_1_Name() {

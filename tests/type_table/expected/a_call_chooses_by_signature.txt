@@ -22,4 +22,4 @@
     one  i32
     two  i32
     up  i32
-  25 types interned
+  27 types interned

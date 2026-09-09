@@ -8,7 +8,7 @@
     symbols  bool
     broken  <none>
     also_broken  <none>
-  16 types interned
+  18 types interned
 diagnostics:
 error: 'and' needs bool, and this is i32
   --> main.hd:11:18

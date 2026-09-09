@@ -3,7 +3,8 @@
 Status: **decided and built**, 2026-09-08. Hadley chose the shape after the
 survey in
 [notes/how-languages-write-a-manifest.md](notes/how-languages-write-a-manifest.md):
-*"Vamos de B. O arquivo é lido por uma entrada própria e começa com `{`."*
+*"Let us go with B. The file is read by an entry point of its own and begins
+with `{`."*
 
 | | |
 |---|---|

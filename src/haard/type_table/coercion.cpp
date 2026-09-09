@@ -64,8 +64,9 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
         }
     }
 
-    // And the other direction, added 2026-09-06 with Hadley's 'implemente T&
-    // com semântica parecida com C++'. **A reference IS the thing it names**,
+    // And the other direction, added 2026-09-06 with Hadley's 'implement T&
+    // too, with semantics close to C++'s'. **A reference IS the thing it
+    // names**,
     // so reading one is reading what it names, and without this a 'T&' could
     // not be given back from a function usefully: 'total + xs.at(i)' was
     // *cannot apply this to i32 and i32&*, and so were a binding, a call, a

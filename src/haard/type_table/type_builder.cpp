@@ -17,6 +17,8 @@ static BuiltinType builtin_of(TokenKind kind) {
     case TK_F64: return BUILTIN_F64;
     case TK_BOOL: return BUILTIN_BOOL;
     case TK_CHAR: return BUILTIN_CHAR;
+    case TK_ISIZE: return BUILTIN_ISIZE;
+    case TK_USIZE: return BUILTIN_USIZE;
     case TK_SYMBOL: return BUILTIN_SYMBOL;
     default: break;
     }

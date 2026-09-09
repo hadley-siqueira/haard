@@ -38,9 +38,9 @@ in one file every program loads. The way out of *that* was to make the prelude
 a directory expanded like record [0006](0006-star-import-is-a-directory.md)'s
 star, which is an amendment to 0017 on top of a consequence 0017 did not see.
 
-Hadley, 2026-09-06: *"Ao invés de ter um arquivo de preludio, não dá para
-simplesmente inserir automaticamente um import std.string, import std.array etc
-em cada módulo compilado?"*
+Hadley, 2026-09-06: *"Instead of having a prelude file, could we not simply
+insert an `import std.string`, an `import std.array` and so on automatically
+into every module compiled?"*
 
 ## Decision
 

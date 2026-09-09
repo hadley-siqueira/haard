@@ -12,7 +12,7 @@
     m  Message
     mixed  <none>
     sum  <none>
-  19 types interned
+  21 types interned
 diagnostics:
 error: cannot apply this to symbol and char*
   --> main.hd:36:19
