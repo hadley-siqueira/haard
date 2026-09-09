@@ -409,7 +409,7 @@ thinking is not done twice.
 
 **Haard talks to the world**, since 2026-09-05 — record 0030, and temporary on
 purpose. The emitter writes the body of **eight** functions, by name and only
-inside the module named `std.io`. Nothing was added to the language: a `def`
+inside the module named `std.low_io` (`std.io` until 2026-09-08). Nothing was added to the language: a `def`
 whose body is `pass` already emitted a whole function with an empty body, and
 the emitter fills it in.
 
@@ -418,11 +418,29 @@ is an `i8*` here with nothing lost, while an `std::ofstream` is an object Haard
 cannot name. And `stdout` is a `FILE*` too, so **one set of primitives covers
 the console and a file alike**.
 
-One character at a time, and everything above it — `File`, `write` of a
-character and of a `char*`, `writeln`, `console()`, `open_read` — is written in
-Haard, in `lib/std/io.hd`. `tests/emitter/cases/input_and_output` prints a line
-to the terminal, writes a file, reads it back character by character and
-returns the count.
+One character at a time, and everything above it is written in Haard:
+`std/io.hd` has `print` and `println`, overloaded on `char*`, `String&`,
+`char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol`, and `std/file.hd` has
+`File`, `console()` and `open_read`.
+`tests/emitter/cases/input_and_output` prints a line to the terminal, writes a
+file, reads it back character by character and returns the count, and
+`tests/programs/cases/printing_is_a_free_function` prints one line per
+overload.
+
+**`print` and `println` are free functions in `std.io`**, since 2026-09-08, and
+that is the whole of what a program needs to print:
+
+```haard
+import std.io
+
+def main : i32
+    println("hello, world!")
+
+    return 0
+```
+
+They stand on the natives directly and not on `File`, because `console()`
+builds one with `new` and a `print` written over it would leak one per call.
 
 **A char literal was a float literal to the typer** until 2026-09-05.
 `ExpressionTyper::literal` handles three kinds and split them into two, so

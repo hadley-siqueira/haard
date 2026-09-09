@@ -1,0 +1,38 @@
+# 'print' and 'println' are free functions in std.io, overloaded on what they
+# are given (record 0012: what tells two apart is their parameters). Nothing
+# is opened and nothing is constructed first -- the console is the one output
+# every program has.
+#
+# std.string is imported for the two things that need the name 'String': the
+# local written below, and the template string, which is lowered into one.
+import std.io
+import std.string
+
+def main : i32
+    println("hello, world!")
+
+    print("no newline yet")
+    println()
+
+    println('c')
+    println(42)
+    println(0 - 7)
+    println(true)
+    println(false)
+    println(2.5)
+    println(:a_symbol)
+
+    let s : String = "a String, and ${6 * 7} inside it"
+
+    println(s)
+
+    # and the same list without the newline, so the line below is written by
+    # six calls and one println
+    print("six")
+    print(' ')
+    print(1)
+    print(' ')
+    print("calls")
+    println()
+
+    return 0

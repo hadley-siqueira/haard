@@ -8,7 +8,6 @@
 #
 # The bytes are kept with a '\0' after them, so 'text()' hands back something
 # the IO layer can walk. That terminator is not counted in 'size'.
-import std.io
 
 class String:
     data : char*

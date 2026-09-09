@@ -18,8 +18,8 @@ C++. **`hdc` transpiles a whole Haard program into one C++17 file**, which a
 C++ compiler then turns into a binary. It runs today: hello world, programs of
 several modules and libraries, a PPM image writer, a drawing library, a binary
 tree over an enum, and the language's own standard library — `Array<T>`,
-`List<T>`, `Hash<K, V>`, `String` and `File` — are all written in Haard and all
-run.
+`List<T>`, `Hash<K, V>`, `String`, `File` and `print`/`println` — are all
+written in Haard and all run.
 
 There is no intermediate representation and no build system inside the
 compiler: `hdc` is told where a program's libraries are and searches nowhere
@@ -72,26 +72,25 @@ typo in it is a diagnostic with a caret like any other.
 
     dependencies: [
         {name: "std", path: "../../std"}
-    ],
-
-    prelude: ["std.string", "std.file"]
+    ]
 }
 ```
 
 `examples/hello/main.hd`:
 
 ```haard
-def main : i32
-    let out = console()
+import std.io
 
-    out->writeln("hello, world!")
+def main : i32
+    println("hello, world!")
 
     return 0
 ```
 
-There is no `import` in that file: `prelude` is the list of imports every
-module of the program is given, so `String` and `console()` are already in
-view.
+`print` and `println` are ordinary functions in `std.io`, overloaded on what
+they are given — a `char*`, a `String`, an `i32`, a `char`, a `bool`, an `f64`,
+a symbol. Nothing is opened and nothing is constructed first. Writing to a file
+is `std.file`, which puts the same names on a `File`.
 
 Build and run it:
 
@@ -119,12 +118,11 @@ describe. Saying it out loud is the same thing:
 
 The whole program — the entry file, the standard library it reached, and the
 handful of native functions that touch C's stdio — arrives as one C++ file of
-417 lines. Its end:
+438 lines. Its end:
 
 ```cpp
 int32_t h0_1_main() {
-    h2_1_File *h0_2_out = h2_19_console();
-    h0_2_out->m_writeln_pb12("hello, world!");
+    h1_27_println("hello, world!");
     return 0;
 }
 
@@ -149,7 +147,8 @@ examples/shapes/
     geometry/   haard.pkg   shape.hd
     report/     haard.pkg   lines.hd
 std/
-    haard.pkg   array.hd  string.hd  list.hd  hash.hd  file.hd  io.hd
+    haard.pkg   array.hd  string.hd  list.hd  hash.hd
+                io.hd     file.hd    low_io.hd
 ```
 
 **`app/haard.pkg`** — what the program needs, and the name it will import each
@@ -166,9 +165,14 @@ one by:
         {name: "report", path: "../report"}
     ],
 
-    prelude: ["std.array", "std.string", "std.file"]
+    prelude: ["std.array", "std.string", "std.io"]
 }
 ```
+
+`prelude` is the list of imports **every module of this program** is given, so
+nothing below writes `import std.io` — it is how a program says which names
+should always be in view. Only the program's own manifest is asked for one: a
+library deciding that for its importer would be a library deciding too much.
 
 **`geometry/haard.pkg`** — a library that needs nothing:
 
@@ -249,15 +253,14 @@ import geometry.shape
 import report.lines
 
 def main : i32
-    let out = console()
     let shapes : Shape[] = [Point, Circle(2), Rect(3, 4)]
     let total = 0
 
     for s in shapes:
-        out->writeln(described(s))
+        println(described(s))
         total = total + area_of(s)
 
-    out->writeln("total area: ${total}")
+    println("total area: ${total}")
 
     return 0
 ```
@@ -336,24 +339,23 @@ all taken apart:
 
 ```cpp
 int32_t h0_1_main() {
-    h5_1_File *h0_2_out = h5_19_console();
     h1_1_Shape __fx0[3] = {h1_1_Shape_h1_2_Point(), h1_1_Shape_h1_3_Circle(2),
                            h1_1_Shape_h1_4_Rect(3, 4)};
-    h3_42_Array h0_3_shapes(__fx0, 3);
-    int32_t h0_4_total = 0;
+    h3_42_Array h0_2_shapes(__fx0, 3);
+    int32_t h0_3_total = 0;
     {
-        h3_75_ArrayCursor h0_7___c0 = h0_3_shapes.m_iterator();
-        while (h0_7___c0.m_has_next()) {
-            h1_1_Shape &h0_5_s = h0_7___c0.m_next();
-            h0_2_out->m_writeln_rn4c1(const_cast<h4_1_String&>(
-                static_cast<const h4_1_String&>(h2_1_described(h0_5_s))));
-            h0_4_total = h0_4_total + h1_5_area_of(h0_5_s);
+        h3_75_ArrayCursor h0_6___c0 = h0_2_shapes.m_iterator();
+        while (h0_6___c0.m_has_next()) {
+            h1_1_Shape &h0_4_s = h0_6___c0.m_next();
+            h5_31_println(const_cast<h4_1_String&>(
+                static_cast<const h4_1_String&>(h2_1_described(h0_4_s))));
+            h0_3_total = h0_3_total + h1_5_area_of(h0_4_s);
         }
     }
-    h4_1_String h0_6___ts0;
-    h0_6___ts0.m_append_pb12("total area: ");
-    h0_6___ts0.m_append_b6(h0_4_total);
-    h0_2_out->m_writeln_rn4c1(h0_6___ts0);
+    h4_1_String h0_5___ts0;
+    h0_5___ts0.m_append_pb12("total area: ");
+    h0_5___ts0.m_append_b6(h0_3_total);
+    h5_31_println(h0_5___ts0);
     return 0;
 }
 ```
@@ -430,28 +432,29 @@ optional and inference does the rest.
 ### Control flow
 
 ```haard
+import std.io
+
 def main : i32
-    let out = console()
     let i = 0
 
     while i < 10:
         i = i + 1
 
     for j = 0; j < 10; j = j + 1:
-        out->writeln("${j}")
+        println(j)
 
     for k in 0 .. 3:          # 0, 1, 2, 3 -- inclusive
-        out->writeln("${k}")
+        println(k)
 
     for k in 0 ... 3:         # 0, 1, 2    -- exclusive
-        out->writeln("${k}")
+        println(k)
 
     if i > 5:
-        out->writeln("big")
+        println("big")
     elif i == 0:
-        out->writeln("zero")
+        println("zero")
     else:
-        out->writeln("small")
+        println("small")
 
     return 0
 ```
@@ -540,7 +543,7 @@ let a = :ok
 let b = :ok
 
 if a == b:                 # one pointer comparison
-    out->writeln(a as char*)
+    println(a)
 ```
 
 It is a type of its own, `symbol`, so a field or a parameter may be one, and
@@ -549,9 +552,10 @@ It is a type of its own, `symbol`, so a field or a parameter may be one, and
 ### Strings, containers and generics
 
 ```haard
-def main : i32
-    let out = console()
+import std.io
+import std.string
 
+def main : i32
     let xs : i32[] = [3, 1, 2]     # Array<i32>, written form 'T[]'
     xs.add(4)
     xs[0] = 5
@@ -563,16 +567,16 @@ def main : i32
     ages[:grace] = 45
 
     for who in ages:               # a Hash walks its keys
-        out->writeln("${who as char*} is ${ages[who]}")
+        println("${who as char*} is ${ages[who]}")
 
     let total = 0
 
     for x in xs:
         total = total + x
 
-    let line : String = "total: ${total}"
+    let line : String = "total: ${total}, and ${ys[2]}"
 
-    out->writeln(line)
+    println(line)
 
     return 0
 ```
@@ -582,6 +586,27 @@ into a `String` and a few `append` calls. `[1, 2, 3]` is a fixed array plus one
 constructor call, and which constructor is chosen by the type written on the
 left. Generics are monomorphised: `Hash<symbol, i32>` becomes a class of its
 own, in the module that declared the generic.
+
+### The standard library
+
+`std/` is seven files, all of them Haard:
+
+| module | what is in it |
+|---|---|
+| `std.io` | `print` and `println`, overloaded on `char*`, `String&`, `char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol` |
+| `std.string` | `String`, which owns its bytes and is what a `${}` builds |
+| `std.array` | `Array<T>`, the class `T[]` is written form for |
+| `std.list` | `List<T>`, a doubly linked list |
+| `std.hash` | `Hash<K, V>`, open addressed, hashed by the `hash_of` overload set |
+| `std.file` | `File`, `console()`, `open_read`, `open_write` — the same names as `std.io`, on a file |
+| `std.low_io` | eight functions whose bodies the compiler writes, one character at a time |
+
+Only that last file is special, and it is meant to be deleted. Nothing in
+Haard can reach a C library yet, so the emitter fills in eight bodies — by
+name, and only inside `std.low_io` — and everything anyone actually calls is
+built on them, in the language, where it can be read and changed without
+touching the compiler. When a real foreign interface is decided, those eight
+become ordinary declarations of it and nothing above them changes.
 
 ### Pointers
 
@@ -624,7 +649,7 @@ def main : i32
 | generics, monomorphised | operators as methods, including `=` and `[]` |
 | type inference, `let` optional | enums as tagged unions, `switch` as a pattern match |
 | `for x in` over containers, arrays and ranges | template strings, `${}` |
-| symbols, interned in a table | `Array<T>`, `List<T>`, `Hash<K, V>`, `String`, `File` |
+| symbols, interned in a table | `Array<T>`, `List<T>`, `Hash<K, V>`, `String`, `File`, `print`/`println` |
 | imports, aliases, star imports, cycles | two versions of one library in one program |
 | `haard.pkg`, followed transitively | rustc-shaped diagnostics with carets |
 | pointers, `new`, `delete`, `new T[n]` | modules compiled to one C++17 file |

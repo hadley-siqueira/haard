@@ -1,6 +1,6 @@
-def main : i32
-    let out = console()
+import std.io
 
-    out->writeln("hello, world!")
+def main : i32
+    println("hello, world!")
 
     return 0

@@ -5,7 +5,7 @@ the record says what replaces it.
 
 | | |
 |---|---|
-| The emitter writes the body of eight functions, by **name**, and only inside the module named **`std.io`** | **decided** |
+| The emitter writes the body of eight functions, by **name**, and only inside the module named **`std.low_io`** | **decided**, amended 2026-09-08 |
 | C's `stdio` and **not** C++'s streams, and the reason is the handle | **decided** |
 | The native surface is **one character at a time**; everything above it is Haard | **decided** |
 | Not a `native` keyword, because what a real foreign interface looks like has not been decided | **decided** |
@@ -30,9 +30,10 @@ So nothing had to be added to the language. The emitter fills the body in.
 
 ## Decision
 
-**1. By name, inside `std.io`.** The emitter knows eight names and writes their
-bodies when — and only when — the module they are declared in is named
-`std.io`. The module is half the match, so a `__io_write` written anywhere else
+**1. By name, inside `std.low_io`.** The emitter knows eight names and writes
+their bodies when — and only when — the module they are declared in is named
+`std.low_io` (it was `std.io` until the amendment below). The module is half
+the match, so a `__io_write` written anywhere else
 is an ordinary function with an empty body and not something the compiler
 quietly takes over. The same trick already finds `String` in `Coercion`.
 
@@ -83,8 +84,8 @@ questions with two types, and `at_end` is asked **after** a read, the way C's
   and not in the repository — and what it printed joins the golden, above the
   exit status, when it printed anything.
 - **Where the standard library lives is still record 0017's question.**
-  `lib/std/io.hd` is a file in this repository and a roots table has to point
-  at it. The prelude is what will make `import std.io` unnecessary.
+  `std/low_io.hd` is a file in this repository and a manifest or a roots table
+  has to point at it.
 
 ## What found a bug on the way
 
@@ -103,6 +104,38 @@ found by trying to compare a character read from a file.
 ## What replaces this
 
 A decided foreign interface. When it lands, these eight become ordinary
-declarations of it, `Emitter::native_body` is deleted, and **nothing above the
-line in `lib/std/io.hd` changes** — which is the whole reason the line is where
-it is.
+declarations of it, `Emitter::native_body` is deleted, and **nothing that
+stands on them changes** — which is the whole reason the line is where it is.
+
+## Amendment, 2026-09-08 — the module is `std.low_io`
+
+The natives moved out of `std.io` and into **`std.low_io`**, and `std.io` now
+holds `print` and `println`, overloaded on what they are given. Hadley asked
+for it in those words: a program should print with
+
+```haard
+import std.io
+
+def main : i32
+    println("hello, world!")
+
+    return 0
+```
+
+and not by writing `let out = console()` first.
+
+Two things follow, and neither is a new decision:
+
+- **The emitter matches on `std.low_io`** now. One string, one line, and the
+  half-a-match reasoning above is untouched.
+- **`print` is written on the natives directly, not on `File`.** `console()`
+  builds a `File` with `new` and hands back the pointer, so a `print` written
+  over it would leak one per call. The handle is what it needs, and
+  `__io_stdout()` is the handle.
+
+`std.file` is unchanged and still writes the same names on a `File`: a program
+that writes to a file opens one, and a program that writes to the console
+calls `println`. The split the record cares about — a native floor of single
+characters, everything else in Haard — is exactly where it was; only the name
+of the floor changed, so that the obvious name belongs to the half a program
+actually calls.

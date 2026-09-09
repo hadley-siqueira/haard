@@ -4,7 +4,7 @@
 # whose bodies the emitter writes (record 0030), and every one of them moves a
 # single character. Everything anyone would actually write is here, on top of
 # them, in the language.
-import std.io
+import std.low_io
 
 class File:
     handle : i8*

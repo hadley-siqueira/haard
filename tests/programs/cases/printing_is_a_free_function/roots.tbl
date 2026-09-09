@@ -1,0 +1,8 @@
+# No prelude block at all: this program writes its own imports, which is the
+# point of the case. 'print' and 'println' come from 'std.io' and from
+# nowhere else -- a program that never imports it cannot print, and a program
+# that does needs no File and no handle.
+root std = std
+
+root myapp = myapp
+    std -> std

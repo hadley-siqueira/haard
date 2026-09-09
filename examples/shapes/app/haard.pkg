@@ -8,5 +8,5 @@
         {name: "report", path: "../report"}
     ],
 
-    prelude: ["std.array", "std.string", "std.file"]
+    prelude: ["std.array", "std.string", "std.io"]
 }

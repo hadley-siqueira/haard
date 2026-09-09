@@ -1,0 +1,13 @@
+hello, world!
+no newline yet
+c
+42
+-7
+true
+false
+2.500000
+a_symbol
+a String, and 42 inside it
+six 1 calls
+--- files:
+--- exit: 0
