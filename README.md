@@ -742,7 +742,7 @@ binary operator it has, and a unary minus binds tighter than it:
 
 It is right associative in both: `a ** b ** c` is `a ** (b ** c)`, which is
 what a power tower means — the left folding reading would be a redundant
-spelling of `a ** (b * c)`.
+spelling of `a ** (b * c)`. And `//` floors in both.
 
 Comparisons do not chain. `a < b < c` is `(a < b) < c`, and since the left half
 is a `bool` the compiler says so rather than reading it as `a < b and b < c`.
@@ -760,20 +760,62 @@ An operator must be on the **same line** as its left operand, unless a `(`,
 `[` or `{` is open — inside brackets one expression may span as many lines as
 it likes.
 
-#### What is parsed but not yet typed
+#### The four C++ has no spelling for
 
-`**` between two operands, and `in`/`not in` outside a `for`, are read by the
-parser and written back by the pretty printer, but they have no type and no
-emission. They are precedence with nothing behind them yet, and the compiler
-says so rather than emitting something that means the wrong thing:
+Four of the operators above are not a C++ operator with another name on it, so
+`hdc` writes something else: a call to a helper it puts above the program, or
+a method it asked the type for. They run today, and they were the last four
+the table had and the compiler did not.
+
+**`**` raises**, and binds tighter than `*`. Both sides are the same type and
+so is the answer, exactly as with `*`. A negative exponent over a whole number
+is `1 / (a ** -b)` truncated, which is `0` for every base but `1` and `-1`; a
+float exponent need not be whole.
 
 ```haard
-let a = 2 ** 3          # hdc: 'a' has no type the emitter can write
-if 2 in xs:             # hdc: this expression cannot be emitted yet
+2 ** 10          # 1024
+2 ** -1          # 0
+2.0 ** 0.5       # 1.4142135
 ```
 
-`for x in xs` is a different rule and works: the `in` there is read by the
-loop, not by the expression grammar.
+**`//` floors**, where C++'s `/` truncates toward zero. The two differ exactly
+when the signs differ and the division is not exact, and that is the whole
+reason it is not emitted as `/`:
+
+```haard
+7 // 2           # 3
+(0 - 7) // 2     # -4, where C++'s own '/' gives -3
+7.0 // 2.0       # 3.0
+```
+
+**`>>>` fills with zeroes** where `>>` keeps the sign, which is Java's pair.
+Over a type that is already unsigned the two are the same operator.
+
+```haard
+8 >>> 1          # 4
+(0 - 8) >>> 28   # 15
+(0 - 8) >> 28    # -1
+```
+
+**`a in b` is `b.contains(a)`**, and `a not in b` is its negation. The
+container is asked for a method by **name** — the language has no interfaces,
+so this is how it asks a type for anything, the same way `for x in` asks one
+for `iterator`. Any class with a `contains` answers `in`, and the standard
+library's four containers and `Range<T>` all have one.
+
+```haard
+2 in xs                    # an Array
+5 in ls                    # a List
+'a' in s                   # a String
+key in h                   # a Hash, which is asked about its keys
+3 in 0 .. 10               # a Range
+```
+
+The type argument of a generic `contains` is written by the **compiler**, out
+of the type of the value — `in` has nowhere to put a `<i32>`. That is also why
+a container's `contains` is a *generic method*: one taking the class's own `T`
+would be instantiated with the class, and comparing two `T` would make every
+`T` ever put in an `Array` need an `operator==` for a method nobody called.
 
 ## Where the compiler is
 
@@ -792,6 +834,7 @@ loop, not by the expression grammar.
 | pointers, `new`, `delete`, `new T[n]` | modules compiled to one C++17 file |
 | `T(args)` — a constructor called by hand | `main` taking `argc`/`argv` or a `String[]` |
 | a range as a value, `let r = 0 .. 10` | the operator precedence above, carried into the C++ |
+| `**`, `//` and `>>>`, which C++ has not | `x in xs`, asked of the container by name |
 
 **Not there yet**, and the compiler says so by name rather than emitting
 something that means the wrong thing:
@@ -799,7 +842,7 @@ something that means the wrong thing:
 | | |
 |---|---|
 | closures and lambdas | tuples as values |
-| `{key: value}` as a literal with a type | `**`, and `in` as an expression |
+| `{key: value}` as a literal with a type | `[T]` as a written type — `List<T>` works |
 | versions, a registry, a lock file | move semantics, `const` |
 | threads, exceptions | a filesystem beyond open/read/write/close |
 

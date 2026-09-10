@@ -1,0 +1,28 @@
+# Record 0057 makes '**' a real operator, so record 0034 applies to it like
+# it applies to '+': a class says what it means by declaring 'operator**',
+# and the emitter calls that method rather than leaning on C++ -- which has
+# no '**' to lean on in the first place.
+#
+# The exit status is 12: three by four.
+class Money:
+    cents : i32
+
+    def operator** : Money
+        @times : Money
+
+        let out : Money
+
+        out.cents = cents * times.cents
+
+        return out
+
+def main : i32
+    let a : Money
+    let b : Money
+
+    a.cents = 3
+    b.cents = 4
+
+    let c = a ** b
+
+    return c.cents

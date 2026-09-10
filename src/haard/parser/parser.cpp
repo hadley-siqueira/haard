@@ -1227,6 +1227,7 @@ AstNodeKind Parser::operator_kind() {
     if (match_on_same_line(TK_ASSIGNMENT)) return AST_ASSIGNMENT;
     if (match_on_same_line(TK_PLUS)) return AST_PLUS;
     if (match_on_same_line(TK_MINUS)) return AST_MINUS;
+    if (match_on_same_line(TK_POWER)) return AST_POWER;
     if (match_on_same_line(TK_TIMES)) return AST_TIMES;
     if (match_on_same_line(TK_INTEGER_DIVISION)) return AST_INTEGER_DIVISION;
     if (match_on_same_line(TK_DIVISION)) return AST_DIVISION;

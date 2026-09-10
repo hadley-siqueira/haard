@@ -1,0 +1,29 @@
+1024
+1
+-8
+0
+1
+1.414213
+3
+-3
+-4
+-4
+3.000000
+4
+15
+-1
+true
+false
+true
+true
+true
+true
+false
+true
+true
+true
+true
+2
+true
+--- files:
+--- exit: 0

@@ -1,0 +1,15 @@
+# The whole standard library in the prelude, since this case reaches every
+# container that answers 'in'.
+prelude
+    std -> std
+    import std.array
+    import std.list
+    import std.string
+    import std.hash
+    import std.range
+    import std.io
+
+root std = std
+
+root myapp = myapp
+    std -> std

@@ -1,0 +1,32 @@
+<unnamed>:
+    Bag  Bag
+    Sack  Sack
+    main  i32
+    n  i32
+    n  i32
+    contains  i32 -> bool
+    value  i32
+    bag  Bag
+    sack  Sack
+    n  i32
+    held  bool
+    missing  <none>
+    nonsense  <none>
+    backwards  <none>
+  21 types interned
+diagnostics:
+error: Bag has no 'contains', which is what 'in' asks a container
+  --> main.hd:22:21
+   |
+22 |     let missing = n in bag
+   |                     ^^
+error: 'in' asks a container what it holds, and i32 is not one
+  --> main.hd:23:22
+   |
+23 |     let nonsense = n in n
+   |                      ^^
+error: 'in' asks a container what it holds, and i32 is not one
+  --> main.hd:24:26
+   |
+24 |     let backwards = sack in n
+   |                          ^^

@@ -64,6 +64,16 @@ namespace haard {
         return which <= BUILTIN_USIZE;
     }
 
+    // Whether that whole number is signed. Record 0057 asks it twice: '//'
+    // floors, which C++'s '/' already does when neither side can be negative,
+    // and '>>>' fills with zeroes, which C++'s '>>' already does over an
+    // unsigned. 'char' is not one of these -- it is the language's own type
+    // and not a stand-in for i8
+    inline bool is_signed(BuiltinType which) {
+        return (which >= BUILTIN_I8 && which <= BUILTIN_I64)
+               || which == BUILTIN_ISIZE;
+    }
+
     struct Type {
         u8 kind;
 

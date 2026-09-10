@@ -1,0 +1,26 @@
+# Record 0057. 'a in b' is 'b.contains(a)': the container is asked for a
+# method by name, the way record 0040 asks one for 'iterator'. Both ways of
+# getting that wrong are here -- a container that declares no 'contains', and
+# a left side that is not a container at all.
+class Bag:
+    n : i32
+
+class Sack:
+    n : i32
+
+    def contains : bool
+        @value : i32
+
+        return value == n
+
+def main : i32
+    let bag : Bag
+    let sack : Sack
+    let n = 5
+
+    let held = n in sack
+    let missing = n in bag
+    let nonsense = n in n
+    let backwards = sack in n
+
+    return 0

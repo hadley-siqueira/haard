@@ -1,0 +1,37 @@
+# Record 0057. '**', '//' and '>>>' are operators C++ does not have, and 'in'
+# is one it has no idea about -- so this golden is the text the emitter writes
+# instead: a call to a helper above the program, C++'s own operator where it
+# already means the same thing, and a method the container was asked for by
+# name.
+#
+# The helpers are written only when a program reaches them, which is why every
+# other golden in this suite has none of them.
+#
+# The exit status is 46: 32 + 3 - 4 + 15.
+class Bag:
+    n : i32
+
+    # what 'x in bag' asks. Nothing about Bag is generic, so nothing about
+    # this is either
+    def contains : bool
+        @value : i32
+
+        return value == n
+
+def main : i32
+    let a = 2 ** 5              # a call: C++ has no '**'
+    let b = 7 // 2              # a call: C++'s '/' truncates and this floors
+    let c = (0 - 7) // 2        # -4, where C++'s own '/' gives -3
+    let d = (0 - 8) >>> 28      # a shift through an unsigned of the same width
+    let bag : Bag
+
+    bag.n = 5
+
+    # 'x in bag' is 'bag.contains(x)', and the operands change places
+    if 5 not in bag:
+        return 1
+
+    if 4 in bag:
+        return 2
+
+    return a + b + c + d

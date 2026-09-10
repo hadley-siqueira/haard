@@ -295,6 +295,19 @@ the table writes some of them.
 
 ## What does not work, and it is mostly silence
 
+**Four operators were precedence with nothing behind them** until 2026-09-10,
+and they had failed two different ways. `**`, `in` and `not in` were in
+nobody's switch in the type phase: they fell through its `default`, gave back
+`INVALID_TYPE` **without a word**, and the first complaint was three phases
+later and about the name the value had been bound to — `let a = 2 ** 3` said
+*'a' has no type the emitter can write*, a true sentence about the wrong line.
+`//` and `>>>` were typed and had no emission, one step further along, and the
+emitter said so where it happened. All four run now: `**` and `//` are calls
+to a helper the emitter writes above the program, `>>>` is a shift through an
+unsigned of the same width, and `a in b` is `b.contains(a)` — the container
+asked for a method by name, since there are no interfaces to ask it with.
+Record [0057](design/0057-the-precedence-of-the-operators.md).
+
 **The emitter carried none of the language's precedence** until 2026-09-10.
 It wrote every binary operator as `left oper right` with nothing around it, so
 **C++ regrouped every expression the two languages read differently** — which

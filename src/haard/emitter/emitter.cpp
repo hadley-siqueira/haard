@@ -25,9 +25,34 @@ static const char* BUILTIN_CPP[] = {
     "const char*"
 };
 
+// the unsigned builtin of the same width, which is what record 0057's '>>>'
+// shifts through
+static const char* unsigned_twin(u32 which) {
+    switch (which) {
+    case BUILTIN_I8: return "uint8_t";
+    case BUILTIN_I16: return "uint16_t";
+    case BUILTIN_I32: return "uint32_t";
+    case BUILTIN_I64: return "uint64_t";
+    case BUILTIN_ISIZE: return "uintptr_t";
+    default: break;
+    }
+
+    return nullptr;
+}
+
+static bool is_an_unsigned_whole_number(u32 which) {
+    return which != BUILTIN_COUNT && is_a_whole_number((BuiltinType) which)
+           && !is_signed((BuiltinType) which);
+}
+
 Emitter::Emitter() {
     compilation = nullptr;
     indentation = 0;
+    needs_power_signed = false;
+    needs_power_unsigned = false;
+    needs_power_floating = false;
+    needs_floor_division = false;
+    needs_floor_division_floating = false;
 }
 
 void Emitter::set_compilation(Compilation* compilation) {
@@ -123,7 +148,11 @@ bool Emitter::emit(std::ostream& stream) {
     // constants below may hold nothing that names a symbol today, and a
     // global may -- so the one thing everything else can point into is
     // written before either
-    out << head << emit_symbol_table() << constants.str() << body;
+    // the helpers after the bodies were written, because writing them is what
+    // says which ones this program reached -- and above the bodies in the
+    // file, because that is where a C++ function has to be declared
+    out << head << emit_symbol_table() << emit_arithmetic_helpers()
+        << constants.str() << body;
 
     if (error.size() > 0) {
         return false;
@@ -2440,6 +2469,21 @@ void Emitter::emit_expression(u32 module, u32 node) {
     case AST_DIVISION: emit_binary(module, node, "/"); return;
     case AST_MODULO: emit_binary(module, node, "%"); return;
 
+    // Record 0057's three: an operator Haard has and C++ has not. Each is a
+    // call to a helper written above the program, or -- where C++'s own
+    // operator already means the same thing -- that operator
+    // Record 0057. What the container was asked is written on this node, and
+    // the value is the argument -- so the two operands change places
+    case AST_IN: emit_membership(module, node, false); return;
+    case AST_NOT_IN: emit_membership(module, node, true); return;
+
+    case AST_POWER: emit_power(module, node); return;
+    case AST_INTEGER_DIVISION: emit_floor_division(module, node); return;
+
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
+        emit_unsigned_shift(module, node);
+        return;
+
     // both spellings of each, because the tree keeps them apart and C++ has
     // one of each
     case AST_LOGICAL_AND: emit_binary(module, node, "&&"); return;
@@ -2634,6 +2678,25 @@ int Emitter::precedence_of(u32 module, u32 node) {
     case AST_CAST: case AST_NEW: case AST_DELETE: case AST_DELETE_ARRAY:
         return 3;
 
+    // Record 0057. These three come out as a cast around a call --
+    // '(int32_t) __power_i(a, b)' -- which C++ reads at the unary level,
+    // except where the operand's type let them stay C++'s own operator
+    // Record 0057: 'b.contains(a)', and the negated one wears a '!'
+    case AST_IN:
+        return 2;
+
+    case AST_NOT_IN:
+        return 3;
+
+    case AST_POWER:
+        return 3;
+
+    case AST_INTEGER_DIVISION:
+        return is_an_unsigned_whole_number(builtin_of(module, node)) ? 5 : 3;
+
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
+        return is_an_unsigned_whole_number(builtin_of(module, node)) ? 7 : 3;
+
     case AST_TIMES: case AST_DIVISION: case AST_MODULO: return 5;
     case AST_PLUS: case AST_MINUS: return 6;
     case AST_BITWISE_LEFT_SHIFT: case AST_BITWISE_RIGHT_SHIFT: return 7;
@@ -2669,6 +2732,13 @@ int Emitter::precedence_of(u32 module, u32 node) {
 bool Emitter::emitted_as_a_call(u32 module_index, u32 node) {
     AstNodeKind kind = kind_of(module_index, node);
     Module* module = compilation->get_module(module_index);
+
+    // Record 0057's negated membership carries a candidate like the plain
+    // one, and comes out as '!' in front of the call it chose -- which is a
+    // unary expression and not a call
+    if (kind == AST_NOT_IN) {
+        return false;
+    }
 
     // the typer writes a candidate down only for an operator a class
     // overloaded, so every builtin one answers no here
@@ -2734,6 +2804,168 @@ void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
     out << " " << oper << " ";
     emit_operand(module, child_of(module, node, 1),
                  to_the_right ? level : level - 1);
+}
+
+void Emitter::emit_membership(u32 module_index, u32 node, bool negated) {
+    Module* module = compilation->get_module(module_index);
+    Resolution* found = module->get_resolutions()->get(node);
+
+    if (found->candidate == 0) {
+        fail("an 'in' whose 'contains' was never chosen");
+        return;
+    }
+
+    u32 value = child_of(module_index, node, 0);
+    u32 container = child_of(module_index, node, 1);
+
+    if (negated) {
+        out << "!";
+    }
+
+    emit_operand(module_index, container, 2);
+    out << (is_pointer(module_index, container) ? "->" : ".")
+        << name_of(found->module, found->candidate) << "(";
+
+    // the same conversion an argument goes through, for the same reason
+    // record 0034's operand goes through it: 'contains' is a method and this
+    // is its argument
+    u32 wanted = raw_parameter_of(found->module, found->candidate, 0);
+
+    if (!emit_conversion(module_index, found->module, wanted, value)) {
+        emit_expression(module_index, value);
+    }
+
+    out << ")";
+}
+
+u32 Emitter::builtin_of(u32 module_index, u32 node) {
+    u32 type = type_at(module_index, node);
+
+    if (type == INVALID_TYPE) {
+        return BUILTIN_COUNT;
+    }
+
+    Type* entry = compilation->get_module(module_index)->get_types()
+                      ->get_type(type);
+
+    if (entry->kind != TYPE_BUILTIN) {
+        return BUILTIN_COUNT;
+    }
+
+    return entry->subject;
+}
+
+// 'a ** b'. C++ has no operator for it, so what comes out is a call, and the
+// answer is cast back to the type the expression has -- the helpers work in
+// the widest of each family so that three of them cover all thirteen builtins
+void Emitter::emit_power(u32 module, u32 node) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    u32 which = builtin_of(module, node);
+    const char* helper = nullptr;
+
+    if (which == BUILTIN_F32 || which == BUILTIN_F64) {
+        helper = "__power_f";
+        needs_power_floating = true;
+    } else if (which == BUILTIN_COUNT) {
+        fail("a '**' whose type was never worked out");
+        return;
+    } else if (is_a_whole_number((BuiltinType) which)) {
+        helper = is_signed((BuiltinType) which) ? "__power_i" : "__power_u";
+
+        if (is_signed((BuiltinType) which)) {
+            needs_power_signed = true;
+        } else {
+            needs_power_unsigned = true;
+        }
+    } else {
+        fail("'**' raises a number, and this is " + type_name(module,
+                                                     type_at(module, node)));
+        return;
+    }
+
+    out << "(" << type_name(module, type_at(module, node)) << ")" << helper
+        << "(";
+    emit_expression(module, child_of(module, node, 0));
+    out << ", ";
+    emit_expression(module, child_of(module, node, 1));
+    out << ")";
+}
+
+// 'a // b' floors and C++'s '/' truncates toward zero. The two differ exactly
+// when the operands have different signs and the division is not exact, so an
+// unsigned pair is C++'s own operator and nothing else is
+void Emitter::emit_floor_division(u32 module, u32 node) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    u32 which = builtin_of(module, node);
+
+    if (which == BUILTIN_COUNT) {
+        fail("a '//' whose type was never worked out");
+        return;
+    }
+
+    if (is_an_unsigned_whole_number(which)) {
+        emit_binary(module, node, "/");
+        return;
+    }
+
+    const char* helper = nullptr;
+
+    if (which == BUILTIN_F32 || which == BUILTIN_F64) {
+        helper = "__floor_div_f";
+        needs_floor_division_floating = true;
+    } else if (is_a_whole_number((BuiltinType) which)) {
+        helper = "__floor_div_i";
+        needs_floor_division = true;
+    } else {
+        fail("'//' divides a number, and this is " + type_name(module,
+                                                      type_at(module, node)));
+        return;
+    }
+
+    out << "(" << type_name(module, type_at(module, node)) << ")" << helper
+        << "(";
+    emit_expression(module, child_of(module, node, 0));
+    out << ", ";
+    emit_expression(module, child_of(module, node, 1));
+    out << ")";
+}
+
+// '>>>' fills with zeroes where '>>' keeps the sign, which is Java's pair.
+// C++ has only the one operator and what it does is the operand's own
+// business, so the zero filling one is a shift through an unsigned of the
+// same width -- and over a type that is already unsigned it IS '>>'
+void Emitter::emit_unsigned_shift(u32 module, u32 node) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    u32 which = builtin_of(module, node);
+
+    if (which == BUILTIN_COUNT
+        || !is_a_whole_number((BuiltinType) which)) {
+        fail("'>>>' shifts a whole number, and this is not one");
+        return;
+    }
+
+    if (!is_signed((BuiltinType) which)) {
+        emit_binary(module, node, ">>");
+        return;
+    }
+
+
+    std::string own = type_name(module, type_at(module, node));
+
+    out << "(" << own << ")((" << unsigned_twin(which) << ")(";
+    emit_expression(module, child_of(module, node, 0));
+    out << ") >> ";
+    emit_operand(module, child_of(module, node, 1), 6);
+    out << ")";
 }
 
 bool Emitter::emit_operator(u32 module_index, u32 node) {
@@ -3477,6 +3709,99 @@ u32 Emitter::symbol_entry(const std::string& written) {
 //
 // Written from the map, which is by name, so the entries come out in the
 // order they were given and not in the order the names sort
+// Record 0057. Three operators of the language have no C++ operator behind
+// them, and these are what the emitter calls instead. Only the ones a program
+// reached are written: a program with no '**' and no '//' carries none of
+// this, which is also what keeps a golden that has neither byte for byte the
+// same as it was.
+//
+// '<cmath>' is included here rather than at the top for the same reason -- an
+// include at file scope is an include wherever it is written, and the head of
+// the file stays the three every program has
+std::string Emitter::emit_arithmetic_helpers() {
+    std::string out;
+
+    if (needs_power_floating || needs_floor_division_floating) {
+        out += "#include <cmath>\n\n";
+    }
+
+    if (needs_power_signed) {
+        out += "// record 0057: 'a ** b' over a signed whole number. C++ has "
+               "no operator\n"
+               "// for it. A negative exponent is 1/(a ** -b) truncated "
+               "toward zero, which\n"
+               "// is 0 for every base but 1 and -1\n"
+               "static int64_t __power_i(int64_t base, int64_t exponent) {\n"
+               "    if (exponent < 0) {\n"
+               "        if (base == 1) {\n"
+               "            return 1;\n"
+               "        }\n"
+               "\n"
+               "        if (base == -1) {\n"
+               "            return exponent % 2 == 0 ? 1 : -1;\n"
+               "        }\n"
+               "\n"
+               "        return 0;\n"
+               "    }\n"
+               "\n"
+               "    int64_t answer = 1;\n"
+               "\n"
+               "    for (int64_t i = 0; i < exponent; i++) {\n"
+               "        answer *= base;\n"
+               "    }\n"
+               "\n"
+               "    return answer;\n"
+               "}\n\n";
+    }
+
+    if (needs_power_unsigned) {
+        out += "// the same, where neither side can be negative\n"
+               "static uint64_t __power_u(uint64_t base, uint64_t exponent) "
+               "{\n"
+               "    uint64_t answer = 1;\n"
+               "\n"
+               "    for (uint64_t i = 0; i < exponent; i++) {\n"
+               "        answer *= base;\n"
+               "    }\n"
+               "\n"
+               "    return answer;\n"
+               "}\n\n";
+    }
+
+    if (needs_power_floating) {
+        out += "// and over a float, where the exponent need not be whole\n"
+               "static double __power_f(double base, double exponent) {\n"
+               "    return std::pow(base, exponent);\n"
+               "}\n\n";
+    }
+
+    if (needs_floor_division) {
+        out += "// record 0057: 'a // b' FLOORS, where C++'s '/' truncates "
+               "toward zero.\n"
+               "// The two differ exactly when the signs differ and the "
+               "division is not exact\n"
+               "static int64_t __floor_div_i(int64_t a, int64_t b) {\n"
+               "    int64_t answer = a / b;\n"
+               "\n"
+               "    if (a % b != 0 && ((a < 0) != (b < 0))) {\n"
+               "        answer--;\n"
+               "    }\n"
+               "\n"
+               "    return answer;\n"
+               "}\n\n";
+    }
+
+    if (needs_floor_division_floating) {
+        out += "// the same over a float, which is the floor of the "
+               "quotient\n"
+               "static double __floor_div_f(double a, double b) {\n"
+               "    return std::floor(a / b);\n"
+               "}\n\n";
+    }
+
+    return out;
+}
+
 std::string Emitter::emit_symbol_table() {
     if (symbols.size() == 0) {
         return "";

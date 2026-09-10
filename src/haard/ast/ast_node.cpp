@@ -51,6 +51,7 @@ const char* haard::operator_name(AstNodeKind kind) {
     case AST_TIMES: return "operator*";
     case AST_DIVISION: return "operator/";
     case AST_INTEGER_DIVISION: return "operator//";
+    case AST_POWER: return "operator**";
     case AST_MODULO: return "operator%";
     case AST_EQUAL: return "operator==";
     case AST_NOT_EQUAL: return "operator!=";

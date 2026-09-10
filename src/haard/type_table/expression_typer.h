@@ -188,6 +188,11 @@ namespace haard {
             u32 identifier(u32 scope, u32 node);
             u32 binary(u32 scope, u32 node, u32 expected, bool comparison);
 
+            // Record 0057: 'a in b' and 'a not in b'. The container is asked
+            // for a method named 'contains', the way record 0040 asks one for
+            // 'iterator' -- there are no interfaces to ask it with
+            u32 membership(u32 scope, u32 node);
+
             // 'and', 'or', 'not' and the symbol forms of all three. Record
             // 0018 has no conversion, and so it has no truthiness either: an
             // operand of these is a bool or it is a mistake, and there is

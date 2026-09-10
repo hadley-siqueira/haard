@@ -1,0 +1,249 @@
+# std/io.hd -- print and println, the two names a program should need.
+#
+# 'import std.io' and 'println("hello, world!")', with no file to open and
+# nothing to construct first. What is written here is the console, which is
+# the one output every program has; anything else is a File (std.file), and a
+# File writes the same things by the same names.
+#
+# It stands on std.low_io directly and NOT on File, for one reason: 'console()'
+# builds a File with 'new' and gives back the pointer, so a 'print' written on
+# top of it would leak one per call. The handle is what these need, and
+# '__io_stdout()' is the handle.
+#
+# Every overload but the first two is the same shape: build a String, let it
+# do the work it already knows how to do (std.string is where a number becomes
+# text), and write what it holds. There is no formatting here on purpose --
+# '${}' in a string literal is the language's answer to that, and it is the
+# same String underneath.
+import std.low_io
+import std.string
+
+# ---- the two that touch the handle, and the ones everything else calls
+
+def print : void
+    @text : char*
+
+    let out = __io_stdout()
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(out, text[i])
+        i = i + 1
+
+def print : void
+    @c : char
+
+    __io_write(__io_stdout(), c)
+
+# ---- everything else, through the String that already knows how
+
+def print : void
+    @text : String&
+
+    print(text.text())
+
+def print : void
+    @value : i32
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+def print : void
+    @value : i64
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+def print : void
+    @value : u32
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+def print : void
+    @value : f64
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+# The narrow ones widen and hand over, which is what the String's own 'append'
+# does with the same six. They are here for the same reason: a program that
+# holds an i8 has to be able to print one, and until 2026-09-09 'println(n)'
+# over anything but i32, i64, u32 or f64 was *no 'println' takes these
+# arguments* about a whole number
+def print : void
+    @value : i8
+    print(value as i32)
+
+def print : void
+    @value : i16
+    print(value as i32)
+
+def print : void
+    @value : u8
+    print(value as u32)
+
+def print : void
+    @value : u16
+    print(value as u32)
+
+def print : void
+    @value : f32
+    print(value as f64)
+
+# Record 0050's pair, which the String knows how to write
+def print : void
+    @value : isize
+    print(value as i64)
+
+def print : void
+    @value : usize
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+# u64 has nothing wider to widen into, so it goes through the String, which is
+# where its own digits are written
+def print : void
+    @value : u64
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+def print : void
+    @value : bool
+
+    let built : String
+
+    built.append(value)
+    print(built.text())
+
+# Record 0041: the emitter's table holds a symbol's text, and 'as char*' is
+# the only way across -- which is the point of a symbol being its own type
+def print : void
+    @value : symbol
+
+    print(value as char*)
+
+# ---- and the same list, with the newline
+#
+# Written as 'print' then a newline rather than by appending one to the text:
+# appending would copy the whole string to add one character, and this is the
+# call every program makes most
+
+def println : void
+    print('\n')
+
+def println : void
+    @text : char*
+
+    print(text)
+    print('\n')
+
+def println : void
+    @c : char
+
+    print(c)
+    print('\n')
+
+def println : void
+    @text : String&
+
+    print(text)
+    print('\n')
+
+def println : void
+    @value : i32
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : i64
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u32
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : f64
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : i8
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : i16
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u8
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u16
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : u64
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : f32
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : isize
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : usize
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : bool
+
+    print(value)
+    print('\n')
+
+def println : void
+    @value : symbol
+
+    print(value)
+    print('\n')

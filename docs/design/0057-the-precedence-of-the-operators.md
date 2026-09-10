@@ -10,6 +10,7 @@ end, which had never carried any of it.
 | The emitter wrote **no parentheses**, so C++ regrouped every one of them | **fixed** |
 | `not` is a **loose word** above the comparisons and `!` is a tight symbol below them | **changed** |
 | `**` is **right associative**, the way a power tower is read | **changed** |
+| `**`, `//`, `>>>` and `in` had no back end, and two of them no type | **built** |
 
 ## The order
 
@@ -77,9 +78,9 @@ The interaction with the unary minus is **not** changed here: `-2 ** 2` is
 level, which this cascade cannot express without also changing what `- a | b`
 means. It is open.
 
-`**` is still parsed and printed and **not typed**, so none of this is visible
-in a program that runs yet. The parser suite dumps the tree, which is where it
-is proven.
+`**` is typed and emitted since the same day, below, so this is visible in a
+program that runs. The parser suite dumps the tree, which is where the
+associativity itself is proven.
 
 ## The back end had none of it
 
@@ -118,10 +119,74 @@ Three things fall out of the same helper:
   0025's printer needs them) and were never the problem. They still come out
   exactly where they were written.
 
+## The four the table had and the compiler did not
+
+Four operators of the table were precedence with nothing behind them, and they
+had failed in **two different ways**, which is worth keeping apart:
+
+- `**`, `in` and `not in` were **not typed**. `ExpressionTyper::work` had no
+  case for them, so they fell through its `default` and gave back
+  `INVALID_TYPE` *without a word* — and the first complaint was three phases
+  later and about the name the value had been bound to. `let a = 2 ** 3` said
+  *'a' has no type the emitter can write*, which is a true sentence about the
+  wrong line;
+- `//` and `>>>` **were** typed and were not **emitted**, one step further
+  along, and the emitter said so where it happened.
+
+All four run now.
+
+**`**`** types exactly as `*` does: both sides the same type, and the answer
+is that type. C++ has no operator for it, so what comes out is a call to a
+helper the emitter writes above the program — repeated multiplication for a
+whole number, `std::pow` for a float. A negative exponent over a whole number
+is `1 / (a ** -b)` truncated toward zero, which is `0` for every base but `1`
+and `-1`: the honest answer, rather than a special case that silently means
+something else. A class may overload it, like every other arithmetic operator.
+
+**`//` floors**, and that is a decision and not an implementation detail:
+C++'s `/` truncates toward zero, and the two differ exactly when the operands
+have different signs and the division is not exact. Emitting `/` would have
+been emitting a **different operator**, silently, for negative operands only.
+So it is a helper too — except over an unsigned pair, where C++'s `/` already
+floors and is used as it is.
+
+**`>>>`** shifts through an unsigned of the same width and casts back, which
+is what filling with zeroes means. Over a type that is already unsigned it *is*
+C++'s `>>`, and is emitted as it.
+
+**`a in b` is `b.contains(a)`.** The container is asked for a method by name,
+which is how this language asks a type for anything — record 0040 asks one for
+`iterator`, `has_next` and `next`, and record 0051 asks a list for `add`.
+There are no interfaces. The name is `contains` because `Range<T>` already had
+one doing exactly this before anything called it.
+
+Two things fall out of it:
+
+- **the compiler writes the type argument**, out of the value's type. `in` has
+  nowhere to put a `<i32>`, so a call that could not be *written* is one the
+  typer *builds* — which is also why none of this waits on inference for a
+  generic called with no type arguments, measured on 2026-09-10 and still
+  missing;
+- **a generic container's `contains` is a generic METHOD**, taking a `U` of
+  its own rather than the class's `T`. A method taking `T` is instantiated
+  **with the class** (record 0054), so comparing two `T` there would make
+  every `T` ever put in an `Array` need an `operator==` for a method nobody
+  called — measured again here, and it is still exactly what stops
+  `Array<Token>` from compiling. A generic method is instantiated per call
+  (record 0055) and one nobody calls is never instantiated at all.
+
+`Hash<K, V>`'s is **not** generic: a hash cannot work without comparing keys,
+so every `K` already needs an `operator==` and there is no trap to avoid.
+`String`'s is not either — it holds bytes and there is nothing to bind.
+
+The value is typed **expecting what the container holds** — the first argument
+of its instantiation, when it has one — so `7 in longs` makes the `7` an `i64`
+instead of letting it take its default and then failing to compare.
+
 ## What is not decided here
 
 - the unary minus against `**`, above;
-- `**` itself, which has no type and no emission;
-- `in` and `not in` as expressions, which have neither either. Both are read
-  by the parser and written back by the printer, and the compiler says so by
-  name rather than emitting something that means the wrong thing.
+- `[T]` as a **written** type. `let l : [i32]` is a type of its own that
+  answers to no method, where `List<i32>` works: the sugar of record 0022
+  reaches the literal and not the annotation. Found while writing this record
+  and left where it was.

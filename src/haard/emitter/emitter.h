@@ -257,6 +257,23 @@ namespace haard {
             u32 symbol_entry(const std::string& written);
             std::string emit_symbol_table();
 
+            // Record 0057: the three operators C++ has no spelling for. Only
+            // the helpers a program actually reached are written, so a
+            // program with no '**' and no '//' carries neither
+            std::string emit_arithmetic_helpers();
+
+            // Record 0057: 'a in b' is 'b.contains(a)', so the operand on
+            // the left of the dot is the one written on the RIGHT of the 'in'
+            void emit_membership(u32 module, u32 node, bool negated);
+
+            void emit_power(u32 module, u32 node);
+            void emit_floor_division(u32 module, u32 node);
+            void emit_unsigned_shift(u32 module, u32 node);
+
+            // the builtin a node's type is, and BUILTIN_COUNT when its type
+            // is not a builtin at all
+            u32 builtin_of(u32 module, u32 node);
+
             // an enum: a C++ 'enum class' over an i32, and whether an
             // expression is the NAME of one, which is what makes 'Colour.red'
             // a '::' and not a '.'
@@ -411,6 +428,13 @@ namespace haard {
             // modules is one entry and one pointer -- which is the whole of
             // what makes comparing two symbols a pointer comparison
             std::map<std::string, u32> symbols;
+
+            // which of record 0057's helpers this program reached
+            bool needs_power_signed;
+            bool needs_power_unsigned;
+            bool needs_power_floating;
+            bool needs_floor_division;
+            bool needs_floor_division_floating;
 
             std::ostringstream constants;
             u32 constant_count;

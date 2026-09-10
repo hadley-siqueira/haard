@@ -1,0 +1,62 @@
+# Record 0057. Four operators the precedence table had and the compiler did
+# not: '**' was in nobody's switch and typed to nothing, '//' and '>>>' typed
+# and had no C++ behind them, and 'in' had neither.
+#
+# Every line here is one of the four, and the golden is what the binary
+# printed -- which is the only thing that says a transpiler is right.
+
+def main : i32
+    # '**' raises. C++ has no operator for it, so it is a call to a helper
+    # written above the program
+    println(2 ** 10)
+    println(3 ** 0)
+    println(0 - 2 ** 3)         # '**' binds tighter than '-'
+    println(2 ** -1)            # 1/2 truncated, which is 0
+    println(1 ** -3)            # the one base a negative exponent survives
+    println(2.0 ** 0.5)         # and a float exponent need not be whole
+
+    # '//' FLOORS, where C++'s '/' truncates toward zero. The two differ
+    # exactly when the signs differ and the division is not exact
+    println(7 // 2)
+    println(0 - 7 // 2)         # -(7 // 2), since '//' binds tighter
+    println(7 // (0 - 2))       # floor(-3.5) = -4, where C++ gives -3
+    println((0 - 7) // 2)       # -4 as well
+    println(7.0 // 2.0)
+
+    # '>>>' fills with zeroes where '>>' keeps the sign
+    println(8 >>> 1)
+    println((0 - 8) >>> 28)
+    println((0 - 8) >> 28)
+
+    # 'a in b' is 'b.contains(a)', asked of the container by name
+    let xs : i32[] = [1, 2, 3]
+    let ls : List<i32> = [4, 5, 6]
+    let s : String = "haard"
+    let h : Hash<String, i32>
+    let key : String = "one"
+
+    h[key] = 1
+
+    println(2 in xs)
+    println(9 in xs)
+    println(9 not in xs)
+    println(5 in ls)
+    println(9 not in ls)
+    println('a' in s)
+    println('z' in s)
+    println(key in h)
+    println(3 in 0 .. 10)
+    println(30 not in 0 .. 10)
+
+    # a literal takes the type of what the container holds, so this 7 is an
+    # i64 and not an i32 that cannot be compared
+    let longs : i64[] = []
+
+    longs.add(7)
+    println(7 in longs)
+
+    # and the whole point of the four being operators: they compose
+    println(2 ** 3 // 3)
+    println(1 in 0 .. 2 ** 4)
+
+    return 0

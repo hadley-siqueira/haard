@@ -118,6 +118,14 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_DIVISION:
     case AST_INTEGER_DIVISION:
     case AST_MODULO:
+
+    // Record 0057. It was in this group's shape from the day the parser read
+    // it and in nobody's switch: the answer fell through to the default,
+    // which is INVALID_TYPE and no diagnostic, so 'let a = 2 ** 3' bound a
+    // name to nothing and the first complaint was three phases later and
+    // about the NAME. A power is arithmetic: both sides the same type, and
+    // the answer is that type
+    case AST_POWER:
         return binary(scope, node, expected, false);
 
     // Bits. The same shape as arithmetic and one rule more: they are about the
@@ -154,6 +162,10 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_LOGICAL_NOT:
     case AST_LOGICAL_NOT_OPERATOR:
         return logical(scope, node, true);
+
+    case AST_IN:
+    case AST_NOT_IN:
+        return membership(scope, node);
 
     case AST_DOT:
         return member(scope, node, false);
@@ -1188,6 +1200,125 @@ u32 ExpressionTyper::value_of_candidate(u32 owner, u32 candidate) {
 // rather be told what to be than say
 static bool is_untyped_literal(AstNodeKind kind) {
     return kind == AST_INTEGER_LITERAL || kind == AST_FLOAT_LITERAL;
+}
+
+// Record 0057. 'a in b' is 'b.contains(a)': the container is asked for a
+// method by NAME, which is how this language asks a type for anything --
+// record 0040 asks one for 'iterator', 'has_next' and 'next', and record 0051
+// asks a list for 'add'. There are no interfaces to ask with.
+//
+// The name is 'contains' because 'Range<T>' already had one, doing exactly
+// this, before anything called it.
+//
+// A generic container's 'contains' is a generic METHOD, so that record 0054's
+// trap is not sprung: a method taking the class's own T is instantiated WITH
+// the class, and comparing two T would make every T ever put in an Array need
+// an 'operator==' for a method nobody called -- measured, and it is what
+// stopped 'Array<Token>' from compiling. A generic method is instantiated per
+// call (record 0055), and one nobody calls is never instantiated at all.
+//
+// The type argument is written by the compiler and not by the source. It has
+// the value's type in hand, so a call that could not be written -- 'in' has
+// nowhere to put a '<i32>' -- is one it can build. That is also why this does
+// not wait on inference for a generic called with no arguments.
+u32 ExpressionTyper::membership(u32 scope, u32 node) {
+    TypeTable* types = module->get_types();
+    u32 value_node = first_child(node);
+    u32 container_node = second_child(node);
+
+    u32 container = types->value_of(
+        type_of(index, scope, container_node, INVALID_TYPE));
+
+    if (container == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    if (types->get_type(container)->kind != TYPE_NAMED) {
+        report(node, "'in' asks a container what it holds, and "
+               + name_of(container) + " is not one");
+
+        return INVALID_TYPE;
+    }
+
+    u32 owner = index;
+    std::vector<Candidacy> candidates = members_named(container, "contains",
+                                                      owner);
+
+    if (candidates.size() == 0) {
+        report(node, name_of(container) + " has no 'contains', which is what "
+               "'in' asks a container");
+
+        return INVALID_TYPE;
+    }
+
+    // What the container holds is the context the value is typed in, so
+    // '2 in longs' makes the 2 an i64 instead of taking its default and then
+    // failing to compare. For a container that is not an instantiation --
+    // String, or a class somebody wrote -- there is no argument and the value
+    // is typed with nothing asked of it, exactly as a binding types it
+    u32 held = argument_of_instantiation(container);
+    u32 value = types->value_of(type_of(index, scope, value_node, held));
+
+    if (value == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    AstQuery query;
+    std::vector<Candidacy> ranked;
+
+    for (const Candidacy& candidacy : candidates) {
+        Module* holder = compilation->get_module(candidacy.module);
+        Candidate* one = holder->get_symbols()->get_candidate(candidacy.candidate);
+
+        query.set_module(holder);
+
+        if (query.get_generic_parameters(one->ast_node).size() == 0) {
+            ranked.push_back(candidacy);
+            continue;
+        }
+
+        // the one type argument, which is the value's own type. A generic
+        // 'contains' takes a U of its own rather than the class's T for the
+        // reason above, so this is the whole list
+        u32 made = builder.instantiate_written(index, scope, node,
+                                               candidacy.module,
+                                               candidacy.candidate, {value});
+
+        if (made != 0) {
+            Candidacy clone;
+
+            clone.module = candidacy.module;
+            clone.candidate = made;
+
+            ranked.push_back(clone);
+        }
+    }
+
+    std::vector<Argument> arguments;
+    Argument argument;
+
+    argument.literal = false;
+    argument.node = value_node;
+    argument.type = value;
+
+    arguments.push_back(argument);
+
+    Overload chosen = overloads.choose(index, ranked, arguments);
+
+    if (chosen.status != OVERLOAD_FOUND) {
+        report(node, chosen.status == OVERLOAD_AMBIGUOUS
+                         ? "this matches more than one 'contains' equally well"
+                         : "no 'contains' of " + name_of(container)
+                               + " takes a " + name_of(value));
+
+        return INVALID_TYPE;
+    }
+
+    // on the 'in' itself, which is where the emitter looks for it
+    module->get_resolutions()->set_declaration(node, chosen.module,
+                                               chosen.candidate);
+
+    return types->builtin(BUILTIN_BOOL);
 }
 
 u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
