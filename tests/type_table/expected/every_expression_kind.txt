@@ -1,14 +1,21 @@
 <unnamed>:
+    Hash  Hash
     Box  Box
     free  i32 -> i32
-    main  i32[4] -> Box* -> Box -> {i32: f64} -> i32
+    main  i32[4] -> Box* -> Box -> Hash<i32, f64> -> i32
+    Hash  Hash<i32, f64>
+    K  K
+    V  V
+    held  V
+    operator[]  K -> V&
+    key  K
     value  i32
     method  i32
     a  i32
     row  i32[4]
     p  Box*
     b  Box
-    h  {i32: f64}
+    h  Hash<i32, f64>
     integer  i32
     floating  f64
     truth  bool
@@ -20,7 +27,7 @@
     notted  bool
     indexed  i32
     through_pointer  Box
-    hashed  f64
+    hashed  f64&
     field  i32
     arrow  i32
     called  i32
@@ -43,10 +50,15 @@
     text  char*
     ranged  <none>
     a_symbol  symbol
-  29 types interned
+    K  i32
+    V  f64
+    held  f64
+    operator[]  i32 -> f64&
+    key  i32
+  36 types interned
 diagnostics:
 error: a range is a Range<T>, and 'Range' names nothing here
-  --> main.hd:91:19
-   |
-91 |     let ranged = 0..10
-   |                   ^^
+   --> main.hd:103:19
+    |
+103 |     let ranged = 0..10
+    |                   ^^

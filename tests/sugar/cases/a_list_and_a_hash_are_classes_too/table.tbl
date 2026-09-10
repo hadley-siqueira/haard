@@ -1,0 +1,11 @@
+prelude
+    std -> std
+    import std.array
+    import std.list
+    import std.hash
+    import std.string
+
+root std = std
+
+root app = app
+    std -> std

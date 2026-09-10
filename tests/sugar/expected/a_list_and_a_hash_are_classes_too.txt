@@ -1,0 +1,16 @@
+def takes : void
+    @xs : List<i32>
+    @pairs : Hash<i32, f64>
+    @nested : List<List<i32>>
+    @mixed : Hash<i32, List<f64>>
+    @grid : Array<Hash<i32, f64>>
+    pass
+class Holder:
+    numbers : List<i32>
+    counts : Hash<String, i32>
+    fixed : f64[2]
+def main : i32
+    let l : List<i32>
+    let h : Hash<i32, f64>
+    let deep : List<Hash<i32, f64>>
+    return 0

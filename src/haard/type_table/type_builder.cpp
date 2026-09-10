@@ -92,12 +92,6 @@ u32 TypeBuilder::build_here(u32 index, u32 scope, u32 node) {
         return inner == INVALID_TYPE ? INVALID_TYPE : table->reference(inner);
     }
 
-    case AST_LIST_TYPE: {
-        u32 inner = build(index, scope, first_child(node));
-
-        return inner == INVALID_TYPE ? INVALID_TYPE : table->list(inner);
-    }
-
     case AST_ARRAY_TYPE: {
         u32 inner = build(index, scope, first_child(node));
 
@@ -106,17 +100,6 @@ u32 TypeBuilder::build_here(u32 index, u32 scope, u32 node) {
         }
 
         return table->array(inner, length_of(second_child(node)));
-    }
-
-    case AST_HASH_TYPE: {
-        u32 key = build(index, scope, first_child(node));
-        u32 value = build(index, scope, second_child(node));
-
-        if (key == INVALID_TYPE || value == INVALID_TYPE) {
-            return INVALID_TYPE;
-        }
-
-        return table->hash(key, value);
     }
 
     case AST_TUPLE_TYPE: {
@@ -193,9 +176,7 @@ u32 TypeBuilder::translate(u32 into, u32 from, u32 type) {
     switch ((TypeKind) entry->kind) {
     case TYPE_POINTER: return target->pointer(arguments[0]);
     case TYPE_REFERENCE: return target->reference(arguments[0]);
-    case TYPE_LIST: return target->list(arguments[0]);
     case TYPE_ARRAY: return target->array(arguments[0], entry->subject);
-    case TYPE_HASH: return target->hash(arguments[0], arguments[1]);
     case TYPE_TUPLE: return target->tuple(arguments);
     case TYPE_GENERIC: return target->generic(entry->module, entry->subject);
 

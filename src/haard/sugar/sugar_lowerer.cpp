@@ -108,9 +108,29 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
         walk_children(node, block, statement, hoisting);
 
         if (sibling_of(first_child(node)) == 0) {
-            lower_array_type(node);
+            lower_into_generic(node, "Array");
         }
 
+        return;
+
+    // '[T]' and '{K: V}', the other two spellings record 0022 decided are
+    // written form for a class of the standard library. They were **not**
+    // lowered until 2026-09-10 and were a structural type of their own
+    // instead: 'let l : [i32]' compiled and then answered to no method, and
+    // 'let l : [i32] = [1, 2, 3]' was *expected [i32], found Array<i32>*.
+    // 'List<i32>' worked all along, which is what made it a hole and not a
+    // decision -- the sugar reached the literal and not the annotation.
+    //
+    // Neither has a second reading the way 'T[3]' is a second reading of
+    // 'T[]', so neither asks a question before it is rewritten
+    case AST_LIST_TYPE:
+        walk_children(node, block, statement, hoisting);
+        lower_into_generic(node, "List");
+        return;
+
+    case AST_HASH_TYPE:
+        walk_children(node, block, statement, hoisting);
+        lower_into_generic(node, "Hash");
         return;
 
     // its interpolations first, so that a template string written inside one
@@ -211,27 +231,35 @@ void SugarLowerer::lower_template_string(u32 node, u32 block, u32 statement) {
 //
 // 'T[3]' is untouched. Record 0021 makes a written length a **fixed** array,
 // which is not a class at all
-void SugarLowerer::lower_array_type(u32 node) {
+// The one rewrite behind all three spellings: what the brackets held becomes
+// the type argument list, and the node becomes the named type it always meant.
+// A hash has two children and the other two have one, which is the whole
+// difference between them -- so the loop is what makes one function enough.
+void SugarLowerer::lower_into_generic(u32 node, const std::string& name) {
     Ast* ast = module->get_ast();
-    u32 element = first_child(node);
-    u32 like = token_of(element) == 0 ? token_of(node) : token_of(element);
-    u32 name = module->add_synthetic_token(TK_IDENTIFIER, "Array", like);
+    u32 first = first_child(node);
+    u32 like = token_of(first) == 0 ? token_of(node) : token_of(first);
+    u32 written = module->add_synthetic_token(TK_IDENTIFIER, name, like);
     u32 open = module->add_synthetic_token(TK_LESS_THAN, "<", like);
-
-    // the element leaves the array type and becomes the argument, so what it
-    // used to be followed by is nothing
-    ast->get_node(element)->set_sibling(0);
-
     u32 arguments = builder.make_generic_arguments(open);
+    u32 last = 0;
 
-    builder.add_child(arguments, 0, element);
+    // the sibling is read before the child is moved, because a child that has
+    // become an argument is followed by nothing
+    for (u32 child = first; child != 0; ) {
+        u32 next = sibling_of(child);
 
-    u32 identifier = builder.make_identifier(name);
+        ast->get_node(child)->set_sibling(0);
+        last = builder.add_child(arguments, last, child);
+        child = next;
+    }
+
+    u32 identifier = builder.make_identifier(written);
 
     AstNode* rewritten = ast->get_node(node);
 
     rewritten->set_kind(AST_NAMED_TYPE);
-    rewritten->set_token(name);
+    rewritten->set_token(written);
     rewritten->set_children(0);
 
     builder.add_child(node, builder.add_child(node, 0, identifier), arguments);

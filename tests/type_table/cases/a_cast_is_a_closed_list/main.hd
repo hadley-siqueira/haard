@@ -35,6 +35,8 @@ def allowed : void
     @circle : Circle*
     @shape_ref : Shape&
     @circle_ref : Circle&
+    @n_ref : i32&
+    @s_ref : symbol&
 
     # a number to a number, in either direction and losing what it loses.
     # Record 0048 keeps every one of these off the implicit list, so this is
@@ -72,6 +74,14 @@ def allowed : void
 
     # record 0041, and the one way across
     let text = s as char*
+
+    # Record 0035: a reference IS the thing it names, so it casts wherever
+    # the thing does. Until 2026-09-10 the list was asked about the WRITTEN
+    # types only, and 'who as char*' over the loop variable of a 'for x in'
+    # -- which record 0040 makes a reference -- was refused by name, in a
+    # sentence about a '&' the reader never wrote
+    let read_through = n_ref as f64
+    let named_through = s_ref as char*
 
     # and record 0045's other spelling of the same conversion, which emits
     # the same C++ and therefore asks the same list. 'i64(n)' and 'n as i64'
@@ -125,3 +135,9 @@ def refused : void
     let solid : Circle
 
     let i = solid as Shape
+
+    # and to a reference, which is the same slice arriving from the other
+    # side. Reading through a reference (above) does not reach this: it asks
+    # the same list one step in, and a class by value is not on it there
+    # either
+    let l = solid as Shape&

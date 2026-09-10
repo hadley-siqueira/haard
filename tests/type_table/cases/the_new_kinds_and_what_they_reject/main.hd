@@ -5,8 +5,11 @@
 # elements, and since 2026-09-06 one of them is an 'Array<T>' -- a class,
 # which this file has no prelude to name. So the golden holds one extra line
 # saying 'Array' names nothing, once per literal, and the mismatches under
-# them are still what the case is about. Where a bracket literal is built is
-# tests/sugar and tests/programs.
+# them are still what the case is about. Since 2026-09-10 the written '[f64]'
+# is a 'List<f64>' the same way and adds a line of its own -- which is why the
+# literal of two names below is checked against a tuple and not against that
+# one: a type this file cannot name says nothing about what it refuses. Where
+# a bracket literal is built is tests/sugar and tests/programs.
 def main : i32
     @row : i32[4]
     let n = 1
@@ -19,7 +22,7 @@ def main : i32
 
     # and refuses these
     let mixed = [1, 2.5]
-    let two_names = [n, floats]
+    let two_names = [n, pair]
     let empty = []
     let loose = null
     let wrong : i32 = null

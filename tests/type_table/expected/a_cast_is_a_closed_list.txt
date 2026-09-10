@@ -2,7 +2,7 @@
     Shape  Shape
     Circle  Circle
     Point  Point
-    allowed  i32 -> i64 -> f64 -> char* -> i32** -> symbol -> Shape* -> Circle* -> Shape& -> Circle& -> void
+    allowed  i32 -> i64 -> f64 -> char* -> i32** -> symbol -> Shape* -> Circle* -> Shape& -> Circle& -> i32& -> symbol& -> void
     refused  i32 -> f64 -> char* -> symbol -> Point& -> Shape* -> void
     tag  i32
     radius  i32
@@ -18,6 +18,8 @@
     circle  Circle*
     shape_ref  Shape&
     circle_ref  Circle&
+    n_ref  i32&
+    s_ref  symbol&
     widened  i64
     narrowed  i32
     floated  f64
@@ -36,6 +38,8 @@
     up_by_reference  Shape&
     down_by_reference  Circle&
     text  char*
+    read_through  f64
+    named_through  char*
     by_construction  i64
     address_again  i64
     n  i32
@@ -57,65 +61,71 @@
     h  <none>
     solid  Circle
     i  <none>
-  31 types interned
+    l  <none>
+  33 types interned
 diagnostics:
 error: there is no cast from Point& to i32
-  --> main.hd:91:19
-   |
-91 |     let a = point as i32
-   |                   ^^
-error: there is no cast from i32 to Point
-  --> main.hd:92:15
-   |
-92 |     let b = n as Point
-   |               ^^
-error: there is no cast from char* to Point
-  --> main.hd:95:15
-   |
-95 |     let c = p as Point
-   |               ^^
-error: there is no cast from symbol to i32
-  --> main.hd:98:15
-   |
-98 |     let d = s as i32
-   |               ^^
-error: there is no cast from Point& to Shape&
    --> main.hd:101:19
     |
-101 |     let e = point as Shape&
+101 |     let a = point as i32
+    |                   ^^
+error: there is no cast from i32 to Point
+   --> main.hd:102:15
+    |
+102 |     let b = n as Point
+    |               ^^
+error: there is no cast from char* to Point
+   --> main.hd:105:15
+    |
+105 |     let c = p as Point
+    |               ^^
+error: there is no cast from symbol to i32
+   --> main.hd:108:15
+    |
+108 |     let d = s as i32
+    |               ^^
+error: there is no cast from Point& to Shape&
+   --> main.hd:111:19
+    |
+111 |     let e = point as Shape&
     |                   ^^
 error: there is no cast from f64 to char*
-   --> main.hd:104:15
+   --> main.hd:114:15
     |
-104 |     let g = f as char*
+114 |     let g = f as char*
     |               ^^
 error: there is no cast from char* to i32
-   --> main.hd:110:15
+   --> main.hd:120:15
     |
-110 |     let j = p as i32
+120 |     let j = p as i32
     |               ^^
 error: there is no cast from i32 to char*
-   --> main.hd:111:15
+   --> main.hd:121:15
     |
-111 |     let k = n as char*
+121 |     let k = n as char*
     |               ^^
 error: there is no cast from char* to i32
-   --> main.hd:116:17
+   --> main.hd:126:17
     |
-116 |     let m = i32(p)
+126 |     let m = i32(p)
     |                 ^
 error: there is no cast from Point& to i32
-   --> main.hd:117:17
+   --> main.hd:127:17
     |
-117 |     let o = i32(point)
+127 |     let o = i32(point)
     |                 ^^^^^
 error: there is no cast from Shape* to Shape
-   --> main.hd:123:19
+   --> main.hd:133:19
     |
-123 |     let h = shape as Shape
+133 |     let h = shape as Shape
     |                   ^^
 error: there is no cast from Circle to Shape
-   --> main.hd:127:19
+   --> main.hd:137:19
     |
-127 |     let i = solid as Shape
+137 |     let i = solid as Shape
+    |                   ^^
+error: there is no cast from Circle to Shape&
+   --> main.hd:143:19
+    |
+143 |     let l = solid as Shape&
     |                   ^^

@@ -24,16 +24,8 @@ u32 TypeTable::reference(u32 type) {
     return intern(TYPE_REFERENCE, 0, 0, std::vector<u32>{type});
 }
 
-u32 TypeTable::list(u32 type) {
-    return intern(TYPE_LIST, 0, 0, std::vector<u32>{type});
-}
-
 u32 TypeTable::array(u32 type, u32 length) {
     return intern(TYPE_ARRAY, length, 0, std::vector<u32>{type});
-}
-
-u32 TypeTable::hash(u32 key, u32 value) {
-    return intern(TYPE_HASH, 0, 0, std::vector<u32>{key, value});
 }
 
 u32 TypeTable::tuple(const std::vector<u32>& elements) {

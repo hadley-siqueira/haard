@@ -4,6 +4,18 @@
 # This case exists because three blocking bugs were found on 2026-09-02 by
 # writing ordinary Haard and running it, while every suite was green. A golden
 # proves what its case writes, and nobody had written an array subscript.
+# '{i32: f64}' is written form for 'Hash<i32, f64>' since 2026-09-10, so the
+# name has to be in view -- and this file has no prelude, exactly as it has no
+# 'Array'. Declaring the smallest one that answers a subscript is what keeps
+# 'h[1]' a typed expression here, which is the kind this case is holding on to
+class Hash<K, V>:
+    held : V
+
+    def operator[] : V&
+        @key : K
+
+        return held
+
 class Box:
     value : i32
 

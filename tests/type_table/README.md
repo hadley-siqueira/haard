@@ -97,14 +97,18 @@ said whether it is one, and a string and a symbol wait on the prelude of record
 ## `[]` is dynamic and `{}` is fixed
 
 Record 0021. `[1, 2, 3]` is a growable `Array<i32>` and `{1, 2, 3}` is an
-`i32[3]` whose length is how many were written. The golden shows `[i32]` next
-to `i32[3]`, and the first is a placeholder: it is a `TYPE_LIST` because the
-prelude does not exist and there is no `Array` to name yet.
+`i32[3]` whose length is how many were written. A file with no prelude cannot
+name `Array`, so the golden records that it names nothing and the literal
+types to `<none>` — which is the case's point, since what a bracket literal
+becomes belongs to tests/sugar and tests/programs.
 
 ## What the goldens pin
 
 - **Every shape the grammar has**: pointer, `**` as two pointers, `***`,
-  reference, list, hash, tuple, sized and unsized array.
+  reference, tuple and sized array. Not `[T]`, `{K: V}` or `T[]`: record 0022
+  makes all three written form for a class, and record 0057 lowered the last
+  two of them on 2026-09-10, so a field spelled that way holds a **named**
+  type. Where they are rewritten is tests/sugar.
 - **The array length is part of the identity.** `i32[10]` and `i32[5]` are two
   types, and dropping the length from the entry collapses them — 3 of 5 cases
   fail.

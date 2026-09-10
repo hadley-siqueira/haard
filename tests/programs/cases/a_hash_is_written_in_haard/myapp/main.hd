@@ -142,6 +142,26 @@ def main : i32
     if not printed:
         failures = failures + 1
 
+    # ---- record 0057: '{K: V}' IS Hash<K, V>, and was not until 2026-09-10
+
+    # It built a structural type of its own instead, so a binding spelled this
+    # way compiled and then answered to no method -- 'h.length()' was
+    # *{i32: i32} has no member named 'length'* -- while the same program
+    # written 'Hash<i32, i32>' worked
+    let braced : {i32: i32}
+
+    braced[2] = 4
+    braced[3] = 9
+
+    let same_class = (braced.length() == 2 and braced[3] == 9
+                      and braced.has(2) and not braced.has(5))
+
+    check(out, "'{i32: i32}' is a Hash, at ${braced.length()} entries",
+          same_class)
+
+    if not same_class:
+        failures = failures + 1
+
     out->writeln("")
     out->writeln("failures: ${failures}")
 

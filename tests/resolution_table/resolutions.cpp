@@ -74,13 +74,6 @@ static std::string render(u32 module, u32 type) {
                                             : std::to_string(entry->subject))
              + "]";
 
-    case TYPE_LIST:
-        return "[" + render(module, arguments[0]) + "]";
-
-    case TYPE_HASH:
-        return "{" + render(module, arguments[0]) + ": "
-             + render(module, arguments[1]) + "}";
-
     case TYPE_TUPLE:
         for (u32 i = 0; i < arguments.size(); i++) {
             out += (i > 0 ? ", " : "") + render(module, arguments[i]);

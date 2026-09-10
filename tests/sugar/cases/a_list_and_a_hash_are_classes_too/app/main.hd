@@ -1,0 +1,28 @@
+# '[T]' is written form for 'List<T>' and '{K: V}' for 'Hash<K, V>' -- record
+# 0022, the same decision that makes 'T[]' an 'Array<T>' -- and the golden
+# below is the tree after the pass, so all three read as the classes they are.
+#
+# Neither was lowered until 2026-09-10. They built a structural type of their
+# own instead, so 'let l : [i32]' compiled and then answered to no method at
+# all, while 'let l : List<i32>' worked: the sugar reached the literal and not
+# the annotation. One rewrite serves the three of them now, which is why the
+# nesting below is written every way round.
+def takes : void
+    @xs : [i32]
+    @pairs : {i32: f64}
+    @nested : [[i32]]
+    @mixed : {i32: [f64]}
+    @grid : {i32: f64}[]
+    pass
+
+class Holder:
+    numbers : [i32]
+    counts : {String: i32}
+    fixed : f64[2]
+
+def main : i32
+    let l : [i32]
+    let h : {i32: f64}
+    let deep : [{i32: f64}]
+
+    return 0

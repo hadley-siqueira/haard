@@ -5,7 +5,7 @@
     wide  i64
     pair  (u8, f64)
     bytes  u8[2]
-    floats  [f64]
+    floats  <none>
     mixed  <none>
     two_names  <none>
     empty  <none>
@@ -14,50 +14,55 @@
     deref_array  <none>
     index_a_number  <none>
     p  i32*
-  23 types interned
+  22 types interned
 diagnostics:
-error: an array literal is an Array<T>, and 'Array' names nothing here
-  --> main.hd:18:26
+error: cannot find 'List' in this scope
+  --> main.hd:21:19
    |
-18 |     let floats : [f64] = [1.5, 2.5]
+21 |     let floats : [f64] = [1.5, 2.5]
+   |                   ^^^
+error: an array literal is an Array<T>, and 'Array' names nothing here
+  --> main.hd:21:26
+   |
+21 |     let floats : [f64] = [1.5, 2.5]
    |                          ^
 error: expected i32, found a floating point literal
-  --> main.hd:21:21
+  --> main.hd:24:21
    |
-21 |     let mixed = [1, 2.5]
+24 |     let mixed = [1, 2.5]
    |                     ^^^
-error: expected i32, found [f64]
-  --> main.hd:22:25
+error: expected i32, found (u8, f64)
+  --> main.hd:25:25
    |
-22 |     let two_names = [n, floats]
-   |                         ^^^^^^
+25 |     let two_names = [n, pair]
+   |                         ^^^^
 error: nothing here says what this is empty of, so write the type it is being given to
-  --> main.hd:23:17
+  --> main.hd:26:17
    |
-23 |     let empty = []
+26 |     let empty = []
    |                 ^
 error: there is nothing here to say what 'null' is a pointer to
-  --> main.hd:24:17
+  --> main.hd:27:17
    |
-24 |     let loose = null
+27 |     let loose = null
    |                 ^^^^
 error: expected i32, found 'null'
-  --> main.hd:25:23
+  --> main.hd:28:23
    |
-25 |     let wrong : i32 = null
+28 |     let wrong : i32 = null
    |                       ^^^^
 error: '*' needs a pointer, and this is i32[4]
-  --> main.hd:26:23
+  --> main.hd:29:23
    |
-26 |     let deref_array = *row
+29 |     let deref_array = *row
    |                       ^
 error: i32 cannot be indexed
-  --> main.hd:27:27
+  --> main.hd:30:27
    |
-27 |     let index_a_number = n[0]
+30 |     let index_a_number = n[0]
    |                           ^
 error: only a pointer can be deleted, and this is i32
-  --> main.hd:31:5
+  --> main.hd:34:5
    |
-31 |     delete n
+34 |     delete n
    |     ^^^^^^

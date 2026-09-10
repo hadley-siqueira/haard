@@ -570,9 +570,9 @@ def main : i32
     xs.add(4)
     xs[0] = 5
 
-    let ys : List<i32> = [1, 2, 3] # a doubly linked list, in Haard
+    let ys : [i32] = [1, 2, 3]     # List<i32>, written form '[T]'
 
-    let ages : Hash<symbol, i32>   # open addressed, in Haard
+    let ages : {symbol: i32}       # Hash<symbol, i32>, written form '{K: V}'
     ages[:ada] = 36
     ages[:grace] = 45
 
@@ -597,6 +597,12 @@ constructor call, and which constructor is chosen by the type written on the
 left. Generics are monomorphised: `Hash<symbol, i32>` becomes a class of its
 own, in the module that declared the generic.
 
+`T[]`, `[T]` and `{K: V}` are **written form** for three classes of the
+standard library and nothing else — a pass rewrites all three into
+`Array<T>`, `List<T>` and `Hash<K, V>` before anything is typed, so writing
+either spelling gives exactly the same class. `T[3]` is the one that is not a
+class: a fixed array, with its length in its type.
+
 ### The standard library
 
 `std/` is seven files, all of them Haard:
@@ -606,8 +612,8 @@ own, in the module that declared the generic.
 | `std.io` | `print` and `println`, overloaded on `char*`, `String&`, `char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol` |
 | `std.string` | `String`, which owns its bytes and is what a `${}` builds |
 | `std.array` | `Array<T>`, the class `T[]` is written form for |
-| `std.list` | `List<T>`, a doubly linked list |
-| `std.hash` | `Hash<K, V>`, open addressed, hashed by the `hash_of` overload set |
+| `std.list` | `List<T>`, a doubly linked list, written `[T]` as well |
+| `std.hash` | `Hash<K, V>`, open addressed, written `{K: V}` as well, hashed by the `hash_of` overload set |
 | `std.file` | `File`, `console()`, `open_read`, `open_write` — the same names as `std.io`, on a file |
 | `std.low_io` | eight functions whose bodies the compiler writes, one character at a time |
 
@@ -835,6 +841,7 @@ would be instantiated with the class, and comparing two `T` would make every
 | `T(args)` — a constructor called by hand | `main` taking `argc`/`argv` or a `String[]` |
 | a range as a value, `let r = 0 .. 10` | the operator precedence above, carried into the C++ |
 | `**`, `//` and `>>>`, which C++ has not | `x in xs`, asked of the container by name |
+| `T[]`, `[T]` and `{K: V}` as written types | `Array<T>`, `List<T>` and `Hash<K, V>` under them |
 
 **Not there yet**, and the compiler says so by name rather than emitting
 something that means the wrong thing:
@@ -842,7 +849,7 @@ something that means the wrong thing:
 | | |
 |---|---|
 | closures and lambdas | tuples as values |
-| `{key: value}` as a literal with a type | `[T]` as a written type — `List<T>` works |
+| `{key: value}` as a literal with a type | compile-time reflection |
 | versions, a registry, a lock file | move semantics, `const` |
 | threads, exceptions | a filesystem beyond open/read/write/close |
 

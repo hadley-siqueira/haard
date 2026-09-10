@@ -295,6 +295,28 @@ the table writes some of them.
 
 ## What does not work, and it is mostly silence
 
+**A cast read no reference** until 2026-09-10. Record 0049's closed list was
+asked about the **written** types, so `symbol as char*` was on it and
+`symbol& as char*` was not — and the loop variable of a `for x in` is a
+reference, which made `who as char*` *there is no cast from symbol& to char*'*,
+a sentence about a `&` the reader never wrote. It is in the README's own tour,
+which did not compile. `may_cast` reads through a reference now and asks the
+same list one step in; it **joins** the base chain rather than replacing it,
+since reading through both sides of `circle_ref as Shape&` would leave the
+slice that entry refuses.
+
+**`[T]` and `{K: V}` were never lowered** until 2026-09-10. Record 0022 makes
+`T[]`, `[T]` and `{K: V}` written form for three classes of the standard
+library, and only the **first** was ever rewritten: the other two built a
+structural type of their own, so `let l : [i32]` compiled and then answered to
+no method at all — *[i32] has no member named 'push_back'* — while the same
+program written `List<i32>` worked. The sugar reached the **literal** and not
+the **annotation**, which is what made it a hole and not a decision. One
+rewrite serves all three now, and `TYPE_LIST` and `TYPE_HASH` went with them:
+nothing built one afterwards and nothing had ever *emitted* one, which is what
+they had been all along — a shape with no back end. Record
+[0057](design/0057-the-precedence-of-the-operators.md).
+
 **Four operators were precedence with nothing behind them** until 2026-09-10,
 and they had failed two different ways. `**`, `in` and `not in` were in
 nobody's switch in the type phase: they fell through its `default`, gave back

@@ -88,6 +88,27 @@ def main : i32
     if not apart:
         failures = failures + 1
 
+    # ---- record 0057: '[T]' IS List<T>, and was not until 2026-09-10
+
+    # It built a structural type of its own instead, so a binding spelled this
+    # way compiled and then answered to no method at all -- while the very
+    # same program written 'List<i32>' worked. The sugar reached the literal
+    # and not the annotation
+    let bracketed : [i32] = [4, 5, 6]
+
+    bracketed.push_back(7)
+
+    # this file's copy of the library is a trimmed one, so what is asked here
+    # is what a List has had all along: 'x in l' is proven where the whole
+    # library is, in tests/programs/four_operators_that_had_no_back_end
+    let same_class = (bracketed.length() == 4 and bracketed[3] == 7
+                      and bracketed[0] == 4)
+
+    check(out, "'[i32]' is a List, at ${bracketed.length()} long", same_class)
+
+    if not same_class:
+        failures = failures + 1
+
     out->writeln("")
     out->writeln("failures: ${failures}")
 

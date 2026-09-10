@@ -6,6 +6,7 @@ three String keys: 1, 2, 3: ok
 symbols as keys: 7 and 9: ok
 walking the three keys adds their values to 6: ok
 a symbol in a template string: estado: ready: ok
+'{i32: i32}' is a Hash, at 2 entries: ok
 
 failures: 0
 --- files:

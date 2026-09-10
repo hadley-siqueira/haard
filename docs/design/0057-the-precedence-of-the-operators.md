@@ -183,10 +183,75 @@ The value is typed **expecting what the container holds** — the first argument
 of its instantiation, when it has one — so `7 in longs` makes the `7` an `i64`
 instead of letting it take its default and then failing to compare.
 
+## `[T]` and `{K: V}` were never lowered
+
+Found while writing the section above and fixed the same day.
+
+Record 0022 makes `T[]`, `[T]` and `{K: V}` written form for three classes of
+the standard library. Only the **first** of them was ever rewritten. The other
+two built a structural type of their own — `TYPE_LIST` and `TYPE_HASH` — so
+this compiled and then answered to nothing:
+
+```haard
+let l : [i32]
+l.push_back(2)        # [i32] has no member named 'push_back'
+let h : {i32: i32}
+h.length()            # {i32: i32} has no member named 'length'
+```
+
+while the same program written `List<i32>` and `Hash<i32, i32>` worked. The
+sugar reached the **literal** and not the **annotation**, which is what makes
+this a hole and not a decision: nothing anywhere had decided that `[T]` should
+be a second thing.
+
+One rewrite serves all three now — `SugarLowerer::lower_into_generic`, whose
+whole difference between them is that a hash has two children and the other
+two have one. `T[3]` is untouched: record 0021 makes a written length a fixed
+array, which is not a class, and the length is what tells the two apart.
+
+**`TYPE_LIST` and `TYPE_HASH` are gone with them.** Nothing built one after
+this, and nothing had ever *emitted* one — which is what they had been all
+along, a shape with no back end. That took four sites in the type phase with
+them, and two test dumpers that keep their own copy of the rendering.
+
+Three cases in `tests/type_table` had been writing those spellings as shapes,
+and they say something different now. Two of them lost a line each and gained
+a sentence saying why; one needed a `Hash<K, V>` declared in the file, since a
+name has to be in view for the same reason `Array` does; and one had its
+refusal checked against a tuple instead, because a type the file cannot name
+says nothing about what it refuses.
+
+## A cast read no reference
+
+Found the same day, in a sample in the README's own tour that did not compile,
+and fixed.
+
+Record 0049's list was asked about the **written** types only. So `symbol as
+char*` was on it and `symbol& as char*` was not — and the loop variable of a
+`for x in` is a reference (record 0040), which made this the diagnostic:
+
+```
+error: there is no cast from symbol& to char*
+    println("${who as char*} is ${ages[who]}")
+```
+
+a sentence about a `&` the reader never wrote. Record 0035 already says what
+the answer is: a reference **is** the thing it names, so it casts wherever the
+thing does. `may_cast` reads through one now and asks itself the same list one
+step in.
+
+It **joins** the base chain and does not replace it. That entry is about a
+reference on purpose — a base is reached through a pointer or a reference —
+and reading through both first leaves `Circle as Shape`, which is the slicing
+it refuses. Measured by asking only the new one: `circle_ref as Shape&` and
+`shape_ref as Circle&` stop casting.
+
+The order between the two is **not** load-bearing, and the first version of
+this section said it was. Swapping them changes no answer, because a class by
+value is refused either way — measured by swapping them. What the case pins is
+the answers, not the order: `solid as Shape&` is still refused, which is the
+slice arriving from the other side.
+
 ## What is not decided here
 
-- the unary minus against `**`, above;
-- `[T]` as a **written** type. `let l : [i32]` is a type of its own that
-  answers to no method, where `List<i32>` works: the sugar of record 0022
-  reaches the literal and not the annotation. Found while writing this record
-  and left where it was.
+- the unary minus against `**`, above.

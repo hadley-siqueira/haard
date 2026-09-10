@@ -20,8 +20,12 @@ namespace haard {
         TYPE_POINTER,
         TYPE_REFERENCE,
         TYPE_ARRAY,
-        TYPE_LIST,
-        TYPE_HASH,
+
+        // TYPE_LIST and TYPE_HASH were here until 2026-09-10. '[T]' and
+        // '{K: V}' are written form for a class of the standard library
+        // (record 0022) and record 0057 finally lowered them, so nothing
+        // builds a structural one any more -- and nothing ever emitted one,
+        // which is what they had been all along: a shape with no back end
         TYPE_TUPLE,
         TYPE_FUNCTION,
     } TypeKind;
@@ -112,12 +116,10 @@ namespace haard {
 
             u32 pointer(u32 type);
             u32 reference(u32 type);
-            u32 list(u32 type);
 
             // length is NO_LENGTH for 'T[]'
             u32 array(u32 type, u32 length);
 
-            u32 hash(u32 key, u32 value);
             u32 tuple(const std::vector<u32>& elements);
 
             // the return type is the last argument. Record 0012 keeps it out

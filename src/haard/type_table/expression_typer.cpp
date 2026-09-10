@@ -317,14 +317,8 @@ u32 ExpressionTyper::element_of(u32 type) {
 
     switch ((TypeKind) entry->kind) {
     case TYPE_ARRAY:
-    case TYPE_LIST:
     case TYPE_POINTER:
         return types->get_argument(entry->first_argument);
-
-    // a hash is read by its key and gives back its value, so the thing it
-    // holds -- for the purpose of a subscript -- is the second of the two
-    case TYPE_HASH:
-        return types->get_argument(entry->first_argument + 1);
 
     default:
         break;
@@ -439,13 +433,10 @@ u32 ExpressionTyper::subscript(u32 scope, u32 node) {
         return INVALID_TYPE;
     }
 
-    // a hash is the one that says what its subscript has to be. For everything
-    // else the subscript is a position, and nothing yet says it must be an
-    // integer
-    type_of(index, scope, second_child(node),
-            entry->kind == TYPE_HASH
-                ? types->get_argument(entry->first_argument)
-                : INVALID_TYPE);
+    // the subscript is a position, and nothing yet says it must be an
+    // integer. A hash is a class since record 0057 lowered '{K: V}', so what
+    // its key has to be is its 'operator[]' asking, like any other class
+    type_of(index, scope, second_child(node), INVALID_TYPE);
 
     return element;
 }
@@ -586,7 +577,31 @@ bool ExpressionTyper::may_cast(u32 from, u32 to) {
         return true;
     }
 
-    return one_derives_from_the_other(from, to);
+    if (one_derives_from_the_other(from, to)) {
+        return true;
+    }
+
+    // Record 0035: a reference IS the thing it names, so a 'symbol&' casts
+    // wherever a 'symbol' does. Until 2026-09-10 the list was asked about the
+    // WRITTEN types only, and 'who as char*' over the loop variable of a
+    // 'for x in' -- which record 0040 makes a reference -- was *there is no
+    // cast from symbol& to char*'*, a sentence about a '&' the reader never
+    // wrote. It is in the README's own tour, which did not compile.
+    //
+    // It JOINS the base chain above and does not replace it. That entry is
+    // about a reference on purpose -- a base is reached through a pointer or
+    // a reference -- and reading through both first would leave 'Circle as
+    // Shape', which is the slicing it refuses. Measured: asking only this one
+    // stops 'circle_ref as Shape&' from casting.
+    //
+    // Which of the two is asked first changes no answer, since a class by
+    // value is refused either way. Measured as well
+    u32 read = types->value_of(from);
+    u32 into = types->value_of(to);
+
+    // one step only: 'value_of' gives back what it was given for anything
+    // that is not a reference, so the guard is what ends the recursion
+    return (read != from || into != to) && may_cast(read, into);
 }
 
 bool ExpressionTyper::holds_a_pointer(u32 type) {
@@ -868,8 +883,7 @@ u32 ExpressionTyper::sequence(u32 scope, u32 node, u32 expected, bool array) {
     if (expected != INVALID_TYPE) {
         Type* entry = types->get_type(expected);
 
-        if ((array && entry->kind == TYPE_ARRAY)
-            || (!array && entry->kind == TYPE_LIST)) {
+        if (array && entry->kind == TYPE_ARRAY) {
             wanted = types->get_argument(entry->first_argument);
         }
 
@@ -2343,13 +2357,6 @@ std::string ExpressionTyper::name_in(u32 owner, u32 type) {
              + (entry->subject == NO_LENGTH ? ""
                                             : std::to_string(entry->subject))
              + "]";
-
-    case TYPE_LIST:
-        return "[" + name_in(owner, arguments[0]) + "]";
-
-    case TYPE_HASH:
-        return "{" + name_in(owner, arguments[0]) + ": " + name_in(owner, arguments[1])
-             + "}";
 
     case TYPE_TUPLE:
         for (u32 i = 0; i < arguments.size(); i++) {
