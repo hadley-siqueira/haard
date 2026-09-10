@@ -1,0 +1,6 @@
+# Nothing unusual here: one library and one application. What the case is
+# about is in myapp/main.hd
+root std = std
+
+root myapp = myapp
+    std -> std

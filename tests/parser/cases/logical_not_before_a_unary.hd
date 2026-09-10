@@ -1,0 +1,3 @@
+# the word is above the comparison and the symbols are below it, so one 'not'
+# reaches through a comparison to a whole stack of them
+let x = not !~-a == y

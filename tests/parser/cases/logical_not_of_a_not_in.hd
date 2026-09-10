@@ -1,0 +1,2 @@
+# the word read as a prefix and the two tokens read as an operator, in one line
+let x = not a not in b

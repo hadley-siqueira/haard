@@ -1,0 +1,16 @@
+let x = not !~-a == y
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'x'
+      binding_expression
+        logical_not 'not'
+          equal '=='
+            logical_not_operator '!'
+              bitwise_not '~'
+                unary_minus '-'
+                  identifier 'a'
+            identifier 'y'
+--- round trip: ok

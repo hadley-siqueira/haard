@@ -661,28 +661,43 @@ row binds tighter than that row.
 | cast | `as` | see below |
 | logical or | `or` `\|\|` | left |
 | logical and | `and` `&&` | left |
+| logical not | `not` | right |
 | equality | `==` `!=` | left |
 | relational | `<` `>` `<=` `>=` `in` `not in` | left |
 | range | `..` `...` | left |
 | additive | `+` `-` | left |
 | multiplicative | `*` `/` `//` `%` | left |
-| power | `**` | left |
+| power | `**` | right |
 | bitwise or | `\|` | left |
 | bitwise xor | `^` | left |
 | bitwise and | `&` | left |
 | shift | `<<` `>>` `>>>` | left |
-| unary prefix | `!` `not` `~` `-` `+` `++` `--` `&` `*` `**` `new` `delete` `delete[]` `sizeof` | right |
+| unary prefix | `!` `~` `-` `+` `++` `--` `&` `*` `**` `new` `delete` `delete[]` `sizeof` | right |
 | postfix | `.` `->` `[]` `()` `++` `--` | left |
 | primary | `::` a name, a literal, `(...)`, `[...]`, `{...}`, `\|...\|`, `this`, `super`, `${}` | |
 
-`or`/`||` and `and`/`&&` are one operator with two spellings, and so are
-`not`/`!`. Which one was written is kept, and the pretty printer writes it back.
+`or`/`||` and `and`/`&&` are one operator with two spellings. Which one was
+written is kept, and the pretty printer writes it back.
+
+`not` and `!` are **not**: they are the one pair of spellings that mean
+different things. The word is loose and takes the whole comparison to its
+right; the symbol is tight and takes the operand next to it.
+
+```haard
+not a < b        # not (a < b)
+!a < b           # (!a) < b
+```
 
 The `&` and `*` that stand between two operands are the bitwise and and the
 multiplication; the ones that open an operand are the address-of and the
 dereference. What tells them apart is only where they are read. `**` is a
 power between two operands and a **double dereference** in front of one, so
 `**p` is `*(*p)`.
+
+Because `hdc` transpiles to C++, and because C++ reads five of these levels in
+a different order, the emitter writes the parentheses the source did not need:
+`4 + 3 & 1` comes out as `4 + (3 & 1)`. Parentheses the source did write are a
+node of their own and survive on their own.
 
 #### Where it differs from C++
 
@@ -702,7 +717,7 @@ answer is that a bitwise operator is arithmetic on the representation, so it
 binds like arithmetic that is tighter still, and the parentheses C needs are
 not needed here.
 
-`as` is the other difference: it is looser than every operator except
+`as` is the second difference: it is looser than every operator except
 assignment, where a C++ cast binds as tight as a unary operator. Its left
 operand is the whole expression to its left, and **nothing may follow it** —
 there is no level between `as` and assignment for an operator to be read at.
@@ -712,31 +727,27 @@ let b = 1.0 + a as i32       # (1.0 + a) as i32
 let b = a as i32 + 1         # error: nothing may follow a statement on its line
 ```
 
-There is no ternary `?:` and no comma operator.
+The third is `not`, which is where Python has it and not where C's `!` is —
+`!` itself is unchanged. There is no ternary `?:` and no comma operator.
 
 #### Where it differs from Python
 
-`**` is **left** associative and looser than the bitwise operators, where
-Python's is right associative and the tightest binary operator it has. And a
-unary minus binds **tighter** than `**`, not looser:
+`**` is looser than the bitwise operators, where Python's is the **tightest**
+binary operator it has, and a unary minus binds tighter than it:
 
 ```haard
-2 ** 3 ** 2      # Haard: (2 ** 3) ** 2 = 64      Python: 2 ** (3 ** 2) = 512
--2 ** 2          # Haard: (-2) ** 2 = 4           Python: -(2 ** 2) = -4
+2 | 3 ** 2       # Haard: (2 | 3) ** 2 = 9      Python: 2 | (3 ** 2) = 11
+-2 ** 2          # Haard: (-2) ** 2 = 4         Python: -(2 ** 2) = -4
 ```
 
-`not` is a unary operator sitting with `!` and `~`, not a low precedence word,
-so it takes the operand next to it and not the comparison around it:
-
-```haard
-not a < b        # Haard: (not a) < b     Python: not (a < b)
-```
+It is right associative in both: `a ** b ** c` is `a ** (b ** c)`, which is
+what a power tower means — the left folding reading would be a redundant
+spelling of `a ** (b * c)`.
 
 Comparisons do not chain. `a < b < c` is `(a < b) < c`, and since the left half
 is a `bool` the compiler says so rather than reading it as `a < b and b < c`.
 
-`in` and `not in` are at the relational level, which is where Python has them
-too.
+`not`, `in` and `not in` are where Python puts them.
 
 #### Two rules that are not precedence but decide the same thing
 
@@ -751,9 +762,18 @@ it likes.
 
 #### What is parsed but not yet typed
 
-`**` between two operands, and `in`/`not in` outside a `for`, are read and
-printed but have no type and no emission yet. The compiler says so by name
-rather than emitting something that means the wrong thing.
+`**` between two operands, and `in`/`not in` outside a `for`, are read by the
+parser and written back by the pretty printer, but they have no type and no
+emission. They are precedence with nothing behind them yet, and the compiler
+says so rather than emitting something that means the wrong thing:
+
+```haard
+let a = 2 ** 3          # hdc: 'a' has no type the emitter can write
+if 2 in xs:             # hdc: this expression cannot be emitted yet
+```
+
+`for x in xs` is a different rule and works: the `in` there is read by the
+loop, not by the expression grammar.
 
 ## Where the compiler is
 
@@ -770,6 +790,8 @@ rather than emitting something that means the wrong thing.
 | imports, aliases, star imports, cycles | two versions of one library in one program |
 | `haard.pkg`, followed transitively | rustc-shaped diagnostics with carets |
 | pointers, `new`, `delete`, `new T[n]` | modules compiled to one C++17 file |
+| `T(args)` — a constructor called by hand | `main` taking `argc`/`argv` or a `String[]` |
+| a range as a value, `let r = 0 .. 10` | the operator precedence above, carried into the C++ |
 
 **Not there yet**, and the compiler says so by name rather than emitting
 something that means the wrong thing:
@@ -777,8 +799,7 @@ something that means the wrong thing:
 | | |
 |---|---|
 | closures and lambdas | tuples as values |
-| `{key: value}` as a literal with a type | `T(args)` — calling a constructor by hand |
-| a range as a value (`let r = 0 .. 10`) | `main(argc, argv)` |
+| `{key: value}` as a literal with a type | `**`, and `in` as an expression |
 | versions, a registry, a lock file | move semantics, `const` |
 | threads, exceptions | a filesystem beyond open/read/write/close |
 

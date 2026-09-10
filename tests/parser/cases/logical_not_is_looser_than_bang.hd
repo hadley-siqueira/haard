@@ -1,0 +1,6 @@
+# 'not' is the loose word and '!' is the tight symbol: 'not' takes the whole
+# comparison and '!' takes the name next to it
+def main : i32
+    let a = not x == y
+    let b = !x == y
+    return a

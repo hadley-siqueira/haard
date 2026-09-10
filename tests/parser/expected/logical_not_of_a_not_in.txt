@@ -1,4 +1,4 @@
-let x = a ** b ** c
+let x = not a not in b
 --- tree
 module
   let_declaration 'let'
@@ -6,9 +6,8 @@ module
       binding_name
         identifier 'x'
       binding_expression
-        power '**'
-          power '**'
+        logical_not 'not'
+          not_in 'not'
             identifier 'a'
             identifier 'b'
-          identifier 'c'
 --- round trip: ok

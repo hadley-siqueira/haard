@@ -295,6 +295,19 @@ the table writes some of them.
 
 ## What does not work, and it is mostly silence
 
+**The emitter carried none of the language's precedence** until 2026-09-10.
+It wrote every binary operator as `left oper right` with nothing around it, so
+**C++ regrouped every expression the two languages read differently** — which
+is five levels of the table, since `**`, `|`, `^`, `&` and the shifts bind
+tighter than `*` here and looser than `+` there. `println(4 + 3 & 1)` printed
+1 where the tree says 5, `println(1 << 2 + 3)` printed 32 where it says 7.
+`hdc` was right, g++ was right and the program was wrong, with no diagnostic
+anywhere. Not one of the 37 emitter goldens moved when it was fixed: **no test
+had ever written an expression the two languages disagree about**, which is
+exactly how a defect of this shape lives for as long as it did. Record
+[0057](design/0057-the-precedence-of-the-operators.md), which also moved `not`
+above the comparisons and made `**` right associative.
+
 **A call whose answer is thrown away** was typed by nothing until 2026-09-02 —
 `takes_int(2.5)` passed in silence — and now is. **The increment of a C shaped
 `for`** was the same hole and lasted a day longer: `for i = 0; i < 3;

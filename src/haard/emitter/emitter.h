@@ -168,6 +168,26 @@ namespace haard {
             void emit_declaring_assignment(u32 module, u32 node);
 
             void emit_expression(u32 module, u32 node);
+
+            // The precedence **C++** will read the emitted text with, since
+            // C++ is the language the text is written in. Haard's own order is
+            // in the parser and the two disagree on five levels -- '**', '|',
+            // '^', '&' and the shifts bind tighter than '*' here and looser
+            // than '+' there -- so what carries the meaning across is a pair
+            // of parentheses this emitter writes. Tighter binds lower
+            int precedence_of(u32 module, u32 node);
+
+            // whether this node is emitted as a method call rather than as an
+            // operator: an overloaded operator (record 0034), record 0031's
+            // assignment, and an enum's comparison. What comes out is a call
+            // and a call needs nothing around it
+            bool emitted_as_a_call(u32 module, u32 node);
+
+            // a child of an operator, in parentheses when C++ would otherwise
+            // read the text the wrong way round. 'limit' is the loosest
+            // precedence allowed to stand here unwrapped
+            void emit_operand(u32 module, u32 node, int limit);
+
             void emit_binary(u32 module, u32 node, const std::string& oper);
             void emit_unary(u32 module, u32 node, const std::string& oper);
             void emit_postfix(u32 module, u32 node, const std::string& oper);

@@ -1609,18 +1609,47 @@ u32 Parser::parse_logical_or_expression() {
     return node;
 }
 
-//   logical_and := equality (('and' | '&&') equality)*
+//   logical_and := logical_not (('and' | '&&') logical_not)*
 u32 Parser::parse_logical_and_expression() {
-    u32 node = parse_equality_expression();
+    u32 node = parse_logical_not_expression();
 
     while (match_on_same_line(TK_AND) || match_on_same_line(TK_LOGICAL_AND)) {
         u32 oper = matched;
-        u32 right = parse_equality_expression();
+        u32 right = parse_logical_not_expression();
 
         node = builder.make_binary_operator(AST_LOGICAL_AND, oper, node, right);
     }
 
     return node;
+}
+
+// The word is **loose** and the symbol is tight, which is the one place where
+// the two spellings of an operator stop meaning the same thing. 'not a < b'
+// asks about the comparison -- Python's reading, and the one a person who
+// writes the word expects -- while '!a < b' is '(!a) < b', which is where C
+// puts its own '!'. Until 2026-09-10 'not' sat with '!' at the unary level and
+// 'not a < b' was '(not a) < b': it typed 'not' against an i32 and said so,
+// which is a diagnostic about a line nobody meant to write.
+//
+// Right associative by recursion, so 'not not a' is a double negation. There
+// is no loop for the same reason the unary level has none: a prefix word
+// applies to whatever comes after it, however many of them there are.
+//
+// 'not in' is **not** read here. It is two tokens combined at the relational
+// level below, and it is only ever met with a left operand already in hand --
+// so 'a not in b' never reaches this rule, and 'not a in b' is the negation of
+// 'a in b', which is what it says.
+//
+//   logical_not := ('not')* equality
+u32 Parser::parse_logical_not_expression() {
+    if (!match_on_same_line(TK_NOT)) {
+        return parse_equality_expression();
+    }
+
+    u32 oper = matched;
+
+    return builder.make_unary_operator(AST_LOGICAL_NOT, oper,
+                                       parse_logical_not_expression());
 }
 
 //   equality := relational (('==' | '!=') relational)*
@@ -1799,21 +1828,28 @@ u32 Parser::parse_term_expression() {
 // the arithmetic ones and this order would be wrong. It is not an accident and
 // it is not to be corrected.
 //
-// '**' is left associative here, the way the old compiler wrote it, even though
-// mathematics reads a power tower from the right.
+// '**' is **right** associative, which is what a power tower means: 'a ** b ** c'
+// is 'a ** (b ** c)', because the left folding reading would be a redundant
+// spelling of 'a ** (b * c)' and no notation spends a syntax on that. It is
+// what Python, Ruby, Fortran, Haskell, F#, Perl, R and JavaScript all do; the
+// old compiler folded it left and that was corrected on 2026-09-10.
 //
-//   power_expression := bitwise_or_expression ('**' bitwise_or_expression)*
+// Like the assignment level, this is one of the two levels of the cascade that
+// recurses on itself instead of looping, and that is what right associativity
+// looks like here.
+//
+//   power_expression := bitwise_or_expression ('**' power_expression)?
 u32 Parser::parse_power_expression() {
     u32 node = parse_bitwise_or_expression();
 
-    while (match_on_same_line(TK_POWER)) {
-        u32 oper = matched;
-        u32 right = parse_bitwise_or_expression();
-
-        node = builder.make_binary_operator(AST_POWER, oper, node, right);
+    if (!match_on_same_line(TK_POWER)) {
+        return node;
     }
 
-    return node;
+    u32 oper = matched;
+    u32 right = parse_power_expression();
+
+    return builder.make_binary_operator(AST_POWER, oper, node, right);
 }
 
 //   bitwise_or_expression := bitwise_xor_expression ('|' bitwise_xor_expression)*
@@ -1893,13 +1929,14 @@ u32 Parser::parse_shift_expression() {
 // nots. There is no loop here because a prefix operator applies to whatever
 // comes after it, however many of them there are.
 //
-// 'not' and '!' are two node kinds, as they are two token kinds — the language
-// keeps them apart and this is not the place to merge them.
+// '!' is here and 'not' is **not**: the word is a level of its own up above
+// the comparisons, so the two spellings are two node kinds because they are
+// two operators and no longer only because they are two token kinds.
 //
 // '**p' is the old compiler's shape: two dereferences, both carrying the same
 // '**' token, rather than a node kind of its own.
 //
-//   unary_expression := ('!' | 'not' | '&' | '*' | '**' | '~' | '-' | '+'
+//   unary_expression := ('!' | '&' | '*' | '**' | '~' | '-' | '+'
 //                       | '++' | '--') unary_expression
 //                     | postfix_expression
 u32 Parser::parse_unary_expression() {
@@ -1921,8 +1958,6 @@ u32 Parser::parse_unary_expression() {
 
     if (match_on_same_line(TK_LOGICAL_NOT)) {
         kind = AST_LOGICAL_NOT_OPERATOR;
-    } else if (match_on_same_line(TK_NOT)) {
-        kind = AST_LOGICAL_NOT;
     } else if (match_on_same_line(TK_BITWISE_AND)) {
         kind = AST_ADDRESS_OF;
     } else if (match_on_same_line(TK_TIMES)) {

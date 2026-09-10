@@ -1,0 +1,5 @@
+# 'not' sits between 'and' and the comparisons, exactly where Python puts it
+def main : i32
+    let a = not x and y
+    let b = not not x
+    return a

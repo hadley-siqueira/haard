@@ -1,0 +1,44 @@
+# Haard's precedence is deliberately not C's: '**', '|', '^', '&' and the
+# shifts all bind TIGHTER than '*' and '/', where C has them looser than '+'.
+# The compiler transpiles to C++, so every one of these lines is a number the
+# two languages disagree about, and the emitter has to write parentheses the
+# source never needed to carry the meaning across. Until 2026-09-10 it wrote
+# none: 'println(4 + 3 & 1)' came out as 'println(4 + 3 & 1)' and the program
+# printed C's answer, with no diagnostic anywhere.
+#
+# Every line below prints the Haard answer. The C answer is in the comment,
+# and it is a different number: this golden IS the difference between the two
+# languages, checked by running the binary.
+import std.io
+
+def main : i32
+    println(4 + 3 & 1)          # 4 + (3 & 1) = 5, where C says 1
+    println(1 << 2 + 3)         # (1 << 2) + 3 = 7, where C says 32
+    println(2 * 3 | 4)          # 2 * (3 | 4) = 14, where C says 6
+    println(8 - 3 ^ 1)          # 8 - (3 ^ 1) = 6, where C says 4
+    println(1 + 6 >> 1)         # 1 + (6 >> 1) = 4, where C says 3
+    println(12 / 3 & 6)         # 12 / (3 & 6) = 6, where C says 4
+
+    # parentheses the source DID write are a node of their own and survive on
+    # their own, so this is still C's number and not Haard's
+    println((4 + 3) & 1)        # 1
+
+    # where the two languages agree, nothing is added and nothing changes
+    println(1 + 2 * 3)          # 7 in both
+    println(1 + 2 == 3)         # true in both
+
+    let a = 1
+    let b = 2
+
+    # 'not' is the loose word and takes the whole comparison; '!' is the tight
+    # symbol and takes what is next to it. The word needs the parentheses in
+    # C++ and the symbol does not
+    println(not a < b)          # not (a < b) = false
+    println(not a == b)         # not (a == b) = true
+    println(!(a < b))           # false
+
+    # two prefix operators that would scan as one token in C++ if the emitter
+    # wrote them side by side: '- -5' is not '--5'
+    println(- -5)               # 5
+
+    return 0

@@ -2039,7 +2039,7 @@ bool Emitter::emit_union_comparison(u32 module_index, u32 node, bool negated) {
     }
 
     out << (negated ? "!" : "");
-    emit_expression(module_index, left);
+    emit_operand(module_index, left, 2);
     out << ".__equals(";
     emit_expression(module_index, child_of(module_index, node, 1));
     out << ")";
@@ -2406,7 +2406,7 @@ void Emitter::emit_expression(u32 module, u32 node) {
             return;
         }
 
-        emit_expression(module, child_of(module, node, 0));
+        emit_operand(module, child_of(module, node, 0), 2);
         out << "[";
         emit_expression(module, child_of(module, node, 1));
         out << "]";
@@ -2583,12 +2583,12 @@ void Emitter::emit_expression(u32 module, u32 node) {
 
     case AST_DELETE:
         out << "delete ";
-        emit_expression(module, child_of(module, node, 0));
+        emit_operand(module, child_of(module, node, 0), 3);
         return;
 
     case AST_DELETE_ARRAY:
         out << "delete[] ";
-        emit_expression(module, child_of(module, node, 0));
+        emit_operand(module, child_of(module, node, 0), 3);
         return;
 
     default:
@@ -2598,14 +2598,142 @@ void Emitter::emit_expression(u32 module, u32 node) {
     fail("this expression cannot be emitted yet");
 }
 
+// C++'s own table, tighter first, with the two levels this emitter never
+// writes -- the comma and the conditional -- left out. The numbers mean
+// nothing on their own: only their order is read
+int Emitter::precedence_of(u32 module, u32 node) {
+    if (node == 0) {
+        return 0;
+    }
+
+    // whatever it was written as, what comes out is 'left.method(right)', and
+    // the postfix level is what a call is read at
+    if (emitted_as_a_call(module, node)) {
+        return 2;
+    }
+
+    switch (kind_of(module, node)) {
+    // a literal, a name, and everything this emitter writes with its own
+    // brackets around it -- a parenthesis kept from the source, a container
+    // literal, a range, all of which come out as a call or a value
+    case AST_INTEGER_LITERAL: case AST_FLOAT_LITERAL: case AST_CHAR_LITERAL:
+    case AST_STRING_LITERAL: case AST_SYMBOL_LITERAL: case AST_TRUE:
+    case AST_FALSE: case AST_NULL_LITERAL: case AST_THIS: case AST_IDENTIFIER:
+    case AST_SCOPE: case AST_GENERIC_NAME: case AST_PARENTHESIS: case AST_LIST:
+    case AST_ARRAY: case AST_HASH: case AST_INCLUSIVE_RANGE:
+    case AST_EXCLUSIVE_RANGE:
+        return 1;
+
+    case AST_CALL: case AST_INDEX: case AST_DOT: case AST_ARROW:
+    case AST_POST_INCREMENT: case AST_POST_DECREMENT: case AST_SIZEOF:
+        return 2;
+
+    case AST_UNARY_MINUS: case AST_UNARY_PLUS: case AST_BITWISE_NOT:
+    case AST_LOGICAL_NOT: case AST_LOGICAL_NOT_OPERATOR: case AST_ADDRESS_OF:
+    case AST_DEREFERENCE: case AST_PRE_INCREMENT: case AST_PRE_DECREMENT:
+    case AST_CAST: case AST_NEW: case AST_DELETE: case AST_DELETE_ARRAY:
+        return 3;
+
+    case AST_TIMES: case AST_DIVISION: case AST_MODULO: return 5;
+    case AST_PLUS: case AST_MINUS: return 6;
+    case AST_BITWISE_LEFT_SHIFT: case AST_BITWISE_RIGHT_SHIFT: return 7;
+
+    case AST_LESS_THAN: case AST_GREATER_THAN:
+    case AST_LESS_THAN_OR_EQUAL: case AST_GREATER_THAN_OR_EQUAL:
+        return 9;
+
+    case AST_EQUAL: case AST_NOT_EQUAL: return 10;
+    case AST_BITWISE_AND: return 11;
+    case AST_BITWISE_XOR: return 12;
+    case AST_BITWISE_OR: return 13;
+    case AST_LOGICAL_AND: return 14;
+    case AST_LOGICAL_OR: return 15;
+
+    case AST_ASSIGNMENT: case AST_PLUS_ASSIGNMENT: case AST_MINUS_ASSIGNMENT:
+    case AST_TIMES_ASSIGNMENT: case AST_DIVISION_ASSIGNMENT:
+    case AST_MODULO_ASSIGNMENT: case AST_BITWISE_AND_ASSIGNMENT:
+    case AST_BITWISE_OR_ASSIGNMENT: case AST_BITWISE_XOR_ASSIGNMENT:
+    case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT:
+    case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
+        return 16;
+
+    default:
+        break;
+    }
+
+    // a kind this emitter has no C++ for. It reports that where it is written
+    // and never reaches here with anything to wrap
+    return 1;
+}
+
+bool Emitter::emitted_as_a_call(u32 module_index, u32 node) {
+    AstNodeKind kind = kind_of(module_index, node);
+    Module* module = compilation->get_module(module_index);
+
+    // the typer writes a candidate down only for an operator a class
+    // overloaded, so every builtin one answers no here
+    if (module->get_resolutions()->get(node)->candidate != 0) {
+        return true;
+    }
+
+    if (kind == AST_ASSIGNMENT) {
+        return declares_copy(module_index,
+                             type_at(module_index, child_of(module_index, node,
+                                                            0)));
+    }
+
+    if (kind == AST_EQUAL || kind == AST_NOT_EQUAL) {
+        u32 holder = module_index;
+        u32 owner = enum_of_type(module_index, child_of(module_index, node, 0),
+                                 holder);
+
+        // the negated one comes out as '!left.__equals(right)', which is a
+        // unary expression and not a call
+        return owner != 0 && carries_a_payload(holder, owner)
+               && kind == AST_EQUAL;
+    }
+
+    return false;
+}
+
+void Emitter::emit_operand(u32 module, u32 node, int limit) {
+    if (precedence_of(module, node) <= limit) {
+        emit_expression(module, node);
+        return;
+    }
+
+    out << "(";
+    emit_expression(module, node);
+    out << ")";
+}
+
+// Record 0025 writes C++ from the tree, and the tree is the only place the
+// grouping still exists: the parser folded 'a + b & c' into 'a + (b & c)' by
+// Haard's precedence and nothing downstream remembers that it was written
+// without parentheses. Handing the operands straight to the output would let
+// **C++'s** precedence regroup them -- '(a + b) & c', a different number,
+// with no diagnostic anywhere -- so each side is asked what it would be read
+// as over there, and wrapped when the answer is looser than this operator.
+//
+// Parentheses the source had are a node of their own and survive on their
+// own; these are the ones the source did not need and C++ does
 void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
     if (emit_operator(module, node)) {
         return;
     }
 
-    emit_expression(module, child_of(module, node, 0));
+    int level = precedence_of(module, node);
+
+    // every binary operator C++ has is left associative except the
+    // assignments, and the side that may hold an equal precedence unwrapped is
+    // the one the folding starts from
+    bool to_the_right = level == 16;
+
+    emit_operand(module, child_of(module, node, 0),
+                 to_the_right ? level - 1 : level);
     out << " " << oper << " ";
-    emit_expression(module, child_of(module, node, 1));
+    emit_operand(module, child_of(module, node, 1),
+                 to_the_right ? level : level - 1);
 }
 
 bool Emitter::emit_operator(u32 module_index, u32 node) {
@@ -2622,7 +2750,7 @@ bool Emitter::emit_operator(u32 module_index, u32 node) {
     u32 holder = found->module;
     u32 candidate = found->candidate;
 
-    emit_expression(module_index, left);
+    emit_operand(module_index, left, 2);
     out << (is_pointer(module_index, left) ? "->" : ".")
         << name_of(holder, candidate) << "(";
 
@@ -2650,13 +2778,36 @@ bool Emitter::emit_operator(u32 module_index, u32 node) {
     return true;
 }
 
+// A prefix operator whose operand begins with the same character is **one
+// token** to C++'s scanner: the '-' of '- -a' comes out as '--a', which is a
+// pre-decrement of 'a' and not the double negation that was written, and '&'
+// of '&x' is a '&&'. The parentheses are what keep them two
+static bool glues_to(char oper, AstNodeKind operand) {
+    if (oper != '-' && oper != '+' && oper != '&') {
+        return false;
+    }
+
+    switch (operand) {
+    case AST_UNARY_MINUS: case AST_PRE_DECREMENT: return oper == '-';
+    case AST_UNARY_PLUS: case AST_PRE_INCREMENT: return oper == '+';
+    case AST_ADDRESS_OF: return oper == '&';
+    default: return false;
+    }
+}
+
 void Emitter::emit_unary(u32 module, u32 node, const std::string& oper) {
+    u32 operand = child_of(module, node, 0);
+
     out << oper;
-    emit_expression(module, child_of(module, node, 0));
+
+    // a prefix operator takes another one unwrapped -- '!!x' is two nots --
+    // unless the two would scan as a single token
+    emit_operand(module, operand,
+                 glues_to(oper[0], kind_of(module, operand)) ? 2 : 3);
 }
 
 void Emitter::emit_postfix(u32 module, u32 node, const std::string& oper) {
-    emit_expression(module, child_of(module, node, 0));
+    emit_operand(module, child_of(module, node, 0), 2);
     out << oper;
 }
 
@@ -2681,7 +2832,7 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
         return;
     }
 
-    emit_expression(module, left);
+    emit_operand(module, left, 2);
     out << (arrow ? "->" : ".");
 
     u32 right = child_of(module, node, 1);
@@ -2928,7 +3079,7 @@ void Emitter::emit_call(u32 module_index, u32 node) {
         }
     }
 
-    emit_expression(module_index, callee);
+    emit_operand(module_index, callee, 2);
     emit_call_arguments(module_index, child_of(module_index, node, 1), holder,
                         candidate);
 }
@@ -3697,7 +3848,7 @@ bool Emitter::emit_copy_assignment(u32 module_index, u32 node) {
     // there, which is the failure record 0037 exists to prevent
     u32 wanted = types->reference(types->value_of(type_at(module_index, left)));
 
-    emit_expression(module_index, left);
+    emit_operand(module_index, left, 2);
     out << (is_pointer(module_index, left) ? "->" : ".") << "m_assign(";
 
     if (!emit_conversion(module_index, module_index, wanted, right)) {

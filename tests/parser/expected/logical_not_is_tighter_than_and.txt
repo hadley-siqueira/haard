@@ -1,6 +1,6 @@
 def main : i32
-    let a = not x == y
-    let b = !x == y
+    let a = not x and y
+    let b = not not x
     return a
 --- tree
 module
@@ -15,7 +15,7 @@ module
           binding_name
             identifier 'a'
           binding_expression
-            equal '=='
+            logical_and 'and'
               logical_not 'not'
                 identifier 'x'
               identifier 'y'
@@ -24,10 +24,9 @@ module
           binding_name
             identifier 'b'
           binding_expression
-            equal '=='
-              logical_not_operator '!'
+            logical_not 'not'
+              logical_not 'not'
                 identifier 'x'
-              identifier 'y'
       return 'return'
         identifier 'a'
 --- round trip: ok

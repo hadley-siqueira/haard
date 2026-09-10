@@ -1,0 +1,26 @@
+# The tree is the only place the grouping lives: the parser folded these by
+# Haard's precedence -- '&', '|', '^' and the shifts bind tighter than '*' and
+# '/' here, where C has them looser than '+' -- and nothing downstream
+# remembers that the source wrote no parentheses. So the emitter writes them,
+# and this golden is the text where they land.
+#
+# Every value below is a number C's own order would get wrong, and the exit
+# status is their sum: 47 with Haard's grouping and 55 with C's.
+def main : i32
+    let a = 4 + 3 & 1           # 4 + (3 & 1) = 5
+    let b = 1 << 2 + 3          # (1 << 2) + 3 = 7
+    let c = 2 * 3 | 4           # 2 * (3 | 4) = 14
+    let d = 8 - 3 ^ 1           # 8 - (3 ^ 1) = 6
+    let e = 1 + 6 >> 1          # 1 + (6 >> 1) = 4
+    let f = 12 / 3 & 6          # 12 / (3 & 6) = 6
+
+    # two prefix operators C++ would scan as one token written side by side
+    let g = - -5                # 5, and never '--5'
+
+    # the word takes the whole comparison, so it needs parentheses over there
+    let held = not a < b
+
+    if held:
+        return 0
+
+    return a + b + c + d + e + f + g

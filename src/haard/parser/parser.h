@@ -136,11 +136,13 @@ namespace haard {
             u32 parse_expression();
 
             // the loose end of the cascade. The order is the old compiler's,
-            // and so is the *left* associativity of the assignment level
+            // except that the assignment level is *right* associative here --
+            // the reference wrote it as a left fold and that was wrong
             u32 parse_assignment_expression();
             u32 parse_cast_expression();
             u32 parse_logical_or_expression();
             u32 parse_logical_and_expression();
+            u32 parse_logical_not_expression();
             u32 parse_equality_expression();
             u32 parse_relational_expression();
             u32 parse_range_expression();
