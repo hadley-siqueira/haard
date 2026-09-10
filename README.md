@@ -648,6 +648,113 @@ def main : i32
     return 0
 ```
 
+### Operators and precedence
+
+Haard's precedence is **not C's and not Python's**, and the difference is on
+purpose. The parser is a cascade of one function per level, so the table below
+is the parser read from top to bottom: **loosest first**, everything under a
+row binds tighter than that row.
+
+| Level | Operators | Associativity |
+|---|---|---|
+| assignment | `=` `+=` `-=` `*=` `/=` `//=` `%=` `&=` `\|=` `^=` `~=` `<<=` `>>=` `>>>=` | right |
+| cast | `as` | see below |
+| logical or | `or` `\|\|` | left |
+| logical and | `and` `&&` | left |
+| equality | `==` `!=` | left |
+| relational | `<` `>` `<=` `>=` `in` `not in` | left |
+| range | `..` `...` | left |
+| additive | `+` `-` | left |
+| multiplicative | `*` `/` `//` `%` | left |
+| power | `**` | left |
+| bitwise or | `\|` | left |
+| bitwise xor | `^` | left |
+| bitwise and | `&` | left |
+| shift | `<<` `>>` `>>>` | left |
+| unary prefix | `!` `not` `~` `-` `+` `++` `--` `&` `*` `**` `new` `delete` `delete[]` `sizeof` | right |
+| postfix | `.` `->` `[]` `()` `++` `--` | left |
+| primary | `::` a name, a literal, `(...)`, `[...]`, `{...}`, `\|...\|`, `this`, `super`, `${}` | |
+
+`or`/`||` and `and`/`&&` are one operator with two spellings, and so are
+`not`/`!`. Which one was written is kept, and the pretty printer writes it back.
+
+The `&` and `*` that stand between two operands are the bitwise and and the
+multiplication; the ones that open an operand are the address-of and the
+dereference. What tells them apart is only where they are read. `**` is a
+power between two operands and a **double dereference** in front of one, so
+`**p` is `*(*p)`.
+
+#### Where it differs from C++
+
+Five levels — `**`, `|`, `^`, `&` and the shifts — sit **between the
+multiplication and the unary operators**, so all five bind **tighter than `*`
+and `/`, and much tighter than `+` and `-`**. The four C also has are all
+looser than arithmetic there, so this is the reverse of C:
+
+```haard
+4 + 3 & 1        # Haard: 4 + (3 & 1)     C: (4 + 3) & 1
+1 << 2 + 3       # Haard: (1 << 2) + 3    C: 1 << (2 + 3)
+2 * 3 | 4        # Haard: 2 * (3 | 4)     C: (2 * 3) | 4
+```
+
+The C order is the one that makes `if (a & MASK == 0)` a famous bug. Haard's
+answer is that a bitwise operator is arithmetic on the representation, so it
+binds like arithmetic that is tighter still, and the parentheses C needs are
+not needed here.
+
+`as` is the other difference: it is looser than every operator except
+assignment, where a C++ cast binds as tight as a unary operator. Its left
+operand is the whole expression to its left, and **nothing may follow it** —
+there is no level between `as` and assignment for an operator to be read at.
+
+```haard
+let b = 1.0 + a as i32       # (1.0 + a) as i32
+let b = a as i32 + 1         # error: nothing may follow a statement on its line
+```
+
+There is no ternary `?:` and no comma operator.
+
+#### Where it differs from Python
+
+`**` is **left** associative and looser than the bitwise operators, where
+Python's is right associative and the tightest binary operator it has. And a
+unary minus binds **tighter** than `**`, not looser:
+
+```haard
+2 ** 3 ** 2      # Haard: (2 ** 3) ** 2 = 64      Python: 2 ** (3 ** 2) = 512
+-2 ** 2          # Haard: (-2) ** 2 = 4           Python: -(2 ** 2) = -4
+```
+
+`not` is a unary operator sitting with `!` and `~`, not a low precedence word,
+so it takes the operand next to it and not the comparison around it:
+
+```haard
+not a < b        # Haard: (not a) < b     Python: not (a < b)
+```
+
+Comparisons do not chain. `a < b < c` is `(a < b) < c`, and since the left half
+is a `bool` the compiler says so rather than reading it as `a < b and b < c`.
+
+`in` and `not in` are at the relational level, which is where Python has them
+too.
+
+#### Two rules that are not precedence but decide the same thing
+
+A `<` **glued** to a name opens a generic argument list; **spaced**, it is a
+comparison. `f<i32>()` calls a generic and `a < b` compares — spacing is what
+disambiguates, and `a<b` glued to something that cannot take type arguments is
+an error that says as much.
+
+An operator must be on the **same line** as its left operand, unless a `(`,
+`[` or `{` is open — inside brackets one expression may span as many lines as
+it likes.
+
+#### What is parsed but not yet typed
+
+`**` between two operands, and `in`/`not in` outside a `for`, are read and
+printed but have no type and no emission yet. The compiler says so by name
+rather than emitting something that means the wrong thing.
+
 ## Where the compiler is
 
 **Works, and every line of it is proven by a program that runs:**
