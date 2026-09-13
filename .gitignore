@@ -12,6 +12,10 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 
+# ...but not the whole-program cases: their Makefile IS the test, it says how a
+# Haard program becomes a binary, and the CMake rule above was swallowing it.
+!tests/programs/cases/*/Makefile
+
 # Prerequisites
 *.d
 
