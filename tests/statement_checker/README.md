@@ -31,7 +31,10 @@ file here exist for that.
 | `the_coercion_list_is_not_only_for_a_call` | record 0023: the return, the binding and the assignment ask record 0018's list, which until 2026-09-03 only a call knew. Six forms pass in silence and nine are refused — an upcast by value, a base where a derived was asked, a numeric widening, and a class with `String`'s own fields under another name, which is what pins that `char*` reaches `String` because the language names it and not because a class holds a `char*` |
 | `the_increment_of_a_for_is_checked` | the last part of `for a; b; c:` was typed by nothing until 2026-09-03, so a wrong call passed there in silence while the same line inside the body was reported. Found by the emitter refusing to name something the type phase had never looked at. The golden is **three** errors and not four: the head is not checked here on purpose, because an assignment there declares and its initialiser belongs to the `TypeCollector` |
 | `a_call_written_as_a_statement` | a call whose answer is thrown away is type checked at all, which nothing did until 2026-09-02 |
-| `a_closure_gives_back_nothing_known` | a `return` inside a closure is compared against nothing, an assignment inside one is still checked, and a `return` **after** the closure is still the function's — which is what makes the return type a parameter of the walk and not a member |
+| `a_closure_gives_back_nothing_known` | written before closures typed, and it still holds with a new reading since record 0058: a `return` inside a closure answers to the **closure's** `-> f64`, not to `main`'s `i32`, an assignment inside one is still checked, and a `return` **after** the closure is still the function's — which is what makes the return type a parameter of the walk and not a member |
+| `a_closure_answers_to_its_own_return` | record 0058: a `return` inside a closure is checked against what the closure wrote, what was expected where it stands, or `void` when neither says; a one-expression body is checked against the `bool` its call asks for, and **once** — typed again as a statement of the body, the `'and' needs bool` inside it would come out twice; a closure that could not be typed is not walked, so its body's use of the untyped `z` says nothing more |
+| `a_closure_is_typed_once` | record 0040's lowering types a `for ... in`'s sequence twice — once to learn what it is, once as the `iterator()` call it becomes — and a closure inside it is typed once all the same: the mistake in its body is said once |
+| `a_function_value_is_called_by_its_type` | a value of type `A -> R` is called by its type and nothing is chosen: the wrong count, a literal that cannot be the parameter, and a name that is no function are each said in words about the call. And a closure given where one is expected must agree with it wherever it wrote something itself — how many it takes, a parameter's type, what it gives back |
 
 ## The one that is not obvious
 
@@ -73,11 +76,51 @@ against this suite **and** `tests/type_table/`, since the type they give back
 is only visible there: eight more, each breaking at least one golden of one of
 the two.
 
+## Record 0058's sabotages, across four suites
+
+A closure's rules live in the typer, the collector, the resolver, this checker
+and the emitter, and are pinned by cases in `type_table`, here, `emitter` and
+`programs`. Each of the 29 was taken away on 2026-09-22 and each broke at
+least one case; four broke none the first time, and the case that now catches
+each was written for it (marked).
+
+| what was taken away | cases that failed |
+|---|---|
+| a parameter's type taken from the `A -> R` expected | 5 |
+| the sweep skipping a closure's body | 1 |
+| the body's locals typed with the closure | 1 |
+| a closure typed once (`a_closure_is_typed_once`, written for it) | 1 |
+| the expression given back checked once | 1 |
+| a `return` answering to the closure | 1 |
+| a closure that never typed not walked | 1 |
+| the expression given back told what to be (`wide`, written for it) | 1 |
+| a mismatch in what is given back reported | 1 |
+| what is given back deciding the type when nothing else does | 2 |
+| nothing written and nothing expected is an error | 2 |
+| how many it takes, against what is expected | 1 |
+| a written parameter type, against what is expected | 1 |
+| a written `->`, against what is expected | 1 |
+| a variable, parameter or field called as a value | 4 |
+| the count of a call through a value | 1 |
+| an argument of such a call asked to fit (`ratio`, written for it) | 1 |
+| a literal argument of such a call told what to be | 1 |
+| a callee that is no name called as a value (`make()(4)`, written for it) | 1 |
+| a closure argument carried untyped until an overload wins | 4 |
+| a closure argument typed against the winner | 4 |
+| an overload chosen by how many a closure takes | 1 |
+| `(A, B) -> C` flattened into two parameters | 2 |
+| a capture bound by reference inside the closure | 2 |
+| `this` written as the captured pointer inside the closure | 2 |
+| the environment filled in where the closure is written | 2 |
+| a one-expression body emitted as a `return` | 1 |
+| a `def` as a value written through its adapter | 1 |
+| a call through a value written through its helper | 2 |
+
 ## What is not checked, and why
 
-**What a closure gives back.** A closure is not a declaration, so it has no
-candidate and no signature, and a `return` inside one is compared against
-nothing.
+**What a closure gives back** is checked since 2026-09-22 (record 0058). A
+closure is still not a declaration and has no candidate, so what it gives back
+is read off the type the typer recorded on the closure node.
 
 **The first and third parts of a C shaped `for`.** `for i = 0; ...` is an
 assignment and is checked as one, wherever it is written — but nothing says

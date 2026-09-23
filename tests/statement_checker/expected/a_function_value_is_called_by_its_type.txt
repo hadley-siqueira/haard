@@ -1,0 +1,35 @@
+error: this takes 2 arguments, and 1 was written
+  --> main.hd:23:5
+   |
+23 |     add(1)
+   |     ^^^
+error: expected i32, found a floating point literal
+  --> main.hd:24:12
+   |
+24 |     add(1, 2.5)
+   |            ^^^
+error: expected i32, found f64
+  --> main.hd:25:12
+   |
+25 |     add(1, ratio)
+   |            ^^^^^
+error: 'n' is i32, which cannot be called
+  --> main.hd:26:5
+   |
+26 |     n(2)
+   |     ^
+error: this closure takes 2 parameters, and i32 -> i32 takes 1
+  --> main.hd:30:28
+   |
+30 |     let few : i32 -> i32 = |a, b| { a }
+   |                            ^
+error: 'a' is written i64, and i32 is expected here
+  --> main.hd:31:31
+   |
+31 |     let typed : i32 -> i32 = |a: i64| { 1 }
+   |                               ^
+error: this closure gives back bool, and i32 is expected here
+  --> main.hd:32:30
+   |
+32 |     let gives : i32 -> i32 = |a| -> bool { true }
+   |                              ^

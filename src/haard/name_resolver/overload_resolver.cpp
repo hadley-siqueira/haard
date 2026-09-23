@@ -288,6 +288,32 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
                    : -1;
     }
 
+    // Record 0058: a closure takes its parameters' types from the one it is
+    // given to, so before one wins all it can be asked is whether it takes as
+    // many as the parameter's function does. What it wrote is checked against
+    // the winner when it is typed
+    if (argument.node != 0
+        && compilation->get_module(caller)->get_ast()
+                   ->get_node(argument.node)->get_kind()
+               == AST_CLOSURE) {
+        TypeTable* types = compilation->get_module(caller)->get_types();
+        Ast* ast = compilation->get_module(caller)->get_ast();
+        u32 taken = 0;
+
+        if (types->get_type(parameter)->kind != TYPE_FUNCTION) {
+            return -1;
+        }
+
+        for (u32 child = ast->get_node(argument.node)->get_children();
+             child != 0; child = ast->get_node(child)->get_sibling()) {
+            if (ast->get_node(child)->get_kind() == AST_CLOSURE_PARAMETER) {
+                taken++;
+            }
+        }
+
+        return taken + 1 == types->get_arguments(parameter).size() ? 0 : -1;
+    }
+
     // record 0018: a literal has no type until its context gives it one, and
     // the context here is this parameter. So it is asked to be it, and the
     // question is about the value

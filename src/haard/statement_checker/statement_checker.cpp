@@ -56,6 +56,7 @@ void StatementChecker::check(u32 index) {
     table = module->get_symbols();
 
     scope_of.clear();
+    given_back.clear();
 
     // a diagnostic may name a type before any expression has been typed --
     // 'return' with nothing after it is one -- and the typer reads the names
@@ -172,12 +173,31 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         result = result_of(node);
         break;
 
-    // a closure is not a declaration, so it has no candidate and no signature
-    // to read. Nothing is known about what it gives back, and a question
-    // nobody can answer is not asked
-    case AST_CLOSURE:
-        result = INVALID_TYPE;
+    // Record 0058. A closure is no declaration, so what it gives back is not
+    // on a candidate: it is in the type the typer recorded on the closure,
+    // and a 'return' inside answers to that and not to the function around
+    // it.
+    //
+    // One that never typed is not walked at all. Its parameters have no
+    // types, and every use of them would be reported again as whatever it
+    // failed to be -- after the one diagnostic that said why
+    case AST_CLOSURE: {
+        u32 type = module->get_resolutions()->get(node)->type;
+        AstQuery query;
+
+        if (type == INVALID_TYPE) {
+            return;
+        }
+
+        result = module->get_types()->get_arguments(type).back();
+
+        // the one expression a body gives back was typed with the closure,
+        // against what it gives back, and typing it again here would report
+        // everything in it twice
+        query.set_module(module);
+        given_back.insert(query.get_given_back(node));
         break;
+    }
 
     case AST_RETURN:
         check_return(node, scope, result);
@@ -232,7 +252,9 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
     if (kind == AST_BLOCK) {
         for (u32 child = first_child(node); child != 0;
              child = module->get_ast()->get_node(child)->get_sibling()) {
-            check_expression(child, scope);
+            if (given_back.count(child) == 0) {
+                check_expression(child, scope);
+            }
         }
     }
 

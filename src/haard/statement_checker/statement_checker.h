@@ -150,6 +150,10 @@ namespace haard {
 
             // the node that opened a scope, back to the scope it opened
             std::map<u32, u32> scope_of;
+
+            // record 0058: the expression each closure's body gives back,
+            // which the typer checked when it typed the closure
+            std::set<u32> given_back;
     };
 }
 

@@ -232,6 +232,25 @@ namespace haard {
             // twelfth
             u32 call(u32 scope, u32 node);
 
+            // Record 0058. A closure is a function whose type is built from
+            // what it wrote and, for what it did not, from the 'A -> R'
+            // expected where it was written. Its parameters are given their
+            // types here and the rest of its body is typed by the collector
+            // right after, since nothing inside could be typed before
+            u32 closure(u32 scope, u32 node, u32 expected);
+
+            // 'f(1)' where 'f' is a VALUE of type 'A -> R' -- a local, a
+            // parameter, a field -- rather than the name of a 'def'. Nothing
+            // is chosen: a value has one type, so the arguments are only
+            // asked to fit it
+            u32 value_call(u32 scope, u32 node, u32 callee, u32 list,
+                           u32 function);
+
+            // whether an argument waits for the parameter before it is typed:
+            // a literal (record 0018) and a closure (record 0058), which take
+            // what they are from where they go
+            bool waits_for_its_parameter(u32 node);
+
             // Record 0045. A call whose callee names a **type** is not a call
             // at all: it is a construction, and its candidates are that
             // type's 'init's rather than a set of overloads. Gives back

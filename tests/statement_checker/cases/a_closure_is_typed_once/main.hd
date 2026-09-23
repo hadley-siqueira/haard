@@ -1,0 +1,42 @@
+# Record 0058. A closure is typed once, however many times the expression
+# holding it is: record 0040's lowering types the sequence of a 'for ... in'
+# to find out what it is, and then again as the 'iterator()' call it becomes.
+# Typed twice, the mistake inside the closure would be said twice.
+
+class Cursor:
+    left : i32
+
+    def has_next : bool
+        return left > 0
+
+    def next : i32
+        left -= 1
+
+        return left
+
+class Bag:
+    size : i32
+
+    def iterator : Cursor
+        let c : Cursor
+
+        c.left = size
+
+        return c
+
+def bag_of : Bag
+    @keep : i32 -> bool
+
+    let b : Bag
+
+    b.size = 3
+
+    return b
+
+def main : i32
+    let total = 0
+
+    for n in bag_of(|x| { x and true }):
+        total += n
+
+    return total

@@ -1,0 +1,34 @@
+# Record 0058. A value of type 'A -> R' is called by its type: nothing is
+# chosen, so the arguments are only asked to fit it. And a closure given where
+# one is expected must agree with it wherever it wrote something itself.
+
+def make : i32 -> i32
+    return |x| { x + 1 }
+
+def main : i32
+    let add = |a: i32, b: i32| { a + b }
+    let n = 3
+
+    # right, all four ways: a name, a literal handed down, a call's answer
+    let fine = add(1, 2) + make()(4)
+
+    # a literal given back is told what to be, so it is an i64 here and not
+    # an i32 that fails to fit one
+    let wide : i32 -> i64 = |x| { 1 }
+
+    # the wrong number, the wrong type -- written and held in a name -- and
+    # something that is no function
+    let ratio = 2.5
+
+    add(1)
+    add(1, 2.5)
+    add(1, ratio)
+    n(2)
+
+    # the closure against what was expected of it: how many it takes, the
+    # type it wrote for one, and what it wrote it gives back
+    let few : i32 -> i32 = |a, b| { a }
+    let typed : i32 -> i32 = |a: i64| { 1 }
+    let gives : i32 -> i32 = |a| -> bool { true }
+
+    return fine

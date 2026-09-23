@@ -118,13 +118,38 @@ u32 TypeBuilder::build_here(u32 index, u32 scope, u32 node) {
     }
 
     // 'A -> B -> C' is written as one node with three children, so the last
-    // one is the result and the others are what it takes
+    // one is the result and the others are what it takes.
+    //
+    // Record 0058: '(A, B) -> C' is the same function. A bracketed list in
+    // front of the first arrow is the parameters written together, and it is
+    // flattened -- the way a variant's tuple payload is -- so both spellings
+    // intern one type and a closure of two parameters fits either
     case AST_FUNCTION_TYPE: {
         std::vector<u32> parameters;
         u32 result = INVALID_TYPE;
+        u32 first = first_child(node);
 
-        for (u32 child = first_child(node); child != 0;
+        for (u32 child = first; child != 0;
              child = module->get_ast()->get_node(child)->get_sibling()) {
+            bool together = child == first
+                         && module->get_ast()->get_node(child)->get_sibling()
+                                != 0
+                         && module->get_ast()->get_node(child)->get_kind()
+                                == AST_TUPLE_TYPE;
+
+            if (together) {
+                for (u32 one = first_child(child); one != 0;
+                     one = module->get_ast()->get_node(one)->get_sibling()) {
+                    parameters.push_back(build(index, scope, one));
+
+                    if (parameters.back() == INVALID_TYPE) {
+                        return INVALID_TYPE;
+                    }
+                }
+
+                continue;
+            }
+
             parameters.push_back(build(index, scope, child));
 
             if (parameters.back() == INVALID_TYPE) {

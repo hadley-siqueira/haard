@@ -188,6 +188,11 @@ bool TypeCollector::walk(u32 index, bool given) {
         }
 
         for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+            // record 0058: typed with its closure, see type_locals_of_closure
+            if (closure_around(index, scope) != 0) {
+                continue;
+            }
+
             for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
                  symbol = table->get_symbol(symbol)->sibling_or_next) {
                 for (u32 candidate = table->get_symbol(symbol)->candidates;
@@ -253,6 +258,99 @@ bool TypeCollector::walk(u32 index, bool given) {
     walking.erase(index);
 
     return worked;
+}
+
+u32 TypeCollector::closure_around(u32 module_index, u32 scope) {
+    Module* holder = compilation->get_module(module_index);
+    SymbolTable* table = holder->get_symbols();
+
+    for (u32 at = scope; at != 0; at = table->get_scope(at)->parent) {
+        u32 owner = table->get_scope(at)->owner;
+
+        if (owner != 0
+            && holder->get_ast()->get_node(owner)->get_kind() == AST_CLOSURE) {
+            return owner;
+        }
+    }
+
+    return 0;
+}
+
+bool TypeCollector::claim_closure(u32 module_index, u32 closure) {
+    return closures.insert(std::make_pair(module_index, closure)).second;
+}
+
+void TypeCollector::type_locals_of_closure(u32 module_index, u32 closure) {
+    // asked from inside a walk as often as not, so what the walk was looking
+    // at is put back afterwards
+    u32 held_index = index;
+    Module* held_module = module;
+    std::map<u32, u32> held_scope_of = scope_of;
+
+    index = module_index;
+    module = compilation->get_module(module_index);
+
+    SymbolTable* table = module->get_symbols();
+    std::set<u32> typed;
+    bool worked = true;
+
+    // Round and round for the reason the sweep goes round: a 'for x in'
+    // inside the body is taken apart while its variable is typed, and that
+    // declares locals of its own. What a round adds, the next one types
+    while (worked) {
+        worked = false;
+        scope_of.clear();
+
+        for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+            u32 owner = table->get_scope(scope)->owner;
+
+            if (owner != 0) {
+                scope_of[owner] = scope;
+            }
+        }
+
+        for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+            if (closure_around(index, scope) != closure) {
+                continue;
+            }
+
+            for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+                 symbol = table->get_symbol(symbol)->sibling_or_next) {
+                for (u32 candidate = table->get_symbol(symbol)->candidates;
+                     candidate != 0;
+                     candidate =
+                         table->get_candidate(candidate)->next_candidate) {
+                    if (!typed.insert(candidate).second) {
+                        continue;
+                    }
+
+                    // the parameters are the typer's, which had the
+                    // expected type in hand when it wrote them
+                    if (module->get_ast()
+                            ->get_node(table->get_candidate(candidate)
+                                           ->ast_node)
+                            ->get_kind()
+                        == AST_CLOSURE_PARAMETER) {
+                        continue;
+                    }
+
+                    // both passes, in order, which is what the sweep gives a
+                    // declaration it meets late
+                    table->set_candidate_type(
+                        candidate, type_of(candidate, scope, false));
+                    require_default_construction(candidate);
+                    table->set_candidate_type(
+                        candidate, type_of(candidate, scope, true));
+
+                    worked = true;
+                }
+            }
+        }
+    }
+
+    index = held_index;
+    module = held_module;
+    scope_of = held_scope_of;
 }
 
 u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {

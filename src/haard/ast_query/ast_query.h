@@ -126,6 +126,17 @@ namespace haard {
             // the block a 'def' or a closure runs, 0 when it has none
             u32 get_block(u32 node);
 
+            // Record 0058. A closure's parameters in source order, and the
+            // type written after its '->', 0 when none was
+            std::vector<u32> get_closure_parameters(u32 closure);
+            u32 get_closure_return_type(u32 closure);
+
+            // the one expression a closure's body is, when it is one: a body
+            // of a single expression statement gives that expression back, and
+            // this is 0 for any other body -- several statements, or one that
+            // is not an expression, such as a 'return' or an assignment
+            u32 get_given_back(u32 closure);
+
             // the children of a node, in source order. The walk inside a
             // function is not a walk of known statement kinds: an 'if', a
             // 'while' and a 'for' all reach their block the same way, so a

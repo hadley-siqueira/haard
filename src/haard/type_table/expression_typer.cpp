@@ -278,6 +278,9 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_TUPLE:
         return tuple(scope, node, expected);
 
+    case AST_CLOSURE:
+        return closure(scope, node, expected);
+
     // A template string is a String and a symbol is nobody has said what,
     // and a range has no type at all -- nothing has decided whether it is one
     // or only a thing a 'for ... in' reads. All three say nothing rather than
@@ -802,7 +805,7 @@ void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made, u32 list) {
         argument.literal = kind == AST_INTEGER_LITERAL
                         || kind == AST_FLOAT_LITERAL;
         argument.node = child;
-        argument.type = argument.literal
+        argument.type = argument.literal || kind == AST_CLOSURE
                             ? INVALID_TYPE
                             : type_of(index, scope, child, INVALID_TYPE);
 
@@ -855,6 +858,11 @@ void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made, u32 list) {
         if (arguments[i].literal) {
             module->get_resolutions()->set_type(arguments[i].node,
                                                 chosen.parameters[i]);
+        }
+
+        // record 0058, as at a call
+        if (kind_of(arguments[i].node) == AST_CLOSURE) {
+            type_of(index, scope, arguments[i].node, chosen.parameters[i]);
         }
     }
 }
@@ -1640,11 +1648,61 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
         return made;
     }
 
+    // Record 0058: something that is not a name -- 'make()(1)', '(f)(1)' --
+    // can only be called by being a value, and a value is called by its type
+    AstNodeKind shape = callee == 0 ? AST_UNKNOWN : kind_of(callee);
+
+    if (callee != 0 && shape != AST_IDENTIFIER && shape != AST_SCOPE
+        && shape != AST_DOT && shape != AST_ARROW
+        && shape != AST_GENERIC_NAME) {
+        u32 function = type_of(index, scope, callee, INVALID_TYPE);
+
+        if (function == INVALID_TYPE) {
+            return INVALID_TYPE;
+        }
+
+        if (module->get_types()->get_type(function)->kind != TYPE_FUNCTION) {
+            report(node, name_of(function) + " cannot be called");
+
+            return INVALID_TYPE;
+        }
+
+        return value_call(scope, node, callee, list, function);
+    }
+
     std::vector<Candidacy> candidates = callee_of(scope, callee);
     std::vector<Argument> arguments;
 
     if (candidates.size() == 0) {
         return INVALID_TYPE;
+    }
+
+    // and a name that is a variable, a parameter or a field, rather than a
+    // 'def': one value with one type, so there is nothing to choose. The name
+    // is typed as the value it is, which is what records its declaration
+    if (candidates.size() == 1) {
+        u8 kind = compilation->get_module(candidates[0].module)->get_symbols()
+                      ->get_candidate(candidates[0].candidate)->kind;
+
+        if (kind == SYMBOL_VARIABLE || kind == SYMBOL_PARAM
+            || kind == SYMBOL_FIELD) {
+            u32 function = type_of(index, scope, callee, INVALID_TYPE);
+            u32 at = name_of_callee(callee);
+
+            if (function == INVALID_TYPE) {
+                return INVALID_TYPE;
+            }
+
+            if (module->get_types()->get_type(function)->kind
+                != TYPE_FUNCTION) {
+                report(at, "'" + text_of(at) + "' is " + name_of(function)
+                       + ", which cannot be called");
+
+                return INVALID_TYPE;
+            }
+
+            return value_call(scope, node, callee, list, function);
+        }
     }
 
     for (u32 child = list == 0 ? 0 : first_child(list); child != 0;
@@ -1662,7 +1720,7 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
                         || kind == AST_FLOAT_LITERAL
                         || kind == AST_NULL_LITERAL;
         argument.node = child;
-        argument.type = argument.literal
+        argument.type = waits_for_its_parameter(child)
                             ? INVALID_TYPE
                             : type_of(index, scope, child, INVALID_TYPE);
 
@@ -1687,6 +1745,13 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
             if (arguments[i].literal) {
                 module->get_resolutions()->set_type(arguments[i].node,
                                                     chosen.parameters[i]);
+            }
+
+            // Record 0058: a closure was only asked whether it COULD be the
+            // parameter, by how many it takes. Now that one won, it is typed
+            // against it, and that is what gives its parameters their types
+            if (kind_of(arguments[i].node) == AST_CLOSURE) {
+                type_of(index, scope, arguments[i].node, chosen.parameters[i]);
             }
 
             // Record 0037, and this is the one place it cannot be asked
@@ -1753,6 +1818,224 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
     }
 
     return chosen.result;
+}
+
+bool ExpressionTyper::waits_for_its_parameter(u32 node) {
+    AstNodeKind kind = kind_of(node);
+
+    return kind == AST_INTEGER_LITERAL || kind == AST_FLOAT_LITERAL
+        || kind == AST_NULL_LITERAL || kind == AST_CLOSURE;
+}
+
+u32 ExpressionTyper::value_call(u32 scope, u32 node, u32 callee, u32 list,
+                                u32 function) {
+    TypeTable* types = module->get_types();
+    std::vector<u32> parameters = types->get_arguments(function);
+    u32 result = parameters.back();
+    std::vector<u32> written;
+
+    parameters.pop_back();
+
+    for (u32 child = list == 0 ? 0 : first_child(list); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        written.push_back(child);
+    }
+
+    if (written.size() != parameters.size()) {
+        u32 at = kind_of(callee) == AST_IDENTIFIER ? callee : node;
+
+        report(at, "this takes " + std::to_string(parameters.size())
+               + (parameters.size() == 1 ? " argument" : " arguments")
+               + ", and " + std::to_string(written.size())
+               + (written.size() == 1 ? " was" : " were") + " written");
+
+        return INVALID_TYPE;
+    }
+
+    for (u32 i = 0; i < written.size(); i++) {
+        u32 wanted = parameters[i];
+
+        // what takes its type from where it goes is told where it goes: a
+        // literal is asked to BE the parameter (record 0018), a closure takes
+        // its parameters from it, and a string literal becomes the class a
+        // String parameter asks for (record 0037) -- through the reference,
+        // since a 'String&' takes a String
+        if (waits_for_its_parameter(written[i])) {
+            type_of(index, scope, written[i], wanted);
+        } else if (kind_of(written[i]) == AST_STRING_LITERAL) {
+            u32 given = type_of(index, scope, written[i],
+                                types->value_of(wanted));
+
+            if (given != INVALID_TYPE && !coercion.fits(index, given, wanted)) {
+                report(written[i], "expected " + name_of(wanted) + ", found "
+                       + name_of(given));
+            }
+        } else {
+            u32 given = type_of(index, scope, written[i], INVALID_TYPE);
+
+            if (given != INVALID_TYPE && !coercion.fits(index, given, wanted)) {
+                report(written[i], "expected " + name_of(wanted) + ", found "
+                       + name_of(given));
+            }
+        }
+
+        // record 0031, the fourth place a value is given to something
+        if (!coercion.may_be_copied(index, wanted)) {
+            report(written[i], name_of(wanted)
+                   + " cannot be copied, and this parameter takes one by "
+                     "value");
+        }
+    }
+
+    return result;
+}
+
+// Record 0058. A closure's type is built from two sources, and what it wrote
+// wins over what it is given: a parameter or a '->' written on the closure is
+// the closure's own, and the 'A -> R' expected where it stands fills in
+// whatever it left out. With neither, the compiler cannot decide what a
+// parameter is -- the one reason record 0047 lets it refuse.
+//
+// It is typed once. Typing it builds its parameters' types into the symbol
+// table and asks the collector to type the body's locals, and neither may
+// happen twice: a second answer could differ from the first, and every
+// diagnostic inside would come out again
+u32 ExpressionTyper::closure(u32 scope, u32 node, u32 expected) {
+    TypeTable* types = module->get_types();
+    SymbolTable* table = module->get_symbols();
+    Resolution* earlier = module->get_resolutions()->get(node);
+    AstQuery query;
+
+    query.set_module(module);
+
+    // both typers reach closures, the collector's and the statement
+    // checker's, and they share the collector -- so it is the one that knows
+    if (collector != nullptr && !collector->claim_closure(index, node)) {
+        return earlier->type;
+    }
+
+    bool offered = expected != INVALID_TYPE
+                && types->get_type(expected)->kind == TYPE_FUNCTION;
+    std::vector<u32> given;
+    u32 given_result = INVALID_TYPE;
+
+    if (offered) {
+        given = types->get_arguments(expected);
+        given_result = given.back();
+        given.pop_back();
+    }
+
+    std::vector<u32> written = query.get_closure_parameters(node);
+    std::vector<u32> parameters;
+    bool whole = true;
+
+    if (offered && written.size() != given.size()) {
+        report(node, "this closure takes " + std::to_string(written.size())
+               + (written.size() == 1 ? " parameter" : " parameters")
+               + ", and " + name_of(expected) + " takes "
+               + std::to_string(given.size()));
+
+        return INVALID_TYPE;
+    }
+
+    for (u32 i = 0; i < written.size(); i++) {
+        // the identifier, under the AST_BINDING_NAME a closure's parameter
+        // shares with a 'let' -- which has no token of its own to point at
+        u32 name = first_child(first_child(written[i]));
+        u32 own = query.get_written_type(written[i]);
+        u32 type = INVALID_TYPE;
+
+        if (own != 0) {
+            type = builder.build(index, scope, own);
+
+            if (type == INVALID_TYPE) {
+                whole = false;
+            } else if (offered && given[i] != INVALID_TYPE
+                       && type != given[i]) {
+                report(name, "'" + text_of(name) + "' is written "
+                       + name_of(type) + ", and " + name_of(given[i])
+                       + " is expected here");
+
+                whole = false;
+            }
+        } else if (offered) {
+            type = given[i];
+        } else {
+            report(name, "nothing says what '" + text_of(name) + "' is: "
+                   "write its type, or give this closure where a function is "
+                   "expected");
+
+            whole = false;
+        }
+
+        u32 candidate = table->candidate_of(written[i]);
+
+        if (candidate != 0) {
+            table->set_candidate_type(candidate, type);
+        }
+
+        parameters.push_back(type);
+    }
+
+    u32 result = INVALID_TYPE;
+    bool decided = false;
+    u32 own_result = query.get_closure_return_type(node);
+
+    if (own_result != 0) {
+        result = builder.build(index, scope, own_result);
+        decided = true;
+
+        if (result != INVALID_TYPE && offered && given_result != INVALID_TYPE
+            && result != given_result) {
+            report(node, "this closure gives back " + name_of(result) + ", and "
+                   + name_of(given_result) + " is expected here");
+
+            whole = false;
+        }
+    } else if (offered) {
+        result = given_result;
+        decided = true;
+    }
+
+    // and now the body, whose locals could not be typed before a parameter
+    // they read had a type
+    if (collector != nullptr) {
+        collector->type_locals_of_closure(index, node);
+    }
+
+    // A body of one expression gives it back, and it is typed here and only
+    // here -- the statement checker leaves it alone -- against what the
+    // closure gives back, or to find out what that is. A void closure's
+    // expression is typed too, for nothing in particular, the way an
+    // expression on a line of its own always is
+    u32 back = query.get_given_back(node);
+    u32 nothing = types->builtin(BUILTIN_VOID);
+
+    if (back != 0) {
+        u32 block = table->scope_owned_by(query.get_block(node));
+        u32 inside = block != 0 ? block : scope;
+        bool wanted = decided && result != nothing && result != INVALID_TYPE;
+        u32 value = type_of(index, inside, back, wanted ? result : INVALID_TYPE);
+
+        if (!decided) {
+            result = value;
+            decided = true;
+        } else if (wanted && value != INVALID_TYPE
+                   && !coercion.fits(index, value, result)) {
+            report(back, "expected " + name_of(result) + ", found "
+                   + name_of(value));
+        }
+    }
+
+    if (!decided) {
+        result = nothing;
+    }
+
+    if (!whole || result == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    return types->function(parameters, result);
 }
 
 // Record 0045, and the shape it settles is that a construction is a **call
@@ -2367,9 +2650,18 @@ std::string ExpressionTyper::name_in(u32 owner, u32 type) {
 
     // the return is the last one, per record 0016, and it reads as the arrow
     // chain the source would write
+    // Record 0058 made a function a value, and so a parameter: one taken
+    // by another is bracketed, or 'i32 -> (i32 -> void) -> void' would read
+    // as a function of three things
     case TYPE_FUNCTION:
         for (u32 i = 0; i < arguments.size(); i++) {
-            out += (i > 0 ? " -> " : "") + name_in(owner, arguments[i]);
+            std::string one = name_in(owner, arguments[i]);
+
+            if (types->get_type(arguments[i])->kind == TYPE_FUNCTION) {
+                one = "(" + one + ")";
+            }
+
+            out += (i > 0 ? " -> " : "") + one;
         }
 
         return out;

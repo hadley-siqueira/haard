@@ -1,0 +1,108 @@
+# Record 0058. A closure is an environment of addresses and a function taking
+# it, so what it captures it captures BY REFERENCE: every '+=' below lands on
+# the variable outside. The exit status is the sum of what each shape left
+# behind, and each shape moves it if it is wrong.
+
+enum Colour:
+    red
+    green
+
+def times : void
+    @n : i32
+    @f : i32 -> void
+
+    for i = 0; i < n; i += 1:
+        f(i)
+
+def twice : i32
+    @f : i32 -> i32
+    @x : i32
+
+    return f(f(x))
+
+def apply : i32
+    @f : (i32, i32) -> i32
+
+    return f(3, 4)
+
+# a closure given back, capturing nothing, and called on the spot: the callee
+# is no name at all, so it can only be called by being a value
+def make : i32 -> i32
+    return |x| { x + 1 }
+
+def add_one : i32
+    @x : i32
+
+    return x + 1
+
+def paint : i32
+    @c : Colour
+    @f : Colour -> i32
+
+    return f(c)
+
+# a field and 'this', from inside a closure written in a method
+class Counter:
+    count : i32
+    step : i32
+
+    def run : i32
+        @n : i32
+
+        times(n, |i| { count += step })
+        times(n, |i| { this.count += 1 })
+
+        return count
+
+# a function held in a field and called through it
+class Holder:
+    callback : i32 -> i32
+
+# a parameter that is a reference, captured: the write goes through both
+def bump : void
+    @total : i32&
+    @by : i32
+
+    times(by, |i| { total += 1 })
+
+def main : i32
+    # a closure inside a closure, capturing the outer one's parameter and a
+    # local of main: 0*0 + 0*1 + 1*0 + 1*1 + 2*0 + 2*1
+    let outer = 0
+
+    times(3, |i| {
+        times(2, |j| { outer += i * j })
+    })
+
+    let c = Counter()
+
+    c.count = 0
+    c.step = 5
+
+    let r = c.run(2)
+    let t = 0
+
+    bump(t, 4)
+
+    # a 'def' given as a value, one expression given back, and one of two
+    # parameters written together
+    let w = twice(add_one, 10)
+    let k = apply(|a, b| { a * b })
+
+    let h = Holder()
+
+    h.callback = |x| { x * 3 }
+
+    let q = h.callback(2)
+
+    let p = paint(Colour.green, |k| {
+        if k == Colour.green:
+            return 100
+
+        return 0
+    })
+
+    let m = make()(4)
+
+    # 3 + 12 + 4 + 12 + 12 + 6 + 100 + 5
+    return outer + r + t + w + k + q + p + m

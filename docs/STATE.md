@@ -1,6 +1,6 @@
 # Where the compiler is
 
-Written 2026-09-02, last brought up to date 2026-09-09. The agenda of
+Written 2026-09-02, last brought up to date 2026-09-22. The agenda of
 *decisions* is `design/README.md`; this is the state of the *code*, and what to
 do next.
 
@@ -29,11 +29,11 @@ source. Hadley has said an IR **will** be needed for a processor he is
 building; 0025 names the signals that will say when.
 
 What it refuses, it says so about, rather than writing C++ that means something
-else: a hash literal, a tuple, a list, a closure, a range, and `T[]` with no
-length **inside a type**. Two have left that list: a **template string** on
-2026-09-06, taken apart before the emitter is reached, and a **symbol** on
+else: a hash literal, a tuple, a list, a range, and `T[]` with no
+length **inside a type**. Three have left that list: a **template string** on
+2026-09-06, taken apart before the emitter is reached, a **symbol** on
 2026-09-08, which is now a builtin and an entry in a table the emitter builds
-(record 0041). `new T[n]` is not that case and works — record 0028.
+(record 0041), and a **closure** on 2026-09-22 (record 0058). `new T[n]` is not that case and works — record 0028.
 
 **A whole program, the way a user builds one**, is
 `tests/programs/cases/<name>/Makefile`: `hdc --roots table entry.hd --emit-cpp`
@@ -57,6 +57,15 @@ builds through those Makefiles, which is what keeps them true.
 Seventeen test suites, ~680 cases, `make check` in about a minute.
 
 ## What works, proven by running it
+
+**Closures work**, since 2026-09-22 — record 0058. `|x| { total += x }` is an
+environment of **addresses** and a function taking it, so everything it names
+from outside is captured **by reference**; its value has the type `A -> R`,
+which is a pair `{env, call}` in C++ and follows the rules of a `T&`. A
+parameter with no type written takes it from the `A -> R` expected where the
+closure stands, a body of one expression gives it back, and a `def` is a value
+of the same type. No C++ lambda and no `std::function` is written.
+`Array<T>` and `List<T>` have `each`. See *Read this first*.
 
 Classes, single inheritance, methods, fields, `init` and `destroy`, `.` and `->`, `this`, overloads
 chosen by signature, overriding, inherited names by a bare name, imports with
@@ -628,6 +637,49 @@ constant evaluation, and the whole of track 3 (the `.hdm` blob) is untouched.
 
 ## Read this first next session
 
+**Closures, record 0058, built 2026-09-22.** What the code does, and the traps
+that shaped it:
+
+- **The body is typed when the closure is, and never by the sweep.** A
+  parameter with no type takes one from where the closure goes, which for
+  `xs.each(|x| {...})` on a line of its own is only known in the **statement
+  checker** — a phase after the one that types locals. So
+  `TypeCollector::walk` skips every scope inside a closure, and
+  `ExpressionTyper::closure` types the parameters and then asks
+  `TypeCollector::type_locals_of_closure` for the rest. Left to the sweep,
+  `let y = add_one(x)` inside was *no 'add_one' takes these arguments*.
+- **Two typers reach closures and they share the collector**, so
+  `claim_closure` is what says a closure is typed once; the second asker reads
+  the recorded type. Typed twice, every diagnostic inside came out twice.
+- **A closure at a call is carried untyped, like a literal.** The resolver
+  asks it only how many parameters it takes (`OverloadResolver::match`); once
+  an overload wins it is typed against that parameter.
+- **A call through a value** is recognised by the callee having a function
+  type **recorded**: the typer types a callee only when it is a value (a
+  variable, a parameter, a field, or something that is no name at all), never
+  when it names a `def`. The emitter reads the same mark, in `emit_call` and
+  in `emit_identifier` — where a `def` with a function type on its name is a
+  `def` given as a value, written as `{nullptr, &adapter}`.
+- **The expression a one-expression body gives back is typed by the typer
+  only.** The statement checker skips it (`given_back`), and does not walk a
+  closure that never typed at all.
+- **The emitter writes three new buffers**: the function types right after the
+  forward declarations (a field may hold one; an enum one names is declared
+  there too), the environments, prototypes and call helpers after the
+  prototypes, and the closures' bodies after the constants. An environment is
+  a local declared at the top of the enclosing body and filled in **where the
+  closure is written**, with a comma expression — addresses have no side
+  effects, so nothing is hoisted. Inside the closure every captured name is
+  bound as a C++ reference under its own name, so the body is emitted exactly
+  as it would be outside; `this` becomes `h_self`.
+- `(i32, i32) -> bool` is **two** parameters. It built a function of one tuple
+  until 2026-09-22, since nothing had ever given a function type a value.
+
+Not done, and none of it needs a decision: a **method** as a value (the emitter
+refuses by name), an **overloaded** `def` as a value (it types to nothing, so
+the call reports no overload), and `map`, which waits on a generic called with
+no type arguments.
+
 **A generic method is instantiated per call**, since 2026-09-09 — record 0055,
 and it is record 0054's other half. `b.take<i32>(3)` did not **parse**: a type
 argument list was read after a bare name and never after a `.`. That branch is
@@ -989,8 +1041,9 @@ check text and do not care which language produced it.
 **The next thing to build**: nothing in the standard library is missing any
 more — `Hash<K, V>` landed on 2026-09-08 (record 0042) and record 0022's four
 classes are all written. What is left of the library is `{key: value}` (agenda
-1.23, deferred with its design written down) and a **closure that types**,
-which is what an `each` or a `map` waits on.
+1.23, deferred with its design written down) and `map`, which waits on a
+generic called with no type arguments. `each` landed with closures on
+2026-09-22 (record 0058).
 
 **Two things writing the Hash found**, and both are worth knowing before
 touching the type phase:
@@ -1191,16 +1244,14 @@ in the meantime.
 
    What is left in the front end, in order:
 
-   1. **A closure that types** — the biggest by far, and the only one that
-      needs a decision before any code. `AST_CLOSURE` is in the parser, the
-      builder, the printer and the symbol collector, and the statement checker
-      only says *I do not know what this gives back*. **Nothing in
-      `type_table/` has ever seen one.** `each` and `map` wait on it.
+   1. ~~**A closure that types**~~ — **done 2026-09-22**, record 0058. See
+      *Read this first*.
    2. **A generic called without written type arguments** — `f(3)` and
       `b.take(3)` alike, which need the parameter types unified against the
       argument types. There is no unification in the compiler at all. One
       subject for the function and the method, since record 0055 made them one
-      mechanism.
+      mechanism. **`map` waits on it**: `xs.map(|x| { x * 2 })` has nowhere to
+      write the type it gives back, and it is the first thing to write after.
    3. The small ones: `T&&` does not parse (1.15), record 0018's list does not
       compose (`char*` → `String&`), the three template-string refusals are
       loosenable and additive, a constant inside a **type** cannot be
@@ -1236,8 +1287,8 @@ in the meantime.
    - ~~**`Hash<K, V>`**~~ — **done 2026-09-08**, record 0042: open addressed,
      hashed by an overload set, walked by its keys, and in the prelude. What
      is left of the library is `{key: value}` (agenda 1.23, deferred with its
-     design written down) and a **closure that types**, which is what `each`
-     and `map` wait on.
+     design written down) and `map`; `each` came with closures (record
+     0058).
    - ~~**Migrating `char*` → `String` onto record 0037's mechanism**~~ —
      **done 2026-09-08** for a written **literal**, and **finished
      2026-09-09** by records 0045 and 0046 together: `T(args)` is writable

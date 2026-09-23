@@ -1,0 +1,35 @@
+error: expected i32, found a floating point literal
+  --> main.hd:13:16
+   |
+13 |         return 2.5
+   |                ^^^
+error: expected void, found a value
+  --> main.hd:20:16
+   |
+20 |         return y
+   |                ^
+error: expected bool, found i32
+  --> main.hd:25:17
+   |
+25 |     run(|n| { n + 1 })
+   |                 ^
+error: 'and' needs bool, and this is i32
+  --> main.hd:29:15
+   |
+29 |     run(|n| { n and true })
+   |               ^
+error: expected bool, found an integer literal
+  --> main.hd:33:16
+   |
+33 |         return 2
+   |                ^
+error: nothing says what 'z' is: write its type, or give this closure where a function is expected
+  --> main.hd:38:17
+   |
+38 |     let lost = |z| {
+   |                 ^
+error: expected i32, found a floating point literal
+  --> main.hd:44:12
+   |
+44 |     return 2.5
+   |            ^^^

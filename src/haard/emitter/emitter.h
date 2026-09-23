@@ -408,6 +408,48 @@ namespace haard {
             // not emitted: they name type parameters nothing bound
             bool is_generic(u32 module, u32 declaration);
 
+            // Record 0058. A value of type 'A -> R' is a pair, written as a
+            // struct of its own per distinct function type: the environment
+            // and the function taking it. Named by the type's mangling and
+            // written the first time it is asked for, into a buffer that goes
+            // right after the forward declarations -- a field may hold one --
+            // together with a helper that calls one without writing it twice
+            std::string function_type_name(u32 module, u32 type);
+
+            // what a closure's body names from outside it, in the order it
+            // names them: the locals and the parameters it captures by
+            // reference, and whether it reads 'this' -- a field or a method
+            // by its bare name counts, since those are written 'this->'
+            std::vector<u32> captures_of(u32 module, u32 closure, bool& self);
+
+            // the closure's value where it is written: the environment
+            // filled in with the addresses it captures, and the pair
+            void emit_closure(u32 module, u32 node);
+
+            // its function and its environment, once per closure: the
+            // environment's struct and the function's prototype above the
+            // constants, and the function's body below them
+            void define_closure(u32 module, u32 node);
+
+            // one environment per closure a body writes, declared at the top
+            // of that body. It holds only addresses, and every one of them is
+            // in view wherever the closure is, so it is filled in right where
+            // the closure is written and never hoisted
+            void declare_environments(u32 module, u32 body);
+            void closures_inside(u32 module, u32 node, std::vector<u32>& found);
+
+            // a 'def' given where an 'A -> R' is expected: its pair has no
+            // environment, and its function is an adapter that drops one
+            std::string adapter_of(u32 module, u32 candidate, u32 value_module,
+                                   u32 type);
+
+            // an enum a function type names, declared before the function
+            // types are -- they come right after the forward declarations,
+            // and an enum is not among those
+            void declare_enum_early(u32 module, u32 type);
+
+            std::string closure_name(u32 module, u32 node);
+
             void fail(const std::string& message);
 
             AstNodeKind kind_of(u32 module, u32 node);
@@ -438,6 +480,24 @@ namespace haard {
 
             std::ostringstream constants;
             u32 constant_count;
+
+            // record 0058's three buffers: the function types, what calls
+            // and captures (above the constants), and the closures' bodies
+            // (below them), plus what has been written into each
+            std::ostringstream functions;
+            std::ostringstream callables;
+            std::ostringstream closure_bodies;
+            std::set<std::string> function_types;
+            std::set<std::string> adapters;
+            std::set<std::pair<u32, u32>> closures;
+            std::set<std::pair<u32, u32>> early_enums;
+
+            // what 'this' is written as: 'this' in a method and the captured
+            // pointer inside a closure's function, which is a free function
+            std::string self;
+
+            // the class whose method is being written, 0 in a free function
+            u32 method_holder;
             std::string error;
             u32 indentation;
 

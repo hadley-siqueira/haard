@@ -1,0 +1,37 @@
+<unnamed>:
+    each  i32 -> (i32 -> void) -> void
+    pick  (i32 -> bool) -> i32
+    pick  (i32 -> i32 -> bool) -> i64
+    add_one  i32 -> i32
+    main  i32
+    n  i32
+    f  i32 -> void
+    f  i32 -> bool
+    f  i32 -> i32 -> bool
+    x  i32
+    total  i32
+    twice  i32 -> i32
+    longer  i64 -> i64 -> i64
+    one  i32
+    two  i64
+    called  i32
+    through  i64
+    unknown  <none>
+    x  i32
+    doubled  i32
+    bigger  i32
+    y  i32
+    a  i64
+    b  i64
+    sum  i64
+    c  i32
+    d  i32
+    e  i32
+    z  <none>
+  26 types interned
+diagnostics:
+error: nothing says what 'z' is: write its type, or give this closure where a function is expected
+  --> main.hd:51:20
+   |
+51 |     let unknown = |z| { z + 1 }
+   |                    ^

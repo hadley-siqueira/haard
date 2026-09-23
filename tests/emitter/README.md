@@ -152,3 +152,26 @@ holds that nothing else can:
 one parameter taking the `Array` (built into a **name** first, because C++ will
 not bind a temporary to a reference) and two taking a pointer and a count
 (nothing in between). Neither is a C++ implicit conversion.
+
+## What the record 0058 case pins
+
+**`a_closure_captures_by_reference`** — every shape a closure is given in, and
+the exit status is the sum of what each left behind: 149, and each shape moves
+it when it is wrong.
+
+- **by reference**: `outer`, `t` and the two counts are written from inside
+  closures and read outside. A closure that bound a copy would leave them 0.
+- **a closure inside a closure**, capturing the outer one's parameter `i` and
+  `main`'s `outer`. The inner environment takes the addresses of what the
+  outer one bound, which is only right because the outer one bound them as
+  references under their own names.
+- **`this`**, twice: a field by its bare name (`count += step`, written
+  `this->` in a method) and `this.count` written out. Inside the closure's
+  function, which is a free function, both are `h_self`.
+- **a parameter that is a reference**, captured: `bump`'s write goes through
+  it to `main`'s `t`.
+- **a `def` as a value** (`twice(add_one, 10)`), through an adapter that drops
+  the environment; **two parameters written together**, `(i32, i32) -> i32`;
+  a function **held in a field** and called through it; and an **enum** in a
+  function type, which is declared before the function types are.
+

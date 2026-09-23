@@ -314,6 +314,24 @@ once per name it binds and must still say one thing; a class that answers none
 of the three names is reported by the **call**, which names the method to
 write.
 
+## A closure takes its types from where it goes
+
+`a_closure_takes_its_types_from_where_it_goes` is record 0058 written as
+types. `x` is an i32 because `each` takes an `i32 -> void`, and `doubled` and
+`bigger` inside the body are typed **after** it: the sweep skips a closure's
+body and the typer asks for it once the parameters are known. Typed by the
+sweep, `bigger = add_one(x)` was *no 'add_one' takes these arguments*.
+
+`one` and `two` are what shows the two `pick`s chosen by **how many** a
+closure takes, which is all a closure can be asked before an overload wins —
+so they give back an i32 and an i64 on purpose. `twice` and `longer` wrote
+their own types, and `z` wrote none where nothing was expected, which is the
+one diagnostic.
+
+A function taken or given by another is written in brackets —
+`i32 -> (i32 -> void) -> void` — by this dumper and by the compiler's own
+diagnostics alike; without them `each` read as a function of three things.
+
 ## The sabotages
 
 | sabotage | fails |

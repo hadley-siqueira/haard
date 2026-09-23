@@ -1,0 +1,5 @@
+error: 'and' needs bool, and this is i32
+  --> main.hd:39:27
+   |
+39 |     for n in bag_of(|x| { x and true }):
+   |                           ^

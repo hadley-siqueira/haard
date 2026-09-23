@@ -59,6 +59,30 @@ namespace haard {
             // with the walk
             void type_signature_now(u32 module, u32 candidate);
 
+            // Record 0058. What is declared inside a closure is typed when the
+            // closure is, and never by the sweep: a parameter with no type
+            // written takes one from where the closure goes, and that is only
+            // known once the expression holding the closure is typed -- which
+            // for a closure given to a call on a line of its own is the
+            // statement checker, a phase after this one. Typed by the sweep,
+            // 'let y = x * 2' inside it would read an x that is nothing yet.
+            //
+            // So the ExpressionTyper types the parameters and then asks for
+            // the rest here, once per closure -- which is
+            // what the typer asks first, because both of the typers that may
+            // reach a closure share this collector
+            void type_locals_of_closure(u32 module, u32 closure);
+
+            // true the first time a closure is asked about and false after,
+            // so the one typer that gets there first types it and the other
+            // reads what it recorded
+            bool claim_closure(u32 module, u32 closure);
+
+            // the closure, or 0, whose body this scope is inside -- the
+            // nearest one, since a closure written inside another is typed on
+            // its own when the outer body reaches it
+            u32 closure_around(u32 module, u32 scope);
+
             TypeCollector();
 
         public:
@@ -195,6 +219,9 @@ namespace haard {
             // grew costs the new declarations and reports nothing twice
             std::map<u32, u32> collected;
             std::map<u32, u32> inferred;
+
+            // record 0058's closures already typed, by module and node
+            std::set<std::pair<u32, u32>> closures;
     };
 }
 

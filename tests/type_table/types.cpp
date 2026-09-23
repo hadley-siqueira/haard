@@ -79,9 +79,17 @@ static std::string render(u32 module, u32 type) {
 
         return "(" + out + ")";
 
+    // a function taken or given by another is bracketed, as the compiler's
+    // own diagnostics write it (record 0058)
     case TYPE_FUNCTION:
         for (u32 i = 0; i < arguments.size(); i++) {
-            out += (i > 0 ? " -> " : "") + render(module, arguments[i]);
+            std::string one = render(module, arguments[i]);
+
+            if (table->get_type(arguments[i])->kind == TYPE_FUNCTION) {
+                one = "(" + one + ")";
+            }
+
+            out += (i > 0 ? " -> " : "") + one;
         }
 
         return out;

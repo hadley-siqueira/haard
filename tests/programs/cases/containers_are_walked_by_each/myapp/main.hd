@@ -1,0 +1,80 @@
+# Record 0058: a container is walked by handing 'each' a closure. The closure
+# captures what it names BY REFERENCE, so the totals below are the ones in
+# main and not copies; and 'each' hands every element over by reference too,
+# the way 'for x in' does (record 0040), so a closure can change what it is
+# given.
+#
+# Its exit status is the number of checks that failed.
+
+# a class whose method walks one of its own fields and writes another from
+# inside the closure -- which is 'this', captured
+class Shelf:
+    titles : List<String>
+    letters : i32
+
+    def count_letters : i32
+        letters = 0
+        titles.each(|title| { letters += title.length() })
+
+        return letters
+
+def check : i32
+    @what : String
+    @ok : bool
+
+    print(what)
+
+    if ok:
+        println(": ok")
+        return 0
+
+    println(": FAILED")
+    return 1
+
+def main : i32
+    let failures = 0
+
+    # ---- an Array, added up by a closure that writes a local of main
+
+    let xs : i32[] = [1, 2, 3, 4]
+    let total = 0
+
+    xs.each(|x| { total += x })
+    failures += check("an Array of four adds up to ${total}", total == 10)
+
+    # ---- the element is the element: doubling it writes into the Array
+
+    xs.each(|x| { x = x * 2 })
+    failures += check("doubled in place, the first is ${xs[0]}", xs[0] == 2)
+
+    # ---- a List follows its links, and the same closure shape walks it
+
+    let ns : List<i32> = [5, 6, 7]
+    let longest = 0
+
+    ns.each(|n| {
+        if n > longest:
+            longest = n
+    })
+    failures += check("the largest of a List is ${longest}", longest == 7)
+
+    # ---- a closure inside a closure, both capturing main's counter
+
+    let pairs = 0
+
+    xs.each(|a| {
+        ns.each(|b| { pairs += 1 })
+    })
+    failures += check("four by three is ${pairs} pairs", pairs == 12)
+
+    # ---- from inside a method, through 'this'
+
+    let shelf = Shelf()
+
+    shelf.titles.push_back("Dune")
+    shelf.titles.push_back("Emma")
+    shelf.titles.push_back("Ulysses")
+    let letters = shelf.count_letters()
+    failures += check("three titles hold ${letters} letters", letters == 15)
+
+    return failures

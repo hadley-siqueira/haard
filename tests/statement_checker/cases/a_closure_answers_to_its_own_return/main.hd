@@ -1,0 +1,44 @@
+# Record 0058. A 'return' inside a closure answers to the closure: what it
+# wrote after '->', what was expected where it stands, or void when neither
+# says -- and never to the function around it.
+
+def run : void
+    @f : i32 -> bool
+
+    pass
+
+def main : i32
+    # the closure's own '->', and a return that is not it
+    let wrong = || -> i32 {
+        return 2.5
+    }
+
+    # nothing written and nothing expected: a body of several statements
+    # gives back nothing
+    let nothing = |x: i32| {
+        let y = x
+        return y
+    }
+
+    # one expression gives itself back, and it is checked once -- against
+    # the bool 'run' asks for
+    run(|n| { n + 1 })
+
+    # checked ONCE: typed again as a statement of the body, the mistake
+    # inside it would be reported twice
+    run(|n| { n and true })
+
+    # and a return written the long way answers to the same bool
+    run(|n| {
+        return 2
+    })
+
+    # a closure that could not be typed is not walked: its parameter has no
+    # type, and the call inside would be reported again as something it is not
+    let lost = |z| {
+        run(z)
+        return z
+    }
+
+    # and the function's own return is still the function's
+    return 2.5

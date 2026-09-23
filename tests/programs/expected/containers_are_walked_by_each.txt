@@ -1,0 +1,7 @@
+an Array of four adds up to 10: ok
+doubled in place, the first is 2: ok
+the largest of a List is 7: ok
+four by three is 12 pairs: ok
+three titles hold 15 letters: ok
+--- files:
+--- exit: 0

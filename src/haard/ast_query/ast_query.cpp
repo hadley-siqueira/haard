@@ -260,6 +260,75 @@ u32 AstQuery::get_block(u32 node) {
     return find_child(node, AST_BLOCK);
 }
 
+std::vector<u32> AstQuery::get_closure_parameters(u32 closure) {
+    std::vector<u32> parameters;
+
+    for (u32 child = ast->get_node(closure)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        if (ast->get_node(child)->get_kind() == AST_CLOSURE_PARAMETER) {
+            parameters.push_back(child);
+        }
+    }
+
+    return parameters;
+}
+
+u32 AstQuery::get_closure_return_type(u32 closure) {
+    u32 wrapper = find_child(closure, AST_CLOSURE_RETURN_TYPE);
+
+    return wrapper == 0 ? 0 : ast->get_node(wrapper)->get_children();
+}
+
+// A list of what is NOT an expression, rather than of what is: every kind
+// that may stand on a line of its own as a statement is here, and anything
+// else on a line of its own is an expression written for its value
+u32 AstQuery::get_given_back(u32 closure) {
+    u32 block = get_block(closure);
+    u32 only = block == 0 ? 0 : ast->get_node(block)->get_children();
+
+    if (only == 0 || ast->get_node(only)->get_sibling() != 0) {
+        return 0;
+    }
+
+    switch (ast->get_node(only)->get_kind()) {
+    case AST_LET_DECLARATION:
+    case AST_CONST_DECLARATION:
+    case AST_BLOCK:
+    case AST_PASS:
+    case AST_IF:
+    case AST_WHILE:
+    case AST_SWITCH:
+    case AST_FOR:
+    case AST_FOR_EACH:
+    case AST_RETURN:
+    case AST_BREAK:
+    case AST_CONTINUE:
+    case AST_YIELD:
+    case AST_GOTO:
+    case AST_LABEL:
+    case AST_ASSIGNMENT:
+    case AST_PLUS_ASSIGNMENT:
+    case AST_MINUS_ASSIGNMENT:
+    case AST_TIMES_ASSIGNMENT:
+    case AST_DIVISION_ASSIGNMENT:
+    case AST_INTEGER_DIVISION_ASSIGNMENT:
+    case AST_MODULO_ASSIGNMENT:
+    case AST_BITWISE_AND_ASSIGNMENT:
+    case AST_BITWISE_OR_ASSIGNMENT:
+    case AST_BITWISE_XOR_ASSIGNMENT:
+    case AST_BITWISE_NOT_ASSIGNMENT:
+    case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT:
+    case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+        return 0;
+
+    default:
+        break;
+    }
+
+    return only;
+}
+
 std::vector<u32> AstQuery::get_children(u32 node) {
     std::vector<u32> children;
 

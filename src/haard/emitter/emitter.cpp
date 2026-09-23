@@ -53,6 +53,8 @@ Emitter::Emitter() {
     needs_power_floating = false;
     needs_floor_division = false;
     needs_floor_division_floating = false;
+    self = "this";
+    method_holder = 0;
 }
 
 void Emitter::set_compilation(Compilation* compilation) {
@@ -103,6 +105,15 @@ bool Emitter::emit(std::ostream& stream) {
     indentation = 0;
     emitted.clear();
     emitting.clear();
+    functions.str("");
+    callables.str("");
+    closure_bodies.str("");
+    function_types.clear();
+    adapters.clear();
+    closures.clear();
+    early_enums.clear();
+    self = "this";
+    method_holder = 0;
 
     if (compilation->get_module_count() == 0) {
         fail("nothing to emit");
@@ -123,6 +134,13 @@ bool Emitter::emit(std::ostream& stream) {
     out << "#include <new>\n\n";
 
     emit_forward_declarations();
+
+    // record 0058: the function types go between the forward declarations
+    // and the types, and they are only known once everything has been
+    // written -- so what is above them is set aside and spliced back
+    std::string forward = out.str();
+
+    out.str("");
     emit_types();
     emit_prototypes();
     // Everything that can hold a bracket literal is built into a buffer of
@@ -151,8 +169,13 @@ bool Emitter::emit(std::ostream& stream) {
     // the helpers after the bodies were written, because writing them is what
     // says which ones this program reached -- and above the bodies in the
     // file, because that is where a C++ function has to be declared
-    out << head << emit_symbol_table() << emit_arithmetic_helpers()
-        << constants.str() << body;
+    //
+    // Record 0058's closures and adapters sit on either side of the
+    // constants: what calls a function value and what a closure captures
+    // needs only the types, and a closure's body may name a constant
+    out << forward << functions.str() << head << callables.str()
+        << emit_symbol_table() << emit_arithmetic_helpers() << constants.str()
+        << closure_bodies.str() << body;
 
     if (error.size() > 0) {
         return false;
@@ -1320,15 +1343,18 @@ void Emitter::emit_function_body(u32 module_index, u32 node, u32 holder) {
     emit_signature(module_index, node, name, false);
     out << " {\n";
     indentation++;
+    method_holder = holder;
 
     std::string native = native_body(module_index, node);
 
     if (native.size() > 0) {
         out << std::string(indentation * 4, ' ') << native << "\n";
     } else {
+        declare_environments(module_index, query.get_block(node));
         emit_block(module_index, query.get_block(node));
     }
 
+    method_holder = 0;
     indentation--;
     out << "}\n\n";
 }
@@ -2370,7 +2396,11 @@ void Emitter::emit_expression(u32 module, u32 node) {
         return;
 
     case AST_THIS:
-        out << "this";
+        out << self;
+        return;
+
+    case AST_CLOSURE:
+        emit_closure(module, node);
         return;
 
     case AST_IDENTIFIER:
@@ -2665,7 +2695,7 @@ int Emitter::precedence_of(u32 module, u32 node) {
     case AST_FALSE: case AST_NULL_LITERAL: case AST_THIS: case AST_IDENTIFIER:
     case AST_SCOPE: case AST_GENERIC_NAME: case AST_PARENTHESIS: case AST_LIST:
     case AST_ARRAY: case AST_HASH: case AST_INCLUSIVE_RANGE:
-    case AST_EXCLUSIVE_RANGE:
+    case AST_EXCLUSIVE_RANGE: case AST_CLOSURE:
         return 1;
 
     case AST_CALL: case AST_INDEX: case AST_DOT: case AST_ARROW:
@@ -3194,6 +3224,29 @@ void Emitter::emit_identifier(u32 module_index, u32 node) {
         return;
     }
 
+    // Record 0058: a 'def' named where a value goes. The name of one being
+    // CALLED is never typed -- the call chooses among candidates and writes
+    // only which one won -- so a function type recorded on the name is the
+    // mark that it stands for a value here
+    u32 as_value = type_at(module_index, node);
+
+    if (as_value != INVALID_TYPE
+        && module->get_types()->get_type(as_value)->kind == TYPE_FUNCTION
+        && (SymbolKind) compilation->get_module(found->module)->get_symbols()
+                   ->get_candidate(found->candidate)->kind
+               == SYMBOL_FUNCTION) {
+        if (holder_of(found->module, found->candidate) != 0) {
+            fail("a method cannot be given as a value yet");
+            return;
+        }
+
+        out << function_type_name(module_index, as_value) << "{nullptr, &"
+            << adapter_of(found->module, found->candidate, module_index,
+                          as_value)
+            << "}";
+        return;
+    }
+
     // a bare 'Click', which record 0009's search finds last: it is a variant
     // and not a name, and what it is in C++ is the enum's business
     if (found->candidate != 0
@@ -3217,11 +3270,418 @@ void Emitter::emit_identifier(u32 module_index, u32 node) {
         if (kind == SYMBOL_FIELD
             || (kind == SYMBOL_FUNCTION
                 && holder_of(module_index, found->candidate) != 0)) {
-            out << "this->";
+            out << self << "->";
         }
     }
 
     out << name;
+}
+
+std::string Emitter::function_type_name(u32 module_index, u32 type) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    std::string key = mangle_type(module_index, type);
+    std::string name = "h_fn_" + key;
+
+    if (!function_types.insert(key).second) {
+        return name;
+    }
+
+    std::vector<u32> parameters = types->get_arguments(type);
+    u32 result = parameters.back();
+
+    parameters.pop_back();
+
+    for (u32 one : types->get_arguments(type)) {
+        declare_enum_early(module_index, one);
+    }
+
+    // everything this names is written before it is: a function type among
+    // the parameters is declared by asking for its name, right here
+    std::string gives = declare(module_index, result, "");
+    std::string takes = "void *";
+    std::string named = name + " f";
+    std::string passes = "f.env";
+
+    for (u32 i = 0; i < parameters.size(); i++) {
+        std::string argument = "a" + std::to_string(i);
+
+        takes += ", " + declare(module_index, parameters[i], "");
+        named += ", " + declare(module_index, parameters[i], argument);
+        passes += ", " + argument;
+    }
+
+    functions << "struct " << name << " {\n"
+              << "    void *env;\n"
+              << "    " << gives << " (*call)(" << takes << ");\n"
+              << "};\n\n";
+
+    callables << "static inline " << gives << " " << name << "_call("
+              << named << ") {\n"
+              << "    return f.call(" << passes << ");\n"
+              << "}\n\n";
+
+    return name;
+}
+
+void Emitter::declare_enum_early(u32 module_index, u32 type) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    Type* entry = types->get_type(type);
+
+    if (entry->kind == TYPE_POINTER || entry->kind == TYPE_REFERENCE) {
+        declare_enum_early(module_index,
+                           types->get_argument(entry->first_argument));
+        return;
+    }
+
+    if (entry->kind != TYPE_NAMED) {
+        return;
+    }
+
+    Candidate* found = compilation->get_module(entry->module)->get_symbols()
+                           ->get_candidate(entry->subject);
+
+    if ((SymbolKind) found->kind != SYMBOL_ENUM
+        || !early_enums.insert(std::make_pair(entry->module, entry->subject))
+                .second) {
+        return;
+    }
+
+    // the two shapes record 0043 writes an enum as, declared the way each is
+    // defined: a tagged union is a struct, and one with no payload is a
+    // scoped enum over an i32
+    if (carries_a_payload(entry->module, found->ast_node)) {
+        functions << "struct " << name_of(entry->module, entry->subject)
+                  << ";\n";
+    } else {
+        functions << "enum class " << name_of(entry->module, entry->subject)
+                  << " : int32_t;\n";
+    }
+}
+
+std::string Emitter::adapter_of(u32 module_index, u32 candidate,
+                                u32 value_module, u32 type) {
+    std::string target = name_of(module_index, candidate);
+    std::string name = target + "_as_value";
+
+    if (!adapters.insert(name).second) {
+        return name;
+    }
+
+    TypeTable* types = compilation->get_module(value_module)->get_types();
+    std::vector<u32> parameters = types->get_arguments(type);
+    u32 result = parameters.back();
+    std::string passes;
+
+    parameters.pop_back();
+
+    callables << "static " << declare(value_module, result, "") << " " << name
+              << "(void *";
+
+    for (u32 i = 0; i < parameters.size(); i++) {
+        std::string argument = "a" + std::to_string(i);
+
+        callables << ", " << declare(value_module, parameters[i], argument);
+        passes += (i > 0 ? ", " : "") + argument;
+    }
+
+    callables << ") {\n"
+              << "    return " << target << "(" << passes << ");\n"
+              << "}\n\n";
+
+    return name;
+}
+
+std::string Emitter::closure_name(u32 module_index, u32 node) {
+    return "h" + std::to_string(module_index) + "_closure_"
+         + std::to_string(node);
+}
+
+std::vector<u32> Emitter::captures_of(u32 module_index, u32 closure,
+                                      bool& uses_self) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    Ast* ast = module->get_ast();
+    u32 own = table->scope_owned_by(closure);
+    std::set<u32> inside;
+    std::set<u32> seen;
+    std::vector<u32> found;
+    std::vector<u32> pending;
+
+    uses_self = false;
+
+    // what is declared inside is its own, at any depth, and what is declared
+    // at module scope is a global, reached without being captured
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        bool within = scope == table->get_module_scope();
+
+        for (u32 at = scope; at != 0 && !within;
+             at = table->get_scope(at)->parent) {
+            within = at == own;
+        }
+
+        if (!within) {
+            continue;
+        }
+
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+                 one = table->get_candidate(one)->next_candidate) {
+                inside.insert(one);
+            }
+        }
+    }
+
+    pending.push_back(closure);
+
+    while (pending.size() > 0) {
+        u32 node = pending.back();
+        AstNodeKind kind = (AstNodeKind) ast->get_node(node)->get_kind();
+
+        pending.pop_back();
+
+        if (kind == AST_THIS || kind == AST_SUPER) {
+            uses_self = true;
+        }
+
+        if (kind == AST_IDENTIFIER) {
+            Resolution* named = module->get_resolutions()->get(node);
+
+            if (named->candidate != 0 && named->module == module_index) {
+                SymbolKind what = (SymbolKind) table->get_candidate(
+                                      named->candidate)->kind;
+
+                if ((what == SYMBOL_VARIABLE || what == SYMBOL_PARAM)
+                    && inside.count(named->candidate) == 0
+                    && seen.insert(named->candidate).second) {
+                    found.push_back(named->candidate);
+                }
+
+                if (what == SYMBOL_FIELD
+                    || (what == SYMBOL_FUNCTION
+                        && holder_of(module_index, named->candidate) != 0)) {
+                    uses_self = true;
+                }
+            }
+        }
+
+        // the right side of a '.' is a member of whatever the left side is,
+        // and never something the closure reaches by itself
+        u32 last = 0;
+
+        for (u32 child = ast->get_node(node)->get_children(); child != 0;
+             child = ast->get_node(child)->get_sibling()) {
+            if ((kind == AST_DOT || kind == AST_ARROW) && last != 0) {
+                break;
+            }
+
+            pending.push_back(child);
+            last = child;
+        }
+    }
+
+    // the walk above is last in, first out; the source order is kinder to
+    // whoever reads the struct
+    std::vector<u32> ordered;
+
+    for (u32 one : found) {
+        ordered.insert(ordered.begin(), one);
+    }
+
+    return ordered;
+}
+
+void Emitter::closures_inside(u32 module_index, u32 node,
+                              std::vector<u32>& found) {
+    Ast* ast = compilation->get_module(module_index)->get_ast();
+
+    for (u32 child = node == 0 ? 0 : ast->get_node(node)->get_children();
+         child != 0; child = ast->get_node(child)->get_sibling()) {
+        if (ast->get_node(child)->get_kind() == AST_CLOSURE) {
+            found.push_back(child);
+            continue;
+        }
+
+        closures_inside(module_index, child, found);
+    }
+}
+
+void Emitter::declare_environments(u32 module_index, u32 body) {
+    std::vector<u32> found;
+
+    closures_inside(module_index, body, found);
+
+    for (u32 closure : found) {
+        bool uses_self = false;
+
+        define_closure(module_index, closure);
+
+        if (captures_of(module_index, closure, uses_self).size() > 0
+            || uses_self) {
+            std::string name = closure_name(module_index, closure);
+
+            line(name + "_captured " + name + "_env;");
+        }
+    }
+}
+
+void Emitter::define_closure(u32 module_index, u32 node) {
+    if (!closures.insert(std::make_pair(module_index, node)).second) {
+        return;
+    }
+
+    Module* module = compilation->get_module(module_index);
+    TypeTable* types = module->get_types();
+    SymbolTable* table = module->get_symbols();
+    u32 type = type_at(module_index, node);
+    std::string name = closure_name(module_index, node);
+    bool uses_self = false;
+    AstQuery query;
+
+    if (type == INVALID_TYPE) {
+        fail("a closure that was never typed");
+        return;
+    }
+
+    query.set_module(module);
+
+    std::vector<u32> captures = captures_of(module_index, node, uses_self);
+    std::vector<u32> parameters = query.get_closure_parameters(node);
+    u32 result = types->get_arguments(type).back();
+    std::string owner;
+
+    if (uses_self) {
+        if (method_holder == 0) {
+            fail("a closure reads 'this' outside a method");
+            return;
+        }
+
+        owner = name_of(module_index, table->candidate_of(method_holder));
+    }
+
+    // the environment: one pointer per captured name, under that name
+    if (captures.size() > 0 || uses_self) {
+        callables << "struct " << name << "_captured {\n";
+
+        for (u32 one : captures) {
+            u32 held = types->value_of(table->get_candidate(one)->type);
+
+            callables << "    "
+                      << declare(module_index, types->pointer(held),
+                                 name_of(module_index, one))
+                      << ";\n";
+        }
+
+        if (uses_self) {
+            callables << "    " << owner << " *h_self;\n";
+        }
+
+        callables << "};\n\n";
+    }
+
+    std::string signature = declare(module_index, result, "") + " " + name
+                          + "(void *h_env";
+
+    for (u32 parameter : parameters) {
+        u32 candidate = table->candidate_of(parameter);
+
+        signature += ", "
+                   + declare(module_index,
+                             table->get_candidate(candidate)->type,
+                             name_of(module_index, candidate));
+    }
+
+    signature += ")";
+    callables << "static " << signature << ";\n\n";
+
+    // The body goes to a buffer of its own, and the one being written is set
+    // aside meanwhile: this is reached from the middle of another body. Every
+    // captured name is bound, by reference, under the name it has outside --
+    // so the body is written exactly as it would be there
+    std::ostringstream held;
+    u32 held_indentation = indentation;
+    std::string held_self = self;
+
+    held.swap(out);
+    indentation = 1;
+
+    out << "static " << signature << " {\n";
+
+    if (captures.size() > 0 || uses_self) {
+        line(name + "_captured *h_captured = (" + name + "_captured *) h_env;");
+    }
+
+    for (u32 one : captures) {
+        u32 value = types->value_of(table->get_candidate(one)->type);
+        std::string local = name_of(module_index, one);
+
+        line(declare(module_index, types->reference(value), local)
+             + " = *h_captured->" + local + ";");
+    }
+
+    if (uses_self) {
+        line(owner + " *h_self = h_captured->h_self;");
+        self = "h_self";
+    }
+
+    declare_environments(module_index, query.get_block(node));
+
+    u32 back = query.get_given_back(node);
+
+    if (back != 0 && result != types->builtin(BUILTIN_VOID)) {
+        out << std::string(indentation * 4, ' ') << "return ";
+
+        if (!emit_construction(module_index, back)) {
+            emit_expression(module_index, back);
+        }
+
+        out << ";\n";
+    } else {
+        emit_block(module_index, query.get_block(node));
+    }
+
+    out << "}\n\n";
+    closure_bodies << out.str();
+
+    out.swap(held);
+    indentation = held_indentation;
+    self = held_self;
+}
+
+void Emitter::emit_closure(u32 module_index, u32 node) {
+    u32 type = type_at(module_index, node);
+    std::string name = closure_name(module_index, node);
+    bool uses_self = false;
+
+    define_closure(module_index, node);
+
+    if (type == INVALID_TYPE) {
+        return;
+    }
+
+    std::vector<u32> captures = captures_of(module_index, node, uses_self);
+    std::string value = function_type_name(module_index, type);
+
+    if (captures.size() == 0 && !uses_self) {
+        out << value << "{nullptr, &" << name << "}";
+        return;
+    }
+
+    // filled in where it is written, with addresses: nothing here has a side
+    // effect, so this is right inside a condition, an 'and', anywhere
+    out << "(";
+
+    for (u32 one : captures) {
+        std::string local = name_of(module_index, one);
+
+        out << name << "_env." << local << " = &" << local << ", ";
+    }
+
+    if (uses_self) {
+        out << name << "_env.h_self = " << self << ", ";
+    }
+
+    out << value << "{&" << name << "_env, &" << name << "})";
 }
 
 void Emitter::emit_call(u32 module_index, u32 node) {
@@ -3290,6 +3750,40 @@ void Emitter::emit_call(u32 module_index, u32 node) {
         out << name_of(entry->module, entry->subject);
         emit_call_arguments(module_index, child_of(module_index, node, 1),
                             chosen->module, chosen->candidate);
+        return;
+    }
+
+    // Record 0058: a call through a value of type 'A -> R'. The typer types
+    // the callee only when it is a value, never when it names a 'def', so a
+    // function type recorded on it says which call this is. Written through
+    // the type's helper, so the callee is evaluated once
+    u32 through = type_at(module_index, callee);
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+
+    if (through != INVALID_TYPE
+        && types->get_type(through)->kind == TYPE_FUNCTION) {
+        std::vector<u32> parameters = types->get_arguments(through);
+        u32 written = 0;
+        u32 list = child_of(module_index, node, 1);
+
+        out << function_type_name(module_index, through) << "_call(";
+        emit_expression(module_index, callee);
+
+        for (u32 argument = list == 0 ? 0 : child_of(module_index, list, 0);
+             argument != 0;
+             argument = compilation->get_module(module_index)->get_ast()
+                            ->get_node(argument)->get_sibling()) {
+            out << ", ";
+
+            if (!emit_conversion(module_index, module_index,
+                                 parameters[written], argument)) {
+                emit_expression(module_index, argument);
+            }
+
+            written++;
+        }
+
+        out << ")";
         return;
     }
 
@@ -3524,6 +4018,18 @@ std::string Emitter::mangle_type(u32 module_index, u32 type) {
     case TYPE_ARRAY:
         return "a" + std::to_string(entry->subject)
              + mangle_type(module_index, inside);
+
+    // record 0058: how many it holds, then each of them, the return last --
+    // so no two function types can spell the same
+    case TYPE_FUNCTION: {
+        std::string spelled = "f" + std::to_string(entry->argument_count);
+
+        for (u32 one : types->get_arguments(type)) {
+            spelled += mangle_type(module_index, one);
+        }
+
+        return spelled;
+    }
 
     default:
         break;
@@ -4319,6 +4825,9 @@ std::string Emitter::declare(u32 module_index, u32 type,
 
     case TYPE_REFERENCE:
         return declare(module_index, inside, "&" + name);
+
+    case TYPE_FUNCTION:
+        return function_type_name(module_index, type) + tail;
 
     case TYPE_ARRAY:
         if (entry->subject == NO_LENGTH) {

@@ -100,6 +100,14 @@ directory, it does, and `make clean` takes it back.
   No file of the program imports `String`. The table's `prelude` block does it
   (record 0033), which is what makes a template string mean anything here.
 
+- **`containers_are_walked_by_each`** — record 0058: an `Array` and a `List`
+  walked by handing `each` a closure. Totals written from inside the closure
+  are `main`'s own, since everything is captured by reference; `x = x * 2`
+  doubles the element itself, since `each` hands it over by reference the way
+  `for x in` does; a closure inside a closure counts pairs; and a method walks
+  one of its own fields and writes another through the `this` it captured.
+  Its `std` is the canonical one, copied whole.
+
 - **`lists_are_built_from_literals`** — record 0037, and the two ways there
   are to build a `List<T>`, since there is no literal for one: from a bracket
   literal, where the compiler picks `init(Array<T>&)`, and from a braced one,
