@@ -1,0 +1,38 @@
+def check : bool
+    @s : String&
+    return true
+def main : i32
+    let n = 1
+    let ok = true
+    let __sc0 : bool = ok
+    if __sc0:
+        let __ts1 : String
+        __ts1.append("only sometimes ")
+        __ts1.append(n)
+        __sc0 = check(__ts1)
+    if __sc0:
+        n = 0
+    let __sc2 : bool = ok
+    if not __sc2:
+        let __ts3 : String
+        __ts3.append("also sometimes ")
+        __ts3.append(n)
+        __sc2 = check(__ts3)
+    if __sc2:
+        n = 0
+    return n
+def nested : bool
+    @a : bool
+    @b : bool
+    @k : i32
+    let __sc4 : bool = a and b
+    if not __sc4:
+        let __ts6 : String
+        __ts6.append(k)
+        let __sc5 : bool = check(__ts6)
+        if __sc5:
+            let __ts7 : String
+            __ts7.append(k + 1)
+            __sc5 = check(__ts7)
+        __sc4 = __sc5
+    return __sc4

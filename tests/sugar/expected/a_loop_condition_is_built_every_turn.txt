@@ -1,0 +1,46 @@
+def again : bool
+    @s : String&
+    return false
+def main : i32
+    let n = 3
+    while true:
+        let __ts0 : String
+        __ts0.append("every turn ")
+        __ts0.append(n)
+        if not again(__ts0):
+            break
+        n = n - 1
+    for i = 0; ; i = i + 1:
+        let __ts1 : String
+        __ts1.append("head ")
+        __ts1.append(i)
+        if not again(__ts1):
+            break
+        n = 0
+    return n
+def steps : i32
+    let n = 0
+    let __step2 : bool = false
+    for i = 0; ; __step2 = true:
+        if __step2:
+            let __ts3 : String
+            __ts3.append(i)
+            i = i + step(__ts3)
+        if not i < 3:
+            break
+        if i == 1:
+            continue
+        n = n + 1
+    while again_with(|x| {
+        let __ts4 : String
+        __ts4.append(x)
+        again(__ts4)
+    }):
+        n = 0
+    return n
+def again_with : bool
+    @f : i32 -> bool
+    return f(1)
+def step : i32
+    @s : String&
+    return 1

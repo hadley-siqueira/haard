@@ -1,0 +1,24 @@
+# The smallest String these cases need: what a template string appends to.
+# The real one, which owns its bytes and writes record 0031's 'copy', is
+# tests/programs/cases/strings_are_built_and_joined/std/string.hd -- and the
+# whole program using it is tests/programs/cases/text_is_written_by_template.
+#
+# Three overloads, because what this suite is about is that each '${}' finds
+# the one its own type asks for.
+class String:
+    size : i32
+
+    def init : void
+        size = 0
+
+    def append : void
+        @text : char*
+        size = size + 1
+
+    def append : void
+        @value : i32
+        size = size + 1
+
+    def append : void
+        @other : String&
+        size = size + other.size

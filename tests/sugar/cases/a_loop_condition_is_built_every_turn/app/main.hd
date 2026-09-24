@@ -1,0 +1,50 @@
+def again : bool
+    @s : String&
+    return false
+
+def main : i32
+    let n = 3
+
+    # Record 0061. Lifted out, it would be built once before the loop instead
+    # of every turn -- so the condition moves into the body, first, where it
+    # is asked every turn and leaves by 'break'
+    while again("every turn ${n}"):
+        n = n - 1
+
+    # a C shaped 'for' the same way, and its step stays where it is: a
+    # 'continue' reaches the step and then the condition, at the top
+    for i = 0; again("head ${i}"); i = i + 1:
+        n = 0
+
+    return n
+
+def steps : i32
+    let n = 0
+
+    # A step that builds something moves to the top of the body, behind a
+    # flag the header's step sets -- at the END of the body a 'continue' would
+    # skip it. The condition moves with it, because it runs after the step.
+    # The flag is declared before the 'for', so it starts false every time
+    # the loop is reached
+    for i = 0; i < 3; i = i + step("${i}"):
+        if i == 1:
+            continue
+
+        n = n + 1
+
+    # a closure's body is a block of its own and builds there, so a closure
+    # in a condition leaves the loop as it was written
+    while again_with(|x| { again("${x}") }):
+        n = 0
+
+    return n
+
+def again_with : bool
+    @f : i32 -> bool
+
+    return f(1)
+
+def step : i32
+    @s : String&
+
+    return 1

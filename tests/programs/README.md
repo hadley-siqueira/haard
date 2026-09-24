@@ -114,6 +114,13 @@ directory, it does, and `make clean` takes it back.
   several statements that writes its `->`, and a map of a map. Mapping into
   bools is what found that a condition did not read through a `bool&`.
 
+- **`template_strings_are_built_when_they_run`** — record 0061: a `${}` on the
+  right of `and` and `or`, in a `while`'s condition, in a `for`'s condition
+  and step with a `continue` in the body, in an `elif`, and an unbound array
+  literal in the same places. Every interpolation calls `Log.seen`, and each
+  check compares the log, so the case says **when** each part ran and nothing
+  about how — it is written to outlive the C++ back end.
+
 - **`generic_classes_are_built_from_their_arguments`** — record 0060: a
   class of the program's own built as `Pair(3, 2.5)` and `new Pair(p, 10)`,
   one passed straight to a function, and the library's own — `List(xs)` from

@@ -1,0 +1,10 @@
+'and' with a false left builds nothing: 0: ok
+'and' with a true left builds it: [2][3]: ok
+'or' builds its right only after a false left: [2][3]: ok
+a chain of three builds the last two: [2][3]: ok
+a 'while' condition is built every turn: [0][1][2][3]: ok
+a 'for' builds its step after every turn: [0][10][1][11][2][12][3][13][4]: ok
+an 'elif' is built only when it is asked: [1]: ok
+an array literal is built where it runs: [1][2][3]: ok
+--- files:
+--- exit: 0

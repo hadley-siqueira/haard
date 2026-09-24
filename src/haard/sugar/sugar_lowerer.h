@@ -30,9 +30,11 @@ namespace haard {
     //
     // **Hoisting is the reason this is a pass and not an expression.** The
     // calls have to become statements, and moving them out of the expression
-    // they were written in is not always meaning preserving -- so where it is
-    // not, this refuses rather than emitting a program that means something
-    // else. Loosening it later is additive.
+    // they were written in is not always meaning preserving. Where it is not
+    // -- the right of 'and' and 'or', a loop's condition and step, an 'elif''s
+    // condition -- the statement is rewritten first into the branch or the
+    // loop it already is, where it is (record 0061). Only module level, with
+    // no statement at all, is refused.
     //
     // The node is rewritten in place into a use of the local, rather than
     // replaced in its parent: it keeps its index and its sibling link, so no
@@ -45,37 +47,36 @@ namespace haard {
             void set_module(Module* module);
 
             // takes apart every template string of this module, logging one
-            // error per one that cannot be hoisted
+            // error per one written at module level
             void lower();
 
         private:
-            // Whether the calls may be lifted out to the statement, and when
-            // they may not, which of the three reasons it is. It travels down
-            // the walk as a parameter: a template string does not know where
-            // it sits, and the walk is the only thing that does
-            enum Hoisting {
-                HOIST_OK,
+            void walk(u32 node, u32 block, u32 statement);
+            void walk_children(u32 node, u32 block, u32 statement);
 
-                // the condition of a 'while' or the middle of a C shaped
-                // 'for': lifting the calls out builds the String once,
-                // before the loop, instead of every turn
-                HOIST_IN_A_LOOP_CONDITION,
+            // Record 0061: whether anything under this node would be built
+            // before its statement -- a template string or a literal that is
+            // not bound. Not through a block, which is a closure's body and
+            // has statements of its own
+            bool hoists(u32 node);
 
-                // the right of 'and' or of 'or', which is evaluated only when
-                // the left did not already decide the answer. Lifted out, it
-                // would be built even then
-                HOIST_AFTER_AND,
-                HOIST_AFTER_OR,
-            };
+            // The four places where building before the statement would
+            // change what the program does, each rewritten into a shape where
+            // it does not. See the comment on 'walk'
+            void short_circuit_into_a_branch(u32 node, u32 block,
+                                             u32 statement);
+            void condition_into_the_body(u32 node);
+            void take_the_step_apart(u32 node, u32 block, u32 statement);
+            void elif_into_an_else(u32 node);
 
-            void walk(u32 node, u32 block, u32 statement, Hoisting hoisting);
-            void walk_children(u32 node, u32 block, u32 statement,
-                               Hoisting hoisting);
+            // 'let <name> : bool = <value>', '<name> = <value>' and
+            // 'if not <condition>: break', which is what the four are made of
+            u32 make_flag(u32 name, u32 value, u32 like);
+            u32 make_assignment(u32 name, u32 value, u32 like);
+            u32 make_exit_unless(u32 condition, u32 like);
 
-            // the first child under one rule and the rest under another,
-            // which is the shape of 'while', 'and' and 'or' alike
-            void walk_head_apart(u32 node, u32 block, u32 statement,
-                                 Hoisting head, Hoisting rest);
+            // statements put first in a block
+            void prepend(u32 block, const std::vector<u32>& statements);
 
             // 'T[]' -> 'Array<T>', '[T]' -> 'List<T>' and '{K: V}' ->
             // 'Hash<K, V>', records 0016 and 0022. One rewrite for the three
@@ -86,10 +87,6 @@ namespace haard {
             void lower_into_generic(u32 node, const std::string& name);
 
             void lower_template_string(u32 node, u32 block, u32 statement);
-
-            // what a refused one becomes, so that one mistake reads as one
-            // error. See the comment on the definition
-            void recover(u32 node, u32 block, u32 statement);
 
             // 'let __tsN : String'
             u32 make_declaration(u32 name_token, u32 like);
@@ -116,9 +113,8 @@ namespace haard {
             // declaration and a declaration needs a statement
             void hoist_literal(u32 node, u32 block, u32 statement);
 
-            // 'what' names the construct, since three of them now share the
-            // same three refusals
-            void refuse(u32 node, Hoisting hoisting, const std::string& what);
+            // module level, where there is no statement to build before
+            void refuse(u32 node, const std::string& what);
 
             AstNodeKind kind_of(u32 node);
             u32 first_child(u32 node);

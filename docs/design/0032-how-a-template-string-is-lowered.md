@@ -10,7 +10,7 @@ same day, so the wait was hours. `src/haard/sugar/sugar_lowerer.{h,cpp}`,
 | | |
 |---|---|
 | A template string becomes a **local `String`** and a run of `append` calls, hoisted before the statement it was written in | **decided** |
-| Hoisting where it would change the meaning — an operand of `and`/`or`, a loop condition — is **refused**, and loosened later | **decided** |
+| Hoisting where it would change the meaning — an operand of `and`/`or`, a loop condition — is **refused**, and loosened later | **decided**; loosened 2026-09-24 by record 0061 |
 | How the pass names `String` in a module that never imported it | **decided: the prelude answers it**, record 0017. Template strings wait for it |
 | A user's class in a `${}` is found by a `to_string` convention | already decided, record [0031](0031-what-copying-a-value-means.md) |
 
@@ -210,9 +210,12 @@ out->write('\n')
 
 ## What is left open
 
-**Loosening the three refusals**, which record 0018's own argument says is
-additive: an `and` can be lowered to the branch it already is, and a loop
-condition by rebuilding at the top of the body. Nothing needs deciding first.
+~~**Loosening the three refusals**~~ — **done 2026-09-24**, record 0061, in
+the shapes this paragraph named: an `and` or an `or` becomes the branch it
+already is, and a loop condition is rebuilt at the top of the body. It also
+found a fourth place that was never refused and should have been: an
+`elif`'s condition. Only module level is still refused, and the recovery
+below is gone with the refusals it served.
 
 **The name `__tsN` is writable by a user**, unlike record 0002's `Pair#3#7`,
 which no source can spell. A program declaring its own `__ts0` in the same

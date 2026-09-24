@@ -1,0 +1,31 @@
+def total : i32
+    @xs : Array<i32>&
+    return 0
+let global = [1, 2]
+def main : i32
+    let n = 3
+    let ok = true
+    while true:
+        let __ar0 = [1, 2]
+        if not total(__ar0) < n:
+            break
+        n = n - 1
+    let __sc1 : bool = ok
+    if __sc1:
+        let __ar2 = [3, 4]
+        __sc1 = total(__ar2) > 0
+    if __sc1:
+        n = 0
+    let __sc3 : bool = ok
+    if not __sc3:
+        let __ar4 = [5, 6]
+        __sc3 = total(__ar4) > 0
+    if __sc3:
+        n = 0
+    let __ar5 = [7, 8]
+    if total(__ar5) > 0:
+        n = 0
+    let __ar6 = [9, 10]
+    if total(__ar6) > 0 and ok:
+        n = 0
+    return n

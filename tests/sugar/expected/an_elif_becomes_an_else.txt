@@ -1,0 +1,28 @@
+def check : bool
+    @s : String&
+    return true
+def main : i32
+    let n = 1
+    if n > 0:
+        n = 2
+    else:
+        let __ts0 : String
+        __ts0.append("only when the if was false ")
+        __ts0.append(n)
+        if check(__ts0):
+            n = 3
+        elif n < 0:
+            n = 4
+        else:
+            let __ts1 : String
+            __ts1.append("and only when that was false too ")
+            __ts1.append(n)
+            if check(__ts1):
+                n = 5
+            else:
+                n = 6
+    if n > 0:
+        n = 7
+    elif n < 0:
+        n = 8
+    return n

@@ -17,11 +17,23 @@ void SugarLowerer::lower() {
     // no block and no statement yet: a template string written at module
     // level -- a global's value, a field's, a parameter's default -- has
     // nowhere to be built before, and is refused when it is reached
-    walk(module->get_ast()->get_root(), 0, 0, HOIST_OK);
+    walk(module->get_ast()->get_root(), 0, 0);
 }
 
-void SugarLowerer::walk(u32 node, u32 block, u32 statement,
-                        Hoisting hoisting) {
+// Record 0061. Everything this pass takes apart is built **before the
+// statement it is written in**, which is only the same program where the
+// statement evaluates that part exactly once and before anything else that
+// can decide not to. Four places do not, and each is rewritten first into a
+// shape where it does -- so the hoisting itself never has to know:
+//
+//   - the right of 'and' and of 'or', which may not run at all
+//   - the condition of a loop and a C shaped 'for''s step, which run every turn
+//   - the condition of an 'elif', which runs only when those above were false
+//
+// Each is rewritten only when what it holds would be hoisted, so a program
+// that writes no template string and no unbound literal in one of those
+// places is the tree it always was
+void SugarLowerer::walk(u32 node, u32 block, u32 statement) {
     if (node == 0) {
         return;
     }
@@ -32,33 +44,39 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
     case AST_BLOCK:
         for (u32 child = first_child(node); child != 0;
              child = sibling_of(child)) {
-            walk(child, node, child, HOIST_OK);
+            walk(child, node, child);
         }
 
         return;
 
-    // the condition is the first child of both, and the block after it is
-    // ordinary again -- statements in there have their own place to go
     case AST_WHILE:
-        walk_head_apart(node, block, statement, HOIST_IN_A_LOOP_CONDITION,
-                        hoisting);
+        if (hoists(first_child(node))) {
+            condition_into_the_body(node);
+        }
+
+        walk_children(node, block, statement);
         return;
 
-    // the middle and the last part of 'for a; b; c:'. Both run every turn,
-    // and neither is a block
-    case AST_FOR_CONDITION:
-    case AST_FOR_INCREMENT:
-        walk_children(node, block, statement, HOIST_IN_A_LOOP_CONDITION);
+    case AST_FOR:
+        take_the_step_apart(node, block, statement);
+        walk_children(node, block, statement);
+        return;
+
+    case AST_IF:
+        elif_into_an_else(node);
+        walk_children(node, block, statement);
         return;
 
     // The left of a short circuit is evaluated whatever happens, so it is as
     // safe as anywhere. The right is the one that may not run
     case AST_LOGICAL_AND:
-        walk_head_apart(node, block, statement, hoisting, HOIST_AFTER_AND);
-        return;
-
     case AST_LOGICAL_OR:
-        walk_head_apart(node, block, statement, hoisting, HOIST_AFTER_OR);
+        if (block != 0 && hoists(sibling_of(first_child(node)))) {
+            short_circuit_into_a_branch(node, block, statement);
+            return;
+        }
+
+        walk_children(node, block, statement);
         return;
 
     // A bracket or brace literal that is NOT bound to a name. The emitter
@@ -67,7 +85,7 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
     // binding first
     case AST_LIST:
     case AST_ARRAY:
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
 
         // An **empty** one is left where it stands, and for a reason that is
         // not an exception: what a literal is hoisted for is the fixed array
@@ -79,8 +97,8 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
             return;
         }
 
-        if (hoisting != HOIST_OK || block == 0) {
-            refuse(node, hoisting, "an array literal");
+        if (block == 0) {
+            refuse(node, "an array literal");
             return;
         }
 
@@ -94,18 +112,18 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
 
         if (held != 0
             && (kind_of(held) == AST_LIST || kind_of(held) == AST_ARRAY)) {
-            walk_children(held, block, statement, hoisting);
+            walk_children(held, block, statement);
             return;
         }
 
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
         return;
     }
 
     // 'T[]' with nothing between the brackets. 'T[3]' is a fixed array and
     // stays one (record 0021), so the length is what tells them apart
     case AST_ARRAY_TYPE:
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
 
         if (sibling_of(first_child(node)) == 0) {
             lower_into_generic(node, "Array");
@@ -124,12 +142,12 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
     // Neither has a second reading the way 'T[3]' is a second reading of
     // 'T[]', so neither asks a question before it is rewritten
     case AST_LIST_TYPE:
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
         lower_into_generic(node, "List");
         return;
 
     case AST_HASH_TYPE:
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
         lower_into_generic(node, "Hash");
         return;
 
@@ -137,11 +155,10 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
     // is already a local by the time this one appends it -- and its
     // statements, inserted before the same statement, land before these
     case AST_TEMPLATE_STRING:
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
 
-        if (hoisting != HOIST_OK || block == 0) {
-            refuse(node, hoisting, "a template string");
-            recover(node, block, statement);
+        if (block == 0) {
+            refuse(node, "a template string");
             return;
         }
 
@@ -149,13 +166,12 @@ void SugarLowerer::walk(u32 node, u32 block, u32 statement,
         return;
 
     default:
-        walk_children(node, block, statement, hoisting);
+        walk_children(node, block, statement);
         return;
     }
 }
 
-void SugarLowerer::walk_children(u32 node, u32 block, u32 statement,
-                                 Hoisting hoisting) {
+void SugarLowerer::walk_children(u32 node, u32 block, u32 statement) {
     u32 child = first_child(node);
 
     // read the sibling before walking, because lowering rewrites the node it
@@ -163,28 +179,247 @@ void SugarLowerer::walk_children(u32 node, u32 block, u32 statement,
     while (child != 0) {
         u32 next = sibling_of(child);
 
-        walk(child, block, statement, hoisting);
+        walk(child, block, statement);
         child = next;
     }
 }
 
-void SugarLowerer::walk_head_apart(u32 node, u32 block, u32 statement,
-                                   Hoisting head, Hoisting rest) {
-    u32 child = first_child(node);
+// Whether anything under this node would be built before its statement. A
+// block is where a closure's body starts, and what is inside it is built
+// before a statement of its own
+bool SugarLowerer::hoists(u32 node) {
+    if (node == 0) {
+        return false;
+    }
 
-    if (child == 0) {
+    switch (kind_of(node)) {
+    case AST_BLOCK:
+        return false;
+
+    case AST_TEMPLATE_STRING:
+        return true;
+
+    case AST_LIST:
+    case AST_ARRAY:
+        if (first_child(node) != 0) {
+            return true;
+        }
+
+        break;
+
+    default:
+        break;
+    }
+
+    for (u32 child = first_child(node); child != 0; child = sibling_of(child)) {
+        if (hoists(child)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// 'a and b' is the branch it always was:
+//
+//     let __sc0 : bool = a
+//     if __sc0:
+//         __sc0 = b
+//
+// and 'a or b' the same with 'if not __sc0'. The right is now a statement in
+// a block of its own, so whatever it builds is built there -- only when it
+// runs. The two new statements go before the one the operator was written in,
+// and are walked as statements, so a left that builds something builds it
+// before the 'let', and an 'and' on the right is taken apart inside the 'if'
+void SugarLowerer::short_circuit_into_a_branch(u32 node, u32 block,
+                                               u32 statement) {
+    u32 like = token_of(node);
+    u32 left = first_child(node);
+    u32 right = sibling_of(left);
+    bool is_and = kind_of(node) == AST_LOGICAL_AND;
+    u32 name = module->add_synthetic_token(
+        TK_IDENTIFIER, "__sc" + std::to_string(counter++), like);
+
+    module->get_ast()->get_node(left)->set_sibling(0);
+
+    u32 declaration = make_flag(name, left, like);
+
+    u32 test = builder.make_identifier(name);
+
+    if (!is_and) {
+        test = builder.make_unary_operator(
+            AST_LOGICAL_NOT, module->add_synthetic_token(TK_NOT, "not", like),
+            test);
+    }
+
+    u32 body = builder.make_block();
+
+    builder.add_child(body, 0, make_assignment(name, right, like));
+
+    u32 branch = builder.make_if(module->add_synthetic_token(TK_IF, "if",
+                                                             like));
+
+    builder.add_child(branch, builder.add_child(branch, 0, test), body);
+
+    // and the operator becomes the answer, in place
+    AstNode* rewritten = module->get_ast()->get_node(node);
+
+    rewritten->set_kind(AST_IDENTIFIER);
+    rewritten->set_token(name);
+    rewritten->set_children(0);
+
+    insert_before(block, statement, std::vector<u32>{declaration, branch});
+
+    walk(declaration, block, declaration);
+    walk(branch, block, branch);
+}
+
+// 'while c:' is 'while true:' with the condition asked first thing in every
+// turn, where whatever it builds is built every turn:
+//
+//     while true:
+//         if not c:
+//             break
+//         ...
+void SugarLowerer::condition_into_the_body(u32 node) {
+    u32 condition = first_child(node);
+    u32 body = sibling_of(condition);
+    u32 like = token_of(node);
+    u32 always = builder.make_literal(
+        AST_TRUE, module->add_synthetic_token(TK_TRUE, "true", like));
+
+    module->get_ast()->get_node(condition)->set_sibling(0);
+    module->get_ast()->get_node(always)->set_sibling(body);
+    module->get_ast()->get_node(node)->set_children(always);
+
+    prepend(body, std::vector<u32>{make_exit_unless(condition, like)});
+}
+
+// A C shaped 'for' runs its condition every turn and its step after every
+// turn, 'continue' included. Only the condition building something:
+//
+//     for a; ; c:
+//         if not b:
+//             break
+//         ...
+//
+// and a 'continue' still reaches 'c' and then the condition. A step that
+// builds something cannot move to the end of the body -- a 'continue' would
+// skip it -- so it moves to the **top**, behind a flag the step itself sets,
+// and the condition moves with it, since the condition runs after the step:
+//
+//     let __step0 : bool = false
+//     for a; ; __step0 = true:
+//         if __step0:
+//             c
+//         if not b:
+//             break
+//         ...
+void SugarLowerer::take_the_step_apart(u32 node, u32 block, u32 statement) {
+    u32 head = first_child(node);
+    u32 condition = sibling_of(head);
+    u32 step = condition == 0 ? 0 : sibling_of(condition);
+    u32 body = step == 0 ? 0 : sibling_of(step);
+    u32 tested = condition == 0 ? 0 : first_child(condition);
+    bool moves_step = step != 0 && hoists(step);
+
+    if (body == 0 || (!moves_step && !hoists(tested))) {
         return;
     }
 
-    u32 next = sibling_of(child);
+    u32 like = token_of(node);
+    std::vector<u32> first;
 
-    walk(child, block, statement, head);
+    if (moves_step) {
+        u32 name = module->add_synthetic_token(
+            TK_IDENTIFIER, "__step" + std::to_string(counter++), like);
+        u32 steps = builder.make_block();
+        u32 last = 0;
 
-    while (next != 0) {
-        u32 after = sibling_of(next);
+        for (u32 part = first_child(step); part != 0; ) {
+            u32 next = sibling_of(part);
 
-        walk(next, block, statement, rest);
-        next = after;
+            module->get_ast()->get_node(part)->set_sibling(0);
+            last = builder.add_child(steps, last, part);
+            part = next;
+        }
+
+        module->get_ast()->get_node(step)->set_children(0);
+        builder.add_child(step, 0, make_assignment(
+            name, builder.make_literal(AST_TRUE, module->add_synthetic_token(
+                                                     TK_TRUE, "true", like)),
+            like));
+
+        u32 branch = builder.make_if(module->add_synthetic_token(TK_IF, "if",
+                                                                 like));
+
+        builder.add_child(branch,
+                          builder.add_child(branch, 0,
+                                            builder.make_identifier(name)),
+                          steps);
+        first.push_back(branch);
+
+        // the flag is declared where the 'for' is, so it starts false every
+        // time the loop is reached and not once per program
+        insert_before(block, statement, std::vector<u32>{make_flag(
+            name,
+            builder.make_literal(AST_FALSE, module->add_synthetic_token(
+                                                TK_FALSE, "false", like)),
+            like)});
+    }
+
+    if (tested != 0) {
+        module->get_ast()->get_node(condition)->set_children(0);
+        first.push_back(make_exit_unless(tested, like));
+    }
+
+    prepend(body, first);
+}
+
+// 'elif c:' runs 'c' only when everything above it was false. Written as the
+// 'else' holding an 'if' it always meant, 'c' is a condition at the top of
+// its own statement, where building before it is building at the right time:
+//
+//     if a:                    if a:
+//         ...                      ...
+//     elif c:          ->      else:
+//         ...                      if c:
+//     else:                            ...
+//         ...                      else:
+//                                      ...
+//
+// Only the first 'elif' that builds something is moved; the ones after it
+// move with it, and the walk reaches them in the new 'if'
+void SugarLowerer::elif_into_an_else(u32 node) {
+    u32 previous = first_child(node);
+
+    for (u32 branch = sibling_of(previous); branch != 0;
+         previous = branch, branch = sibling_of(branch)) {
+        if (kind_of(branch) != AST_ELIF || !hoists(first_child(branch))) {
+            continue;
+        }
+
+        u32 inner = builder.make_if(token_of(branch));
+
+        // the elif's condition and block, then every elif and else after it
+        module->get_ast()->get_node(inner)->set_children(first_child(branch));
+
+        u32 last = sibling_of(first_child(branch));
+
+        module->get_ast()->get_node(last)->set_sibling(sibling_of(branch));
+
+        u32 holder = builder.make_block();
+
+        builder.add_child(holder, 0, inner);
+
+        AstNode* rewritten = module->get_ast()->get_node(branch);
+
+        rewritten->set_kind(AST_ELSE);
+        rewritten->set_children(0);
+        rewritten->set_sibling(0);
+
+        builder.add_child(branch, 0, holder);
+        return;
     }
 }
 
@@ -289,41 +524,6 @@ void SugarLowerer::hoist_literal(u32 node, u32 block, u32 statement) {
     insert_before(block, statement,
                   std::vector<u32>{
                       builder.make_let_declaration(let_token, binding)});
-}
-
-// A refused template string is still a String -- what was refused is where it
-// was written, not what it is. So it becomes one, with nothing appended to it,
-// and every phase after this reads an ordinary local instead of a node no
-// typer has a case for.
-//
-// Without it the refusal is followed by a consequence of itself: an
-// expression that types to nothing makes the call around it report 'no f
-// takes these arguments', and one mistake reads as two. This is the parser's
-// poisoned primitive one phase later, and it is safe for the same reason --
-// an error was logged, so nothing is emitted from this tree.
-//
-// The appends are what is dropped, and dropping them is what keeps the
-// recovery from inventing errors of its own: 'for i = 0; takes("${i}"); ...'
-// would otherwise put a use of 'i' before the loop that declares it
-void SugarLowerer::recover(u32 node, u32 block, u32 statement) {
-    // written at module level, where there is no statement to be built before
-    // and so nothing to recover into. It reports once as it is
-    if (block == 0) {
-        return;
-    }
-
-    u32 quote = token_of(node);
-    std::string name = "__ts" + std::to_string(counter++);
-    u32 name_token = module->add_synthetic_token(TK_IDENTIFIER, name, quote);
-
-    AstNode* rewritten = module->get_ast()->get_node(node);
-
-    rewritten->set_kind(AST_IDENTIFIER);
-    rewritten->set_token(name_token);
-    rewritten->set_children(0);
-
-    insert_before(block, statement,
-                  std::vector<u32>{make_declaration(name_token, quote)});
 }
 
 u32 SugarLowerer::make_declaration(u32 name_token, u32 like) {
@@ -451,38 +651,70 @@ void SugarLowerer::insert_before(u32 block, u32 statement,
     }
 }
 
-void SugarLowerer::refuse(u32 node, Hoisting hoisting,
-                          const std::string& what) {
-    // one sentence, and it says the mechanism rather than only the verdict:
-    // what makes these three places different is not obvious from the source,
-    // and a reader who knows a template string becomes a local built before
-    // the statement can work out the rest
-    std::string where;
-
-    switch (hoisting) {
-    case HOIST_IN_A_LOOP_CONDITION:
-        where = "so it cannot go in a loop condition";
-        break;
-
-    case HOIST_AFTER_AND:
-        where = "so it cannot go on the right of 'and'";
-        break;
-
-    case HOIST_AFTER_OR:
-        where = "so it cannot go on the right of 'or'";
-        break;
-
-    case HOIST_OK:
-        where = "and this is not inside one";
-        break;
-    }
-
+// Module level, the one place with no statement to be built before: a global's
+// value, a field's, a parameter's default. The four places that used to be
+// refused beside it are taken apart instead (record 0061)
+void SugarLowerer::refuse(u32 node, const std::string& what) {
     u32 token = token_of(node);
 
     module->get_logger()->error(
         module->get_tokens()->get_token(token).get_offset(),
         module->get_tokens()->get_token(token).get_length(),
-        what + " is built before the statement it is written in, " + where);
+        what + " is built before the statement it is written in, and this "
+               "is not inside one");
+}
+
+// 'let <name> : bool = <value>'
+u32 SugarLowerer::make_flag(u32 name, u32 value, u32 like) {
+    u32 let_token = module->add_synthetic_token(TK_LET, "let", like);
+    u32 bool_token = module->add_synthetic_token(TK_BOOL, "bool", like);
+
+    u32 binding = builder.make_binding(
+        builder.make_binding_name(builder.make_identifier(name)),
+        builder.make_binding_type(builder.make_builtin_type(bool_token)),
+        builder.make_binding_expression(value));
+
+    return builder.make_let_declaration(let_token, binding);
+}
+
+// '<name> = <value>'
+u32 SugarLowerer::make_assignment(u32 name, u32 value, u32 like) {
+    return builder.make_binary_operator(
+        AST_ASSIGNMENT, module->add_synthetic_token(TK_ASSIGNMENT, "=", like),
+        builder.make_identifier(name), value);
+}
+
+// 'if not <condition>: break'
+u32 SugarLowerer::make_exit_unless(u32 condition, u32 like) {
+    u32 test = builder.make_unary_operator(
+        AST_LOGICAL_NOT, module->add_synthetic_token(TK_NOT, "not", like),
+        condition);
+    u32 body = builder.make_block();
+
+    builder.add_child(body, 0, builder.make_jump(
+        AST_BREAK, module->add_synthetic_token(TK_BREAK, "break", like), 0));
+
+    u32 branch = builder.make_if(module->add_synthetic_token(TK_IF, "if",
+                                                             like));
+
+    builder.add_child(branch, builder.add_child(branch, 0, test), body);
+
+    return branch;
+}
+
+void SugarLowerer::prepend(u32 block, const std::vector<u32>& statements) {
+    if (statements.size() == 0) {
+        return;
+    }
+
+    Ast* ast = module->get_ast();
+
+    for (size_t i = 0; i + 1 < statements.size(); i++) {
+        ast->get_node(statements[i])->set_sibling(statements[i + 1]);
+    }
+
+    ast->get_node(statements.back())->set_sibling(first_child(block));
+    ast->get_node(block)->set_children(statements.front());
 }
 
 AstNodeKind SugarLowerer::kind_of(u32 node) {

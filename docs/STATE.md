@@ -58,6 +58,12 @@ Seventeen test suites, ~680 cases, `make check` in about a minute.
 
 ## What works, proven by running it
 
+**What a statement builds is built when it runs**, since 2026-09-24 — record
+0061. A template string or an unbound literal on the right of `and`/`or`, in a
+loop's condition, in a `for`'s step or in an `elif`'s condition is built only
+when that part runs, and every turn it runs; before, three of those were
+refused and the `elif` was wrong in silence.
+
 **A generic class is solved from its arguments**, since 2026-09-24 — record
 0060. `Pair(1, 2.5)`, `new Pair(p, 3)`, `List(xs)` and `Range(1, 4)` build the
 clone their arguments say, solved from the class's `init`s; two `init`s naming
@@ -294,11 +300,12 @@ insertion goes directly before the same statement. Each `${}` finds the
 `append` its own type asks for, so String's eight overloads carry the whole
 feature and no phase after the pass knows a template string existed.
 
-**Three places are refused**, and loosening them is additive: an operand of
-`and`/`or` (evaluated only when the left did not decide), a loop condition
-(built once instead of every turn), and module level (no statement to be built
-before). A refused one is still lowered into a `String` with the appends
-dropped — recovery, so one mistake reads as one error.
+**Only module level is refused** (no statement to be built before), since
+2026-09-24 and record 0061. The right of `and`/`or`, a loop's condition, a C
+shaped `for`'s step and an `elif`'s condition are rewritten first into the
+control flow they already are, so what they build is built when it runs. The
+`elif` had never been refused, and was built before the whole `if`, in
+silence.
 
 **The prelude works**, since 2026-09-06 — record 0033, and it is not record
 0017's prelude. There is **no prelude module**: the roots table carries a
@@ -1182,15 +1189,14 @@ Three things about it are worth knowing before touching it:
   kept beside the stream, and the offset is still used for **where to point** —
   each is given a real token's position, so a diagnostic about a node nobody
   wrote lands on the `${}` the author did write.
-- **A refused one is still a `String`**, with the appends dropped. Without that
-  recovery a refusal reads as two errors, the second a consequence of the
-  first.
+- ~~**A refused one is still a `String`**~~ — gone with the refusals it
+  served, record 0061.
 - **`tests/sugar/` prints the tree back as Haard.** The golden *is* the sugar
   taken apart, which is record 0025's argument for a pass over an IR being
   cashed in.
 
-Three places are refused and loosening them is additive: an operand of
-`and`/`or`, a loop condition, and module level.
+Only module level is refused since record 0061; the other places are
+rewritten into the control flow they already are.
 
 **The prelude is in, and it is not the one record 0017 designed.** That is what
 changed on 2026-09-06, and record **0033** supersedes 0017's mechanism.
@@ -1282,8 +1288,8 @@ in the meantime.
       built with none written, `Pair(1, 2)`~~ — **done 2026-09-24**, record
       0060. A generic **enum**'s variant, `Option.Some(3)`, is not.
    3. The small ones: `T&&` does not parse (1.15), record 0018's list does not
-      compose (`char*` → `String&`), the three template-string refusals are
-      loosenable and additive, a constant inside a **type** cannot be
+      compose (`char*` → `String&`), ~~the three template-string refusals~~
+      (**done 2026-09-24**, record 0061), a constant inside a **type** cannot be
       evaluated, and a **tuple as a value** types but does not emit.
    4. Deferred on purpose, with the design written down: 1.23 (`{key: value}`)
       and 1.26 (`const`). Do not re-derive either.
@@ -1301,10 +1307,8 @@ in the meantime.
    a line in that list. What it does **not** do yet is `T[]` → `Array<T>` and
    a type for a string literal: those need an `Array` to exist, which is item
    4, and the sugar to be pointed at it.
-3. ~~**Template strings**~~ — **done**, record 0032. What is left is
-   **loosening** the three refusals, which is additive and needs no decision:
-   an `and` lowers to the branch it already is, and a loop condition by
-   rebuilding at the top of the body.
+3. ~~**Template strings**~~ — **done**, record 0032, and ~~loosening the
+   three refusals~~ — **done 2026-09-24**, record 0061.
 4. **The rest of the standard library** (records 0022 and 0023). `Array` is
    in (record 0036); `List` and `Hash` follow. What is next inside it, in
    order:

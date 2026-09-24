@@ -1,0 +1,30 @@
+# Record 0061. An 'elif''s condition runs only when every branch above it was
+# false. Built before the statement, it ran before the 'if' was even asked --
+# in silence, since it was never refused. So the 'elif' becomes the 'else' it
+# always meant, holding an 'if' whose condition is at the top of a statement
+# of its own, and every 'elif' and 'else' after it moves into that 'if'.
+def check : bool
+    @s : String&
+    return true
+
+def main : i32
+    let n = 1
+
+    if n > 0:
+        n = 2
+    elif check("only when the if was false ${n}"):
+        n = 3
+    elif n < 0:
+        n = 4
+    elif check("and only when that was false too ${n}"):
+        n = 5
+    else:
+        n = 6
+
+    # an 'elif' that builds nothing is left an 'elif'
+    if n > 0:
+        n = 7
+    elif n < 0:
+        n = 8
+
+    return n

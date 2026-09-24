@@ -1,0 +1,29 @@
+def check : bool
+    @s : String&
+    return true
+
+def main : i32
+    let n = 1
+    let ok = true
+
+    # Record 0061. The right of 'and' runs only when the left did not already
+    # decide, so it is built inside the branch that runs it: the operator
+    # becomes a flag, and the right becomes an 'if' setting it
+    if ok and check("only sometimes ${n}"):
+        n = 0
+
+    # and 'or' is the same branch the other way round
+    if ok or check("also sometimes ${n}"):
+        n = 0
+
+    return n
+
+def nested : bool
+    @a : bool
+    @b : bool
+    @k : i32
+
+    # 'a and b' is the left of the 'or' and builds nothing, so it stays an
+    # operator; the right of the 'or' is taken apart. Inside it, an 'and'
+    # whose right builds something is taken apart again, inside the branch
+    return a and b or check("${k}") and check("${k + 1}")

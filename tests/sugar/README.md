@@ -95,40 +95,62 @@ let two = total(__ar0) + total(__ar1)
 ```
 
 `bound` does not move, and the hoisted ones keep the order they were written
-in. `an_array_literal_cannot_always_be_hoisted` is the same three refusals a
-template string gets, plus the one that is **not** refused: a global, because a
+in. `an_array_literal_is_built_where_it_runs` is the same rewrites a template
+string gets (below), plus the one place that needs none: a global, because a
 global is a binding and the emitter builds one where it is bound.
 
-## The three refusals, and what is not refused
+## Where building before the statement would change the program
 
 The calls have to become statements, and lifting them out of the expression
-they were written in is not always meaning preserving. Where it is not, the
-pass refuses instead of emitting a program that means something else:
+they were written in is not always meaning preserving. Record 0032 refused
+three places; record 0061 **rewrites** four into the control flow they already
+are, and the goldens are that rewrite, readable:
 
-- **a loop condition** — a `while`'s, or the middle of a C shaped `for`. Lifted
-  out, the String is built once before the loop instead of every turn.
-- **the right of `and` or of `or`** — evaluated only when the left did not
-  already decide. Lifted out, it would be built even then.
-- **module level** — a global's value has no statement to be built before.
+- **`a_short_circuit_becomes_a_branch`** — the right of `and` or `or` runs only
+  when the left did not decide. The operator becomes a `bool` flag and an
+  `if` that sets it, and the right is built inside that `if`. `nested` is a
+  chain: the `and` on the left of the `or` builds nothing and stays an
+  operator, and the `and` on its right is taken apart again inside the branch.
+- **`a_loop_condition_is_built_every_turn`** — a `while`'s condition, and a C
+  shaped `for`'s, move to the top of the body as `if not c: break`, so they are
+  built every turn. `steps` is a `for` whose **step** builds something: it
+  moves to the top behind a flag the header's step sets, since at the end a
+  `continue` would skip it. Its last loop holds a **closure** in the
+  condition, whose body builds in a block of its own, so that loop is left as
+  written.
+- **`an_elif_becomes_an_else`** — an `elif`'s condition runs only when the
+  branches above were false. It used to be built before the whole `if`, and
+  nothing refused it. The `elif` becomes the `else` holding an `if` it always
+  meant, and what follows it moves inside.
+- **`an_array_literal_is_built_where_it_runs`** — the same rewrites for a
+  bracket literal that is not bound, plus the one place that never needed
+  one: a global, which the emitter builds where it is bound.
 
-`what_is_safe_is_not_refused` is the case that keeps the other three honest: an
+**Module level is the one refusal left**,
+`at_module_level_there_is_no_statement`, because a global's value has no
+statement to be built before. Record 0032 turned a refused template string into
+an empty `String` so one refusal did not read as two errors; module level never
+had a block to recover into, so that recovery went with the other refusals.
+
+`what_is_safe_is_not_rewritten` is the case that keeps the others honest: an
 `if` condition is evaluated once before either branch, and the **left** of a
-short circuit runs whatever the right one does. Both lower in full. Without it
-a sabotage that refuses every condition, or every operand of `and`, would pass
-the suite.
+short circuit runs whatever the right one does. Both lower as they always did,
+with no flag and no branch. Without it a sabotage that rewrites every
+condition, or every operand of `and`, would pass the suite.
 
-## A refused template string is still a String
+**What these goldens do not say is whether the rewrite is right.** They pin
+the shape. The meaning is pinned by
+`tests/programs/cases/template_strings_are_built_when_they_run`, which logs
+when each `${}` runs and reads no C++, so it stays true under any lowering.
 
-Look at the refusal goldens: the tree keeps `let __ts0 : String` with nothing
-appended to it, and the node became a use of it.
+## The sabotages of record 0061
 
-That is recovery, and it is the parser's poisoned primitive one phase later. An
-expression that types to nothing makes the call around it report *no `f` takes
-these arguments*, so without it one mistake would read as two — the refusal,
-and a consequence of the refusal. **The appends are what is dropped**, and
-dropping them is what keeps the recovery from inventing errors of its own:
-`for i = 0; again("${i}"); ...` would otherwise put a use of `i` before the
-loop that declares it.
-
-Module level is the one refusal with no recovery, because there is no block to
-put the declaration in. It reports once as it is.
+| sabotage | fails here | and in `tests/programs` |
+|---|---|---|
+| a short circuit is never rewritten | 2 | yes |
+| a loop condition is never moved into the body | 2 | yes |
+| a `for` is never taken apart | 1 | yes |
+| a `for`'s step never moves, only its condition | 1 | yes |
+| an `elif` is never made an `else` | 1 | yes |
+| `hoists` looks inside a closure's block | 1 | no — the shape changes, the meaning does not |
+| `or` is tested like `and` | 2 | yes |
