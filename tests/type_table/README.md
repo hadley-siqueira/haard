@@ -347,6 +347,15 @@ words the reader can act on — two arguments disagreeing about `T`, and nothing
 saying what it is. The clones are in the golden too, one per distinct set of
 arguments.
 
+## A binding is a copy
+
+`a_binding_is_a_copy_of_what_it_is_given` is record 0062: every binding given
+a `T&` with nothing written is a `T`, and the one beside it written as `T&` is
+a reference. `owned` is the refusal that follows from it -- a copy of a class
+that owns something and says nothing about being copied -- where its
+reference used to be taken in silence. `cell`, a loop variable, is still a
+reference, and `seen`, bound from it, is a copy.
+
 ## A generic class solved from its arguments
 
 `a_generic_class_is_solved_from_its_arguments` is record 0060: every class is
@@ -421,6 +430,8 @@ and an argument that did not type, which says so and nothing more.
 | a fresh clone's fields wait for the walk | 1 |
 | an argument that did not type is solved over anyway | 1 |
 | a construction inside an unbound generic is solved | 1 |
+| an unwritten binding keeps the reference it is given | 3 |
+| the loop variable is a copy too | 2 |
 
 The last one is the confirm that follows a hash hit, and **nothing here reaches
 it**: the mixing hash separates every type in these cases, so the comparison is

@@ -476,7 +476,10 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
         // list that grew has moved
         table->set_candidate_node(candidate, binding);
 
-        return written_or_inferred(binding, scope, expected);
+        // and it is the one binding with nothing written that is a
+        // REFERENCE to what it was given: record 0040 makes the loop
+        // variable the element itself, so writing to it writes the container
+        return written_or_inferred(binding, scope, expected, true);
     }
 
     // What a variant of an enum IS, and it is two things.
@@ -809,7 +812,8 @@ u32 TypeCollector::super_of(u32 candidate, u32 scope) {
     return base;
 }
 
-u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written) {
+u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written,
+                                       bool keeps_reference) {
     AstQuery query;
     u32 expression;
 
@@ -824,6 +828,17 @@ u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written) {
     // converted into it. With nothing written the expression decides, which is
     // the whole of inference for a binding
     u32 given = typer.type_of(index, scope, expression, written);
+
+    // Record 0062, Hadley 2026-09-24: with nothing written, a binding is a
+    // COPY of what it was given, the way C++'s 'auto' is -- 'let x = xs[i]'
+    // holds the element's value, and 'let x : T& = xs[i]' is how a reference
+    // is asked for. It used to take the 'T&' it was given as it was, so
+    // 'let i = table[k]' followed by 'i += 1' walked the table itself: found
+    // by the bootstrap's SourceFile. Stripped before record 0031's question,
+    // which is now about the copy this makes
+    if (written == INVALID_TYPE && !keeps_reference && given != INVALID_TYPE) {
+        given = module->get_types()->value_of(given);
+    }
 
     // Record 0031: what a binding was given is **copied** into it, so a class
     // that owns something and has not said how to be copied cannot be what it

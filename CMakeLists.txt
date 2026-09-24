@@ -197,12 +197,14 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/bootstrap/tests/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"
     VERBATIM
 )
 
-# tests/programs runs the real binary through each case's own Makefile, so it
-# is the one suite that needs hdc to exist. Every other one compiles the
+# tests/programs runs the real binary through each case's own Makefile, and
+# bootstrap/ is built by it, so those two are the suites that need hdc to
+# exist. Every other one compiles the
 # compiler's sources itself, which is why 'check' needed no dependency before
 add_dependencies(check hdc)

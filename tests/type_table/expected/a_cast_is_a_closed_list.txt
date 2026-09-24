@@ -65,67 +65,67 @@
   33 types interned
 diagnostics:
 error: there is no cast from Point& to i32
-   --> main.hd:101:19
+   --> main.hd:103:19
     |
-101 |     let a = point as i32
+103 |     let a = point as i32
     |                   ^^
 error: there is no cast from i32 to Point
-   --> main.hd:102:15
+   --> main.hd:104:15
     |
-102 |     let b = n as Point
+104 |     let b = n as Point
     |               ^^
 error: there is no cast from char* to Point
-   --> main.hd:105:15
+   --> main.hd:107:15
     |
-105 |     let c = p as Point
+107 |     let c = p as Point
     |               ^^
 error: there is no cast from symbol to i32
-   --> main.hd:108:15
+   --> main.hd:110:15
     |
-108 |     let d = s as i32
+110 |     let d = s as i32
     |               ^^
 error: there is no cast from Point& to Shape&
-   --> main.hd:111:19
+   --> main.hd:113:19
     |
-111 |     let e = point as Shape&
+113 |     let e = point as Shape&
     |                   ^^
 error: there is no cast from f64 to char*
-   --> main.hd:114:15
+   --> main.hd:116:15
     |
-114 |     let g = f as char*
+116 |     let g = f as char*
     |               ^^
 error: there is no cast from char* to i32
-   --> main.hd:120:15
+   --> main.hd:122:15
     |
-120 |     let j = p as i32
+122 |     let j = p as i32
     |               ^^
 error: there is no cast from i32 to char*
-   --> main.hd:121:15
+   --> main.hd:123:15
     |
-121 |     let k = n as char*
+123 |     let k = n as char*
     |               ^^
 error: there is no cast from char* to i32
-   --> main.hd:126:17
+   --> main.hd:128:17
     |
-126 |     let m = i32(p)
+128 |     let m = i32(p)
     |                 ^
 error: there is no cast from Point& to i32
-   --> main.hd:127:17
+   --> main.hd:129:17
     |
-127 |     let o = i32(point)
+129 |     let o = i32(point)
     |                 ^^^^^
 error: there is no cast from Shape* to Shape
-   --> main.hd:133:19
+   --> main.hd:135:19
     |
-133 |     let h = shape as Shape
+135 |     let h = shape as Shape
     |                   ^^
 error: there is no cast from Circle to Shape
-   --> main.hd:137:19
+   --> main.hd:139:19
     |
-137 |     let i = solid as Shape
+139 |     let i = solid as Shape
     |                   ^^
 error: there is no cast from Circle to Shape&
-   --> main.hd:143:19
+   --> main.hd:145:19
     |
-143 |     let l = solid as Shape&
+145 |     let l = solid as Shape&
     |                   ^^

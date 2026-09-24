@@ -1,0 +1,33 @@
+# hdc.module.module -- one file and everything the phases learn about it.
+#
+# The twin of src/haard/module/, and only the part the scanner needs so far:
+# the source, the tokens read from it and the diagnostics about it. The later
+# phases add their tables here, the way the C++ one holds them.
+import hdc.token.token
+import hdc.source.source_file
+import hdc.log.logger
+
+class Module:
+    source_file : SourceFile
+    tokens : Array<Token>
+    logger : Logger
+
+    # The logger quotes the source, so it is pointed at it here. A Module is
+    # never copied -- it is built where it is used and passed by pointer --
+    # which is what keeps that address good
+    def init : void
+        logger.source = &source_file
+
+    # the text of the i-th token, which is a window into the source
+    def token_value : String
+        @i : i32
+
+        let text : String
+        let at = tokens[i].offset
+        let end = at + tokens[i].length
+
+        while at < end:
+            text.append(source_file.char_at(at))
+            at += 1
+
+        return text

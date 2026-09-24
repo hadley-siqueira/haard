@@ -27,7 +27,7 @@
     notted  bool
     indexed  i32
     through_pointer  Box
-    hashed  f64&
+    hashed  f64
     field  i32
     arrow  i32
     called  i32

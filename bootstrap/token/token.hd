@@ -1,0 +1,543 @@
+# hdc.token.token -- what the scanner gives back, one per word of the source.
+#
+# The twin of src/haard/token/token.h, and in the same order: the kinds are
+# the ones the C++ scanner has, and 'name_of' writes each the way its dump
+# does, so the two dumps can be compared line for line.
+
+enum TokenKind:
+    Unknown
+    Import
+    Def
+    Class
+    Enum
+    Union
+    Struct
+    If
+    Elif
+    Else
+    For
+    While
+    Switch
+    Case
+    Default
+    Let
+    Const
+    True
+    False
+    As
+    In
+    Not
+    And
+    Or
+    Return
+    Continue
+    Break
+    Yield
+    This
+    Super
+    Null
+    New
+    Delete
+    Sizeof
+    Operator
+    U8
+    U16
+    U32
+    U64
+    I8
+    I16
+    I32
+    I64
+    F32
+    F64
+    Bool
+    Void
+    Char
+    Isize
+    Usize
+    Symbol
+    Pass
+    Goto
+    Label
+    IntegerLiteral
+    FloatLiteral
+    StringLiteral
+    CharLiteral
+    SymbolLiteral
+    TemplateStringBegin
+    TemplateStringChunk
+    TemplateStringEnd
+    InterpolationBegin
+    InterpolationEnd
+    Identifier
+    Assignment
+    PlusAssignment
+    MinusAssignment
+    TimesAssignment
+    DivisionAssignment
+    IntegerDivisionAssignment
+    ModuloAssignment
+    BitwiseAndAssignment
+    BitwiseOrAssignment
+    BitwiseXorAssignment
+    BitwiseNotAssignment
+    BitwiseLeftShiftAssignment
+    BitwiseRightShiftAssignment
+    BitwiseUnsignedRightShiftAssignment
+    Plus
+    Minus
+    Times
+    Power
+    Division
+    IntegerDivision
+    Modulo
+    LeftParenthesis
+    RightParenthesis
+    LeftSquareBracket
+    RightSquareBracket
+    LeftCurlyBracket
+    RightCurlyBracket
+    Comma
+    Semicolon
+    LogicalNot
+    BitwiseAnd
+    BitwiseOr
+    BitwiseNot
+    BitwiseXor
+    BitwiseLeftShift
+    BitwiseRightShift
+    BitwiseUnsignedRightShift
+    LogicalAnd
+    LogicalOr
+    Dollar
+    QuestionMark
+    Equal
+    NotEqual
+    LessThan
+    LessThanOrEqual
+    GreaterThan
+    GreaterThanOrEqual
+    Increment
+    Decrement
+    Dot
+    InclusiveRange
+    ExclusiveRange
+    Arrow
+    Colon
+    Scope
+    At
+    Eof
+
+# the name the C++ dump prints, which is what the goldens hold
+def name_of : char*
+    @kind : TokenKind
+
+    switch kind:
+        case Unknown:
+            return "TK_UNKNOWN"
+
+        case Import:
+            return "TK_IMPORT"
+
+        case Def:
+            return "TK_DEF"
+
+        case Class:
+            return "TK_CLASS"
+
+        case Enum:
+            return "TK_ENUM"
+
+        case Union:
+            return "TK_UNION"
+
+        case Struct:
+            return "TK_STRUCT"
+
+        case If:
+            return "TK_IF"
+
+        case Elif:
+            return "TK_ELIF"
+
+        case Else:
+            return "TK_ELSE"
+
+        case For:
+            return "TK_FOR"
+
+        case While:
+            return "TK_WHILE"
+
+        case Switch:
+            return "TK_SWITCH"
+
+        case Case:
+            return "TK_CASE"
+
+        case Default:
+            return "TK_DEFAULT"
+
+        case Let:
+            return "TK_LET"
+
+        case Const:
+            return "TK_CONST"
+
+        case True:
+            return "TK_TRUE"
+
+        case False:
+            return "TK_FALSE"
+
+        case As:
+            return "TK_AS"
+
+        case In:
+            return "TK_IN"
+
+        case Not:
+            return "TK_NOT"
+
+        case And:
+            return "TK_AND"
+
+        case Or:
+            return "TK_OR"
+
+        case Return:
+            return "TK_RETURN"
+
+        case Continue:
+            return "TK_CONTINUE"
+
+        case Break:
+            return "TK_BREAK"
+
+        case Yield:
+            return "TK_YIELD"
+
+        case This:
+            return "TK_THIS"
+
+        case Super:
+            return "TK_SUPER"
+
+        case Null:
+            return "TK_NULL"
+
+        case New:
+            return "TK_NEW"
+
+        case Delete:
+            return "TK_DELETE"
+
+        case Sizeof:
+            return "TK_SIZEOF"
+
+        case Operator:
+            return "TK_OPERATOR"
+
+        case U8:
+            return "TK_U8"
+
+        case U16:
+            return "TK_U16"
+
+        case U32:
+            return "TK_U32"
+
+        case U64:
+            return "TK_U64"
+
+        case I8:
+            return "TK_I8"
+
+        case I16:
+            return "TK_I16"
+
+        case I32:
+            return "TK_I32"
+
+        case I64:
+            return "TK_I64"
+
+        case F32:
+            return "TK_F32"
+
+        case F64:
+            return "TK_F64"
+
+        case Bool:
+            return "TK_BOOL"
+
+        case Void:
+            return "TK_VOID"
+
+        case Char:
+            return "TK_CHAR"
+
+        case Isize:
+            return "TK_ISIZE"
+
+        case Usize:
+            return "TK_USIZE"
+
+        case Symbol:
+            return "TK_SYMBOL"
+
+        case Pass:
+            return "TK_PASS"
+
+        case Goto:
+            return "TK_GOTO"
+
+        case Label:
+            return "TK_LABEL"
+
+        case IntegerLiteral:
+            return "TK_INTEGER_LITERAL"
+
+        case FloatLiteral:
+            return "TK_FLOAT_LITERAL"
+
+        case StringLiteral:
+            return "TK_STRING_LITERAL"
+
+        case CharLiteral:
+            return "TK_CHAR_LITERAL"
+
+        case SymbolLiteral:
+            return "TK_SYMBOL_LITERAL"
+
+        case TemplateStringBegin:
+            return "TK_TEMPLATE_STRING_BEGIN"
+
+        case TemplateStringChunk:
+            return "TK_TEMPLATE_STRING_CHUNK"
+
+        case TemplateStringEnd:
+            return "TK_TEMPLATE_STRING_END"
+
+        case InterpolationBegin:
+            return "TK_INTERPOLATION_BEGIN"
+
+        case InterpolationEnd:
+            return "TK_INTERPOLATION_END"
+
+        case Identifier:
+            return "TK_IDENTIFIER"
+
+        case Assignment:
+            return "TK_ASSIGNMENT"
+
+        case PlusAssignment:
+            return "TK_PLUS_ASSIGNMENT"
+
+        case MinusAssignment:
+            return "TK_MINUS_ASSIGNMENT"
+
+        case TimesAssignment:
+            return "TK_TIMES_ASSIGNMENT"
+
+        case DivisionAssignment:
+            return "TK_DIVISION_ASSIGNMENT"
+
+        case IntegerDivisionAssignment:
+            return "TK_INTEGER_DIVISION_ASSIGNMENT"
+
+        case ModuloAssignment:
+            return "TK_MODULO_ASSIGNMENT"
+
+        case BitwiseAndAssignment:
+            return "TK_BITWISE_AND_ASSIGNMENT"
+
+        case BitwiseOrAssignment:
+            return "TK_BITWISE_OR_ASSIGNMENT"
+
+        case BitwiseXorAssignment:
+            return "TK_BITWISE_XOR_ASSIGNMENT"
+
+        case BitwiseNotAssignment:
+            return "TK_BITWISE_NOT_ASSIGNMENT"
+
+        case BitwiseLeftShiftAssignment:
+            return "TK_BITWISE_LEFT_SHIFT_ASSIGNMENT"
+
+        case BitwiseRightShiftAssignment:
+            return "TK_BITWISE_RIGHT_SHIFT_ASSIGNMENT"
+
+        case BitwiseUnsignedRightShiftAssignment:
+            return "TK_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT"
+
+        case Plus:
+            return "TK_PLUS"
+
+        case Minus:
+            return "TK_MINUS"
+
+        case Times:
+            return "TK_TIMES"
+
+        case Power:
+            return "TK_POWER"
+
+        case Division:
+            return "TK_DIVISION"
+
+        case IntegerDivision:
+            return "TK_INTEGER_DIVISION"
+
+        case Modulo:
+            return "TK_MODULO"
+
+        case LeftParenthesis:
+            return "TK_LEFT_PARENTHESIS"
+
+        case RightParenthesis:
+            return "TK_RIGHT_PARENTHESIS"
+
+        case LeftSquareBracket:
+            return "TK_LEFT_SQUARE_BRACKET"
+
+        case RightSquareBracket:
+            return "TK_RIGHT_SQUARE_BRACKET"
+
+        case LeftCurlyBracket:
+            return "TK_LEFT_CURLY_BRACKET"
+
+        case RightCurlyBracket:
+            return "TK_RIGHT_CURLY_BRACKET"
+
+        case Comma:
+            return "TK_COMMA"
+
+        case Semicolon:
+            return "TK_SEMICOLON"
+
+        case LogicalNot:
+            return "TK_LOGICAL_NOT"
+
+        case BitwiseAnd:
+            return "TK_BITWISE_AND"
+
+        case BitwiseOr:
+            return "TK_BITWISE_OR"
+
+        case BitwiseNot:
+            return "TK_BITWISE_NOT"
+
+        case BitwiseXor:
+            return "TK_BITWISE_XOR"
+
+        case BitwiseLeftShift:
+            return "TK_BITWISE_LEFT_SHIFT"
+
+        case BitwiseRightShift:
+            return "TK_BITWISE_RIGHT_SHIFT"
+
+        case BitwiseUnsignedRightShift:
+            return "TK_BITWISE_UNSIGNED_RIGHT_SHIFT"
+
+        case LogicalAnd:
+            return "TK_LOGICAL_AND"
+
+        case LogicalOr:
+            return "TK_LOGICAL_OR"
+
+        case Dollar:
+            return "TK_DOLLAR"
+
+        case QuestionMark:
+            return "TK_QUESTION_MARK"
+
+        case Equal:
+            return "TK_EQUAL"
+
+        case NotEqual:
+            return "TK_NOT_EQUAL"
+
+        case LessThan:
+            return "TK_LESS_THAN"
+
+        case LessThanOrEqual:
+            return "TK_LESS_THAN_OR_EQUAL"
+
+        case GreaterThan:
+            return "TK_GREATER_THAN"
+
+        case GreaterThanOrEqual:
+            return "TK_GREATER_THAN_OR_EQUAL"
+
+        case Increment:
+            return "TK_INCREMENT"
+
+        case Decrement:
+            return "TK_DECREMENT"
+
+        case Dot:
+            return "TK_DOT"
+
+        case InclusiveRange:
+            return "TK_INCLUSIVE_RANGE"
+
+        case ExclusiveRange:
+            return "TK_EXCLUSIVE_RANGE"
+
+        case Arrow:
+            return "TK_ARROW"
+
+        case Colon:
+            return "TK_COLON"
+
+        case Scope:
+            return "TK_SCOPE"
+
+        case At:
+            return "TK_AT"
+
+        case Eof:
+            return "TK_EOF"
+
+# A token does not hold its text: it is where the text is. The source is
+# kept whole, and 'offset' and 'length' are a window into it.
+#
+# The C++ class packs 'newline_before' and 'whitespace' into one byte and
+# 'length' into sixteen bits. Here they are fields of their own, and the
+# setters keep the same limits, so what a dump prints is the same number.
+class Token:
+    kind : TokenKind
+    offset : i32
+    length : i32
+
+    # set when a line break separates this token from the one before it,
+    # which is decided by the line the previous token ENDED on
+    newline_before : bool
+
+    # the spaces at the start of the token's line
+    whitespace : i32
+
+    def init : void
+        kind = TokenKind.Unknown
+        offset = 0
+        length = 0
+        newline_before = false
+        whitespace = 0
+
+    # sixteen bits, as the C++ token keeps it: a longer token was already
+    # reported, and this is the number it is left with
+    def set_length : void
+        @value : i32
+
+        length = value & 65535
+
+    # seven bits, clamped rather than wrapped
+    def set_whitespace : void
+        @value : i32
+
+        if value < 0:
+            whitespace = 0
+        elif value > 127:
+            whitespace = 127
+        else:
+            whitespace = value

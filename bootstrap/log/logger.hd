@@ -1,0 +1,138 @@
+# hdc.log.logger -- diagnostics, collected and then printed rustc's way.
+#
+# The twin of src/haard/log/. A phase never prints: it tells the Logger, and
+# whoever drives the phase decides when the collection is shown.
+import hdc.source.source_file
+
+class Log:
+    offset : i32
+    length : i32
+    message : String
+
+class Logger:
+    # what the offsets are offsets into, and what a diagnostic quotes
+    source : SourceFile*
+    logs : Array<Log>
+
+    def init : void
+        source = null
+
+    # By value, because a message is almost always written as a literal
+    # right here, and a 'char*' does not reach a 'String&' (record 0018's
+    # list does not compose)
+    def error : void
+        @offset : i32
+        @length : i32
+        @message : String
+
+        let log : Log
+
+        log.offset = offset
+        log.length = length
+        log.message = message
+
+        logs.add(log)
+
+    def has_errors : bool
+        return logs.length() > 0
+
+    def print_all : void
+        # by offset, and stable, so that the diagnostics of a phase that walks
+        # the file out of order still read top to bottom
+        let i = 1
+
+        while i < logs.length():
+            let j = i
+
+            while j > 0 and logs[j - 1].offset > logs[j].offset:
+                # a copy of what the 'Log&' names (record 0062)
+                let held = logs[j]
+
+                logs[j] = logs[j - 1]
+                logs[j - 1] = held
+                j -= 1
+
+            i += 1
+
+        i = 0
+
+        while i < logs.length():
+            print_one(logs[i])
+            i += 1
+
+    def print_one : void
+        @log : Log&
+
+        println("error: ${log.message}")
+
+        if source == null:
+            return
+
+        let at = source->position_of(log.offset)
+        let number : String
+
+        number.append(at.line)
+
+        let gutter = spaces(number.length())
+
+        # rustc's alignment: the arrow sits one column left of the bar
+        println("${gutter}--> ${source->path}:${at.line}:${at.column}")
+
+        let text = source->line_text(at.line)
+
+        println("${gutter} |")
+        println("${at.line} | ${text}")
+        print("${gutter} | ")
+
+        # the padding copies the tabs of the line instead of guessing how wide
+        # they are, so the caret lands under the right character anywhere
+        let seen = 0
+        let i = 0
+
+        while i < text.length() and seen + 1 < at.column:
+            if not is_continuation(text.at(i)):
+                if text.at(i) == '\t':
+                    print('\t')
+                else:
+                    print(' ')
+
+                seen += 1
+
+            i += 1
+
+        # the caret spans the token, in characters, and never runs past the
+        # end of the line: an unterminated literal reaches the end of the file
+        let carets = 0
+
+        i = log.offset
+
+        while i < log.offset + log.length and i < source->size():
+            if source->char_at(i) == '\n':
+                break
+
+            if not is_continuation(source->char_at(i)):
+                carets += 1
+
+            i += 1
+
+        if carets < 1:
+            carets = 1
+
+        let line : String
+
+        while carets > 0:
+            line.append('^')
+            carets -= 1
+
+        println(line)
+
+def spaces : String
+    @count : i32
+
+    let text : String
+
+    while count > 0:
+        text.append(' ')
+        count -= 1
+
+    return text

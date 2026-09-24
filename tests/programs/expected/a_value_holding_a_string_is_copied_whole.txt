@@ -1,0 +1,6 @@
+the first is entry 1: ok
+the last is entry 20: ok
+an assigned copy is its own: entry 1: ok
+a copy two levels down is its own: entry 7: ok
+--- files:
+--- exit: 0

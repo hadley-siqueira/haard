@@ -52,8 +52,12 @@ def main : i32
     let bag : Bag
     let fixed = {1, 2, 3}
 
+    # the loop variable is a reference to the element (record 0040), and a
+    # binding with nothing written is a copy of it (record 0062): only one
+    # written as a reference is another name for the element
     for x in bag:
         let seen = x
+        let alias : i32& = x
 
     for f in fixed:
         let taken = f

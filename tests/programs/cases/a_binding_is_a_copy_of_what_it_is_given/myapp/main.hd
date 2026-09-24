@@ -1,0 +1,71 @@
+# Record 0062: a binding with no type written is a COPY of what it was given,
+# the way C++'s 'auto' is, and one written as 'T&' is another name for it.
+# What is checked is what a write through each one changes -- which is the
+# whole of the difference, and holds whatever the compiler lowers it into.
+#
+# Its exit status is the number of checks that failed.
+
+def check : i32
+    @what : String
+    @ok : bool
+
+    print(what)
+
+    if ok:
+        println(": ok")
+        return 0
+
+    println(": FAILED")
+    return 1
+
+def main : i32
+    let failures = 0
+    let xs : i32[] = [1, 2, 3]
+
+    # ---- a copy: writing it leaves the element alone
+
+    let copied = xs[0]
+
+    copied += 100
+
+    failures += check("a copy is its own: ${copied}, and xs[0] is ${xs[0]}",
+                      copied == 101 and xs[0] == 1)
+
+    # ---- written as a reference: writing it writes the element
+
+    let named : i32& = xs[1]
+
+    named += 100
+
+    failures += check("a written reference writes through: xs[1] is ${xs[1]}",
+                      xs[1] == 102)
+
+    # ---- a String held by an Array: the copy has a buffer of its own
+
+    let words : String[] = ["alpha", "beta"]
+    let word = words[0]
+
+    word.append("!")
+
+    failures += check("a copied String is its own: ${word} and ${words[0]}",
+                      words[0] == "alpha" and word == "alpha!")
+
+    # ---- the loop variable is still the element (record 0040)
+
+    for x in xs:
+        x += 10
+
+    failures += check("a loop still writes the elements: ${xs[2]}",
+                      xs[2] == 13)
+
+    # ---- and a copy of the loop variable does not
+
+    for x in xs:
+        let y = x
+
+        y += 1000
+
+    failures += check("a copy of the loop variable is its own: ${xs[2]}",
+                      xs[2] == 13)
+
+    return failures

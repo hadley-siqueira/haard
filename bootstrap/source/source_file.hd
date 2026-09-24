@@ -1,0 +1,118 @@
+# hdc.source.source_file -- a file read whole, and where its lines begin.
+#
+# The twin of src/haard/source_file/. The content is kept as it was read, so
+# a token is a window into it and a diagnostic can quote the line it is on.
+
+# Where an offset is, in the terms a person reads: lines from 1 and columns
+# from 1, counted in characters and not in bytes
+struct Position:
+    line : i32
+    column : i32
+
+class SourceFile:
+    # as it was given, which is how a diagnostic names the file
+    path : String
+    content : String
+
+    # the offset where each line begins. Line 1 is 'line_starts[0]', and a
+    # file always has one
+    line_starts : Array<i32>
+
+    # false when the file will not open, which the caller has to look at
+    def open : bool
+        @where : char*
+
+        path = where
+
+        let file = open_read(where)
+
+        if file == null:
+            return false
+
+        let c = file->read()
+
+        while not file->at_end():
+            content.append(c)
+            c = file->read()
+
+        file->close()
+        delete file
+
+        line_starts.add(0)
+
+        let i = 0
+
+        while i < content.length():
+            if content.at(i) == '\n':
+                line_starts.add(i + 1)
+
+            i += 1
+
+        return true
+
+    def size : i32
+        return content.length()
+
+    # '\0' past the end, so a look ahead never has to ask first
+    def char_at : char
+        @index : i32
+
+        return content.at(index)
+
+    def position_of : Position
+        @offset : i32
+
+        # the last line that starts at or before the offset
+        let low = 0
+        let high = line_starts.length() - 1
+
+        while low < high:
+            let middle = (low + high + 1) / 2
+
+            if line_starts[middle] <= offset:
+                low = middle
+            else:
+                high = middle - 1
+
+        let at : Position
+
+        # a copy of the start, which the loop below walks forward: record
+        # 0062 makes 'let' copy what an 'i32&' names, and before it this
+        # walked the table itself (see README.md, "What writing it found")
+        let i = line_starts[low]
+
+        at.line = low + 1
+        at.column = 1
+
+        # characters, not bytes: a utf8 continuation byte belongs to the
+        # character that opened before it
+        while i < offset and i < content.length():
+            if not is_continuation(content.at(i)):
+                at.column += 1
+
+            i += 1
+
+        return at
+
+    # the line without its '\n', and nothing for a line the file does not have
+    def line_text : String
+        @line : i32
+
+        let text : String
+
+        if line < 1 or line > line_starts.length():
+            return text
+
+        let i = line_starts[line - 1]
+
+        while i < content.length() and content.at(i) != '\n':
+            text.append(content.at(i))
+            i += 1
+
+        return text
+
+# a byte that continues a utf8 character, which takes up no column of its own
+def is_continuation : bool
+    @c : char
+
+    return ((c as u8) & 0xC0) == 0x80

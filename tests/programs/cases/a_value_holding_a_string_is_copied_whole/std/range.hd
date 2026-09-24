@@ -1,0 +1,162 @@
+# std/range.hd -- Range<T>, what '0..10' is as a value.
+#
+# Record 0052. Until it, a range was only ever syntax: 'for i in 0..10' is
+# taken apart by the for-each lowering (record 0040) and becomes a plain C
+# shaped loop with no object at all, and that is still what happens -- a loop
+# over a range costs nothing and allocates nothing. This class is what the
+# same expression means when it is written anywhere else.
+#
+# It holds three whole numbers and owns nothing, so there is no 'destroy' and
+# no 'copy': record 0031's question is about a class that owns memory, and
+# this one is three integers side by side.
+#
+# **'stop' is one past the end**, which is Python's shape and what makes
+# 'length' a subtraction. The two spellings the language has both come here
+# through the same field: '0..10' is written inclusive, so it arrives as a
+# stop of 11, and '0...10' arrives as 10.
+import std.array
+
+class Range<T>:
+    start : T
+    stop : T
+    step : T
+
+    # a range of nothing, which is what a class with no arguments written has
+    # to mean (record 0026)
+    def init : void
+        start = 0
+        stop = 0
+        step = 1
+
+    def init : void
+        @first : T
+        @past : T
+
+        start = first
+        stop = past
+        step = 1
+
+    def init : void
+        @first : T
+        @past : T
+        @by : T
+
+        start = first
+        stop = past
+        step = by
+
+    def first : T
+        return start
+
+    def past_the_end : T
+        return stop
+
+    def stride : T
+        return step
+
+    # How many values it holds, and 0 when it walks away from its end. The
+    # rounding is written out rather than done with a division and a remainder
+    # so that a negative step reads the same as a positive one
+    def length : i32
+        if step > 0:
+            if stop <= start:
+                return 0
+
+            return ((stop - start) + (step - 1)) / step as i32
+
+        if step < 0:
+            if stop >= start:
+                return 0
+
+            return ((start - stop) + ((0 - step) - 1)) / (0 - step) as i32
+
+        return 0
+
+    def is_empty : bool
+        return length() == 0
+
+    # the value at a position, which is what makes a range indexable without
+    # ever building the values
+    def at : T
+        @i : i32
+
+        return start + (i as T) * step
+
+    def operator[] : T
+        @i : i32
+
+        return at(i)
+
+    def contains : bool
+        @value : T
+
+        if step > 0:
+            if value < start or value >= stop:
+                return false
+        else:
+            if value > start or value <= stop:
+                return false
+
+        return (value - start) % step == 0
+
+    def operator== : bool
+        @other : Range<T>&
+        return (start == other.start and stop == other.stop
+                and step == other.step)
+
+    def operator!= : bool
+        @other : Range<T>&
+        return (start != other.start or stop != other.stop
+                or step != other.step)
+
+    # The values a range only describes, made into values that exist.
+    #
+    # It is a **method on the Range** and not an 'init' on the Array, which is
+    # where it was for an afternoon: a parameter of type 'Range<T>' inside
+    # 'Array<T>' makes every 'Array<X>' instantiate 'Range<X>', and a Range
+    # demands of its X four comparisons, a subtraction and a cast from i32.
+    # That took 'Array<Token>' from one diagnostic to twenty-seven.
+    #
+    # This way round costs nothing that is not asked for: a Range is only ever
+    # made of whole numbers, and an Array asks nothing of those they cannot do
+    def to_array : Array<T>
+        let made : Array<T>
+        let i = 0
+
+        while i < length():
+            made.add(at(i))
+            i = i + 1
+
+        return made
+
+    # record 0040's three names, so 'for x in r' walks a range held in a
+    # binding exactly as it walks a container
+    def iterator : RangeCursor<T>
+        let cursor : RangeCursor<T>
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
+
+class RangeCursor<T>:
+    held : Range<T>*
+    position : i32
+
+    def init : void
+        held = null
+        position = 0
+
+    def has_next : bool
+        return position < held->length()
+
+    # a T and not a T&, which is where a range differs from every other
+    # container: there is nothing to write through. The values do not exist
+    # until they are asked for
+    def next : T
+        let at = position
+
+        position = position + 1
+
+        return held->at(at)

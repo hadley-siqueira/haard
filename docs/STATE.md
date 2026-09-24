@@ -54,9 +54,23 @@ builds through those Makefiles, which is what keeps them true.
 | 5 | check statements | `return`, conditions, assignments |
 | 6 | check overrides | the return type of an override |
 
-Seventeen test suites, ~680 cases, `make check` in about a minute.
+Seventeen test suites and the bootstrap, ~700 cases, `make check` in a minute or two.
 
 ## What works, proven by running it
+
+**The compiler has started to be written in Haard**, since 2026-09-24:
+`bootstrap/` is a real Haard project -- a `haard.pkg`, a `roots.tbl` that
+`make table` keeps equal to it, and a `Makefile` -- whose **scanner** passes
+all 45 cases of `tests/scanner` byte for byte, diagnostics included. It is
+part of `make check`, which also makes it the largest regression test of the
+compiler in the repository. Writing it found three bugs in `hdc`, fixed with
+it: a class **holding** a `String` was assigned shallow, an assignment through
+a **reference** to an owning class was shallow (both record 0031, amended),
+and `--pkg haard.pkg` without a directory covered no file. And one question it
+raised, answered the same day as record 0062: `let x = xs[i]` bound a
+**reference**, and now it is a **copy**, as C++'s `auto` is -- a reference is
+`let x : T& = ...`, and a `for x in` variable stays one. See
+`bootstrap/README.md`.
 
 **What a statement builds is built when it runs**, since 2026-09-24 — record
 0061. A template string or an unbound literal on the right of `and`/`or`, in a

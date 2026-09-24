@@ -1,0 +1,7 @@
+a copy is its own: 101, and xs[0] is 1: ok
+a written reference writes through: xs[1] is 102: ok
+a copied String is its own: alpha! and alpha: ok
+a loop still writes the elements: 13: ok
+a copy of the loop variable is its own: 13: ok
+--- files:
+--- exit: 0

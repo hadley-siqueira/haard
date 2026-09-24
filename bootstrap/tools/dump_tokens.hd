@@ -1,0 +1,108 @@
+# hdc.tools.dump_tokens -- the token stream of one file, one line per token.
+#
+# The twin of tests/scanner/dump_tokens.cpp, and its output is the same byte
+# for byte: the diagnostics first, then kind, offset, length, the line and
+# column derived from the offset, the newline flag, the indentation and the
+# text. That is what lets the C++ scanner's goldens judge this one.
+import hdc.token.token
+import hdc.module.module
+import hdc.scanner.scanner
+
+def main : i32
+    @args : String[]
+
+    if args.length() < 2:
+        println("usage: dump_tokens <file.hd>")
+        return 2
+
+    let module : Module
+    let scanner : Scanner
+
+    scanner.set_module(&module)
+
+    if not scanner.get_tokens(args[1].text()):
+        println("dump_tokens: cannot read ${args[1]}")
+        return 2
+
+    module.logger.print_all()
+
+    let i = 0
+
+    while i < module.tokens.length():
+        let token = module.tokens[i]
+        let at = module.source_file.position_of(token.offset)
+        let place : String
+        let line : String
+        let value = module.token_value(i)
+
+        place.append(at.line)
+        place.append(':')
+        place.append(at.column)
+
+        line.append(padded(name_of(token.kind), 26))
+        line.append(" off=")
+        line.append(padded_number(token.offset, 4))
+        line.append(" len=")
+        line.append(padded_number(token.length, 3))
+        line.append(" at=")
+        line.append(padded(place.text(), 7))
+        line.append(" nl=")
+        line.append(token.newline_before as i32)
+        line.append(" ws=")
+        line.append(padded_number(token.whitespace, 3))
+        line.append(" '")
+        line.append(escaped(value))
+        line.append("'")
+
+        println(line)
+        i += 1
+
+    return 0
+
+# left justified in a field this wide, the way 'std::left << std::setw' does:
+# never cut, only filled
+def padded : String
+    @text : char*
+    @width : i32
+
+    let result : String = text
+
+    while result.length() < width:
+        result.append(' ')
+
+    return result
+
+def padded_number : String
+    @value : i32
+    @width : i32
+
+    let text : String
+
+    text.append(value)
+
+    return padded(text.text(), width)
+
+# the four characters a line of the dump cannot hold as they are
+def escaped : String
+    @text : String&
+
+    let result : String
+    let i = 0
+
+    while i < text.length():
+        let c = text.at(i)
+
+        if c == '\\':
+            result.append("\\\\")
+        elif c == '\n':
+            result.append("\\n")
+        elif c == '\t':
+            result.append("\\t")
+        elif c == '\r':
+            result.append("\\r")
+        else:
+            result.append(c)
+
+        i += 1
+
+    return result

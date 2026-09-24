@@ -1186,8 +1186,17 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
             line("void m_assign(" + holder + "& other);");
         }
 
+        // Record 0031 through composition: see 'assigns_by_field'
+        if (copy == 0 && assigns_by_field(module_index, declaration)) {
+            line("void m_assign(" + holder + "& other);");
+        }
+
         line("virtual ~" + holder + "();");
         return;
+    }
+
+    if (copy == 0 && assigns_by_field(module_index, declaration)) {
+        emit_assignment_by_field(module_index, declaration, holder);
     }
 
     if (copy != 0) {
@@ -4696,8 +4705,12 @@ bool Emitter::declares_copy(u32 module_index, u32 type) {
         return false;
     }
 
-    Type* entry = compilation->get_module(module_index)->get_types()
-                      ->get_type(type);
+    // Through a reference, record 0035's rule: 'xs[i] = s' assigns to the
+    // String the 'String&' names, and asking about the reference itself made
+    // it a C++ '=' -- which copies the pointer. Found by the bootstrap's
+    // Logger, sorting an 'Array<Log>' in place
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    Type* entry = types->get_type(types->value_of(type));
 
     if (entry->kind != TYPE_NAMED) {
         return false;
@@ -4718,7 +4731,101 @@ bool Emitter::declares_copy(u32 module_index, u32 type) {
         return holds_a_class(entry->module, declaration);
     }
 
-    return copy_init_of(entry->module, declaration) != 0;
+    return copy_init_of(entry->module, declaration) != 0
+        || assigns_by_field(entry->module, declaration);
+}
+
+// Record 0031 made an assignment between two values of a class that owns
+// something a call to 'm_assign', and record 0034 keeps C++'s 'operator=' out
+// of the emitted program. Together they left a hole one level down: a class
+// that owns nothing itself but HOLDS a field that does -- a 'Log' with a
+// 'String' message -- was assigned by C++'s implicit 'operator=', member by
+// member, and C++ assigned the String member by ITS implicit 'operator=',
+// which copies the pointer. Two owners of one buffer, freed twice, in silence:
+// found by the bootstrap's scanner, whose 'Array<Log>' did exactly that.
+//
+// So such a class is assigned the way C++ would have done it had the member
+// been right: field by field, each by its own rule -- 'm_assign' for one that
+// has it, '=' for one that does not. The base is a field for this purpose.
+// Its copy CONSTRUCTOR needs nothing: C++'s implicit one copies each member
+// by its copy constructor, and the owning class writes a deep one
+bool Emitter::assigns_by_field(u32 module_index, u32 declaration) {
+    if (kind_of(module_index, declaration) == AST_ENUM
+        || copy_init_of(module_index, declaration) != 0) {
+        return false;
+    }
+
+    Module* module = compilation->get_module(module_index);
+    u32 candidate = module->get_symbols()->candidate_of(declaration);
+    AstQuery query;
+
+    if (candidate == 0) {
+        return false;
+    }
+
+    u32 base = module->get_symbols()->get_candidate(candidate)->super;
+
+    if (base != INVALID_TYPE && declares_copy(module_index, base)) {
+        return true;
+    }
+
+    query.set_module(module);
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) == AST_FIELD
+            && declares_copy(module_index, declared_type(module_index, member))) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void Emitter::emit_assignment_by_field(u32 module_index, u32 declaration,
+                                       const std::string& holder) {
+    Module* module = compilation->get_module(module_index);
+    u32 candidate = module->get_symbols()->candidate_of(declaration);
+    u32 base = module->get_symbols()->get_candidate(candidate)->super;
+    AstQuery query;
+
+    query.set_module(module);
+
+    out << "void " << holder << "::m_assign(" << holder << "& other) {\n"
+        << "    if (this == &other) {\n        return;\n    }\n\n";
+
+    if (base != INVALID_TYPE) {
+        Type* entry = module->get_types()->get_type(base);
+        std::string above = name_of(entry->module, entry->subject);
+
+        if (declares_copy(module_index, base)) {
+            out << "    this->" << above << "::m_assign(other);\n";
+        } else {
+            out << "    static_cast<" << above << "&>(*this) = other;\n";
+        }
+    }
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) != AST_FIELD) {
+            continue;
+        }
+
+        u32 field = module->get_symbols()->candidate_of(member);
+
+        if (field == 0) {
+            continue;
+        }
+
+        std::string name = name_of(module_index, field);
+
+        if (declares_copy(module_index, declared_type(module_index, member))) {
+            out << "    this->" << name << ".m_assign(other." << name
+                << ");\n";
+        } else {
+            out << "    this->" << name << " = other." << name << ";\n";
+        }
+    }
+
+    out << "}\n\n";
 }
 
 bool Emitter::is_constant_literal(u32 module_index, u32 node) {

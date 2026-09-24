@@ -114,6 +114,17 @@ directory, it does, and `make clean` takes it back.
   several statements that writes its `->`, and a map of a map. Mapping into
   bools is what found that a condition did not read through a `bool&`.
 
+- **`a_binding_is_a_copy_of_what_it_is_given`** — record 0062: what a write
+  changes through a binding with nothing written (a copy), one written as
+  `T&` (the element), a copied `String`, and the loop variable, which is
+  still the element.
+
+- **`a_value_holding_a_string_is_copied_whole`** — record 0031, amended
+  2026-09-24: a class holding a `String`, and one holding that class, kept in
+  an `Array` that grows, sorted in place through the references `operator[]`
+  gives back, and assigned. Both ways it failed were a double free in silence,
+  found by the bootstrap's scanner.
+
 - **`template_strings_are_built_when_they_run`** — record 0061: a `${}` on the
   right of `and` and `or`, in a `while`'s condition, in a `for`'s condition
   and step with a `continue` in the body, in an `elif`, and an unbound array

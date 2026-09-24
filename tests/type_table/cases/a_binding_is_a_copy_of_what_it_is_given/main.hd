@@ -1,0 +1,93 @@
+# Record 0062, Hadley 2026-09-24: a binding with no type written is a COPY of
+# what it was given, the way C++'s 'auto' is. Given a 'T&', it is a T; a
+# reference is what it is only when it is written as one. The loop variable
+# of a 'for ... in' is the one exception, and record 0040's.
+class Point:
+    x : i32
+    y : i32
+
+# owns something and says nothing about being copied (record 0031)
+class Owner:
+    data : i32*
+
+    def init : void
+        data = new i32[1]
+
+    def destroy : void
+        delete[] data
+
+class Row:
+    cells : i32[3]
+    points : Point[2]
+    owners : Owner[1]
+
+    def at : i32&
+        @i : i32
+
+        return cells[i]
+
+    def point : Point&
+        @i : i32
+
+        return points[i]
+
+    def owner : Owner&
+        return owners[0]
+
+    def iterator : RowCursor
+        let cursor : RowCursor
+
+        cursor.held = this
+        cursor.position = 0
+
+        return cursor
+
+class RowCursor:
+    held : Row*
+    position : i32
+
+    def has_next : bool
+        return position < 3
+
+    def next : i32&
+        let at = position
+
+        position = position + 1
+
+        return held->cells[at]
+
+def moved : i32
+    @p : Point&
+
+    # a parameter taken by reference, bound with nothing written
+    let copied = p
+
+    # and bound as what it is
+    let same : Point& = p
+
+    return copied.x + same.x
+
+def main : i32
+    let row : Row
+
+    # a method giving back a reference, with nothing written and written
+    let value = row.at(0)
+    let alias : i32& = row.at(0)
+
+    # a class, copied whole
+    let point = row.point(1)
+    let point_alias : Point& = row.point(1)
+
+    # a reference through a cast is the same question
+    let through_cast = row.at(1) as i32&
+
+    # a copy of something that cannot be copied is refused, where the
+    # reference it used to be was not; asking for the reference still works
+    let owned = row.owner()
+    let owned_alias : Owner& = row.owner()
+
+    # the loop variable is still a reference to the element
+    for cell in row:
+        let seen = cell
+
+    return value + alias + point.x + point_alias.x + through_cast

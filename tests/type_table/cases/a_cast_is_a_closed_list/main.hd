@@ -69,8 +69,10 @@ def allowed : void
     # nothing checks it at run time
     let up = circle as Shape*
     let down = shape as Circle*
-    let up_by_reference = circle_ref as Shape&
-    let down_by_reference = shape_ref as Circle&
+    # written as references, since record 0062 makes an unwritten binding a
+    # copy -- and a copy of a 'Shape&' naming a Circle would be a Shape
+    let up_by_reference : Shape& = circle_ref as Shape&
+    let down_by_reference : Circle& = shape_ref as Circle&
 
     # record 0041, and the one way across
     let text = s as char*

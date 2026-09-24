@@ -372,6 +372,14 @@ namespace haard {
 
             bool declares_copy(u32 module, u32 type);
 
+            // Record 0031 through composition: a class that says nothing
+            // about copying but holds, by value, a field or a base that does.
+            // It is assigned field by field, each by its own rule, and not by
+            // C++'s implicit 'operator=', which would copy an owned pointer
+            bool assigns_by_field(u32 module, u32 declaration);
+            void emit_assignment_by_field(u32 module, u32 declaration,
+                                          const std::string& holder);
+
             // a method's parameters as a string every module spells the same
             // way, which is what makes an override carry the base's name
             std::string mangle_parameters(u32 module, u32 candidate);

@@ -124,7 +124,11 @@ namespace haard {
             // built and is handed in rather than built again -- rebuilding it
             // would ask the same questions of the same tree and report every
             // answer twice
-            u32 written_or_inferred(u32 node, u32 scope, u32 written);
+            // 'keeps_reference' is record 0040's loop variable, the one
+            // binding with no type written that is a reference to what it was
+            // given. Every other one is a copy of it (record 0062)
+            u32 written_or_inferred(u32 node, u32 scope, u32 written,
+                                    bool keeps_reference = false);
 
             // the type a class, a struct or a union derives from, and
             // INVALID_TYPE for everything else

@@ -160,3 +160,29 @@ One name for the compiler to know instead of two, and it is the name records
   base subobject and then calls `copy`, so a derived class's `copy` has to
   take care of what its base holds. `super(...)` is undecided (record 0026)
   and this is the same gap.
+
+## Amended 2026-09-24: through composition, and through a reference
+
+Two holes, found by the bootstrap's scanner (`bootstrap/`), the first program
+to keep a class that holds a `String` in an `Array`. Both were a double free
+in silence, and neither needed a decision: this record already says a `String`
+is copied deeply, and both were places where that stopped being true.
+
+- **A class that holds an owning field.** The emitter writes `m_assign` for a
+  class that declares a copy, and record 0034 keeps C++'s `operator=` out of
+  the program. So a class that owns nothing itself but holds, by value, a field
+  or a base that does -- a `Log` with a `String` message -- was assigned by
+  C++'s implicit `=`, which assigns each member by ITS `operator=`, and the
+  `String` has none: the pointer was copied. Such a class now gets an
+  `m_assign` of its own, written by the compiler, **field by field, each by its
+  own rule**, and an assignment to it calls that. Its copy constructor needed
+  nothing: C++'s implicit one copies each member with the deep constructor the
+  owning class already has. A fixed array of owning values held as a field
+  (`String[3]`) is not covered; nothing has written one.
+- **An assignment through a reference.** `xs[i] = s` asked whether the
+  **`String&`** declares a copy, and a reference declares nothing, so it was a
+  C++ `=`. The question is asked of what the reference names now, which is
+  record 0035's rule.
+
+`tests/programs/cases/a_value_holding_a_string_is_copied_whole` pins both, and
+turning either fix off makes it abort.

@@ -1,0 +1,17 @@
+# The same build haard.pkg describes, written as record 0010's table: what a
+# build system hands 'hdc --roots'. 'make table' checks that the two give the
+# same program, which is what keeps this one from going stale.
+
+root ../std = std
+
+root . = hdc
+    std -> ../std
+
+# record 0033: the imports every module of the program is given
+prelude
+    std -> ../std
+    import std.array
+    import std.string
+    import std.hash
+    import std.io
+    import std.file

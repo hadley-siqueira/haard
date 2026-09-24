@@ -1,0 +1,762 @@
+# hdc.scanner.scanner -- the source, cut into tokens.
+#
+# The twin of src/haard/scanner/, function by function and in the same order,
+# so that a difference between the two dumps points at one function here and
+# its namesake there. The comments that explain WHY live in the C++ one; the
+# ones here are about what is different in Haard.
+import hdc.token.token
+import hdc.module.module
+
+class Scanner:
+    module : Module*
+
+    # every word the language has, keywords and operators together, as the
+    # C++ scanner's one table has them
+    words : Hash<String, TokenKind>
+
+    # the characters an operator may start with, asked with 'in' (record 0057)
+    operator_starts : String
+
+    token_offset : i32
+    token_length : i32
+    token_line : i32
+    token_ws : i32
+    column : i32
+    line : i32
+    ws : i32
+
+    # the line the previous token ended on, which decides the newline flag of
+    # the next one
+    last_end_line : i32
+    last_tab_line : i32
+    last_deep_indentation_line : i32
+    line_tab_offset : i32
+    line_start : bool
+    line_has_tab : bool
+    token_has_tab : bool
+    idx : i32
+
+    def init : void
+        module = null
+        operator_starts = "()[]{}+-*/%!&|~=><^.$:?@,;"
+        fill_words()
+        reset()
+
+    def set_module : void
+        @where : Module*
+
+        module = where
+
+    def reset : void
+        token_offset = 0
+        token_length = 0
+        token_line = 1
+        token_ws = 0
+        column = 1
+        line = 1
+        ws = 0
+        idx = 0
+
+        # zero, not one, so the first token of the file opens a line
+        last_end_line = 0
+        last_tab_line = 0
+        last_deep_indentation_line = 0
+        line_tab_offset = 0
+        line_start = true
+        line_has_tab = false
+        token_has_tab = false
+
+    # false when the file will not open
+    def get_tokens : bool
+        @path : char*
+
+        reset()
+
+        if not module->source_file.open(path):
+            return false
+
+        while has_next():
+            get_token()
+
+        create_eof_token()
+
+        return true
+
+    def get_token : void
+        if is_newline():
+            advance()
+        elif is_comment():
+            skip_comment()
+        elif is_string():
+            get_string()
+        elif is_alpha(0):
+            get_keyword_or_identifier()
+        elif is_digit(0):
+            get_number()
+        elif is_symbol():
+            get_symbol()
+        elif is_operator(0):
+            get_operator()
+        elif is_whitespace():
+            advance()
+        else:
+            get_invalid_character()
+
+    def get_invalid_character : void
+        let c = char_at(idx)
+        let byte = c as u8
+
+        if byte >= 32 and byte < 127:
+            error(idx, 1, "invalid character '${c}'")
+        else:
+            error(idx, 1, "invalid byte 0x${hex_of(byte)}")
+
+        advance()
+
+    def get_keyword_or_identifier : void
+        start_token()
+
+        while is_alphanum(0):
+            advance()
+
+        end_token()
+
+        let kind = kind_of_word(lexeme())
+
+        if kind == TokenKind.Unknown:
+            kind = TokenKind.Identifier
+
+        create_token(kind)
+
+    def get_number : void
+        let kind = TokenKind.IntegerLiteral
+
+        start_token()
+
+        if lookahead("0b"):
+            advance(2)
+
+            if is_binary_digit(0):
+                while is_binary_digit(0) or lookahead('_'):
+                    advance()
+            else:
+                error(token_offset, idx - token_offset,
+                      "missing binary digits after '0b'")
+        elif lookahead("0o"):
+            advance(2)
+
+            if is_octal_digit(0):
+                while is_octal_digit(0) or lookahead('_'):
+                    advance()
+            else:
+                error(token_offset, idx - token_offset,
+                      "missing octal digits after '0o'")
+        elif lookahead("0x"):
+            advance(2)
+
+            if is_hex_digit(0):
+                while is_hex_digit(0) or lookahead('_'):
+                    advance()
+            else:
+                error(token_offset, idx - token_offset,
+                      "missing hexadecimal digits after '0x'")
+        else:
+            while is_digit(0) or lookahead('_'):
+                advance()
+
+            # a '.' opens a fraction only when a digit follows it, which keeps
+            # '1..10' a range and '1.field' a member access
+            if lookahead('.') and is_digit(1):
+                kind = TokenKind.FloatLiteral
+                advance()
+
+                while is_digit(0) or lookahead('_'):
+                    advance()
+
+            let exponent = ((lookahead('e') or lookahead('E'))
+                            and (is_digit(1)
+                                 or ((lookahead_at('+', 1)
+                                      or lookahead_at('-', 1))
+                                     and is_digit(2))))
+
+            if exponent:
+                kind = TokenKind.FloatLiteral
+                advance()
+
+                if lookahead('+') or lookahead('-'):
+                    advance()
+
+                while is_digit(0) or lookahead('_'):
+                    advance()
+
+        end_token()
+        create_token(kind)
+
+    # Between single quotes, a lexeme of at most one character is a char
+    # literal and anything longer is a string. An escape and a multibyte utf8
+    # sequence each count as one character
+    def get_string : void
+        let delimiter = char_at(idx)
+        let counter = 0
+
+        if is_template_string():
+            get_template_string()
+            return
+
+        start_token()
+        advance()
+
+        while has_next() and not lookahead(delimiter):
+            if lookahead('\\'):
+                advance()
+
+                if has_next():
+                    advance()
+            else:
+                advance()
+
+                while is_utf8_continuation(0):
+                    advance()
+
+            counter += 1
+
+        if not lookahead(delimiter):
+            error(token_offset, idx - token_offset,
+                  "unterminated string literal")
+            end_token()
+            create_token(TokenKind.StringLiteral)
+            return
+
+        advance()
+        end_token()
+
+        if delimiter == '\'' and counter <= 1:
+            create_token(TokenKind.CharLiteral)
+        else:
+            create_token(TokenKind.StringLiteral)
+
+    #   BEGIN CHUNK (INTERPOLATION_BEGIN <tokens> INTERPOLATION_END CHUNK)* END
+    def get_template_string : void
+        let delimiter = char_at(idx)
+        let opening = idx
+
+        start_token()
+        advance()
+        end_token()
+        create_token(TokenKind.TemplateStringBegin)
+
+        while true:
+            start_token()
+
+            while (has_next() and not lookahead(delimiter)
+                   and not is_interpolation()):
+                if lookahead('\\'):
+                    advance()
+
+                    if has_next():
+                        advance()
+                else:
+                    advance()
+
+            end_token()
+            create_token(TokenKind.TemplateStringChunk)
+
+            if not is_interpolation():
+                break
+
+            start_token()
+            advance(2)
+            end_token()
+            create_token(TokenKind.InterpolationBegin)
+
+            get_interpolation()
+
+        if not lookahead(delimiter):
+            error(opening, idx - opening, "unterminated template string")
+            return
+
+        start_token()
+        advance()
+        end_token()
+        create_token(TokenKind.TemplateStringEnd)
+
+    # the expression inside '${ }', scanned as ordinary code. The depth is
+    # what keeps a '}' of a nested block from closing the interpolation
+    def get_interpolation : void
+        let opening = idx - 2
+        let depth = 0
+
+        while has_next():
+            if lookahead('}'):
+                if depth == 0:
+                    break
+
+                depth -= 1
+            elif lookahead('{'):
+                depth += 1
+
+            get_token()
+
+        if not lookahead('}'):
+            error(opening, 2, "unterminated interpolation in template string")
+            return
+
+        start_token()
+        advance()
+        end_token()
+        create_token(TokenKind.InterpolationEnd)
+
+    # '#' up to the end of the line, leaving the newline for get_token, so a
+    # comment behaves exactly like a blank line
+    def skip_comment : void
+        while has_next() and not is_newline():
+            advance()
+
+    # the longest operator of at most four characters that the table knows
+    def get_operator : void
+        let n = 4
+        let kind = TokenKind.Unknown
+
+        while n > 0:
+            let candidate : String
+            let i = 0
+
+            while i < n:
+                candidate.append(char_at(idx + i))
+                i += 1
+
+            kind = kind_of_word(candidate)
+
+            if kind != TokenKind.Unknown:
+                break
+
+            n -= 1
+
+        if n == 0:
+            error(idx, 1, "unknown operator")
+            advance()
+            return
+
+        start_token()
+        advance(n)
+        end_token()
+        create_token(kind)
+
+    # ':name', ':'name with spaces'' or ':"name with spaces"'
+    def get_symbol : void
+        start_token()
+        advance()
+
+        if lookahead('\'') or lookahead('"'):
+            let delimiter = char_at(idx)
+
+            advance()
+
+            while has_next() and not lookahead(delimiter):
+                if lookahead('\\'):
+                    advance()
+
+                    if has_next():
+                        advance()
+                else:
+                    advance()
+
+                    while is_utf8_continuation(0):
+                        advance()
+
+            if not lookahead(delimiter):
+                error(token_offset, idx - token_offset,
+                      "unterminated symbol literal")
+                end_token()
+                create_token(TokenKind.SymbolLiteral)
+                return
+
+            advance()
+        else:
+            while is_alphanum(0):
+                advance()
+
+        end_token()
+        create_token(TokenKind.SymbolLiteral)
+
+    def has_next : bool
+        return idx < module->source_file.size()
+
+    def start_token : void
+        token_offset = idx
+        token_length = 0
+
+        # a token may span lines, and its flag and indentation belong to the
+        # line it opens on
+        token_line = line
+        token_ws = ws
+        token_has_tab = line_has_tab
+
+    def end_token : void
+        token_length = idx - token_offset
+
+        if token_length >= 65535:
+            error(token_offset, 1, "token is longer than 65535 bytes")
+
+    def create_token : void
+        @kind : TokenKind
+
+        let token : Token
+
+        if token_has_tab and token_line != last_tab_line:
+            error(line_tab_offset, 1, "tabs are not allowed in the indentation")
+            last_tab_line = token_line
+
+        if token_ws > 127 and token_line != last_deep_indentation_line:
+            error(token_offset, token_length,
+                  "indentation is deeper than 127 spaces")
+            last_deep_indentation_line = token_line
+
+        token.kind = kind
+        token.offset = token_offset
+        token.set_length(token_length)
+        token.newline_before = token_line != last_end_line
+        token.set_whitespace(token_ws)
+
+        module->tokens.add(token)
+        last_end_line = line
+
+    # its 'ws' is zero, which closes every block the parser has open at the
+    # end of the file with no special case
+    def create_eof_token : void
+        let token : Token
+
+        token.kind = TokenKind.Eof
+        token.offset = module->source_file.size()
+        token.set_length(0)
+        token.newline_before = line != last_end_line
+        token.set_whitespace(0)
+
+        module->tokens.add(token)
+
+    def advance : void
+        @steps : i32
+
+        while steps > 0:
+            advance()
+            steps -= 1
+
+    def advance : void
+        let c = char_at(idx)
+        let byte = c as u8
+
+        if c == '\n':
+            column = 1
+            line += 1
+            ws = 0
+            line_start = true
+            line_has_tab = false
+        elif c == ' ' and line_start:
+            ws += 1
+            column += 1
+        elif c == '\t' and line_start:
+            if not line_has_tab:
+                line_tab_offset = idx
+
+            line_has_tab = true
+            column += 1
+        else:
+            line_start = false
+
+            if (byte & 0x80) == 0:
+                column += 1
+            elif (byte & 0xC0) == 0x80:
+                pass
+            elif (byte & 0xE0) == 0xC0:
+                column += 1
+            elif (byte & 0xF0) == 0xE0:
+                column += 1
+            elif (byte & 0xF8) == 0xF0:
+                column += 1
+            else:
+                error(idx, 1, "invalid utf8 byte 0x${hex_of(byte)}")
+
+        idx += 1
+
+    def lookahead : bool
+        @c : char
+
+        return has_next() and char_at(idx) == c
+
+    def lookahead_at : bool
+        @c : char
+        @offset : i32
+
+        return char_at(idx + offset) == c
+
+    def lookahead : bool
+        @s : char*
+
+        let offset = 0
+
+        while s[offset] != '\0':
+            if not lookahead_at(s[offset], offset):
+                return false
+
+            offset += 1
+
+        return true
+
+    def is_newline : bool
+        return char_at(idx) == '\n'
+
+    # the '\r' of a crlf file belongs to the line ending
+    def is_whitespace : bool
+        let c = char_at(idx)
+
+        return c == ' ' or c == '\t' or c == '\r'
+
+    def is_comment : bool
+        return char_at(idx) == '#'
+
+    def is_string : bool
+        return lookahead('"') or lookahead('\'')
+
+    def is_symbol : bool
+        return (lookahead(':')
+                and (is_alpha(1) or lookahead_at('\'', 1)
+                     or lookahead_at('"', 1)))
+
+    # from the opening delimiter, a '${' before the closing one, without
+    # consuming anything
+    def is_template_string : bool
+        let delimiter = char_at(idx)
+        let size = module->source_file.size()
+        let i = idx + 1
+
+        while i < size and char_at(i) != delimiter:
+            if char_at(i) == '\\':
+                i += 2
+            elif char_at(i) == '$' and char_at(i + 1) == '{':
+                return true
+            else:
+                i += 1
+
+        return false
+
+    # asked a character at a time: "${" written as a literal would be a
+    # template string, and an unterminated one
+    def is_interpolation : bool
+        return lookahead_at('$', 0) and lookahead_at('{', 1)
+
+    def is_utf8_continuation : bool
+        @offset : i32
+
+        return ((char_at(idx + offset) as u8) & 0xC0) == 0x80
+
+    # a byte of 128 or more is part of a utf8 sequence, and belongs to the
+    # identifier whichever byte of it it is
+    def is_alpha : bool
+        @offset : i32
+
+        let c = char_at(idx + offset)
+
+        return ((c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or c == '_'
+                or (c as u8) >= 128)
+
+    def is_digit : bool
+        @offset : i32
+
+        let c = char_at(idx + offset)
+
+        return c >= '0' and c <= '9'
+
+    def is_binary_digit : bool
+        @offset : i32
+
+        let c = char_at(idx + offset)
+
+        return c >= '0' and c <= '1'
+
+    def is_octal_digit : bool
+        @offset : i32
+
+        let c = char_at(idx + offset)
+
+        return c >= '0' and c <= '7'
+
+    def is_hex_digit : bool
+        @offset : i32
+
+        let c = char_at(idx + offset)
+
+        return ((c >= '0' and c <= '9') or (c >= 'a' and c <= 'f')
+                or (c >= 'A' and c <= 'F'))
+
+    def is_alphanum : bool
+        @offset : i32
+
+        return is_alpha(offset) or is_digit(offset)
+
+    def is_operator : bool
+        @offset : i32
+
+        return char_at(idx + offset) in operator_starts
+
+    # ---- what the C++ one gets from its members' own classes
+
+    def char_at : char
+        @index : i32
+
+        return module->source_file.char_at(index)
+
+    def lexeme : String
+        let text : String
+        let i = 0
+
+        while i < token_length:
+            text.append(char_at(token_offset + i))
+            i += 1
+
+        return text
+
+    def error : void
+        @offset : i32
+        @length : i32
+        @message : String
+
+        module->logger.error(offset, length, message)
+
+    def kind_of_word : TokenKind
+        @text : String&
+
+        if words.has(text):
+            return words[text]
+
+        return TokenKind.Unknown
+
+    def word : void
+        @text : char*
+        @kind : TokenKind
+
+        let key : String = text
+
+        words.add(key, kind)
+
+    def fill_words : void
+        word("import", TokenKind.Import)
+        word("def", TokenKind.Def)
+        word("class", TokenKind.Class)
+        word("enum", TokenKind.Enum)
+        word("union", TokenKind.Union)
+        word("struct", TokenKind.Struct)
+        word("if", TokenKind.If)
+        word("elif", TokenKind.Elif)
+        word("else", TokenKind.Else)
+        word("for", TokenKind.For)
+        word("while", TokenKind.While)
+        word("switch", TokenKind.Switch)
+        word("case", TokenKind.Case)
+        word("default", TokenKind.Default)
+        word("let", TokenKind.Let)
+        word("const", TokenKind.Const)
+        word("true", TokenKind.True)
+        word("false", TokenKind.False)
+        word("as", TokenKind.As)
+        word("in", TokenKind.In)
+        word("not", TokenKind.Not)
+        word("and", TokenKind.And)
+        word("or", TokenKind.Or)
+        word("return", TokenKind.Return)
+        word("continue", TokenKind.Continue)
+        word("break", TokenKind.Break)
+        word("yield", TokenKind.Yield)
+        word("this", TokenKind.This)
+        word("super", TokenKind.Super)
+        word("null", TokenKind.Null)
+        word("new", TokenKind.New)
+        word("delete", TokenKind.Delete)
+        word("sizeof", TokenKind.Sizeof)
+        word("u8", TokenKind.U8)
+        word("u16", TokenKind.U16)
+        word("u32", TokenKind.U32)
+        word("u64", TokenKind.U64)
+        word("i8", TokenKind.I8)
+        word("i16", TokenKind.I16)
+        word("i32", TokenKind.I32)
+        word("i64", TokenKind.I64)
+        word("f32", TokenKind.F32)
+        word("f64", TokenKind.F64)
+        word("bool", TokenKind.Bool)
+        word("void", TokenKind.Void)
+        word("char", TokenKind.Char)
+        word("isize", TokenKind.Isize)
+        word("usize", TokenKind.Usize)
+        word("symbol", TokenKind.Symbol)
+        word("pass", TokenKind.Pass)
+        word("goto", TokenKind.Goto)
+        word("label", TokenKind.Label)
+        word("operator", TokenKind.Operator)
+        word("=", TokenKind.Assignment)
+        word("+=", TokenKind.PlusAssignment)
+        word("-=", TokenKind.MinusAssignment)
+        word("*=", TokenKind.TimesAssignment)
+        word("/=", TokenKind.DivisionAssignment)
+        word("//=", TokenKind.IntegerDivisionAssignment)
+        word("%=", TokenKind.ModuloAssignment)
+        word("&=", TokenKind.BitwiseAndAssignment)
+        word("|=", TokenKind.BitwiseOrAssignment)
+        word("^=", TokenKind.BitwiseXorAssignment)
+        word("~=", TokenKind.BitwiseNotAssignment)
+        word("<<=", TokenKind.BitwiseLeftShiftAssignment)
+        word(">>=", TokenKind.BitwiseRightShiftAssignment)
+        word(">>>=", TokenKind.BitwiseUnsignedRightShiftAssignment)
+        word("+", TokenKind.Plus)
+        word("-", TokenKind.Minus)
+        word("*", TokenKind.Times)
+        word("**", TokenKind.Power)
+        word("/", TokenKind.Division)
+        word("//", TokenKind.IntegerDivision)
+        word("++", TokenKind.Increment)
+        word("--", TokenKind.Decrement)
+        word("==", TokenKind.Equal)
+        word("!=", TokenKind.NotEqual)
+        word("<", TokenKind.LessThan)
+        word("<=", TokenKind.LessThanOrEqual)
+        word(">", TokenKind.GreaterThan)
+        word(">=", TokenKind.GreaterThanOrEqual)
+        word("%", TokenKind.Modulo)
+        word(".", TokenKind.Dot)
+        word("..", TokenKind.InclusiveRange)
+        word("...", TokenKind.ExclusiveRange)
+        word("->", TokenKind.Arrow)
+        word(":", TokenKind.Colon)
+        word("::", TokenKind.Scope)
+        word("@", TokenKind.At)
+        word("(", TokenKind.LeftParenthesis)
+        word(")", TokenKind.RightParenthesis)
+        word("[", TokenKind.LeftSquareBracket)
+        word("]", TokenKind.RightSquareBracket)
+        word("{", TokenKind.LeftCurlyBracket)
+        word("}", TokenKind.RightCurlyBracket)
+        word(",", TokenKind.Comma)
+        word(";", TokenKind.Semicolon)
+        word("!", TokenKind.LogicalNot)
+        word("&", TokenKind.BitwiseAnd)
+        word("|", TokenKind.BitwiseOr)
+        word("~", TokenKind.BitwiseNot)
+        word("^", TokenKind.BitwiseXor)
+        word("<<", TokenKind.BitwiseLeftShift)
+        word(">>", TokenKind.BitwiseRightShift)
+        word(">>>", TokenKind.BitwiseUnsignedRightShift)
+        word("&&", TokenKind.LogicalAnd)
+        word("||", TokenKind.LogicalOr)
+        word("$", TokenKind.Dollar)
+        word("?", TokenKind.QuestionMark)
+
+# two hexadecimal digits, upper case, as C's '%02X' writes a byte
+def hex_of : String
+    @byte : u8
+
+    let digits = "0123456789ABCDEF"
+    let text : String
+
+    text.append(digits[(byte >> 4) as i32])
+    text.append(digits[(byte & 0x0F) as i32])
+
+    return text

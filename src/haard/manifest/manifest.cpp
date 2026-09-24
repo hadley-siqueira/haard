@@ -18,6 +18,15 @@ bool Manifest::load(const std::filesystem::path& file) {
     prelude.clear();
     directory = file.parent_path();
 
+    // 'hdc --pkg haard.pkg' names a manifest in the working directory, whose
+    // parent is the EMPTY path and not '.'. A root at the empty path covers no
+    // file at all, so the entry file itself was 'not covered by any root
+    // block' -- found by the bootstrap's Makefile, the first one to write the
+    // manifest's name bare
+    if (directory.empty()) {
+        directory = ".";
+    }
+
     scanner.set_module(&module);
 
     try {

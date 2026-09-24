@@ -28,7 +28,7 @@ int32_t h0_20_main() {
     h0_21_a.m_add_b6(20);
     h0_22_b.m_add_b6(3);
     h0_22_b.m_add_b6(4);
-    int32_t &h0_23_first = h0_21_a.m_operator_at_b6(0);
+    int32_t h0_23_first = h0_21_a.m_operator_at_b6(0);
     h0_21_a.m_operator_at_b6(1) = 5;
     int32_t h0_24_sum = h0_21_a.m_operator_plus_rn0c1(h0_22_b);
     int32_t h0_25_difference = h0_21_a.m_operator_minus_rn0c1(h0_22_b);

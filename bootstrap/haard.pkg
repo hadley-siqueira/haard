@@ -1,0 +1,16 @@
+# hdc -- the Haard compiler, written in Haard. Only the scanner so far.
+#
+# The only file written by hand to build it: 'hdc' finds it by looking at and
+# above the file it is given, reads the manifests it reaches, and builds the
+# roots table itself (record 0044). 'roots.tbl' beside it is that same table
+# written out, for a build that passes '--roots'.
+{
+    name: "hdc",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../std"}
+    ],
+
+    prelude: ["std.array", "std.string", "std.hash", "std.io", "std.file"]
+}

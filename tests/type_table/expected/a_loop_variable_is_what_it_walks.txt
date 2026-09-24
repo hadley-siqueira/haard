@@ -18,7 +18,8 @@
     fixed  i32[3]
     x  i32&
     __c0  BagCursor
-    seen  i32&
+    seen  i32
+    alias  i32&
     f  i32
     __i1  i32
     taken  i32

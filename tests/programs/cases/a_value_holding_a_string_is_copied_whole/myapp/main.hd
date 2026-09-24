@@ -1,0 +1,107 @@
+# Record 0031, through composition. A class that owns nothing itself but
+# HOLDS a String is copied and assigned field by field, and the String field
+# by the String's own rule -- a buffer of its own, never the other's pointer.
+#
+# Two ways that failed, both found by the bootstrap's scanner and both a
+# double free in silence until then:
+#
+#   - an assignment between two such values was C++'s implicit '=', which
+#     assigned the String member by copying its pointer; an Array of them
+#     does exactly that every time it grows
+#   - an assignment through a REFERENCE to a class that owns something --
+#     'xs[i] = other', where 'operator[]' gives back a 'T&' -- asked the
+#     reference whether it owns anything, and a reference owns nothing
+#
+# Its exit status is the number of checks that failed.
+
+class Entry:
+    order : i32
+    text : String
+
+# a class holding a class that holds a String, which is the same rule twice
+class Labelled:
+    title : String
+    entry : Entry
+
+def check : i32
+    @what : String
+    @ok : bool
+
+    print(what)
+
+    if ok:
+        println(": ok")
+        return 0
+
+    println(": FAILED")
+    return 1
+
+def entry : Entry
+    @order : i32
+
+    let made : Entry
+
+    made.order = order
+    made.text = "entry ${order}"
+
+    return made
+
+def main : i32
+    let failures = 0
+
+    # ---- enough of them that the Array grows, copying every one each time
+
+    let entries : Array<Entry>
+    let i = 20
+
+    while i > 0:
+        entries.add(entry(i))
+        i -= 1
+
+    # ---- and sorted in place, which assigns through the references
+    # 'operator[]' gives back
+
+    let j = 1
+
+    while j < entries.length():
+        let k = j
+
+        while k > 0 and entries[k - 1].order > entries[k].order:
+            let held : Entry = entries[k]
+
+            entries[k] = entries[k - 1]
+            entries[k - 1] = held
+            k -= 1
+
+        j += 1
+
+    failures += check("the first is ${entries[0].text}",
+                      entries[0].text == "entry 1")
+    failures += check("the last is ${entries[19].text}",
+                      entries[19].text == "entry 20")
+
+    # ---- one assigned from another keeps its own buffer
+
+    let a = entry(1)
+    let b = entry(2)
+
+    b = a
+    a.text.append(" changed")
+
+    failures += check("an assigned copy is its own: ${b.text}",
+                      b.text == "entry 1")
+
+    # ---- and a level deeper
+
+    let outer : Labelled
+    let other : Labelled
+
+    outer.title = "outer"
+    outer.entry = entry(7)
+    other = outer
+    outer.entry.text.append(" changed")
+
+    failures += check("a copy two levels down is its own: ${other.entry.text}",
+                      other.entry.text == "entry 7")
+
+    return failures
