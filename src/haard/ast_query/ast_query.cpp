@@ -286,8 +286,23 @@ u32 AstQuery::get_given_back(u32 closure) {
     u32 block = get_block(closure);
     u32 only = block == 0 ? 0 : ast->get_node(block)->get_children();
 
-    if (only == 0 || ast->get_node(only)->get_sibling() != 0) {
+    if (only == 0) {
         return 0;
+    }
+
+    // One expression as the SOURCE wrote it. Records 0032 and 0061 insert
+    // statements in front of it -- 'again("${x}")' becomes a String built
+    // and then the call -- and each of those carries a token the pass made.
+    // Counted as statements, they turned a body of one expression into three,
+    // and a closure typed to give back a bool gave back nothing: C++ with no
+    // 'return', undefined and silent, until the check that a body promising
+    // a value gives one back found it on 2026-09-24
+    while (ast->get_node(only)->get_sibling() != 0) {
+        if (!module->is_synthetic(ast->get_node(only)->get_token())) {
+            return 0;
+        }
+
+        only = ast->get_node(only)->get_sibling();
     }
 
     switch (ast->get_node(only)->get_kind()) {

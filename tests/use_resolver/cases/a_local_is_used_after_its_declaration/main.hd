@@ -1,0 +1,45 @@
+# A local is in view from the end of the statement that declares it. Before
+# that, a use reads a value nothing has made: until 2026-09-24 the emitter
+# found a binding with no type, or g++ a name used before it was declared.
+#
+# A function, a class and a global are not locals, and are in view wherever
+# they are written -- 'later' below is one.
+def before_its_let : i32
+    let y = x + 1
+    let x = 2
+
+    return y
+
+def in_its_own_initialiser : i32
+    let x = x + 1
+
+    return x
+
+def in_its_own_assignment : i32
+    n = n + 1
+
+    return n
+
+def in_an_inner_block : i32
+    let x = 1
+
+    if x > 0:
+        # the inner x is the one this names, and it is not made yet
+        let x = x + 1
+
+    return x
+
+def main : i32
+    return later() + global
+
+def later : i32
+    let a = 1
+    let b = a + 1
+    let f = |x : i32| { x + b }
+
+    c = b
+    c = c + 1
+
+    return f(c)
+
+let global = 3

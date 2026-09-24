@@ -1,6 +1,11 @@
 # an override is about two classes. Two declarations in ONE class that answer
 # to the same call are record 0012's ambiguous call and always were, and
-# nothing about inheritance makes one of them win
+# nothing about inheritance makes one of them win.
+#
+# Since 2026-09-24 the second declaration is an error on its own too: two
+# functions of one name and the same parameters cannot both stand, since no
+# call could ever choose between them. The call is still reported, which is
+# what this case pins
 class Shape:
     def pick : i32
         @a : i32

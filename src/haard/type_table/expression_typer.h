@@ -41,6 +41,17 @@ namespace haard {
             // which is what a 'let' with no written type does
             u32 type_of(u32 module, u32 scope, u32 node, u32 expected);
 
+            // Whether this expression, already typed, names somewhere a value
+            // is kept: a variable, a parameter, a field, an element, what a
+            // pointer points at, or a 'T&'. What an assignment writes, what
+            // '&' takes the address of and what '++' changes
+            bool is_place(u32 node);
+
+            // whether a named type is an enum. An enum is a set of tags and
+            // not a shape: comparing two of them is comparing the tag, and
+            // there is no operator to look up
+            bool is_an_enum(u32 type);
+
             // which module name_of reads its names out of. type_of sets it
             // too, and this is for a caller that has to name a type before it
             // has asked for one -- the StatementChecker reporting a 'return'
@@ -99,6 +110,8 @@ namespace haard {
 
             // '&x' adds a pointer and '*p' takes one away
             u32 address_of(u32 scope, u32 node);
+            bool names_storage(u32 node);
+            bool gives_a_reference(u32 type);
             u32 dereference(u32 scope, u32 node);
 
             // 'x as T' is whatever it was written as. Nothing checks that the
@@ -383,10 +396,6 @@ namespace haard {
             // either alike
             u32 this_type(u32 scope);
 
-            // whether a named type is an enum. An enum is a set of tags and
-            // not a shape: comparing two of them is comparing the tag, and
-            // there is no operator to look up
-            bool is_an_enum(u32 type);
 
             // the type a candidate has as a **value**: its own, except for a
             // variant whose payload has a default, which is a value of its

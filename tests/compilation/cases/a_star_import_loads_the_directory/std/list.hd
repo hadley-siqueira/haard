@@ -1,2 +1,2 @@
 def length : i32
-    pass
+    return 0

@@ -1,0 +1,15 @@
+error: 'break' is written outside a loop, where there is nothing to leave
+  --> main.hd:11:17
+   |
+11 |                 break
+   |                 ^^^^^
+error: 'break' is written outside a loop, where there is nothing to leave
+  --> main.hd:19:5
+   |
+19 |     break
+   |     ^^^^^
+error: 'continue' is written outside a loop, where there is nothing to go round
+  --> main.hd:22:9
+   |
+22 |         continue
+   |         ^^^^^^^^

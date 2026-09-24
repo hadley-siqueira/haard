@@ -84,7 +84,15 @@ for directory in "${cases[@]}"; do
         got="did not build:
 $errors"
     else
-        printed=$(cd "$work" && timeout 30 ./app 2>&1)
+        # a case that reads its input keeps it in 'stdin'; one that does not
+        # reads nothing, and never waits on the terminal that ran the suite
+        input=/dev/null
+
+        if [ -f "$work/stdin" ]; then
+            input=$work/stdin
+        fi
+
+        printed=$(cd "$work" && timeout 30 ./app < "$input" 2>&1)
         code=$?
 
         got="$printed
@@ -94,7 +102,7 @@ $errors"
         # sources and the two things the Makefile builds are not artefacts
         for file in $(cd "$work" && ls -A); do
             case $file in
-            main.cpp|app|Makefile|roots.tbl|entry) continue ;;
+            main.cpp|app|Makefile|roots.tbl|entry|stdin) continue ;;
             esac
 
             if [ -d "$work/$file" ]; then

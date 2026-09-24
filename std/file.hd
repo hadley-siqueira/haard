@@ -1,6 +1,6 @@
 # std/file.hd -- a file and the console, written in Haard.
 #
-# Nothing here is in the compiler. std.io next door holds the eight functions
+# Nothing here is in the compiler. std.low_io holds the nine functions
 # whose bodies the emitter writes (record 0030), and every one of them moves a
 # single character. Everything anyone would actually write is here, on top of
 # them, in the language.

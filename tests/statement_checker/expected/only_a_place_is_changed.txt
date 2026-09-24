@@ -1,0 +1,40 @@
+error: this is a value and not a place, so it cannot be assigned to
+  --> main.hd:27:7
+   |
+27 |     3 = 4
+   |       ^
+error: this is a value and not a place, so it cannot be assigned to
+  --> main.hd:28:12
+   |
+28 |     five() = 6
+   |            ^
+error: this is a value and not a place, so it cannot be assigned to
+  --> main.hd:29:11
+   |
+29 |     a + b += 1
+   |           ^^
+error: this is a value and not a place, so it cannot be assigned to
+  --> main.hd:30:16
+   |
+30 |     cell.get() = 7
+   |                ^
+error: this is a value and not a place, so it has no address
+  --> main.hd:32:13
+   |
+32 |     let q = &3
+   |             ^
+error: this is a value and not a place, so it has no address
+  --> main.hd:33:13
+   |
+33 |     let r = &(a + 1)
+   |             ^
+error: this is a value and not a place, so there is nothing to change
+  --> main.hd:35:5
+   |
+35 |     ++5
+   |     ^^
+error: this is a value and not a place, so there is nothing to change
+  --> main.hd:36:12
+   |
+36 |     (a + b)++
+   |            ^^

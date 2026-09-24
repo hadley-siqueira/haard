@@ -56,7 +56,7 @@ directory, it does, and `make clean` takes it back.
 ## The cases
 
 - **`an_image_written_and_read_back`** — a PPM reader and writer in Haard, over
-  a `std` that is itself Haard on top of record 0030's eight native functions.
+  a `std` that is itself Haard on top of record 0030's native functions.
   Three roots: `std`, `ppm` and the user's `myapp`, which sees the other two
   and nothing they import privately. It paints an image white, writes a
   gradient, reads both back, inverts one and reads that back, and compares
@@ -99,6 +99,13 @@ directory, it does, and `make clean` takes it back.
 
   No file of the program imports `String`. The table's `prelude` block does it
   (record 0033), which is what makes a template string mean anything here.
+
+- **`a_line_is_read_from_the_keyboard`** — `input`, Python's, in `std.io`:
+  a prompt is written, a line is read and given back without its newline.
+  The case's `stdin` file is what is typed — this suite hands it to the
+  program, and every case without one reads `/dev/null` — and it holds an
+  empty line and a last line with no newline, so the end of the input and an
+  empty line are both asked about, and `input_ended` tells them apart.
 
 - **`containers_are_walked_by_each`** — record 0058: an `Array` and a `List`
   walked by handing `each` a closure. Totals written from inside the closure

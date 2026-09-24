@@ -1,0 +1,7 @@
+# A body of only 'pass' that promises a value is exempt here and nowhere
+# else: record 0030's natives are written by the emitter, by name and inside
+# this module. 'only_a_pass' in a_function_gives_back_on_every_path is the
+# same function outside it, and is an error.
+def __io_stdin : i8*
+    pass
+

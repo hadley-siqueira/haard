@@ -75,3 +75,11 @@ carries no token of its own — `AstBuilder::make_named_type` builds one with
 token 0 and lets the name below it hold the span — so reporting at a return
 type lands on the first token of the file. The message names both types anyway;
 what the span has to say is *which method*.
+
+## One declaration per name
+
+`a_name_is_declared_once_per_scope` is record 0063: two classes, two fields,
+two methods and two functions with the same parameters, two variants, two
+parameters and two `let`s, each reported where the repeat is written. What
+stands beside them: overloads with different parameters, one name in two
+classes, and a `let` in a block that hides one outside.

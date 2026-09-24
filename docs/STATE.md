@@ -76,6 +76,13 @@ raised, answered the same day as record 0062: `let x = xs[i]` bound a
 `let x : T& = ...`, and a `for x in` variable stays one. See
 `bootstrap/README.md`.
 
+**The front end refuses what is not a program**, since 2026-09-24 — record
+0063. Of 24 wrong programs, 23 used to pass it and reach g++, the emitter or
+nothing at all. Now each is a diagnostic with a caret: `break` outside a loop,
+writing to a value, a `goto` with nowhere to go, a local read before it is
+made, `this` in a free function, a name declared twice in a scope, and a
+function that can end without giving back what it promised.
+
 **What a statement builds is built when it runs**, since 2026-09-24 — record
 0061. A template string or an unbound literal on the right of `and`/`or`, in a
 loop's condition, in a `for`'s step or in an `elif`'s condition is built only
@@ -527,7 +534,8 @@ down the semantics Hadley wants and the design that delivers them, so the
 thinking is not done twice.
 
 **Haard talks to the world**, since 2026-09-05 — record 0030, and temporary on
-purpose. The emitter writes the body of **eight** functions, by name and only
+purpose. The emitter writes the body of **nine** functions (the ninth,
+`__io_flush`, came with `input` on 2026-09-24), by name and only
 inside the module named `std.low_io` (`std.io` until 2026-09-08). Nothing was added to the language: a `def`
 whose body is `pass` already emitted a whole function with an empty body, and
 the emitter fills it in.

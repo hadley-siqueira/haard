@@ -35,6 +35,7 @@ StatementChecker::StatementChecker() {
     compilation = nullptr;
     module = nullptr;
     index = 0;
+    loops = 0;
 }
 
 void StatementChecker::set_collector(TypeCollector* collector) {
@@ -57,6 +58,8 @@ void StatementChecker::check(u32 index) {
 
     scope_of.clear();
     given_back.clear();
+    declaring.clear();
+    loops = 0;
 
     // a diagnostic may name a type before any expression has been typed --
     // 'return' with nothing after it is one -- and the typer reads the names
@@ -68,6 +71,16 @@ void StatementChecker::check(u32 index) {
 
         if (owner != 0) {
             scope_of[owner] = scope;
+        }
+    }
+
+    for (u32 candidate = 1; candidate < table->get_candidate_count();
+         candidate++) {
+        Candidate* one = table->get_candidate(candidate);
+
+        if (one->kind == SYMBOL_VARIABLE
+            && kind_of(one->ast_node) == AST_ASSIGNMENT) {
+            declaring.insert(one->ast_node);
         }
     }
 
@@ -168,10 +181,32 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         return;
     }
 
+    // a function or a closure is a body of its own, which no loop around it
+    // reaches into
+    u32 held_loops = loops;
+
     switch (kind) {
-    case AST_FUNCTION:
+    case AST_FUNCTION: {
         result = result_of(node);
+        loops = 0;
+
+        u32 body = 0;
+
+        for (u32 child = first_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            if (kind_of(child) == AST_BLOCK) {
+                body = child;
+            }
+        }
+
+        AstQuery query;
+
+        query.set_module(module);
+        check_jumps(body);
+        check_ends(body, result, node,
+                   "'" + query.get_declaration_name(node) + "'");
         break;
+    }
 
     // Record 0058. A closure is no declaration, so what it gives back is not
     // on a candidate: it is in the type the typer recorded on the closure,
@@ -190,14 +225,54 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         }
 
         result = module->get_types()->get_arguments(type).back();
+        loops = 0;
 
         // the one expression a body gives back was typed with the closure,
         // against what it gives back, and typing it again here would report
         // everything in it twice
         query.set_module(module);
-        given_back.insert(query.get_given_back(node));
+
+        u32 given = query.get_given_back(node);
+
+        given_back.insert(given);
+
+        u32 body = 0;
+
+        for (u32 child = first_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            if (kind_of(child) == AST_BLOCK) {
+                body = child;
+            }
+        }
+
+        check_jumps(body);
+
+        // a body of one expression gives it back, and that is its end
+        if (given == 0) {
+            check_ends(body, result, node, "this closure");
+        }
+
         break;
     }
+
+    // Nothing to leave and nothing to go round: C++ refused these about the
+    // C++, and a 'break' in a closure written inside a loop is the one that
+    // looks right -- the closure is a function of its own
+    case AST_BREAK:
+        if (loops == 0) {
+            report(node, "'break' is written outside a loop, where there is "
+                   "nothing to leave");
+        }
+
+        break;
+
+    case AST_CONTINUE:
+        if (loops == 0) {
+            report(node, "'continue' is written outside a loop, where there "
+                   "is nothing to go round");
+        }
+
+        break;
 
     case AST_RETURN:
         check_return(node, scope, result);
@@ -258,6 +333,10 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         }
     }
 
+    if (kind == AST_WHILE || kind == AST_FOR || kind == AST_FOR_EACH) {
+        loops++;
+    }
+
     // and then into everything, including what was just checked: the walk is
     // looking for the statements further down -- a block under an 'if', a
     // closure inside a condition, the inner assignment of 'a = b = 1'
@@ -265,6 +344,335 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
          child = module->get_ast()->get_node(child)->get_sibling()) {
         walk(child, scope, result);
     }
+
+    loops = held_loops;
+}
+
+// Hadley, 2026-09-24: reaching the end of a function that promised a value is
+// an error. Before, it compiled, and the program died at run time on the trap
+// g++ writes there -- 'Illegal instruction', about a line nobody wrote.
+//
+// A body that is only 'pass' is exempt **inside 'std.low_io' only**: there it
+// is a declaration whose body the emitter writes, which is what record 0030's
+// natives are, and the module is the same half of the match the emitter makes.
+// Anywhere else a 'pass' is a body like any other -- Hadley, 2026-09-24, after
+// a user's 'def f : i32' of 'pass' was measured compiling and dying on the
+// same trap
+void StatementChecker::check_ends(u32 body, u32 result, u32 at,
+                                  const std::string& what) {
+    if (body == 0 || result == INVALID_TYPE
+        || result == module->get_types()->builtin(BUILTIN_VOID)) {
+        return;
+    }
+
+    u32 first = first_child(body);
+
+    if (module->get_name() == "std.low_io" && first != 0
+        && kind_of(first) == AST_PASS
+        && module->get_ast()->get_node(first)->get_sibling() == 0) {
+        return;
+    }
+
+    if (terminates(body)) {
+        return;
+    }
+
+    u32 name = at;
+
+    if (kind_of(at) == AST_FUNCTION) {
+        u32 wrapper = first_child(at);
+
+        if (wrapper != 0 && kind_of(wrapper) == AST_BINDING_NAME
+            && first_child(wrapper) != 0) {
+            name = first_child(wrapper);
+        }
+    }
+
+    report(name, what + " can reach its end without giving back "
+           + typer.name_of(result));
+}
+
+// Deliberately the simple rules, the ones a reader checks by eye: a 'return'
+// or a 'goto' ends a path; an 'if' ends every path only with an 'else', and
+// only when every branch does; a 'switch' when every case with a body does and
+// nothing is left uncovered; and a loop only when it runs forever -- a 'while
+// true' or a 'for' with no condition -- with no 'break' of its own inside
+bool StatementChecker::terminates(u32 node) {
+    if (node == 0) {
+        return false;
+    }
+
+    switch (kind_of(node)) {
+    case AST_RETURN:
+    case AST_GOTO:
+        return true;
+
+    case AST_BLOCK:
+        for (u32 child = first_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            if (terminates(child)) {
+                return true;
+            }
+        }
+
+        return false;
+
+    case AST_IF: {
+        bool otherwise = false;
+
+        for (u32 child = second_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            AstNodeKind kind = kind_of(child);
+            u32 branch = child;
+
+            if (kind == AST_ELIF) {
+                branch = second_child(child);
+            } else if (kind == AST_ELSE) {
+                branch = first_child(child);
+                otherwise = true;
+            }
+
+            if (!terminates(branch)) {
+                return false;
+            }
+        }
+
+        return otherwise;
+    }
+
+    case AST_WHILE: {
+        u32 condition = first_child(node);
+
+        return condition != 0 && kind_of(condition) == AST_TRUE
+            && !breaks_out(second_child(node));
+    }
+
+    // 'for a; ; c:' runs forever, and so does one whose condition is 'true'
+    case AST_FOR: {
+        u32 condition = 0;
+        u32 body = 0;
+
+        for (u32 child = first_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            if (kind_of(child) == AST_FOR_CONDITION) {
+                condition = child;
+            } else if (kind_of(child) == AST_BLOCK) {
+                body = child;
+            }
+        }
+
+        if (condition != 0 && first_child(condition) != 0
+            && kind_of(first_child(condition)) != AST_TRUE) {
+            return false;
+        }
+
+        return !breaks_out(body);
+    }
+
+    // every case with a body ends, and nothing is left out: a 'default', or
+    // an enum -- whose switch is refused unless it covers every variant, so
+    // an uncovered one was already reported and is not reported again here
+    case AST_SWITCH: {
+        u32 subject = first_child(node);
+        bool covered = false;
+
+        for (u32 child = second_child(node); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            u32 body = kind_of(child) == AST_DEFAULT ? first_child(child)
+                                                     : second_child(child);
+
+            if (kind_of(child) == AST_DEFAULT) {
+                covered = true;
+            }
+
+            if (body != 0 && !terminates(body)) {
+                return false;
+            }
+        }
+
+        if (!covered && subject != 0) {
+            u32 given = module->get_resolutions()->get(subject)->type;
+
+            covered = given != INVALID_TYPE
+                   && typer.is_an_enum(module->get_types()->value_of(given));
+        }
+
+        return covered;
+    }
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool StatementChecker::breaks_out(u32 node) {
+    if (node == 0) {
+        return false;
+    }
+
+    switch (kind_of(node)) {
+    case AST_BREAK:
+        return true;
+
+    // a 'break' in here leaves the inner one
+    case AST_WHILE:
+    case AST_FOR:
+    case AST_FOR_EACH:
+    case AST_CLOSURE:
+        return false;
+
+    default:
+        break;
+    }
+
+    for (u32 child = first_child(node); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        if (breaks_out(child)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void StatementChecker::check_jumps(u32 body) {
+    if (body == 0) {
+        return;
+    }
+
+    std::vector<Placed> labels;
+    std::vector<Placed> gotos;
+    std::vector<Placed> declarations;
+    std::vector<u32> blocks;
+    u32 order = 0;
+
+    collect_jumps(body, blocks, order, labels, gotos, declarations);
+
+    std::map<std::string, u32> named;
+
+    for (u32 i = 0; i < labels.size(); i++) {
+        std::string name = text_of(first_child(labels[i].node));
+
+        if (named.count(name) > 0) {
+            report(labels[i].node, "the label '" + name + "' is already "
+                   "written in this function");
+            continue;
+        }
+
+        named[name] = i;
+    }
+
+    AstQuery query;
+
+    query.set_module(module);
+
+    for (const Placed& jump : gotos) {
+        std::string name = text_of(first_child(jump.node));
+        auto found = named.find(name);
+
+        if (found == named.end()) {
+            report(jump.node, "there is no label '" + name
+                   + "' in this function");
+            continue;
+        }
+
+        const Placed& target = labels[found->second];
+
+        // a jump backwards leaves the declarations it passes, which is fine;
+        // one forwards lands where a declaration it skipped is in view, and
+        // that one would be used without ever having been made
+        if (target.order < jump.order) {
+            continue;
+        }
+
+        for (const Placed& declared : declarations) {
+            if (declared.order < jump.order || declared.order > target.order
+                || declared.blocks.size() == 0) {
+                continue;
+            }
+
+            u32 inside = declared.blocks.back();
+            bool in_view = false;
+
+            for (u32 block : target.blocks) {
+                in_view = in_view || block == inside;
+            }
+
+            if (!in_view) {
+                continue;
+            }
+
+            std::string what = kind_of(declared.node) == AST_ASSIGNMENT
+                ? text_of(first_child(declared.node))
+                : query.get_binding_names(declared.node).front();
+
+            report(jump.node, "this 'goto' jumps over the declaration of '"
+                   + what + "', which is in view where it lands");
+            break;
+        }
+    }
+}
+
+void StatementChecker::collect_jumps(u32 node, std::vector<u32>& blocks,
+                                     u32& order,
+                                     std::vector<Placed>& labels,
+                                     std::vector<Placed>& gotos,
+                                     std::vector<Placed>& declarations) {
+    if (node == 0) {
+        return;
+    }
+
+    order++;
+
+    switch (kind_of(node)) {
+    // a function of its own, with labels of its own
+    case AST_CLOSURE:
+        return;
+
+    case AST_LABEL:
+        labels.push_back(Placed{node, order, blocks});
+        return;
+
+    case AST_GOTO:
+        gotos.push_back(Placed{node, order, blocks});
+        return;
+
+    case AST_LET_DECLARATION:
+        declarations.push_back(Placed{node, order, blocks});
+        break;
+
+    case AST_ASSIGNMENT:
+        if (declaring.count(node) > 0) {
+            declarations.push_back(Placed{node, order, blocks});
+        }
+
+        break;
+
+    default:
+        break;
+    }
+
+    bool block = kind_of(node) == AST_BLOCK;
+
+    if (block) {
+        blocks.push_back(node);
+    }
+
+    for (u32 child = first_child(node); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        collect_jumps(child, blocks, order, labels, gotos, declarations);
+    }
+
+    if (block) {
+        blocks.pop_back();
+    }
+}
+
+std::string StatementChecker::text_of(u32 node) {
+    return std::string(module->get_token_value(
+        module->get_ast()->get_node(node)->get_token()));
 }
 
 void StatementChecker::check_return(u32 node, u32 scope, u32 result) {
@@ -694,6 +1102,14 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
     u32 left = typer.type_of(index, scope, target, INVALID_TYPE);
 
     if (left == INVALID_TYPE) {
+        return;
+    }
+
+    // '3 = 4', 'five() = 6', 'a + b += 1': a value that lives nowhere cannot
+    // be written, and until 2026-09-24 g++ was the one saying so, about C++
+    if (!typer.is_place(target)) {
+        report(node, "this is a value and not a place, so it cannot be "
+               "assigned to");
         return;
     }
 

@@ -1,0 +1,20 @@
+error: there is no label 'nowhere' in this function
+  --> main.hd:12:5
+   |
+12 |     goto nowhere
+   |     ^^^^
+error: there is no label 'elsewhere' in this function
+  --> main.hd:13:5
+   |
+13 |     goto elsewhere
+   |     ^^^^
+error: the label 'twice' is already written in this function
+  --> main.hd:16:5
+   |
+16 |     label twice
+   |     ^^^^^
+error: this 'goto' jumps over the declaration of 'skipped', which is in view where it lands
+  --> main.hd:18:5
+   |
+18 |     goto ahead
+   |     ^^^^

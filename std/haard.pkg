@@ -1,4 +1,4 @@
-# The standard library. It depends on nobody: record 0030's eight native
+# The standard library. It depends on nobody: record 0030's native
 # functions are the floor, and everything above them is Haard.
 {
     name: "std",

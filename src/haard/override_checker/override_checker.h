@@ -44,6 +44,11 @@ namespace haard {
             // every method of this class, against the classes above it
             void check_class(u32 candidate);
 
+            // two declarations of one name in one scope, where only an
+            // overload set of different parameters may stand
+            void check_duplicates();
+            bool same_declaration(u32 first, u32 second);
+
             // Agenda 5.6: an 'init' or a 'destroy' that gives something
             // back. Asked of every class and not only of a derived one --
             // there is no base in the question -- and it lives here because

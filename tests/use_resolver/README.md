@@ -91,3 +91,11 @@ record 0040 takes a `for ... in` apart in the type phase and binds **one**
 name, so the `for key, value in pairs` this case writes to prove that two names
 resolve is also a form nothing can lower yet. Both lines are true of the same
 program and the golden keeps both.
+
+## A local is used after its declaration
+
+`a_local_is_used_after_its_declaration` is record 0063: a local is in view
+from the **end** of the statement that declares it, so `let y = x + 1` above
+`let x`, `let x = x + 1`, `n = n + 1` where that assignment declares `n`, and
+`let x = x + 1` in a block that redeclares an outer `x` are all refused. A
+function and a global are used before they are written, and that stands.

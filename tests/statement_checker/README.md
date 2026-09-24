@@ -126,3 +126,25 @@ is read off the type the typer recorded on the closure node.
 **The first and third parts of a C shaped `for`.** `for i = 0; ...` is an
 assignment and is checked as one, wherever it is written — but nothing says
 those parts must be assignments at all.
+
+## What record 0063 pins
+
+Each case holds the wrong half and the right half side by side, so a rule
+that refused too much fails as surely as one that refused too little.
+
+- **`a_break_needs_a_loop`** -- `break` and `continue` with no loop around
+  them, and the one that looks right: a `break` in a closure written inside a
+  `while`, which is a function of its own. A loop inside a closure is fine.
+- **`only_a_place_is_changed`** -- an assignment, `&` and `++` of a value:
+  `3 = 4`, `five() = 6`, `a + b += 1`, `&(a + 1)`, `++5`. And every place:
+  a variable, a parenthesis around one, a field, an element, a call that
+  gives back a `T&`, what a pointer points at.
+- **`a_goto_needs_its_label`** -- a label that is not there, one in another
+  function, one written twice, and a jump forward over a declaration in view.
+  A jump backwards, and one forwards over a block that has ended, stand.
+- **`a_function_gives_back_on_every_path`** -- five functions and a closure
+  that can reach their end, and nine that cannot: both branches, every
+  variant, a `default`, `while true`, `for ; ; :`, a `break` of an inner loop,
+  a `pass` body, and a closure of one expression.
+- **`this_is_written_in_a_class`** -- `this` in a free function, twice, and
+  in a closure inside a method, where it is fine.

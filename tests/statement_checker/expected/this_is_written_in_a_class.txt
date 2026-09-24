@@ -1,0 +1,10 @@
+error: 'this' is written outside a class, where there is no object to name
+  --> main.hd:13:13
+   |
+13 |     let p = this
+   |             ^^^^
+error: 'this' is written outside a class, where there is no object to name
+  --> main.hd:15:12
+   |
+15 |     return this->n
+   |            ^^^^

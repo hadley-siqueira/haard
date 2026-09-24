@@ -1,0 +1,38 @@
+# 'input' is Python's: it writes the prompt, reads a line up to its newline,
+# and gives the line back as a String without the newline. The four lines of
+# 'stdin' beside this are what is typed -- a name, an empty line, a line with
+# spaces in it, and a last line the input ends before a newline could.
+import std.io
+import std.string
+
+def main : i32
+    let name = input("name? ")
+
+    println("")
+    println("hello, ${name}")
+
+    # an empty line is an empty String, and the input has not ended
+    let empty = input()
+
+    println(empty.length())
+    println(input_ended())
+
+    # a template string is a String, so the prompt may be built
+    let rest = input("more, ${name}? ")
+
+    println("")
+    println("[${rest}]")
+
+    # the last line has no newline, and is given back whole all the same
+    let last = input()
+
+    println("[${last}]")
+
+    # and past the end there is nothing: an empty String, and 'input_ended'
+    # is what tells it from the empty line above
+    let after = input()
+
+    println(after.length())
+    println(input_ended())
+
+    return 0

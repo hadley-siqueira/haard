@@ -1,0 +1,44 @@
+# A 'break' leaves a loop and a 'continue' goes round one, so both are
+# written inside one. Until 2026-09-24 g++ was the one saying so, about the
+# C++ -- and the third below is the one that looks right: the closure is a
+# function of its own, and there is no loop inside it.
+def closures : void
+    let xs : i32[3]
+
+    while true:
+        let f = |x : i32| {
+            if x == 2:
+                break
+        }
+
+    return
+
+def main : i32
+    let x = 1
+
+    break
+
+    if x > 0:
+        continue
+
+    # and every one of these is inside a loop of its own
+    while x < 10:
+        x += 1
+
+        if x == 3:
+            continue
+
+        for i = 0; i < 2; i += 1:
+            if i == 1:
+                break
+
+        if x == 5:
+            break
+
+    # a loop INSIDE a closure is the closure's own
+    let g = |y : i32| {
+        while y > 0:
+            break
+    }
+
+    return 0

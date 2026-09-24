@@ -23,7 +23,38 @@ void UseResolver::resolve(u32 index) {
 
     scope_of.clear();
     declarations.clear();
+    made.clear();
+    local.clear();
+    declaring.clear();
     query.set_module(module);
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        if (scope == table->get_module_scope()) {
+            continue;
+        }
+
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 candidate = table->get_symbol(symbol)->candidates;
+                 candidate != 0;
+                 candidate = table->get_candidate(candidate)->next_candidate) {
+                Candidate* one = table->get_candidate(candidate);
+                AstNodeKind kind = kind_of(one->ast_node);
+
+                if (one->kind != SYMBOL_VARIABLE) {
+                    continue;
+                }
+
+                if (kind == AST_BINDING || kind == AST_ASSIGNMENT) {
+                    local.insert(candidate);
+                }
+
+                if (kind == AST_ASSIGNMENT) {
+                    declaring.insert(one->ast_node);
+                }
+            }
+        }
+    }
 
     // Scope::owner read backwards. The collector stamped every scope with the
     // node that opened it, so this is the same description of the shape and
@@ -66,6 +97,34 @@ void UseResolver::walk(u32 node, u32 scope) {
     case AST_IDENTIFIER:
         use(node, scope);
         return;
+
+    // what a declaration is given is read before the name is in view, which
+    // is exactly what makes 'let x = x + 1' a use of nothing
+    case AST_LET_DECLARATION:
+    case AST_CONST_DECLARATION: {
+        for (u32 child = module->get_ast()->get_node(node)->get_children();
+             child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            walk(child, scope);
+            made.insert(child);
+        }
+
+        return;
+    }
+
+    // Record 0027: the first 'n = 1' declares n. Its right side is read
+    // first, and the name on the left is the declaration and not a use of it
+    case AST_ASSIGNMENT:
+        if (declaring.count(node) > 0) {
+            u32 left = module->get_ast()->get_node(node)->get_children();
+
+            walk(module->get_ast()->get_node(left)->get_sibling(), scope);
+            made.insert(node);
+            walk(left, scope);
+            return;
+        }
+
+        break;
 
     case AST_SCOPE:
         walk_scope(node, scope);
@@ -155,8 +214,19 @@ void UseResolver::walk_scope(u32 node, u32 scope) {
 
 void UseResolver::use(u32 node, u32 scope) {
     std::string name = text_of(node);
+    std::vector<Candidacy> found = resolver.resolve(index, scope, name);
 
-    if (resolver.resolve(index, scope, name).size() > 0) {
+    if (found.size() > 0) {
+        // the name a local is resolved to, read before its statement ended.
+        // Until 2026-09-24 this went through in silence, and the emitter
+        // found a binding with no type, or g++ a name used before it
+        if (found[0].module == index && local.count(found[0].candidate) > 0
+            && made.count(module->get_symbols()
+                              ->get_candidate(found[0].candidate)->ast_node)
+                   == 0) {
+            report(node, "'" + name + "' is used before it is declared");
+        }
+
         return;
     }
 

@@ -1,0 +1,11 @@
+name? 
+hello, Ada
+0
+false
+more, Ada? 
+[42 and more]
+[no newline at the end]
+0
+true
+--- files:
+--- exit: 0

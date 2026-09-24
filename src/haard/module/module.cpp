@@ -109,6 +109,10 @@ u32 Module::add_synthetic_token(TokenKind kind, const std::string& text,
     return first_synthetic + (u32) synthetic_text.size() - 1;
 }
 
+bool Module::is_synthetic(u32 token) {
+    return token >= first_synthetic;
+}
+
 void Module::inspect_tokens() {
     for (auto tk : tokens.get_tokens()) {
         auto offset = tk.get_offset();

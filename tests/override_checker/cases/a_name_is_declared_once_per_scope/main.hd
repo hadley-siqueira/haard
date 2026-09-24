@@ -1,0 +1,80 @@
+# One scope holds one declaration of a name, except for functions, which are
+# an overload set told apart by their parameters (record 0012). Two of
+# anything else, or two functions with the same parameters, cannot both
+# stand. Until 2026-09-24 two classes 'Box', two fields and two 'f(i32)'
+# compiled and ran, and two 'let x' reached the emitter.
+class Box:
+    a : i32
+
+class Box:
+    b : i32
+
+class Point:
+    x : i32
+    x : i32
+
+    def move : void
+        @by : i32
+        pass
+
+    def move : void
+        @by : i32
+        pass
+
+enum Colour:
+    Red
+    Red
+
+def f : i32
+    @x : i32
+
+    return 1
+
+def f : i32
+    @x : i32
+
+    return 2
+
+def g : i32
+    @a : i32
+    @a : i32
+
+    return a
+
+def locals : i32
+    let x = 1
+    let x = 2
+
+    return x
+
+# and every one of these stands: overloads with different parameters, one
+# name in two scopes, and a name inside a block that hides the one outside
+def h : i32
+    @x : i32
+
+    return x
+
+def h : i32
+    @x : i64
+
+    return 1
+
+def h : i32
+    return 0
+
+def shadowed : i32
+    let x = 1
+
+    if x > 0:
+        let x = 2
+
+    return x
+
+class Other:
+    x : i32
+
+    def move : void
+        pass
+
+def main : i32
+    return 0

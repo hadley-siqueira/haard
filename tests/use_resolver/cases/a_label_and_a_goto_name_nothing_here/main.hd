@@ -1,3 +1,7 @@
+# A label and the target of a 'goto' are in a namespace of their own, so
+# this phase resolves neither and reports neither as a missing name. Whether
+# the label a 'goto' names exists is the StatementChecker's question, per
+# function, and 'never_written' is its one diagnostic here (2026-09-24)
 def main : i32
     label again
     goto again

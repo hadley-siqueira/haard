@@ -1,0 +1,18 @@
+# 'this' names the object a method was called on, so a free function has
+# none. It used to reach the emitter as a binding with no type, or g++ as
+# 'this' in a non-member function.
+class Counter:
+    n : i32
+
+    def get : i32
+        let f = |x : i32| { this->n + x }
+
+        return this->n
+
+def free : i32
+    let p = this
+
+    return this->n
+
+def main : i32
+    return 0

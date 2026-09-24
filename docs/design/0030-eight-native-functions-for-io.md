@@ -5,7 +5,7 @@ the record says what replaces it.
 
 | | |
 |---|---|
-| The emitter writes the body of eight functions, by **name**, and only inside the module named **`std.low_io`** | **decided**, amended 2026-09-08 |
+| The emitter writes the body of eight functions, by **name**, and only inside the module named **`std.low_io`** | **decided**, amended 2026-09-08 and 2026-09-24 (nine) |
 | C's `stdio` and **not** C++'s streams, and the reason is the handle | **decided** |
 | The native surface is **one character at a time**; everything above it is Haard | **decided** |
 | Not a `native` keyword, because what a real foreign interface looks like has not been decided | **decided** |
@@ -139,3 +139,23 @@ calls `println`. The split the record cares about — a native floor of single
 characters, everything else in Haard — is exactly where it was; only the name
 of the floor changed, so that the obvious name belongs to the half a program
 actually calls.
+
+## Amendment, 2026-09-24 — a ninth, `__io_flush`
+
+Hadley asked for Python's `input` in `std.io`: write a prompt, read a line,
+give it back as a `String` without the newline. Reading needed nothing new —
+`__io_stdin` and `__io_read` were already here — but the prompt did. It has no
+newline, and when the output is a pipe or a file C's `stdout` is fully
+buffered, so the prompt would come out **after** the line it asked for. Python
+flushes for the same reason.
+
+So the floor gained one function, `__io_flush`, whose body is `fflush`. It is
+the one native that moves no character, and it is a native because nothing in
+Haard can reach a buffer it cannot see. Everything else — `input`, the loop
+that reads to the newline, and `input_ended`, which tells the end of the input
+from an empty line — is Haard in `std.io`.
+
+`tests/programs/cases/a_line_is_read_from_the_keyboard` is the case, and the
+program suite now hands a case's `stdin` file to the program it runs (every
+other case reads `/dev/null`, and none waits on the terminal). Taking the flush
+out makes that case fail: the prompt moves below the lines printed after it.

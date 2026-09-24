@@ -122,6 +122,40 @@ namespace haard {
             void check_condition(u32 node, u32 scope);
             void check_assignment(u32 node, u32 scope);
 
+            // A body that promises something has to give it back on every
+            // path: reaching the end of an 'i32' function is undefined in C++
+            // and a trap in what g++ writes. 'what' names it in the message
+            void check_ends(u32 body, u32 result, u32 at,
+                            const std::string& what);
+
+            // whether control can never run past the end of this statement
+            bool terminates(u32 node);
+
+            // whether a 'break' inside this loop body leaves THIS loop -- one
+            // inside a loop of its own or a closure does not
+            bool breaks_out(u32 node);
+
+            // The 'goto's of one body against its labels: a label that is not
+            // there, one written twice, and a jump forward over a declaration
+            // still in view where it lands -- which C++ refuses as crossing
+            // an initialisation
+            void check_jumps(u32 body);
+
+            // A statement of a body in source order, with the blocks it sits
+            // in, outermost first
+            struct Placed {
+                u32 node;
+                u32 order;
+                std::vector<u32> blocks;
+            };
+
+            void collect_jumps(u32 node, std::vector<u32>& blocks, u32& order,
+                               std::vector<Placed>& labels,
+                               std::vector<Placed>& gotos,
+                               std::vector<Placed>& declarations);
+
+            std::string text_of(u32 node);
+
             // the type a 'def' gives back: the last argument of the signature
             // on its candidate. INVALID_TYPE when there is no signature to
             // read, which is a declaration whose type already failed to build
@@ -154,6 +188,14 @@ namespace haard {
             // record 0058: the expression each closure's body gives back,
             // which the typer checked when it typed the closure
             std::set<u32> given_back;
+
+            // how many loops enclose the statement being walked, in the body
+            // being walked: a closure's body is a function of its own and
+            // starts again at none
+            u32 loops;
+
+            // record 0027: the assignments that declare the name they write
+            std::set<u32> declaring;
     };
 }
 

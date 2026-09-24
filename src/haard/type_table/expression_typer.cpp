@@ -176,8 +176,19 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_CALL:
         return call(scope, node);
 
-    case AST_THIS:
-        return this_type(scope);
+    // A free function has no 'this', and 'this_type' answers that by giving
+    // back nothing -- which used to travel to the emitter as a binding with
+    // no type, or to g++ as 'this' in a non-member function
+    case AST_THIS: {
+        u32 type = this_type(scope);
+
+        if (type == INVALID_TYPE) {
+            report(node, "'this' is written outside a class, where there is "
+                   "no object to name");
+        }
+
+        return type;
+    }
 
     case AST_INDEX:
         return subscript(scope, node);
@@ -194,11 +205,23 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_UNARY_MINUS:
     case AST_UNARY_PLUS:
     case AST_BITWISE_NOT:
+        return type_of(index, scope, first_child(node), expected);
+
+    // the same, and what it is applied to is changed: '++5' has nothing to
+    // change, and g++ was the one saying so
     case AST_PRE_INCREMENT:
     case AST_PRE_DECREMENT:
     case AST_POST_INCREMENT:
-    case AST_POST_DECREMENT:
-        return type_of(index, scope, first_child(node), expected);
+    case AST_POST_DECREMENT: {
+        u32 operand = type_of(index, scope, first_child(node), expected);
+
+        if (operand != INVALID_TYPE && !is_place(first_child(node))) {
+            report(node, "this is a value and not a place, so there is "
+                   "nothing to change");
+        }
+
+        return operand;
+    }
 
     case AST_CAST:
         return cast(scope, node);
@@ -451,6 +474,14 @@ u32 ExpressionTyper::address_of(u32 scope, u32 node) {
         return INVALID_TYPE;
     }
 
+    // '&3' and '&(a + 1)': a value that lives nowhere has no address, and
+    // until 2026-09-24 g++ was the one saying so, about the C++
+    if (!is_place(first_child(node))) {
+        report(node, "this is a value and not a place, so it has no address");
+
+        return INVALID_TYPE;
+    }
+
     // Record 0035, and the one place it had not been applied: **a reference
     // is the thing it names**, so the address of one is the address of that
     // thing and not of a reference. '&xs[0]' over an Array is a 'T*' -- it
@@ -461,6 +492,98 @@ u32 ExpressionTyper::address_of(u32 scope, u32 node) {
     // C++ needs nothing for it: '&' on a 'T&' already gives a 'T*' there, so
     // only the type was wrong
     return module->get_types()->pointer(module->get_types()->value_of(inner));
+}
+
+// Whether an expression names somewhere a value is kept -- what C calls an
+// lvalue -- which is what an assignment writes, what '&' takes the address of
+// and what '++' changes. Asked AFTER the expression was typed, since what a
+// name means is what the typer recorded on it.
+//
+// A variable, a parameter or a field; an element; what a pointer points at;
+// and anything whose type is a reference, which is what a call giving back a
+// 'T&' is (record 0035: a reference is the thing it names). A literal, a sum,
+// or a call giving back a value is not one
+bool ExpressionTyper::is_place(u32 node) {
+    if (node == 0) {
+        return true;
+    }
+
+    Resolution* resolved = module->get_resolutions()->get(node);
+
+    switch (kind_of(node)) {
+    case AST_PARENTHESIS:
+        return is_place(first_child(node));
+
+    case AST_DEREFERENCE:
+        return true;
+
+    // an element of an array or of what a pointer points at. An 'operator[]'
+    // a class wrote is a call, and it is a place when it gives back a 'T&'
+    case AST_INDEX:
+        return resolved->candidate == 0 || gives_a_reference(resolved->type);
+
+    case AST_IDENTIFIER:
+    case AST_SCOPE:
+        return names_storage(node);
+
+    // the member is recorded on the name at the right of the '.'
+    case AST_DOT:
+    case AST_ARROW: {
+        u32 member = second_child(node);
+
+        if (member != 0 && kind_of(member) == AST_GENERIC_NAME) {
+            return false;
+        }
+
+        return names_storage(member);
+    }
+
+    default:
+        break;
+    }
+
+    return gives_a_reference(resolved->type);
+}
+
+// a name whose declaration is a variable, a parameter or a field. One the
+// typer recorded nothing for was either reported already or is a declaration
+// being made (record 0027), and is let through rather than reported twice
+bool ExpressionTyper::names_storage(u32 node) {
+    if (node == 0) {
+        return true;
+    }
+
+    // the name inside '::name' and 'alias::name' is the last of them
+    if (kind_of(node) == AST_SCOPE) {
+        u32 first = first_child(node);
+        u32 second = module->get_ast()->get_node(first)->get_sibling();
+
+        node = second == 0 ? first : second;
+    }
+
+    Resolution* resolved = module->get_resolutions()->get(node);
+
+    if (resolved->candidate == 0) {
+        return true;
+    }
+
+    switch ((SymbolKind) compilation->get_module(resolved->module)
+                ->get_symbols()->get_candidate(resolved->candidate)->kind) {
+    case SYMBOL_VARIABLE:
+    case SYMBOL_PARAM:
+    case SYMBOL_FIELD:
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool ExpressionTyper::gives_a_reference(u32 type) {
+    return type != INVALID_TYPE
+        && module->get_types()->get_type(type)->kind == TYPE_REFERENCE;
 }
 
 u32 ExpressionTyper::dereference(u32 scope, u32 node) {

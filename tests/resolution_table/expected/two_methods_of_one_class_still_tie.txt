@@ -3,8 +3,13 @@
     30    0             i32
     44    s             Shape               -> s
 diagnostics:
-error: this call matches more than one 'pick' equally well
-  --> main.hd:15:14
+error: 'pick' is already declared here with the same parameters
+  --> main.hd:14:9
    |
-15 |     return s.pick(1)
+14 |     def pick : i32
+   |         ^^^^
+error: this call matches more than one 'pick' equally well
+  --> main.hd:20:14
+   |
+20 |     return s.pick(1)
    |              ^^^^

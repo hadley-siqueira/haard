@@ -1,0 +1,53 @@
+# An assignment writes somewhere, '&' takes where something is, and '++'
+# changes it -- so each needs a place: a variable, a parameter, a field, an
+# element, what a pointer points at, or a reference. A literal, a sum and a
+# call that gives back a value are values, and until 2026-09-24 g++ was the
+# one refusing them.
+class Cell:
+    value : i32
+    held : i32[2]
+
+    def get : i32
+        return value
+
+    def at : i32&
+        @i : i32
+
+        return held[i]
+
+def five : i32
+    return 5
+
+def main : i32
+    let a = 1
+    let b = 2
+    let cell : Cell
+    let p = &a
+
+    3 = 4
+    five() = 6
+    a + b += 1
+    cell.get() = 7
+
+    let q = &3
+    let r = &(a + 1)
+
+    ++5
+    (a + b)++
+
+    # and every one of these is a place
+    a = 3
+    (a) = 4
+    cell.value = 5
+    cell.held[0] = 6
+    cell.at(1) = 7
+    *p = 8
+    a += 1
+    ++a
+    cell.value++
+
+    let s = &cell.value
+    let t = &cell.held[1]
+    let u = &cell.at(0)
+
+    return 0

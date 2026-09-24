@@ -82,6 +82,10 @@ namespace haard {
             u32 add_synthetic_token(TokenKind kind, const std::string& text,
                                     u32 like);
 
+            // whether a token was made by a pass and not read from the source:
+            // every statement the sugar inserts carries one
+            bool is_synthetic(u32 token);
+
         public:
             // the dotted name this file is known by, 'app.main'. A module is
             // a file, so its name is its path with the separators turned back

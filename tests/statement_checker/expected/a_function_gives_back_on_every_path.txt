@@ -1,0 +1,35 @@
+error: 'if_without_else' can reach its end without giving back i32
+ --> main.hd:8:5
+  |
+8 | def if_without_else : i32
+  |     ^^^^^^^^^^^^^^^
+error: 'nothing_at_all' can reach its end without giving back i32
+  --> main.hd:14:5
+   |
+14 | def nothing_at_all : i32
+   |     ^^^^^^^^^^^^^^
+error: 'a_case_that_falls_out' can reach its end without giving back i32
+  --> main.hd:17:5
+   |
+17 | def a_case_that_falls_out : i32
+   |     ^^^^^^^^^^^^^^^^^^^^^
+error: 'a_loop_that_may_end' can reach its end without giving back i32
+  --> main.hd:26:5
+   |
+26 | def a_loop_that_may_end : i32
+   |     ^^^^^^^^^^^^^^^^^^^
+error: 'a_loop_with_a_way_out' can reach its end without giving back i32
+  --> main.hd:32:5
+   |
+32 | def a_loop_with_a_way_out : i32
+   |     ^^^^^^^^^^^^^^^^^^^^^
+error: this closure can reach its end without giving back i32
+  --> main.hd:37:13
+   |
+37 |     let f = |x : i32| -> i32 {
+   |             ^
+error: 'only_a_pass' can reach its end without giving back i32
+  --> main.hd:43:5
+   |
+43 | def only_a_pass : i32
+   |     ^^^^^^^^^^^

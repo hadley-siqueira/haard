@@ -78,6 +78,21 @@ namespace haard {
             // not wrapped in an AST_BINDING_NAME, so they cannot be skipped by
             // shape and are collected as the walk reaches each loop
             std::set<u32> declarations;
+
+            // A local is in view from the end of the statement that declares
+            // it, and not before: 'let y = x + 1' above 'let x = 2', and 'let
+            // x = x + 1', both read a value nothing has made yet. These are
+            // the declarations -- a 'let''s binding, or an assignment that
+            // declares (record 0027) -- whose statement the walk has finished
+            std::set<u32> made;
+
+            // the local ones among this module's candidates: a variable
+            // declared inside a function, which is where order matters. A
+            // global, a field or a function is in view wherever it is written
+            std::set<u32> local;
+
+            // record 0027: the assignments that declare the name they write
+            std::set<u32> declaring;
     };
 }
 

@@ -1,0 +1,7 @@
+# The program reads what 'stdin' in this directory holds: the suite hands
+# that file to the program's standard input, so what the keyboard would have
+# typed is written down beside the golden.
+root std = std
+
+root myapp = myapp
+    std -> std

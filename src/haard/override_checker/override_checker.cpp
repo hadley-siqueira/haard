@@ -42,6 +42,77 @@ void OverrideChecker::check(u32 index) {
             break;
         }
     }
+
+    check_duplicates();
+}
+
+// One scope may hold one declaration of a name, except for a function: record
+// 0012 makes several functions of one name an overload set, told apart by
+// their parameters. So two of anything else is an error, and so are two
+// functions whose parameters are the same -- no call could choose between
+// them. Until 2026-09-24 both went through: two classes 'Box', two fields 'x'
+// and two 'f(i32)' compiled and ran, and two 'let x' reached the emitter.
+//
+// Here and not earlier because telling two functions apart takes their
+// signatures, and this is the phase that reads a signature and reports about
+// a declaration. Each repeat is reported where it is written, once
+void OverrideChecker::check_duplicates() {
+    SymbolTable* table = module->get_symbols();
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            std::vector<u32> seen;
+
+            for (u32 candidate = table->get_symbol(symbol)->candidates;
+                 candidate != 0;
+                 candidate = table->get_candidate(candidate)->next_candidate) {
+                for (u32 earlier : seen) {
+                    if (!same_declaration(earlier, candidate)) {
+                        continue;
+                    }
+
+                    Candidate* one = table->get_candidate(candidate);
+                    std::string name = query.get_declaration_name(
+                        one->ast_node);
+
+                    if (one->kind == SYMBOL_FUNCTION) {
+                        report(name_node_of(one->ast_node),
+                               "'" + name + "' is already declared here with "
+                               "the same parameters");
+                    } else {
+                        report(name_node_of(one->ast_node),
+                               "'" + name + "' is already declared in this "
+                               "scope");
+                    }
+
+                    break;
+                }
+
+                seen.push_back(candidate);
+            }
+        }
+    }
+}
+
+// whether two declarations of one name in one scope cannot both stand
+bool OverrideChecker::same_declaration(u32 first, u32 second) {
+    SymbolTable* table = module->get_symbols();
+    Candidate* one = table->get_candidate(first);
+    Candidate* other = table->get_candidate(second);
+
+    if (one->kind != SYMBOL_FUNCTION || other->kind != SYMBOL_FUNCTION) {
+        return true;
+    }
+
+    // a signature that did not build was reported where it was written
+    if (one->type == INVALID_TYPE || other->type == INVALID_TYPE
+        || module->get_types()->get_type(one->type)->kind != TYPE_FUNCTION
+        || module->get_types()->get_type(other->type)->kind != TYPE_FUNCTION) {
+        return false;
+    }
+
+    return parameters_of(index, first) == parameters_of(index, second);
 }
 
 void OverrideChecker::check_class(u32 candidate) {

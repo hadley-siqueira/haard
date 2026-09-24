@@ -1,0 +1,22 @@
+# A 'goto' and its label, backwards and forwards. The label was written as
+# the word 'label' itself until 2026-09-24 -- 'label:;' -- so every 'goto'
+# named a label C++ never saw, and even a correct program did not compile.
+#
+# The exit status is 3 turns of the loop plus the 4 the forward jump keeps.
+def main : i32
+    let turns = 0
+    let kept = 4
+
+    label again
+    turns += 1
+
+    if turns < 3:
+        goto again
+
+    goto done
+
+    kept = 100
+
+    label done
+
+    return turns + kept

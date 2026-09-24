@@ -1,0 +1,102 @@
+# A body that promises a value gives one back on every path. Reaching the end
+# of one compiled until 2026-09-24, and the program died there at run time on
+# the trap g++ writes: 'Illegal instruction', about a line nobody wrote.
+enum Colour:
+    Red
+    Green
+
+def if_without_else : i32
+    @x : i32
+
+    if x > 0:
+        return 1
+
+def nothing_at_all : i32
+    let x = 42
+
+def a_case_that_falls_out : i32
+    @c : Colour
+
+    switch c:
+        case Red:
+            return 1
+        case Green:
+            let nothing = 0
+
+def a_loop_that_may_end : i32
+    @x : i32
+
+    while x > 0:
+        return 1
+
+def a_loop_with_a_way_out : i32
+    while true:
+        break
+
+def a_closure_of_statements : void
+    let f = |x : i32| -> i32 {
+        let y = x
+    }
+
+# 'pass' is a body like any other outside std.low_io, whose natives the
+# emitter writes (a_native_is_written_by_the_emitter is that case)
+def only_a_pass : i32
+    pass
+
+# and every one of these gives back on every path
+def both_branches : i32
+    @x : i32
+
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
+def every_variant : i32
+    @c : Colour
+
+    switch c:
+        case Red:
+            return 1
+        case Green:
+            return 2
+
+def a_default : i32
+    @x : i32
+
+    switch x:
+        case 1:
+            return 1
+        default:
+            return 0
+
+def forever : i32
+    while true:
+        pass
+
+def forever_too : i32
+    for ; ; :
+        let x = 1
+
+def a_break_of_an_inner_loop : i32
+    while true:
+        while true:
+            break
+
+def given_back_at_the_end : i32
+    let x = 1
+
+    return x
+
+def a_closure_of_one_expression : void
+    let f = |x : i32| -> i32 { x + 1 }
+    let g = |x : i32| -> i32 {
+        let y = x
+
+        return y
+    }
+
+def main : i32
+    return 0

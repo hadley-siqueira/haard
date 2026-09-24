@@ -194,3 +194,9 @@ a construction is **passed** to a function taking a written
 `Pair<i32, i64>&`, which reaches the clone that signature made; and one is
 solved inside a generic, waiting for its clone. Reading `p.first` and
 `q->first.second` is what found that a fresh clone's fields had no type.
+
+## What the record 0063 case pins
+
+**`a_goto_reaches_its_label`** -- 7, three turns of a backward jump and the
+4 a forward jump keeps. The label was written as the word `label` itself
+until 2026-09-24, so no `goto` had ever compiled.

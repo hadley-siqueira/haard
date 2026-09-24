@@ -1,0 +1,20 @@
+error: 'x' is used before it is declared
+ --> main.hd:8:13
+  |
+8 |     let y = x + 1
+  |             ^
+error: 'x' is used before it is declared
+  --> main.hd:14:13
+   |
+14 |     let x = x + 1
+   |             ^
+error: 'n' is used before it is declared
+  --> main.hd:19:9
+   |
+19 |     n = n + 1
+   |         ^
+error: 'x' is used before it is declared
+  --> main.hd:28:17
+   |
+28 |         let x = x + 1
+   |                 ^

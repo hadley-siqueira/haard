@@ -1,0 +1,6 @@
+import std.low_io
+
+def main : i32
+    let keys = __io_stdin()
+
+    return 0

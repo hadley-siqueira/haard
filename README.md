@@ -18,7 +18,7 @@ C++. **`hdc` transpiles a whole Haard program into one C++17 file**, which a
 C++ compiler then turns into a binary. It runs today: hello world, programs of
 several modules and libraries, a PPM image writer, a drawing library, a binary
 tree over an enum, and the language's own standard library — `Array<T>`,
-`List<T>`, `Hash<K, V>`, `String`, `File` and `print`/`println` — are all
+`List<T>`, `Hash<K, V>`, `String`, `File`, `print`/`println` and `input` — are all
 written in Haard and all run.
 
 There is no intermediate representation and no build system inside the
@@ -91,6 +91,25 @@ def main : i32
 they are given — a `char*`, a `String`, an `i32`, a `char`, a `bool`, an `f64`,
 a symbol. Nothing is opened and nothing is constructed first. Writing to a file
 is `std.file`, which puts the same names on a `File`.
+
+Reading from the keyboard is `input`, also in `std.io`, and it is Python's: it
+writes the prompt, reads one line and gives it back as a `String` without the
+newline.
+
+```haard
+import std.io
+
+def main : i32
+    let name = input("what is your name? ")
+
+    println("hello, ${name}")
+
+    return 0
+```
+
+`input()` with no prompt reads a line and writes nothing. Once the input has
+ended, `input` gives back an empty `String`, and `input_ended()` is how that is
+told apart from an empty line.
 
 Build and run it:
 
@@ -609,19 +628,19 @@ class: a fixed array, with its length in its type.
 
 | module | what is in it |
 |---|---|
-| `std.io` | `print` and `println`, overloaded on `char*`, `String&`, `char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol` |
+| `std.io` | `print` and `println`, overloaded on `char*`, `String&`, `char`, `i32`, `i64`, `u32`, `f64`, `bool` and `symbol`; `input`, which writes a prompt and reads a line, and `input_ended` |
 | `std.string` | `String`, which owns its bytes and is what a `${}` builds |
 | `std.array` | `Array<T>`, the class `T[]` is written form for |
 | `std.list` | `List<T>`, a doubly linked list, written `[T]` as well |
 | `std.hash` | `Hash<K, V>`, open addressed, written `{K: V}` as well, hashed by the `hash_of` overload set |
 | `std.file` | `File`, `console()`, `open_read`, `open_write` — the same names as `std.io`, on a file |
-| `std.low_io` | eight functions whose bodies the compiler writes, one character at a time |
+| `std.low_io` | nine functions whose bodies the compiler writes, one character at a time and a flush |
 
 Only that last file is special, and it is meant to be deleted. Nothing in
-Haard can reach a C library yet, so the emitter fills in eight bodies — by
+Haard can reach a C library yet, so the emitter fills in nine bodies — by
 name, and only inside `std.low_io` — and everything anyone actually calls is
 built on them, in the language, where it can be read and changed without
-touching the compiler. When a real foreign interface is decided, those eight
+touching the compiler. When a real foreign interface is decided, those nine
 become ordinary declarations of it and nothing above them changes.
 
 ### Pointers
@@ -834,7 +853,7 @@ would be instantiated with the class, and comparing two `T` would make every
 | generics, monomorphised | operators as methods, including `=` and `[]` |
 | type inference, `let` optional | enums as tagged unions, `switch` as a pattern match |
 | `for x in` over containers, arrays and ranges | template strings, `${}` |
-| symbols, interned in a table | `Array<T>`, `List<T>`, `Hash<K, V>`, `String`, `File`, `print`/`println` |
+| symbols, interned in a table | `Array<T>`, `List<T>`, `Hash<K, V>`, `String`, `File`, `print`/`println`, `input` |
 | imports, aliases, star imports, cycles | two versions of one library in one program |
 | `haard.pkg`, followed transitively | rustc-shaped diagnostics with carets |
 | pointers, `new`, `delete`, `new T[n]` | modules compiled to one C++17 file |

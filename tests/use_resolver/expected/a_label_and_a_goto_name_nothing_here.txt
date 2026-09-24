@@ -1,1 +1,5 @@
-no diagnostics
+error: there is no label 'never_written' in this function
+ --> main.hd:8:5
+  |
+8 |     goto never_written
+  |     ^^^^

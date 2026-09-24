@@ -1,0 +1,39 @@
+# A 'goto' names a label of its own function, written once; and jumping
+# forward over a declaration that is still in view where it lands would use a
+# name nothing made, which C++ refuses as crossing an initialisation.
+def other : void
+    label elsewhere
+
+    return
+
+def main : i32
+    let i = 0
+
+    goto nowhere
+    goto elsewhere
+
+    label twice
+    label twice
+
+    goto ahead
+
+    let skipped = 1
+
+    label ahead
+
+    # a jump backwards leaves what it passes, and one forwards over a
+    # declaration in a block that has ended lands where it is not in view
+    label again
+    i += 1
+
+    if i < 3:
+        goto again
+
+    goto past
+
+    if i > 0:
+        let inner = 2
+
+    label past
+
+    return 0
