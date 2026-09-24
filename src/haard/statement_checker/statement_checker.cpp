@@ -671,9 +671,13 @@ void StatementChecker::check_condition(u32 node, u32 scope) {
         return;
     }
 
+    // Record 0035: a reference is the thing it names, so a 'bool&' -- the
+    // variable of a 'for b in' over bools, or what 'each' hands a closure --
+    // is a bool here. It was refused as a bool& until 2026-09-22
     u32 given = typer.type_of(index, scope, node, wanted);
 
-    if (given == INVALID_TYPE || given == wanted) {
+    if (given == INVALID_TYPE
+        || module->get_types()->value_of(given) == wanted) {
         return;
     }
 

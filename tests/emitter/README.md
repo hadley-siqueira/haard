@@ -175,3 +175,22 @@ it when it is wrong.
   a function **held in a field** and called through it; and an **enum** in a
   function type, which is declared before the function types are.
 
+## What the record 0059 case pins
+
+**`a_generic_is_solved_from_its_arguments`** — 96, the sum of what each
+solved call gave back, so a clone of the wrong type or none at all moves it.
+Beyond the shapes the `type_table` case types, it runs a **generic method**
+solved the same way (record 0055's clone, in its class's body), and a generic
+solved **inside another generic**: `pair_sum(x, x)` in `twice` waits while
+`twice` is unbound, since `x` is a `T`, and is solved in the clone of `twice`
+where it is an i64.
+
+## What the record 0060 case pins
+
+**`a_generic_class_is_solved_from_its_arguments`** — 39, the sum of what the
+solved clones hold. A class is built by a call and after a `new`, from values,
+from literals, from another solved clone and from what a closure gives back;
+a construction is **passed** to a function taking a written
+`Pair<i32, i64>&`, which reaches the clone that signature made; and one is
+solved inside a generic, waiting for its clone. Reading `p.first` and
+`q->first.second` is what found that a fresh clone's fields had no type.

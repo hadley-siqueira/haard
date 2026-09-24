@@ -1,0 +1,94 @@
+# Record 0060. A generic class built with nothing between '<' and '>' has its
+# type parameters solved from its 'init's, by record 0059's rules, and each
+# binding below is the clone that was built -- written as a call and after a
+# 'new' alike.
+
+class Pair<A, B>:
+    first : A
+    second : B
+
+    def init : void
+        @a : A
+        @b : B
+
+        first = a
+        second = b
+
+class Wrap<T>:
+    value : T
+
+    def init : void
+        @x : T
+
+        value = x
+
+    def init : void
+        @x : T*
+
+        value = *x
+
+class Holder<T>:
+    made : T
+
+    def init : void
+        @f : i32 -> T
+
+        made = f(1)
+
+class Same<T>:
+    value : T
+
+    def init : void
+        @a : T
+        @b : T
+
+        value = a
+
+struct Box<T>:
+    value : T
+
+def paired<T> : i32
+    @x : T
+
+    # T is a parameter here, and the clone of 'paired' asks again with it bound
+    let inside = Pair(x, 1)
+
+    return 0
+
+def main : i32
+    let small : i64 = 3
+    let one : i32 = 1
+
+    let by_literals = Pair(1, 2.5)
+    let by_values = Pair(small, one)
+    let nested = Pair(by_literals, small)
+    let on_the_heap = new Pair(one, small)
+    let by_what_it_gives = Holder(|x| { x > 0 })
+    let qualified = ::Pair(one, one)
+    let through_the_clone = paired(small)
+
+    # a field of a clone made while inferring, written or solved: the walk
+    # has not reached the clone yet, and the field is asked for now
+    let written = Pair<i8, i64>(one as i8, small)
+    let its_first = written.first
+    let its_second = by_literals.second
+
+    # a literal does not decide what an argument already has
+    let widened = Same(small, 2)
+
+    # T is an i32 by the first 'init' and an i32* by the second
+    let torn_between = Wrap(&one)
+
+    # T is an i32 and an i64 at once, which no clone can be
+    let torn = Same(one, small)
+
+    # an aggregate takes nothing that could say what T is
+    let nothing = Box()
+
+    # and no 'init' of Pair takes one argument
+    let short = Pair(1)
+
+    # an argument that did not type has said so, and is the only thing said
+    let broken = Pair(nowhere, 1)
+
+    return 0

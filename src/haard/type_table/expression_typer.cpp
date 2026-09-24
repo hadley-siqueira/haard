@@ -679,8 +679,32 @@ bool ExpressionTyper::one_derives_from_the_other(u32 from, u32 to) {
 }
 
 u32 ExpressionTyper::allocation(u32 scope, u32 node) {
-    u32 made = builder.build(index, scope, first_child(node));
+    u32 written = first_child(node);
     u32 list = second_child(node);
+
+    // Record 0060: 'new Pair(1, 2)' is solved the way 'Pair(1, 2)' is, and
+    // asked before the type is built -- built, a bare generic name is an
+    // arity error
+    if (kind_of(written) == AST_NAMED_TYPE && second_child(written) == 0) {
+        std::vector<Candidacy> found = callee_of(scope, first_child(written));
+        u32 owner = index;
+        u32 symbol = builder.type_symbol(found, owner);
+
+        if (symbol != 0
+            && compilation->get_module(owner)->get_symbols()
+                       ->get_candidate(symbol)->kind != SYMBOL_ENUM
+            && is_generic(owner, symbol)) {
+            u32 solved = solved_class(scope, node,
+                                      name_of_callee(first_child(written)),
+                                      owner, symbol, list);
+
+            return solved == INVALID_TYPE
+                       ? INVALID_TYPE
+                       : module->get_types()->pointer(solved);
+        }
+    }
+
+    u32 made = builder.build(index, scope, written);
 
     // record 0026: 'new T(...)' runs T's 'init', so the arguments are a call
     // like any other and are checked like one. Nothing checked them at all
@@ -695,7 +719,6 @@ u32 ExpressionTyper::allocation(u32 scope, u32 node) {
     }
 
     TypeTable* types = module->get_types();
-    u32 written = first_child(node);
 
     // The length of 'new T[n]' is an ordinary expression and is typed here,
     // which is the only place it can be. It sits under a **type** node, and a
@@ -748,13 +771,17 @@ u32 ExpressionTyper::allocation(u32 scope, u32 node) {
 // this one, the way C++ and every language with a constructor chain does it,
 // so the arguments written here answer to this class alone
 std::vector<Candidacy> ExpressionTyper::constructors_of(u32 type, u32& owner) {
-    std::vector<Candidacy> found;
     u32 declaration = class_of(type, owner);
 
     if (declaration == 0) {
-        return found;
+        return std::vector<Candidacy>();
     }
 
+    return inits_of(owner, declaration);
+}
+
+std::vector<Candidacy> ExpressionTyper::inits_of(u32 owner, u32 declaration) {
+    std::vector<Candidacy> found;
     Module* holder = compilation->get_module(owner);
     SymbolTable* table = holder->get_symbols();
     std::string wanted = "init";
@@ -790,10 +817,12 @@ std::vector<Candidacy> ExpressionTyper::constructors_of(u32 type, u32& owner) {
 }
 
 void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made, u32 list) {
+    initialisation(scope, node, made, construction_arguments(scope, list));
+}
+
+std::vector<Argument> ExpressionTyper::construction_arguments(u32 scope,
+                                                              u32 list) {
     std::vector<Argument> arguments;
-    u32 owner = index;
-    std::vector<Candidacy> candidates;
-    u32 count = 0;
 
     for (u32 child = list == 0 ? 0 : first_child(list); child != 0;
          child = module->get_ast()->get_node(child)->get_sibling()) {
@@ -810,8 +839,16 @@ void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made, u32 list) {
                             : type_of(index, scope, child, INVALID_TYPE);
 
         arguments.push_back(argument);
-        count++;
     }
+
+    return arguments;
+}
+
+void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made,
+                                     const std::vector<Argument>& arguments) {
+    u32 owner = index;
+    std::vector<Candidacy> candidates;
+    u32 count = arguments.size();
 
     if (made == INVALID_TYPE) {
         return;
@@ -1495,7 +1532,9 @@ bool ExpressionTyper::boolean_operand(u32 scope, u32 node, u32 at) {
     u32 wanted = module->get_types()->builtin(BUILTIN_BOOL);
     u32 given = type_of(index, scope, node, wanted);
 
-    if (given == wanted) {
+    // through a reference, as a condition reads one (record 0035)
+    if (given != INVALID_TYPE
+        && module->get_types()->value_of(given) == wanted) {
         return true;
     }
 
@@ -1727,8 +1766,32 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
         arguments.push_back(argument);
     }
 
-    Overload chosen = overloads.choose(index, candidates, arguments);
     u32 at = name_of_callee(callee);
+    std::string unknown;
+
+    // a closure typed while solving this call makes calls of its own, and
+    // each of those clears and fills this for itself -- so the one around it
+    // is put back, and what this call found is read off before that
+    std::string around = conflict;
+
+    conflict.clear();
+
+    // Record 0059: nothing was written between '<' and '>', so a generic
+    // candidate is solved from these arguments before anything is ranked.
+    // Written, 'callee_of' has already instantiated it
+    if (callee != 0 && !(kind_of(callee) == AST_GENERIC_NAME
+                         || ((kind_of(callee) == AST_DOT
+                              || kind_of(callee) == AST_ARROW)
+                             && kind_of(second_child(callee))
+                                    == AST_GENERIC_NAME))) {
+        candidates = inferred(scope, at, candidates, arguments, unknown);
+    }
+
+    std::string disagreement = conflict;
+
+    conflict = around;
+
+    Overload chosen = overloads.choose(index, candidates, arguments);
 
     if (chosen.status == OVERLOAD_FOUND) {
         // record 0019: *which* overload this call meant. Nothing can work it
@@ -1812,12 +1875,407 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
     }
 
     if (chosen.status == OVERLOAD_NONE) {
+        // the generic that would have taken them, had anything said what one
+        // of its parameters is -- which is the sentence the reader can act on
+        if (unknown.size() > 0) {
+            report(at, "nothing here says what '" + unknown + "' is, so it "
+                   "has to be written: " + text_of(at) + "<...>(...)");
+
+            return INVALID_TYPE;
+        }
+
+        if (disagreement.size() > 0) {
+            report(at, disagreement);
+
+            return INVALID_TYPE;
+        }
+
         report(at, "no '" + text_of(at) + "' takes these arguments");
 
         return INVALID_TYPE;
     }
 
     return chosen.result;
+}
+
+// Record 0059. Three sources, in the order they are trusted: an argument that
+// already has a type, then a number written with nothing else to go on, then
+// a closure -- which is told the parameters now known and says, by what it
+// gives back, what is left. That last one is what 'xs.map(|x| { x * 2 })' is:
+// T is the Array's own and U is whatever the closure makes of it.
+//
+// Everything happens in THIS module's table. The signature is translated in,
+// the way record 0016 has every type crossing a boundary, and what is found
+// is handed to 'instantiate_written', which takes a written '<...>' in the
+// caller's table too -- so a solved call and a written one are the same call
+// from there on
+std::vector<Candidacy> ExpressionTyper::inferred(
+    u32 scope, u32 at, const std::vector<Candidacy>& found,
+    const std::vector<Argument>& arguments, std::string& unknown) {
+    TypeTable* types = module->get_types();
+    std::vector<Candidacy> answer;
+    AstQuery query;
+
+    // Record 0002, as for a written list: inside a generic nobody
+    // instantiated, an argument may itself be a parameter, and solving
+    // against it would clone with nothing bound. The clone of the caller
+    // asks again
+    for (const Argument& argument : arguments) {
+        if (argument.type != INVALID_TYPE && mentions_a_parameter(argument.type)) {
+            return found;
+        }
+    }
+
+    for (const Candidacy& candidacy : found) {
+        Module* owner = compilation->get_module(candidacy.module);
+        Candidate* one = owner->get_symbols()->get_candidate(candidacy.candidate);
+        std::vector<u32> generics;
+
+        query.set_module(owner);
+
+        if (one->kind == SYMBOL_FUNCTION) {
+            generics = query.get_generic_parameters(one->ast_node);
+        }
+
+        if (generics.size() == 0 || one->type == INVALID_TYPE
+            || owner->get_types()->get_type(one->type)->kind
+                   != TYPE_FUNCTION) {
+            answer.push_back(candidacy);
+            continue;
+        }
+
+        std::vector<u32> signature;
+
+        for (u32 written : owner->get_types()->get_arguments(one->type)) {
+            signature.push_back(
+                builder.translate(index, candidacy.module, written));
+        }
+
+        signature.pop_back();
+
+        if (arguments.size() > signature.size()
+            || arguments.size() < overloads.required_of(candidacy.module,
+                                                        candidacy.candidate)) {
+            answer.push_back(candidacy);
+            continue;
+        }
+
+        std::map<std::pair<u32, u32>, u32> bound;
+        std::vector<u32> built;
+        bool solved = solve(scope, signature, arguments, bound)
+                   && parameters_of(candidacy.module, generics, bound, built,
+                                    unknown);
+
+        // One that cannot be solved is not a candidate at all. Left in, its
+        // parameters unbound, 'make()' matched it and gave back a T -- a type
+        // parameter nothing will ever bind, in silence
+        u32 made = solved ? builder.instantiate_written(index, scope, at,
+                                                        candidacy.module,
+                                                        candidacy.candidate,
+                                                        built)
+                          : 0;
+
+        if (made == 0) {
+            continue;
+        }
+
+        Candidacy clone;
+
+        clone.module = candidacy.module;
+        clone.candidate = made;
+
+        answer.push_back(clone);
+    }
+
+    return answer;
+}
+
+// The three sources of record 0059, in the order they are trusted, laid over
+// one signature already in this module's table. Shared by a generic function
+// and by a generic class's 'init' (record 0060), which are the same question
+// asked of a different declaration
+bool ExpressionTyper::solve(u32 scope, const std::vector<u32>& signature,
+                            const std::vector<Argument>& arguments,
+                            std::map<std::pair<u32, u32>, u32>& bound) {
+    TypeTable* types = module->get_types();
+    bool solved = true;
+
+    // what already has a type decides first
+    for (u32 i = 0; i < arguments.size() && solved; i++) {
+        AstNodeKind kind = kind_of(arguments[i].node);
+
+        if (!arguments[i].literal && kind != AST_CLOSURE
+            && arguments[i].type != INVALID_TYPE) {
+            solved = unify(signature[i], arguments[i].type, bound);
+        }
+    }
+
+    // a number, written where nothing else said what the parameter is,
+    // is what record 0018 makes it when nothing asks
+    for (u32 i = 0; i < arguments.size() && solved; i++) {
+        AstNodeKind kind = kind_of(arguments[i].node);
+        u32 wanted = types->value_of(signature[i]);
+        Type* entry = types->get_type(wanted);
+
+        if (!arguments[i].literal || entry->kind != TYPE_GENERIC
+            || bound.count(std::make_pair(entry->module, entry->subject))
+                   > 0) {
+            continue;
+        }
+
+        if (kind == AST_INTEGER_LITERAL) {
+            bound[std::make_pair(entry->module, entry->subject)] =
+                types->builtin(BUILTIN_I32);
+        } else if (kind == AST_FLOAT_LITERAL) {
+            bound[std::make_pair(entry->module, entry->subject)] =
+                types->builtin(BUILTIN_F64);
+        }
+    }
+
+    // and a closure last: it is told the parameters it takes, which must
+    // all be known by now, and what it gives back says the rest
+    for (u32 i = 0; i < arguments.size() && solved; i++) {
+        if (kind_of(arguments[i].node) != AST_CLOSURE) {
+            continue;
+        }
+
+        Type* entry = types->get_type(signature[i]);
+
+        if (entry->kind != TYPE_FUNCTION) {
+            return false;
+        }
+
+        std::vector<u32> wanted = types->get_arguments(signature[i]);
+        u32 result = substitute(wanted.back(), bound);
+
+        wanted.pop_back();
+
+        for (u32& parameter : wanted) {
+            parameter = substitute(parameter, bound);
+            solved = solved && !mentions_a_parameter(parameter);
+        }
+
+        if (!solved) {
+            return false;
+        }
+
+        u32 made = type_of(index, scope, arguments[i].node,
+                           types->function(wanted,
+                                           mentions_a_parameter(result)
+                                               ? INVALID_TYPE
+                                               : result));
+
+        solved = made != INVALID_TYPE && unify(signature[i], made, bound);
+    }
+
+    return solved;
+}
+
+// what each of a declaration's type parameters was bound to, in the order
+// they are written -- or false, and the first one nothing bound in 'unknown'
+bool ExpressionTyper::parameters_of(
+    u32 owner, const std::vector<u32>& generics,
+    const std::map<std::pair<u32, u32>, u32>& bound, std::vector<u32>& built,
+    std::string& unknown) {
+    Module* holder = compilation->get_module(owner);
+
+    for (u32 generic : generics) {
+        u32 parameter = holder->get_symbols()->candidate_of(generic);
+        auto found = bound.find(std::make_pair(owner, parameter));
+
+        if (found == bound.end()) {
+            if (unknown.size() == 0) {
+                unknown = std::string(holder->get_token_value(
+                    holder->get_ast()->get_node(generic)->get_token()));
+            }
+
+            return false;
+        }
+
+        built.push_back(found->second);
+    }
+
+    return true;
+}
+
+// Structural, and only as strict as it has to be to bind something: where no
+// parameter is involved the answer is yes, and whether the argument really
+// fits is the overload resolver's question, asked right after with the clone
+bool ExpressionTyper::unify(u32 parameter, u32 argument,
+                            std::map<std::pair<u32, u32>, u32>& bound) {
+    TypeTable* types = module->get_types();
+
+    if (parameter == INVALID_TYPE || argument == INVALID_TYPE) {
+        return true;
+    }
+
+    Type* wanted = types->get_type(parameter);
+    u32 given = argument;
+    Type* entry = types->get_type(given);
+
+    switch ((TypeKind) wanted->kind) {
+    // a value is what binds: 'x' of a 'for x in' is an i32& and T is an i32
+    case TYPE_GENERIC: {
+        std::pair<u32, u32> key(wanted->module, wanted->subject);
+        auto earlier = bound.find(key);
+
+        if (earlier == bound.end()) {
+            bound[key] = given;
+            return true;
+        }
+
+        // the one mistake a reader can be told in words: two arguments said
+        // two different things about one parameter
+        if (earlier->second != given && conflict.size() == 0) {
+            conflict = "'" + declaration_name(wanted->module, wanted->subject)
+                     + "' cannot be both " + name_of(earlier->second)
+                     + " and " + name_of(given);
+        }
+
+        return earlier->second == given;
+    }
+
+    // record 0018 gives a value to a reference, so a T& laid over an i32 is
+    // T laid over the same i32
+    case TYPE_REFERENCE:
+        return unify(types->get_argument(wanted->first_argument), given,
+                     bound);
+
+    case TYPE_POINTER:
+        return entry->kind == TYPE_POINTER
+            && unify(types->get_argument(wanted->first_argument),
+                     types->get_argument(entry->first_argument), bound);
+
+    case TYPE_ARRAY:
+        return entry->kind == TYPE_ARRAY && entry->subject == wanted->subject
+            && unify(types->get_argument(wanted->first_argument),
+                     types->get_argument(entry->first_argument), bound);
+
+    case TYPE_FUNCTION: {
+        std::vector<u32> left = types->get_arguments(parameter);
+        std::vector<u32> right = types->get_arguments(given);
+
+        if (entry->kind != TYPE_FUNCTION || left.size() != right.size()) {
+            return false;
+        }
+
+        for (u32 i = 0; i < left.size(); i++) {
+            if (!unify(left[i], right[i], bound)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // 'Array<U>' inside the generic is the DECLARATION with its arguments,
+    // and an 'Array<i32>' is a clone, which carries none: record 0002 keeps
+    // them on the record that made it, in the declaring module's table
+    case TYPE_NAMED: {
+        if (wanted->argument_count == 0) {
+            return true;
+        }
+
+        if (entry->kind != TYPE_NAMED || entry->module != wanted->module) {
+            return false;
+        }
+
+        const Instantiation* made = compilation->get_module(entry->module)
+                                        ->get_instantiation(entry->subject);
+
+        if (made == nullptr || made->origin != wanted->subject
+            || made->arguments.size() != wanted->argument_count) {
+            return false;
+        }
+
+        std::vector<u32> left = types->get_arguments(parameter);
+
+        for (u32 i = 0; i < left.size(); i++) {
+            if (!unify(left[i],
+                       builder.translate(index, entry->module,
+                                         made->arguments[i]),
+                       bound)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    default:
+        break;
+    }
+
+    return true;
+}
+
+u32 ExpressionTyper::substitute(
+    u32 type, const std::map<std::pair<u32, u32>, u32>& bound) {
+    TypeTable* types = module->get_types();
+
+    if (type == INVALID_TYPE) {
+        return type;
+    }
+
+    Type* entry = types->get_type(type);
+    std::vector<u32> inside = types->get_arguments(type);
+
+    switch ((TypeKind) entry->kind) {
+    case TYPE_GENERIC: {
+        auto found = bound.find(std::make_pair(entry->module, entry->subject));
+
+        return found == bound.end() ? type : found->second;
+    }
+
+    case TYPE_POINTER:
+        return types->pointer(substitute(inside[0], bound));
+
+    case TYPE_REFERENCE:
+        return types->reference(substitute(inside[0], bound));
+
+    case TYPE_ARRAY:
+        return types->array(substitute(inside[0], bound), entry->subject);
+
+    case TYPE_FUNCTION: {
+        for (u32& one : inside) {
+            one = substitute(one, bound);
+        }
+
+        u32 result = inside.back();
+
+        inside.pop_back();
+
+        return types->function(inside, result);
+    }
+
+    // a generic class with its arguments is left as the declaration it is:
+    // substituting them would name 'Array<i32>' without instantiating it, so
+    // a closure taking one is not solved for, and says so as unsolved
+    default:
+        break;
+    }
+
+    return type;
+}
+
+bool ExpressionTyper::mentions_a_parameter(u32 type) {
+    TypeTable* types = module->get_types();
+
+    if (type == INVALID_TYPE) {
+        return false;
+    }
+
+    if (types->get_type(type)->kind == TYPE_GENERIC) {
+        return true;
+    }
+
+    for (u32 one : types->get_arguments(type)) {
+        if (mentions_a_parameter(one)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool ExpressionTyper::waits_for_its_parameter(u32 node) {
@@ -1992,7 +2450,7 @@ u32 ExpressionTyper::closure(u32 scope, u32 node, u32 expected) {
 
             whole = false;
         }
-    } else if (offered) {
+    } else if (offered && given_result != INVALID_TYPE) {
         result = given_result;
         decided = true;
     }
@@ -2128,6 +2586,18 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
 
     built = true;
 
+    // Record 0060: 'Pair(1, 2)', a generic class with nothing written between
+    // '<' and '>'. Its type parameters are solved from its 'init's before
+    // anything is built -- built here, the bare name would be the arity error
+    // it used to be. An enum keeps the path below, which says how it is built
+    if (kind != AST_GENERIC_NAME
+        && compilation->get_module(owner)->get_symbols()
+                   ->get_candidate(symbol)->kind != SYMBOL_ENUM
+        && is_generic(owner, symbol)) {
+        return solved_class(scope, node, name_of_callee(callee), owner,
+                            symbol, list);
+    }
+
     // The name and its arguments, which are the two parts an AST_NAMED_TYPE
     // holds and in the same order. So a written generic instantiates here for
     // free: 'Pair<i32, i32>(1, 2)' builds the clone before it looks for an
@@ -2162,6 +2632,169 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
     initialisation(scope, node, made, list);
 
     return made;
+}
+
+bool ExpressionTyper::is_generic(u32 owner, u32 symbol) {
+    Module* holder = compilation->get_module(owner);
+    AstQuery query;
+
+    query.set_module(holder);
+
+    return query.get_generic_parameters(
+               holder->get_symbols()->get_candidate(symbol)->ast_node)
+               .size() > 0;
+}
+
+// Record 0060, and it is record 0059 asked of a different declaration: what
+// is laid over the arguments is each 'init' of the generic class, whose
+// parameters name the class's own T and U, and what comes out is handed to
+// the instantiation a written 'Pair<i32, f64>' reaches. The 'init' is then
+// chosen among the CLONE's, by the ordinary ranking -- the solving says which
+// class, and never which constructor.
+//
+// Every 'init' that solves is heard, and they must agree. Two that name two
+// different classes are the reader's to choose between, the way two equally
+// good overloads are
+u32 ExpressionTyper::solved_class(u32 scope, u32 node, u32 at, u32 owner,
+                                  u32 symbol, u32 list) {
+    TypeTable* types = module->get_types();
+    Module* holder = compilation->get_module(owner);
+    AstQuery query;
+
+    query.set_module(holder);
+
+    std::vector<u32> generics = query.get_generic_parameters(
+        holder->get_symbols()->get_candidate(symbol)->ast_node);
+    std::vector<Argument> arguments = construction_arguments(scope, list);
+
+    for (const Argument& argument : arguments) {
+        // record 0016's poison rule: an argument that did not type has
+        // already said why, and every sentence after it would be about
+        // nothing
+        if (argument.type == INVALID_TYPE && !argument.literal
+            && kind_of(argument.node) != AST_CLOSURE) {
+            return INVALID_TYPE;
+        }
+
+        // Record 0002, as at a call: inside a generic nobody instantiated an
+        // argument may be a parameter, and the clone of the caller asks again
+        if (mentions_a_parameter(argument.type)) {
+            return INVALID_TYPE;
+        }
+    }
+
+    std::vector<std::vector<u32>> solutions;
+    std::string unknown;
+    std::string around = conflict;
+
+    conflict.clear();
+
+    std::vector<Candidacy> inits = inits_of(owner, symbol);
+
+    for (const Candidacy& init : inits) {
+        Candidate* one = holder->get_symbols()->get_candidate(init.candidate);
+
+        if (one->type == INVALID_TYPE
+            || holder->get_types()->get_type(one->type)->kind
+                   != TYPE_FUNCTION) {
+            continue;
+        }
+
+        std::vector<u32> signature;
+
+        for (u32 written : holder->get_types()->get_arguments(one->type)) {
+            signature.push_back(builder.translate(index, owner, written));
+        }
+
+        signature.pop_back();
+
+        // one that does not answer to this many arguments says nothing
+        // about what they are -- and asked, 'Pair(1)' would have been about
+        // B instead of about the count
+        if (arguments.size() > signature.size()
+            || arguments.size() < overloads.required_of(owner,
+                                                        init.candidate)) {
+            continue;
+        }
+
+        std::map<std::pair<u32, u32>, u32> bound;
+        std::vector<u32> built;
+
+        if (!solve(scope, signature, arguments, bound)
+            || !parameters_of(owner, generics, bound, built, unknown)) {
+            continue;
+        }
+
+        bool heard = false;
+
+        for (const std::vector<u32>& earlier : solutions) {
+            heard = heard || earlier == built;
+        }
+
+        if (!heard) {
+            solutions.push_back(built);
+        }
+    }
+
+    std::string disagreement = conflict;
+
+    conflict = around;
+
+    // a class with no 'init' is an aggregate, and nothing it takes can say
+    // what its parameters are -- so the first of them is the one to write
+    if (inits.size() == 0) {
+        std::vector<u32> none;
+
+        parameters_of(owner, generics,
+                      std::map<std::pair<u32, u32>, u32>(), none, unknown);
+    }
+
+    if (solutions.size() == 0) {
+        if (disagreement.size() > 0) {
+            report(at, disagreement);
+        } else if (unknown.size() == 0) {
+            report(at, "no 'init' of '" + text_of(at) + "' takes these "
+                   "arguments");
+        } else {
+            report(at, "nothing here says what '" + unknown + "' is, so it "
+                   "has to be written: " + text_of(at) + "<...>(...)");
+        }
+
+        return INVALID_TYPE;
+    }
+
+    if (solutions.size() > 1) {
+        std::string named;
+
+        for (u32 i = 0; i < solutions.size(); i++) {
+            named += i == 0 ? "" : " or ";
+            named += text_of(at) + "<";
+
+            for (u32 j = 0; j < solutions[i].size(); j++) {
+                named += (j == 0 ? "" : ", ") + name_of(solutions[i][j]);
+            }
+
+            named += ">";
+        }
+
+        report(at, "this could be " + named + ", so which has to be "
+               "written: " + text_of(at) + "<...>(...)");
+
+        return INVALID_TYPE;
+    }
+
+    u32 made = builder.instantiate_written(index, scope, at, owner, symbol,
+                                           solutions[0]);
+
+    if (made == 0) {
+        return INVALID_TYPE;
+    }
+
+    u32 type = types->named(owner, made, std::vector<u32>());
+
+    initialisation(scope, node, type, arguments);
+
+    return type;
 }
 
 // Record 0053. Before it, a class whose every 'init' took an argument could

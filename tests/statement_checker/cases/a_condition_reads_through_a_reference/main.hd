@@ -1,0 +1,21 @@
+# Record 0035: a reference is the thing it names, so a 'bool&' is a bool
+# wherever a bool is asked for -- which is what 'each' hands a closure over
+# an Array of bools, and the variable of a 'for b in' over one. Until
+# 2026-09-22 both places were refused as 'bool&'; an i32& is still a mistake.
+
+def count : i32
+    @flag : bool&
+    @number : i32&
+
+    let n = 0
+
+    if flag:
+        n += 1
+
+    while flag and false:
+        n += 1
+
+    if number:
+        n += 1
+
+    return n

@@ -1,0 +1,9 @@
+the area of 3 by 2.500000: ok
+width is 3: ok
+and built where it is passed: ok
+the heap holds 10: ok
+a List of an Array adds up to 6: ok
+two of three are above 1: 2: ok
+a Range from 1 past 4 adds up to 6: ok
+--- files:
+--- exit: 0

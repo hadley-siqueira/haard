@@ -1,6 +1,6 @@
 # Where the compiler is
 
-Written 2026-09-02, last brought up to date 2026-09-22. The agenda of
+Written 2026-09-02, last brought up to date 2026-09-24. The agenda of
 *decisions* is `design/README.md`; this is the state of the *code*, and what to
 do next.
 
@@ -57,6 +57,17 @@ builds through those Makefiles, which is what keeps them true.
 Seventeen test suites, ~680 cases, `make check` in about a minute.
 
 ## What works, proven by running it
+
+**A generic class is solved from its arguments**, since 2026-09-24 — record
+0060. `Pair(1, 2.5)`, `new Pair(p, 3)`, `List(xs)` and `Range(1, 4)` build the
+clone their arguments say, solved from the class's `init`s; two `init`s naming
+two different classes are reported, and the reader writes which.
+
+**A generic is solved from its arguments**, since 2026-09-22 — record 0059.
+`id(4)`, `apply(5, |x| { x > 3 })` and `xs.map(|x| { x * 2 })` reach the
+clone their arguments say, through the same instantiation a written `<...>`
+reaches; what cannot be solved says which parameter nothing decided, or which
+one two arguments disagree about. `Array<T>` and `List<T>` have `map`.
 
 **Closures work**, since 2026-09-22 — record 0058. `|x| { total += x }` is an
 environment of **addresses** and a function taking it, so everything it names
@@ -637,6 +648,28 @@ constant evaluation, and the whole of track 3 (the `.hdm` blob) is untouched.
 
 ## Read this first next session
 
+**Record 0059, built 2026-09-22**: `ExpressionTyper::inferred` runs in
+`call()` after the arguments are typed and before anything is ranked, only
+when no `<...>` was written. It unifies in the **caller's** table — the
+signature is translated in — and a clone's arguments are read off its
+`Instantiation`, since a clone's type carries none. A closure argument is
+typed **during** inference, with an expected `A -> R` whose `R` may be
+unknown (`INVALID_TYPE`), which `ExpressionTyper::closure` reads as *decide it
+yourself*. `conflict` is a member that a nested call would clear, so `call()`
+saves and restores it.
+
+**Record 0060, built 2026-09-24**: the same solving for a generic **class**.
+`ExpressionTyper::solved_class` is reached from `construction` and from
+`allocation` before the type is built, since a bare generic name built is the
+arity error. Record 0059's body was split into `solve` and `parameters_of` so
+both use it; each `init` of the **declaration** is laid over the arguments,
+the solutions must agree, and the `init` is ranked among the **clone's** by
+`initialisation`, which now takes the arguments already typed. An `init` (or a
+generic function) whose arity range excludes the count is not asked.
+**The trap it found**: `TypeCollector::type_signature_now` did not type a
+fresh clone's **fields**, so `Pair<i32, i32>(1, 2).first` was `<none>` in
+silence; it types them now.
+
 **Closures, record 0058, built 2026-09-22.** What the code does, and the traps
 that shaped it:
 
@@ -676,9 +709,8 @@ that shaped it:
   until 2026-09-22, since nothing had ever given a function type a value.
 
 Not done, and none of it needs a decision: a **method** as a value (the emitter
-refuses by name), an **overloaded** `def` as a value (it types to nothing, so
-the call reports no overload), and `map`, which waits on a generic called with
-no type arguments.
+refuses by name) and an **overloaded** `def` as a value (it types to nothing,
+so the call reports no overload). `map` landed with record 0059.
 
 **A generic method is instantiated per call**, since 2026-09-09 — record 0055,
 and it is record 0054's other half. `b.take<i32>(3)` did not **parse**: a type
@@ -1041,9 +1073,8 @@ check text and do not care which language produced it.
 **The next thing to build**: nothing in the standard library is missing any
 more — `Hash<K, V>` landed on 2026-09-08 (record 0042) and record 0022's four
 classes are all written. What is left of the library is `{key: value}` (agenda
-1.23, deferred with its design written down) and `map`, which waits on a
-generic called with no type arguments. `each` landed with closures on
-2026-09-22 (record 0058).
+1.23, deferred with its design written down). `each` landed with closures
+and `map` with record 0059, both on 2026-09-22.
 
 **Two things writing the Hash found**, and both are worth knowing before
 touching the type phase:
@@ -1246,12 +1277,10 @@ in the meantime.
 
    1. ~~**A closure that types**~~ — **done 2026-09-22**, record 0058. See
       *Read this first*.
-   2. **A generic called without written type arguments** — `f(3)` and
-      `b.take(3)` alike, which need the parameter types unified against the
-      argument types. There is no unification in the compiler at all. One
-      subject for the function and the method, since record 0055 made them one
-      mechanism. **`map` waits on it**: `xs.map(|x| { x * 2 })` has nowhere to
-      write the type it gives back, and it is the first thing to write after.
+   2. ~~**A generic called without written type arguments**~~ — **done
+      2026-09-22**, record 0059, and `map` with it. ~~A generic **class**
+      built with none written, `Pair(1, 2)`~~ — **done 2026-09-24**, record
+      0060. A generic **enum**'s variant, `Option.Some(3)`, is not.
    3. The small ones: `T&&` does not parse (1.15), record 0018's list does not
       compose (`char*` → `String&`), the three template-string refusals are
       loosenable and additive, a constant inside a **type** cannot be
@@ -1287,8 +1316,8 @@ in the meantime.
    - ~~**`Hash<K, V>`**~~ — **done 2026-09-08**, record 0042: open addressed,
      hashed by an overload set, walked by its keys, and in the prelude. What
      is left of the library is `{key: value}` (agenda 1.23, deferred with its
-     design written down) and `map`; `each` came with closures (record
-     0058).
+     design written down); `each` came with closures (record 0058) and `map`
+     with record 0059.
    - ~~**Migrating `char*` → `String` onto record 0037's mechanism**~~ —
      **done 2026-09-08** for a written **literal**, and **finished
      2026-09-09** by records 0045 and 0046 together: `T(args)` is writable

@@ -1,0 +1,63 @@
+# Record 0059. A generic called with nothing between '<' and '>' is solved from
+# its arguments, and each binding below is whatever the clone it reached gives
+# back: an argument that has a type decides first, a number written with
+# nothing else to go on is what record 0018 makes it, and a closure is told
+# the parameters now known and decides the rest by what it gives back.
+
+struct Box<T>:
+    value : T
+
+def id<T> : T
+    @x : T
+
+    return x
+
+def read<T> : T
+    @p : T*
+
+    return *p
+
+def unbox<T> : T
+    @b : Box<T>&
+
+    return b.value
+
+def apply<A, B> : B
+    @x : A
+    @f : A -> B
+
+    return f(x)
+
+def bigger<T> : T
+    @a : T
+    @b : T
+
+    return a
+
+def make<T> : T
+    let t : T
+
+    return t
+
+def main : i32
+    let small : i64 = 3
+    let one : i32 = 1
+    let b : Box<f64>
+
+    let by_value = id(small)
+    let by_literal = id(4)
+    let a_float = id(2.5)
+    let through_a_pointer = read(&small)
+    let out_of_a_box = unbox(b)
+    let what_it_gives = apply(one, |x| { x > 0 })
+
+    # a literal does not decide what an argument already has
+    let widened = bigger(small, 2)
+
+    # T is an i32 and an i64 at once, which no clone can be
+    let torn = bigger(one, small)
+
+    # and nothing says what T is at all
+    let nothing = make()
+
+    return 0

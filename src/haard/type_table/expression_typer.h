@@ -2,6 +2,7 @@
 #define HAARD_EXPRESSION_TYPER_H
 
 #include <haard/name_resolver/overload_resolver.h>
+#include <map>
 
 namespace haard {
     class TypeCollector;
@@ -142,9 +143,21 @@ namespace haard {
             // written at a construction answers to that class alone
             std::vector<Candidacy> constructors_of(u32 type, u32& owner);
 
+            // the 'init's a class declares in its own body, whatever it is --
+            // the generic declaration itself included, which record 0060 lays
+            // over the arguments before there is a clone to ask
+            std::vector<Candidacy> inits_of(u32 owner, u32 declaration);
+
             // the arguments of a 'new T(...)' against those candidates, which
             // is a call in every way that matters
             void initialisation(u32 scope, u32 node, u32 made, u32 list);
+
+            // the arguments of a construction, carried the way record 0018
+            // carries a call's, and the ranking of 'made's 'init's against
+            // them -- split so record 0060 types them once, before solving
+            std::vector<Argument> construction_arguments(u32 scope, u32 list);
+            void initialisation(u32 scope, u32 node, u32 made,
+                                const std::vector<Argument>& arguments);
 
             // '[a, b]', '{a, b}' and '(a, b)'. The first two hold one type,
             // which the context gives or the first element decides, and every
@@ -245,6 +258,51 @@ namespace haard {
             // asked to fit it
             u32 value_call(u32 scope, u32 node, u32 callee, u32 list,
                            u32 function);
+
+            // Record 0059. A generic called with no type arguments, written as
+            // if it were not generic: its type parameters are found by laying
+            // its signature over the arguments, and what is found is handed
+            // to the same instantiation a written '<...>' reaches. A
+            // candidate that cannot be solved is dropped, and 'unknown'
+            // names the first parameter nothing said anything about
+            std::vector<Candidacy> inferred(u32 scope, u32 at,
+                                            const std::vector<Candidacy>& found,
+                                            const std::vector<Argument>& arguments,
+                                            std::string& unknown);
+
+            // the three sources, in order, over one signature already in
+            // this module's table; and what each type parameter of a
+            // declaration came out as, or the first nothing bound
+            bool solve(u32 scope, const std::vector<u32>& signature,
+                       const std::vector<Argument>& arguments,
+                       std::map<std::pair<u32, u32>, u32>& bound);
+            bool parameters_of(u32 owner, const std::vector<u32>& generics,
+                               const std::map<std::pair<u32, u32>, u32>& bound,
+                               std::vector<u32>& built, std::string& unknown);
+
+            // Record 0060. 'Pair(1, 2)' and 'new Pair(1, 2)': a generic class
+            // built with nothing written between '<' and '>' has its type
+            // parameters solved from its 'init's, the way record 0059 solves
+            // a function's, and is then built as the clone they name. 'node'
+            // is where the chosen 'init' is written, 'at' the name. INVALID_TYPE
+            // when it cannot be solved, and it has said why
+            u32 solved_class(u32 scope, u32 node, u32 at, u32 owner,
+                             u32 symbol, u32 list);
+
+            // whether a declaration has type parameters of its own
+            bool is_generic(u32 owner, u32 symbol);
+
+            // one parameter's type laid over one argument's, both in this
+            // module's table: a type parameter met for the first time is
+            // bound to what it is laid over, and met again must be it
+            bool unify(u32 parameter, u32 argument,
+                       std::map<std::pair<u32, u32>, u32>& bound);
+
+            // a type with every bound parameter replaced by what it is bound
+            // to, and whether a type still names a parameter at all
+            u32 substitute(u32 type,
+                           const std::map<std::pair<u32, u32>, u32>& bound);
+            bool mentions_a_parameter(u32 type);
 
             // whether an argument waits for the parameter before it is typed:
             // a literal (record 0018) and a closure (record 0058), which take
@@ -364,6 +422,11 @@ namespace haard {
             // typed yet, and asking for that one signature is the only thing
             // this is for
             TypeCollector* collector;
+
+            // record 0059: what the inference of the call being typed found
+            // two arguments disagreeing about, said once it has no candidate
+            // left
+            std::string conflict;
 
             Module* module;
             u32 index;

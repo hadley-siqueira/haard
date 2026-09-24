@@ -203,8 +203,8 @@ declared there now, on demand, in the shape record 0043 defines it.
 - a **method** given as a value — the emitter refuses it by name;
 - an **overloaded** `def` given as a value — the name types to nothing, so the
   call it is given to reports that no overload takes it;
-- `map`, which gives back an `Array<U>` and so waits on a generic called with
-  no type arguments.
+- ~~`map`~~, which waited on a generic called with no type arguments —
+  **done** the same day, record 0059.
 
 ## Deferred, and why each is additive
 

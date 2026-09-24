@@ -1,0 +1,5 @@
+error: a condition must be bool, and this is i32&
+  --> main.hd:18:8
+   |
+18 |     if number:
+   |        ^^^^^^

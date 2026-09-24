@@ -1,0 +1,55 @@
+# Record 0060. Every generic class below is built with nothing between '<' and
+# '>', as a call and after a 'new', and each reaches the clone its arguments
+# say: the exit status is the sum of what the clones hold, so a clone of the
+# wrong type -- or none -- moves it.
+
+class Pair<A, B>:
+    first : A
+    second : B
+
+    def init : void
+        @a : A
+        @b : B
+
+        first = a
+        second = b
+
+class Holder<T>:
+    made : T
+
+    def init : void
+        @f : i32 -> T
+
+        made = f(4)
+
+# a construction reaches a call, which is what record 0045 wrote it for
+def total : i32
+    @p : Pair<i32, i64>&
+
+    return p.first + i32(p.second)
+
+# solved inside a generic: 'x' is a T while 'boxed' is unbound, so the
+# construction waits for the clone of 'boxed', where T is a type
+def boxed<T> : T
+    @x : T
+
+    let p = Pair(x, x)
+
+    return p.second
+
+def main : i32
+    let big : i64 = 5
+    let p = Pair(1, 2)
+    let q = new Pair(p, big)
+    let h = Holder(|x| { x * 3 })
+    let flag = Holder(|x| { x > 3 })
+
+    if not flag.made:
+        return 0
+
+    let sum = p.first + p.second + q->first.second + i32(q->second)
+
+    delete q
+
+    # 1 + 2 + 2 + 5 + 12 + 10 + 7
+    return sum + h.made + total(Pair(3, big + 2)) + boxed(7)

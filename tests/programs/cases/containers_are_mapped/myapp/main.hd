@@ -1,0 +1,69 @@
+# Record 0059: 'map' is a generic METHOD whose own parameter, U, is written
+# nowhere in the call -- 'xs.map(|x| { x * 2 })'. It is solved from what the
+# closure gives back: T is the container's own, the closure is told it takes
+# a T&, and whatever its one expression is, is U.
+#
+# Its exit status is the number of checks that failed.
+
+def check : i32
+    @what : String
+    @ok : bool
+
+    print(what)
+
+    if ok:
+        println(": ok")
+        return 0
+
+    println(": FAILED")
+    return 1
+
+def main : i32
+    let failures = 0
+
+    # ---- an Array into an Array of the same thing
+
+    let xs : i32[] = [1, 2, 3, 4]
+    let doubled = xs.map(|x| { x * 2 })
+
+    failures += check("doubled, the last is ${doubled[3]}", doubled[3] == 8)
+    failures += check("the original is untouched: ${xs[3]}", xs[3] == 4)
+
+    # ---- into an Array of something else: U is a bool here
+
+    let large = xs.map(|x| { x > 2 })
+    let counted = 0
+
+    # a 'bool&' is a bool in a condition (record 0035)
+    large.each(|yes| {
+        if yes:
+            counted += 1
+    })
+    failures += check("two of four are above 2: ${counted}", counted == 2)
+
+    # ---- a body of several statements says what it gives back with '->'
+
+    let halves = xs.map(|x| -> f64 {
+        let whole = x as f64
+
+        return whole / 2.0
+    })
+
+    failures += check("half of 3 is ${halves[2]}", halves[2] == 1.5)
+
+    # ---- a List maps into a List, following its links
+
+    let ns : List<i32> = [5, 6]
+    let squares = ns.map(|n| { n * n })
+    let total = 0
+
+    squares.each(|s| { total += s })
+    failures += check("25 and 36 add up to ${total}", total == 61)
+
+    # ---- and a map of a map
+
+    let chained = xs.map(|x| { x * 10 }).map(|x| { x + 1 })
+
+    failures += check("ten times and one more: ${chained[0]}", chained[0] == 11)
+
+    return failures

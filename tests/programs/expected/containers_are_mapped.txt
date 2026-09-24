@@ -1,0 +1,8 @@
+doubled, the last is 8: ok
+the original is untouched: 4: ok
+two of four are above 2: 2: ok
+half of 3 is 1.500000: ok
+25 and 36 add up to 61: ok
+ten times and one more: 11: ok
+--- files:
+--- exit: 0

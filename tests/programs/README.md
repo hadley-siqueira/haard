@@ -108,6 +108,18 @@ directory, it does, and `make clean` takes it back.
   one of its own fields and writes another through the `this` it captured.
   Its `std` is the canonical one, copied whole.
 
+- **`containers_are_mapped`** — record 0059: `map` on an `Array` and a
+  `List`, a generic method whose `U` is written nowhere and solved from what
+  the closure gives back — the same type, a `bool`, an `f64` from a body of
+  several statements that writes its `->`, and a map of a map. Mapping into
+  bools is what found that a condition did not read through a `bool&`.
+
+- **`generic_classes_are_built_from_their_arguments`** — record 0060: a
+  class of the program's own built as `Pair(3, 2.5)` and `new Pair(p, 10)`,
+  one passed straight to a function, and the library's own — `List(xs)` from
+  an `Array<i32>`, `List(xs.map(...))` from a map into bools, and a
+  `for i in Range(1, 4)` — none of them writing a `<...>`.
+
 - **`lists_are_built_from_literals`** — record 0037, and the two ways there
   are to build a `List<T>`, since there is no literal for one: from a bracket
   literal, where the compiler picks `init(Array<T>&)`, and from a braced one,

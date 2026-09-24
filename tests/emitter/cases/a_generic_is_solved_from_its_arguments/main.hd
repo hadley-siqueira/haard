@@ -1,0 +1,81 @@
+# Record 0059. Every generic below is called with nothing between '<' and '>',
+# and each call reaches the clone its arguments say: the exit status is the
+# sum of what each gave back, so a clone of the wrong type -- or none -- moves
+# it.
+
+struct Box<T>:
+    value : T
+
+def id<T> : T
+    @x : T
+
+    return x
+
+def bigger<T> : T
+    @a : T
+    @b : T
+
+    if a > b:
+        return a
+
+    return b
+
+def read<T> : T
+    @p : T*
+
+    return *p
+
+def unbox<T> : T
+    @b : Box<T>&
+
+    return b.value
+
+def apply<A, B> : B
+    @x : A
+    @f : A -> B
+
+    return f(x)
+
+def pair_sum<T> : T
+    @a : T
+    @b : T
+
+    return a + b
+
+# solved inside a generic: 'x' is a T while 'twice' is unbound, so the call
+# waits for the clone of 'twice', where T is a type
+def twice<T> : T
+    @x : T
+
+    return pair_sum(x, x)
+
+# a generic METHOD, solved the same way (record 0055's clone)
+class Wrapper:
+    base : i32
+
+    def wrap<T> : T
+        @x : T
+
+        return x
+
+def main : i32
+    let small : i64 = 3
+    let n = id(4)
+    let m = bigger(7, 9)
+    let v = read(&n)
+    let b : Box<i32>
+
+    b.value = 20
+
+    let u = unbox(b)
+    let r = apply(5, |x| { x * 10 })
+    let flag = apply(5, |x| { x > 3 })
+    let t = twice(small)
+    let w = Wrapper()
+    let a = w.wrap(3)
+
+    if not flag:
+        return 0
+
+    # 4 + 9 + 4 + 20 + 50 + 6 + 3
+    return n + m + v + u + r + i32(t) + a

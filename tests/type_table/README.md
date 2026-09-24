@@ -332,6 +332,39 @@ A function taken or given by another is written in brackets —
 `i32 -> (i32 -> void) -> void` — by this dumper and by the compiler's own
 diagnostics alike; without them `each` read as a function of three things.
 
+## A generic solved from its arguments
+
+`a_generic_is_solved_from_its_arguments` is record 0059: every call writes
+nothing between `<` and `>`, and every binding is what the clone it reached
+gives back. `by_value` is an i64 because `small` is; `by_literal` and
+`a_float` are what record 0018 makes a number nothing else decides; the
+pointer, the `Box<T>&` and the closure's `A -> B` each bind through their
+shape. `widened` is the order written down: `small` binds T first, and the `2`
+is then an i64 literal, never a converted i32.
+
+The two diagnostics are the two ways a generic cannot be solved, each said in
+words the reader can act on — two arguments disagreeing about `T`, and nothing
+saying what it is. The clones are in the golden too, one per distinct set of
+arguments.
+
+## A generic class solved from its arguments
+
+`a_generic_class_is_solved_from_its_arguments` is record 0060: every class is
+built with nothing between `<` and `>`, as a call and after a `new`, and the
+clone in each binding is the one its `init`s said — from literals, from
+typed values, from another solved clone, from what a closure gives back,
+through `::`, and inside a generic function, where the construction waits for
+the clone of `paired`. `widened` is record 0059's order for a class.
+
+`written` and `its_first` are the bug it found: a field of a clone made during
+inference had no type until the walk reached the clone, and that was so for a
+**written** `Pair<i8, i64>(...)` as much as for a solved one.
+
+The five diagnostics are the ways a class cannot be solved: two `init`s naming
+two classes, two arguments disagreeing, an aggregate with nothing to say, no
+`init` of that arity — which must not come out as *nothing says what 'B' is* —
+and an argument that did not type, which says so and nothing more.
+
 ## The sabotages
 
 | sabotage | fails |
@@ -381,6 +414,13 @@ diagnostics alike; without them `each` read as a function of three things.
 | a range walks with the type of its start | 1 |
 | a loop is taken apart once per name it binds | 1 |
 | `same` compares only the kind and the argument count | **0** |
+| a bare generic class in a call is not solved | 1 |
+| a bare generic class after `new` is not solved | 1 |
+| two `init`s naming two classes: the first wins | 1 |
+| an `init` is asked whatever the argument count | 1 |
+| a fresh clone's fields wait for the walk | 1 |
+| an argument that did not type is solved over anyway | 1 |
+| a construction inside an unbound generic is solved | 1 |
 
 The last one is the confirm that follows a hash hit, and **nothing here reaches
 it**: the mixing hash separates every type in these cases, so the comparison is

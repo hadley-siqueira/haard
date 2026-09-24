@@ -1,0 +1,78 @@
+<unnamed>:
+    Box  Box
+    id  T -> T
+    read  T* -> T
+    unbox  Box<T>& -> T
+    apply  A -> (A -> B) -> B
+    bigger  T -> T -> T
+    make  T
+    main  i32
+    Box  Box<f64>
+    id  i64 -> i64
+    id  i32 -> i32
+    id  f64 -> f64
+    read  i64* -> i64
+    unbox  Box<f64>& -> f64
+    apply  i32 -> (i32 -> bool) -> bool
+    bigger  i64 -> i64 -> i64
+    T  T
+    value  T
+    T  T
+    x  T
+    T  T
+    p  T*
+    T  T
+    b  Box<T>&
+    A  A
+    B  B
+    x  A
+    f  A -> B
+    T  T
+    a  T
+    b  T
+    T  T
+    t  T
+    small  i64
+    one  i32
+    b  Box<f64>
+    by_value  i64
+    by_literal  i32
+    a_float  f64
+    through_a_pointer  i64
+    out_of_a_box  f64
+    what_it_gives  bool
+    widened  i64
+    torn  <none>
+    nothing  <none>
+    x  i32
+    T  f64
+    value  f64
+    T  i64
+    x  i64
+    T  i32
+    x  i32
+    T  f64
+    x  f64
+    T  i64
+    p  i64*
+    T  f64
+    b  Box<f64>&
+    A  i32
+    B  bool
+    x  i32
+    f  i32 -> bool
+    T  i64
+    a  i64
+    b  i64
+  49 types interned
+diagnostics:
+error: 'T' cannot be both i32 and i64
+  --> main.hd:58:16
+   |
+58 |     let torn = bigger(one, small)
+   |                ^^^^^^
+error: nothing here says what 'T' is, so it has to be written: make<...>(...)
+  --> main.hd:61:19
+   |
+61 |     let nothing = make()
+   |                   ^^^^

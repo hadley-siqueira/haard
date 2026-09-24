@@ -1,0 +1,88 @@
+# Record 0060: a generic class built with nothing between '<' and '>' --
+# 'Pair(1, 2.5)', 'new Pair(...)', 'List(xs)', 'Range(1, 4)' -- has its type
+# parameters solved from its 'init's, the way record 0059 solves a function's,
+# and is built as the clone they name.
+#
+# Its exit status is the number of checks that failed.
+import std.range
+
+class Pair<A, B>:
+    first : A
+    second : B
+
+    def init : void
+        @a : A
+        @b : B
+
+        first = a
+        second = b
+
+def check : i32
+    @what : String
+    @ok : bool
+
+    print(what)
+
+    if ok:
+        println(": ok")
+        return 0
+
+    println(": FAILED")
+    return 1
+
+# a construction reaches a call, which is what record 0045 wrote it for
+def area : f64
+    @p : Pair<i32, f64>&
+
+    return (p.first as f64) * p.second
+
+def main : i32
+    let failures = 0
+
+    # ---- a class of the program's own, from literals and from values
+
+    let p = Pair(3, 2.5)
+    let name : String = "width"
+    let labelled = Pair(name, p)
+
+    failures += check("the area of ${p.first} by ${p.second}", area(p) == 7.5)
+    failures += check("${labelled.first} is ${labelled.second.first}",
+                      labelled.second.first == 3)
+    failures += check("and built where it is passed",
+                      area(Pair(2, 1.5)) == 3.0)
+
+    # ---- on the heap
+
+    let q = new Pair(p, 10)
+
+    failures += check("the heap holds ${q->second}", q->second == 10)
+
+    delete q
+
+    # ---- the library's own: List<T> from an Array<T>, and a Range
+
+    let xs : i32[] = [1, 2, 3]
+    let from_xs = List(xs)
+    let total = 0
+
+    from_xs.each(|x| { total += x })
+    failures += check("a List of an Array adds up to ${total}", total == 6)
+
+    let from_a_map = List(xs.map(|x| { x > 1 }))
+    let yes = 0
+
+    from_a_map.each(|b| {
+        if b:
+            yes += 1
+    })
+    failures += check("two of three are above 1: ${yes}", yes == 2)
+
+    let walked = 0
+
+    for i in Range(1, 4):
+        walked += i
+
+    failures += check("a Range from 1 past 4 adds up to ${walked}",
+                      walked == 6)
+
+    return failures

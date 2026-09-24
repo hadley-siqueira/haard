@@ -69,6 +69,11 @@ namespace haard {
                             const std::vector<Candidacy>& candidates,
                             const std::vector<Argument>& arguments);
 
+            // the parameters a candidate cannot do without: those the source
+            // wrote no default for. Public for records 0059 and 0060, which
+            // must not solve a generic against a count it does not answer to
+            u32 required_of(u32 module, u32 candidate);
+
         private:
             // how well one candidate answers, or -1 for not at all. The score
             // is the total distance climbed, so 0 is an exact match
@@ -115,9 +120,6 @@ namespace haard {
             // the caller's table so two of them can be compared
             std::vector<u32> parameters_of(u32 caller, const Candidacy& who);
 
-            // the parameters a candidate cannot do without: those the source
-            // wrote no default for
-            u32 required_of(u32 module, u32 candidate);
 
             // what a variant carries, which is what it requires when its
             // payload has no default

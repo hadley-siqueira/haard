@@ -1,0 +1,144 @@
+<unnamed>:
+    Pair  Pair
+    Wrap  Wrap
+    Holder  Holder
+    Same  Same
+    Box  Box
+    paired  T -> i32
+    main  i32
+    Pair  Pair<i32, f64>
+    Pair  Pair<i64, i32>
+    Pair  Pair<Pair<i32, f64>, i64>
+    Pair  Pair<i32, i64>
+    Holder  Holder<bool>
+    Pair  Pair<i32, i32>
+    paired  i64 -> i32
+    Pair  Pair<i8, i64>
+    Same  Same<i64>
+    A  A
+    B  B
+    first  A
+    second  B
+    init  A -> B -> void
+    a  A
+    b  B
+    T  T
+    value  T
+    init  T -> void
+    init  T* -> void
+    x  T
+    x  T*
+    T  T
+    made  T
+    init  (i32 -> T) -> void
+    f  i32 -> T
+    T  T
+    value  T
+    init  T -> T -> void
+    a  T
+    b  T
+    T  T
+    value  T
+    T  T
+    x  T
+    inside  <none>
+    small  i64
+    one  i32
+    by_literals  Pair<i32, f64>
+    by_values  Pair<i64, i32>
+    nested  Pair<Pair<i32, f64>, i64>
+    on_the_heap  Pair<i32, i64>*
+    by_what_it_gives  Holder<bool>
+    qualified  Pair<i32, i32>
+    through_the_clone  i32
+    written  Pair<i8, i64>
+    its_first  i8
+    its_second  f64
+    widened  Same<i64>
+    torn_between  <none>
+    torn  <none>
+    nothing  <none>
+    short  <none>
+    broken  <none>
+    x  i32
+    A  i32
+    B  f64
+    first  i32
+    second  f64
+    init  i32 -> f64 -> void
+    a  i32
+    b  f64
+    A  i64
+    B  i32
+    first  i64
+    second  i32
+    init  i64 -> i32 -> void
+    a  i64
+    b  i32
+    A  Pair<i32, f64>
+    B  i64
+    first  Pair<i32, f64>
+    second  i64
+    init  Pair<i32, f64> -> i64 -> void
+    a  Pair<i32, f64>
+    b  i64
+    A  i32
+    B  i64
+    first  i32
+    second  i64
+    init  i32 -> i64 -> void
+    a  i32
+    b  i64
+    T  bool
+    made  bool
+    init  (i32 -> bool) -> void
+    f  i32 -> bool
+    A  i32
+    B  i32
+    first  i32
+    second  i32
+    init  i32 -> i32 -> void
+    a  i32
+    b  i32
+    T  i64
+    x  i64
+    inside  Pair<i64, i32>
+    A  i8
+    B  i64
+    first  i8
+    second  i64
+    init  i8 -> i64 -> void
+    a  i8
+    b  i64
+    T  i64
+    value  i64
+    init  i64 -> i64 -> void
+    a  i64
+    b  i64
+  59 types interned
+diagnostics:
+error: this could be Wrap<i32*> or Wrap<i32>, so which has to be written: Wrap<...>(...)
+  --> main.hd:80:24
+   |
+80 |     let torn_between = Wrap(&one)
+   |                        ^^^^
+error: 'T' cannot be both i32 and i64
+  --> main.hd:83:16
+   |
+83 |     let torn = Same(one, small)
+   |                ^^^^
+error: nothing here says what 'T' is, so it has to be written: Box<...>(...)
+  --> main.hd:86:19
+   |
+86 |     let nothing = Box()
+   |                   ^^^
+error: no 'init' of 'Pair' takes these arguments
+  --> main.hd:89:17
+   |
+89 |     let short = Pair(1)
+   |                 ^^^^
+error: cannot find 'nowhere' in this scope
+  --> main.hd:92:23
+   |
+92 |     let broken = Pair(nowhere, 1)
+   |                       ^^^^^^^

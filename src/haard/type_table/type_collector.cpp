@@ -103,16 +103,43 @@ void TypeCollector::type_signature_now(u32 module_index, u32 candidate) {
         // reads as *no 'iterator' takes these arguments*
         u32 body = table->scope_owned_by(
             table->get_candidate(candidate)->ast_node);
+        std::vector<u32> fields;
 
         for (u32 symbol = body == 0 ? 0 : table->get_scope(body)->symbols;
              symbol != 0; symbol = table->get_symbol(symbol)->sibling_or_next) {
             for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
                  one = table->get_candidate(one)->next_candidate) {
-                if (table->get_candidate(one)->kind == SYMBOL_FUNCTION
-                    && table->get_candidate(one)->type == INVALID_TYPE) {
+                if (table->get_candidate(one)->type != INVALID_TYPE) {
+                    continue;
+                }
+
+                if (table->get_candidate(one)->kind == SYMBOL_FUNCTION) {
                     type_signature_now(module_index, one);
+                } else if (table->get_candidate(one)->kind == SYMBOL_FIELD) {
+                    fields.push_back(one);
                 }
             }
+        }
+
+        // And its fields, by what they WROTE, which in a clone names the
+        // bound parameters. 'Pair<i32, i32>(1, 2).first' read a field the
+        // walk had not reached yet and was nothing, in silence: a member
+        // access with no type says so to nobody, and the binding it went
+        // into was '<none>'. The walk types them again, to the same answer,
+        // and keeps what must happen once -- the default construction check
+        if (fields.size() > 0) {
+            u32 held_index = index;
+            Module* held_module = module;
+
+            index = module_index;
+            module = holder;
+
+            for (u32 one : fields) {
+                table->set_candidate_type(one, type_of(one, body, false));
+            }
+
+            index = held_index;
+            module = held_module;
         }
 
         return;
