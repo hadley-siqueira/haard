@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <new>
 
+enum class h0_1_Movement : int32_t;
 
 enum class h0_1_Movement : int32_t {
     h0_2_Up,

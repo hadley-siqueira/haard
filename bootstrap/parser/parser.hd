@@ -1,0 +1,2160 @@
+# hdc.parser.parser -- recursive descent over the scanner's tokens.
+#
+# The twin of src/haard/parser/, function by function and in the same order,
+# so a difference between the two trees points at one function here and its
+# namesake there. The comments that explain WHY a rule is shaped the way it is
+# live in the C++ one; the ones here are about what is different in Haard.
+#
+# Error handling is the poisoned parser: reporting an error sets 'panic', and
+# while it is set every primitive goes inert -- lookahead answers false,
+# advance freezes, expect reports nothing new. The statement loops are the
+# only places that look at it, to recover.
+import hdc.token.token
+import hdc.ast.ast_node
+import hdc.ast.ast_builder
+import hdc.module.module
+
+# what a body holds. The four share one loop
+enum BodyKind:
+    BodyIndented
+    BodyBraced
+
+    # a class, a struct or a union: a field must state its type
+    BodyMembers
+
+    # an enum: a variant may carry no payload, so the type is optional
+    BodyEnumMembers
+
+class Parser:
+    module : Module*
+    builder : AstBuilder
+
+    current_token : i32
+    matched : i32
+    statement_first_token : i32
+    panic : bool
+
+    # how many brackets are open around the token being read. While it is not
+    # zero the line rule is suspended
+    open_brackets : i32
+
+    # A stack of indentations that starts holding a 0. Array has no 'pop', so
+    # 'depth' says how much of it is in use and a push reuses what is there
+    indentation_stack : Array<i32>
+    depth : i32
+
+    def init : void
+        module = null
+        current_token = 0
+        matched = 0
+        statement_first_token = 0
+        panic = false
+        open_brackets = 0
+        depth = 0
+        indent(0)
+
+    def set_module : void
+        @where : Module*
+
+        module = where
+        builder.set_ast(&where->ast)
+
+    def parse : i32
+        reset()
+
+        return parse_module()
+
+    # a whole file that is one value: a manifest is a literal and then the
+    # end of the file
+    def parse_value : i32
+        reset()
+        begin_statement()
+
+        let node = parse_expression()
+
+        if not panic and not lookahead(TokenKind.Eof):
+            error_found("the end of the file", false)
+
+        return node
+
+    def reset : void
+        current_token = 0
+        matched = 0
+        statement_first_token = 0
+        panic = false
+        open_brackets = 0
+        depth = 0
+        indent(0)
+
+    #   module := declaration*
+    def parse_module : i32
+        let node = builder.make_module()
+        let last = 0
+
+        while not lookahead(TokenKind.Eof):
+            let indentation = indentation_of_current_line()
+            let start = current_token
+
+            begin_statement()
+
+            let child = parse_declaration()
+
+            if panic:
+                synchronize(indentation, start, false)
+                continue
+
+            last = builder.add_child(node, last, child)
+
+        return node
+
+    def parse_declaration : i32
+        if lookahead(TokenKind.Import):
+            return parse_import()
+
+        if lookahead(TokenKind.Let):
+            return parse_let_declaration()
+
+        if lookahead(TokenKind.Const):
+            return parse_const_declaration()
+
+        if lookahead(TokenKind.Def):
+            return parse_function()
+
+        if lookahead(TokenKind.Class):
+            return parse_type_declaration(TokenKind.Class, AstNodeKind.Class)
+
+        if lookahead(TokenKind.Struct):
+            return parse_type_declaration(TokenKind.Struct, AstNodeKind.Struct)
+
+        if lookahead(TokenKind.Enum):
+            return parse_type_declaration(TokenKind.Enum, AstNodeKind.Enum)
+
+        if lookahead(TokenKind.Union):
+            return parse_type_declaration(TokenKind.Union, AstNodeKind.Union)
+
+        error_found("a declaration", false)
+
+        return 0
+
+    #   import := 'import' import_path ('as' identifier)?
+    def parse_import : i32
+        let token = current_token
+
+        expect(TokenKind.Import)
+
+        let path = parse_import_path()
+        let alias = parse_import_alias()
+
+        return builder.make_import(token, path, alias)
+
+    #   import_path := identifier ('.' identifier)* ('.' '*')?
+    def parse_import_path : i32
+        let node = builder.make_import_path()
+        let last = builder.add_child(node, 0, parse_import_path_segment())
+
+        while match_on_same_line(TokenKind.Dot):
+            if match_on_same_line(TokenKind.Times):
+                builder.add_child(node, last, builder.make_import_all(matched))
+                break
+
+            last = builder.add_child(node, last, parse_import_path_segment())
+
+        return node
+
+    def parse_import_path_segment : i32
+        if expect_on_same_line(TokenKind.Identifier):
+            return builder.make_import_path_segment(matched)
+
+        return 0
+
+    def parse_import_alias : i32
+        if not match_on_same_line(TokenKind.As):
+            return 0
+
+        if expect_on_same_line(TokenKind.Identifier):
+            return builder.make_import_alias(matched)
+
+        return 0
+
+    #   let_declaration := 'let' binding
+    def parse_let_declaration : i32
+        let token = current_token
+
+        expect(TokenKind.Let)
+
+        return builder.make_let_declaration(token, parse_binding())
+
+    #   const_declaration := 'const' binding
+    def parse_const_declaration : i32
+        let token = current_token
+
+        expect(TokenKind.Const)
+
+        return builder.make_const_declaration(token, parse_binding())
+
+    #   type_declaration := ('class' | 'struct' | 'enum' | 'union') identifier
+    #                       generic_parameters? super_type? ':' type_body
+    def parse_type_declaration : i32
+        @keyword : TokenKind
+        @kind : AstNodeKind
+
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(keyword)
+
+        let node = builder.make_type_declaration(kind, token)
+        let last = builder.add_child(node, 0, parse_binding_name())
+
+        last = builder.add_child(node, last, parse_generic_parameters())
+        last = builder.add_child(node, last, parse_super_type())
+
+        expect_on_same_line(TokenKind.Colon)
+
+        let body = BodyKind.BodyMembers
+
+        if kind == AstNodeKind.Enum:
+            body = BodyKind.BodyEnumMembers
+
+        builder.add_child(node, last, parse_type_body(indentation, body))
+
+        return node
+
+    #   super_type := '(' type ')'
+    def parse_super_type : i32
+        if not match_on_same_line(TokenKind.LeftParenthesis):
+            return 0
+
+        let token = matched
+        let type = parse_type()
+
+        expect_on_same_line(TokenKind.RightParenthesis)
+
+        return builder.make_super_type(token, type)
+
+    #   type_body := 'pass' | member+
+    def parse_type_body : i32
+        @header_indentation : i32
+        @kind : BodyKind
+
+        let node = builder.make_type_body()
+
+        indent(header_indentation)
+        parse_body(node, kind)
+        dedent()
+
+        return node
+
+    #   member := function | field
+    def parse_member : i32
+        @type_is_optional : bool
+
+        if lookahead(TokenKind.Def):
+            return parse_function()
+
+        return parse_field(type_is_optional)
+
+    #   field := identifier ':' type ('=' expression)?          in a class
+    #          | identifier (':' type)? ('=' expression)?       in an enum
+    def parse_field : i32
+        @type_is_optional : bool
+
+        let name = parse_binding_name()
+        let type = 0
+
+        if type_is_optional:
+            type = parse_binding_type()
+        else:
+            type = parse_param_type()
+
+        let value = parse_binding_expression()
+
+        return builder.make_field(name, type, value)
+
+    # One exit only: the indentation stack is state, and a return between the
+    # indent and the dedent would leak a level onto it.
+    #
+    #   function := 'def' identifier generic_parameters? ':' type param* body?
+    def parse_function : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        expect(TokenKind.Def)
+
+        let node = builder.make_function(token)
+        let name = 0
+
+        if lookahead_on_same_line(TokenKind.Operator):
+            name = parse_operator_name()
+        else:
+            name = parse_binding_name()
+
+        let last = builder.add_child(node, 0, name)
+
+        last = builder.add_child(node, last, parse_generic_parameters())
+
+        expect_on_same_line(TokenKind.Colon)
+
+        last = builder.add_child(node, last, parse_function_return_type())
+
+        indent(indentation)
+
+        while is_indented() and lookahead(TokenKind.At):
+            last = builder.add_child(node, last, parse_param())
+
+        dedent()
+
+        builder.add_child(node, last, parse_block(indentation))
+
+        return node
+
+    #   generic_parameters := '<' identifier (',' identifier)* '>'
+    def parse_generic_parameters : i32
+        if not lookahead_on_same_line(TokenKind.LessThan):
+            return 0
+
+        if not glued_to_previous():
+            error_at_current("a generic parameter list is written glued to the name it belongs to")
+            return 0
+
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LessThan)
+
+        let node = builder.make_generic_parameters(token)
+        let last = builder.add_child(node, 0, parse_identifier())
+
+        while match_on_same_line(TokenKind.Comma):
+            last = builder.add_child(node, last, parse_identifier())
+
+        expect_on_same_line(TokenKind.GreaterThan)
+
+        return node
+
+    def parse_function_return_type : i32
+        let type = parse_type()
+
+        if type == 0:
+            return 0
+
+        return builder.make_function_return_type(type)
+
+    #   block := 'pass' | statement+
+    def parse_block : i32
+        @header_indentation : i32
+
+        let node = builder.make_block()
+
+        indent(header_indentation)
+        parse_body(node, BodyKind.BodyIndented)
+        dedent()
+
+        return node
+
+    # delimited by its braces, so it pushes no indentation level
+    #
+    #   braced_block := '{' ('pass' | statement+) '}'
+    def parse_braced_block : i32
+        let node = builder.make_block()
+
+        parse_body(node, BodyKind.BodyBraced)
+
+        return node
+
+    # The statements of a block, whichever delimits it: the recovery point,
+    # the 'pass' rule and the empty-block error are the same everywhere
+    def parse_body : i32
+        @node : i32
+        @kind : BodyKind
+
+        let last = 0
+        let had_lines = false
+
+        # the line rule is back in force inside a block, and the enclosing
+        # expression's bracket count is put back afterwards
+        let enclosing_brackets = open_brackets
+
+        if inside_block(kind) and lookahead(TokenKind.Pass):
+            had_lines = true
+            last = builder.add_child(node, 0, parse_pass())
+
+            if inside_block(kind):
+                error_at_current("nothing can follow 'pass': it is how a block with no statements is written")
+        else:
+            while inside_block(kind):
+                let indentation = indentation_of_current_line()
+                let start = current_token
+
+                had_lines = true
+
+                begin_statement()
+
+                let child = 0
+
+                if body_holds_members(kind):
+                    child = parse_member(kind == BodyKind.BodyEnumMembers)
+                else:
+                    child = parse_statement()
+
+                if not panic and leftover_on_the_line(kind):
+                    error_at_current("nothing may follow a statement on its line")
+                    last = builder.add_child(node, last, child)
+                    synchronize(indentation, start, kind == BodyKind.BodyBraced)
+                    continue
+
+                if panic:
+                    synchronize(indentation, start, kind == BodyKind.BodyBraced)
+                    continue
+
+                last = builder.add_child(node, last, child)
+
+        if last == 0:
+            if not had_lines:
+                if body_holds_members(kind):
+                    error_found("a field, a method or 'pass'", true)
+                else:
+                    error_found("a statement or 'pass'", true)
+
+            poison()
+
+        open_brackets = enclosing_brackets
+
+        return last
+
+    # whether the statement just read left something behind on its line. The
+    # brace that closes a braced block does not count
+    def leftover_on_the_line : bool
+        @kind : BodyKind
+
+        if current().kind == TokenKind.Eof:
+            return false
+
+        if kind == BodyKind.BodyBraced and lookahead(TokenKind.RightCurlyBracket):
+            return false
+
+        return on_same_line()
+
+    def body_holds_members : bool
+        @kind : BodyKind
+
+        return kind == BodyKind.BodyMembers or kind == BodyKind.BodyEnumMembers
+
+    def inside_block : bool
+        @kind : BodyKind
+
+        if kind != BodyKind.BodyBraced:
+            return is_indented()
+
+        return (not panic and not lookahead(TokenKind.RightCurlyBracket)
+                and current().kind != TokenKind.Eof)
+
+    def parse_pass : i32
+        begin_statement()
+        expect(TokenKind.Pass)
+
+        return builder.make_pass(matched)
+
+    #   statement := let_declaration | const_declaration
+    #              | if | while | for
+    #              | return | break | continue | yield | goto | label
+    #              | expression
+    def parse_statement : i32
+        if lookahead(TokenKind.Let):
+            return parse_let_declaration()
+
+        if lookahead(TokenKind.Const):
+            return parse_const_declaration()
+
+        if lookahead(TokenKind.If):
+            return parse_if()
+
+        if lookahead(TokenKind.While):
+            return parse_while()
+
+        if lookahead(TokenKind.Switch):
+            return parse_switch()
+
+        if lookahead(TokenKind.For):
+            return parse_for()
+
+        if lookahead(TokenKind.Return):
+            return parse_jump(TokenKind.Return, AstNodeKind.Return)
+
+        if lookahead(TokenKind.Break):
+            return parse_jump(TokenKind.Break, AstNodeKind.Break)
+
+        if lookahead(TokenKind.Continue):
+            return parse_jump(TokenKind.Continue, AstNodeKind.Continue)
+
+        if lookahead(TokenKind.Yield):
+            return parse_jump(TokenKind.Yield, AstNodeKind.Yield)
+
+        if lookahead(TokenKind.Goto):
+            return parse_jump(TokenKind.Goto, AstNodeKind.Goto)
+
+        if lookahead(TokenKind.Label):
+            return parse_label()
+
+        return parse_expression()
+
+    #   label := 'label' identifier
+    def parse_label : i32
+        let token = current_token
+
+        begin_statement()
+        expect(TokenKind.Label)
+
+        return builder.make_label(token, parse_identifier())
+
+    #   jump := ('return' | 'break' | 'continue' | 'yield' | 'goto') expression?
+    def parse_jump : i32
+        @keyword : TokenKind
+        @kind : AstNodeKind
+
+        let token = current_token
+
+        begin_statement()
+        expect(keyword)
+
+        let expression = 0
+
+        if on_same_line() and not lookahead(TokenKind.Eof):
+            expression = parse_expression()
+
+        return builder.make_jump(kind, token, expression)
+
+    #   if := 'if' expression ':' block elif* else?
+    def parse_if : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.If)
+
+        let node = builder.make_if(token)
+        let last = parse_conditional(node, indentation)
+
+        while lookahead(TokenKind.Elif) and is_indented():
+            last = builder.add_child(node, last, parse_elif())
+
+        if lookahead(TokenKind.Else) and is_indented():
+            builder.add_child(node, last, parse_else())
+
+        return node
+
+    #   elif := 'elif' expression ':' block
+    def parse_elif : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.Elif)
+
+        let node = builder.make_elif(token)
+
+        parse_conditional(node, indentation)
+
+        return node
+
+    #   else := 'else' ':' block
+    def parse_else : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.Else)
+        expect_on_same_line(TokenKind.Colon)
+
+        let node = builder.make_else(token)
+
+        builder.add_child(node, 0, parse_block(indentation))
+
+        return node
+
+    #   switch := 'switch' expression ':' (case | default)+
+    def parse_switch : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.Switch)
+
+        let node = builder.make_switch(token)
+        let last = builder.add_child(node, 0, parse_expression())
+        let had_a_case = false
+
+        expect_on_same_line(TokenKind.Colon)
+
+        indent(indentation)
+
+        while (is_indented()
+               and (lookahead(TokenKind.Case) or lookahead(TokenKind.Default))):
+            had_a_case = true
+
+            if lookahead(TokenKind.Case):
+                last = builder.add_child(node, last, parse_case())
+            else:
+                last = builder.add_child(node, last, parse_default())
+
+        if not had_a_case and not panic:
+            error_found("'case' or 'default'", false)
+            poison()
+
+        dedent()
+
+        return node
+
+    #   case := 'case' expression ':' block?
+    def parse_case : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.Case)
+
+        let node = builder.make_case(token)
+        let last = builder.add_child(node, 0, parse_expression())
+
+        expect_on_same_line(TokenKind.Colon)
+
+        if not panic and indentation_of_current_line() > indentation:
+            builder.add_child(node, last, parse_block(indentation))
+        elif not panic and leftover_on_the_line(BodyKind.BodyIndented):
+            error_at_current("nothing may follow a statement on its line")
+            poison()
+
+        return node
+
+    #   default := 'default' ':' block
+    def parse_default : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.Default)
+        expect_on_same_line(TokenKind.Colon)
+
+        let node = builder.make_default(token)
+
+        builder.add_child(node, 0, parse_block(indentation))
+
+        return node
+
+    # Which of the three loops it is shows only once the head is read: an
+    # 'in' or a 'not in' last makes it a foreach.
+    #
+    #   for := 'for' for_head (';' expression? (';' expression_list?)?)? ':' block
+    def parse_for : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.For)
+
+        let head = builder.make_for_head()
+        let last_expression = 0
+
+        if not lookahead_on_same_line(TokenKind.Semicolon):
+            last_expression = builder.add_child(head, 0, parse_expression())
+
+            while match_on_same_line(TokenKind.Comma):
+                last_expression = builder.add_child(head, last_expression,
+                                                    parse_expression())
+
+        let each = (kind_of(last_expression) == AstNodeKind.In
+                    or kind_of(last_expression) == AstNodeKind.NotIn)
+        let node = 0
+
+        if each:
+            node = builder.make_for_each(token)
+        else:
+            node = builder.make_for(token)
+
+        let last = builder.add_child(node, 0, head)
+
+        if not each:
+            last = builder.add_child(node, last, parse_for_condition())
+            last = builder.add_child(node, last, parse_for_increment())
+
+        expect_on_same_line(TokenKind.Colon)
+
+        builder.add_child(node, last, parse_block(indentation))
+
+        return node
+
+    # built as soon as its ';' is read, because the semicolons say which part
+    # is which
+    def parse_for_condition : i32
+        if not match_on_same_line(TokenKind.Semicolon):
+            return 0
+
+        let node = builder.make_for_condition()
+
+        if (not lookahead_on_same_line(TokenKind.Semicolon)
+            and not lookahead_on_same_line(TokenKind.Colon)):
+            builder.add_child(node, 0, parse_expression())
+
+        return node
+
+    def parse_for_increment : i32
+        if not match_on_same_line(TokenKind.Semicolon):
+            return 0
+
+        let node = builder.make_for_increment()
+
+        if lookahead_on_same_line(TokenKind.Colon):
+            return node
+
+        let last = builder.add_child(node, 0, parse_expression())
+
+        while match_on_same_line(TokenKind.Comma):
+            last = builder.add_child(node, last, parse_expression())
+
+        return node
+
+    #   while := 'while' expression ':' block
+    def parse_while : i32
+        let token = current_token
+        let indentation = indentation_of_current_line()
+
+        begin_statement()
+        expect(TokenKind.While)
+
+        let node = builder.make_while(token)
+
+        parse_conditional(node, indentation)
+
+        return node
+
+    # the shape 'if', 'elif' and 'while' share. Gives back the last child
+    def parse_conditional : i32
+        @node : i32
+        @header_indentation : i32
+
+        let condition = parse_expression()
+
+        expect_on_same_line(TokenKind.Colon)
+
+        let last = builder.add_child(node, 0, condition)
+
+        return builder.add_child(node, last, parse_block(header_indentation))
+
+    #   param := '@' identifier ':' type ('=' expression)?
+    def parse_param : i32
+        let token = current_token
+
+        begin_statement()
+        expect(TokenKind.At)
+
+        let name = parse_binding_name()
+        let type = parse_param_type()
+        let value = parse_binding_expression()
+
+        return builder.make_param(token, name, type, value)
+
+    def parse_param_type : i32
+        if not expect_on_same_line(TokenKind.Colon):
+            return 0
+
+        let type = parse_type()
+
+        if type == 0:
+            return 0
+
+        return builder.make_binding_type(type)
+
+    #   binding := binding_name binding_type? binding_expression?
+    def parse_binding : i32
+        let name = parse_binding_target()
+        let type = parse_binding_type()
+        let expression = parse_binding_expression()
+
+        return builder.make_binding(name, type, expression)
+
+    #   binding_target := identifier | '(' identifier (',' identifier)* ')'
+    def parse_binding_target : i32
+        if not lookahead_on_same_line(TokenKind.LeftParenthesis):
+            return parse_binding_name()
+
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LeftParenthesis)
+
+        let tuple = builder.make_tuple(token)
+        let last = builder.add_child(tuple, 0, parse_identifier())
+
+        while match_on_same_line(TokenKind.Comma):
+            last = builder.add_child(tuple, last, parse_identifier())
+
+        expect_on_same_line(TokenKind.RightParenthesis)
+
+        return builder.make_binding_name(tuple)
+
+    #   binding_name := identifier
+    def parse_binding_name : i32
+        let name = parse_identifier()
+
+        if name == 0:
+            return 0
+
+        return builder.make_binding_name(name)
+
+    #   binding_type := ':' type
+    def parse_binding_type : i32
+        if not match_on_same_line(TokenKind.Colon):
+            return 0
+
+        let type = parse_type()
+
+        if type == 0:
+            return 0
+
+        return builder.make_binding_type(type)
+
+    #   binding_expression := '=' expression
+    def parse_binding_expression : i32
+        if not match_on_same_line(TokenKind.Assignment):
+            return 0
+
+        let expression = parse_expression()
+
+        if expression == 0:
+            return 0
+
+        return builder.make_binding_expression(expression)
+
+    # 'operator' and then the operator, written against it. Record 0034: what
+    # comes back is a name no identifier can be
+    #
+    #   operator_name := 'operator' operator
+    def parse_operator_name : i32
+        expect_on_same_line(TokenKind.Operator)
+
+        if not joined_to_previous():
+            error_found("the operator, written against 'operator'", true)
+            return 0
+
+        let at = current_token
+        let kind = operator_kind()
+
+        if kind == AstNodeKind.Unknown:
+            error_found("an operator that may be overloaded", true)
+            return 0
+
+        # built and not read off the source, because '[]' is two tokens
+        let text : String = operator_name(kind)
+
+        return builder.make_binding_name(builder.make_identifier(
+            module->add_synthetic_token(TokenKind.Identifier, text, at)))
+
+    # consumes the operator and says which one it was
+    def operator_kind : AstNodeKind
+        if match_on_same_line(TokenKind.LeftSquareBracket):
+            if match_on_same_line(TokenKind.RightSquareBracket):
+                return AstNodeKind.Index
+
+            return AstNodeKind.Unknown
+
+        if match_on_same_line(TokenKind.Assignment):
+            return AstNodeKind.Assignment
+
+        if match_on_same_line(TokenKind.Plus):
+            return AstNodeKind.Plus
+
+        if match_on_same_line(TokenKind.Minus):
+            return AstNodeKind.Minus
+
+        if match_on_same_line(TokenKind.Power):
+            return AstNodeKind.Power
+
+        if match_on_same_line(TokenKind.Times):
+            return AstNodeKind.Times
+
+        if match_on_same_line(TokenKind.IntegerDivision):
+            return AstNodeKind.IntegerDivision
+
+        if match_on_same_line(TokenKind.Division):
+            return AstNodeKind.Division
+
+        if match_on_same_line(TokenKind.Modulo):
+            return AstNodeKind.Modulo
+
+        if match_on_same_line(TokenKind.Equal):
+            return AstNodeKind.Equal
+
+        if match_on_same_line(TokenKind.NotEqual):
+            return AstNodeKind.NotEqual
+
+        if match_on_same_line(TokenKind.LessThanOrEqual):
+            return AstNodeKind.LessThanOrEqual
+
+        if match_on_same_line(TokenKind.LessThan):
+            return AstNodeKind.LessThan
+
+        if match_on_same_line(TokenKind.GreaterThanOrEqual):
+            return AstNodeKind.GreaterThanOrEqual
+
+        if match_on_same_line(TokenKind.GreaterThan):
+            return AstNodeKind.GreaterThan
+
+        return AstNodeKind.Unknown
+
+    def joined_to_previous : bool
+        let before : Token = module->token(current_token - 1)
+
+        return before.offset + before.length == module->token(current_token).offset
+
+    #   template_string := BEGIN (chunk | interpolation)* END
+    def parse_template_string : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.TemplateStringBegin)
+
+        let node = builder.make_template_string(token)
+        let last = 0
+
+        while (lookahead_on_same_line(TokenKind.TemplateStringChunk)
+               or lookahead_on_same_line(TokenKind.InterpolationBegin)):
+            if lookahead_on_same_line(TokenKind.TemplateStringChunk):
+                last = builder.add_child(node, last,
+                                         parse_template_string_chunk())
+            else:
+                last = builder.add_child(node, last, parse_interpolation())
+
+        expect_on_same_line(TokenKind.TemplateStringEnd)
+
+        return node
+
+    # an empty chunk is text that was never written, and gets no node
+    def parse_template_string_chunk : i32
+        if not match_on_same_line(TokenKind.TemplateStringChunk):
+            return 0
+
+        if module->token(matched).length == 0:
+            return 0
+
+        return builder.make_template_string_chunk(matched)
+
+    #   interpolation := '${' expression '}'
+    def parse_interpolation : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.InterpolationBegin)
+
+        let expression = parse_expression()
+
+        expect_on_same_line(TokenKind.InterpolationEnd)
+
+        return builder.make_interpolation(token, expression)
+
+    #   type := function_type
+    def parse_type : i32
+        return parse_function_type()
+
+    #   function_type := tuple_type ('->' tuple_type)*
+    def parse_function_type : i32
+        let type = parse_tuple_type()
+
+        if not lookahead_on_same_line(TokenKind.Arrow):
+            return type
+
+        let token = current_token
+        let node = builder.make_function_type(token)
+        let last = builder.add_child(node, 0, type)
+
+        while match_on_same_line(TokenKind.Arrow):
+            last = builder.add_child(node, last, parse_tuple_type())
+
+        return node
+
+    #   tuple_type := '(' type (',' type)* ')' | primary_type
+    def parse_tuple_type : i32
+        if not lookahead_on_same_line(TokenKind.LeftParenthesis):
+            return parse_primary_type()
+
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LeftParenthesis)
+
+        let node = builder.make_tuple_type(token)
+        let last = builder.add_child(node, 0, parse_type())
+
+        while match_on_same_line(TokenKind.Comma):
+            last = builder.add_child(node, last, parse_type())
+
+        expect_on_same_line(TokenKind.RightParenthesis)
+
+        return node
+
+    #   primary_type := (named_type | '[' type ']' | '{' type ':' type '}') postfix*
+    def parse_primary_type : i32
+        let type = 0
+
+        if lookahead_on_same_line(TokenKind.LeftSquareBracket):
+            let token = current_token
+
+            expect_on_same_line(TokenKind.LeftSquareBracket)
+
+            let element = parse_type()
+
+            expect_on_same_line(TokenKind.RightSquareBracket)
+            type = builder.make_list_type(token, element)
+        elif lookahead_on_same_line(TokenKind.LeftCurlyBracket):
+            let token = current_token
+
+            expect_on_same_line(TokenKind.LeftCurlyBracket)
+
+            let key = parse_type()
+
+            expect_on_same_line(TokenKind.Colon)
+
+            let value = parse_type()
+
+            expect_on_same_line(TokenKind.RightCurlyBracket)
+            type = builder.make_hash_type(token, key, value)
+        elif (is_builtin_type(current().kind)
+              and lookahead_on_same_line(current().kind)):
+            let token = current_token
+
+            advance()
+            type = builder.make_builtin_type(token)
+        else:
+            type = parse_named_type()
+
+        return parse_type_postfix(type)
+
+    #   postfix := '*' | '**' | '&' | '[' expression? ']'
+    def parse_type_postfix : i32
+        @type : i32
+
+        while true:
+            if match_on_same_line(TokenKind.Times):
+                type = builder.make_pointer_type(matched, type)
+            elif match_on_same_line(TokenKind.Power):
+                let oper = matched
+
+                type = builder.make_pointer_type(oper, type)
+                type = builder.make_pointer_type(oper, type)
+            elif match_on_same_line(TokenKind.BitwiseAnd):
+                type = builder.make_reference_type(matched, type)
+            elif lookahead_on_same_line(TokenKind.LeftSquareBracket):
+                let token = current_token
+                let size = 0
+
+                expect_on_same_line(TokenKind.LeftSquareBracket)
+
+                if not lookahead_on_same_line(TokenKind.RightSquareBracket):
+                    size = parse_expression()
+
+                expect_on_same_line(TokenKind.RightSquareBracket)
+                type = builder.make_array_type(token, type, size)
+            else:
+                break
+
+        return type
+
+    #   named_type := scope generic_arguments?
+    def parse_named_type : i32
+        let name = parse_scope()
+
+        if name == 0:
+            return 0
+
+        return builder.make_named_type(name, parse_generic_arguments())
+
+    #   generic_arguments := '<' type (',' type)* '>'
+    def parse_generic_arguments : i32
+        if not lookahead_on_same_line(TokenKind.LessThan):
+            return 0
+
+        if not glued_to_previous():
+            error_at_current(generic_spacing_message())
+            return 0
+
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LessThan)
+
+        if not glued_to_previous():
+            error_at_current(generic_spacing_message())
+            return 0
+
+        let node = builder.make_generic_arguments(token)
+        let last = builder.add_child(node, 0, parse_type())
+
+        while match_on_same_line(TokenKind.Comma):
+            last = builder.add_child(node, last, parse_type())
+
+        expect_generic_close()
+
+        return node
+
+    def generic_spacing_message : String
+        let text : String = "a generic argument list is written glued, with "
+
+        text.append("no space at its brackets")
+
+        return text
+
+    # The angles that close nested generics arrive glued, as one '>>' or
+    # '>>>'. One '>' is carved off the front of the token IN PLACE -- which is
+    # why the token is held by a reference written as one (record 0062)
+    def expect_generic_close : bool
+        if panic:
+            return false
+
+        if match_on_same_line(TokenKind.GreaterThan):
+            return true
+
+        let token : Token& = current()
+        let kind = token.kind
+        let splittable = (on_same_line()
+                          and (kind == TokenKind.BitwiseRightShift
+                               or kind == TokenKind.BitwiseUnsignedRightShift))
+
+        if not splittable:
+            error_expected(TokenKind.GreaterThan, true)
+            return false
+
+        token.offset = token.offset + 1
+        token.set_length(token.length - 1)
+
+        if kind == TokenKind.BitwiseRightShift:
+            token.kind = TokenKind.GreaterThan
+        else:
+            token.kind = TokenKind.BitwiseRightShift
+
+        return true
+
+    def parse_expression : i32
+        return parse_assignment_expression()
+
+    # right associative, by recursion
+    #
+    #   assignment := cast (assignment_operator assignment)?
+    def parse_assignment_expression : i32
+        let node = parse_cast_expression()
+        let token_kind = current().kind
+        let kind = assignment_kind(token_kind)
+
+        if kind == AstNodeKind.Unknown or not match_on_same_line(token_kind):
+            return node
+
+        let oper = matched
+        let right = parse_assignment_expression()
+
+        return builder.make_binary_operator(kind, oper, node, right)
+
+    #   cast := logical_or ('as' type)?
+    def parse_cast_expression : i32
+        let node = parse_logical_or_expression()
+
+        if not match_on_same_line(TokenKind.As):
+            return node
+
+        let oper = matched
+        let type = parse_type()
+
+        return builder.make_binary_operator(AstNodeKind.Cast, oper, node, type)
+
+    #   logical_or := logical_and (('or' | '||') logical_and)*
+    def parse_logical_or_expression : i32
+        let node = parse_logical_and_expression()
+
+        while (match_on_same_line(TokenKind.Or)
+               or match_on_same_line(TokenKind.LogicalOr)):
+            let oper = matched
+            let right = parse_logical_and_expression()
+
+            node = builder.make_binary_operator(AstNodeKind.LogicalOr, oper,
+                                                node, right)
+
+        return node
+
+    #   logical_and := logical_not (('and' | '&&') logical_not)*
+    def parse_logical_and_expression : i32
+        let node = parse_logical_not_expression()
+
+        while (match_on_same_line(TokenKind.And)
+               or match_on_same_line(TokenKind.LogicalAnd)):
+            let oper = matched
+            let right = parse_logical_not_expression()
+
+            node = builder.make_binary_operator(AstNodeKind.LogicalAnd, oper,
+                                                node, right)
+
+        return node
+
+    # the word is loose and the symbol is tight (record 0057)
+    #
+    #   logical_not := ('not')* equality
+    def parse_logical_not_expression : i32
+        if not match_on_same_line(TokenKind.Not):
+            return parse_equality_expression()
+
+        let oper = matched
+
+        return builder.make_unary_operator(AstNodeKind.LogicalNot, oper,
+                                           parse_logical_not_expression())
+
+    #   equality := relational (('==' | '!=') relational)*
+    def parse_equality_expression : i32
+        let node = parse_relational_expression()
+
+        while true:
+            let kind = AstNodeKind.Unknown
+
+            if match_on_same_line(TokenKind.Equal):
+                kind = AstNodeKind.Equal
+            elif match_on_same_line(TokenKind.NotEqual):
+                kind = AstNodeKind.NotEqual
+            else:
+                break
+
+            let oper = matched
+            let right = parse_relational_expression()
+
+            node = builder.make_binary_operator(kind, oper, node, right)
+
+        return node
+
+    #   relational := range (('<' | '>' | '<=' | '>=' | 'in' | 'not' 'in') range)*
+    def parse_relational_expression : i32
+        let node = parse_range_expression()
+
+        while true:
+            if ((lookahead_on_same_line(TokenKind.LessThan)
+                 or lookahead_on_same_line(TokenKind.GreaterThan))
+                and glued_to_previous()):
+                let message : String = "a comparison is written with spaces "
+
+                message.append("around it; glued, this opens a generic ")
+                message.append("argument list, and what is in front of it ")
+                message.append("cannot take one")
+                error_at_current(message)
+                break
+
+            let kind = AstNodeKind.Unknown
+
+            if match_on_same_line(TokenKind.LessThan):
+                kind = AstNodeKind.LessThan
+            elif match_on_same_line(TokenKind.GreaterThan):
+                kind = AstNodeKind.GreaterThan
+            elif match_on_same_line(TokenKind.LessThanOrEqual):
+                kind = AstNodeKind.LessThanOrEqual
+            elif match_on_same_line(TokenKind.GreaterThanOrEqual):
+                kind = AstNodeKind.GreaterThanOrEqual
+            elif match_on_same_line(TokenKind.In):
+                kind = AstNodeKind.In
+            elif match_on_same_line(TokenKind.Not):
+                let oper = matched
+
+                expect_on_same_line(TokenKind.In)
+
+                let right = parse_range_expression()
+
+                node = builder.make_binary_operator(AstNodeKind.NotIn, oper,
+                                                    node, right)
+                continue
+            else:
+                break
+
+            let oper = matched
+            let right = parse_range_expression()
+
+            node = builder.make_binary_operator(kind, oper, node, right)
+
+        return node
+
+    #   range := arith (('..' | '...') arith)*
+    def parse_range_expression : i32
+        let node = parse_arith_expression()
+
+        while true:
+            let kind = AstNodeKind.Unknown
+
+            if match_on_same_line(TokenKind.InclusiveRange):
+                kind = AstNodeKind.InclusiveRange
+            elif match_on_same_line(TokenKind.ExclusiveRange):
+                kind = AstNodeKind.ExclusiveRange
+            else:
+                break
+
+            let oper = matched
+            let right = parse_arith_expression()
+
+            node = builder.make_binary_operator(kind, oper, node, right)
+
+        return node
+
+    #   arith_expression := term_expression (('+' | '-') term_expression)*
+    def parse_arith_expression : i32
+        let node = parse_term_expression()
+
+        while true:
+            let kind = AstNodeKind.Unknown
+
+            if match_on_same_line(TokenKind.Plus):
+                kind = AstNodeKind.Plus
+            elif match_on_same_line(TokenKind.Minus):
+                kind = AstNodeKind.Minus
+            else:
+                break
+
+            let oper = matched
+            let right = parse_term_expression()
+
+            node = builder.make_binary_operator(kind, oper, node, right)
+
+        return node
+
+    #   term_expression := power (('*' | '/' | '//' | '%') power)*
+    def parse_term_expression : i32
+        let node = parse_power_expression()
+
+        while true:
+            let kind = AstNodeKind.Unknown
+
+            if match_on_same_line(TokenKind.Times):
+                kind = AstNodeKind.Times
+            elif match_on_same_line(TokenKind.Division):
+                kind = AstNodeKind.Division
+            elif match_on_same_line(TokenKind.IntegerDivision):
+                kind = AstNodeKind.IntegerDivision
+            elif match_on_same_line(TokenKind.Modulo):
+                kind = AstNodeKind.Modulo
+            else:
+                break
+
+            let oper = matched
+            let right = parse_power_expression()
+
+            node = builder.make_binary_operator(kind, oper, node, right)
+
+        return node
+
+    # deliberately not C's order, and right associative (record 0057)
+    #
+    #   power_expression := bitwise_or ('**' power_expression)?
+    def parse_power_expression : i32
+        let node = parse_bitwise_or_expression()
+
+        if not match_on_same_line(TokenKind.Power):
+            return node
+
+        let oper = matched
+        let right = parse_power_expression()
+
+        return builder.make_binary_operator(AstNodeKind.Power, oper, node, right)
+
+    #   bitwise_or := bitwise_xor ('|' bitwise_xor)*
+    def parse_bitwise_or_expression : i32
+        let node = parse_bitwise_xor_expression()
+
+        while match_on_same_line(TokenKind.BitwiseOr):
+            let oper = matched
+            let right = parse_bitwise_xor_expression()
+
+            node = builder.make_binary_operator(AstNodeKind.BitwiseOr, oper,
+                                                node, right)
+
+        return node
+
+    #   bitwise_xor := bitwise_and ('^' bitwise_and)*
+    def parse_bitwise_xor_expression : i32
+        let node = parse_bitwise_and_expression()
+
+        while match_on_same_line(TokenKind.BitwiseXor):
+            let oper = matched
+            let right = parse_bitwise_and_expression()
+
+            node = builder.make_binary_operator(AstNodeKind.BitwiseXor, oper,
+                                                node, right)
+
+        return node
+
+    #   bitwise_and := shift ('&' shift)*
+    def parse_bitwise_and_expression : i32
+        let node = parse_shift_expression()
+
+        while match_on_same_line(TokenKind.BitwiseAnd):
+            let oper = matched
+            let right = parse_shift_expression()
+
+            node = builder.make_binary_operator(AstNodeKind.BitwiseAnd, oper,
+                                                node, right)
+
+        return node
+
+    #   shift := unary (('<<' | '>>' | '>>>') unary)*
+    def parse_shift_expression : i32
+        let node = parse_unary_expression()
+
+        while true:
+            let kind = AstNodeKind.Unknown
+
+            if match_on_same_line(TokenKind.BitwiseLeftShift):
+                kind = AstNodeKind.BitwiseLeftShift
+            elif match_on_same_line(TokenKind.BitwiseRightShift):
+                kind = AstNodeKind.BitwiseRightShift
+            elif match_on_same_line(TokenKind.BitwiseUnsignedRightShift):
+                kind = AstNodeKind.BitwiseUnsignedRightShift
+            else:
+                break
+
+            let oper = matched
+            let right = parse_unary_expression()
+
+            node = builder.make_binary_operator(kind, oper, node, right)
+
+        return node
+
+    #   unary := ('!' | '&' | '*' | '**' | '~' | '-' | '+' | '++' | '--') unary
+    #          | postfix
+    def parse_unary_expression : i32
+        if lookahead_on_same_line(TokenKind.New):
+            return parse_new()
+
+        if lookahead_on_same_line(TokenKind.Delete):
+            return parse_delete()
+
+        if lookahead_on_same_line(TokenKind.Sizeof):
+            return parse_sizeof()
+
+        let kind = AstNodeKind.Unknown
+
+        if match_on_same_line(TokenKind.LogicalNot):
+            kind = AstNodeKind.LogicalNotOperator
+        elif match_on_same_line(TokenKind.BitwiseAnd):
+            kind = AstNodeKind.AddressOf
+        elif match_on_same_line(TokenKind.Times):
+            kind = AstNodeKind.Dereference
+        elif match_on_same_line(TokenKind.Power):
+            # one token, two dereferences
+            let oper = matched
+            let operand = parse_unary_expression()
+
+            operand = builder.make_unary_operator(AstNodeKind.Dereference, oper,
+                                                  operand)
+
+            return builder.make_unary_operator(AstNodeKind.Dereference, oper,
+                                               operand)
+        elif match_on_same_line(TokenKind.BitwiseNot):
+            kind = AstNodeKind.BitwiseNot
+        elif match_on_same_line(TokenKind.Minus):
+            kind = AstNodeKind.UnaryMinus
+        elif match_on_same_line(TokenKind.Plus):
+            kind = AstNodeKind.UnaryPlus
+        elif match_on_same_line(TokenKind.Increment):
+            kind = AstNodeKind.PreIncrement
+        elif match_on_same_line(TokenKind.Decrement):
+            kind = AstNodeKind.PreDecrement
+        else:
+            return parse_postfix_expression()
+
+        let oper = matched
+        let operand = parse_unary_expression()
+
+        return builder.make_unary_operator(kind, oper, operand)
+
+    #   new := 'new' type arguments?
+    def parse_new : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.New)
+
+        let type = parse_type()
+        let arguments = 0
+
+        if lookahead_on_same_line(TokenKind.LeftParenthesis):
+            arguments = parse_arguments()
+
+        return builder.make_new(token, type, arguments)
+
+    #   delete := 'delete' '[' ']'? expression
+    def parse_delete : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.Delete)
+
+        let kind = AstNodeKind.Delete
+
+        if match_on_same_line(TokenKind.LeftSquareBracket):
+            expect_on_same_line(TokenKind.RightSquareBracket)
+            kind = AstNodeKind.DeleteArray
+
+        return builder.make_unary_operator(kind, token, parse_unary_expression())
+
+    #   sizeof := 'sizeof' '(' type ')'
+    def parse_sizeof : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.Sizeof)
+        expect_on_same_line(TokenKind.LeftParenthesis)
+
+        let type = parse_type()
+
+        expect_on_same_line(TokenKind.RightParenthesis)
+
+        return builder.make_sizeof(token, type)
+
+    #   postfix_expression := primary_expression postfix*
+    def parse_postfix_expression : i32
+        let node = parse_primary_expression()
+
+        while true:
+            if match_on_same_line(TokenKind.Dot):
+                let oper = matched
+                let member = parse_generic_name(parse_identifier())
+
+                node = builder.make_binary_operator(AstNodeKind.Dot, oper, node,
+                                                    member)
+            elif match_on_same_line(TokenKind.Arrow):
+                let oper = matched
+                let member = parse_generic_name(parse_identifier())
+
+                node = builder.make_binary_operator(AstNodeKind.Arrow, oper,
+                                                    node, member)
+            elif lookahead_on_same_line(TokenKind.LeftSquareBracket):
+                let token = current_token
+
+                expect_on_same_line(TokenKind.LeftSquareBracket)
+                open_brackets += 1
+
+                let subscript = parse_expression()
+
+                expect_on_same_line(TokenKind.RightSquareBracket)
+                open_brackets -= 1
+                node = builder.make_index(token, node, subscript)
+            elif lookahead_on_same_line(TokenKind.LeftParenthesis):
+                let token = current_token
+
+                node = builder.make_call(token, node, parse_arguments())
+            elif match_on_same_line(TokenKind.Increment):
+                node = builder.make_unary_operator(AstNodeKind.PostIncrement,
+                                                   matched, node)
+            elif match_on_same_line(TokenKind.Decrement):
+                node = builder.make_unary_operator(AstNodeKind.PostDecrement,
+                                                   matched, node)
+            else:
+                break
+
+        return node
+
+    #   arguments := '(' (expression (',' expression)*)? ')'
+    def parse_arguments : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LeftParenthesis)
+        open_brackets += 1
+
+        let node = builder.make_arguments(token)
+
+        if not lookahead_on_same_line(TokenKind.RightParenthesis):
+            let last = builder.add_child(node, 0, parse_expression())
+
+            while match_on_same_line(TokenKind.Comma):
+                last = builder.add_child(node, last, parse_expression())
+
+        expect_on_same_line(TokenKind.RightParenthesis)
+        open_brackets -= 1
+
+        return node
+
+    #   primary := parenthesis_or_tuple | list | array_or_hash | closure
+    #            | 'this' | template_string | literal | scope
+    def parse_primary_expression : i32
+        if lookahead_on_same_line(TokenKind.LeftParenthesis):
+            return parse_parenthesis_or_tuple()
+
+        if lookahead_on_same_line(TokenKind.LeftSquareBracket):
+            return parse_list()
+
+        if lookahead_on_same_line(TokenKind.LeftCurlyBracket):
+            return parse_array_or_hash()
+
+        # the '|' that opens a closure, and a '||' is an empty parameter list
+        if (lookahead_on_same_line(TokenKind.BitwiseOr)
+            or lookahead_on_same_line(TokenKind.LogicalOr)):
+            return parse_closure()
+
+        if match_on_same_line(TokenKind.This):
+            return builder.make_this(matched)
+
+        # record 0053
+        if match_on_same_line(TokenKind.Super):
+            return builder.make_super(matched)
+
+        # record 0045: 'i32(x)', a builtin standing where a callee goes
+        if (is_builtin_type(current().kind) and on_same_line()
+            and module->token(current_token + 1).kind
+                    == TokenKind.LeftParenthesis):
+            let token = current_token
+
+            advance()
+
+            return builder.make_builtin_type(token)
+
+        if lookahead_on_same_line(TokenKind.TemplateStringBegin):
+            return parse_template_string()
+
+        let literal = parse_literal()
+
+        if literal != 0:
+            return literal
+
+        if (lookahead_on_same_line(TokenKind.Scope)
+            or lookahead_on_same_line(TokenKind.Identifier)):
+            return parse_generic_name(parse_scope())
+
+        error_found("an expression", true)
+
+        return 0
+
+    # only read when the '<' is glued to the name
+    #
+    #   generic_name := name generic_arguments?
+    def parse_generic_name : i32
+        @name : i32
+
+        if (name == 0 or not lookahead_on_same_line(TokenKind.LessThan)
+            or not glued_to_previous()):
+            return name
+
+        return builder.make_generic_name(name, parse_generic_arguments())
+
+    #   parenthesis_or_tuple := '(' expression (',' expression?)* ')'
+    def parse_parenthesis_or_tuple : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LeftParenthesis)
+        open_brackets += 1
+
+        let expression = parse_expression()
+
+        if not lookahead_on_same_line(TokenKind.Comma):
+            expect_on_same_line(TokenKind.RightParenthesis)
+            open_brackets -= 1
+
+            return builder.make_parenthesis(token, expression)
+
+        let node = builder.make_tuple(token)
+        let last = builder.add_child(node, 0, expression)
+
+        while match_on_same_line(TokenKind.Comma):
+            if lookahead_on_same_line(TokenKind.RightParenthesis):
+                break
+
+            last = builder.add_child(node, last, parse_expression())
+
+        expect_on_same_line(TokenKind.RightParenthesis)
+        open_brackets -= 1
+
+        return node
+
+    #   list := '[' (expression (',' expression?)*)? ']'
+    def parse_list : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LeftSquareBracket)
+        open_brackets += 1
+
+        let node = builder.make_list(token)
+
+        if not lookahead_on_same_line(TokenKind.RightSquareBracket):
+            let last = builder.add_child(node, 0, parse_expression())
+
+            while match_on_same_line(TokenKind.Comma):
+                if lookahead_on_same_line(TokenKind.RightSquareBracket):
+                    break
+
+                last = builder.add_child(node, last, parse_expression())
+
+        expect_on_same_line(TokenKind.RightSquareBracket)
+        open_brackets -= 1
+
+        return node
+
+    #   array_or_hash := '{' (hash | expression (',' expression?)*)? '}'
+    def parse_array_or_hash : i32
+        let token = current_token
+
+        expect_on_same_line(TokenKind.LeftCurlyBracket)
+        open_brackets += 1
+
+        if match_on_same_line(TokenKind.RightCurlyBracket):
+            open_brackets -= 1
+
+            return builder.make_array(token)
+
+        let first = parse_expression()
+
+        if (kind_of(first) == AstNodeKind.Identifier
+            and lookahead_on_same_line(TokenKind.Colon)):
+            let hash = parse_hash(token, first)
+
+            open_brackets -= 1
+
+            return hash
+
+        let node = builder.make_array(token)
+        let last = builder.add_child(node, 0, first)
+
+        while match_on_same_line(TokenKind.Comma):
+            if lookahead_on_same_line(TokenKind.RightCurlyBracket):
+                break
+
+            last = builder.add_child(node, last, parse_expression())
+
+        expect_on_same_line(TokenKind.RightCurlyBracket)
+        open_brackets -= 1
+
+        return node
+
+    #   hash := identifier ':' expression (',' identifier ':' expression)*
+    def parse_hash : i32
+        @token : i32
+        @key : i32
+
+        let node = builder.make_hash(token)
+        let last = 0
+
+        while true:
+            let colon = current_token
+
+            expect_on_same_line(TokenKind.Colon)
+
+            let value = parse_expression()
+
+            last = builder.add_child(node, last,
+                                     builder.make_hash_pair(colon, key, value))
+
+            if not match_on_same_line(TokenKind.Comma):
+                break
+
+            if lookahead_on_same_line(TokenKind.RightCurlyBracket):
+                break
+
+            key = parse_identifier()
+
+        expect_on_same_line(TokenKind.RightCurlyBracket)
+
+        return node
+
+    #   closure := ('||' | '|' (closure_parameter (',' closure_parameter)*)? '|')
+    #              ('->' type)? '{' braced_block '}'
+    def parse_closure : i32
+        let token = current_token
+        let empty_parameters = match_on_same_line(TokenKind.LogicalOr)
+
+        if not empty_parameters:
+            expect_on_same_line(TokenKind.BitwiseOr)
+
+        let node = builder.make_closure(token)
+        let last = 0
+
+        if not empty_parameters:
+            if not lookahead_on_same_line(TokenKind.BitwiseOr):
+                last = builder.add_child(node, last, parse_closure_parameter())
+
+                while match_on_same_line(TokenKind.Comma):
+                    last = builder.add_child(node, last,
+                                             parse_closure_parameter())
+
+            expect_on_same_line(TokenKind.BitwiseOr)
+
+        if match_on_same_line(TokenKind.Arrow):
+            last = builder.add_child(node, last,
+                                     builder.make_closure_return_type(
+                                         parse_type()))
+
+        expect_on_same_line(TokenKind.LeftCurlyBracket)
+
+        builder.add_child(node, last, parse_braced_block())
+
+        # the brace that closes it may be lines below, so no line rule here
+        expect(TokenKind.RightCurlyBracket)
+
+        return node
+
+    #   closure_parameter := identifier (':' type)?
+    def parse_closure_parameter : i32
+        let name = parse_binding_name()
+        let type = parse_binding_type()
+
+        return builder.make_closure_parameter(name, type)
+
+    #   literal := integer | float | string | char | symbol | 'true' | 'false'
+    def parse_literal : i32
+        let token_kind = current().kind
+        let kind = literal_kind(token_kind)
+
+        if kind == AstNodeKind.Unknown:
+            return 0
+
+        if not match_on_same_line(token_kind):
+            return 0
+
+        return builder.make_literal(kind, matched)
+
+    #   scope := '::' identifier
+    #          | identifier ('::' identifier)?
+    def parse_scope : i32
+        if match_on_same_line(TokenKind.Scope):
+            let oper = matched
+            let name = parse_identifier()
+
+            return builder.make_scope(oper, 0, name)
+
+        let alias = parse_identifier()
+
+        if not match_on_same_line(TokenKind.Scope):
+            return alias
+
+        let oper = matched
+        let name = parse_identifier()
+
+        return builder.make_scope(oper, alias, name)
+
+    def parse_identifier : i32
+        if expect_on_same_line(TokenKind.Identifier):
+            return builder.make_identifier(matched)
+
+        return 0
+
+    # ---- navigation, all of it inert while panic is set
+
+    def lookahead : bool
+        @kind : TokenKind
+
+        return not panic and current().kind == kind
+
+    def match : bool
+        @kind : TokenKind
+
+        if not lookahead(kind):
+            return false
+
+        matched = current_token
+        advance()
+
+        return true
+
+    def expect : bool
+        @kind : TokenKind
+
+        if match(kind):
+            return true
+
+        error_expected(kind, false)
+
+        return false
+
+    # a statement lives on one line, and inside a bracket it does not
+    def on_same_line : bool
+        return (open_brackets > 0 or current_token == statement_first_token
+                or not current().newline_before)
+
+    def begin_statement : void
+        statement_first_token = current_token
+        open_brackets = 0
+
+    # nothing at all between the two tokens
+    def glued_to_previous : bool
+        if current_token == 0:
+            return false
+
+        let previous : Token = module->token(current_token - 1)
+
+        return previous.offset + previous.length == current().offset
+
+    def indent : void
+        @indentation : i32
+
+        if depth < indentation_stack.length():
+            indentation_stack[depth] = indentation
+        else:
+            indentation_stack.add(indentation)
+
+        depth += 1
+
+    # the 0 the stack is born with is not a level anyone pushed, so it stays
+    def dedent : void
+        if depth > 1:
+            depth -= 1
+
+    def is_indented : bool
+        return (not panic and current().kind != TokenKind.Eof
+                and indentation_of_current_line()
+                        > indentation_stack[depth - 1])
+
+    def lookahead_on_same_line : bool
+        @kind : TokenKind
+
+        return on_same_line() and lookahead(kind)
+
+    def match_on_same_line : bool
+        @kind : TokenKind
+
+        return on_same_line() and match(kind)
+
+    def expect_on_same_line : bool
+        @kind : TokenKind
+
+        if match_on_same_line(kind):
+            return true
+
+        error_expected(kind, true)
+
+        return false
+
+    # freezes while panic is set
+    def advance : void
+        if panic:
+            return
+
+        if current().kind != TokenKind.Eof:
+            current_token += 1
+
+    def current : Token&
+        return module->token(current_token)
+
+    def kind_of : AstNodeKind
+        @node : i32
+
+        return module->ast.node(node).kind
+
+    def indentation_of_current_line : i32
+        return current().whitespace
+
+    def error_expected : void
+        @kind : TokenKind
+        @same_line : bool
+
+        error_found(describe(kind), same_line)
+
+    def error_found : void
+        @expectation : String
+        @same_line : bool
+
+        if panic:
+            return
+
+        panic = true
+
+        let token : Token = current()
+        let at_end_of_file = token.kind == TokenKind.Eof
+        let at_end_of_line = same_line and not on_same_line()
+
+        # what was needed never came: the caret goes just past the last token
+        # of this line rather than on the first of the next
+        if (at_end_of_file or at_end_of_line) and current_token > 0:
+            let previous : Token = module->token(current_token - 1)
+            let found = "the end of the line"
+
+            if at_end_of_file:
+                found = "the end of the file"
+
+            module->logger.error(previous.offset + previous.length, 0,
+                                 "expected ${expectation}, found ${found}")
+            return
+
+        let value = module->token_value(current_token)
+
+        module->logger.error(token.offset, token.length,
+                             "expected ${expectation}, found '${value}'")
+
+    def error_at_current : void
+        @message : String
+
+        if panic:
+            return
+
+        panic = true
+
+        let token : Token = current()
+
+        module->logger.error(token.offset, token.length, message)
+
+    # the flag without a message: this statement cannot be kept
+    def poison : void
+        panic = true
+
+    # throw away what is left of the line that failed, and the lines it
+    # opened
+    def synchronize : void
+        @statement_indentation : i32
+        @statement_start : i32
+        @braced : bool
+
+        panic = false
+
+        if current_token == statement_start:
+            skip_to_next_line(braced)
+        elif not current().newline_before:
+            skip_to_next_line(braced)
+
+        while (not at_block_end(braced)
+               and indentation_of_current_line() > statement_indentation):
+            skip_to_next_line(braced)
+
+    def skip_to_next_line : void
+        @braced : bool
+
+        if at_block_end(braced):
+            return
+
+        advance()
+
+        while not at_block_end(braced) and not current().newline_before:
+            advance()
+
+    def at_block_end : bool
+        @braced : bool
+
+        if current().kind == TokenKind.Eof:
+            return true
+
+        return braced and lookahead(TokenKind.RightCurlyBracket)
+
+# what to call a token kind inside a message
+def describe : String
+    @kind : TokenKind
+
+    let text : String
+
+    switch kind:
+        case Import:
+            text = "'import'"
+        case Def:
+            text = "'def'"
+        case Pass:
+            text = "'pass'"
+        case At:
+            text = "'@'"
+        case Colon:
+            text = "':'"
+        case Comma:
+            text = "','"
+        case In:
+            text = "'in'"
+        case Semicolon:
+            text = "';'"
+        case BitwiseOr:
+            text = "'|'"
+        case LeftCurlyBracket:
+            text = "'{'"
+        case RightCurlyBracket:
+            text = "'}'"
+        case GreaterThan:
+            text = "'>'"
+        case Let:
+            text = "'let'"
+        case Const:
+            text = "'const'"
+        case As:
+            text = "'as'"
+        case Dot:
+            text = "'.'"
+        case LeftParenthesis:
+            text = "'('"
+        case TemplateStringEnd:
+            text = "the end of the template string"
+        case InterpolationEnd:
+            text = "'}'"
+        case RightParenthesis:
+            text = "')'"
+        case RightSquareBracket:
+            text = "']'"
+        case Identifier:
+            text = "an identifier"
+        case Eof:
+            text = "the end of the file"
+        default:
+            text = "a different token"
+
+    return text
+
+def assignment_kind : AstNodeKind
+    @kind : TokenKind
+
+    switch kind:
+        case Assignment:
+            return AstNodeKind.Assignment
+        case PlusAssignment:
+            return AstNodeKind.PlusAssignment
+        case MinusAssignment:
+            return AstNodeKind.MinusAssignment
+        case TimesAssignment:
+            return AstNodeKind.TimesAssignment
+        case DivisionAssignment:
+            return AstNodeKind.DivisionAssignment
+        case BitwiseNotAssignment:
+            return AstNodeKind.BitwiseNotAssignment
+        case IntegerDivisionAssignment:
+            return AstNodeKind.IntegerDivisionAssignment
+        case ModuloAssignment:
+            return AstNodeKind.ModuloAssignment
+        case BitwiseAndAssignment:
+            return AstNodeKind.BitwiseAndAssignment
+        case BitwiseOrAssignment:
+            return AstNodeKind.BitwiseOrAssignment
+        case BitwiseXorAssignment:
+            return AstNodeKind.BitwiseXorAssignment
+        case BitwiseLeftShiftAssignment:
+            return AstNodeKind.BitwiseLeftShiftAssignment
+        case BitwiseRightShiftAssignment:
+            return AstNodeKind.BitwiseRightShiftAssignment
+        case BitwiseUnsignedRightShiftAssignment:
+            return AstNodeKind.BitwiseUnsignedRightShiftAssignment
+        default:
+            return AstNodeKind.Unknown
+
+# the builtin types are words of their own, so 'i32' cannot be a variable
+def is_builtin_type : bool
+    @kind : TokenKind
+
+    switch kind:
+        case U8:
+        case U16:
+        case U32:
+        case U64:
+        case I8:
+        case I16:
+        case I32:
+        case I64:
+        case F32:
+        case F64:
+        case Isize:
+        case Usize:
+        case Bool:
+        case Void:
+        case Char:
+        case Symbol:
+            return true
+        default:
+            return false
+
+def literal_kind : AstNodeKind
+    @kind : TokenKind
+
+    switch kind:
+        case IntegerLiteral:
+            return AstNodeKind.IntegerLiteral
+        case FloatLiteral:
+            return AstNodeKind.FloatLiteral
+        case StringLiteral:
+            return AstNodeKind.StringLiteral
+        case CharLiteral:
+            return AstNodeKind.CharLiteral
+        case SymbolLiteral:
+            return AstNodeKind.SymbolLiteral
+        case True:
+            return AstNodeKind.True
+        case False:
+            return AstNodeKind.False
+        case Null:
+            return AstNodeKind.NullLiteral
+        default:
+            return AstNodeKind.Unknown

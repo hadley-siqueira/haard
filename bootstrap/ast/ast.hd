@@ -1,0 +1,39 @@
+# hdc.ast.ast -- the nodes, and nothing else.
+#
+# The twin of src/haard/ast/ast.h: a flat Array of nodes that name each other
+# by index. Building them is AstBuilder's job.
+import hdc.ast.ast_node
+
+class Ast:
+    nodes : Array<AstNode>
+
+    # the node every walk starts from, 0 when nothing was built yet. Set by
+    # hand, because a tree is built from the leaves up
+    root : i32
+
+    def init : void
+        let unknown : AstNode
+
+        # index 0 is the sentinel every 'no node here' points at
+        nodes.add(unknown)
+        root = 0
+
+    def push : i32
+        @node : AstNode
+
+        nodes.add(node)
+
+        return nodes.length() - 1
+
+    # Out of range gives back the sentinel at 0, so a walk of a broken tree
+    # stops instead of reading past the end.
+    #
+    # A reference into the Array, and so only good until the next 'push':
+    # the Array may move when it grows. Read what is needed and let it go
+    def node : AstNode&
+        @index : i32
+
+        if index < 0 or index >= nodes.length():
+            return nodes[0]
+
+        return nodes[index]

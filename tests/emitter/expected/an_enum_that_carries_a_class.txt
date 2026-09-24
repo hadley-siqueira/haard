@@ -4,6 +4,7 @@
 #include <new>
 
 struct h0_1_Text;
+struct h0_13_Message;
 
 struct h0_1_Text {
     char *h0_2_data;

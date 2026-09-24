@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# The bootstrap's scanner, judged by the C++ scanner's goldens.
+# The bootstrap, judged by the C++ compiler's own goldens.
 #
-#   tests/run.sh      build it and run every case of tests/scanner
+#   tests/run.sh      build it and run every case of each suite it has a twin of
 #
 # There is nothing to update here and no expected/ of its own: the answer to
-# every case is already written down, in ../tests/scanner/expected, by the
-# scanner this one is the twin of. A case passes when the two dumps are the
-# same byte for byte -- the diagnostics first, then one line per token.
+# every case is already written down, by the C++ phase each tool is the twin
+# of. A case passes when the two outputs are the same byte for byte.
 #
-# It runs from tests/scanner and names each case 'cases/<name>.hd', because
-# that is how the goldens were written: a diagnostic quotes the path it was
-# given.
+#   tests/scanner   build/dump_tokens      the token stream, diagnostics first
+#   tests/parser    build/parse_and_print  the diagnostics, the source printed
+#                                          back, the tree, and the round trip
+#
+# Each suite runs from its own directory and names a case 'cases/<name>.hd',
+# because that is how its goldens were written: a diagnostic quotes the path
+# it was given.
 #
 # Exits 0 if everything passed, 1 otherwise.
 set -u
@@ -18,7 +21,7 @@ set -u
 cd "$(dirname "$0")/.."
 
 bootstrap=$(pwd)
-oracle=$bootstrap/../tests/scanner
+build=${TMPDIR:-/tmp}/haard-bootstrap-tests
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
     green=$'\033[32m'
@@ -32,57 +35,93 @@ else
     reset=''
 fi
 
+indented() {
+    sed -n '1,20p' | sed "s/^/        ${dim}/;s/\$/${reset}/"
+}
+
 # the manifest and the roots table are two spellings of one build, so they
-# must give the same program before either is worth testing
+# must give the same programs before either is worth testing
 if ! out=$(make -s table 2>&1); then
     printf '%sFAIL%s  haard.pkg and roots.tbl build different programs\n' \
         "$red" "$reset"
-    printf '%s\n' "$out" | sed -n '1,20p' | sed "s/^/      ${dim}/;s/\$/${reset}/"
+    printf '%s\n' "$out" | indented
     exit 1
 fi
 
 if ! out=$(make -s 2>&1); then
     printf '%sFAIL%s  the bootstrap does not build\n' "$red" "$reset"
-    printf '%s\n' "$out" | sed -n '1,30p' | sed "s/^/      ${dim}/;s/\$/${reset}/"
+    printf '%s\n' "$out" | indented
     exit 1
 fi
 
-scan=$bootstrap/build/dump_tokens
-cases=("$oracle"/cases/*.hd)
-total=${#cases[@]}
+mkdir -p "$build"
+
 passed=0
 failed=0
-done=0
 
-cd "$oracle"
+# suite <name> <tool> <takes a reprint path>
+suite() {
+    local name=$1
+    local tool=$bootstrap/build/$2
+    local reprint=$3
+    local oracle=$bootstrap/../tests/$name
+    local cases=("$oracle"/cases/*.hd)
+    local total=${#cases[@]}
+    local done=0
 
-for case in "${cases[@]}"; do
-    name=$(basename "$case" .hd)
-    done=$((done + 1))
+    echo
+    echo "$name, against tests/$name/expected"
 
-    got=$(timeout 5 "$scan" "cases/$name.hd" 2>&1)
-    status=$?
+    cd "$oracle" || exit 1
 
-    if [ $status -eq 124 ]; then
-        printf '[%2d/%d] %sFAIL%s  %s (timed out after 5s)\n' \
-            "$done" "$total" "$red" "$reset" "$name"
-        failed=$((failed + 1))
-        continue
-    fi
+    for case in "${cases[@]}"; do
+        local case_name
+        local got
+        local status
+        local difference
 
-    if ! difference=$(diff -u "expected/$name.txt" <(printf '%s\n' "$got")); then
-        printf '[%2d/%d] %sFAIL%s  %s\n' "$done" "$total" "$red" "$reset" "$name"
-        printf '%s\n' "$difference" | sed -n '1,20p' \
-            | sed "s/^/        ${dim}/;s/\$/${reset}/"
-        failed=$((failed + 1))
-        continue
-    fi
+        case_name=$(basename "$case" .hd)
+        done=$((done + 1))
 
-    printf '[%2d/%d] %sPASS%s  %s\n' "$done" "$total" "$green" "$reset" "$name"
-    passed=$((passed + 1))
-done
+        if [ "$reprint" = yes ]; then
+            got=$(timeout 5 "$tool" "cases/$case_name.hd" \
+                  "$build/$case_name.reprint.hd" 2>&1)
+        else
+            got=$(timeout 5 "$tool" "cases/$case_name.hd" 2>&1)
+        fi
+
+        status=$?
+
+        if [ $status -eq 124 ]; then
+            printf '[%3d/%d] %sFAIL%s  %s (timed out after 5s)\n' \
+                "$done" "$total" "$red" "$reset" "$case_name"
+            failed=$((failed + 1))
+            continue
+        fi
+
+        if ! difference=$(diff -u "expected/$case_name.txt" \
+                              <(printf '%s\n' "$got")); then
+            printf '[%3d/%d] %sFAIL%s  %s\n' "$done" "$total" "$red" "$reset" \
+                "$case_name"
+            printf '%s\n' "$difference" | indented
+            failed=$((failed + 1))
+            continue
+        fi
+
+        printf '[%3d/%d] %sPASS%s  %s\n' "$done" "$total" "$green" "$reset" \
+            "$case_name"
+        passed=$((passed + 1))
+    done
+
+    cd "$bootstrap" || exit 1
+}
+
+suite scanner dump_tokens no
+suite parser parse_and_print yes
 
 echo
+
+total=$((passed + failed))
 
 if [ $failed -gt 0 ]; then
     printf '%s%d of %d passed, %d failed%s\n' "$red" "$passed" "$total" \

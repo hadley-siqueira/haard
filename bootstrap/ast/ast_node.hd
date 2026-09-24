@@ -1,0 +1,214 @@
+# hdc.ast.ast_node -- one node of the tree, and what kind of node it is.
+#
+# The twin of src/haard/ast/ast_node.h. The kinds are the C++ ones in the same
+# order, generated once from that header and edited by hand since.
+
+enum AstNodeKind:
+    Unknown
+    Module
+    Import
+    ImportPath
+    ImportPathSegment
+    ImportAlias
+    ImportAll
+    LetDeclaration
+    ConstDeclaration
+    Class
+    Struct
+    Enum
+    Union
+    SuperType
+    TypeBody
+    Field
+    Function
+    GenericParameters
+    FunctionReturnType
+    Param
+    Block
+    Pass
+    If
+    Elif
+    Else
+    While
+    Switch
+    Case
+    Default
+    For
+    ForEach
+    ForHead
+    ForCondition
+    ForIncrement
+    Return
+    Break
+    Continue
+    Yield
+    Goto
+    Label
+    Binding
+    BindingName
+    BindingType
+    BindingExpression
+    Plus
+    Minus
+    Times
+    Division
+    Assignment
+    PlusAssignment
+    MinusAssignment
+    TimesAssignment
+    DivisionAssignment
+    IntegerDivisionAssignment
+    ModuloAssignment
+    BitwiseAndAssignment
+    BitwiseOrAssignment
+    BitwiseXorAssignment
+    BitwiseNotAssignment
+    BitwiseLeftShiftAssignment
+    BitwiseRightShiftAssignment
+    BitwiseUnsignedRightShiftAssignment
+    Cast
+    LogicalOr
+    LogicalAnd
+    Equal
+    NotEqual
+    LessThan
+    GreaterThan
+    LessThanOrEqual
+    GreaterThanOrEqual
+    In
+    NotIn
+    InclusiveRange
+    ExclusiveRange
+    IntegerDivision
+    Modulo
+    Power
+    BitwiseOr
+    BitwiseXor
+    BitwiseAnd
+    BitwiseLeftShift
+    BitwiseRightShift
+    BitwiseUnsignedRightShift
+    LogicalNot
+    LogicalNotOperator
+    AddressOf
+    Dereference
+    BitwiseNot
+    UnaryMinus
+    UnaryPlus
+    PreIncrement
+    PreDecrement
+    New
+    Delete
+    DeleteArray
+    Sizeof
+    Scope
+    Dot
+    Arrow
+    Index
+    Call
+    Arguments
+    PostIncrement
+    PostDecrement
+    Parenthesis
+    Identifier
+    IntegerLiteral
+    FloatLiteral
+    StringLiteral
+    CharLiteral
+    SymbolLiteral
+    True
+    False
+    NullLiteral
+    This
+    Super
+    List
+    Array
+    Hash
+    HashPair
+    Tuple
+    Closure
+    ClosureParameter
+    ClosureReturnType
+    NamedType
+    BuiltinType
+    GenericName
+    GenericArguments
+    PointerType
+    ReferenceType
+    ArrayType
+    ListType
+    HashType
+    TupleType
+    FunctionType
+    TemplateString
+    TemplateStringChunk
+    Interpolation
+
+# A node names its token, its first child and its next sibling by index, so
+# the tree is a flat Array of these and nothing points at anything
+class AstNode:
+    kind : AstNodeKind
+    token : i32
+    sibling : i32
+    children : i32
+
+    def init : void
+        kind = AstNodeKind.Unknown
+        token = 0
+        sibling = 0
+        children = 0
+
+# The name a class declares its overload of this operator under, and "" for a
+# kind that is not one. Record 0034: a name no identifier can be, so no source
+# can call one by name
+def operator_name : char*
+    @kind : AstNodeKind
+
+    switch kind:
+        case Assignment:
+            return "operator="
+
+        case Index:
+            return "operator[]"
+
+        case Plus:
+            return "operator+"
+
+        case Minus:
+            return "operator-"
+
+        case Times:
+            return "operator*"
+
+        case Division:
+            return "operator/"
+
+        case IntegerDivision:
+            return "operator//"
+
+        case Power:
+            return "operator**"
+
+        case Modulo:
+            return "operator%"
+
+        case Equal:
+            return "operator=="
+
+        case NotEqual:
+            return "operator!="
+
+        case LessThan:
+            return "operator<"
+
+        case LessThanOrEqual:
+            return "operator<="
+
+        case GreaterThan:
+            return "operator>"
+
+        case GreaterThanOrEqual:
+            return "operator>="
+
+        default:
+            return ""

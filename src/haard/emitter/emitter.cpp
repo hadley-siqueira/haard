@@ -199,7 +199,7 @@ void Emitter::emit_forward_declarations() {
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if (kind != AST_CLASS && kind != AST_STRUCT) {
+            if (kind != AST_CLASS && kind != AST_STRUCT && kind != AST_ENUM) {
                 continue;
             }
 
@@ -210,6 +210,19 @@ void Emitter::emit_forward_declarations() {
             u32 candidate = module->get_symbols()->candidate_of(declaration);
 
             if (candidate == 0) {
+                continue;
+            }
+
+            // An enum too, declared the way it is defined: a scoped enum
+            // over an i32, or the struct a tagged union is. A method taking
+            // one by value only needs it declared, and the order section two
+            // writes the types in follows fields and bases -- not
+            // parameters. So 'def make : i32 @kind : AstNodeKind' in a class
+            // emitted before the enum was a C++ error: found by the
+            // bootstrap's AstBuilder, whose makers all take a kind
+            if (kind == AST_ENUM && !carries_a_payload(i, declaration)) {
+                out << "enum class " << name_of(i, candidate)
+                    << " : int32_t;\n";
                 continue;
             }
 

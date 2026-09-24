@@ -1,33 +1,82 @@
 # hdc.module.module -- one file and everything the phases learn about it.
 #
-# The twin of src/haard/module/, and only the part the scanner needs so far:
-# the source, the tokens read from it and the diagnostics about it. The later
-# phases add their tables here, the way the C++ one holds them.
+# The twin of src/haard/module/, and the part the scanner and the parser need
+# so far: the source, the tokens read from it, the tree built from those, and
+# the diagnostics about all of it. The later phases add their tables here, the
+# way the C++ one holds them.
 import hdc.token.token
 import hdc.source.source_file
 import hdc.log.logger
+import hdc.ast.ast
 
 class Module:
     source_file : SourceFile
     tokens : Array<Token>
     logger : Logger
+    ast : Ast
+
+    # What a token past the end is, the way TokenStream::get_token answers:
+    # a walk off the end reads an end of file instead of past the Array
+    eof : Token
+
+    # The text of the tokens the parser makes up -- 'operator[]' is one, and
+    # it is not written anywhere in the source. They are pushed after the
+    # real ones, and 'first_synthetic' is where they start
+    synthetic_text : Array<String>
+    first_synthetic : i32
 
     # The logger quotes the source, so it is pointed at it here. A Module is
     # never copied -- it is built where it is used and passed by pointer --
     # which is what keeps that address good
     def init : void
         logger.source = &source_file
+        eof.kind = TokenKind.Eof
 
-    # the text of the i-th token, which is a window into the source
+        # no synthetic token yet, and every real index is below this
+        first_synthetic = 2147483647
+
+    # the i-th token, or the end of the file past the last one. A reference,
+    # because the parser carves a '>' out of a '>>' in place
+    def token : Token&
+        @i : i32
+
+        if i < 0 or i >= tokens.length():
+            return eof
+
+        return tokens[i]
+
+    # the text of the i-th token, which is a window into the source -- or,
+    # for one the parser made up, the text it was made with
     def token_value : String
         @i : i32
 
+        if i >= first_synthetic:
+            return synthetic_text[i - first_synthetic]
+
         let text : String
-        let at = tokens[i].offset
-        let end = at + tokens[i].length
+        let at = token(i).offset
+        let end = at + token(i).length
 
         while at < end:
             text.append(source_file.char_at(at))
             at += 1
 
         return text
+
+    # a token with a text of its own, pointing where 'like' points
+    def add_synthetic_token : i32
+        @kind : TokenKind
+        @text : String
+        @like : i32
+
+        let made : Token = token(like)
+
+        made.kind = kind
+
+        if synthetic_text.length() == 0:
+            first_synthetic = tokens.length()
+
+        tokens.add(made)
+        synthetic_text.add(text)
+
+        return first_synthetic + synthetic_text.length() - 1

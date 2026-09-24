@@ -1,0 +1,1279 @@
+# hdc.pretty_printer.pretty_printer -- the tree, written back as source.
+#
+# The twin of src/haard/pretty_printer/, and the parser suite's oracle: the
+# printed source has to read back as the same tree. It walks and never works
+# anything out -- the grouping the source had is in the tree, as parenthesis
+# nodes, and this writes it back.
+#
+# The one-line printers were generated once from the C++ ones, grouped by
+# shape, and are edited by hand since.
+import hdc.ast.ast_node
+import hdc.module.module
+
+class PrettyPrinter:
+    module : Module*
+    output : String
+    indentation : i32
+
+    # what was written last, for the one thing the printer checks about its
+    # own output: that two prefix operators do not paste into one token
+    last_character : char
+
+    def init : void
+        module = null
+        indentation = 0
+        last_character = '\0'
+
+    def set_module : void
+        @where : Module*
+
+        module = where
+
+    # false when there is no tree at all
+    def print_tree : bool
+        @out : String&
+
+        let root = module->ast.root
+
+        if root == 0:
+            return false
+
+        let empty : String
+
+        output = empty
+        indentation = 0
+        last_character = '\0'
+        print_node(root)
+        out.append(output)
+        out.append('\n')
+
+        return true
+
+    def print_node : void
+        @node : i32
+
+        if node == 0:
+            return
+
+        let kind = module->ast.node(node).kind
+
+        switch kind:
+
+            case Module:
+                print_module(node)
+
+            case Import:
+                print_import(node)
+
+            case ImportPath:
+                print_import_path(node)
+
+            case ImportPathSegment:
+                print_import_path_segment(node)
+
+            case ImportAlias:
+                print_import_alias(node)
+
+            case ImportAll:
+                print_import_all(node)
+
+            case LetDeclaration:
+                print_let_declaration(node)
+
+            case ConstDeclaration:
+                print_const_declaration(node)
+
+            case Class:
+                print_class(node)
+
+            case Struct:
+                print_struct(node)
+
+            case Enum:
+                print_enum(node)
+
+            case Union:
+                print_union(node)
+
+            case SuperType:
+                print_super_type(node)
+
+            case Field:
+                print_field(node)
+
+            case Function:
+                print_function(node)
+
+            case GenericParameters:
+                print_generic_parameters(node)
+
+            case FunctionReturnType:
+                print_function_return_type(node)
+
+            case Block:
+            case TypeBody:
+                print_block(node)
+
+            case Pass:
+                print_pass(node)
+
+            case If:
+                print_if(node)
+
+            case Elif:
+                print_elif(node)
+
+            case Else:
+                print_else(node)
+
+            case While:
+                print_while(node)
+
+            case Switch:
+                print_switch(node)
+
+            case Case:
+                print_case(node)
+
+            case Default:
+                print_default(node)
+
+            case For:
+            case ForEach:
+                print_for(node)
+
+            case ForHead:
+                print_for_head(node)
+
+            case ForCondition:
+                print_for_condition(node)
+
+            case ForIncrement:
+                print_for_increment(node)
+
+            case Return:
+                print_return(node)
+
+            case Break:
+                print_break(node)
+
+            case Continue:
+                print_continue(node)
+
+            case Yield:
+                print_yield(node)
+
+            case Goto:
+                print_goto(node)
+
+            case Label:
+                print_label(node)
+
+            case Param:
+                print_param(node)
+
+            case Binding:
+                print_binding(node)
+
+            case BindingName:
+                print_binding_name(node)
+
+            case BindingType:
+                print_binding_type(node)
+
+            case BindingExpression:
+                print_binding_expression(node)
+
+            case Plus:
+                print_plus_expression(node)
+
+            case Minus:
+                print_minus_expression(node)
+
+            case Times:
+                print_times_expression(node)
+
+            case Division:
+                print_division_expression(node)
+
+            case IntegerDivision:
+                print_integer_division_expression(node)
+
+            case Modulo:
+                print_modulo_expression(node)
+
+            case Assignment:
+            case PlusAssignment:
+            case MinusAssignment:
+            case TimesAssignment:
+            case DivisionAssignment:
+            case ModuloAssignment:
+            case BitwiseAndAssignment:
+            case BitwiseOrAssignment:
+            case BitwiseXorAssignment:
+            case BitwiseNotAssignment:
+            case IntegerDivisionAssignment:
+            case BitwiseLeftShiftAssignment:
+            case BitwiseRightShiftAssignment:
+            case BitwiseUnsignedRightShiftAssignment:
+                print_assignment_expression(node)
+
+            case Cast:
+                print_cast_expression(node)
+
+            case LogicalOr:
+            case LogicalAnd:
+                print_logical_expression(node)
+
+            case Equal:
+            case NotEqual:
+            case LessThan:
+            case GreaterThan:
+            case LessThanOrEqual:
+            case GreaterThanOrEqual:
+            case In:
+                print_comparison_expression(node)
+
+            case NotIn:
+                print_not_in_expression(node)
+
+            case InclusiveRange:
+            case ExclusiveRange:
+                print_range_expression(node)
+
+            case Power:
+                print_power_expression(node)
+
+            case BitwiseOr:
+                print_bitwise_or_expression(node)
+
+            case BitwiseXor:
+                print_bitwise_xor_expression(node)
+
+            case BitwiseAnd:
+                print_bitwise_and_expression(node)
+
+            case BitwiseLeftShift:
+                print_left_shift_expression(node)
+
+            case BitwiseRightShift:
+                print_right_shift_expression(node)
+
+            case BitwiseUnsignedRightShift:
+                print_unsigned_right_shift_expression(node)
+
+            case LogicalNot:
+                print_logical_not(node)
+
+            case LogicalNotOperator:
+                print_logical_not_operator(node)
+
+            case AddressOf:
+                print_address_of(node)
+
+            case Dereference:
+                print_dereference(node)
+
+            case BitwiseNot:
+                print_bitwise_not(node)
+
+            case UnaryMinus:
+                print_unary_minus(node)
+
+            case UnaryPlus:
+                print_unary_plus(node)
+
+            case PreIncrement:
+                print_pre_increment(node)
+
+            case PreDecrement:
+                print_pre_decrement(node)
+
+            case New:
+                print_new(node)
+
+            case Delete:
+                print_delete(node)
+
+            case DeleteArray:
+                print_delete_array(node)
+
+            case Sizeof:
+                print_sizeof(node)
+
+            case Scope:
+                print_scope(node)
+
+            case Dot:
+                print_dot(node)
+
+            case Arrow:
+                print_arrow(node)
+
+            case Index:
+                print_index(node)
+
+            case Call:
+                print_call(node)
+
+            case Arguments:
+                print_arguments(node)
+
+            case PostIncrement:
+                print_post_increment(node)
+
+            case PostDecrement:
+                print_post_decrement(node)
+
+            case Parenthesis:
+                print_parenthesis(node)
+
+            case Identifier:
+                print_identifier(node)
+
+            case IntegerLiteral:
+            case FloatLiteral:
+            case StringLiteral:
+            case CharLiteral:
+            case SymbolLiteral:
+            case True:
+            case False:
+            case NullLiteral:
+                print_literal(node)
+
+            case Super:
+            case This:
+                print_this(node)
+
+            case List:
+                print_list(node)
+
+            case Array:
+                print_array(node)
+
+            case Hash:
+                print_hash(node)
+
+            case HashPair:
+                print_hash_pair(node)
+
+            case Tuple:
+                print_tuple(node)
+
+            case Closure:
+                print_closure(node)
+
+            case ClosureParameter:
+                print_closure_parameter(node)
+
+            case ClosureReturnType:
+                print_closure_return_type(node)
+
+            case NamedType:
+                print_named_type(node)
+
+            case BuiltinType:
+                print_builtin_type(node)
+
+            case GenericName:
+                print_generic_name(node)
+
+            case GenericArguments:
+                print_generic_arguments(node)
+
+            case PointerType:
+                print_pointer_type(node)
+
+            case ReferenceType:
+                print_reference_type(node)
+
+            case ArrayType:
+                print_array_type(node)
+
+            case ListType:
+                print_list_type(node)
+
+            case HashType:
+                print_hash_type(node)
+
+            case TupleType:
+                print_tuple_type(node)
+
+            case FunctionType:
+                print_function_type(node)
+
+            case TemplateString:
+                print_template_string(node)
+
+            case TemplateStringChunk:
+                print_template_string_chunk(node)
+
+            case Interpolation:
+                print_interpolation(node)
+
+            # a kind with no case here would vanish from the output without a
+            # trace, which is the worst way to find out one is missing
+            default:
+                print_string("<no printer for this ast kind>")
+
+    def print_module : void
+        @node : i32
+
+        print_children_joined(node, "\n")
+
+    def print_import_path : void
+        @node : i32
+
+        print_children_joined(node, ".")
+
+    def print_generic_parameters : void
+        @node : i32
+
+        print_string("<")
+        print_children_joined(node, ", ")
+        print_string(">")
+
+    def print_for_head : void
+        @node : i32
+
+        print_children_joined(node, ", ")
+
+    def print_plus_expression : void
+        @node : i32
+
+        print_children_joined(node, " + ")
+
+    def print_minus_expression : void
+        @node : i32
+
+        print_children_joined(node, " - ")
+
+    def print_times_expression : void
+        @node : i32
+
+        print_children_joined(node, " * ")
+
+    def print_division_expression : void
+        @node : i32
+
+        print_children_joined(node, " / ")
+
+    def print_integer_division_expression : void
+        @node : i32
+
+        print_children_joined(node, " // ")
+
+    def print_modulo_expression : void
+        @node : i32
+
+        print_children_joined(node, " % ")
+
+    def print_not_in_expression : void
+        @node : i32
+
+        print_children_joined(node, " not in ")
+
+    def print_power_expression : void
+        @node : i32
+
+        print_children_joined(node, " ** ")
+
+    def print_bitwise_or_expression : void
+        @node : i32
+
+        print_children_joined(node, " | ")
+
+    def print_bitwise_xor_expression : void
+        @node : i32
+
+        print_children_joined(node, " ^ ")
+
+    def print_bitwise_and_expression : void
+        @node : i32
+
+        print_children_joined(node, " & ")
+
+    def print_left_shift_expression : void
+        @node : i32
+
+        print_children_joined(node, " << ")
+
+    def print_right_shift_expression : void
+        @node : i32
+
+        print_children_joined(node, " >> ")
+
+    def print_unsigned_right_shift_expression : void
+        @node : i32
+
+        print_children_joined(node, " >>> ")
+
+    def print_dot : void
+        @node : i32
+
+        print_children_joined(node, ".")
+
+    def print_arrow : void
+        @node : i32
+
+        print_children_joined(node, "->")
+
+    def print_hash_pair : void
+        @node : i32
+
+        print_children_joined(node, ": ")
+
+    def print_function_type : void
+        @node : i32
+
+        print_children_joined(node, " -> ")
+
+    def print_import : void
+        @node : i32
+
+        print_string("import ")
+        print_children(node)
+
+    def print_let_declaration : void
+        @node : i32
+
+        print_string("let ")
+        print_children(node)
+
+    def print_const_declaration : void
+        @node : i32
+
+        print_string("const ")
+        print_children(node)
+
+    def print_function_return_type : void
+        @node : i32
+
+        print_string(" : ")
+        print_children(node)
+
+    def print_label : void
+        @node : i32
+
+        print_string("label ")
+        print_children(node)
+
+    def print_param : void
+        @node : i32
+
+        print_string("@")
+        print_children(node)
+
+    def print_binding_type : void
+        @node : i32
+
+        print_string(" : ")
+        print_children(node)
+
+    def print_binding_expression : void
+        @node : i32
+
+        print_string(" = ")
+        print_children(node)
+
+    def print_new : void
+        @node : i32
+
+        print_string("new ")
+        print_children(node)
+
+    def print_closure_return_type : void
+        @node : i32
+
+        print_string(" -> ")
+        print_children(node)
+
+    def print_super_type : void
+        @node : i32
+
+        print_string("(")
+        print_children(node)
+        print_string(")")
+
+    def print_sizeof : void
+        @node : i32
+
+        print_string("sizeof(")
+        print_children(node)
+        print_string(")")
+
+    def print_arguments : void
+        @node : i32
+
+        print_string("(")
+        print_children_joined(node, ", ")
+        print_string(")")
+
+    def print_parenthesis : void
+        @node : i32
+
+        print_string("(")
+        print_children(node)
+        print_string(")")
+
+    def print_list : void
+        @node : i32
+
+        print_string("[")
+        print_children_joined(node, ", ")
+        print_string("]")
+
+    def print_array : void
+        @node : i32
+
+        print_string("{")
+        print_children_joined(node, ", ")
+        print_string("}")
+
+    def print_hash : void
+        @node : i32
+
+        print_string("{")
+        print_children_joined(node, ", ")
+        print_string("}")
+
+    def print_generic_arguments : void
+        @node : i32
+
+        print_string("<")
+        print_children_joined(node, ", ")
+        print_string(">")
+
+    def print_list_type : void
+        @node : i32
+
+        print_string("[")
+        print_children(node)
+        print_string("]")
+
+    def print_hash_type : void
+        @node : i32
+
+        print_string("{")
+        print_children_joined(node, ": ")
+        print_string("}")
+
+    def print_tuple_type : void
+        @node : i32
+
+        print_string("(")
+        print_children_joined(node, ", ")
+        print_string(")")
+
+    def print_interpolation : void
+        @node : i32
+
+        # in two, since "${" written whole would be a template string
+        print_string("$")
+        print_string("{")
+        print_children(node)
+        print_string("}")
+
+    def print_field : void
+        @node : i32
+
+        print_children(node)
+
+    def print_binding : void
+        @node : i32
+
+        print_children(node)
+
+    def print_binding_name : void
+        @node : i32
+
+        print_children(node)
+
+    def print_call : void
+        @node : i32
+
+        print_children(node)
+
+    def print_closure_parameter : void
+        @node : i32
+
+        print_children(node)
+
+    def print_named_type : void
+        @node : i32
+
+        print_children(node)
+
+    def print_generic_name : void
+        @node : i32
+
+        print_children(node)
+
+    def print_import_path_segment : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_import_all : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_pass : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_this : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_builtin_type : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_identifier : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_literal : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_template_string_chunk : void
+        @node : i32
+
+        print_node_token(node)
+
+    def print_assignment_expression : void
+        @node : i32
+
+        print_binary_from_token(node)
+
+    def print_cast_expression : void
+        @node : i32
+
+        print_binary_from_token(node)
+
+    def print_logical_expression : void
+        @node : i32
+
+        print_binary_from_token(node)
+
+    def print_comparison_expression : void
+        @node : i32
+
+        print_binary_from_token(node)
+
+    def print_logical_not : void
+        @node : i32
+
+        print_prefix(node, "not ")
+
+    def print_logical_not_operator : void
+        @node : i32
+
+        print_prefix(node, "!")
+
+    def print_address_of : void
+        @node : i32
+
+        print_prefix(node, "&")
+
+    def print_dereference : void
+        @node : i32
+
+        print_prefix(node, "*")
+
+    def print_bitwise_not : void
+        @node : i32
+
+        print_prefix(node, "~")
+
+    def print_unary_minus : void
+        @node : i32
+
+        print_prefix(node, "-")
+
+    def print_unary_plus : void
+        @node : i32
+
+        print_prefix(node, "+")
+
+    def print_pre_increment : void
+        @node : i32
+
+        print_prefix(node, "++")
+
+    def print_pre_decrement : void
+        @node : i32
+
+        print_prefix(node, "--")
+
+    def print_delete : void
+        @node : i32
+
+        print_prefix(node, "delete ")
+
+    def print_delete_array : void
+        @node : i32
+
+        print_prefix(node, "delete[] ")
+
+    def print_post_increment : void
+        @node : i32
+
+        print_children(node)
+        print_string("++")
+
+    def print_post_decrement : void
+        @node : i32
+
+        print_children(node)
+        print_string("--")
+
+    def print_return : void
+        @node : i32
+
+        print_jump(node, "return")
+
+    def print_break : void
+        @node : i32
+
+        print_jump(node, "break")
+
+    def print_continue : void
+        @node : i32
+
+        print_jump(node, "continue")
+
+    def print_yield : void
+        @node : i32
+
+        print_jump(node, "yield")
+
+    def print_goto : void
+        @node : i32
+
+        print_jump(node, "goto")
+
+    def print_if : void
+        @node : i32
+
+        print_conditional(node, "if ")
+
+    def print_elif : void
+        @node : i32
+
+        print_conditional(node, "elif ")
+
+    def print_else : void
+        @node : i32
+
+        print_conditional(node, "else")
+
+    def print_while : void
+        @node : i32
+
+        print_conditional(node, "while ")
+
+    def print_class : void
+        @node : i32
+
+        print_type_declaration(node, "class ")
+
+    def print_struct : void
+        @node : i32
+
+        print_type_declaration(node, "struct ")
+
+    def print_enum : void
+        @node : i32
+
+        print_type_declaration(node, "enum ")
+
+    def print_union : void
+        @node : i32
+
+        print_type_declaration(node, "union ")
+
+    def print_import_alias : void
+        @node : i32
+
+        print_string(" as ")
+        print_node_token(node)
+
+    # the ':' is written when the walk reaches the body, so the parts are
+    # told apart by kind and not by position
+    def print_type_declaration : void
+        @node : i32
+        @keyword : char*
+
+        print_string(keyword)
+
+        let child = first_child(node)
+
+        while child != 0:
+            if kind_of(child) == AstNodeKind.TypeBody:
+                print_string(":")
+
+            print_node(child)
+            child = sibling_of(child)
+
+    def print_function : void
+        @node : i32
+
+        print_string("def ")
+
+        let child = first_child(node)
+
+        while child != 0:
+            # a parameter needs a line of its own, one level in
+            if kind_of(child) == AstNodeKind.Param:
+                indentation += 1
+                print_new_line()
+                print_node(child)
+                indentation -= 1
+            else:
+                print_node(child)
+
+            child = sibling_of(child)
+
+    # every statement on a line of its own, one level deeper
+    def print_block : void
+        @node : i32
+
+        let child = first_child(node)
+
+        indentation += 1
+
+        while child != 0:
+            print_new_line()
+            print_node(child)
+            child = sibling_of(child)
+
+        indentation -= 1
+
+    def print_switch : void
+        @node : i32
+
+        print_string("switch ")
+
+        let child = first_child(node)
+
+        print_node(child)
+        print_string(":")
+
+        indentation += 1
+        child = sibling_of(child)
+
+        while child != 0:
+            print_new_line()
+            print_node(child)
+            child = sibling_of(child)
+
+        indentation -= 1
+
+    def print_case : void
+        @node : i32
+
+        print_string("case ")
+
+        let child = first_child(node)
+
+        print_node(child)
+        print_string(":")
+
+        if child != 0 and sibling_of(child) != 0:
+            print_node(sibling_of(child))
+
+    def print_default : void
+        @node : i32
+
+        print_string("default:")
+        print_node(first_child(node))
+
+    # the ':' is written when the walk reaches the block, and each part before
+    # it carries its own separator
+    def print_for : void
+        @node : i32
+
+        print_string("for ")
+
+        let child = first_child(node)
+
+        while child != 0:
+            if kind_of(child) == AstNodeKind.Block:
+                print_string(":")
+
+            print_node(child)
+            child = sibling_of(child)
+
+    def print_for_condition : void
+        @node : i32
+
+        print_string("; ")
+        print_children(node)
+
+    def print_for_increment : void
+        @node : i32
+
+        print_string("; ")
+        print_children_joined(node, ", ")
+
+    # the space belongs to the expression: a bare 'return' has no trailing one
+    def print_jump : void
+        @node : i32
+        @keyword : char*
+
+        print_string(keyword)
+
+        if first_child(node) == 0:
+            return
+
+        print_string(" ")
+        print_children(node)
+
+    def print_conditional : void
+        @node : i32
+        @keyword : char*
+
+        print_string(keyword)
+
+        let child = first_child(node)
+
+        while child != 0:
+            let kind = kind_of(child)
+
+            if kind == AstNodeKind.Block:
+                print_string(":")
+                print_node(child)
+            elif kind == AstNodeKind.Elif or kind == AstNodeKind.Else:
+                print_new_line()
+                print_node(child)
+            else:
+                print_node(child)
+
+            child = sibling_of(child)
+
+    # one child is '::name' and two are 'alias::name'
+    def print_scope : void
+        @node : i32
+
+        let child = first_child(node)
+
+        if child != 0 and sibling_of(child) == 0:
+            print_string("::")
+            print_node(child)
+            return
+
+        print_children_joined(node, "::")
+
+    # a range is written against its ends: '0..len'
+    def print_range_expression : void
+        @node : i32
+
+        print_children_joined(node, module->token_value(token_of(node)).text())
+
+    # the operator comes from the token, since more than one lexeme builds the
+    # same kind: 'and' and '&&' are one operator
+    def print_binary_from_token : void
+        @node : i32
+
+        let oper : String = " "
+
+        oper.append(module->token_value(token_of(node)))
+        oper.append(" ")
+
+        print_children_joined(node, oper.text())
+
+    def print_prefix : void
+        @node : i32
+        @oper : char*
+
+        print_string(oper)
+        print_children(node)
+
+    # the target then the subscript, positionally
+    def print_index : void
+        @node : i32
+
+        let target = first_child(node)
+
+        print_node(target)
+        print_string("[")
+
+        if target != 0:
+            print_node(sibling_of(target))
+
+        print_string("]")
+
+    # a tuple of one keeps its comma, or it reads back as a group
+    def print_tuple : void
+        @node : i32
+
+        let child = first_child(node)
+
+        print_string("(")
+        print_children_joined(node, ", ")
+
+        if child != 0 and sibling_of(child) == 0:
+            print_string(",")
+
+        print_string(")")
+
+    def print_closure : void
+        @node : i32
+
+        let child = first_child(node)
+        let first = true
+
+        print_string("|")
+
+        while child != 0 and kind_of(child) == AstNodeKind.ClosureParameter:
+            if not first:
+                print_string(", ")
+
+            print_node(child)
+            child = sibling_of(child)
+            first = false
+
+        print_string("|")
+
+        while child != 0:
+            if kind_of(child) == AstNodeKind.Block:
+                print_string(" {")
+                print_node(child)
+                print_new_line()
+                print_string("}")
+            else:
+                print_node(child)
+
+            child = sibling_of(child)
+
+    def print_pointer_type : void
+        @node : i32
+
+        print_children(node)
+        print_string("*")
+
+    def print_reference_type : void
+        @node : i32
+
+        print_children(node)
+        print_string("&")
+
+    def print_array_type : void
+        @node : i32
+
+        let element = first_child(node)
+
+        print_node(element)
+        print_string("[")
+
+        if element != 0:
+            print_node(sibling_of(element))
+
+        print_string("]")
+
+    # the token is the opening quote, and it closes the string too
+    def print_template_string : void
+        @node : i32
+
+        print_node_token(node)
+        print_children(node)
+        print_node_token(node)
+
+    def print_children : void
+        @node : i32
+
+        let child = first_child(node)
+
+        while child != 0:
+            print_node(child)
+            child = sibling_of(child)
+
+    def print_children_joined : void
+        @node : i32
+        @separator : char*
+
+        let first = true
+        let child = first_child(node)
+
+        while child != 0:
+            if not first:
+                print_string(separator)
+
+            print_node(child)
+            child = sibling_of(child)
+            first = false
+
+    def print_node_token : void
+        @node : i32
+
+        print_string(module->token_value(token_of(node)).text())
+
+    # '- -a' written as '--a' would read back as a pre-decrement, so a space
+    # goes between two prefix operators that would paste into one token
+    def print_string : void
+        @text : char*
+
+        if text[0] == '\0':
+            return
+
+        if would_paste(last_character, text[0]):
+            output.append(' ')
+
+        output.append(text)
+
+        let i = 0
+
+        while text[i] != '\0':
+            i += 1
+
+        last_character = text[i - 1]
+
+    def print_new_line : void
+        output.append('\n')
+
+        let i = 0
+
+        while i < indentation * 4:
+            output.append(' ')
+            i += 1
+
+        last_character = ' '
+
+    def first_child : i32
+        @node : i32
+
+        return module->ast.node(node).children
+
+    def sibling_of : i32
+        @node : i32
+
+        return module->ast.node(node).sibling
+
+    def kind_of : AstNodeKind
+        @node : i32
+
+        return module->ast.node(node).kind
+
+    def token_of : i32
+        @node : i32
+
+        return module->ast.node(node).token
+
+# only three prefix operators double into a token with another meaning
+def would_paste : bool
+    @first : char
+    @second : char
+
+    if first != second:
+        return false
+
+    return first == '-' or first == '+' or first == '&'

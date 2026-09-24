@@ -1,0 +1,634 @@
+# hdc.ast.ast_builder -- the only thing that makes nodes.
+#
+# The twin of src/haard/ast/ast_builder.cpp, maker for maker. Ast is the
+# container and this is what fills it, so the container stays plain.
+#
+# The makers were generated once from the C++ shapes, grouped by how many
+# children each takes, and are edited by hand since.
+import hdc.ast.ast_node
+import hdc.ast.ast
+
+class AstBuilder:
+    ast : Ast*
+
+    def init : void
+        ast = null
+
+    def set_ast : void
+        @where : Ast*
+
+        ast = where
+
+    # Appends a child and gives back the new last one. A 'last' of 0 means
+    # the caller does not know it, not that the parent has none: the list is
+    # still right, each append only walks to the end
+    def add_child : i32
+        @parent : i32
+        @last : i32
+        @child : i32
+
+        if child == 0:
+            return last
+
+        if last == 0:
+            add_last_child(parent, child)
+        else:
+            ast->node(last).sibling = child
+
+        return child
+
+    # read before pushing, since a push may move the Array a node lives in
+    def clone : i32
+        @node : i32
+
+        if node == 0:
+            return 0
+
+        let kind = ast->node(node).kind
+        let token = ast->node(node).token
+        let copy = make_node(kind, token)
+        let last = 0
+        let child = ast->node(node).children
+
+        while child != 0:
+            last = add_child(copy, last, clone(child))
+            child = ast->node(child).sibling
+
+        return copy
+
+    # a module is the root by definition, so building one says where a walk
+    # starts
+    def make_module : i32
+        let node = make_node(AstNodeKind.Module, 0)
+
+        ast->root = node
+
+        return node
+
+    def make_import_path_segment : i32
+        @token : i32
+
+        return make_node(AstNodeKind.ImportPathSegment, token)
+
+    def make_import_alias : i32
+        @token : i32
+
+        return make_node(AstNodeKind.ImportAlias, token)
+
+    def make_import_all : i32
+        @token : i32
+
+        return make_node(AstNodeKind.ImportAll, token)
+
+    def make_type_declaration : i32
+        @kind : AstNodeKind
+        @token : i32
+
+        return make_node(kind, token)
+
+    def make_function : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Function, token)
+
+    def make_generic_parameters : i32
+        @token : i32
+
+        return make_node(AstNodeKind.GenericParameters, token)
+
+    def make_pass : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Pass, token)
+
+    def make_if : i32
+        @token : i32
+
+        return make_node(AstNodeKind.If, token)
+
+    def make_elif : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Elif, token)
+
+    def make_else : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Else, token)
+
+    def make_while : i32
+        @token : i32
+
+        return make_node(AstNodeKind.While, token)
+
+    def make_switch : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Switch, token)
+
+    def make_case : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Case, token)
+
+    def make_default : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Default, token)
+
+    def make_for : i32
+        @token : i32
+
+        return make_node(AstNodeKind.For, token)
+
+    def make_for_each : i32
+        @token : i32
+
+        return make_node(AstNodeKind.ForEach, token)
+
+    def make_arguments : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Arguments, token)
+
+    def make_identifier : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Identifier, token)
+
+    def make_builtin_type : i32
+        @token : i32
+
+        return make_node(AstNodeKind.BuiltinType, token)
+
+    def make_generic_arguments : i32
+        @token : i32
+
+        return make_node(AstNodeKind.GenericArguments, token)
+
+    def make_tuple_type : i32
+        @token : i32
+
+        return make_node(AstNodeKind.TupleType, token)
+
+    def make_function_type : i32
+        @token : i32
+
+        return make_node(AstNodeKind.FunctionType, token)
+
+    def make_this : i32
+        @token : i32
+
+        return make_node(AstNodeKind.This, token)
+
+    def make_super : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Super, token)
+
+    def make_list : i32
+        @token : i32
+
+        return make_node(AstNodeKind.List, token)
+
+    def make_array : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Array, token)
+
+    def make_hash : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Hash, token)
+
+    def make_tuple : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Tuple, token)
+
+    def make_closure : i32
+        @token : i32
+
+        return make_node(AstNodeKind.Closure, token)
+
+    def make_template_string : i32
+        @token : i32
+
+        return make_node(AstNodeKind.TemplateString, token)
+
+    def make_template_string_chunk : i32
+        @token : i32
+
+        return make_node(AstNodeKind.TemplateStringChunk, token)
+
+    def make_import_path : i32
+        return make_node(AstNodeKind.ImportPath, 0)
+
+    def make_type_body : i32
+        return make_node(AstNodeKind.TypeBody, 0)
+
+    def make_block : i32
+        return make_node(AstNodeKind.Block, 0)
+
+    def make_for_head : i32
+        return make_node(AstNodeKind.ForHead, 0)
+
+    def make_for_condition : i32
+        return make_node(AstNodeKind.ForCondition, 0)
+
+    def make_for_increment : i32
+        return make_node(AstNodeKind.ForIncrement, 0)
+
+    def make_function_return_type : i32
+        @child : i32
+
+        let node = make_node(AstNodeKind.FunctionReturnType, 0)
+
+        add_child(node, 0, child)
+
+        return node
+
+    def make_binding_name : i32
+        @child : i32
+
+        let node = make_node(AstNodeKind.BindingName, 0)
+
+        add_child(node, 0, child)
+
+        return node
+
+    def make_binding_type : i32
+        @child : i32
+
+        let node = make_node(AstNodeKind.BindingType, 0)
+
+        add_child(node, 0, child)
+
+        return node
+
+    def make_binding_expression : i32
+        @child : i32
+
+        let node = make_node(AstNodeKind.BindingExpression, 0)
+
+        add_child(node, 0, child)
+
+        return node
+
+    def make_closure_return_type : i32
+        @child : i32
+
+        let node = make_node(AstNodeKind.ClosureReturnType, 0)
+
+        add_child(node, 0, child)
+
+        return node
+
+    def make_let_declaration : i32
+        @token : i32
+        @binding : i32
+
+        let node = make_node(AstNodeKind.LetDeclaration, token)
+
+        add_child(node, 0, binding)
+
+        return node
+
+    def make_const_declaration : i32
+        @token : i32
+        @binding : i32
+
+        let node = make_node(AstNodeKind.ConstDeclaration, token)
+
+        add_child(node, 0, binding)
+
+        return node
+
+    def make_super_type : i32
+        @token : i32
+        @type : i32
+
+        let node = make_node(AstNodeKind.SuperType, token)
+
+        add_child(node, 0, type)
+
+        return node
+
+    def make_label : i32
+        @token : i32
+        @name : i32
+
+        let node = make_node(AstNodeKind.Label, token)
+
+        add_child(node, 0, name)
+
+        return node
+
+    def make_sizeof : i32
+        @token : i32
+        @expression : i32
+
+        let node = make_node(AstNodeKind.Sizeof, token)
+
+        add_child(node, 0, expression)
+
+        return node
+
+    def make_parenthesis : i32
+        @token : i32
+        @expression : i32
+
+        let node = make_node(AstNodeKind.Parenthesis, token)
+
+        add_child(node, 0, expression)
+
+        return node
+
+    def make_pointer_type : i32
+        @token : i32
+        @type : i32
+
+        let node = make_node(AstNodeKind.PointerType, token)
+
+        add_child(node, 0, type)
+
+        return node
+
+    def make_reference_type : i32
+        @token : i32
+        @type : i32
+
+        let node = make_node(AstNodeKind.ReferenceType, token)
+
+        add_child(node, 0, type)
+
+        return node
+
+    def make_list_type : i32
+        @token : i32
+        @type : i32
+
+        let node = make_node(AstNodeKind.ListType, token)
+
+        add_child(node, 0, type)
+
+        return node
+
+    def make_interpolation : i32
+        @token : i32
+        @expression : i32
+
+        let node = make_node(AstNodeKind.Interpolation, token)
+
+        add_child(node, 0, expression)
+
+        return node
+
+    def make_import : i32
+        @token : i32
+        @path : i32
+        @alias : i32
+
+        let node = make_node(AstNodeKind.Import, token)
+        let last = add_child(node, 0, path)
+
+        add_child(node, last, alias)
+
+        return node
+
+    def make_scope : i32
+        @token : i32
+        @alias : i32
+        @name : i32
+
+        let node = make_node(AstNodeKind.Scope, token)
+        let last = add_child(node, 0, alias)
+
+        add_child(node, last, name)
+
+        return node
+
+    def make_index : i32
+        @token : i32
+        @target : i32
+        @subscript : i32
+
+        let node = make_node(AstNodeKind.Index, token)
+        let last = add_child(node, 0, target)
+
+        add_child(node, last, subscript)
+
+        return node
+
+    def make_call : i32
+        @token : i32
+        @callee : i32
+        @arguments : i32
+
+        let node = make_node(AstNodeKind.Call, token)
+        let last = add_child(node, 0, callee)
+
+        add_child(node, last, arguments)
+
+        return node
+
+    def make_new : i32
+        @token : i32
+        @type : i32
+        @arguments : i32
+
+        let node = make_node(AstNodeKind.New, token)
+        let last = add_child(node, 0, type)
+
+        add_child(node, last, arguments)
+
+        return node
+
+    def make_array_type : i32
+        @token : i32
+        @type : i32
+        @size : i32
+
+        let node = make_node(AstNodeKind.ArrayType, token)
+        let last = add_child(node, 0, type)
+
+        add_child(node, last, size)
+
+        return node
+
+    def make_hash_type : i32
+        @token : i32
+        @key : i32
+        @value : i32
+
+        let node = make_node(AstNodeKind.HashType, token)
+        let last = add_child(node, 0, key)
+
+        add_child(node, last, value)
+
+        return node
+
+    def make_hash_pair : i32
+        @token : i32
+        @key : i32
+        @value : i32
+
+        let node = make_node(AstNodeKind.HashPair, token)
+        let last = add_child(node, 0, key)
+
+        add_child(node, last, value)
+
+        return node
+
+    def make_named_type : i32
+        @name : i32
+        @arguments : i32
+
+        let node = make_node(AstNodeKind.NamedType, 0)
+        let last = add_child(node, 0, name)
+
+        add_child(node, last, arguments)
+
+        return node
+
+    def make_generic_name : i32
+        @name : i32
+        @arguments : i32
+
+        let node = make_node(AstNodeKind.GenericName, 0)
+        let last = add_child(node, 0, name)
+
+        add_child(node, last, arguments)
+
+        return node
+
+    def make_closure_parameter : i32
+        @name : i32
+        @type : i32
+
+        let node = make_node(AstNodeKind.ClosureParameter, 0)
+        let last = add_child(node, 0, name)
+
+        add_child(node, last, type)
+
+        return node
+
+    def make_field : i32
+        @name : i32
+        @type : i32
+        @value : i32
+
+        let node = make_node(AstNodeKind.Field, 0)
+        let last = add_child(node, 0, name)
+
+        last = add_child(node, last, type)
+        add_child(node, last, value)
+
+        return node
+
+    def make_binding : i32
+        @name : i32
+        @type : i32
+        @expression : i32
+
+        let node = make_node(AstNodeKind.Binding, 0)
+        let last = add_child(node, 0, name)
+
+        last = add_child(node, last, type)
+        add_child(node, last, expression)
+
+        return node
+
+    # the same three parts a field has, and the value is what the caller gets
+    # when it leaves the argument out
+    def make_param : i32
+        @token : i32
+        @name : i32
+        @type : i32
+        @value : i32
+
+        let node = make_node(AstNodeKind.Param, token)
+        let last = add_child(node, 0, name)
+
+        last = add_child(node, last, type)
+        add_child(node, last, value)
+
+        return node
+
+    def make_jump : i32
+        @kind : AstNodeKind
+        @token : i32
+        @expression : i32
+
+        let node = make_node(kind, token)
+
+        add_child(node, 0, expression)
+
+        return node
+
+    def make_binary_operator : i32
+        @kind : AstNodeKind
+        @token : i32
+        @left : i32
+        @right : i32
+
+        let node = make_node(kind, token)
+        let last = add_child(node, 0, left)
+
+        add_child(node, last, right)
+
+        return node
+
+    def make_unary_operator : i32
+        @kind : AstNodeKind
+        @token : i32
+        @operand : i32
+
+        let node = make_node(kind, token)
+
+        add_child(node, 0, operand)
+
+        return node
+
+    def make_literal : i32
+        @kind : AstNodeKind
+        @token : i32
+
+        return make_node(kind, token)
+
+    def make_node : i32
+        @kind : AstNodeKind
+        @token : i32
+
+        let node : AstNode
+
+        node.kind = kind
+        node.token = token
+
+        return ast->push(node)
+
+    # the safety net for a caller that did not carry the last child
+    def add_last_child : void
+        @parent : i32
+        @child : i32
+
+        let last = last_child_of(parent)
+
+        if last == 0:
+            ast->node(parent).children = child
+            return
+
+        ast->node(last).sibling = child
+
+    def last_child_of : i32
+        @parent : i32
+
+        let last = ast->node(parent).children
+
+        if last == 0:
+            return 0
+
+        while ast->node(last).sibling != 0:
+            last = ast->node(last).sibling
+
+        return last

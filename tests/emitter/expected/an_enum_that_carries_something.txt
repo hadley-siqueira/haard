@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <new>
 
+struct h0_1_Action;
+struct h0_14_Shape;
 
 struct h0_1_Action {
     int32_t tag;

@@ -1,0 +1,42 @@
+# A class whose method takes an enum by value, written BEFORE the enum. The
+# types are emitted in an order that follows fields and bases, and not
+# parameters, so the class came out first and its method named a type C++ had
+# not seen. Every enum is declared with the classes now, before any of them --
+# found by the bootstrap's AstBuilder, whose makers all take a kind.
+#
+# The exit status is what the two methods make of the kinds: 3 + 4.
+
+class Maker:
+    made : i32
+
+    def make : i32
+        @kind : Kind
+
+        switch kind:
+            case Small:
+                return 1
+            case Large:
+                return 3
+
+    # an enum carrying something is a struct, and declared as one
+    def weigh : i32
+        @shape : Shape
+
+        switch shape:
+            case Square(side):
+                return side
+            case Dot:
+                return 0
+
+enum Kind:
+    Small
+    Large
+
+enum Shape:
+    Square : i32
+    Dot
+
+def main : i32
+    let maker : Maker
+
+    return maker.make(Kind.Large) + maker.weigh(Shape.Square(4))

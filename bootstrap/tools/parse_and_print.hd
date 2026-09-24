@@ -1,0 +1,717 @@
+# hdc.tools.parse_and_print -- a file parsed, printed back, and read again.
+#
+# The twin of tests/parser/parse_and_print.cpp, and its output is the same
+# byte for byte, which is what lets the C++ parser's goldens judge this one:
+#
+#   1. the diagnostics;
+#   2. the source the pretty printer writes back from the tree;
+#   3. the tree, one node per line, two spaces per level;
+#   4. the round trip: the printed source is parsed again, and the two trees
+#      have to be the same one.
+#
+#   parse_and_print <file.hd> [reprint.hd]
+import hdc.token.token
+import hdc.ast.ast_node
+import hdc.module.module
+import hdc.scanner.scanner
+import hdc.parser.parser
+import hdc.pretty_printer.pretty_printer
+
+def main : i32
+    @args : String[]
+
+    if args.length() < 2:
+        println("usage: parse_and_print <file.hd> [reprint.hd]")
+        return 2
+
+    let module : Module
+    let printer : PrettyPrinter
+    let source : String
+    let scanned = read(&module, args[1].text())
+
+    printer.set_module(&module)
+    module.logger.print_all()
+
+    if not printer.print_tree(source):
+        println("<no ast>")
+        return 0
+
+    print(source)
+    print("--- tree\n")
+    print(dump_of(&module))
+
+    if args.length() < 3:
+        return 0
+
+    # the round trip is a property of a tree the parser was meant to build,
+    # and a scanner error means it was handed tokens nothing else would be
+    if not scanned:
+        print("--- round trip: skipped, the input did not scan\n")
+        return 0
+
+    if not write_file(args[2].text(), source):
+        print("--- round trip: could not write the printed source\n")
+        return 1
+
+    let reparsed : Module
+
+    read(&reparsed, args[2].text())
+
+    if reparsed.logger.has_errors():
+        print("--- round trip: the printed source did not parse\n")
+        reparsed.logger.print_all()
+        return 1
+
+    let before = dump_of(&module)
+    let after = dump_of(&reparsed)
+
+    if before != after:
+        print("--- round trip: the tree changed\n")
+        print(after)
+        return 1
+
+    print("--- round trip: ok\n")
+
+    return 0
+
+# Scans and parses one file into a module of its own, and answers whether the
+# scan was clean. The parser runs either way, on purpose
+def read : bool
+    @module : Module*
+    @path : char*
+
+    let scanner : Scanner
+    let parser : Parser
+
+    scanner.set_module(module)
+    parser.set_module(module)
+    scanner.get_tokens(path)
+
+    let scanned = not module->logger.has_errors()
+
+    parser.parse()
+
+    return scanned
+
+def write_file : bool
+    @path : char*
+    @content : String&
+
+    let file = open_write(path)
+
+    if file == null:
+        return false
+
+    file->write(content)
+    file->close()
+    delete file
+
+    return true
+
+def dump_of : String
+    @module : Module*
+
+    let out : String
+
+    dump_node(out, module, module->ast.root, 0)
+
+    return out
+
+# one node per line, two spaces per level: the indentation records the shape,
+# so comparing two dumps as text compares the two trees
+def dump_node : void
+    @out : String&
+    @module : Module*
+    @node : i32
+    @depth : i32
+
+    while node != 0:
+        let kind = module->ast.node(node).kind
+        let i = 0
+
+        while i < depth * 2:
+            out.append(' ')
+            i += 1
+
+        out.append(name_of(kind))
+
+        if carries_a_token(kind):
+            out.append(" '")
+            out.append(escaped(module->token_value(module->ast.node(node).token)))
+            out.append("'")
+
+        out.append('\n')
+
+        dump_node(out, module, module->ast.node(node).children, depth + 1)
+        node = module->ast.node(node).sibling
+
+# the four characters a line of the dump cannot hold as they are
+def escaped : String
+    @text : String&
+
+    let result : String
+    let i = 0
+
+    while i < text.length():
+        let c = text.at(i)
+
+        if c == '\\':
+            result.append("\\\\")
+        elif c == '\n':
+            result.append("\\n")
+        elif c == '\t':
+            result.append("\\t")
+        elif c == '\r':
+            result.append("\\r")
+        else:
+            result.append(c)
+
+        i += 1
+
+    return result
+
+# what a node is called in the dump
+def name_of : char*
+    @kind : AstNodeKind
+
+    switch kind:
+        case Module:
+            return "module"
+
+        case Import:
+            return "import"
+
+        case ImportPath:
+            return "import_path"
+
+        case ImportPathSegment:
+            return "import_path_segment"
+
+        case ImportAlias:
+            return "import_alias"
+
+        case LetDeclaration:
+            return "let_declaration"
+
+        case ConstDeclaration:
+            return "const_declaration"
+
+        case Class:
+            return "class"
+
+        case Struct:
+            return "struct"
+
+        case Enum:
+            return "enum"
+
+        case Union:
+            return "union"
+
+        case SuperType:
+            return "super_type"
+
+        case TypeBody:
+            return "type_body"
+
+        case Field:
+            return "field"
+
+        case Function:
+            return "function"
+
+        case GenericParameters:
+            return "generic_parameters"
+
+        case FunctionReturnType:
+            return "function_return_type"
+
+        case Block:
+            return "block"
+
+        case Pass:
+            return "pass"
+
+        case If:
+            return "if"
+
+        case Elif:
+            return "elif"
+
+        case Else:
+            return "else"
+
+        case While:
+            return "while"
+
+        case Switch:
+            return "switch"
+
+        case Case:
+            return "case"
+
+        case Default:
+            return "default"
+
+        case For:
+            return "for"
+
+        case ForEach:
+            return "for_each"
+
+        case ForHead:
+            return "for_head"
+
+        case ForCondition:
+            return "for_condition"
+
+        case ForIncrement:
+            return "for_increment"
+
+        case ImportAll:
+            return "import_all"
+
+        case New:
+            return "new"
+
+        case Delete:
+            return "delete"
+
+        case DeleteArray:
+            return "delete_array"
+
+        case Sizeof:
+            return "sizeof"
+
+        case Return:
+            return "return"
+
+        case Break:
+            return "break"
+
+        case Continue:
+            return "continue"
+
+        case Yield:
+            return "yield"
+
+        case Goto:
+            return "goto"
+
+        case Label:
+            return "label"
+
+        case Param:
+            return "param"
+
+        case Binding:
+            return "binding"
+
+        case BindingName:
+            return "binding_name"
+
+        case BindingType:
+            return "binding_type"
+
+        case BindingExpression:
+            return "binding_expression"
+
+        case Plus:
+            return "plus"
+
+        case Minus:
+            return "minus"
+
+        case Times:
+            return "times"
+
+        case Division:
+            return "division"
+
+        case IntegerDivision:
+            return "integer_division"
+
+        case Modulo:
+            return "modulo"
+
+        case Assignment:
+            return "assignment"
+
+        case PlusAssignment:
+            return "plus_assignment"
+
+        case MinusAssignment:
+            return "minus_assignment"
+
+        case TimesAssignment:
+            return "times_assignment"
+
+        case DivisionAssignment:
+            return "division_assignment"
+
+        case IntegerDivisionAssignment:
+            return "integer_division_assignment"
+
+        case BitwiseNotAssignment:
+            return "bitwise_not_assignment"
+
+        case ModuloAssignment:
+            return "modulo_assignment"
+
+        case BitwiseAndAssignment:
+            return "bitwise_and_assignment"
+
+        case BitwiseOrAssignment:
+            return "bitwise_or_assignment"
+
+        case BitwiseXorAssignment:
+            return "bitwise_xor_assignment"
+
+        case BitwiseLeftShiftAssignment:
+            return "left_shift_assignment"
+
+        case BitwiseRightShiftAssignment:
+            return "right_shift_assignment"
+
+        case Cast:
+            return "cast"
+
+        case LogicalOr:
+            return "logical_or"
+
+        case LogicalAnd:
+            return "logical_and"
+
+        case Equal:
+            return "equal"
+
+        case NotEqual:
+            return "not_equal"
+
+        case LessThan:
+            return "less_than"
+
+        case GreaterThan:
+            return "greater_than"
+
+        case LessThanOrEqual:
+            return "less_than_or_equal"
+
+        case GreaterThanOrEqual:
+            return "greater_than_or_equal"
+
+        case In:
+            return "in"
+
+        case NotIn:
+            return "not_in"
+
+        case InclusiveRange:
+            return "inclusive_range"
+
+        case ExclusiveRange:
+            return "exclusive_range"
+
+        case Power:
+            return "power"
+
+        case BitwiseOr:
+            return "bitwise_or"
+
+        case BitwiseXor:
+            return "bitwise_xor"
+
+        case BitwiseAnd:
+            return "bitwise_and"
+
+        case BitwiseLeftShift:
+            return "left_shift"
+
+        case BitwiseRightShift:
+            return "right_shift"
+
+        case BitwiseUnsignedRightShift:
+            return "unsigned_right_shift"
+
+        case LogicalNot:
+            return "logical_not"
+
+        case LogicalNotOperator:
+            return "logical_not_operator"
+
+        case AddressOf:
+            return "address_of"
+
+        case Dereference:
+            return "dereference"
+
+        case BitwiseNot:
+            return "bitwise_not"
+
+        case UnaryMinus:
+            return "unary_minus"
+
+        case UnaryPlus:
+            return "unary_plus"
+
+        case PreIncrement:
+            return "pre_increment"
+
+        case PreDecrement:
+            return "pre_decrement"
+
+        case Scope:
+            return "scope"
+
+        case Dot:
+            return "dot"
+
+        case Arrow:
+            return "arrow"
+
+        case Index:
+            return "index"
+
+        case Call:
+            return "call"
+
+        case Arguments:
+            return "arguments"
+
+        case PostIncrement:
+            return "post_increment"
+
+        case PostDecrement:
+            return "post_decrement"
+
+        case Parenthesis:
+            return "parenthesis"
+
+        case Identifier:
+            return "identifier"
+
+        case IntegerLiteral:
+            return "integer"
+
+        case FloatLiteral:
+            return "float"
+
+        case StringLiteral:
+            return "string"
+
+        case CharLiteral:
+            return "char"
+
+        case SymbolLiteral:
+            return "symbol"
+
+        case True:
+            return "true"
+
+        case False:
+            return "false"
+
+        case NullLiteral:
+            return "null"
+
+        case This:
+            return "this"
+
+        case List:
+            return "list"
+
+        case Array:
+            return "array"
+
+        case Hash:
+            return "hash"
+
+        case HashPair:
+            return "hash_pair"
+
+        case Tuple:
+            return "tuple"
+
+        case Closure:
+            return "closure"
+
+        case ClosureParameter:
+            return "closure_parameter"
+
+        case ClosureReturnType:
+            return "closure_return_type"
+
+        case NamedType:
+            return "named_type"
+
+        case BuiltinType:
+            return "builtin_type"
+
+        case GenericName:
+            return "generic_name"
+
+        case GenericArguments:
+            return "generic_arguments"
+
+        case PointerType:
+            return "pointer_type"
+
+        case ReferenceType:
+            return "reference_type"
+
+        case ArrayType:
+            return "array_type"
+
+        case ListType:
+            return "list_type"
+
+        case HashType:
+            return "hash_type"
+
+        case TupleType:
+            return "tuple_type"
+
+        case FunctionType:
+            return "function_type"
+
+        case TemplateString:
+            return "template_string"
+
+        case TemplateStringChunk:
+            return "template_string_chunk"
+
+        case Interpolation:
+            return "interpolation"
+
+        case BitwiseUnsignedRightShiftAssignment:
+            return "unsigned_right_shift_assignment"
+
+        default:
+            return "<unnamed kind>"
+
+# whether the node's token index means anything: a node with no token of its
+# own carries a 0, and 0 is also the first token of the file
+def carries_a_token : bool
+    @kind : AstNodeKind
+
+    switch kind:
+        case Import:
+        case ImportPathSegment:
+        case ImportAlias:
+        case LetDeclaration:
+        case ConstDeclaration:
+        case Function:
+        case Class:
+        case Struct:
+        case Enum:
+        case Union:
+        case SuperType:
+        case GenericParameters:
+        case Param:
+        case Pass:
+        case If:
+        case Elif:
+        case Else:
+        case While:
+        case For:
+        case ForEach:
+        case ImportAll:
+        case New:
+        case Delete:
+        case DeleteArray:
+        case Sizeof:
+        case Return:
+        case Break:
+        case Continue:
+        case Yield:
+        case Goto:
+        case Label:
+        case Plus:
+        case Minus:
+        case Times:
+        case Division:
+        case IntegerDivision:
+        case IntegerDivisionAssignment:
+        case BitwiseNotAssignment:
+        case Modulo:
+        case Assignment:
+        case PlusAssignment:
+        case MinusAssignment:
+        case TimesAssignment:
+        case DivisionAssignment:
+        case ModuloAssignment:
+        case BitwiseAndAssignment:
+        case BitwiseOrAssignment:
+        case BitwiseXorAssignment:
+        case BitwiseLeftShiftAssignment:
+        case BitwiseRightShiftAssignment:
+        case BitwiseUnsignedRightShiftAssignment:
+        case Cast:
+        case LogicalOr:
+        case LogicalAnd:
+        case Equal:
+        case NotEqual:
+        case LessThan:
+        case GreaterThan:
+        case LessThanOrEqual:
+        case GreaterThanOrEqual:
+        case In:
+        case NotIn:
+        case InclusiveRange:
+        case ExclusiveRange:
+        case Power:
+        case BitwiseOr:
+        case BitwiseXor:
+        case BitwiseAnd:
+        case BitwiseLeftShift:
+        case BitwiseRightShift:
+        case BitwiseUnsignedRightShift:
+        case LogicalNot:
+        case LogicalNotOperator:
+        case AddressOf:
+        case Dereference:
+        case BitwiseNot:
+        case UnaryMinus:
+        case UnaryPlus:
+        case PreIncrement:
+        case PreDecrement:
+        case Scope:
+        case Dot:
+        case Arrow:
+        case Index:
+        case Call:
+        case Arguments:
+        case PostIncrement:
+        case PostDecrement:
+        case Parenthesis:
+        case Identifier:
+        case IntegerLiteral:
+        case FloatLiteral:
+        case StringLiteral:
+        case CharLiteral:
+        case SymbolLiteral:
+        case True:
+        case False:
+        case NullLiteral:
+        case This:
+        case List:
+        case Array:
+        case Hash:
+        case HashPair:
+        case Tuple:
+        case Closure:
+        case BuiltinType:
+        case GenericArguments:
+        case PointerType:
+        case ReferenceType:
+        case ArrayType:
+        case ListType:
+        case HashType:
+        case TupleType:
+        case FunctionType:
+        case TemplateString:
+        case TemplateStringChunk:
+        case Interpolation:
+            return true
+        default:
+            return false

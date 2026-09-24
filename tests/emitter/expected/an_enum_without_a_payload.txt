@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <new>
 
+enum class h0_1_TokenKind : int32_t;
 struct h0_6_Token;
 
 enum class h0_1_TokenKind : int32_t {

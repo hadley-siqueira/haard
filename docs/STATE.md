@@ -60,8 +60,12 @@ Seventeen test suites and the bootstrap, ~700 cases, `make check` in a minute or
 
 **The compiler has started to be written in Haard**, since 2026-09-24:
 `bootstrap/` is a real Haard project -- a `haard.pkg`, a `roots.tbl` that
-`make table` keeps equal to it, and a `Makefile` -- whose **scanner** passes
-all 45 cases of `tests/scanner` byte for byte, diagnostics included. It is
+`make table` keeps equal to it, and a `Makefile` -- whose **scanner and
+parser** (with the AST, its builder and the pretty printer) pass all 45 cases
+of `tests/scanner` and all 409 of `tests/parser` byte for byte: diagnostics,
+the source printed back, the tree and the round trip. The parser found one
+more bug in `hdc`, fixed: an **enum** taken by a method of a class emitted
+before it was a C++ error, since only classes were declared ahead. It is
 part of `make check`, which also makes it the largest regression test of the
 compiler in the repository. Writing it found three bugs in `hdc`, fixed with
 it: a class **holding** a `String` was assigned shallow, an assignment through
