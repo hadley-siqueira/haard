@@ -1,6 +1,6 @@
 # Where the compiler is
 
-Written 2026-09-02, last brought up to date 2026-09-29. The agenda of
+Written 2026-09-02, last brought up to date 2026-09-30. The agenda of
 *decisions* is `design/README.md`; this is the state of the *code*, and what to
 do next.
 
@@ -75,6 +75,31 @@ raised, answered the same day as record 0062: `let x = xs[i]` bound a
 **reference**, and now it is a **copy**, as C++'s `auto` is -- a reference is
 `let x : T& = ...`, and a `for x in` variable stays one. See
 `bootstrap/README.md`.
+
+**A move is written**, since 2026-09-30 -- record 0066, Hadley. `T&&` parses,
+types and emits; a class is moved by `init(other : T&&)` beside its copy
+`init`, and only where `&&x` is written: the move `init` is a C++ constructor
+with a tag first, so g++ never moves on its own. `y = &&x` destroys and moves,
+`&&x` with no move `init` is the copy, and a temporary is never a copy -- so a
+class that owns something and can only be moved is usable at last. The
+bootstrap's parser reads both forms.
+
+**A generic enum works**, since 2026-09-30 -- record 0043, amended.
+`Option<i32>.Some(3)`, `Option<i32>.None`, `Option.Some(3)` and a bare
+`None` or `Some(x)` all failed before, each differently. A variant written
+without the enum's arguments is the same variant of a **clone**, chosen by
+the enum the context expects and then by solving its arguments (record 0059).
+Found on the way: a clone made mid-inference had **untyped variants**, and a
+bare variant reached **clones** by lookup, so one more `Option<bool>` anywhere
+in a program broke a working `None`.
+
+**Four smaller things, the same day.** `//=` and `>>>=` are emitted (record
+0057, amended) through a helper that takes the place by its address, so it is
+evaluated once. `\$` is an escape for `$` (Hadley; record 0032, amended),
+written to C++ as the bare `$` -- `"\${"` had worked only because g++ drops an
+unknown escape. A `<...>` after a name with no type parameters is an error
+(Hadley; record 0054, amended), where `soma<i32>(1, 2)` used to compile with
+the list ignored. And `Array` has `pop`.
 
 **A union is C's union, and a struct has no vtable**, since 2026-09-29 —
 records 0064 and 0065. A union is emitted as a C++ `union`; it derives from

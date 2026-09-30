@@ -157,7 +157,9 @@ record had left open. It is C++'s meaning and **not** two references, so the
 precedent standing next to it is actively wrong: the parser deliberately reads
 `**` as two pointers, and writing `&&` the same way would silently produce
 `T&&` meaning `(T&)&`. It needs its own node kind and its own `TypeKind`. It
-does not parse today.
+~~does not parse today~~ -- **built 2026-09-30**, record
+[0066](0066-a-move-is-written.md): `AST_MOVE_REFERENCE_TYPE` and
+`TYPE_MOVE_REFERENCE`, and what a move is.
 
 ## Decided: an unsized array is sugar for `Array<T>`
 

@@ -442,6 +442,9 @@ def name_of : char*
         case AddressOf:
             return "address_of"
 
+        case Move:
+            return "move"
+
         case Dereference:
             return "dereference"
 
@@ -559,6 +562,9 @@ def name_of : char*
         case ReferenceType:
             return "reference_type"
 
+        case MoveReferenceType:
+            return "move_reference_type"
+
         case ArrayType:
             return "array_type"
 
@@ -669,6 +675,7 @@ def carries_a_token : bool
         case LogicalNot:
         case LogicalNotOperator:
         case AddressOf:
+        case Move:
         case Dereference:
         case BitwiseNot:
         case UnaryMinus:
@@ -704,6 +711,7 @@ def carries_a_token : bool
         case GenericArguments:
         case PointerType:
         case ReferenceType:
+        case MoveReferenceType:
         case ArrayType:
         case ListType:
         case HashType:

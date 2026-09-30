@@ -107,7 +107,7 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
         return module->get_types()->builtin(BUILTIN_SYMBOL);
 
     case AST_IDENTIFIER:
-        return identifier(scope, node);
+        return identifier(scope, node, expected);
 
     case AST_PARENTHESIS:
         return type_of(index, scope, first_child(node), expected);
@@ -167,14 +167,17 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_NOT_IN:
         return membership(scope, node);
 
+    case AST_GENERIC_NAME:
+        return generic_enum(scope, node);
+
     case AST_DOT:
-        return member(scope, node, false);
+        return member(scope, node, false, expected);
 
     case AST_ARROW:
-        return member(scope, node, true);
+        return member(scope, node, true, expected);
 
     case AST_CALL:
-        return call(scope, node);
+        return call(scope, node, expected);
 
     // A free function has no 'this', and 'this_type' answers that by giving
     // back nothing -- which used to travel to the emitter as a binding with
@@ -195,6 +198,9 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
 
     case AST_ADDRESS_OF:
         return address_of(scope, node);
+
+    case AST_MOVE:
+        return move(scope, node);
 
     case AST_DEREFERENCE:
         return dereference(scope, node);
@@ -499,6 +505,31 @@ u32 ExpressionTyper::address_of(u32 scope, u32 node) {
     return module->get_types()->pointer(module->get_types()->value_of(inner));
 }
 
+// '&&x', Hadley 2026-09-30: a move, C++'s 'std::move(x)'. It is the only
+// place the compiler moves -- it never decides to on its own -- and what it
+// gives is a 'T&&', which a move 'init' takes and which becomes a T by that
+// 'init' where a T is asked for, or by the copy when the class has none.
+//
+// Only a place can be moved from, for the reason only a place has an address:
+// '&&make()' names nothing whose insides could be taken
+u32 ExpressionTyper::move(u32 scope, u32 node) {
+    u32 inner = type_of(index, scope, first_child(node), INVALID_TYPE);
+
+    if (inner == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    if (!is_place(first_child(node))) {
+        report(node, "this is a value and not a place, so there is nothing "
+               "to move from");
+
+        return INVALID_TYPE;
+    }
+
+    return module->get_types()->move_reference(
+        module->get_types()->value_of(inner));
+}
+
 // Whether an expression names somewhere a value is kept -- what C calls an
 // lvalue -- which is what an assignment writes, what '&' takes the address of
 // and what '++' changes. Asked AFTER the expression was typed, since what a
@@ -577,6 +608,45 @@ bool ExpressionTyper::names_storage(u32 node) {
     case SYMBOL_VARIABLE:
     case SYMBOL_PARAM:
     case SYMBOL_FIELD:
+        return true;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+// Hadley, 2026-09-30: a value with no name -- what a call gives back by
+// value, a construction, a literal a class is built from -- is not COPIED into
+// what it initialises. It is built there: C++17 guarantees it, and the C++
+// this compiler writes is C++17. So record 0031's refusal, which is about a
+// copy, has nothing to say about one.
+//
+// Asked AFTER the expression was typed, like 'is_place'
+bool ExpressionTyper::is_temporary(u32 node) {
+    if (node == 0) {
+        return false;
+    }
+
+    switch (kind_of(node)) {
+    case AST_PARENTHESIS:
+        return is_temporary(first_child(node));
+
+    // a call gives back a place only when it gives back a reference
+    case AST_CALL: {
+        u32 type = module->get_resolutions()->get(node)->type;
+
+        return type != INVALID_TYPE
+            && module->get_types()->get_type(type)->kind != TYPE_REFERENCE
+            && module->get_types()->get_type(type)->kind
+                   != TYPE_MOVE_REFERENCE;
+    }
+
+    // record 0037: a literal a class is built from
+    case AST_STRING_LITERAL:
+    case AST_LIST:
+    case AST_ARRAY:
         return true;
 
     default:
@@ -1322,9 +1392,41 @@ u32 ExpressionTyper::literal(u32 node, u32 expected, BuiltinType fallback) {
     return expected;
 }
 
-u32 ExpressionTyper::identifier(u32 scope, u32 node) {
+u32 ExpressionTyper::identifier(u32 scope, u32 node, u32 expected) {
     std::vector<Candidacy> found =
         resolver.resolve(index, scope, text_of(node));
+
+    // 'None', bare: a variant of the enum the context expects, or of a
+    // generic one that has to be told what it is
+    if (found.size() > 0 && all_variants(found)) {
+        std::string unknown;
+        std::string generic = generic_enum_of(found);
+
+        found = variants(scope, node, found, std::vector<Argument>(), false,
+                         expected, unknown);
+
+        if (found.size() == 0 && unknown.size() > 0) {
+            report(node, "nothing here says what '" + unknown + "' is, so the "
+                   "enum has to be written with it: " + generic + "<...>."
+                   + text_of(node));
+        }
+
+        // several clones of one generic, or several enums that each declare
+        // the name: the reader is told which ones
+        if (found.size() > 1) {
+            std::string named;
+
+            for (u32 i = 0; i < found.size(); i++) {
+                named += i == 0 ? "" : (i + 1 == found.size() ? " and " : ", ");
+                named += name_of(module->get_types()->named(
+                    found[i].module, enum_of_variant(found[i]),
+                    std::vector<u32>()));
+            }
+
+            report(node, "'" + text_of(node) + "' is a variant of " + named
+                   + ", so which has to be written before it");
+        }
+    }
 
     // an unknown name is the UseResolver's diagnostic, and a name with several
     // candidates is a call to resolve, not a type to read
@@ -1346,9 +1448,20 @@ u32 ExpressionTyper::identifier(u32 scope, u32 node) {
     // what seeding them at fixed positions bought. So every cross-module bare
     // name anyone had written -- an inherited 'wheels : i32' -- was right by
     // construction, and one of a class type would not have been
-    return builder.translate(index, found[0].module,
-                             value_of_candidate(found[0].module,
-                                                found[0].candidate));
+    u32 type = builder.translate(index, found[0].module,
+                                 value_of_candidate(found[0].module,
+                                                    found[0].candidate));
+
+    // A NAME of a 'T&&' -- a move 'init's '@other' -- is a place like any
+    // other, and reads as a 'T&': C++'s rule, and the one that keeps a move
+    // written. Moving from it again is '&&other', said out loud
+    if (type != INVALID_TYPE && module->get_types()->get_type(type)->kind
+                                    == TYPE_MOVE_REFERENCE) {
+        return module->get_types()->reference(
+            module->get_types()->value_of(type));
+    }
+
+    return type;
 }
 
 // The type a candidate has **as a value**, which is its own except for one
@@ -1720,24 +1833,9 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
         node = first_child(node);
     }
 
-    if (kind_of(node) == AST_IDENTIFIER) {
-        return instantiated(scope, node, written,
-                            resolver.resolve(index, scope, text_of(node)));
-    }
-
-    if (kind_of(node) == AST_SCOPE) {
-        u32 first = first_child(node);
-        u32 second = module->get_ast()->get_node(first)->get_sibling();
-
-        if (second == 0) {
-            return instantiated(scope, first, written,
-                                resolver.resolve_at_module(index,
-                                                           text_of(first)));
-        }
-
-        return instantiated(scope, second, written,
-                            resolver.resolve_qualified(index, text_of(first),
-                                                       text_of(second)));
+    if (kind_of(node) == AST_IDENTIFIER || kind_of(node) == AST_SCOPE) {
+        return instantiated(scope, name_of_callee(node), written,
+                            named_by(scope, node));
     }
 
     // a method call: the same walk a field access does, giving back the set
@@ -1793,7 +1891,35 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
     return std::vector<Candidacy>();
 }
 
-u32 ExpressionTyper::call(u32 scope, u32 node) {
+// What a name, or a '::' qualified one, reaches -- the declarations and
+// nothing made from them. 'callee_of' instantiates what this finds; a
+// construction only asks whether it is a type, and asking through
+// 'callee_of' reported a wrong '<...>' twice, once per question
+std::vector<Candidacy> ExpressionTyper::named_by(u32 scope, u32 node) {
+    if (kind_of(node) == AST_GENERIC_NAME) {
+        node = first_child(node);
+    }
+
+    if (kind_of(node) == AST_IDENTIFIER) {
+        return resolver.resolve(index, scope, text_of(node));
+    }
+
+    if (kind_of(node) == AST_SCOPE) {
+        u32 first = first_child(node);
+        u32 second = module->get_ast()->get_node(first)->get_sibling();
+
+        if (second == 0) {
+            return resolver.resolve_at_module(index, text_of(first));
+        }
+
+        return resolver.resolve_qualified(index, text_of(first),
+                                          text_of(second));
+    }
+
+    return std::vector<Candidacy>();
+}
+
+u32 ExpressionTyper::call(u32 scope, u32 node, u32 expected) {
     u32 callee = first_child(node);
     u32 list = second_child(node);
     bool built = false;
@@ -1904,6 +2030,20 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
 
     conflict.clear();
 
+    // a variant of a generic enum, written without the enum's arguments. The
+    // hint below names the enum, since 'Some<...>(...)' means nothing
+    std::string hint = text_of(at) + "<...>(...)";
+
+    if (callee != 0 && kind_of(callee) != AST_GENERIC_NAME) {
+        if (all_variants(candidates)) {
+            hint = generic_enum_of(candidates) + "<...>." + text_of(at)
+                   + "(...)";
+        }
+
+        candidates = variants(scope, at, candidates, arguments, true,
+                              expected, unknown);
+    }
+
     // Record 0059: nothing was written between '<' and '>', so a generic
     // candidate is solved from these arguments before anything is ranked.
     // Written, 'callee_of' has already instantiated it
@@ -1966,7 +2106,10 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
             // took an uncopyable class by value would simply not match, and
             // the reader would be told that no overload takes these arguments
             // -- true, and about the wrong thing
-            if (!coercion.may_be_copied(index, chosen.parameters[i])) {
+            if (!coercion.may_be_copied(index, chosen.parameters[i])
+                && !coercion.is_moved(index, arguments[i].type,
+                                      chosen.parameters[i])
+                && !is_temporary(arguments[i].node)) {
                 report(arguments[i].node,
                        name_of(chosen.parameters[i])
                            + " cannot be copied, and this parameter takes one "
@@ -2007,7 +2150,7 @@ u32 ExpressionTyper::call(u32 scope, u32 node) {
         // of its parameters is -- which is the sentence the reader can act on
         if (unknown.size() > 0) {
             report(at, "nothing here says what '" + unknown + "' is, so it "
-                   "has to be written: " + text_of(at) + "<...>(...)");
+                   "has to be written: " + hint);
 
             return INVALID_TYPE;
         }
@@ -2269,6 +2412,11 @@ bool ExpressionTyper::unify(u32 parameter, u32 argument,
         return unify(types->get_argument(wanted->first_argument), given,
                      bound);
 
+    // and a T&& laid over '&&x' is T laid over what x is
+    case TYPE_MOVE_REFERENCE:
+        return unify(types->get_argument(wanted->first_argument),
+                     types->value_of(given), bound);
+
     case TYPE_POINTER:
         return entry->kind == TYPE_POINTER
             && unify(types->get_argument(wanted->first_argument),
@@ -2360,6 +2508,9 @@ u32 ExpressionTyper::substitute(
 
     case TYPE_REFERENCE:
         return types->reference(substitute(inside[0], bound));
+
+    case TYPE_MOVE_REFERENCE:
+        return types->move_reference(substitute(inside[0], bound));
 
     case TYPE_ARRAY:
         return types->array(substitute(inside[0], bound), entry->subject);
@@ -2465,8 +2616,13 @@ u32 ExpressionTyper::value_call(u32 scope, u32 node, u32 callee, u32 list,
             }
         }
 
-        // record 0031, the fourth place a value is given to something
-        if (!coercion.may_be_copied(index, wanted)) {
+        // record 0031, the fourth place a value is given to something -- and
+        // a '&&x' into a class with a move 'init' is not a copy
+        if (!coercion.may_be_copied(index, wanted)
+            && !coercion.is_moved(index, module->get_resolutions()
+                                             ->get(written[i])->type,
+                                  wanted)
+            && !is_temporary(written[i])) {
             report(written[i], name_of(wanted)
                    + " cannot be copied, and this parameter takes one by "
                      "value");
@@ -2701,7 +2857,7 @@ u32 ExpressionTyper::construction(u32 scope, u32 node, u32 callee, u32 list,
         return INVALID_TYPE;
     }
 
-    std::vector<Candidacy> found = callee_of(scope, callee);
+    std::vector<Candidacy> found = named_by(scope, callee);
     u32 owner = index;
     u32 symbol = builder.type_symbol(found, owner);
 
@@ -3088,13 +3244,14 @@ std::vector<Candidacy> ExpressionTyper::instantiated(
         query.set_module(owner);
 
         // Only a generic FUNCTION. A generic class reaching here is record
-        // 0045's construction, which took its own path before this; a
-        // candidate with no type parameters is left exactly as it was, so an
-        // ordinary overload of the same name still competes and the arity
-        // error it would give is the one the reader wants
+        // 0045's construction, which took its own path before this.
+        //
+        // Anything with no type parameters of its own cannot be what a
+        // written '<...>' meant, and is not a candidate. Hadley, 2026-09-30:
+        // it used to be kept, and 'soma<i32>(1, 2)' over a plain 'soma'
+        // compiled with the list ignored in silence
         if (one->kind != SYMBOL_FUNCTION
             || query.get_generic_parameters(one->ast_node).size() == 0) {
-            answer.push_back(candidacy);
             continue;
         }
 
@@ -3112,7 +3269,33 @@ std::vector<Candidacy> ExpressionTyper::instantiated(
         }
     }
 
+    // nothing of that name takes type arguments at all -- an arity error
+    // from a generic one was already reported by 'instantiate_written'
+    if (answer.size() == 0 && !any_generic_function(found)) {
+        report(at, "'" + text_of(at) + "' is not generic, so it takes no "
+               "type arguments");
+    }
+
     return answer;
+}
+
+bool ExpressionTyper::any_generic_function(
+    const std::vector<Candidacy>& found) {
+    AstQuery query;
+
+    for (const Candidacy& candidacy : found) {
+        Module* owner = compilation->get_module(candidacy.module);
+        Candidate* one = owner->get_symbols()->get_candidate(candidacy.candidate);
+
+        query.set_module(owner);
+
+        if (one->kind == SYMBOL_FUNCTION
+            && query.get_generic_parameters(one->ast_node).size() > 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::vector<Candidacy> ExpressionTyper::members_of(u32 left, u32 name,
@@ -3214,7 +3397,8 @@ u32 ExpressionTyper::this_type(u32 scope) {
     return INVALID_TYPE;
 }
 
-u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
+u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer,
+                            u32 expected) {
     u32 left = type_of(index, scope, first_child(node), INVALID_TYPE);
     u32 name = second_child(node);
 
@@ -3265,6 +3449,23 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
         return INVALID_TYPE;
     }
 
+    // 'Option.None': the generic's own variant, which the context has to
+    // name a clone for
+    if (all_variants(found)) {
+        std::string unknown;
+
+        found = variants(scope, name, found, std::vector<Argument>(), false,
+                         expected, unknown);
+
+        if (found.size() == 0) {
+            report(name, "nothing here says what '" + unknown + "' is, so the "
+                   "enum has to be written with it: " + name_of(left)
+                   + "<...>." + text_of(name));
+
+            return INVALID_TYPE;
+        }
+    }
+
     // recorded at the NAME and not at the dot: the dot is an operator and the
     // thing that names a declaration is its right side
     module->get_resolutions()->set_declaration(name, found[0].module,
@@ -3283,6 +3484,285 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer) {
     return builder.translate(index, found[0].module,
                              value_of_candidate(found[0].module,
                                                 found[0].candidate));
+}
+
+// 'Option<i32>' where a value goes, which is the left of 'Option<i32>.Some(3)'
+// and 'Option<i32>.None': the one place the name of a type stands in an
+// expression, the way 'Tree' does in 'Tree.Leaf'. It is built the way a
+// written type is, which is what makes the clone, and the clone is recorded on
+// the node -- the emitter names the enum by it, and the '.' after it finds its
+// variants there and not in the generic nobody instantiated.
+//
+// Anything else written like this -- 'f<i32>' with no call, a class -- is no
+// value, and gives back nothing as it always did
+u32 ExpressionTyper::generic_enum(u32 scope, u32 node) {
+    u32 name = first_child(node);
+
+    if (kind_of(name) != AST_IDENTIFIER) {
+        return INVALID_TYPE;
+    }
+
+    u32 owner = index;
+    u32 symbol = builder.type_symbol(resolver.resolve(index, scope,
+                                                      text_of(name)), owner);
+
+    if (symbol == 0 || compilation->get_module(owner)->get_symbols()
+                               ->get_candidate(symbol)->kind != SYMBOL_ENUM) {
+        return INVALID_TYPE;
+    }
+
+    u32 made = builder.build_written_name(index, scope, name,
+                                          second_child(node));
+
+    if (made == INVALID_TYPE) {
+        return INVALID_TYPE;
+    }
+
+    Type* entry = module->get_types()->get_type(made);
+
+    // inside a generic nobody instantiated, 'Option<T>' is a type that names a
+    // parameter and has no clone yet. The clone of the function asks again
+    if (entry->kind != TYPE_NAMED) {
+        return INVALID_TYPE;
+    }
+
+    module->get_resolutions()->set_declaration(node, entry->module,
+                                               entry->subject);
+
+    return made;
+}
+
+// Record 0043 meets record 0059, 2026-09-30. A variant of a generic enum
+// written without the enum's arguments -- 'Some(3)', 'Option.Some(3)', 'None'
+// -- names the variant of the generic nobody instantiated, and that one is
+// never a value: its payload is a T. It is replaced by the same variant of a
+// clone, and which clone is said by two things, in the order they are
+// trusted: the enum the context expects, and then the arguments, solved
+// against the payload the way a generic function's parameters are.
+//
+// The expected enum is asked first for a reason 'let a : Option<i64> =
+// Some(3)' shows: the literal alone would say i32.
+//
+// Every other candidate passes through, and so does every variant of an enum
+// that is not generic -- which is every program written before this. The one
+// change to those is that several variants of one name, which used to be no
+// answer at all, are now one when the context names its enum
+std::vector<Candidacy> ExpressionTyper::variants(
+    u32 scope, u32 at, const std::vector<Candidacy>& found,
+    const std::vector<Argument>& arguments, bool called, u32 expected,
+    std::string& unknown) {
+    TypeTable* types = module->get_types();
+    std::vector<Candidacy> answer;
+
+    // Record 0002, as at a call: inside a generic nobody instantiated, what
+    // is expected or given may itself be a parameter. The clone asks again
+    if (expected != INVALID_TYPE && mentions_a_parameter(expected)) {
+        return found;
+    }
+
+    for (const Argument& argument : arguments) {
+        if (argument.type != INVALID_TYPE
+            && mentions_a_parameter(argument.type)) {
+            return found;
+        }
+    }
+
+    u32 wanted_module = 0;
+    u32 wanted = 0;
+
+    if (expected != INVALID_TYPE) {
+        Type* entry = types->get_type(types->value_of(expected));
+
+        if (entry->kind == TYPE_NAMED
+            && compilation->get_module(entry->module)->get_symbols()
+                       ->get_candidate(entry->subject)->kind == SYMBOL_ENUM) {
+            wanted_module = entry->module;
+            wanted = entry->subject;
+        }
+    }
+
+    // the context first: the variant of the very enum it expects, or of the
+    // generic that enum is a clone of
+    if (wanted != 0) {
+        const Instantiation* made =
+            compilation->get_module(wanted_module)->get_instantiation(wanted);
+
+        for (const Candidacy& candidacy : found) {
+            u32 enumeration = enum_of_variant(candidacy);
+
+            if (enumeration == 0 || candidacy.module != wanted_module) {
+                continue;
+            }
+
+            if (enumeration == wanted) {
+                keep(answer, candidacy);
+            } else if (made != nullptr && made->origin == enumeration) {
+                keep(answer, same_variant(candidacy, wanted));
+            }
+        }
+
+        if (answer.size() > 0) {
+            return answer;
+        }
+    }
+
+    for (const Candidacy& candidacy : found) {
+        u32 enumeration = enum_of_variant(candidacy);
+
+        if (enumeration == 0 || !is_unbound_generic(candidacy.module,
+                                                    enumeration)) {
+            keep(answer, candidacy);
+            continue;
+        }
+
+        Module* owner = compilation->get_module(candidacy.module);
+        AstQuery query;
+
+        query.set_module(owner);
+
+        std::vector<u32> generics = query.get_generic_parameters(
+            owner->get_symbols()->get_candidate(enumeration)->ast_node);
+        std::map<std::pair<u32, u32>, u32> bound;
+        std::vector<u32> built;
+        u32 type = owner->get_symbols()->get_candidate(candidacy.candidate)
+                       ->type;
+
+        // one that carries nothing has nothing to solve from, and the name of
+        // the first parameter is what the reader is told to write
+        if (!called || type == INVALID_TYPE
+            || owner->get_types()->get_type(type)->kind != TYPE_FUNCTION) {
+            parameters_of(candidacy.module, generics, bound, built, unknown);
+            continue;
+        }
+
+        std::vector<u32> signature;
+
+        for (u32 written : owner->get_types()->get_arguments(type)) {
+            signature.push_back(
+                builder.translate(index, candidacy.module, written));
+        }
+
+        signature.pop_back();
+
+        if (arguments.size() != signature.size()
+            || !solve(scope, signature, arguments, bound)
+            || !parameters_of(candidacy.module, generics, bound, built,
+                              unknown)) {
+            continue;
+        }
+
+        u32 clone = builder.instantiate_written(index, scope, at,
+                                                candidacy.module, enumeration,
+                                                built);
+
+        if (clone != 0) {
+            keep(answer, same_variant(candidacy, clone));
+        }
+    }
+
+    return answer;
+}
+
+// the enum a variant belongs to, read off its type: one that carries nothing
+// IS one of the enum, and one that carries something gives one back
+u32 ExpressionTyper::enum_of_variant(const Candidacy& candidacy) {
+    Module* owner = compilation->get_module(candidacy.module);
+    Candidate* one = owner->get_symbols()->get_candidate(candidacy.candidate);
+
+    if ((SymbolKind) one->kind != SYMBOL_VARIANT
+        || one->type == INVALID_TYPE) {
+        return 0;
+    }
+
+    TypeTable* types = owner->get_types();
+    Type* entry = types->get_type(one->type);
+
+    if (entry->kind == TYPE_FUNCTION) {
+        entry = types->get_type(types->get_arguments(one->type).back());
+    }
+
+    if (entry->kind != TYPE_NAMED || entry->module != candidacy.module) {
+        return 0;
+    }
+
+    return entry->subject;
+}
+
+// the variant of the same name in another enum of the same module, which is
+// where a clone lives (record 0002's first rule)
+Candidacy ExpressionTyper::same_variant(const Candidacy& candidacy,
+                                        u32 enumeration) {
+    Module* owner = compilation->get_module(candidacy.module);
+    SymbolTable* table = owner->get_symbols();
+    AstQuery query;
+    Candidacy answer = candidacy;
+
+    query.set_module(owner);
+
+    std::string name = query.get_declaration_name(
+        table->get_candidate(candidacy.candidate)->ast_node);
+
+    for (u32 member :
+         query.get_members(table->get_candidate(enumeration)->ast_node)) {
+        if (query.get_declaration_name(member) == name) {
+            answer.candidate = table->candidate_of(member);
+        }
+    }
+
+    return answer;
+}
+
+// the name of the first generic enum, as the source wrote it, whose variant
+// is among these -- the name a hint tells the reader to write
+std::string ExpressionTyper::generic_enum_of(
+    const std::vector<Candidacy>& found) {
+    for (const Candidacy& candidacy : found) {
+        u32 enumeration = enum_of_variant(candidacy);
+
+        if (enumeration != 0 && is_unbound_generic(candidacy.module,
+                                                   enumeration)) {
+            Module* owner = compilation->get_module(candidacy.module);
+            AstQuery query;
+
+            query.set_module(owner);
+
+            return query.get_declaration_name(
+                owner->get_symbols()->get_candidate(enumeration)->ast_node);
+        }
+    }
+
+    return "Enum";
+}
+
+bool ExpressionTyper::all_variants(const std::vector<Candidacy>& found) {
+    for (const Candidacy& candidacy : found) {
+        if (compilation->get_module(candidacy.module)->get_symbols()
+                ->get_candidate(candidacy.candidate)->kind != SYMBOL_VARIANT) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void ExpressionTyper::keep(std::vector<Candidacy>& answer,
+                           const Candidacy& one) {
+    for (const Candidacy& earlier : answer) {
+        if (earlier.module == one.module
+            && earlier.candidate == one.candidate) {
+            return;
+        }
+    }
+
+    answer.push_back(one);
+}
+
+// a generic the source wrote, and not a clone of one -- a clone keeps its
+// parameter list in the tree, and the instantiation record is what tells
+bool ExpressionTyper::is_unbound_generic(u32 owner, u32 symbol) {
+    return is_generic(owner, symbol)
+        && compilation->get_module(owner)->get_instantiation(symbol)
+               == nullptr;
 }
 
 // Whether this named type is an enum, which is the one named type that is not
@@ -3395,6 +3875,9 @@ std::string ExpressionTyper::name_in(u32 owner, u32 type) {
 
     case TYPE_REFERENCE:
         return name_in(owner, arguments[0]) + "&";
+
+    case TYPE_MOVE_REFERENCE:
+        return name_in(owner, arguments[0]) + "&&";
 
     case TYPE_ARRAY:
         return name_in(owner, arguments[0]) + "["

@@ -271,6 +271,9 @@ class PrettyPrinter:
             case AddressOf:
                 print_address_of(node)
 
+            case Move:
+                print_move(node)
+
             case Dereference:
                 print_dereference(node)
 
@@ -386,6 +389,9 @@ class PrettyPrinter:
 
             case ReferenceType:
                 print_reference_type(node)
+
+            case MoveReferenceType:
+                print_move_reference_type(node)
 
             case ArrayType:
                 print_array_type(node)
@@ -784,6 +790,11 @@ class PrettyPrinter:
 
         print_prefix(node, "&")
 
+    def print_move : void
+        @node : i32
+
+        print_prefix(node, "&&")
+
     def print_dereference : void
         @node : i32
 
@@ -1166,6 +1177,12 @@ class PrettyPrinter:
 
         print_children(node)
         print_string("&")
+
+    def print_move_reference_type : void
+        @node : i32
+
+        print_children(node)
+        print_string("&&")
 
     def print_array_type : void
         @node : i32

@@ -1,0 +1,46 @@
+# Hadley, 2026-09-30: a '<...>' written after a name that has no type
+# parameters is an error. It was dropped in silence, so 'soma<i32>(1, 2)' over
+# a plain 'soma' compiled as 'soma(1, 2)'.
+#
+# Where a name has both, the '<...>' picks the generic one: 'both<i64>(1)' is
+# the clone and never the plain overload beside it. And a wrong count is said
+# ONCE -- it used to be twice, since asking whether a callee is a type
+# instantiated it too.
+class Box:
+    n : i32
+
+    def get : i32
+        return n
+
+def soma : i32
+    @a : i32
+    @b : i32
+
+    return a + b
+
+def pick<T> : T
+    @a : T
+
+    return a
+
+def both : i32
+    @a : i32
+
+    return 1
+
+def both<T> : T
+    @a : T
+
+    return a
+
+def main : i32
+    let b : Box
+    let f = |x : i32| { x }
+
+    let x = soma<i32>(1, 2)
+    let y = b.get<i32>()
+    let z = f<i32>(1)
+    let w = pick<i32, bool>(1)
+    let chosen = both<i64>(1)
+
+    return 0

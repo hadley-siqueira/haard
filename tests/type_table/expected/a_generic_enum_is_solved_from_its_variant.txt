@@ -1,0 +1,87 @@
+<unnamed>:
+    Option  Option
+    Either  Either
+    main  i32
+    two  i32
+    Lamp  Lamp
+    Fan  Fan
+    three  i32
+    Option  Option<i64>
+    Either  Either<i32, bool>
+    Option  Option<i32>
+    Option  Option<bool>
+    Option  Option<u8>
+    Option  Option<f64>
+    T  T
+    Some  T -> Option
+    None  Option
+    A  A
+    B  B
+    Left  A -> Either
+    Right  B -> Either
+    written  Option<i32>
+    written_none  Option<u8>
+    solved  Option<bool>
+    bare  Option<f64>
+    expected  Option<i64>
+    expected_none  Option<i64>
+    qualified_none  Option<i64>
+    both  Either<i32, bool>
+    a  <none>
+    b  <none>
+    c  <none>
+    d  Option<i32>
+    e  Option<bool>
+    f  <none>
+    On  Lamp
+    Off  Lamp
+    Fast  Fan
+    Off  Fan
+    g  Fan
+    h  <none>
+    T  i64
+    Some  i64 -> Option<i64>
+    None  Option<i64>
+    A  i32
+    B  bool
+    Left  i32 -> Either<i32, bool>
+    Right  bool -> Either<i32, bool>
+    T  i32
+    Some  i32 -> Option<i32>
+    None  Option<i32>
+    T  bool
+    Some  bool -> Option<bool>
+    None  Option<bool>
+    T  u8
+    Some  u8 -> Option<u8>
+    None  Option<u8>
+    T  f64
+    Some  f64 -> Option<f64>
+    None  Option<f64>
+  41 types interned
+diagnostics:
+error: nothing here says what 'T' is, so the enum has to be written with it: Option<...>.None
+  --> main.hd:25:13
+   |
+25 |     let a = None
+   |             ^^^^
+error: nothing here says what 'T' is, so the enum has to be written with it: Option<...>.None
+  --> main.hd:26:20
+   |
+26 |     let b = Option.None
+   |                    ^^^^
+error: nothing here says what 'B' is, so it has to be written: Either<...>.Left(...)
+  --> main.hd:27:13
+   |
+27 |     let c = Left(3)
+   |             ^^^^
+error: nothing here says what 'T' is, so the enum has to be written with it: Option<...>.None
+  --> main.hd:37:13
+   |
+37 |     let f = None
+   |             ^^^^
+error: 'Off' is a variant of Lamp and Fan, so which has to be written before it
+  --> main.hd:52:13
+   |
+52 |     let h = Off
+   |             ^^^

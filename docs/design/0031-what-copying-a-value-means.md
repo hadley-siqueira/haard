@@ -153,9 +153,11 @@ One name for the compiler to know instead of two, and it is the name records
 
 ## What is still open, named
 
-- **Moving.** There is none, so `gives_back()` copies where C++ would move.
-  Correct and not free. It is additive: a `move` alongside `copy` would only
-  ever loosen.
+- ~~**Moving.**~~ **Done 2026-09-30**, record
+  [0066](0066-a-move-is-written.md): a move `init` taking a `T&&`, run only
+  where `&&x` is written. And `gives_back()` is not a copy at all: a
+  temporary is built where it goes (Hadley, the same day), so `let b =
+  gives_back()` is no longer refused for a class that cannot be copied.
 - **A base's own copy.** The emitted copy constructor default-constructs the
   base subobject and then calls `copy`, so a derived class's `copy` has to
   take care of what its base holds. `super(...)` is undecided (record 0026)

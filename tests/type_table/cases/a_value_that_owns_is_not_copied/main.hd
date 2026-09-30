@@ -47,7 +47,10 @@ def main : i32
     let derived : Derived
     let plain : Plain
 
-    # the four, each reported where it is written
+    # the four, each reported where it is written -- but not 'b': what a
+    # call gives back by value is a temporary, BUILT where it goes and never
+    # copied there (Hadley, 2026-09-30), so it is not a copy of anything.
+    # 'gives_back' itself still copies 'made' out, and says so
     let a = by_value(owner)
     let b = gives_back()
     let c = owner

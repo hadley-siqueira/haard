@@ -73,6 +73,17 @@ void NameResolver::gather_variants(std::vector<Candidacy>& found, u32 module,
             continue;
         }
 
+        // A clone of a generic enum is not in view: record 0002 declares it
+        // under a name no source can write so that no lookup reaches it, and
+        // this one would, by its variants. Reached, 'let a = None' was
+        // whichever clone some other line of the program happened to make --
+        // and one more 'Option<bool>' anywhere made it ambiguous. A clone's
+        // variant is reached by the enum the context expects, and by
+        // 'Option<i32>.None'
+        if (owner->get_instantiation(table->candidate_of(holder)) != nullptr) {
+            continue;
+        }
+
         u32 symbol = table->find(scope, interned);
 
         if (symbol != 0) {

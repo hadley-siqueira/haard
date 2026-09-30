@@ -113,9 +113,16 @@ void TypeCollector::type_signature_now(u32 module_index, u32 candidate) {
                     continue;
                 }
 
+                // a variant is typed the way a field is and for the same
+                // reason: 'Option<i32>.Some(3)' makes the clone mid-inference
+                // and ranks the call against its variant the same moment,
+                // and a variant with no type yet was *no 'Some' takes these
+                // arguments*
                 if (table->get_candidate(one)->kind == SYMBOL_FUNCTION) {
                     type_signature_now(module_index, one);
-                } else if (table->get_candidate(one)->kind == SYMBOL_FIELD) {
+                } else if (table->get_candidate(one)->kind == SYMBOL_FIELD
+                           || table->get_candidate(one)->kind
+                                  == SYMBOL_VARIANT) {
                     fields.push_back(one);
                 }
             }
@@ -836,6 +843,8 @@ u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written,
     // 'let i = table[k]' followed by 'i += 1' walked the table itself: found
     // by the bootstrap's SourceFile. Stripped before record 0031's question,
     // which is now about the copy this makes
+    u32 as_given = given;
+
     if (written == INVALID_TYPE && !keeps_reference && given != INVALID_TYPE) {
         given = module->get_types()->value_of(given);
     }
@@ -845,7 +854,10 @@ u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written,
     // was given. Asked before the list below, because a type that fits
     // perfectly is exactly the one this is about
     if (!coercion.may_be_copied(index, written == INVALID_TYPE ? given
-                                                              : written)) {
+                                                              : written)
+        && !coercion.is_moved(index, as_given,
+                              written == INVALID_TYPE ? given : written)
+        && !typer.is_temporary(expression)) {
         report(name_node_of(node),
                typer.name_of(written == INVALID_TYPE ? given : written)
                    + " cannot be copied, and this is given one");

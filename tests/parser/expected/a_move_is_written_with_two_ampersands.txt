@@ -1,0 +1,102 @@
+class Buffer:
+    data : u8*
+    def init : void
+        @other : Buffer&&
+        data = other.data
+        other.data = null
+def main : i32
+    let a : Buffer
+    let b = &&a
+    let c = x && &&y
+    let d = & &a
+    let e = && &a
+    take(&&b)
+    return 0
+--- tree
+module
+  class 'class'
+    binding_name
+      identifier 'Buffer'
+    type_body
+      field
+        binding_name
+          identifier 'data'
+        binding_type
+          pointer_type '*'
+            builtin_type 'u8'
+      function 'def'
+        binding_name
+          identifier 'init'
+        function_return_type
+          builtin_type 'void'
+        param '@'
+          binding_name
+            identifier 'other'
+          binding_type
+            move_reference_type '&&'
+              named_type
+                identifier 'Buffer'
+        block
+          assignment '='
+            identifier 'data'
+            dot '.'
+              identifier 'other'
+              identifier 'data'
+          assignment '='
+            dot '.'
+              identifier 'other'
+              identifier 'data'
+            null 'null'
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_type
+            named_type
+              identifier 'Buffer'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            move '&&'
+              identifier 'a'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            logical_and '&&'
+              identifier 'x'
+              move '&&'
+                identifier 'y'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'd'
+          binding_expression
+            address_of '&'
+              address_of '&'
+                identifier 'a'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'e'
+          binding_expression
+            move '&&'
+              address_of '&'
+                identifier 'a'
+      call '('
+        identifier 'take'
+        arguments '('
+          move '&&'
+            identifier 'b'
+      return 'return'
+        integer '0'
+--- round trip: ok

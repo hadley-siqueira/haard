@@ -19,6 +19,11 @@ namespace haard {
         TYPE_GENERIC,
         TYPE_POINTER,
         TYPE_REFERENCE,
+
+        // 'T&&', Hadley 2026-09-02 (record 0016) and 2026-09-30: C++'s
+        // rvalue reference, what '&&x' gives and what a move 'init' takes.
+        // A kind of its own and never a reference to a reference
+        TYPE_MOVE_REFERENCE,
         TYPE_ARRAY,
 
         // TYPE_LIST and TYPE_HASH were here until 2026-09-10. '[T]' and
@@ -116,6 +121,7 @@ namespace haard {
 
             u32 pointer(u32 type);
             u32 reference(u32 type);
+            u32 move_reference(u32 type);
 
             // length is NO_LENGTH for 'T[]'
             u32 array(u32 type, u32 length);

@@ -713,7 +713,9 @@ void StatementChecker::check_return(u32 node, u32 scope, u32 result) {
     // is the upcast that record already allows, and it failed here until
     // 2026-09-03 because only a call knew the list
     // record 0031: a value given back by value is copied out of the function
-    if (given != INVALID_TYPE && !coercion.may_be_copied(index, result)) {
+    if (given != INVALID_TYPE && !coercion.may_be_copied(index, result)
+        && !coercion.is_moved(index, given, result)
+        && !typer.is_temporary(expression)) {
         report(expression, typer.name_of(result)
                + " cannot be copied, and giving one back by value copies it");
         return;
@@ -1154,7 +1156,8 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
 
     // record 0031, and an assignment is the one copy that also destroys: what
     // the target held has to go before it can hold something else
-    if (right != INVALID_TYPE && !coercion.may_be_copied(index, left)) {
+    if (right != INVALID_TYPE && !coercion.may_be_copied(index, left)
+        && !coercion.is_moved(index, right, left)) {
         report(node, typer.name_of(left)
                + " cannot be copied, and an assignment copies one");
         return;

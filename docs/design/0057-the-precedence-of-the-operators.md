@@ -252,6 +252,38 @@ value is refused either way — measured by swapping them. What the case pins is
 the answers, not the order: `solid as Shape&` is still refused, which is the
 slice arriving from the other side.
 
+## Amended 2026-09-30: `//=` and `>>>=`
+
+The two compound forms were parsed and typed and then refused by the emitter
+with *this expression cannot be emitted yet*. They are built now, and they need
+one thing the plain operators do not: the operator behind each is a call in
+C++, so `x = f(x, b)` would be the obvious text and it evaluates the **place
+twice** -- `xs[counter.next()] //= 4` would call `next` twice and write the
+wrong element. So the place is handed over **by its address, once**, to a
+helper written per type:
+
+```
+static int32_t __floor_div_assign_int32_t(int32_t* place, int32_t by) {
+    *place = (int32_t)__floor_div_i(*place, by);
+    return *place;
+}
+```
+
+and `x //= 2` is `__floor_div_assign_int32_t(&x, 2)`. `>>>=` is the same
+shape with the shift through the unsigned twin. Where the plain operator is
+already C++'s own -- `//` and `>>>` over an unsigned -- so is the compound form,
+`/=` and `>>=`, and no helper is written. Only the helpers a program reached are
+written, like the rest of this record's.
+
+The case is `tests/emitter/cases/two_compound_operators_cpp_has_no_spelling_for`,
+and its exit status catches each of: truncating instead of flooring, a signed
+shift, the place evaluated twice, a float not floored, and either unsigned path
+written as another operator.
+
+Not built, and not by this amendment: an assignment has **no type** as a value,
+so `let g = (f //= 2)` is *'g' has no type the emitter can write* -- and so is
+`let g = (f = 2)`. `~=` is still undecided.
+
 ## What is not decided here
 
 - the unary minus against `**`, above.

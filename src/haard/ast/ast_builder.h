@@ -176,6 +176,10 @@ namespace haard {
             u32 make_generic_arguments(u32 token);
             u32 make_pointer_type(u32 token, u32 type);
             u32 make_reference_type(u32 token, u32 type);
+
+            // 'T&&', which is one token and one type: an rvalue reference and
+            // not a reference to a reference (record 0016)
+            u32 make_move_reference_type(u32 token, u32 type);
             u32 make_array_type(u32 token, u32 type, u32 size);
             u32 make_list_type(u32 token, u32 type);
             u32 make_hash_type(u32 token, u32 key, u32 value);

@@ -613,7 +613,9 @@ def main : i32
 ```
 
 `${...}` inside a string is a template string, taken apart before the emitter
-into a `String` and a few `append` calls. `[1, 2, 3]` is a fixed array plus one
+into a `String` and a few `append` calls. `\$` is a dollar sign, so
+`"\${name}"` is that text and no interpolation; every other escape is C's.
+`[1, 2, 3]` is a fixed array plus one
 constructor call, and which constructor is chosen by the type written on the
 left. Generics are monomorphised: `Hash<symbol, i32>` becomes a class of its
 own, in the module that declared the generic.
@@ -699,7 +701,7 @@ row binds tighter than that row.
 | bitwise xor | `^` | left |
 | bitwise and | `&` | left |
 | shift | `<<` `>>` `>>>` | left |
-| unary prefix | `!` `~` `-` `+` `++` `--` `&` `*` `**` `new` `delete` `delete[]` `sizeof` | right |
+| unary prefix | `!` `~` `-` `+` `++` `--` `&` `&&` `*` `**` `new` `delete` `delete[]` `sizeof` | right |
 | postfix | `.` `->` `[]` `()` `++` `--` | left |
 | primary | `::` a name, a literal, `(...)`, `[...]`, `{...}`, `\|...\|`, `this`, `super`, `${}` | |
 
@@ -719,7 +721,10 @@ The `&` and `*` that stand between two operands are the bitwise and and the
 multiplication; the ones that open an operand are the address-of and the
 dereference. What tells them apart is only where they are read. `**` is a
 power between two operands and a **double dereference** in front of one, so
-`**p` is `*(*p)`.
+`**p` is `*(*p)`. `&&` is the logical and between two operands and a **move**
+in front of one: `&&x` is C++'s `std::move(x)`, and the only place the
+compiler moves (record 0066). A class says how it is moved with `init(other :
+T&&)`, beside its copy `init(other : T&)`.
 
 Because `hdc` transpiles to C++, and because C++ reads five of these levels in
 a different order, the emitter writes the parentheses the source did not need:

@@ -170,3 +170,30 @@ really walks.
 The fix is one line: after inference has run for a module, `catch_up` uses
 `walk(index, true)`, which gives a declaration **both** passes in order. A
 fresh clone is still fully typed, and a finished one is left alone.
+
+## Amended 2026-09-30: a `<...>` needs a generic
+
+Hadley: a type argument list written after a name that has **no type
+parameters** is an error, and not something to ignore. It was ignored:
+`instantiated` kept every candidate without parameters "so an ordinary
+overload of the same name still competes", and `soma<i32>(1, 2)` over a plain
+`soma` compiled as `soma(1, 2)`. The same for a method, `b.get<i32>()`, and for
+a value, `f<i32>(1)`.
+
+Such a candidate is no candidate now. Where a name has both a plain overload
+and a generic one, the list picks the generic -- `both<i64>(1)` is the clone.
+Where it has only plain ones, the reader is told:
+
+```
+error: 'soma' is not generic, so it takes no type arguments
+```
+
+Writing the case found that a **wrong count** on a free function was reported
+twice: `construction` asks whether a callee names a type before anything is
+ranked, and asked it through `callee_of`, which instantiates -- so the arity
+error came once from that question and once from the call. The question is
+asked through `named_by` now, which finds and makes nothing.
+
+Case: `tests/type_table/cases/a_type_argument_list_needs_a_generic`. Three
+sabotages, each caught: a plain candidate kept, the callee asked twice, the
+refusal left silent.

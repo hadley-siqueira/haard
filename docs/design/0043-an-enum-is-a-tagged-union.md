@@ -260,3 +260,77 @@ Cases: `tests/emitter/cases/an_enum_without_a_payload`,
 `a_switch_is_a_pattern_match`; `tests/type_table/cases/a_variant_is_one_of_its_enum`;
 `tests/statement_checker/cases/a_switch_covers_its_enum` with fourteen
 verdicts; and six in `tests/parser/`.
+
+## Amended 2026-09-30: a generic enum
+
+`enum Option<T>` parsed, and a clone of it worked when it was **written as a
+binding's type** and given a bare variant: `let a : Option<i32> = Some(3)`.
+Almost nothing else did, and the gaps table of 2026-09-24 had it as one line.
+What was measured:
+
+| written | before |
+|---|---|
+| `Option<i32>.Some(3)` | *'a' has no type the emitter can write* |
+| `Option<i32>.None` | *'Option' names no declaration*, from the emitter |
+| `Option.Some(3)` | *no 'Some' takes these arguments* |
+| `let a : Option<i32> = None` beside an `Option<bool>` | *'None' names no declaration*, from the emitter |
+| `let a = Some(true)` with no `Option<bool>` anywhere | *no 'Some' takes these arguments* |
+
+Three things were wrong, and they are fixed.
+
+**A clone made mid-inference had variants with no type.** Record 0039 types a
+clone where it is made, and `TypeCollector::type_signature_now` typed its
+methods and its fields -- and not its variants. `Option<i32>.Some(3)` makes the
+clone and ranks the call against its `Some` in the same moment, so the answer
+was *no 'Some' takes these arguments*: true, and about a signature nobody had
+built. It is the shape of record 0039 once more: a clone made after a phase never
+gets that phase. A variant is typed there now, the way a field is.
+
+**`Option<i32>` where a value goes had no meaning.** The left of `Tree.Leaf` is
+the name of a type and is typed as that type; a generic name there fell to the
+typer's `default`. It is built the way a written type is, which is what makes
+the clone, and the clone is written on the node for the emitter
+(`ExpressionTyper::generic_enum`).
+
+**A variant written without the enum's arguments named the generic's own
+variant**, whose payload is a `T` and which is never a value. It is now the
+same variant **of a clone**, and which clone is said by two things, in the
+order they are trusted (`ExpressionTyper::variants`):
+
+1. the enum the **context expects** -- `let a : Option<i64> = Some(3)` is an
+   `Option<i64>`, where the literal alone would say i32; `Option.None` and bare
+   `None` are found the same way;
+2. then the **arguments**, solved against the payload by record 0059's rules,
+   the way a generic function's parameters are: `Option.Some(true)` and bare
+   `Some(2.5)` make and use `Option<bool>` and `Option<f64>`.
+
+When neither says, it is an error naming what to write:
+
+```
+error: nothing here says what 'T' is, so the enum has to be written with it: Option<...>.None
+error: nothing here says what 'B' is, so it has to be written: Either<...>.Left(...)
+```
+
+And the one change to a program that compiled before: **a clone's variants are
+not in view as bare names**. `NameResolver::gather_variants` walked every enum
+scope, clones included, so a bare `None` was *whichever clone another line of
+the program had made* -- adding `Option<bool>` anywhere turned a working `let a
+: Option<i32> = None` into an emitter failure. Record 0002 declares a clone
+under a name no source can write precisely so that no lookup reaches it, and
+this one did, by its variants. A clone's variant is reached through the
+expected enum or through `Option<i32>.None`, never by lying around.
+
+Several variants of one name in enums **the source wrote**, which was no answer
+at all and reached the emitter in silence, is now the context's choice when it
+names one (`let g : Fan = Off`) and otherwise an error naming them: *'Off' is a
+variant of Lamp and Fan, so which has to be written before it*.
+
+Cases: `tests/emitter/cases/a_generic_enum_is_built_from_its_variants` (42,
+with a generic function over `Option<T>`, a `switch` taking one apart, and a
+recursive `Seq<T>`), and
+`tests/type_table/cases/a_generic_enum_is_solved_from_its_variant`, whose
+golden holds each binding's clone and the four refusals. Seven sabotages, each
+caught: the clone's variants left untyped, the expected enum ignored, clones
+back in view, the generic name as a value giving nothing, the emitter naming
+the enum from the left of the dot, no solving from the arguments, and several
+variants left silent.

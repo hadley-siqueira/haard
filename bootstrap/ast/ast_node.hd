@@ -91,6 +91,7 @@ enum AstNodeKind:
     LogicalNot
     LogicalNotOperator
     AddressOf
+    Move
     Dereference
     BitwiseNot
     UnaryMinus
@@ -135,6 +136,7 @@ enum AstNodeKind:
     GenericArguments
     PointerType
     ReferenceType
+    MoveReferenceType
     ArrayType
     ListType
     HashType

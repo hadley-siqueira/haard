@@ -24,6 +24,10 @@ u32 TypeTable::reference(u32 type) {
     return intern(TYPE_REFERENCE, 0, 0, std::vector<u32>{type});
 }
 
+u32 TypeTable::move_reference(u32 type) {
+    return intern(TYPE_MOVE_REFERENCE, 0, 0, std::vector<u32>{type});
+}
+
 u32 TypeTable::array(u32 type, u32 length) {
     return intern(TYPE_ARRAY, length, 0, std::vector<u32>{type});
 }
@@ -112,9 +116,10 @@ u32 TypeTable::value_of(u32 index) {
 
     Type* entry = get_type(index);
 
-    // one level, and never a walk: 'T&&' does not parse, so a reference to a
-    // reference is not a shape this table can hold
-    if (entry->kind == TYPE_REFERENCE) {
+    // one level, and never a walk: 'T&&' is a kind of its own and not a
+    // reference to a reference, so neither one can hold the other. Both are
+    // the thing they name (record 0035)
+    if (entry->kind == TYPE_REFERENCE || entry->kind == TYPE_MOVE_REFERENCE) {
         return get_argument(entry->first_argument);
     }
 

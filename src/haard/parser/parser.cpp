@@ -1413,7 +1413,10 @@ u32 Parser::parse_primary_type() {
 // array of pointers. '**' is one token and makes two pointers, the same shape
 // the unary '**' has in an expression.
 //
-//   postfix := '*' | '**' | '&' | '[' expression? ']'
+// '&&' is one token too, and it is NOT two references: Hadley, 2026-09-02
+// (record 0016), 'T&&' is C++'s rvalue reference, which is what a move takes.
+//
+//   postfix := '*' | '**' | '&' | '&&' | '[' expression? ']'
 u32 Parser::parse_type_postfix(u32 type) {
     while (true) {
         if (match_on_same_line(TK_TIMES)) {
@@ -1425,6 +1428,8 @@ u32 Parser::parse_type_postfix(u32 type) {
             type = builder.make_pointer_type(oper, type);
         } else if (match_on_same_line(TK_BITWISE_AND)) {
             type = builder.make_reference_type(matched, type);
+        } else if (match_on_same_line(TK_LOGICAL_AND)) {
+            type = builder.make_move_reference_type(matched, type);
         } else if (lookahead_on_same_line(TK_LEFT_SQUARE_BRACKET)) {
             u32 token = current_token;
             u32 size = 0;
@@ -1937,7 +1942,12 @@ u32 Parser::parse_shift_expression() {
 // '**p' is the old compiler's shape: two dereferences, both carrying the same
 // '**' token, rather than a node kind of its own.
 //
-//   unary_expression := ('!' | '&' | '*' | '**' | '~' | '-' | '+'
+// '&&x' is a move, Hadley 2026-09-30: what '&x' is to an address, '&&x' is
+// to C++'s 'std::move(x)'. It is the one place the compiler moves -- it never
+// decides to on its own. Only in front of an operand: between two of them the
+// same token is the logical 'and', which is a level far above this one.
+//
+//   unary_expression := ('!' | '&' | '&&' | '*' | '**' | '~' | '-' | '+'
 //                       | '++' | '--') unary_expression
 //                     | postfix_expression
 u32 Parser::parse_unary_expression() {
@@ -1961,6 +1971,8 @@ u32 Parser::parse_unary_expression() {
         kind = AST_LOGICAL_NOT_OPERATOR;
     } else if (match_on_same_line(TK_BITWISE_AND)) {
         kind = AST_ADDRESS_OF;
+    } else if (match_on_same_line(TK_LOGICAL_AND)) {
+        kind = AST_MOVE;
     } else if (match_on_same_line(TK_TIMES)) {
         kind = AST_DEREFERENCE;
     } else if (match_on_same_line(TK_POWER)) {

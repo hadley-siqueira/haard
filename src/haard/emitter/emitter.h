@@ -114,6 +114,18 @@ namespace haard {
             void emit_parameters(u32 module, u32 node, bool defaults);
             void emit_argument_names(u32 module, u32 node);
 
+            // Hadley, 2026-09-30: a move happens only where '&&x' is written.
+            // The move 'init' -- one parameter, a 'T&&' of its own class --
+            // is a C++ constructor with a tag first, so g++ never picks it
+            // on its own, and 'emit_moved' writes the tag where a class value
+            // is built from a 'T&&'
+            bool is_move_init(u32 module, u32 declaration, u32 member);
+            u32 move_init_of(u32 module, u32 declaration);
+            bool emit_moved(u32 module, u32 holder, u32 wanted, u32 node);
+
+            // 'y = &&x': destroy, then the move 'init'
+            bool emit_move_assignment(u32 module, u32 node);
+
             // the C++ constructor and destructor a class's 'init' and
             // 'destroy' become, declared inside the struct and defined outside
             // it like every other method
@@ -273,6 +285,10 @@ namespace haard {
             void emit_power(u32 module, u32 node);
             void emit_floor_division(u32 module, u32 node);
             void emit_unsigned_shift(u32 module, u32 node);
+
+            // '//=' and '>>>=': a helper per type that takes the place by
+            // its address, so the place is evaluated once
+            void emit_compound(u32 module, u32 node, bool shift);
 
             // the builtin a node's type is, and BUILTIN_COUNT when its type
             // is not a builtin at all
@@ -490,6 +506,13 @@ namespace haard {
             bool needs_floor_division;
             bool needs_floor_division_floating;
 
+            // the helpers '//=' and '>>>=' reached, one per type, by name
+            std::map<std::string, std::string> compound_helpers;
+
+            // whether a class wrote a move 'init', so the tag it takes is
+            // declared -- and a program without one carries none of it
+            bool needs_move_tag;
+
             std::ostringstream constants;
             u32 constant_count;
 
@@ -510,6 +533,10 @@ namespace haard {
 
             // the class whose method is being written, 0 in a free function
             u32 method_holder;
+
+            // what the function being written gives back, which is where a
+            // 'return &&x' is built into -- INVALID_TYPE inside a closure
+            u32 returning;
             std::string error;
             u32 indentation;
 

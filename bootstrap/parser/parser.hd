@@ -1024,7 +1024,10 @@ class Parser:
 
         return parse_type_postfix(type)
 
-    #   postfix := '*' | '**' | '&' | '[' expression? ']'
+    # '&&' is one token and one type: C++'s rvalue reference, never two
+    # references (record 0016)
+    #
+    #   postfix := '*' | '**' | '&' | '&&' | '[' expression? ']'
     def parse_type_postfix : i32
         @type : i32
 
@@ -1038,6 +1041,8 @@ class Parser:
                 type = builder.make_pointer_type(oper, type)
             elif match_on_same_line(TokenKind.BitwiseAnd):
                 type = builder.make_reference_type(matched, type)
+            elif match_on_same_line(TokenKind.LogicalAnd):
+                type = builder.make_move_reference_type(matched, type)
             elif lookahead_on_same_line(TokenKind.LeftSquareBracket):
                 let token = current_token
                 let size = 0
@@ -1428,6 +1433,9 @@ class Parser:
             kind = AstNodeKind.LogicalNotOperator
         elif match_on_same_line(TokenKind.BitwiseAnd):
             kind = AstNodeKind.AddressOf
+        # '&&x' is a move, Hadley 2026-09-30: C++'s 'std::move(x)'
+        elif match_on_same_line(TokenKind.LogicalAnd):
+            kind = AstNodeKind.Move
         elif match_on_same_line(TokenKind.Times):
             kind = AstNodeKind.Dereference
         elif match_on_same_line(TokenKind.Power):

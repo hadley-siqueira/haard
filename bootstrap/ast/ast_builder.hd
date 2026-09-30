@@ -364,6 +364,17 @@ class AstBuilder:
 
         return node
 
+    # 'T&&': one token and one type, an rvalue reference (record 0016)
+    def make_move_reference_type : i32
+        @token : i32
+        @type : i32
+
+        let node = make_node(AstNodeKind.MoveReferenceType, token)
+
+        add_child(node, 0, type)
+
+        return node
+
     def make_list_type : i32
         @token : i32
         @type : i32

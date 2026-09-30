@@ -409,6 +409,14 @@ u32 AstBuilder::make_reference_type(u32 token, u32 type) {
     return node;
 }
 
+u32 AstBuilder::make_move_reference_type(u32 token, u32 type) {
+    u32 node = make_node(AST_MOVE_REFERENCE_TYPE, token);
+
+    add_child(node, 0, type);
+
+    return node;
+}
+
 // the size is optional: 'T[]' is an array of no stated length
 u32 AstBuilder::make_array_type(u32 token, u32 type, u32 size) {
     u32 node = make_node(AST_ARRAY_TYPE, token);

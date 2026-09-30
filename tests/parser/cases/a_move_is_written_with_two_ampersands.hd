@@ -1,0 +1,21 @@
+# Hadley, 2026-09-30. '&&x' is a move -- C++'s 'std::move(x)' -- and 'T&&' is
+# the rvalue reference a move init takes (record 0016). One token each time,
+# and never two references. Between two operands the same token is still the
+# logical 'and', and '& &x' keeps its space so it stays two addresses.
+class Buffer:
+    data : u8*
+
+    def init : void
+        @other : Buffer&&
+
+        data = other.data
+        other.data = null
+
+def main : i32
+    let a : Buffer
+    let b = &&a
+    let c = x && &&y
+    let d = & &a
+    let e = && &a
+    take(&&b)
+    return 0

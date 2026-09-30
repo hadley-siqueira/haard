@@ -1,0 +1,54 @@
+# A generic enum's variant, 2026-09-30. Written with the enum's arguments it
+# names the clone, and written without them the clone is found the way a
+# generic function's is (record 0059): the enum the context expects first,
+# then what the arguments are. The generic's own variant is never a value --
+# its payload is a T -- so each binding below is a clone.
+enum Option<T>:
+    Some : T
+    None
+
+enum Either<A, B>:
+    Left : A
+    Right : B
+
+def main : i32
+    let written = Option<i32>.Some(3)
+    let written_none = Option<u8>.None
+    let solved = Option.Some(true)
+    let bare = Some(2.5)
+    let expected : Option<i64> = Some(3)
+    let expected_none : Option<i64> = None
+    let qualified_none : Option<i64> = Option.None
+    let both : Either<i32, bool> = Left(4)
+
+    # nothing says what T is, and the hint names the enum
+    let a = None
+    let b = Option.None
+    let c = Left(3)
+
+    return 0
+
+# the clones of a generic are not in view by their variants: a bare 'None' is
+# never whichever clone another line happened to make, so this 'f' is the
+# same error with two clones around it as with none
+def two : i32
+    let d : Option<i32> = None
+    let e : Option<bool> = None
+    let f = None
+
+    return 0
+
+# two enums the source wrote, each declaring 'Off': a bare one is either
+enum Lamp:
+    On
+    Off
+
+enum Fan:
+    Fast
+    Off
+
+def three : i32
+    let g : Fan = Off
+    let h = Off
+
+    return 0

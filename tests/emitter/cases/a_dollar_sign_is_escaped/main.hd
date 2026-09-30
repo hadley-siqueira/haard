@@ -1,0 +1,28 @@
+# Hadley, 2026-09-30: '\$' is an escape, and it means a dollar sign. So
+# "\${n}" is the four characters ${n} and no interpolation -- which worked
+# before only because g++ took '\$' as an unknown escape, warned, and dropped
+# the backslash. C++ has no such escape, so the emitter writes the bare '$'.
+#
+# And a string written between single quotes may hold a bare '"', which C++
+# closes on: it is escaped on the way out.
+#
+# The exit status is 36, the '$' itself; every other byte is checked on the way.
+def main : i32
+    let n = 5
+    let text = "\${n}"              # four characters, no interpolation
+    let quoted = 'a"b'
+    let c = '\$'
+
+    if text[0] != '$' or text[1] != '{' or text[2] != 'n' or text[3] != '}':
+        return 1
+
+    if text[4] != '\0':
+        return 2
+
+    if quoted[1] != '"' or quoted[2] != 'b':
+        return 3
+
+    if c != '$':
+        return 4
+
+    return c as i32

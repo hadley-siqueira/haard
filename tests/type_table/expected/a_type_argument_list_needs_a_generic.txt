@@ -1,0 +1,49 @@
+<unnamed>:
+    Box  Box
+    soma  i32 -> i32 -> i32
+    pick  T -> T
+    both  i32 -> i32
+    both  T -> T
+    main  i32
+    both  i64 -> i64
+    n  i32
+    get  i32
+    a  i32
+    b  i32
+    T  T
+    a  T
+    a  i32
+    T  T
+    a  T
+    b  Box
+    f  i32 -> i32
+    x  <none>
+    y  <none>
+    z  <none>
+    w  <none>
+    chosen  i64
+    x  i32
+    T  i64
+    a  i64
+  26 types interned
+diagnostics:
+error: 'soma' is not generic, so it takes no type arguments
+  --> main.hd:40:13
+   |
+40 |     let x = soma<i32>(1, 2)
+   |             ^^^^
+error: 'get' is not generic, so it takes no type arguments
+  --> main.hd:41:15
+   |
+41 |     let y = b.get<i32>()
+   |               ^^^
+error: 'f' is not generic, so it takes no type arguments
+  --> main.hd:42:13
+   |
+42 |     let z = f<i32>(1)
+   |             ^
+error: 'pick' takes 1 type argument, and 2 were written
+  --> main.hd:43:13
+   |
+43 |     let w = pick<i32, bool>(1)
+   |             ^^^^

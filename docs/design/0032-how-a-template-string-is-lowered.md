@@ -221,3 +221,19 @@ below is gone with the refusals it served.
 which no source can spell. A program declaring its own `__ts0` in the same
 scope would collide. It follows record 0030's `__io_` convention and the
 leading underscores are the whole of the protection.
+
+## Amended 2026-09-30: `\$` is an escape
+
+Hadley: `\$` is an escape, and it means a dollar sign. The scanner already
+skipped an escaped character when it looked for `${`, so `"\${n}"` was never a
+template string -- but what reached C++ was `"\${n}"`, and C++ has no `\$`:
+g++ took it for an unknown escape, warned (the suite builds with `-w`) and
+dropped the backslash. It worked by accident, which the gaps table of
+2026-09-24 said in those words.
+
+The emitter now writes every string and char literal through
+`cpp_escapes`: `\$` becomes the bare `$`, every other escape passes through as
+the pair it is, and the quote C++ closes on is escaped when the source did not
+need to -- `'say "hi"'` is a legal Haard string holding a bare `"`, and it was
+C++ that failed to compile on it. A symbol's name gets the same `\$` rule in
+the table. Case: `tests/emitter/cases/a_dollar_sign_is_escaped`.

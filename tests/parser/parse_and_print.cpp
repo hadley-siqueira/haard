@@ -125,6 +125,7 @@ static std::string name_of(AstNodeKind kind) {
         case AST_LOGICAL_NOT: return "logical_not";
         case AST_LOGICAL_NOT_OPERATOR: return "logical_not_operator";
         case AST_ADDRESS_OF: return "address_of";
+        case AST_MOVE: return "move";
         case AST_DEREFERENCE: return "dereference";
         case AST_BITWISE_NOT: return "bitwise_not";
         case AST_UNARY_MINUS: return "unary_minus";
@@ -164,6 +165,7 @@ static std::string name_of(AstNodeKind kind) {
         case AST_GENERIC_ARGUMENTS: return "generic_arguments";
         case AST_POINTER_TYPE: return "pointer_type";
         case AST_REFERENCE_TYPE: return "reference_type";
+        case AST_MOVE_REFERENCE_TYPE: return "move_reference_type";
         case AST_ARRAY_TYPE: return "array_type";
         case AST_LIST_TYPE: return "list_type";
         case AST_HASH_TYPE: return "hash_type";
@@ -259,6 +261,7 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_LOGICAL_NOT:
         case AST_LOGICAL_NOT_OPERATOR:
         case AST_ADDRESS_OF:
+        case AST_MOVE:
         case AST_DEREFERENCE:
         case AST_BITWISE_NOT:
         case AST_UNARY_MINUS:
@@ -294,6 +297,7 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_GENERIC_ARGUMENTS:
         case AST_POINTER_TYPE:
         case AST_REFERENCE_TYPE:
+        case AST_MOVE_REFERENCE_TYPE:
         case AST_ARRAY_TYPE:
         case AST_LIST_TYPE:
         case AST_HASH_TYPE:

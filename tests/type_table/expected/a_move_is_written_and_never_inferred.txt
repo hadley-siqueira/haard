@@ -1,0 +1,69 @@
+<unnamed>:
+    MoveOnly  MoveOnly
+    make  MoveOnly
+    wants_a_move  MoveOnly&& -> i32
+    takes  MoveOnly -> i32
+    CopyOnly  CopyOnly
+    copies  CopyOnly -> i32
+    main  i32
+    data  i32*
+    init  void
+    init  MoveOnly&& -> void
+    destroy  void
+    other  MoveOnly&&
+    seen  MoveOnly
+    made  MoveOnly
+    m  MoveOnly&&
+    m  MoveOnly
+    n  i32
+    init  void
+    init  CopyOnly& -> void
+    other  CopyOnly&
+    c  CopyOnly
+    a  MoveOnly
+    moved  MoveOnly
+    built  MoveOnly
+    n  i32
+    number  i32
+    b  <none>
+    c  <none>
+    d  <none>
+    e  i32
+    g  i32
+    k  MoveOnly -> i32
+    h  i32
+    x  CopyOnly
+    y  i32
+    f  MoveOnly
+  33 types interned
+diagnostics:
+error: MoveOnly cannot be copied, and this is given one
+  --> main.hd:18:13
+   |
+18 |         let seen = other
+   |             ^^^^
+error: this is a value and not a place, so there is nothing to move from
+  --> main.hd:65:13
+   |
+65 |     let b = &&make()
+   |             ^^
+error: this is a value and not a place, so there is nothing to move from
+  --> main.hd:66:13
+   |
+66 |     let c = &&3
+   |             ^^
+error: no 'wants_a_move' takes these arguments
+  --> main.hd:69:13
+   |
+69 |     let d = wants_a_move(a)
+   |             ^^^^^^^^^^^^
+error: MoveOnly cannot be copied, and this is given one
+  --> main.hd:82:9
+   |
+82 |     let f = a
+   |         ^
+error: MoveOnly cannot be copied, and an assignment copies one
+  --> main.hd:84:7
+   |
+84 |     a = make()
+   |       ^

@@ -70,6 +70,10 @@ namespace haard {
             // is what a derived class holds
             bool may_be_copied(u32 module, u32 type);
 
+            // whether a value of 'given' reaching a 'wanted' is a MOVE and
+            // not a copy: a '&&x' into a class that writes a move 'init'
+            bool is_moved(u32 module, u32 given, u32 wanted);
+
 
         private:
             // whether the class this candidate names, or any class above it,

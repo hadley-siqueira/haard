@@ -1,0 +1,52 @@
+# '//=' and '>>>=' are record 0057's '//' and '>>>' written back into the
+# place they read. The operator behind each is a call in C++, so the compound
+# form is a helper per type that takes the place by its address: the place is
+# evaluated ONCE, which 'xs[next()] //= 2' below would notice otherwise --
+# 'next' would run twice and the wrong element would be written.
+#
+# Over an unsigned both are C++'s own '/=' and '>>=', and no helper is written.
+#
+# The exit status is 11: -4 + 15. Every other result is checked on the way.
+class Counter:
+    calls : i32
+
+    def next : i32
+        calls += 1
+        return calls
+
+def main : i32
+    let a : i32 = 0 - 7
+    a //= 2                     # -4: it floors, where C++'s '/=' gives -3
+
+    let b : i32 = 0 - 8
+    b >>>= 28                   # 15: zeroes come in from the left
+
+    let c : u8 = 200
+    c //= 3                     # 66, and C++'s own '/='
+
+    let d : u32 = 16
+    d >>>= 2                    # 4, and C++'s own '>>='
+
+    let e : f64 = 7.5
+    e //= 2.0                   # 3.0: the floor of the quotient
+
+    let xs : i32[3] = {10, 20, 30}
+    let counter : Counter
+    counter.calls = 0
+
+    xs[counter.next()] //= 4    # xs[1] is 5, and next ran once
+    xs[counter.next()] >>>= 1   # xs[2] is 15, and next ran twice in all
+
+    if counter.calls != 2:
+        return 1
+
+    if xs[0] != 10 or xs[1] != 5 or xs[2] != 15:
+        return 2
+
+    if e != 3.0:
+        return 3
+
+    if c != 66 or d != 4:
+        return 5
+
+    return a + b

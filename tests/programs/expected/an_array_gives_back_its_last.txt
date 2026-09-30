@@ -1,0 +1,6 @@
+popped 3, 2 left
+added 9: 1 2 9
+emptied it, and the total was 12
+popped second, then first and third
+--- files:
+--- exit: 0

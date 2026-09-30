@@ -66,6 +66,9 @@ static std::string render(u32 module, u32 type) {
     case TYPE_REFERENCE:
         return render(module, arguments[0]) + "&";
 
+    case TYPE_MOVE_REFERENCE:
+        return render(module, arguments[0]) + "&&";
+
     case TYPE_ARRAY:
         return render(module, arguments[0]) + "["
              + (entry->subject == NO_LENGTH ? ""

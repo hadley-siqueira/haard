@@ -92,6 +92,13 @@ u32 TypeBuilder::build_here(u32 index, u32 scope, u32 node) {
         return inner == INVALID_TYPE ? INVALID_TYPE : table->reference(inner);
     }
 
+    case AST_MOVE_REFERENCE_TYPE: {
+        u32 inner = build(index, scope, first_child(node));
+
+        return inner == INVALID_TYPE ? INVALID_TYPE
+                                     : table->move_reference(inner);
+    }
+
     case AST_ARRAY_TYPE: {
         u32 inner = build(index, scope, first_child(node));
 
@@ -201,6 +208,7 @@ u32 TypeBuilder::translate(u32 into, u32 from, u32 type) {
     switch ((TypeKind) entry->kind) {
     case TYPE_POINTER: return target->pointer(arguments[0]);
     case TYPE_REFERENCE: return target->reference(arguments[0]);
+    case TYPE_MOVE_REFERENCE: return target->move_reference(arguments[0]);
     case TYPE_ARRAY: return target->array(arguments[0], entry->subject);
     case TYPE_TUPLE: return target->tuple(arguments);
     case TYPE_GENERIC: return target->generic(entry->module, entry->subject);

@@ -53,8 +53,10 @@ Emitter::Emitter() {
     needs_power_floating = false;
     needs_floor_division = false;
     needs_floor_division_floating = false;
+    needs_move_tag = false;
     self = "this";
     method_holder = 0;
+    returning = INVALID_TYPE;
 }
 
 void Emitter::set_compilation(Compilation* compilation) {
@@ -112,8 +114,11 @@ bool Emitter::emit(std::ostream& stream) {
     adapters.clear();
     closures.clear();
     early_enums.clear();
+    compound_helpers.clear();
+    needs_move_tag = false;
     self = "this";
     method_holder = 0;
+    returning = INVALID_TYPE;
 
     if (compilation->get_module_count() == 0) {
         fail("nothing to emit");
@@ -173,7 +178,9 @@ bool Emitter::emit(std::ostream& stream) {
     // Record 0058's closures and adapters sit on either side of the
     // constants: what calls a function value and what a closure captures
     // needs only the types, and a closure's body may name a constant
-    out << forward << functions.str() << head << callables.str()
+    // the tag a move 'init' is told apart by, when the program wrote one
+    out << forward << (needs_move_tag ? "struct __haard_move {};\n\n" : "")
+        << functions.str() << head << callables.str()
         << emit_symbol_table() << emit_arithmetic_helpers() << constants.str()
         << closure_bodies.str() << body;
 
@@ -1063,12 +1070,105 @@ void Emitter::emit_argument_names(u32 module_index, u32 node) {
 
     for (u32 i = 0; i < params.size(); i++) {
         u32 parameter = module->get_symbols()->candidate_of(params[i]);
+        std::string name = parameter == 0 ? "" : name_of(module_index, parameter);
+        u32 type = declared_type(module_index, params[i]);
 
-        out << (i > 0 ? ", " : "")
-            << (parameter == 0 ? "" : name_of(module_index, parameter));
+        // a 'T&&' parameter is a place once it has a name, in C++ as in
+        // Haard, and handing it on as a 'T&&' is saying so again
+        if (type != INVALID_TYPE
+            && module->get_types()->get_type(type)->kind
+                   == TYPE_MOVE_REFERENCE) {
+            name = "static_cast<" + type_name(module_index, type) + ">("
+                 + name + ")";
+        }
+
+        out << (i > 0 ? ", " : "") << name;
     }
 
     out << ")";
+}
+
+// Whether this member is the class's MOVE 'init': an 'init' whose one
+// parameter is a 'T&&' of this very class, the way the copy 'init' is the one
+// whose parameter is a T or a T& (record 0031)
+bool Emitter::is_move_init(u32 module_index, u32 declaration, u32 member) {
+    Module* module = compilation->get_module(module_index);
+    AstQuery query;
+
+    query.set_module(module);
+
+    if (kind_of(module_index, member) != AST_FUNCTION
+        || query.get_declaration_name(member) != "init"
+        || query.get_params(member).size() != 1) {
+        return false;
+    }
+
+    u32 type = declared_type(module_index, query.get_params(member)[0]);
+    TypeTable* types = module->get_types();
+
+    if (type == INVALID_TYPE
+        || types->get_type(type)->kind != TYPE_MOVE_REFERENCE) {
+        return false;
+    }
+
+    Type* inside = types->get_type(types->value_of(type));
+
+    return inside->kind == TYPE_NAMED && inside->module == module_index
+        && inside->subject == module->get_symbols()->candidate_of(declaration);
+}
+
+u32 Emitter::move_init_of(u32 module_index, u32 declaration) {
+    AstQuery query;
+
+    query.set_module(compilation->get_module(module_index));
+
+    for (u32 member : query.get_members(declaration)) {
+        if (is_move_init(module_index, declaration, member)) {
+            return member;
+        }
+    }
+
+    return 0;
+}
+
+// Where a value of a class is BUILT from a 'T&&' -- an argument, a binding, a
+// return, a conversion -- and the class has a move 'init', that 'init' is
+// written out by its tag. Without one it is the copy, which is what C++ picks
+// on its own from the same text, so nothing is written here for it
+bool Emitter::emit_moved(u32 module_index, u32 holder, u32 wanted, u32 node) {
+    u32 given = type_at(module_index, node);
+
+    if (wanted == INVALID_TYPE || given == INVALID_TYPE) {
+        return false;
+    }
+
+    TypeTable* there = compilation->get_module(holder)->get_types();
+    TypeTable* here = compilation->get_module(module_index)->get_types();
+
+    if (here->get_type(given)->kind != TYPE_MOVE_REFERENCE
+        || there->get_type(wanted)->kind == TYPE_REFERENCE
+        || there->get_type(wanted)->kind == TYPE_MOVE_REFERENCE) {
+        return false;
+    }
+
+    Type* entry = there->get_type(wanted);
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    u32 declaration = compilation->get_module(entry->module)->get_symbols()
+                          ->get_candidate(entry->subject)->ast_node;
+
+    if (move_init_of(entry->module, declaration) == 0) {
+        return false;
+    }
+
+    out << name_of(entry->module, entry->subject) << "(__haard_move(), ";
+    emit_expression(module_index, node);
+    out << ")";
+
+    return true;
 }
 
 // Record 0026: the constructor and the destructor are the methods 'init' and
@@ -1137,6 +1237,33 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
             continue;
         }
 
+        // Hadley, 2026-09-30: the move 'init' runs where '&&x' was written
+        // and nowhere else. A C++ move constructor would be picked by g++ on
+        // its own -- returning a local, building from a temporary -- so this
+        // one takes a tag first, which no C++ rule will ever supply, and the
+        // places that move write it out: 'Holder(__haard_move(), ...)'
+        if (is_move_init(module_index, declaration, member)) {
+            u32 parameter = query.get_params(member)[0];
+            u32 named = module->get_symbols()->candidate_of(parameter);
+            std::string declared =
+                declare(module_index, declared_type(module_index, parameter),
+                        named == 0 ? "" : name_of(module_index, named));
+
+            needs_move_tag = true;
+
+            if (!bodies) {
+                line(holder + "(__haard_move, " + declared + ");");
+                continue;
+            }
+
+            out << holder << "::" << holder << "(__haard_move, " << declared
+                << ") {\n    this->" << holder << "::"
+                << name_of(module_index, candidate);
+            emit_argument_names(module_index, member);
+            out << ";\n}\n\n";
+            continue;
+        }
+
         if (!bodies) {
             out << std::string(indentation * 4, ' ') << holder;
             emit_parameters(module_index, member, true);
@@ -1183,7 +1310,13 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
         }
     }
 
+    u32 moving = move_init_of(module_index, declaration);
+
     if (!bodies) {
+        if (moving != 0) {
+            line("void m_move_assign(" + holder + "&& other);");
+        }
+
         if (copy != 0) {
             // Declaring a constructor is what takes C++'s implicit default
             // one away, and record 0026 leans on that one: a class with no
@@ -1231,6 +1364,24 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
 
     if (copy == 0 && assigns_by_field(module_index, declaration)) {
         emit_assignment_by_field(module_index, declaration, holder);
+    }
+
+    // 'y = &&x': destroy, then the move 'init' -- record 0031's assignment
+    // with the move in the place of the copy
+    if (moving != 0) {
+        out << "void " << holder << "::m_move_assign(" << holder
+            << "&& other) {\n"
+            << "    if (this == &other) {\n        return;\n    }\n\n";
+
+        if (destroy != 0) {
+            out << "    this->" << holder << "::"
+                << name_of(module_index, destroy) << "();\n";
+        }
+
+        out << "    this->" << holder << "::"
+            << name_of(module_index,
+                       module->get_symbols()->candidate_of(moving))
+            << "(static_cast<" << holder << "&&>(other));\n}\n\n";
     }
 
     if (copy != 0) {
@@ -1392,6 +1543,12 @@ void Emitter::emit_function_body(u32 module_index, u32 node, u32 holder) {
     indentation++;
     method_holder = holder;
 
+    u32 signature = table->get_candidate(candidate)->type;
+
+    returning = signature == INVALID_TYPE
+                    ? INVALID_TYPE
+                    : module->get_types()->get_arguments(signature).back();
+
     std::string native = native_body(module_index, node);
 
     if (native.size() > 0) {
@@ -1402,6 +1559,7 @@ void Emitter::emit_function_body(u32 module_index, u32 node, u32 holder) {
     }
 
     method_holder = 0;
+    returning = INVALID_TYPE;
     indentation--;
     out << "}\n\n";
 }
@@ -1760,7 +1918,11 @@ void Emitter::emit_statement(u32 module, u32 node) {
             // place the emitted C++ leaned on C++'s own conversion -- a
             // 'char*' returned where a class was promised, with nothing
             // written at all
-            if (!emit_construction(module, value)) {
+            //
+            // and 'return &&x' from a function giving back a class is that
+            // class's move 'init', written out (Hadley, 2026-09-30)
+            if (!emit_construction(module, value)
+                && !emit_moved(module, module, returning, value)) {
                 emit_expression(module, value);
             }
         }
@@ -2357,6 +2519,20 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
         out << std::string(indentation * 4, ' ')
             << declare(module_index, type, name_of(module_index, candidate));
 
+        // 'let b = &&a': the move 'init', by its tag. Without one it is the
+        // copy, which the plain initialiser below already is
+        if (expression != 0
+            && kind_of(module_index, expression) == AST_MOVE) {
+            out << " = ";
+
+            if (!emit_moved(module_index, module_index, type, expression)) {
+                emit_expression(module_index, expression);
+            }
+
+            out << ";\n";
+            continue;
+        }
+
         // record 0023's conversion is a construction, so it is written as one
         // and not as an assignment C++ would have to work out
         if (built
@@ -2398,6 +2574,40 @@ void Emitter::emit_declaring_assignment(u32 module_index, u32 node) {
     emit_expression(module_index, child_of(module_index, node, 1));
 }
 
+// The body of a string or a char literal as C++ reads it. Haard's escapes are
+// C's with one more, and it is Hadley's, 2026-09-30: '\$' is a dollar sign, so
+// "\${n}" is the text ${n} and no interpolation. C++ has no such escape --
+// g++ took it as an unknown one and warned, which is how "\${" worked by
+// accident before it was decided -- so it is written as the bare '$'.
+//
+// Everything else is passed through in pairs, which is also what keeps a
+// trailing backslash from escaping the quote. And the one character that
+// needs an escape it did not have is the quote C++ closes on: Haard writes a
+// string between either quote, so 'say "hi"' holds a bare '"'
+static std::string cpp_escapes(const std::string& body, char quote) {
+    std::string result;
+
+    for (size_t i = 0; i < body.size(); i++) {
+        if (body[i] == '\\' && i + 1 < body.size()) {
+            if (body[i + 1] != '$') {
+                result += body[i];
+            }
+
+            result += body[i + 1];
+            i++;
+            continue;
+        }
+
+        if (body[i] == quote) {
+            result += '\\';
+        }
+
+        result += body[i];
+    }
+
+    return result;
+}
+
 void Emitter::emit_expression(u32 module, u32 node) {
     if (node == 0) {
         return;
@@ -2406,20 +2616,31 @@ void Emitter::emit_expression(u32 module, u32 node) {
     switch (kind_of(module, node)) {
     case AST_INTEGER_LITERAL:
     case AST_FLOAT_LITERAL:
-    case AST_CHAR_LITERAL:
         out << text_of(module, node);
         return;
 
     // Haard writes a string with either quote and C++ wants the double one.
-    // The bytes between them are the same escapes in both languages
+    // The bytes between them are the same escapes in both languages but one
+    // -- see 'cpp_escapes'
     case AST_STRING_LITERAL: {
         std::string text = text_of(module, node);
 
-        if (text.size() >= 2 && text.front() == '\'') {
-            text = "\"" + text.substr(1, text.size() - 2) + "\"";
+        if (text.size() >= 2) {
+            text = text.substr(1, text.size() - 2);
         }
 
-        out << text;
+        out << "\"" << cpp_escapes(text, '"') << "\"";
+        return;
+    }
+
+    case AST_CHAR_LITERAL: {
+        std::string text = text_of(module, node);
+
+        if (text.size() >= 2) {
+            text = text.substr(1, text.size() - 2);
+        }
+
+        out << "'" << cpp_escapes(text, '\'') << "'";
         return;
     }
 
@@ -2546,6 +2767,10 @@ void Emitter::emit_expression(u32 module, u32 node) {
         emit_binary(module, node, "<<="); return;
     case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
         emit_binary(module, node, ">>="); return;
+    case AST_INTEGER_DIVISION_ASSIGNMENT:
+        emit_compound(module, node, false); return;
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+        emit_compound(module, node, true); return;
 
     case AST_PLUS: emit_binary(module, node, "+"); return;
     case AST_MINUS: emit_binary(module, node, "-"); return;
@@ -2608,6 +2833,17 @@ void Emitter::emit_expression(u32 module, u32 node) {
     case AST_UNARY_PLUS: emit_unary(module, node, "+"); return;
     case AST_BITWISE_NOT: emit_unary(module, node, "~"); return;
     case AST_ADDRESS_OF: emit_unary(module, node, "&"); return;
+
+    // '&&x' is what C++'s 'std::move(x)' is, written as the cast that one is
+    // -- so it needs no '<utility>' and names no library. Whether a class's
+    // move 'init' runs is decided where the value is BUILT, not here: see
+    // 'is_move_init'
+    case AST_MOVE:
+        out << "static_cast<" << type_name(module, type_at(module, node))
+            << ">(";
+        emit_expression(module, child_of(module, node, 0));
+        out << ")";
+        return;
     case AST_DEREFERENCE: emit_unary(module, node, "*"); return;
     case AST_PRE_INCREMENT: emit_unary(module, node, "++"); return;
     case AST_PRE_DECREMENT: emit_unary(module, node, "--"); return;
@@ -2754,6 +2990,7 @@ int Emitter::precedence_of(u32 module, u32 node) {
 
     case AST_CALL: case AST_INDEX: case AST_DOT: case AST_ARROW:
     case AST_POST_INCREMENT: case AST_POST_DECREMENT: case AST_SIZEOF:
+    case AST_MOVE:
         return 2;
 
     case AST_UNARY_MINUS: case AST_UNARY_PLUS: case AST_BITWISE_NOT:
@@ -2780,6 +3017,13 @@ int Emitter::precedence_of(u32 module, u32 node) {
 
     case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
         return is_an_unsigned_whole_number(builtin_of(module, node)) ? 7 : 3;
+
+    // C++'s own compound operator over an unsigned, and a helper's call
+    // otherwise
+    case AST_INTEGER_DIVISION_ASSIGNMENT:
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+        return is_an_unsigned_whole_number(
+                   builtin_of(module, child_of(module, node, 0))) ? 16 : 2;
 
     case AST_TIMES: case AST_DIVISION: case AST_MODULO: return 5;
     case AST_PLUS: case AST_MINUS: return 6;
@@ -3143,6 +3387,23 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
         u32 owner = enum_of(module, left, holder);
         u32 right = child_of(module, node, 1);
 
+        // 'Option.Some(3)' names the generic on the left and means a clone:
+        // the typer solved which, and wrote the clone's variant on the right
+        Resolution* chosen =
+            compilation->get_module(module)->get_resolutions()->get(right);
+
+        if (chosen->candidate != 0) {
+            Module* theirs = compilation->get_module(chosen->module);
+
+            holder = chosen->module;
+            owner = enum_of_variant(holder, chosen->candidate);
+            emit_variant(holder, owner,
+                         theirs->get_symbols()->get_candidate(
+                             chosen->candidate)->ast_node,
+                         false);
+            return;
+        }
+
         emit_variant(holder, owner, variant_of(holder, owner, module, right),
                      false);
         return;
@@ -3168,7 +3429,10 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
 // whether this expression is the NAME of an enum -- an identifier that names
 // the declaration itself, and not a value of it
 bool Emitter::names_an_enum(u32 module_index, u32 node) {
-    if (node == 0 || kind_of(module_index, node) != AST_IDENTIFIER) {
+    // 'Option<i32>.None' names the clone, and the typer recorded it on the
+    // generic name as a whole
+    if (node == 0 || (kind_of(module_index, node) != AST_IDENTIFIER
+                      && kind_of(module_index, node) != AST_GENERIC_NAME)) {
         return false;
     }
 
@@ -3655,6 +3919,11 @@ void Emitter::define_closure(u32 module_index, u32 node) {
     std::ostringstream held;
     u32 held_indentation = indentation;
     std::string held_self = self;
+    u32 held_returning = returning;
+
+    // a closure's 'return' gives back the closure's value, and the enclosing
+    // function's type is not its business
+    returning = INVALID_TYPE;
 
     held.swap(out);
     indentation = 1;
@@ -3709,6 +3978,7 @@ void Emitter::define_closure(u32 module_index, u32 node) {
     out.swap(held);
     indentation = held_indentation;
     self = held_self;
+    returning = held_returning;
 }
 
 void Emitter::emit_closure(u32 module_index, u32 node) {
@@ -4078,6 +4348,9 @@ std::string Emitter::mangle_type(u32 module_index, u32 type) {
     case TYPE_REFERENCE:
         return "r" + mangle_type(module_index, inside);
 
+    case TYPE_MOVE_REFERENCE:
+        return "m" + mangle_type(module_index, inside);
+
     case TYPE_ARRAY:
         return "a" + std::to_string(entry->subject)
              + mangle_type(module_index, inside);
@@ -4368,7 +4641,86 @@ std::string Emitter::emit_arithmetic_helpers() {
                "}\n\n";
     }
 
+    // the compound forms, after the helpers they call
+    for (const std::pair<const std::string, std::string>& helper :
+         compound_helpers) {
+        out += helper.second;
+    }
+
     return out;
+}
+
+// 'x //= b' and 'x >>>= b'. The two operators behind them are calls, so the
+// compound form cannot be C++'s own -- and 'x = f(x, b)' would evaluate the
+// place twice, which 'xs[next()] //= 2' would notice. So the place is handed
+// over by its address, once, to a helper written per type that does the
+// operation and the store. Where the plain operator is C++'s own -- '//' over
+// an unsigned, '>>>' over an unsigned -- so is the compound form
+void Emitter::emit_compound(u32 module, u32 node, bool shift) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    // an assignment is typed by what it writes: the place on its left
+    u32 place = child_of(module, node, 0);
+    u32 which = builtin_of(module, place);
+    std::string own;
+    std::string body;
+
+    if (shift) {
+        if (which == BUILTIN_COUNT
+            || !is_a_whole_number((BuiltinType) which)) {
+            fail("'>>>=' shifts a whole number, and this is not one");
+            return;
+        }
+
+        if (!is_signed((BuiltinType) which)) {
+            emit_binary(module, node, ">>=");
+            return;
+        }
+
+        own = type_name(module, type_at(module, place));
+        body = "    *place = (" + own + ")((" + unsigned_twin(which)
+               + ")*place >> by);\n";
+    } else {
+        if (which == BUILTIN_COUNT) {
+            fail("a '//=' whose type was never worked out");
+            return;
+        }
+
+        if (is_an_unsigned_whole_number(which)) {
+            emit_binary(module, node, "/=");
+            return;
+        }
+
+        own = type_name(module, type_at(module, place));
+
+        if (which == BUILTIN_F32 || which == BUILTIN_F64) {
+            needs_floor_division_floating = true;
+            body = "    *place = (" + own + ")__floor_div_f(*place, by);\n";
+        } else if (is_a_whole_number((BuiltinType) which)) {
+            needs_floor_division = true;
+            body = "    *place = (" + own + ")__floor_div_i(*place, by);\n";
+        } else {
+            fail("'//=' divides a number, and this is " + own);
+            return;
+        }
+    }
+
+    std::string helper = (shift ? "__shift_assign_" : "__floor_div_assign_")
+                         + own;
+
+    if (compound_helpers.count(helper) == 0) {
+        compound_helpers[helper] =
+            "static " + own + " " + helper + "(" + own + "* place, " + own
+            + " by) {\n" + body + "    return *place;\n}\n\n";
+    }
+
+    out << helper << "(&";
+    emit_operand(module, place, 3);
+    out << ", ";
+    emit_expression(module, child_of(module, node, 1));
+    out << ")";
 }
 
 std::string Emitter::emit_symbol_table() {
@@ -4395,7 +4747,11 @@ std::string Emitter::emit_symbol_table() {
         // something where it was written and means the same here
         for (size_t i = 0; i < name.size(); i++) {
             if (name[i] == '\\' && i + 1 < name.size()) {
-                table += name[i];
+                // '\$' is Haard's and not C++'s: the bare dollar sign
+                if (name[i + 1] != '$') {
+                    table += name[i];
+                }
+
                 table += name[i + 1];
                 i++;
                 continue;
@@ -4505,6 +4861,20 @@ bool Emitter::emit_conversion(u32 module_index, u32 holder, u32 wanted,
 
     if (wanted == INVALID_TYPE || given == INVALID_TYPE) {
         return false;
+    }
+
+    if (emit_moved(module_index, holder, wanted, node)) {
+        return true;
+    }
+
+    // '&&x' where a plain reference is asked for: the move falls back to
+    // what it names (record 0018's entry, 2026-09-30), and C++ will not bind
+    // a 'T&&' to a 'T&' -- so what is written is the place itself
+    if (kind_of(module_index, node) == AST_MOVE
+        && compilation->get_module(holder)->get_types()->get_type(wanted)->kind
+               == TYPE_REFERENCE) {
+        emit_expression(module_index, child_of(module_index, node, 0));
+        return true;
     }
 
     // 'wanted' is a parameter's type and belongs to the table of the module
@@ -4721,6 +5091,14 @@ bool Emitter::takes_two(u32 module_index, u32 candidate,
 bool Emitter::emit_copy_assignment(u32 module_index, u32 node) {
     u32 left = child_of(module_index, node, 0);
 
+    // 'y = &&x', Hadley 2026-09-30: the mirror of record 0031's assignment,
+    // which destroys and then copies -- this destroys and then moves, by the
+    // class's move 'init'. Asked first, since a class that can only be moved
+    // declares no copy, and C++'s own '=' would copy the pointer it owns
+    if (emit_move_assignment(module_index, node)) {
+        return true;
+    }
+
     if (!declares_copy(module_index, type_at(module_index, left))) {
         return false;
     }
@@ -4749,6 +5127,38 @@ bool Emitter::emit_copy_assignment(u32 module_index, u32 node) {
         emit_expression(module_index, right);
     }
 
+    out << ")";
+
+    return true;
+}
+
+bool Emitter::emit_move_assignment(u32 module_index, u32 node) {
+    u32 left = child_of(module_index, node, 0);
+    u32 right = child_of(module_index, node, 1);
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    u32 given = type_at(module_index, right);
+
+    if (given == INVALID_TYPE
+        || types->get_type(given)->kind != TYPE_MOVE_REFERENCE) {
+        return false;
+    }
+
+    Type* entry = types->get_type(types->value_of(type_at(module_index, left)));
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    u32 declaration = compilation->get_module(entry->module)->get_symbols()
+                          ->get_candidate(entry->subject)->ast_node;
+
+    if (move_init_of(entry->module, declaration) == 0) {
+        return false;
+    }
+
+    emit_operand(module_index, left, 2);
+    out << (is_pointer(module_index, left) ? "->" : ".") << "m_move_assign(";
+    emit_expression(module_index, right);
     out << ")";
 
     return true;
@@ -4927,10 +5337,16 @@ u32 Emitter::copy_init_of(u32 module_index, u32 declaration) {
             continue;
         }
 
-        u32 held = module->get_types()->value_of(
-            raw_parameter_of(module_index, candidate, 0));
+        u32 raw = raw_parameter_of(module_index, candidate, 0);
 
-        if (held == mine) {
+        // a 'T&&' is read through by 'value_of' too, and that one is the
+        // MOVE 'init' and not the copy (Hadley, 2026-09-30)
+        if (raw != INVALID_TYPE && module->get_types()->get_type(raw)->kind
+                                       == TYPE_MOVE_REFERENCE) {
+            continue;
+        }
+
+        if (module->get_types()->value_of(raw) == mine) {
             return candidate;
         }
     }
@@ -4986,6 +5402,9 @@ std::string Emitter::declare(u32 module_index, u32 type,
 
     case TYPE_REFERENCE:
         return declare(module_index, inside, "&" + name);
+
+    case TYPE_MOVE_REFERENCE:
+        return declare(module_index, inside, "&&" + name);
 
     case TYPE_FUNCTION:
         return function_type_name(module_index, type) + tail;

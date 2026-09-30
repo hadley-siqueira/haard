@@ -1,0 +1,31 @@
+# 'pop', 2026-09-30: the last element taken off and given back, which is
+# 'add' run backwards. What was taken is a copy, so a String popped off
+# still owns its bytes after the array has let go of the slot -- and adding
+# again writes over that slot without freeing it twice.
+def main : i32
+    let xs : i32[] = [1, 2, 3]
+
+    let last = xs.pop()
+    println("popped ${last}, ${xs.length()} left")
+
+    xs.add(9)
+    println("added 9: ${xs[0]} ${xs[1]} ${xs[2]}")
+
+    let total = 0
+
+    while not xs.is_empty():
+        total = total + xs.pop()
+
+    println("emptied it, and the total was ${total}")
+
+    let words : String[]
+
+    words.add("first")
+    words.add("second")
+
+    let word = words.pop()
+
+    words.add("third")
+    println("popped ${word}, then ${words[0]} and ${words[1]}")
+
+    return 0

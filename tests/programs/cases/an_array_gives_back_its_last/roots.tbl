@@ -1,0 +1,12 @@
+# Record 0033's prelude: the containers, and 'println' for the report
+prelude
+    std -> std
+    import std.array
+    import std.list
+    import std.string
+    import std.io
+
+root std = std
+
+root myapp = myapp
+    std -> std

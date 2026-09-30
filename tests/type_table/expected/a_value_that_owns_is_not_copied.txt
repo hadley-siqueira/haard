@@ -35,27 +35,22 @@ error: Owns cannot be copied, and giving one back by value copies it
 34 |     return made
    |            ^^^^
 error: Owns cannot be copied, and this parameter takes one by value
-  --> main.hd:51:22
+  --> main.hd:54:22
    |
-51 |     let a = by_value(owner)
+54 |     let a = by_value(owner)
    |                      ^^^^^
 error: Owns cannot be copied, and this is given one
-  --> main.hd:52:9
+  --> main.hd:56:9
    |
-52 |     let b = gives_back()
-   |         ^
-error: Owns cannot be copied, and this is given one
-  --> main.hd:53:9
-   |
-53 |     let c = owner
+56 |     let c = owner
    |         ^
 error: Owns cannot be copied, and an assignment copies one
-  --> main.hd:55:11
+  --> main.hd:58:11
    |
-55 |     other = owner
+58 |     other = owner
    |           ^
 error: Derived cannot be copied, and this parameter takes one by value
-  --> main.hd:58:27
+  --> main.hd:61:27
    |
-58 |     let d = takes_derived(derived)
+61 |     let d = takes_derived(derived)
    |                           ^^^^^^^

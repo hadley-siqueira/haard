@@ -107,6 +107,7 @@ namespace haard {
             void print_logical_not(u32 node);
             void print_logical_not_operator(u32 node);
             void print_address_of(u32 node);
+            void print_move(u32 node);
             void print_dereference(u32 node);
             void print_bitwise_not(u32 node);
             void print_unary_minus(u32 node);
@@ -151,6 +152,7 @@ namespace haard {
             void print_generic_arguments(u32 node);
             void print_pointer_type(u32 node);
             void print_reference_type(u32 node);
+            void print_move_reference_type(u32 node);
             void print_array_type(u32 node);
             void print_list_type(u32 node);
             void print_hash_type(u32 node);

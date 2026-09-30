@@ -36,7 +36,8 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
     // value is deliberately not here -- an upcast by value copies the base
     // part and discards the rest, which is C++'s slicing and an error
     if (from->kind == to->kind
-        && (from->kind == TYPE_POINTER || from->kind == TYPE_REFERENCE)) {
+        && (from->kind == TYPE_POINTER || from->kind == TYPE_REFERENCE
+            || from->kind == TYPE_MOVE_REFERENCE)) {
         return climb(module, types->get_argument(from->first_argument),
                      types->get_argument(to->first_argument));
     }
@@ -80,6 +81,26 @@ int Coercion::steps(u32 module, u32 given, u32 wanted) {
     //
     // It costs a step, so an overload taking the reference still wins over
     // one taking the value when a reference is what was passed
+    // '&&x', Hadley 2026-09-30. Where a T is asked for, a 'T&&' is built by
+    // the class's move 'init' -- the construction entry at the bottom finds
+    // it, since that 'init' takes exactly a 'T&&' -- and when the class has
+    // none it is the COPY, as C++ falls back to one. Anywhere else it is the
+    // thing it names and reads as a 'T&', one step further, so an overload
+    // taking the 'T&&' itself always wins over one taking the 'T&'.
+    //
+    // Nothing goes the other way: a 'T&&' parameter takes a '&&x' and
+    // nothing else, since the compiler never decides to move on its own
+    if (from->kind == TYPE_MOVE_REFERENCE) {
+        if (to->kind != TYPE_REFERENCE && builds_from(module, wanted, given)) {
+            return 1;
+        }
+
+        int rest = steps(module,
+                         types->reference(types->value_of(given)), wanted);
+
+        return rest < 0 ? -1 : rest + 1;
+    }
+
     if (from->kind == TYPE_REFERENCE && to->kind != TYPE_REFERENCE) {
         u32 named = types->get_argument(from->first_argument);
 
@@ -180,6 +201,21 @@ bool Coercion::may_be_copied(u32 module, u32 type) {
     }
 
     return declares_a_copy(entry->module, entry->subject);
+}
+
+// '&&x' given where a class is taken by value, and the class writes a move
+// 'init': not a copy at all, so record 0031's refusal is not about it. A class
+// that can only be moved is exactly one that owns something and says how to
+// hand it over, and not how to duplicate it
+bool Coercion::is_moved(u32 module, u32 given, u32 wanted) {
+    if (given == INVALID_TYPE || wanted == INVALID_TYPE) {
+        return false;
+    }
+
+    TypeTable* types = compilation->get_module(module)->get_types();
+
+    return types->get_type(given)->kind == TYPE_MOVE_REFERENCE
+        && builds_from(module, types->value_of(wanted), given);
 }
 
 bool Coercion::builds_from(u32 module, u32 wanted, u32 given) {

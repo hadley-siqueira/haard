@@ -1,0 +1,142 @@
+# Hadley, 2026-09-30. '&&x' is a move -- C++'s 'std::move(x)' -- and a class
+# says how it is moved with an 'init' taking a 'T&&' of itself, beside the
+# copy 'init' taking a 'T&'. The compiler moves ONLY where '&&' is written:
+#
+#   the move 'init' is a C++ constructor with a tag first, '__haard_move',
+#   which no C++ rule supplies -- so g++ cannot pick it on its own when a
+#   local is returned or a temporary is handed over. 'keep' below returns one
+#   of two locals, where NRVO cannot apply and C++ would move: it copies
+#
+#   'y = &&x' destroys y and moves into it, the mirror of record 0031's
+#   assignment, which destroys and copies
+#
+#   '&&x' on a class with no move 'init' is the copy, as in C++
+#
+#   a temporary is BUILT where it goes, never copied (Hadley, the same day),
+#   so a class that can only be moved can still come out of a function
+#
+# Each value carries how it was made: 0 built, 1 moved, 100 copied, and a
+# move of a move counts up. The exit status is 42.
+class Both:
+    data : i32*
+    how : i32
+
+    def init : void
+        data = new i32[1]
+        data[0] = 7
+        how = 0
+
+    def init : void
+        @other : Both&
+
+        data = new i32[1]
+        data[0] = other.data[0]
+        how = 100
+
+    def init : void
+        @other : Both&&
+
+        data = other.data
+        how = other.how + 1
+        other.data = null
+
+    def destroy : void
+        if data != null:
+            delete[] data
+
+# owns something and writes no copy: it can only be moved
+class MoveOnly:
+    data : i32*
+    how : i32
+
+    def init : void
+        @v : i32
+
+        data = new i32[1]
+        data[0] = v
+        how = 0
+
+    def init : void
+        @other : MoveOnly&&
+
+        data = other.data
+        how = other.how + 1
+        other.data = null
+
+    def destroy : void
+        if data != null:
+            delete[] data
+
+class CopyOnly:
+    how : i32
+
+    def init : void
+        how = 0
+
+    def init : void
+        @other : CopyOnly&
+
+        how = 100
+
+def keep : Both
+    @flag : bool
+
+    let one : Both
+    let two : Both
+
+    if flag:
+        return one
+
+    return two
+
+def make : MoveOnly
+    let made = MoveOnly(5)
+
+    return &&made
+
+def hand_on : MoveOnly
+    @m : MoveOnly&&
+
+    return &&m
+
+def takes : i32
+    @m : MoveOnly
+
+    return m.how
+
+def main : i32
+    if keep(true).how != 100:
+        return 1
+
+    let a : Both
+    let b = &&a                 # moved: 1
+
+    if a.data != null or b.how != 1 or b.data[0] != 7:
+        return 2
+
+    let c : Both
+
+    c = &&b                     # destroyed, then moved: 2
+
+    if b.data != null or c.how != 2:
+        return 3
+
+    let m = make()              # moved out of 'made', then built in place
+    let n = hand_on(&&m)        # and moved once more on the way through
+
+    if m.data != null or n.how != 2 or n.data[0] != 5:
+        return 4
+
+    if takes(&&n) != 3 or n.data != null:
+        return 5
+
+    let x : CopyOnly
+    let y = &&x                 # no move 'init': the copy
+
+    if y.how != 100:
+        return 6
+
+    let i = 30
+    let j = &&i                 # a builtin moves by being copied
+
+    return j + c.how * 6

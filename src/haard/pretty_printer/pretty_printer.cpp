@@ -338,6 +338,10 @@ void PrettyPrinter::print_node(u32 node) {
             print_address_of(node);
             break;
 
+        case AST_MOVE:
+            print_move(node);
+            break;
+
         case AST_DEREFERENCE:
             print_dereference(node);
             break;
@@ -490,6 +494,10 @@ void PrettyPrinter::print_node(u32 node) {
 
         case AST_REFERENCE_TYPE:
             print_reference_type(node);
+            break;
+
+        case AST_MOVE_REFERENCE_TYPE:
+            print_move_reference_type(node);
             break;
 
         case AST_ARRAY_TYPE:
@@ -971,6 +979,12 @@ void PrettyPrinter::print_address_of(u32 node) {
     print_prefix(node, "&");
 }
 
+// '& &x' keeps its space by 'would_paste', which is what keeps it two
+// addresses rather than a move
+void PrettyPrinter::print_move(u32 node) {
+    print_prefix(node, "&&");
+}
+
 void PrettyPrinter::print_dereference(u32 node) {
     print_prefix(node, "*");
 }
@@ -1199,6 +1213,11 @@ void PrettyPrinter::print_pointer_type(u32 node) {
 void PrettyPrinter::print_reference_type(u32 node) {
     print_children(node);
     print_string("&");
+}
+
+void PrettyPrinter::print_move_reference_type(u32 node) {
+    print_children(node);
+    print_string("&&");
 }
 
 // the element type, then the brackets holding the size when one was written

@@ -1,0 +1,87 @@
+# Hadley, 2026-09-30. '&&x' is a 'T&&', and it is the only way to get one: a
+# 'T&&' parameter takes a '&&x' and nothing else, since the compiler never
+# decides to move. A name of a 'T&&' -- the move 'init's '@other' -- reads as a
+# 'T&', C++'s rule, so moving from it again is '&&other' written out.
+#
+# A class that can only be moved is still one that cannot be copied: every
+# place record 0031 refuses a copy still refuses it, and a move, or a
+# temporary, is what gets through.
+class MoveOnly:
+    data : i32*
+
+    def init : void
+        data = null
+
+    def init : void
+        @other : MoveOnly&&
+
+        let seen = other
+        data = other.data
+        other.data = null
+
+    def destroy : void
+        pass
+
+def make : MoveOnly
+    let made : MoveOnly
+
+    return &&made
+
+def wants_a_move : i32
+    @m : MoveOnly&&
+
+    return 0
+
+def takes : i32
+    @m : MoveOnly
+
+    return 0
+
+# a copy 'init' and no move 'init': '&&x' into one is the copy
+class CopyOnly:
+    n : i32
+
+    def init : void
+        n = 0
+
+    def init : void
+        @other : CopyOnly&
+
+        n = 1
+
+def copies : i32
+    @c : CopyOnly
+
+    return c.n
+
+def main : i32
+    let a : MoveOnly
+    let moved = &&a
+    let built = make()
+    let n = 4
+    let number = &&n
+
+    # a move of what is no place
+    let b = &&make()
+    let c = &&3
+
+    # a 'T&&' parameter is not given one implicitly
+    let d = wants_a_move(a)
+    let e = wants_a_move(&&a)
+
+    # a temporary is built where it goes, called by name or as a value
+    let g = takes(make())
+    let k : MoveOnly -> i32 = takes
+    let h = k(make())
+
+    # no move 'init': the copy
+    let x : CopyOnly
+    let y = copies(&&x)
+
+    # and a copy is still a copy
+    let f = a
+
+    a = make()
+    a = &&built
+
+    return 0

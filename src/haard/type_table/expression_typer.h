@@ -47,6 +47,11 @@ namespace haard {
             // '&' takes the address of and what '++' changes
             bool is_place(u32 node);
 
+            // whether this expression, already typed, is a value with no name
+            // -- a call giving back a value, a construction -- which is BUILT
+            // where it goes and never copied there (Hadley, 2026-09-30)
+            bool is_temporary(u32 node);
+
             // whether a named type is an enum. An enum is a set of tags and
             // not a shape: comparing two of them is comparing the tag, and
             // there is no operator to look up
@@ -211,7 +216,7 @@ namespace haard {
             u32 argument_of_instantiation(u32 type);
 
             u32 literal(u32 node, u32 expected, BuiltinType fallback);
-            u32 identifier(u32 scope, u32 node);
+            u32 identifier(u32 scope, u32 node, u32 expected);
             u32 binary(u32 scope, u32 node, u32 expected, bool comparison);
 
             // Record 0057: 'a in b' and 'a not in b'. The container is asked
@@ -249,14 +254,46 @@ namespace haard {
             // a TYPE_NAMED, which points at the candidate of a class, whose
             // scope holds the members, and an inherited one is the same search
             // one step up Candidate::super
-            u32 member(u32 scope, u32 node, bool through_pointer);
+            u32 member(u32 scope, u32 node, bool through_pointer,
+                       u32 expected);
+
+            // 'Option<i32>' written where a value goes: the left of a '.' that
+            // names one of its variants. The clone, recorded on the node
+            u32 generic_enum(u32 scope, u32 node);
+
+            // '&&x': a 'T&&' of a place
+            u32 move(u32 scope, u32 node);
+
+            // A variant of a generic enum written without its arguments --
+            // 'Some(3)', 'Option.Some(3)', 'None' -- replaced by the same
+            // variant of a clone: the one the expected enum names, or the one
+            // its arguments solve. Every other candidate passes through.
+            // 'called' is whether there are arguments to solve from at all
+            std::vector<Candidacy> variants(
+                u32 scope, u32 at, const std::vector<Candidacy>& found,
+                const std::vector<Argument>& arguments, bool called,
+                u32 expected, std::string& unknown);
+            u32 enum_of_variant(const Candidacy& candidacy);
+            Candidacy same_variant(const Candidacy& candidacy,
+                                   u32 enumeration);
+            void keep(std::vector<Candidacy>& answer, const Candidacy& one);
+            bool all_variants(const std::vector<Candidacy>& found);
+
+            // whether one of these is a function with type parameters of its
+            // own, which is what a written '<...>' after a name asks for
+            bool any_generic_function(const std::vector<Candidacy>& found);
+
+            // what a name or a '::' reaches, with nothing instantiated
+            std::vector<Candidacy> named_by(u32 scope, u32 node);
+            std::string generic_enum_of(const std::vector<Candidacy>& found);
+            bool is_unbound_generic(u32 owner, u32 symbol);
 
             // 'f(a, b)'. The callee is a name and its candidates are what the
             // resolver chooses among; the arguments are typed first, with a
             // literal left untyped so each candidate may ask it to be its own
             // parameter -- which is record 0018's first rule meeting its
             // twelfth
-            u32 call(u32 scope, u32 node);
+            u32 call(u32 scope, u32 node, u32 expected);
 
             // Record 0058. A closure is a function whose type is built from
             // what it wrote and, for what it did not, from the 'A -> R'
