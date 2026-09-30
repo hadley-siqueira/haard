@@ -1,0 +1,78 @@
+# Record 0064. A union is C's union: nothing says which field is alive, so
+# nothing can make, copy or end one -- and every line below that asks for one
+# of those is refused. The last union is the one that is fine.
+class Box:
+    n : i32
+
+struct Base:
+    n : i32
+
+enum Shape:
+    Circle : i32
+
+enum Colour:
+    red
+    green
+
+union Owned:
+    x : i32
+
+    def destroy : void
+        pass
+
+union Bad(Base):
+    box : Box
+    shape : Shape
+    ref : i32&
+    owned : Owned
+    a : i32 = 1
+    b : i32 = 2
+
+struct FromUnion(Bad):
+    m : i32
+
+# a struct is plain data when nothing runs for it (record 0065)
+struct Point:
+    x : i32
+    y : i32
+
+    def sum : i32
+        return x + y
+
+struct Point3(Point):
+    z : i32
+
+struct Made:
+    n : i32
+
+    def init : void
+        n = 0
+
+struct Valued:
+    n : i32 = 1
+
+struct HoldsMade:
+    made : Made
+
+union Plain:
+    n : i32
+    f : f32
+
+union Fine:
+    n : i32 = 3
+    f : f32
+    p : Box*
+    bytes : u8[4]
+    colour : Colour
+    inner : Plain
+    point : Point
+    point3 : Point3
+    points : Point[2]
+
+# a union with a field given a value runs something when it is made, and so do
+# these three structs
+union NotFine:
+    bad : Bad
+    made : Made
+    valued : Valued
+    holds : HoldsMade

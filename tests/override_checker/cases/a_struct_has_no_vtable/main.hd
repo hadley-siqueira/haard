@@ -1,0 +1,59 @@
+# Record 0065, Hadley 2026-09-29: a struct can always model plain data, so it
+# never has a vtable. It derives from no class, and a method of a struct is not
+# virtual -- so writing it again below, in a struct or in a class, is refused.
+# A constructor and a destructor are not dispatched, and are not asked.
+class Base:
+    n : i32
+
+    def get : i32
+        return n
+
+struct Plain:
+    n : i32
+
+    def get : i32
+        return n
+
+    def get : i32
+        @plus : i32
+        return n + plus
+
+    def init : void
+        n = 0
+
+    def destroy : void
+        pass
+
+struct FromClass(Base):
+    m : i32
+
+struct Again(Plain):
+    def get : i32
+        return 1
+
+    def init : void
+        n = 1
+
+    def destroy : void
+        pass
+
+class Over(Plain):
+    def get : i32
+        return 2
+
+    # another overload, not an override
+    def get : i32
+        @a : i32
+        @b : i32
+        return a + b
+
+# a class derived from a struct has a vtable of its own, and its methods are
+# overridden as any class's are
+class Deeper(Over):
+    def get : i32
+        @a : i32
+        @b : i32
+        return a * b
+
+struct Fine(Plain):
+    m : i32

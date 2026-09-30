@@ -161,3 +161,18 @@ Two older goldens moved, each by one new diagnostic that is right:
 `two_methods_of_one_class_still_tie` (two `pick(i32)` in one class) and
 `a_label_and_a_goto_name_nothing_here` (a `goto` to a label that is not
 there).
+
+## Added 2026-09-29: a name where a type is written names a type
+
+Found while making `sizeof` work, and the same shape as everything above: the
+front end passed a program the emitter could not build. A name in a type
+position was resolved like any other use, so it only had to **exist** --
+`let a : x` with `x` a variable, `def f : helper` with `helper` a function,
+`new helper`, `3 as x` and `sizeof(x)` all passed. Now each is `'x' is not a
+type`, from `UseResolver::require_a_type`, which asks the question
+`TypeBuilder::type_symbol` asks so the two cannot disagree: a class, a struct,
+an enum, a union or a generic parameter.
+
+`sizeof` of a **value**, which C allows, is not in the grammar and stays out;
+adding it later is additive. Case: `tests/use_resolver/cases/a_type_is_named_by_a_type`.
+One older case wrote `sizeof(integer)` over a variable, and now measures `Box`.

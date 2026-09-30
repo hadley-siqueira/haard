@@ -3,6 +3,9 @@
 
 #include <haard/type_table/expression_typer.h>
 
+#include <set>
+#include <utility>
+
 namespace haard {
     // Checks what a method overrides, at the **declaration**.
     //
@@ -44,6 +47,20 @@ namespace haard {
             // every method of this class, against the classes above it
             void check_class(u32 candidate);
 
+            // Records 0064 and 0065: what a union and a struct may be built
+            // from. A union is C's and says nothing about which field is
+            // alive, so it derives from nothing, nothing derives from it, its
+            // fields have no lifetime and at most one is given a value. A
+            // struct has no vtable, so it derives from no class. Here because
+            // a field of a union may be a struct from another module, and
+            // what that struct holds is only known once every module is typed
+            void check_layout(u32 candidate);
+
+            // whether a value of this type, in that module's table, may be a
+            // field of a union: nothing has to run to make, copy or end it
+            bool has_no_lifetime(u32 module, u32 type);
+            bool is_plain(u32 module, u32 candidate);
+
             // two declarations of one name in one scope, where only an
             // overload set of different parameters may stand
             void check_duplicates();
@@ -78,7 +95,11 @@ namespace haard {
             // parameters -- record 0020's rule, and the first one found going
             // up, because a class between the two would have overridden it
             // first
-            Candidacy overridden_by(u32 candidate, u32 super);
+            //
+            // 'holder' is given the class that declares it, which is what
+            // record 0065 asks about: a struct's method is never virtual
+            Candidacy overridden_by(u32 candidate, u32 super,
+                                    Candidacy& holder);
 
             // the nearest class above this one that declares a field of this
             // name, with candidate 0 when none does. The CLASS and not the
@@ -132,6 +153,10 @@ namespace haard {
 
             Module* module;
             u32 index;
+
+            // the declarations has_no_lifetime is inside, so a type that holds
+            // itself by value -- which the emitter reports -- ends the walk
+            std::set<std::pair<u32, u32>> walking;
     };
 }
 

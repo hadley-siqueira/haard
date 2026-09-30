@@ -1,0 +1,15 @@
+error: a struct cannot derive from a class: a struct has no vtable, and a class has one
+  --> main.hd:27:8
+   |
+27 | struct FromClass(Base):
+   |        ^^^^^^^^^
+error: Plain.get is a method of a struct, which is not virtual and cannot be overridden
+  --> main.hd:31:9
+   |
+31 |     def get : i32
+   |         ^^^
+error: Plain.get is a method of a struct, which is not virtual and cannot be overridden
+  --> main.hd:41:9
+   |
+41 |     def get : i32
+   |         ^^^

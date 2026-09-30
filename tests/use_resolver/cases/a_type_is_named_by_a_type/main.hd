@@ -1,0 +1,45 @@
+# A name written where a type is has to reach a type. Until 2026-09-29 it was
+# resolved like any other use, so a variable, a function or a field in a type
+# position passed, and 'sizeof(x)' reached the emitter with nothing built.
+#
+# Refused: a variable, a parameter, a function, a field, in a 'let', a
+# parameter, a return, a generic argument, a 'new', a cast and a 'sizeof'.
+# Quiet: a class, a struct, an enum, a union, a generic parameter, and a
+# builtin, which is a word and not a name.
+class Box<T>:
+    value : T
+
+    def get : T
+        return value
+
+struct Point:
+    x : i32
+
+    def measure : usize
+        return sizeof(x)
+
+enum Colour:
+    red
+
+union Bits:
+    n : i32
+
+def helper : i32
+    return 1
+
+def uses : helper
+    @p : Point
+    @q : p
+    let x = 3
+    let a : x
+    let b : Box<x>
+    let c = new helper
+    let d = 3 as x
+    let e = sizeof(x)
+    let f : Point
+    let g : Box<Point>
+    let h : Colour
+    let i : Bits
+    let j = sizeof(Bits)
+    let k : i32
+    return 0

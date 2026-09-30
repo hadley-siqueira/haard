@@ -1,0 +1,67 @@
+# Record 0064: a union is C's union, written as C++'s own 'union'. Until then
+# one reached as a field was emitted as a STRUCT -- its fields side by side,
+# silently -- with a destructor declared and never defined, so the link failed.
+#
+# Each check moves the exit status: the fields share their memory ('258' read
+# back as its bytes), a union is a value passed and given back, a method on one
+# is not virtual (C++ refuses a virtual one in a union), a field given a value
+# is the one alive when the union is made, an 'init' is a constructor, and a
+# union holds a pointer to itself, another union and an enum with no payload.
+enum Colour:
+    red
+    green
+
+union Word:
+    whole : u32
+    bytes : u8[4]
+
+    def low : u8
+        return bytes[0]
+
+union Cell:
+    colour : Colour
+    word : Word
+    next : Cell*
+    n : i32 = 7
+
+    def twice : i32
+        return n * 2
+
+union Seeded:
+    x : i32
+    y : f32
+
+    def init : void
+        @v : i32
+        x = v
+
+def swap : Word
+    @w : Word
+    let r : Word
+    r.whole = w.whole
+    return r
+
+def main : i32
+    let c : Cell
+    if c.twice() != 14:
+        return 1
+    let w : Word
+    w.whole = 258
+    let v = swap(w)
+    if v.low() != 2:
+        return 2
+    c.word = v
+    if c.word.bytes[1] != 1:
+        return 3
+    let p = new Cell
+    p.next = &c
+    if p.next.n != 258:
+        return 4
+    delete p
+    let s = Seeded(5)
+    if s.x != 5:
+        return 5
+    c.colour = Colour.green
+    if c.colour != Colour.green:
+        return 6
+    return 0

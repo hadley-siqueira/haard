@@ -1,0 +1,40 @@
+error: 'x' is not a type
+  --> main.hd:19:23
+   |
+19 |         return sizeof(x)
+   |                       ^
+error: 'helper' is not a type
+  --> main.hd:30:12
+   |
+30 | def uses : helper
+   |            ^^^^^^
+error: 'p' is not a type
+  --> main.hd:32:10
+   |
+32 |     @q : p
+   |          ^
+error: 'x' is not a type
+  --> main.hd:34:13
+   |
+34 |     let a : x
+   |             ^
+error: 'x' is not a type
+  --> main.hd:35:17
+   |
+35 |     let b : Box<x>
+   |                 ^
+error: 'helper' is not a type
+  --> main.hd:36:17
+   |
+36 |     let c = new helper
+   |                 ^^^^^^
+error: 'x' is not a type
+  --> main.hd:37:18
+   |
+37 |     let d = 3 as x
+   |                  ^
+error: 'x' is not a type
+  --> main.hd:38:20
+   |
+38 |     let e = sizeof(x)
+   |                    ^

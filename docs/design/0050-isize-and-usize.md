@@ -89,3 +89,9 @@ compile and still give the same exit status, which is that suite's verdict.
 It gave a `u64`, which is the same width on every target Haard emits for and
 the wrong answer on the day one of them is not. Changed the same day, at
 Hadley's asking, and the only thing it moved was one line of one golden.
+
+> **2026-09-29:** it never reached the emitter until then. The operand was
+> typed as an expression, which a type is not, so nothing was recorded and
+> every `sizeof` stopped at *a type that was never built*. The typer builds it
+> as a written type now, instantiating a generic there like anywhere else; the
+> case is `tests/emitter/cases/sizeof_measures_a_type`.

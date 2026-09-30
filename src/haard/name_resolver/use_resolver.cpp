@@ -130,6 +130,25 @@ void UseResolver::walk(u32 node, u32 scope) {
         walk_scope(node, scope);
         return;
 
+    // A name where a type is written has to name one. It was resolved like
+    // any other use until 2026-09-29, so 'let a : x' with 'x' a variable
+    // passed, and 'sizeof(x)' reached the emitter with nothing built. The
+    // generic arguments are types of their own and are walked as such
+    case AST_NAMED_TYPE: {
+        u32 name = module->get_ast()->get_node(node)->get_children();
+
+        if (kind_of(name) == AST_SCOPE) {
+            walk_scope(name, scope);
+            require_a_type(name, scope);
+        } else if (kind_of(name) == AST_IDENTIFIER) {
+            use(name, scope);
+            require_a_type(name, scope);
+        }
+
+        walk(module->get_ast()->get_node(name)->get_sibling(), scope);
+        return;
+    }
+
     // its loop variables are declarations and the rest of the head is what it
     // reads. They are noted before the head is walked, so the walk below skips
     // them and resolves the sequence
@@ -231,6 +250,48 @@ void UseResolver::use(u32 node, u32 scope) {
     }
 
     report(node, "cannot find '" + name + "' in this scope");
+}
+
+// The same question TypeBuilder::type_symbol asks, so the two cannot disagree:
+// a name is a type when any declaration it reaches is one. Reaching nothing
+// was already reported, by 'use' or 'walk_scope'
+void UseResolver::require_a_type(u32 name, u32 scope) {
+    std::vector<Candidacy> found;
+    u32 at = name;
+
+    if (kind_of(name) == AST_SCOPE) {
+        u32 first = module->get_ast()->get_node(name)->get_children();
+        u32 second = module->get_ast()->get_node(first)->get_sibling();
+
+        at = second == 0 ? first : second;
+        found = second == 0
+                    ? resolver.resolve_at_module(index, text_of(first))
+                    : resolver.resolve_qualified(index, text_of(first),
+                                                 text_of(second));
+    } else {
+        found = resolver.resolve(index, scope, text_of(name));
+    }
+
+    if (found.size() == 0) {
+        return;
+    }
+
+    for (const Candidacy& one : found) {
+        switch ((SymbolKind) compilation->get_module(one.module)
+                    ->get_symbols()->get_candidate(one.candidate)->kind) {
+        case SYMBOL_CLASS:
+        case SYMBOL_STRUCT:
+        case SYMBOL_ENUM:
+        case SYMBOL_UNION:
+        case SYMBOL_GENERIC:
+            return;
+
+        default:
+            break;
+        }
+    }
+
+    report(at, "'" + text_of(at) + "' is not a type");
 }
 
 void UseResolver::report(u32 node, const std::string& message) {

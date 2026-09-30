@@ -45,6 +45,11 @@ overrides it**, and does not join it as an overload.
 be one. A method is virtual because it can be overridden, not because it was
 marked.
 
+> **Amended by [0065](0065-a-struct-has-no-vtable.md), 2026-09-29:** every
+> method **of a class**. A struct never has a vtable, so its methods are not
+> virtual and writing one again below it is an error. A union's are not either
+> ([0064](0064-a-union-is-cs-union.md)).
+
 ## Consequences
 
 - **Record 0012 is amended at the class boundary only.** Its rule still holds

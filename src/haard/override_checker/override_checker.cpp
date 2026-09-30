@@ -35,6 +35,7 @@ void OverrideChecker::check(u32 index) {
         case SYMBOL_CLASS:
         case SYMBOL_STRUCT:
         case SYMBOL_UNION:
+            check_layout(candidate);
             check_class(candidate);
             break;
 
@@ -171,9 +172,29 @@ void OverrideChecker::check_class(u32 candidate) {
                 continue;
             }
 
-            Candidacy above = overridden_by(method, super);
+            Candidacy holder = Candidacy{0, 0};
+            Candidacy above = overridden_by(method, super, holder);
 
             if (above.candidate == 0) {
+                continue;
+            }
+
+            // Record 0065, Hadley 2026-09-29: a struct has no vtable, so its
+            // methods are not virtual, and one written again below it would
+            // be a second method chosen by the type the caller happens to
+            // hold -- which record 0020 says the same parameters never are.
+            // A constructor and a destructor are not dispatched at all
+            std::string name = query.get_declaration_name(
+                table->get_candidate(method)->ast_node);
+
+            if (compilation->get_module(holder.module)->get_symbols()
+                        ->get_candidate(holder.candidate)->kind
+                    == SYMBOL_STRUCT
+                && name != "init" && name != "destroy") {
+                report(name_node_of(table->get_candidate(method)->ast_node),
+                       qualified(above.module, above.candidate)
+                           + " is a method of a struct, which is not virtual "
+                             "and cannot be overridden");
                 continue;
             }
 
@@ -190,6 +211,186 @@ void OverrideChecker::check_class(u32 candidate) {
                        + ", and gives back " + name_of(mine));
         }
     }
+}
+
+// Record 0047: the compiler refuses when it cannot decide, and each rule for a
+// union is a question nothing in it answers -- which field to make, copy or
+// end, which one a value written on two of them is in. C++ answers none of them
+// either: it deletes the union's constructor, destructor and copy, and says so
+// about a line nobody wrote.
+//
+// A struct's rule is Hadley's, 2026-09-29: a struct can always model plain
+// data, so it never has a vtable -- and a base class would give it one
+void OverrideChecker::check_layout(u32 candidate) {
+    SymbolTable* table = module->get_symbols();
+    Candidate* found = table->get_candidate(candidate);
+    SymbolKind base = SYMBOL_NONE;
+
+    if (found->super != INVALID_TYPE) {
+        Type* entry = module->get_types()->get_type(found->super);
+
+        if (entry->kind == TYPE_NAMED) {
+            base = (SymbolKind) compilation->get_module(entry->module)
+                       ->get_symbols()->get_candidate(entry->subject)->kind;
+        }
+    }
+
+    if (found->kind == SYMBOL_UNION && found->super != INVALID_TYPE) {
+        report(name_node_of(found->ast_node),
+               "a union cannot derive from anything");
+    } else if (base == SYMBOL_UNION) {
+        report(name_node_of(found->ast_node),
+               "nothing can derive from a union");
+    } else if (found->kind == SYMBOL_STRUCT && base == SYMBOL_CLASS) {
+        report(name_node_of(found->ast_node),
+               "a struct cannot derive from a class: a struct has no vtable, "
+               "and a class has one");
+    }
+
+    if (found->kind != SYMBOL_UNION) {
+        return;
+    }
+
+    bool given = false;
+
+    for (u32 member : query.get_members(found->ast_node)) {
+        if (module->get_ast()->get_node(member)->get_kind() != AST_FIELD) {
+            continue;
+        }
+
+        u32 field = table->candidate_of(member);
+        u32 type = field == 0 ? INVALID_TYPE : table->get_candidate(field)->type;
+
+        if (type != INVALID_TYPE && !has_no_lifetime(index, type)) {
+            report(name_node_of(member),
+                   "a union cannot hold " + name_of(type)
+                       + ": nothing says which field is alive, so nothing "
+                         "could make, copy or end it");
+        }
+
+        if (query.get_binding_expression(member) == 0) {
+            continue;
+        }
+
+        // the first field given a value is the one the union is made
+        // holding; a second would be a second field alive at once
+        if (given) {
+            report(name_node_of(member),
+                   "only one field of a union may be given a value: it is "
+                   "the one alive when the union is made");
+        }
+
+        given = true;
+    }
+}
+
+bool OverrideChecker::has_no_lifetime(u32 owner, u32 type) {
+    TypeTable* types = compilation->get_module(owner)->get_types();
+    Type* entry = types->get_type(type);
+
+    switch ((TypeKind) entry->kind) {
+    case TYPE_BUILTIN:
+    case TYPE_POINTER:
+    // a generic's own fields: asked again of each clone, where 'T' is a type
+    case TYPE_GENERIC:
+        return true;
+
+    // 'T[]' is sugar for Array<T> (record 0036), and 'T[4]' is four of T
+    case TYPE_ARRAY:
+        return entry->subject != NO_LENGTH
+               && has_no_lifetime(owner,
+                                  types->get_argument(entry->first_argument));
+
+    case TYPE_NAMED:
+        break;
+
+    default:
+        return false;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    SymbolTable* theirs = holder->get_symbols();
+    Candidate* named = theirs->get_candidate(entry->subject);
+    AstQuery read;
+
+    read.set_module(holder);
+
+    // a class has a vtable, and so a constructor that sets it
+    if (named->kind == SYMBOL_CLASS) {
+        return false;
+    }
+
+    // an enum that carries nothing is an integer; one that carries something
+    // is a struct with a union in it, and whether that has a lifetime depends
+    // on what it carries -- not asked yet
+    if (named->kind == SYMBOL_ENUM) {
+        for (u32 member : read.get_members(named->ast_node)) {
+            if (holder->get_ast()->get_node(member)->get_kind() == AST_FIELD
+                && read.get_written_type(member) != 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    std::pair<u32, u32> key(entry->module, entry->subject);
+
+    if (walking.count(key) > 0) {
+        return true;
+    }
+
+    walking.insert(key);
+
+    bool plain = is_plain(entry->module, entry->subject);
+
+    walking.erase(key);
+
+    return plain;
+}
+
+// Record 0065: a struct -- or a union inside a union -- is plain data when
+// nothing has to run for it. An 'init', a 'destroy' or a field given a value is
+// something that runs; so is a base or a field that has one
+bool OverrideChecker::is_plain(u32 owner, u32 candidate) {
+    Module* holder = compilation->get_module(owner);
+    SymbolTable* theirs = holder->get_symbols();
+    Candidate* named = theirs->get_candidate(candidate);
+    AstQuery read;
+
+    read.set_module(holder);
+
+    if (named->super != INVALID_TYPE
+        && !has_no_lifetime(owner, named->super)) {
+        return false;
+    }
+
+    for (u32 member : read.get_members(named->ast_node)) {
+        AstNodeKind kind = holder->get_ast()->get_node(member)->get_kind();
+
+        if (kind == AST_FUNCTION
+            && (read.get_declaration_name(member) == "init"
+                || read.get_declaration_name(member) == "destroy")) {
+            return false;
+        }
+
+        if (kind != AST_FIELD) {
+            continue;
+        }
+
+        if (read.get_binding_expression(member) != 0) {
+            return false;
+        }
+
+        u32 field = theirs->candidate_of(member);
+
+        if (field != 0 && theirs->get_candidate(field)->type != INVALID_TYPE
+            && !has_no_lifetime(owner, theirs->get_candidate(field)->type)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // Agenda 5.6. Record 0026 makes 'init' and 'destroy' ordinary methods, and
@@ -287,7 +488,8 @@ u32 OverrideChecker::symbol_in(const Candidacy& base, u32 hash,
     return theirs->find(body, interned);
 }
 
-Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super) {
+Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super,
+                                        Candidacy& holder) {
     SymbolTable* table = module->get_symbols();
     std::string name = query.get_declaration_name(
         table->get_candidate(candidate)->ast_node);
@@ -310,6 +512,7 @@ Candidacy OverrideChecker::overridden_by(u32 candidate, u32 super) {
             // found going up is the one that matters -- a class in between
             // would have overridden it first, and this method overrides that
             if (parameters_of(base.module, one) == wanted) {
+                holder = base;
                 return Candidacy{base.module, one};
             }
         }

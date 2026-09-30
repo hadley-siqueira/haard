@@ -66,6 +66,10 @@ written.** A pointer to a base is how a program holds an object here — record
 0020 makes every method virtual for the same reason — and deleting through one
 without a virtual destructor runs the wrong code, silently and only sometimes.
 
+> **Amended by [0065](0065-a-struct-has-no-vtable.md), 2026-09-29:** on every
+> **class**. A struct and a union have a destructor only when they write
+> `destroy`, and it is not virtual.
+
 ## Consequences
 
 - **`delete` is typed**, which nothing did: `delete 5` passed in silence. Its

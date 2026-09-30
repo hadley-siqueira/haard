@@ -1,0 +1,55 @@
+error: a union cannot derive from anything
+  --> main.hd:23:7
+   |
+23 | union Bad(Base):
+   |       ^^^
+error: a union cannot hold Box: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:24:5
+   |
+24 |     box : Box
+   |     ^^^
+error: a union cannot hold Shape: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:25:5
+   |
+25 |     shape : Shape
+   |     ^^^^^
+error: a union cannot hold i32&: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:26:5
+   |
+26 |     ref : i32&
+   |     ^^^
+error: a union cannot hold Owned: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:27:5
+   |
+27 |     owned : Owned
+   |     ^^^^^
+error: only one field of a union may be given a value: it is the one alive when the union is made
+  --> main.hd:29:5
+   |
+29 |     b : i32 = 2
+   |     ^
+error: nothing can derive from a union
+  --> main.hd:31:8
+   |
+31 | struct FromUnion(Bad):
+   |        ^^^^^^^^^
+error: a union cannot hold Bad: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:75:5
+   |
+75 |     bad : Bad
+   |     ^^^
+error: a union cannot hold Made: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:76:5
+   |
+76 |     made : Made
+   |     ^^^^
+error: a union cannot hold Valued: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:77:5
+   |
+77 |     valued : Valued
+   |     ^^^^^^
+error: a union cannot hold HoldsMade: nothing says which field is alive, so nothing could make, copy or end it
+  --> main.hd:78:5
+   |
+78 |     holds : HoldsMade
+   |     ^^^^^

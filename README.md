@@ -512,8 +512,10 @@ class Point:
 
 `init` is construction and `destroy` is destruction — a class that writes
 `destroy` owns something, and then it must also say how it is copied, by an
-`init` taking one of itself. Every method is virtual and single inheritance is
-written `class Square(Shape):`. An operator is a method: `operator+`,
+`init` taking one of itself. Every method of a class is virtual and single
+inheritance is written `class Square(Shape):`. A `struct` never has a vtable,
+so it can always model plain data: its methods are not virtual, it derives
+only from a struct, and none of its methods can be overridden. An operator is a method: `operator+`,
 `operator==`, `operator[]`, `operator=`.
 
 A construction is written as a call on the type's own name, and it is a value

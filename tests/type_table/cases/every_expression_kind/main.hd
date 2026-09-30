@@ -71,7 +71,7 @@ def main : i32
     # the rest
     let converted = integer as f64
     let allocated = new Box
-    let measured = sizeof(integer)
+    let measured = sizeof(Box)
     let parenthesised = (integer)
     let tuple = (1, 2.5)
     let array = {1, 2, 3}

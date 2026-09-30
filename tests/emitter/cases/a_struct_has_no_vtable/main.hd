@@ -1,0 +1,77 @@
+# Record 0065, Hadley 2026-09-29: a struct can always model plain data, so it
+# never has a vtable -- its methods are not virtual, and it has a destructor
+# only when it writes 'destroy'.
+#
+# The proof is a union: a Point laid over an i64 reads back 3 and 4 as the two
+# halves of 17179869187, which is only true when nothing sits in front of 'x'.
+# A struct derived from a struct is plain data too, a struct with 'init' and
+# 'destroy' still runs them, and a class derived from a struct brings a vtable
+# of its own and dispatches through it.
+struct Point:
+    x : i32
+    y : i32
+
+    def sum : i32
+        return x + y
+
+struct Point3(Point):
+    z : i32
+
+    def total : i32
+        return sum() + z
+
+struct Pixel:
+    r : u8
+
+    def init : void
+        r = 9
+
+    def destroy : void
+        pass
+
+class Named(Point):
+    tag : i32
+
+    def describe : i32
+        return 1
+
+    def init : void
+        tag = 5
+
+class Special(Named):
+    def describe : i32
+        return 2
+
+union Packed:
+    whole : i64
+    point : Point
+    deep : Point3
+
+def pick : i32
+    @n : Named*
+    return n.describe()
+
+def main : i32
+    let p : Packed
+    p.whole = 0
+    p.point.x = 3
+    p.point.y = 4
+    if p.point.sum() != 7:
+        return 1
+    if p.whole != 17179869187:
+        return 2
+    p.deep.z = 5
+    if p.deep.total() != 12:
+        return 3
+    let px : Pixel
+    if px.r != 9:
+        return 4
+    let s = new Special
+    s.x = 1
+    s.y = 2
+    if pick(s) != 2:
+        return 5
+    if s.sum() != 3 or s.tag != 5:
+        return 6
+    delete s
+    return 0

@@ -76,6 +76,20 @@ raised, answered the same day as record 0062: `let x = xs[i]` bound a
 `let x : T& = ...`, and a `for x in` variable stays one. See
 `bootstrap/README.md`.
 
+**A union is C's union, and a struct has no vtable**, since 2026-09-29 —
+records 0064 and 0065. A union is emitted as a C++ `union`; it derives from
+nothing and nothing derives from it, and its fields hold only what has no
+lifetime of its own. Before, one reached as a field came out as a struct and
+failed to link. A struct's methods are not virtual and it has no destructor
+unless it writes `destroy`, so a struct with neither `init` nor `destroy` is
+plain data and may be a field of a union. A struct derives only from a struct,
+and a struct's method cannot be overridden.
+
+**`sizeof(T)` runs**, since 2026-09-29: its operand is built as a type and
+not typed as an expression, which is what had stopped the emitter. And a name
+written where a type is must name one -- `let a : x` over a variable passed
+until then.
+
 **The front end refuses what is not a program**, since 2026-09-24 — record
 0063. Of 24 wrong programs, 23 used to pass it and reach g++, the emitter or
 nothing at all. Now each is a diagnostic with a caret: `break` outside a loop,

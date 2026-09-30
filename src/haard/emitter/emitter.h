@@ -99,7 +99,11 @@ namespace haard {
             void emit_type(u32 module, u32 declaration);
 
             void emit_field(u32 module, u32 node);
-            void emit_method_declaration(u32 module, u32 node);
+            // 'dispatched' is true only in a class: a struct has no vtable
+            // (record 0065), and C++ lets a union hold no virtual method
+            // (record 0064)
+            void emit_method_declaration(u32 module, u32 node,
+                                         bool dispatched);
             void emit_function_body(u32 module, u32 node, u32 holder);
             // 'defaults' writes each parameter's default value, which C++
             // takes once and at the declaration. Record 0012 makes arity a

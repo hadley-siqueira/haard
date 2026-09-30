@@ -1,0 +1,36 @@
+# 'sizeof' takes a TYPE, and the typer builds it the way a written type is
+# built -- so a generic there is instantiated as anywhere else. Until
+# 2026-09-29 it was typed as an expression, nothing was recorded, and every
+# 'sizeof' stopped the emitter at 'a type that was never built'.
+#
+# Each check moves the exit status. 'Point' is 8 because a struct has no vtable
+# (record 0065); 'Box<i32>' is a class, so a vtable pointer comes first and it
+# is more than the four bytes it holds.
+struct Point:
+    x : i32
+    y : i32
+
+class Box<T>:
+    value : T
+
+union Bits:
+    n : i32
+    wide : i64
+
+def main : i32
+    if sizeof(i32) != 4:
+        return 1
+    if sizeof(u8[4]) != 4:
+        return 2
+    if sizeof(Point) != 8:
+        return 3
+    if sizeof(Point*) != sizeof(i64*):
+        return 4
+    if sizeof(Box<i32>) <= 4:
+        return 5
+    if sizeof(Bits) != 8:
+        return 6
+    let n : usize = sizeof(char)
+    if n != 1:
+        return 7
+    return 0

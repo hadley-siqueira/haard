@@ -199,7 +199,8 @@ void Emitter::emit_forward_declarations() {
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if (kind != AST_CLASS && kind != AST_STRUCT && kind != AST_ENUM) {
+            if (kind != AST_CLASS && kind != AST_STRUCT && kind != AST_ENUM
+                && kind != AST_UNION) {
                 continue;
             }
 
@@ -226,7 +227,8 @@ void Emitter::emit_forward_declarations() {
                 continue;
             }
 
-            out << "struct " << name_of(i, candidate) << ";\n";
+            out << (kind == AST_UNION ? "union " : "struct ")
+                << name_of(i, candidate) << ";\n";
         }
     }
 
@@ -245,7 +247,8 @@ void Emitter::emit_types() {
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if ((kind == AST_CLASS || kind == AST_STRUCT || kind == AST_ENUM)
+            if ((kind == AST_CLASS || kind == AST_STRUCT || kind == AST_ENUM
+                 || kind == AST_UNION)
                 && !is_generic(i, declaration)) {
                 emit_type(i, declaration);
             }
@@ -916,7 +919,13 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
     emitting.erase(key);
     emitted.insert(key);
 
-    out << "struct " << name_of(module_index, candidate) << inherits << " {\n";
+    // Record 0064: a union is C's, written as C++'s own. The front end
+    // refused a base, a derived class and every field with a lifetime, so
+    // what is left is a C++ union C++ accepts
+    bool is_union = kind_of(module_index, declaration) == AST_UNION;
+
+    out << (is_union ? "union " : "struct ") << name_of(module_index, candidate)
+        << inherits << " {\n";
     indentation++;
 
     for (u32 member : query.get_members(declaration)) {
@@ -928,7 +937,9 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
             // generic class is: it is not a method, it is what one is made
             // from, and its clones are members of this same body -- appended
             // by the instantiator, so this loop reaches them here
-            emit_method_declaration(module_index, member);
+            emit_method_declaration(
+                module_index, member,
+                kind_of(module_index, declaration) == AST_CLASS);
         }
     }
 
@@ -974,7 +985,8 @@ void Emitter::emit_field(u32 module_index, u32 node) {
 //
 // Virtual, always. Hadley, 2026-09-02: every method is virtual and there is no
 // keyword, so the C++ has to say what the language does not
-void Emitter::emit_method_declaration(u32 module, u32 node) {
+void Emitter::emit_method_declaration(u32 module, u32 node,
+                                      bool dispatched) {
     u32 candidate = compilation->get_module(module)->get_symbols()
                         ->candidate_of(node);
 
@@ -982,7 +994,7 @@ void Emitter::emit_method_declaration(u32 module, u32 node) {
         return;
     }
 
-    out << std::string(indentation * 4, ' ') << "virtual ";
+    out << std::string(indentation * 4, ' ') << (dispatched ? "virtual " : "");
     emit_signature(module, node, name_of(module, candidate), true);
     out << ";\n";
 }
@@ -1204,7 +1216,16 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
             line("void m_assign(" + holder + "& other);");
         }
 
-        line("virtual ~" + holder + "();");
+        // A struct or a union ends only when it says how, and never
+        // virtually: a struct has no vtable (record 0065), C++ lets a union
+        // hold no virtual method, and either one with a destructor could no
+        // longer be the field of a union (record 0064)
+        if (kind_of(module_index, declaration) == AST_CLASS) {
+            line("virtual ~" + holder + "();");
+        } else if (destroy != 0) {
+            line("~" + holder + "();");
+        }
+
         return;
     }
 
@@ -1236,6 +1257,10 @@ void Emitter::emit_structors(u32 module_index, u32 declaration,
         }
 
         out << "    " << plain << "\n}\n\n";
+    }
+
+    if (kind_of(module_index, declaration) != AST_CLASS && destroy == 0) {
+        return;
     }
 
     out << holder << "::~" << holder << "() {\n";
@@ -1321,7 +1346,7 @@ void Emitter::emit_bodies() {
         for (u32 declaration : query.get_declarations()) {
             AstNodeKind kind = kind_of(i, declaration);
 
-            if (kind != AST_CLASS && kind != AST_STRUCT
+            if (kind != AST_CLASS && kind != AST_STRUCT && kind != AST_UNION
                 || is_generic(i, declaration)) {
                 continue;
             }

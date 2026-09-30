@@ -24,7 +24,6 @@ struct h0_29_Wrapper {
 
 struct h0_48_Box {
     int32_t h0_50_value;
-    virtual ~h0_48_Box();
 };
 
 int32_t h0_34_main();
@@ -117,9 +116,6 @@ int32_t h0_29_Wrapper::m_wrap_7_b6(int32_t h0_79_x) {
 }
 
 h0_29_Wrapper::~h0_29_Wrapper() {
-}
-
-h0_48_Box::~h0_48_Box() {
 }
 
 int main() {

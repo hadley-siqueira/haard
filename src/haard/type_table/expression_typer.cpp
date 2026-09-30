@@ -233,10 +233,15 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_NEW:
         return allocation(scope, node);
 
-    // a size is a size whatever was measured, and the operand is typed for
-    // the sake of what the recording keeps rather than for an answer
+    // A size is a size whatever was measured, and the operand is a TYPE --
+    // the grammar says so -- built the way a written type is, so a generic
+    // there is instantiated as it would be anywhere. It is recorded on the
+    // operand, which is where the emitter reads what to measure. It used to
+    // be typed as an expression, which a type is not: nothing was recorded
+    // and the emitter stopped at 'a type that was never built'
     case AST_SIZEOF:
-        type_of(index, scope, first_child(node), INVALID_TYPE);
+        module->get_resolutions()->set_type(
+            first_child(node), builder.build(index, scope, first_child(node)));
 
         // Record 0050: a size is a 'usize', which is what that builtin is for.
         // It gave back a 'u64' until 2026-09-09, which is the same width

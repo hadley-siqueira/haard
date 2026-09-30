@@ -57,6 +57,9 @@ namespace haard {
             void walk_scope(u32 node, u32 scope);
 
             void use(u32 node, u32 scope);
+
+            // a name written where a type is has to reach a type
+            void require_a_type(u32 name, u32 scope);
             void report(u32 node, const std::string& message);
 
             std::string text_of(u32 node);
