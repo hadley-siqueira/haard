@@ -1,6 +1,6 @@
 # Where the compiler is
 
-Written 2026-09-02, last brought up to date 2026-09-24. The agenda of
+Written 2026-09-02, last brought up to date 2026-09-29. The agenda of
 *decisions* is `design/README.md`; this is the state of the *code*, and what to
 do next.
 
@@ -1333,6 +1333,18 @@ in the meantime.
       evaluated, and a **tuple as a value** types but does not emit.
    4. Deferred on purpose, with the design written down: 1.23 (`{key: value}`)
       and 1.26 (`const`). Do not re-derive either.
+   5. **The gaps before an IR**, measured 2026-09-24 by 30 feature probes
+      (the 24 wrong programs became record 0063). Work with no decision:
+      ~~`union`~~ (record 0064) and ~~`sizeof(T)`~~ (**done 2026-09-29**);
+      then `//=` and `>>>=` (*cannot be emitted yet*), a generic enum's
+      variant (`Option<i32>.Some(3)`, written or inferred), and a method as a
+      value (`let f = c.get`: `hdc` accepts, g++ refuses). Waiting on
+      Hadley: `T&&` (what does it do -- move?), tuples (how is one
+      represented, how is it read, does `for k, v in` take one apart), `~=`
+      (proposed: `x = x & ~y`, Go's `&^=`). Small questions: `"\${"` works by
+      a C++ accident, `Array` has no `pop`, `<...>` on a call to a
+      non-generic is ignored in silence. **Then the IR**: re-read record
+      0025's signals first.
 
 1. **More real Haard.** `tests/programs/` is the newest suite and the only one
    that runs the flow a **user** runs: the real `hdc` binary, through each
