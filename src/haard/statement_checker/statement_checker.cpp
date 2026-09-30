@@ -803,7 +803,7 @@ void StatementChecker::check_switch(u32 node, u32 scope) {
 
     query.set_module(module);
 
-    for (u32 member : theirs.get_members(found->ast_node)) {
+    for (u32 member : theirs.get_variants(found->ast_node)) {
         variants.push_back(theirs.get_declaration_name(member));
     }
 

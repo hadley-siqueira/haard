@@ -70,6 +70,11 @@ namespace haard {
             // for a body that is only 'pass'
             std::vector<u32> get_members(u32 declaration);
 
+            // the members that are not a 'def': an enum's variants, a
+            // union's or a struct's fields. Since 2026-09-30 an enum may
+            // write methods, and every walk over its variants asks this
+            std::vector<u32> get_variants(u32 declaration);
+
             // the body node itself, which is what something ADDING a member
             // needs and get_members cannot give: 0 when the declaration has
             // no body. Record 0055's clone of a generic method is added here

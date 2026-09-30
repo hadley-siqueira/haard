@@ -289,7 +289,7 @@ void Emitter::emit_enum(u32 module_index, u32 declaration) {
 
     out << "enum class " << name_of(module_index, candidate) << " : int32_t {\n";
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -318,13 +318,31 @@ void Emitter::emit_enum(u32 module_index, u32 declaration) {
 // union when one does. The author writes one declaration either way, which is
 // what every language with a sum type does and the reason the payload-free
 // enum costs nothing
+//
+// And an enum that writes a **method** takes the struct shape too, payload or
+// not (Hadley, 2026-09-30): a C++ 'enum class' can hold no member function,
+// and a method is a member of the value
 bool Emitter::carries_a_payload(u32 module_index, u32 declaration) {
     Module* module = compilation->get_module(module_index);
     AstQuery query;
 
     query.set_module(module);
 
-    for (u32 member : query.get_members(declaration)) {
+    if (query.get_members(declaration).size()
+        != query.get_variants(declaration).size()) {
+        return true;
+    }
+
+    return holds_a_payload(module_index, declaration);
+}
+
+// whether a variant carries something -- the struct needs its union only then
+bool Emitter::holds_a_payload(u32 module_index, u32 declaration) {
+    AstQuery query;
+
+    query.set_module(compilation->get_module(module_index));
+
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) == AST_FIELD
             && query.get_written_type(member) != 0) {
             return true;
@@ -366,9 +384,16 @@ void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
 
     out << "struct " << name << " {\n";
     out << "    int32_t tag;\n";
-    out << "    union {\n";
 
-    for (u32 member : query.get_members(declaration)) {
+    // an enum here only for its methods carries nothing, and C++ has no
+    // union of nothing
+    bool payload = holds_a_payload(module_index, declaration);
+
+    if (payload) {
+        out << "    union {\n";
+    }
+
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD
             || query.get_written_type(member) == 0) {
             continue;
@@ -387,9 +412,24 @@ void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
         out << " } " << name_of(module_index, named) << ";\n";
     }
 
-    out << "    };\n";
+    if (payload) {
+        out << "    };\n";
+    }
 
     out << "\n";
+
+    // Hadley, 2026-09-30: an enum may write methods, and they are a struct's
+    // -- never virtual, since nothing derives from an enum (record 0065)
+    indentation++;
+
+    for (u32 member : query.get_members(declaration)) {
+        if (kind_of(module_index, member) == AST_FUNCTION
+            && !is_generic(module_index, member)) {
+            emit_method_declaration(module_index, member, false);
+        }
+    }
+
+    indentation--;
 
     // Every tagged union carries its own comparison: two of them are equal
     // when they are the same variant carrying the same things, and C++ has no
@@ -410,7 +450,7 @@ void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
 
     // and one maker per variant, payload or not: a variant is a value of the
     // enum and this is how one comes into being
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -478,7 +518,7 @@ u32 Emitter::tag_of(u32 module_index, u32 declaration, u32 wanted) {
 
     query.set_module(module);
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -513,7 +553,7 @@ bool Emitter::holds_a_class(u32 module_index, u32 declaration) {
 
     query.set_module(module);
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -539,7 +579,7 @@ bool Emitter::union_compares(u32 module_index, u32 declaration,
 
     query.set_module(module);
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -601,7 +641,7 @@ void Emitter::emit_union_equality(u32 module_index, u32 declaration,
     out << "        }\n";
     out << "        switch (tag) {\n";
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -676,7 +716,7 @@ void Emitter::emit_union_lifetime(u32 module_index, u32 declaration,
     out << "    void __clear() {\n";
     out << "        switch (tag) {\n";
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -713,7 +753,7 @@ void Emitter::emit_union_lifetime(u32 module_index, u32 declaration,
     out << "        tag = other.tag;\n";
     out << "        switch (tag) {\n";
 
-    for (u32 member : query.get_members(declaration)) {
+    for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
             continue;
         }
@@ -1498,6 +1538,7 @@ void Emitter::emit_bodies() {
             AstNodeKind kind = kind_of(i, declaration);
 
             if (kind != AST_CLASS && kind != AST_STRUCT && kind != AST_UNION
+                    && kind != AST_ENUM
                 || is_generic(i, declaration)) {
                 continue;
             }
@@ -2049,8 +2090,12 @@ void Emitter::emit_switch(u32 module_index, u32 node) {
 
     out << std::string(indentation * 4, ' ') << "switch (";
 
+    // wrapped when a '.' follows it: 'switch *this' over a tagged union was
+    // '*this.tag', which C++ reads as '*(this.tag)'
     if (captures) {
         out << held;
+    } else if (tagged) {
+        emit_operand(module_index, subject, 2);
     } else {
         emit_expression(module_index, subject);
     }
@@ -2366,7 +2411,7 @@ std::string Emitter::label_of(u32 module_index, u32 subject, u32 pattern) {
 
     theirs.set_module(holder);
 
-    for (u32 member : theirs.get_members(
+    for (u32 member : theirs.get_variants(
              table->get_candidate(entry->subject)->ast_node)) {
         if (theirs.get_declaration_name(member) != wanted) {
             continue;
@@ -3520,7 +3565,7 @@ u32 Emitter::variant_of(u32 holder, u32 declaration, u32 module_index,
 
     theirs.set_module(compilation->get_module(holder));
 
-    for (u32 member : theirs.get_members(declaration)) {
+    for (u32 member : theirs.get_variants(declaration)) {
         if (theirs.get_declaration_name(member) == wanted) {
             return member;
         }

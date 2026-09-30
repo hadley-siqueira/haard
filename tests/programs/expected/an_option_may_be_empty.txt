@@ -1,0 +1,10 @@
+found nothing
+found 4
+is_some: true false
+is_none: false true
+unwrap_or: 4 0
+map: 8 false
+names: haard ?
+equal: true true
+--- files:
+--- exit: 0

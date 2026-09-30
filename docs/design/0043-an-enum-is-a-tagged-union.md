@@ -334,3 +334,44 @@ caught: the clone's variants left untyped, the expected enum ignored, clones
 back in view, the generic name as a value giving nothing, the emitter naming
 the enum from the left of the dot, no solving from the arguments, and several
 variants left silent.
+
+## Amended 2026-09-30: an enum writes methods, and `Option<T>`
+
+Hadley, asked while putting `Option<T>` in the library: its API is **methods
+on the enum** -- `found.unwrap_or(0)` -- so an enum may write methods. They are
+a struct's: never virtual, since nothing derives from an enum (record 0065).
+
+The parser had always read a `def` inside an enum, and nothing after it knew
+one could be there:
+
+- **the emitter wrote none of them**, so `a.is_some()` was a C++ error about a
+  member that did not exist;
+- **a `switch` took every member for a variant**, so one over an enum with
+  methods said *does not cover is_some, unwrap_or*. Every walk over an enum's
+  variants asks `AstQuery::get_variants` now, which is the members that are
+  not a `def`;
+- **`switch *this`** over a tagged union came out `*this.tag`, which C++ reads
+  as `*(this.tag)` -- no program had switched over anything but a name.
+
+A C++ `enum class` can hold no member function, so an enum that writes a
+method is emitted in the **struct shape** even when no variant carries
+anything: the tag, the union only when there is something to hold, the makers
+and the comparison, and the methods declared inside. `carries_a_payload`
+answers yes for one, which is what every other place already asks to decide
+how a variant is named, compared and switched over.
+
+**Not decided**: an enum that writes `init` or `destroy`. It is built by its
+makers and not by a constructor, so what either would mean is open, and no
+program writes one.
+
+`std.option` holds `Option<T>`: `is_some`, `is_none`, `unwrap_or`, and `map<U>`,
+a generic method so an Option nobody maps carries none of it. There is **no
+`unwrap`**: a `None` has nothing to give back and the language has no way to
+stop a program -- record 0030's natives have no `abort`. Nothing else in the
+library changed (Hadley: only the type, for now), and a project puts it in view
+by naming `std.option` in its prelude.
+
+Cases: `tests/emitter/cases/an_enum_writes_methods` (42) and
+`tests/programs/cases/an_option_may_be_empty`, which runs clean under the
+address sanitizer with an `Option<String>`.
+

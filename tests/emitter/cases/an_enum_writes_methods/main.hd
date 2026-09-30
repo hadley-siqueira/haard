@@ -1,0 +1,74 @@
+# Hadley, 2026-09-30: an enum may write methods, and they are a struct's --
+# never virtual, since nothing derives from an enum (record 0065).
+#
+# A C++ 'enum class' can hold no member function, so an enum that writes one
+# is emitted in the struct shape -- a tag, and the union only when a variant
+# carries something -- whether it carries anything or not. 'Light' carries
+# nothing and still compares, is switched over and names its variants as
+# every enum does.
+#
+# Two things this found: a switch over one said *does not cover next, is_go*,
+# since every member of an enum was taken for a variant; and 'switch *this'
+# over a tagged union was emitted '*this.tag'.
+#
+# The exit status is 42.
+enum Light:
+    Red
+    Yellow
+    Green = 7
+
+    def next : Light
+        switch *this:
+            case Red:
+                return Light.Green
+
+            case Green:
+                return Light.Yellow
+
+            case Yellow:
+                return Light.Red
+
+        return Light.Red
+
+    def is_go : bool
+        return *this == Light.Green
+
+enum Shape:
+    Circle : i32
+    Square : i32
+
+    def area : i32
+        switch *this:
+            case Circle(r):
+                return 3 * r * r
+
+            case Square(side):
+                return side * side
+
+        return 0
+
+def main : i32
+    let light = Light.Red
+    let after = light.next()
+
+    if not after.is_go() or after == Light.Red:
+        return 1
+
+    let bare = Green
+
+    if bare != after:
+        return 2
+
+    if Shape.Circle(2).area() != 12:
+        return 3
+
+    let square = Square(5)
+
+    switch after.next():
+        case Yellow:
+            return square.area() + 17
+
+        default:
+            return 4
+
+    return 5

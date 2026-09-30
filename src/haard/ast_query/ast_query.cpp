@@ -148,6 +148,18 @@ std::vector<u32> AstQuery::get_members(u32 declaration) {
     return members;
 }
 
+std::vector<u32> AstQuery::get_variants(u32 declaration) {
+    std::vector<u32> variants;
+
+    for (u32 member : get_members(declaration)) {
+        if (ast->get_node(member)->get_kind() != AST_FUNCTION) {
+            variants.push_back(member);
+        }
+    }
+
+    return variants;
+}
+
 std::vector<u32> AstQuery::get_params(u32 function) {
     std::vector<u32> params;
 

@@ -628,7 +628,7 @@ class: a fixed array, with its length in its type.
 
 ### The standard library
 
-`std/` is seven files, all of them Haard:
+`std/` is eight files, all of them Haard:
 
 | module | what is in it |
 |---|---|
@@ -637,6 +637,7 @@ class: a fixed array, with its length in its type.
 | `std.array` | `Array<T>`, the class `T[]` is written form for |
 | `std.list` | `List<T>`, a doubly linked list, written `[T]` as well |
 | `std.hash` | `Hash<K, V>`, open addressed, written `{K: V}` as well, hashed by the `hash_of` overload set |
+| `std.option` | `Option<T>`, `Some(x)` or `None`, with `is_some`, `is_none`, `unwrap_or` and `map` |
 | `std.file` | `File`, `console()`, `open_read`, `open_write` — the same names as `std.io`, on a file |
 | `std.low_io` | nine functions whose bodies the compiler writes, one character at a time and a flush |
 

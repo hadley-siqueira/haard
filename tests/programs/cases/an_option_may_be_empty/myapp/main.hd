@@ -1,0 +1,57 @@
+# Option<T>, 2026-09-30: a value that may not be there, in 'std.option'. A
+# lookup that finds nothing says so in its type, and the caller writes what
+# happens then -- 'unwrap_or', or a 'switch' with both cases.
+def find_first_even : Option<i32>
+    @xs : i32[]&
+
+    for x in xs:
+        if x % 2 == 0:
+            return Some(x)
+
+    return None
+
+def describe : String
+    @found : Option<i32>
+
+    switch found:
+        case Some(value):
+            return "found ${value}"
+
+        case None:
+            return "found nothing"
+
+    return ""
+
+def main : i32
+    let odds : i32[] = [1, 3, 5]
+    let mixed : i32[] = [1, 4, 6]
+
+    println(describe(find_first_even(odds)))
+    println(describe(find_first_even(mixed)))
+
+    let none = find_first_even(odds)
+    let some = find_first_even(mixed)
+
+    println("is_some: ${some.is_some()} ${none.is_some()}")
+    println("is_none: ${some.is_none()} ${none.is_none()}")
+    println("unwrap_or: ${some.unwrap_or(0)} ${none.unwrap_or(0)}")
+
+    # 'map' keeps None a None, and U is solved from what the closure gives
+    let doubled = some.map(|x| { x * 2 })
+    let checked = none.map(|x| { x > 0 })
+
+    println("map: ${doubled.unwrap_or(0)} ${checked.is_some()}")
+
+    # an Option of a class: a String owns its bytes, and the Option copies
+    # and destroys it by the tag
+    let name : Option<String> = Some(String("haard"))
+    let nobody : Option<String> = Option<String>.None
+
+    println("names: ${name.unwrap_or(String("?"))} ${nobody.unwrap_or(String("?"))}")
+
+    # two Options compare by being the same variant holding the same thing
+    let same : Option<i32> = Some(8)
+
+    println("equal: ${doubled == same} ${none == Option<i32>.None}")
+
+    return 0

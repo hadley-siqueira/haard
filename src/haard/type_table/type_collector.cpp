@@ -648,7 +648,7 @@ u32 TypeCollector::capture_of(u32 switch_node, u32 one_case, u32 candidate,
 
     there.set_module(holder);
 
-    for (u32 member : there.get_members(
+    for (u32 member : there.get_variants(
              theirs->get_candidate(entry->subject)->ast_node)) {
         if (there.get_declaration_name(member) != variant) {
             continue;

@@ -303,6 +303,7 @@ namespace haard {
             // a plain 'enum class' when no variant carries anything, and a
             // tag plus a union when one does
             bool carries_a_payload(u32 module, u32 declaration);
+            bool holds_a_payload(u32 module, u32 declaration);
             void emit_tagged_union(u32 module, u32 declaration, u32 candidate);
             std::vector<u32> payload_of(u32 module, u32 member);
 

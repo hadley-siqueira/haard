@@ -76,6 +76,13 @@ raised, answered the same day as record 0062: `let x = xs[i]` bound a
 `let x : T& = ...`, and a `for x in` variable stays one. See
 `bootstrap/README.md`.
 
+**`Option<T>` is in the library**, since 2026-09-30 -- `std.option`, with
+`is_some`, `is_none`, `unwrap_or` and `map`, as methods: an enum may write
+methods now (record 0043, amended), and one that does is emitted as a struct.
+Writing it found that no method of an enum had ever been emitted, and that a
+`switch` counted methods as variants. There is no `unwrap` -- nothing in the
+language can stop a program yet.
+
 **A move is written**, since 2026-09-30 -- record 0066, Hadley. `T&&` parses,
 types and emits; a class is moved by `init(other : T&&)` beside its copy
 `init`, and only where `&&x` is written: the move `init` is a C++ constructor
