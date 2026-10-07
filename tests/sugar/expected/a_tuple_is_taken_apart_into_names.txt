@@ -1,0 +1,16 @@
+def pair : (i32, (bool, f64))
+    return (1, (true, 2.5))
+def main : i32
+    let t = (1, (true, 2.5))
+    let a = t[0]
+    let b = t[1][0]
+    let c = t[1][1]
+    let __d0 = pair()
+    let n = __d0[0]
+    let __d1 : (i32&, f64) = (a, 1.5)
+    let x : i32& = __d1[0]
+    let y : f64 = __d1[1]
+    const k = t[0]
+    const m = t[1][1]
+    let whole = t
+    return 0

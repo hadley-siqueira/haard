@@ -747,7 +747,8 @@ class Parser:
         begin_statement()
         expect(TokenKind.At)
 
-        let name = parse_binding_name()
+        # record 0067: the name may be a pattern
+        let name = parse_binding_target()
         let type = parse_param_type()
         let value = parse_binding_expression()
 
@@ -777,19 +778,28 @@ class Parser:
         if not lookahead_on_same_line(TokenKind.LeftParenthesis):
             return parse_binding_name()
 
+        return builder.make_binding_name(parse_binding_pattern())
+
+    # Record 0067: a tuple taken apart may take a tuple inside it apart too
+    #
+    #   pattern := identifier | '(' pattern (',' pattern)* ')'
+    def parse_binding_pattern : i32
+        if not lookahead_on_same_line(TokenKind.LeftParenthesis):
+            return parse_identifier()
+
         let token = current_token
 
         expect_on_same_line(TokenKind.LeftParenthesis)
 
         let tuple = builder.make_tuple(token)
-        let last = builder.add_child(tuple, 0, parse_identifier())
+        let last = builder.add_child(tuple, 0, parse_binding_pattern())
 
         while match_on_same_line(TokenKind.Comma):
-            last = builder.add_child(tuple, last, parse_identifier())
+            last = builder.add_child(tuple, last, parse_binding_pattern())
 
         expect_on_same_line(TokenKind.RightParenthesis)
 
-        return builder.make_binding_name(tuple)
+        return tuple
 
     #   binding_name := identifier
     def parse_binding_name : i32
@@ -968,7 +978,7 @@ class Parser:
 
         return node
 
-    #   tuple_type := '(' type (',' type)* ')' | primary_type
+    #   tuple_type := '(' type (',' type)* ')' postfix* | primary_type
     def parse_tuple_type : i32
         if not lookahead_on_same_line(TokenKind.LeftParenthesis):
             return parse_primary_type()
@@ -985,7 +995,7 @@ class Parser:
 
         expect_on_same_line(TokenKind.RightParenthesis)
 
-        return node
+        return parse_type_postfix(node)
 
     #   primary_type := (named_type | '[' type ']' | '{' type ':' type '}') postfix*
     def parse_primary_type : i32
@@ -1788,7 +1798,7 @@ class Parser:
 
     #   closure_parameter := identifier (':' type)?
     def parse_closure_parameter : i32
-        let name = parse_binding_name()
+        let name = parse_binding_target()
         let type = parse_binding_type()
 
         return builder.make_closure_parameter(name, type)

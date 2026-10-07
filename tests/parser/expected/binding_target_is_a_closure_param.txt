@@ -1,0 +1,28 @@
+def f : void
+    let g = |(a, (b, _))| {
+        pass
+    }
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'f'
+    function_return_type
+      builtin_type 'void'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'g'
+          binding_expression
+            closure '|'
+              closure_parameter
+                binding_name
+                  tuple '('
+                    identifier 'a'
+                    tuple '('
+                      identifier 'b'
+                      identifier '_'
+              block
+                pass 'pass'
+--- round trip: ok

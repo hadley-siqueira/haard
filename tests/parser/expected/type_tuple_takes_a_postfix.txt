@@ -1,0 +1,44 @@
+let xs : (i32, f64)[]
+let r : (i32, bool)&
+let p : (u8, u8)*
+let fixed : (i32, i32)[4]
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'xs'
+      binding_type
+        array_type '['
+          tuple_type '('
+            builtin_type 'i32'
+            builtin_type 'f64'
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'r'
+      binding_type
+        reference_type '&'
+          tuple_type '('
+            builtin_type 'i32'
+            builtin_type 'bool'
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'p'
+      binding_type
+        pointer_type '*'
+          tuple_type '('
+            builtin_type 'u8'
+            builtin_type 'u8'
+  let_declaration 'let'
+    binding
+      binding_name
+        identifier 'fixed'
+      binding_type
+        array_type '['
+          tuple_type '('
+            builtin_type 'i32'
+            builtin_type 'i32'
+          integer '4'
+--- round trip: ok

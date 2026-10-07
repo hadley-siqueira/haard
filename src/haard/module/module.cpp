@@ -113,6 +113,24 @@ bool Module::is_synthetic(u32 token) {
     return token >= first_synthetic;
 }
 
+void Module::bind_by_reference(u32 name_token) {
+    by_reference.insert(name_token);
+}
+
+bool Module::binds_by_reference(u32 name_token) {
+    return by_reference.count(name_token) > 0;
+}
+
+void Module::set_pattern_length(u32 for_token, u32 length) {
+    pattern_lengths[for_token] = length;
+}
+
+u32 Module::get_pattern_length(u32 for_token) {
+    auto found = pattern_lengths.find(for_token);
+
+    return found == pattern_lengths.end() ? 0 : found->second;
+}
+
 void Module::inspect_tokens() {
     for (auto tk : tokens.get_tokens()) {
         auto offset = tk.get_offset();

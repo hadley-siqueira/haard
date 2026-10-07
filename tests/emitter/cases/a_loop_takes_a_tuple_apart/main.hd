@@ -1,0 +1,160 @@
+# Record 0067: 'for (a, b) in c' names each element of what it walks, and
+# every name is a REFERENCE into it, as a loop variable is (record 0040). When
+# what 'c.iterator()' gives is not such a tuple and 'c' has an 'items', that
+# is what is walked -- any class, found by name. The exit status adds up one
+# bit per thing that held.
+
+# walks its numbers one way and its pairs of number and square the other
+class Squares:
+    numbers : i32[3]
+    squares : i32[3]
+
+    def iterator : NumberCursor
+        let cursor : NumberCursor
+
+        cursor.held = this
+        cursor.at = 0
+
+        return cursor
+
+    def items : SquaresItems
+        let items : SquaresItems
+
+        items.held = this
+
+        return items
+
+class NumberCursor:
+    held : Squares*
+    at : i32
+
+    def has_next : bool
+        return at < 3
+
+    def next : i32&
+        at += 1
+        return held->numbers[at - 1]
+
+class SquaresItems:
+    held : Squares*
+
+    def iterator : SquareCursor
+        let cursor : SquareCursor
+
+        cursor.held = held
+        cursor.at = 0
+
+        return cursor
+
+class SquareCursor:
+    held : Squares*
+    at : i32
+
+    def has_next : bool
+        return at < 3
+
+    def next : (i32&, i32&)
+        at += 1
+        return (held->numbers[at - 1], held->squares[at - 1])
+
+# walks pairs both ways, so a pattern takes 'iterator' and never 'items':
+# what 'items' gives is the doubles, which would move the sum
+class Both:
+    held : Squares*
+
+    def iterator : SquareCursor
+        let cursor : SquareCursor
+
+        cursor.held = held
+        cursor.at = 0
+
+        return cursor
+
+    def items : DoubledItems
+        let items : DoubledItems
+
+        items.held = held
+
+        return items
+
+class DoubledItems:
+    held : Squares*
+
+    def iterator : DoubledCursor
+        let cursor : DoubledCursor
+
+        cursor.held = held
+        cursor.at = 0
+
+        return cursor
+
+class DoubledCursor:
+    held : Squares*
+    at : i32
+
+    def has_next : bool
+        return at < 3
+
+    def next : (i32, i32)
+        at += 1
+        return (2 * held->numbers[at - 1], 0)
+
+def main : i32
+    let result = 0
+    let s = Squares()
+    let i = 0
+
+    while i < 3:
+        s.numbers[i] = i + 1
+        s.squares[i] = 0
+        i += 1
+
+    # 1: a plain name walks 'iterator', the numbers
+    let total = 0
+
+    for n in s:
+        total += n
+
+    if total == 6:
+        result += 1
+
+    # 2: a pattern walks 'items', since the numbers are not pairs -- and the
+    # second name refers into the class, so this fills the squares
+    for (n, square) in s:
+        square = n * n
+
+    if s.squares[0] == 1 and s.squares[1] == 4 and s.squares[2] == 9:
+        result += 2
+
+    # 4: a fixed array of tuples, nested, and '_'
+    let pairs : (i32, (i32, i32))[2] = {(1, (2, 3)), (4, (5, 6))}
+
+    for (a, (b, _)) in pairs:
+        a += b
+
+    if pairs[0][0] == 3 and pairs[1][0] == 9:
+        result += 4
+
+    # 8: and the plain loop variable over a fixed array is a reference too,
+    # which it was not until this record asked the same question of it
+    let plain : i32[2] = {1, 2}
+
+    for x in plain:
+        x += 10
+
+    if plain[0] == 11 and plain[1] == 12:
+        result += 8
+
+    # 16: 'iterator' already gives pairs, so 'items' is not walked
+    let both = Both()
+    let firsts = 0
+
+    both.held = &s
+
+    for (n, _) in both:
+        firsts += n
+
+    if firsts == 6:
+        result += 16
+
+    return result

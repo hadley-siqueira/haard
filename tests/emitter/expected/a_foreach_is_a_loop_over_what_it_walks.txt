@@ -61,7 +61,7 @@ int32_t h0_21_main() {
     {
         int32_t h0_54___i3 = 0;
         for (; h0_54___i3 < 2; h0_54___i3 = h0_54___i3 + 1) {
-            int32_t h0_28_f = h0_27_fixed[h0_54___i3];
+            int32_t &h0_28_f = h0_27_fixed[h0_54___i3];
             h0_23_total = h0_23_total + h0_28_f;
         }
     }

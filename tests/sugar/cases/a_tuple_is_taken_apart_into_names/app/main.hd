@@ -1,0 +1,16 @@
+# Record 0067: 'let (a, b) = t' is a 'let' per name, each given its element,
+# so each is a copy unless the type written for it is a reference. What is
+# not a name is evaluated once, into one; '_' binds nothing; a pattern nests;
+# and '(a)' is a in brackets.
+
+def pair : (i32, (bool, f64))
+    return (1, (true, 2.5))
+
+def main : i32
+    let t = (1, (true, 2.5))
+    let (a, (b, c)) = t
+    let (n, _) = pair()
+    let (x, y) : (i32&, f64) = (a, 1.5)
+    const (k, (_, m)) = t
+    let (whole) = t
+    return 0

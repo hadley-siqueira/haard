@@ -10,6 +10,8 @@
 #include <haard/symbol_table/symbol_table.h>
 #include <haard/type_table/type_table.h>
 #include <haard/resolution_table/resolution_table.h>
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -86,6 +88,22 @@ namespace haard {
             // every statement the sugar inserts carries one
             bool is_synthetic(u32 token);
 
+            // Record 0067: what the sugar pass learns about a 'for' over a
+            // pattern and the type phase acts on. Both are kept by TOKEN, not
+            // by node: a generic is cloned node by node into this same module
+            // (record 0002), and the clone carries the tokens along.
+            //
+            // A name a 'for (k, v)' binds is a reference to its element, as a
+            // loop variable is (record 0040) -- and a 'let' with nothing
+            // written is a copy everywhere else (record 0062)
+            void bind_by_reference(u32 name_token);
+            bool binds_by_reference(u32 name_token);
+
+            // how many elements a 'for' takes apart, by its 'for' token: what
+            // tells it to walk 'items()' when 'iterator()' gives no such tuple
+            void set_pattern_length(u32 for_token, u32 length);
+            u32 get_pattern_length(u32 for_token);
+
         public:
             // the dotted name this file is known by, 'app.main'. A module is
             // a file, so its name is its path with the separators turned back
@@ -143,6 +161,8 @@ namespace haard {
             void inspect_ast();
 
         private:
+            std::set<u32> by_reference;
+            std::map<u32, u32> pattern_lengths;
             std::string name;
             u32 root;
             std::vector<Dependency> dependencies;

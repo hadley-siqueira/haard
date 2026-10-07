@@ -121,6 +121,11 @@ u32 TypeBuilder::build_here(u32 index, u32 scope, u32 node) {
             }
         }
 
+        // record 0067: there is no tuple of one, so '(T)' is T in brackets
+        if (elements.size() == 1) {
+            return elements[0];
+        }
+
         return table->tuple(elements);
     }
 

@@ -110,6 +110,7 @@ namespace haard {
             // what a let or a const binds: one name, or several between
             // brackets when a tuple is being taken apart
             u32 parse_binding_target();
+            u32 parse_binding_pattern();
             u32 parse_binding_type();
             u32 parse_binding_expression();
 

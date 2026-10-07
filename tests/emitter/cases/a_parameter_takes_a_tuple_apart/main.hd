@@ -1,0 +1,53 @@
+# Record 0067: a parameter may be a pattern, in a 'def' and in a closure. A
+# name takes the type written for its element -- a copy, unless that says
+# 'T&' or the whole was written '(A, B)&'. The exit status adds up one bit per
+# thing that held.
+
+def area : i32
+    @(width, height) : (i32, i32)
+
+    return width * height
+
+# the caller's tuple, written through
+def grow : void
+    @(a, (b, _)) : (i32, (i32, i32))&
+
+    a += 1
+    b += 1
+
+# a copy: the caller's tuple is not touched
+def ignore : void
+    @(a, _) : (i32, i32)
+
+    a += 100
+
+def apply : i32
+    @f : ((i32, i32)) -> i32
+    @pair : (i32, i32)
+
+    return f(pair)
+
+def main : i32
+    let result = 0
+
+    if area((3, 4)) == 12:
+        result += 1
+
+    let t = (1, (2, 3))
+
+    grow(t)
+
+    if t[0] == 2 and t[1][0] == 3 and t[1][1] == 3:
+        result += 2
+
+    let u = (1, 2)
+
+    ignore(u)
+
+    if u[0] == 1:
+        result += 4
+
+    if apply(|(x, y)| -> i32 { return x * 10 + y }, (4, 2)) == 42:
+        result += 8
+
+    return result

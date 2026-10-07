@@ -1,0 +1,27 @@
+enum Shape:
+    Dot
+    Circle : f64
+def main : i32
+    let t = (1, Shape.Circle(2.0))
+    
+        let __m0 = false
+        if not __m0 and t[0] == 0:
+            __m0 = true
+            
+                pass
+        if not __m0 and (t[0] == 2 or t[0] == 3):
+            __m0 = true
+            
+                pass
+        if not __m0:
+            switch t[1]:
+                case Circle(r):
+                    __m0 = true
+                    let n = t[0]
+                    
+                        pass
+                default:
+                    pass
+        if not __m0:
+            pass
+    return 0

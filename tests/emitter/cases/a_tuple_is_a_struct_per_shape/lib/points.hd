@@ -1,0 +1,6 @@
+# the same shape as main's, from another module: one struct for both, so a
+# tuple made here is a tuple there
+def swapped : (i32, i32)
+    @p : (i32, i32)
+
+    return (p[1], p[0])

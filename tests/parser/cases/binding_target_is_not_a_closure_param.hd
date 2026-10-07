@@ -1,2 +1,0 @@
-def f : void
-    let g = |(a, b)| { pass }

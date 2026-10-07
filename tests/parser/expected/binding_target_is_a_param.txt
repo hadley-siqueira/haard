@@ -1,0 +1,22 @@
+def f : i32
+    @(a, b) : (i32, i32)
+    pass
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'f'
+    function_return_type
+      builtin_type 'i32'
+    param '@'
+      binding_name
+        tuple '('
+          identifier 'a'
+          identifier 'b'
+      binding_type
+        tuple_type '('
+          builtin_type 'i32'
+          builtin_type 'i32'
+    block
+      pass 'pass'
+--- round trip: ok

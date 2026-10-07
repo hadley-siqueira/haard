@@ -1,0 +1,20 @@
+def distance : f64
+    @__p0 : (f64, f64)
+    @__p1 : (f64, f64)
+    let x1 : f64 = __p0[0]
+    let y1 : f64 = __p0[1]
+    let x2 : f64 = __p1[0]
+    let y2 : f64 = __p1[1]
+    return x2 - x1 + y2 - y1
+def bump : void
+    @__p2 : (i32, (i32, i32))&
+    let a : i32& = __p2[0]
+    let b : i32& = __p2[1][0]
+    a += b
+def main : i32
+    let each = |__p3 : (i32, i32), z : i32| -> i32 {
+        let x : i32 = __p3[0]
+        let y : i32 = __p3[1]
+        return x + y + z
+    }
+    return 0

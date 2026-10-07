@@ -1,0 +1,181 @@
+# Record 0067: a tuple is a struct the compiler writes, and what it holds is
+# copied, assigned and destroyed by each element's own rule. A String inside
+# one is the case that matters: C++'s implicit '=' copies the pointer, so an
+# assignment of a tuple, or of a class holding one, has to go element by
+# element -- and the address sanitizer is what would say it did not.
+#
+# Its exit status is the number of checks that failed.
+
+import std.hash
+
+class Labelled:
+    name : (String, i32)
+
+    def init : void
+        @text : String
+        @n : i32
+
+        name = (text, n)
+
+def check : i32
+    @what : String
+    @ok : bool
+
+    print(what)
+
+    if ok:
+        println(": ok")
+        return 0
+
+    println(": FAILED")
+    return 1
+
+def describe : (String, i32)
+    @n : i32
+
+    if n == 1:
+        return ("one", 1)
+
+    return ("many", n)
+
+# counts how often it is called: a tuple written by '${}' is read once per
+# element, and a call has to be made only once for all of them
+let calls = 0
+
+def counted : (i32, i32)
+    calls += 1
+    return (calls, 10)
+
+def main : i32
+    let failures = 0
+
+    # a String element built from a literal, read back by its position
+    let w : (String, i32) = ("hello", 5)
+    failures += check("read back: ${w[0]} ${w[1]}", w[0] == "hello" and w[1] == 5)
+
+    # a class holding one, assigned in its 'init'
+    let l = Labelled("tuple", 7)
+    failures += check("held by a class: ${l.name[0]}", l.name[0] == "tuple")
+
+    # assigned whole, then the source changed: the copy is its own
+    let copy = describe(1)
+    copy = w
+    w[0] = "changed"
+    failures += check("assigned whole: ${copy[0]}", copy[0] == "hello")
+
+    # an element assigned on its own
+    copy[1] = 9
+    failures += check("an element written: ${copy[1]}", copy[1] == 9)
+
+    # a class holding one, copied and assigned
+    let other = Labelled("other", 1)
+    other = l
+    failures += check("a class assigned: ${other.name[0]}", other.name[0] == "tuple")
+
+    # in an Array, walked
+    let xs : (String, i32)[] = [describe(1), describe(3)]
+    let total = 0
+
+    for p in xs:
+        total += p[1]
+
+    failures += check("walked: ${total}", total == 4)
+
+    # nested
+    let n = (1, ("deep", true))
+    failures += check("nested: ${n[1][0]}", n[1][0] == "deep" and n[1][1])
+
+    # written into a String by '${}': each element by its own 'append',
+    # nested ones in brackets of their own
+    let shown = "${n}"
+    failures += check("written: ${shown}", shown == "(1, (deep, true))")
+
+    let called = "${describe(3)}"
+    failures += check("a call written: ${called}", called == "(many, 3)")
+
+    let once = "${counted()}"
+    failures += check("called once: ${once}", calls == 1 and once == "(1, 10)")
+
+    # compared, element by element, String by its own '=='
+    failures += check("compared", describe(1) == ("one", 1) and describe(2) != ("one", 1))
+
+    # a char* value assigned into a String element, built by the String's init
+    let text : char* = "built"
+    let from = (text, 2)
+    w = from
+    failures += check("converted: ${w}", w == ("built", 2))
+
+    # taken apart: each name is a copy, so changing the tuple leaves it be --
+    # and a name written 'String&' refers into the tuple instead
+    let source : (String, (i32, String)) = ("first", (2, "third"))
+    let (first, (_, third)) = source
+    let (named, _) : (String&, (i32, String)) = source
+
+    source[0] = "changed"
+    failures += check("a copy: ${first} ${third}", first == "first" and third == "third")
+    failures += check("a reference: ${named}", named == "changed")
+
+    let (from_a_call, count) = describe(5)
+    failures += check("from a call: ${from_a_call} ${count}", from_a_call == "many" and count == 5)
+
+    # assigned apart: the right side is read whole before anything is
+    # written, so two Strings swap; and a name nobody declared is declared
+    let left = "left"
+    let right = "right"
+
+    (left, right) = (right, left)
+    failures += check("swapped: ${left} ${right}", left == "right" and right == "left")
+
+    (word, number) = describe(4)
+    failures += check("declared: ${word} ${number}", word == "many" and number == 4)
+
+    # walked apart: 'for (k, v) in h' walks 'h.items()', since a Hash's
+    # 'iterator' gives its keys, and v refers into the Hash
+    let ages : Hash<String, i32>
+
+    ages["ana"] = 30
+    ages["bia"] = 40
+
+    for (name, age) in ages:
+        age += 1
+
+    let sum = 0
+
+    for (name, age) in ages.items():
+        sum += age
+
+    failures += check("a Hash walked apart: ${sum}", sum == 72 and ages["ana"] == 31)
+
+    # and over an Array, each name refers into its element
+    let entries : (String, i32)[] = [("x", 1), ("y", 2)]
+
+    for (tag, n) in entries:
+        tag = "${tag}${n}"
+
+    failures += check("an Array walked apart: ${entries[0]} ${entries[1]}", entries[0] == ("x1", 1) and entries[1] == ("y2", 2))
+
+    # a closure's parameter taken apart: with nothing written, each name
+    # refers into what the closure is handed, as a loop's names do
+    let words : (String, i32)[] = [("a", 1), ("b", 2)]
+
+    words.each(|(text, n)| { text = "${text}${n}" })
+    failures += check("each: ${words[0]} ${words[1]}", words[0] == ("a1", 1) and words[1] == ("b2", 2))
+
+    let lengths = words.map(|(text, n)| -> i32 { return text.length() + n })
+    failures += check("map: ${lengths[0]} ${lengths[1]}", lengths[0] == 3 and lengths[1] == 4)
+
+    ages.items().each(|(name, age)| { age += 10 })
+    failures += check("a Hash's each: ${ages["ana"]}", ages["ana"] == 41)
+
+    # switched over: a String element is compared by its own '=='
+    let reply : String = "none"
+
+    switch describe(3):
+        case ("one", _):
+            reply = "one"
+        case ("many", n):
+            reply = "many: ${n}"
+
+    failures += check("switched: ${reply}", reply == "many: 3")
+
+    return failures

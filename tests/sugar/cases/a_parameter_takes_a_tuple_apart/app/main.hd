@@ -1,0 +1,20 @@
+# Record 0067: a parameter may be a pattern. It becomes a name of its own and
+# the body starts with a 'let' per name out of it: with the element's written
+# type, a reference to the element when the whole was written '(A, B)&', and
+# -- in a closure typed by where it goes -- a reference marked for the type
+# phase, which the golden shows only as the shape.
+
+def distance : f64
+    @(x1, y1) : (f64, f64)
+    @(x2, y2) : (f64, f64)
+
+    return x2 - x1 + y2 - y1
+
+def bump : void
+    @(a, (b, _)) : (i32, (i32, i32))&
+
+    a += b
+
+def main : i32
+    let each = |(x, y) : (i32, i32), z : i32| -> i32 { return x + y + z }
+    return 0

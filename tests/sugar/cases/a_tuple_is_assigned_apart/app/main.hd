@@ -1,0 +1,18 @@
+# Record 0067: '(a, b) = (b, a)' takes the right side whole into a name, then
+# assigns each place its element -- so a swap swaps. A target is any place,
+# '_' takes nothing, a target nests, and a name not in view is declared by its
+# own assignment (record 0027), which runs after this pass.
+
+class Point:
+    x : i32
+    y : i32
+
+def main : i32
+    let a = 1
+    let b = 2
+    let p = Point()
+
+    (a, b) = (b, a)
+    (p.x, (p.y, _)) = (a, (b, 3))
+    (fresh, a) = (4, 5)
+    return 0

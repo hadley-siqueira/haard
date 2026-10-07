@@ -20,7 +20,7 @@
     __c0  BagCursor
     seen  i32
     alias  i32&
-    f  i32
+    f  i32&
     __i1  i32
     taken  i32
     i  i32

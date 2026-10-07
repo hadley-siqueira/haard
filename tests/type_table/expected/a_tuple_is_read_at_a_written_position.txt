@@ -1,0 +1,46 @@
+<unnamed>:
+    min_max  i32 -> i32 -> (i32, i32)
+    copies  i32& -> (i32, i32)
+    main  i32
+    a  i32
+    b  i32
+    r  i32&
+    both  (i32, i32)
+    t  (i32, f64, bool)
+    first  i32
+    second  f64
+    third  bool
+    nested  (i32, (bool, char))
+    inner  char
+    both  (i32, i32)
+    low  i32
+    grouped  i32
+    held  i32
+    copied  (i32, i32)
+    i  i32
+    a  <none>
+    b  <none>
+    c  <none>
+    d  <none>
+  25 types interned
+diagnostics:
+error: a tuple is indexed by a number written in the source, since each element has a type of its own
+  --> main.hd:38:15
+   |
+38 |     let a = t[i]
+   |               ^
+error: (i32, f64, bool) has 3 elements, so 3 is past the last
+  --> main.hd:39:15
+   |
+39 |     let b = t[3]
+   |               ^
+error: a tuple is indexed by a number written in the source, since each element has a type of its own
+  --> main.hd:40:15
+   |
+40 |     let c = t[-1]
+   |               ^
+error: a tuple holds at least two elements; '(a)' without the comma is the value in brackets
+  --> main.hd:43:13
+   |
+43 |     let d = (held,)
+   |             ^

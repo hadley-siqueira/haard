@@ -1,0 +1,24 @@
+# Record 0067: a switch whose cases are tuples is a chain of 'if's on a flag.
+# A literal or a value is compared, '_' is nothing, a name captures, and an
+# element written as a call is a variant, matched by a switch of its own
+# around the rest. Cases with no block share the next one's.
+
+enum Shape:
+    Dot
+    Circle : f64
+
+def main : i32
+    let t = (1, Shape.Circle(2.0))
+
+    switch t:
+        case (0, _):
+            pass
+        case (2, _):
+        case (3, _):
+            pass
+        case (n, Circle(r)):
+            pass
+        default:
+            pass
+
+    return 0

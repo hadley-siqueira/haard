@@ -116,6 +116,79 @@ namespace haard {
             // module level, where there is no statement to build before
             void refuse(u32 node, const std::string& what);
 
+            // Record 0067: 'let (a, (b, _)) = t' is a 'let' per name, each
+            // given its element -- 't[0]', 't[1][0]' -- and so each a copy,
+            // record 0062, unless the type written for it says 'T&'. What is
+            // not a name is bound to one first, so it is evaluated once. The
+            // statement is replaced in its block by what it wrote, and those
+            // are walked like any other
+            bool is_destructuring(u32 statement);
+
+            // and '(a, b) = (b, a)': the right side whole into a name, then
+            // one assignment per place, so a swap swaps. A name that is not
+            // in view is declared by its assignment, record 0027, which runs
+            // after this pass and sees only 'a = __d0[0]'
+            bool is_tuple_assignment(u32 statement);
+
+            // and 'for (k, (v, _)) in c': the loop walks a name of its own,
+            // and the body starts with a 'let' per name out of it -- each
+            // marked to bind a REFERENCE, which is what a loop variable is
+            // (record 0040) and what Hadley asked these to be
+            void lower_pattern_loop(u32 for_each);
+
+            // Record 0067: a 'switch' whose cases are tuples. It is a chain
+            // of 'if's on a flag, so a case that does not match -- one whose
+            // variant test fails deep inside -- leaves the next one to try,
+            // and one that matches stops the rest:
+            //
+            //     let __m0 = false
+            //     if not __m0 and t[0] == 0:      a literal or a value
+            //         __m0 = true
+            //         let x = t[1]                a name captures, by reference
+            //         <the case's block>
+            //     if not __m0:                    'default'
+            //         ...
+            //
+            // An element written as a call, 'Some(y)', is a variant and is
+            // matched by a 'switch' of its own around the rest. A bare name is
+            // always a capture, so a variant with nothing to carry is written
+            // with its enum, 'Option.None'. Nothing matching and no 'default'
+            // runs nothing (Hadley, 2026-10-07)
+            bool is_tuple_switch(u32 statement);
+            void lower_tuple_switch(u32 node, u32 block);
+            void take_pattern_apart(u32 pattern, u32 held,
+                                    const std::vector<u32>& path,
+                                    std::vector<u32>& tests,
+                                    std::vector<u32>& captures,
+                                    std::vector<std::vector<u32>>& at,
+                                    std::vector<u32>& variants,
+                                    std::vector<std::vector<u32>>& where);
+            u32 joined(AstNodeKind kind, TokenKind token, const char* text,
+                       const std::vector<u32>& parts, u32 like);
+            void assign_apart(u32 statement, u32 block);
+            void assign_into(u32 pattern, u32 source,
+                             const std::vector<u32>& path,
+                             std::vector<u32>& written);
+            void destructure(u32 statement, u32 block);
+            // 'through' when the type written for the whole was a reference
+            // to a tuple, '(A, B)&': then each name refers to its element
+            void destructure_into(u32 pattern, u32 type, u32 source,
+                                  const std::vector<u32>& path, bool constant,
+                                  std::vector<u32>& written,
+                                  bool through = false);
+
+            // and a parameter that is a pattern, '@(x, y) : (f64, f64)' or
+            // '|(x, y)| {...}': it becomes a name of its own and the body
+            // starts with a 'let' per name out of it. With no type written --
+            // a closure typed by where it goes -- each name refers into the
+            // parameter, as in a 'for'
+            void lower_parameter_patterns(u32 function);
+            void take_parameter_apart(u32 name, u32 type,
+                                      std::vector<u32>& written);
+            u32 element_at(u32 source, const std::vector<u32>& path, u32 like);
+            u32 declaration_of(u32 name, u32 type, u32 value, bool constant,
+                               u32 like);
+
             AstNodeKind kind_of(u32 node);
             u32 first_child(u32 node);
             u32 sibling_of(u32 node);

@@ -1,0 +1,10 @@
+# record 0033: the prelude is what puts String in view of a file that never
+# wrote an import
+prelude
+    std -> std
+    import std.string
+
+root std = std
+
+root app = app
+    std -> std

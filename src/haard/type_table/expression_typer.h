@@ -47,6 +47,16 @@ namespace haard {
             // '&' takes the address of and what '++' changes
             bool is_place(u32 node);
 
+            // Record 0067: a tuple with every reference in it, at any depth,
+            // read as what it names -- what a tuple of references compares
+            // with and is assigned from
+            u32 value_shape(u32 type);
+
+            // whether the class this type names, or one above it, declares a
+            // member by this name -- asked before a call to it is written,
+            // so a pass can choose between two calls without reporting one
+            bool has_member(u32 type, const std::string& name);
+
             // whether this expression, already typed, is a value with no name
             // -- a call giving back a value, a construction -- which is BUILT
             // where it goes and never copied there (Hadley, 2026-09-30)
@@ -203,6 +213,14 @@ namespace haard {
             // literal for the emitter to read
             u32 constructed_by_one(u32 node, u32 wanted, u32 own);
             u32 tuple(u32 scope, u32 node, u32 expected);
+
+            // 't[0]', the field of a tuple: the position is a written number
+            // and within the tuple, or it is reported (record 0067)
+            u32 tuple_element(u32 node, u32 tuple);
+
+            // whether a tuple holding this could be compared with '==', and
+            // the element that says no
+            bool compares(u32 type, std::string& why);
 
             // the element a container type holds, and INVALID_TYPE for a type
             // that holds none

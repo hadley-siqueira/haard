@@ -1,6 +1,6 @@
 # Where the compiler is
 
-Written 2026-09-02, last brought up to date 2026-09-30. The agenda of
+Written 2026-09-02, last brought up to date 2026-10-07. The agenda of
 *decisions* is `design/README.md`; this is the state of the *code*, and what to
 do next.
 
@@ -29,11 +29,12 @@ source. Hadley has said an IR **will** be needed for a processor he is
 building; 0025 names the signals that will say when.
 
 What it refuses, it says so about, rather than writing C++ that means something
-else: a hash literal, a tuple, a list, a range, and `T[]` with no
+else: a hash literal, a list, a range, and `T[]` with no
 length **inside a type**. Three have left that list: a **template string** on
 2026-09-06, taken apart before the emitter is reached, a **symbol** on
 2026-09-08, which is now a builtin and an entry in a table the emitter builds
-(record 0041), and a **closure** on 2026-09-22 (record 0058). `new T[n]` is not that case and works — record 0028.
+(record 0041), a **closure** on 2026-09-22 (record 0058), and a **tuple** on
+2026-10-07 (record 0067). `new T[n]` is not that case and works — record 0028.
 
 **A whole program, the way a user builds one**, is
 `tests/programs/cases/<name>/Makefile`: `hdc --roots table entry.hd --emit-cpp`
@@ -75,6 +76,24 @@ raised, answered the same day as record 0062: `let x = xs[i]` bound a
 **reference**, and now it is a **copy**, as C++'s `auto` is -- a reference is
 `let x : T& = ...`, and a `for x in` variable stays one. See
 `bootstrap/README.md`.
+
+**A tuple is a struct the compiler writes**, since 2026-10-07 -- record 0067,
+Hadley, built in seven stages, all in. Stage 1: one C++ struct per shape, named by its
+mangling so two modules share it; `(a, b)` builds it, element by element
+through record 0018's list; `t[0]` reads a field, with the position a written
+number inside the tuple; `(i32, i32)[]` parses; `(T)` in a type is T; `(a,)`
+is refused; and a tuple holding something that owns memory is assigned element
+by element, as a class holding one is. Stage 2 too: `==` and `!=`, `${t}`,
+elements that are `T&`, an assignment between two shapes split element by
+element, and a move that moves each element. Stages 3 and 4 too:
+`let (a, (b, _)) = t` and `(a, b) = (b, a)`, taken apart by the sugar pass.
+Stage 5 too: `for (k, v) in c`, the names references, walking `c.items()` when
+`c.iterator()` gives no such tuple -- and a loop over a fixed array, which had
+copied each element since 2026-09-08, refers to it now. Stage 6 too: a
+parameter that is a pattern, `@(x, y) : (f64, f64)` and `|(x, y)| {...}`.
+And stage 7: `switch` over a tuple, a chain of `if`s on a flag with a `switch`
+of its own around a variant. The record is built; what it leaves open is
+listed at its end.
 
 **`Option<T>` is in the library**, since 2026-09-30 -- `std.option`, with
 `is_some`, `is_none`, `unwrap_or` and `map`, as methods: an enum may write

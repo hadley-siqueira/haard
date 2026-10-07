@@ -22,7 +22,7 @@ error: Thing has no member named 'iterator'
    |
 30 |     for b in t:
    |              ^
-error: a 'for ... in' binds one name, and this writes 2
+error: a 'for ... in' binds one name, and this writes 2: a tuple is taken apart with its brackets, 'for (k, v) in'
   --> main.hd:33:5
    |
 33 |     for key, value in fixed:

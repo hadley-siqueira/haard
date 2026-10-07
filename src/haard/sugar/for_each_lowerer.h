@@ -78,6 +78,10 @@ namespace haard {
             u32 lower(u32 index, u32 scope, u32 for_each, u32& written);
 
         private:
+            // record 0067: whether walking this container gives a tuple of
+            // this length, which decides whether 'items()' is walked instead
+            bool gives_a_tuple(u32 scope, u32 container, u32 type, u32 length);
+
             // the three shapes, each giving back the loop variable's binding
             u32 over_a_cursor(u32 scope, u32 for_each, u32 variable,
                               u32 container);

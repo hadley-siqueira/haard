@@ -98,6 +98,35 @@ namespace haard {
             // and not a loop that repeats
             void emit_type(u32 module, u32 declaration);
 
+            // Record 0067: a tuple is a struct per shape, named by its
+            // mangling so every module spells one shape the same way. It is
+            // written in section two, after what it holds by value
+            void emit_tuple(u32 module, u32 type);
+            void complete(u32 module, u32 type);
+            bool is_concrete(u32 module, u32 type);
+
+            // what two tuples' '==' comes to: one comparison per path down
+            // to an element that is not a tuple
+            // record 0066 through a tuple: whether one is moved by more than
+            // its copy, and how one element of '__move' is built
+            bool moves(u32 module, u32 type);
+            bool tuple_moves(u32 module, u32 type);
+            std::string moved_element(u32 module, u32 type,
+                                      const std::string& held);
+
+            void equality_of(u32 module, u32 type, const std::string& left,
+                             const std::string& right,
+                             std::vector<std::string>& paths);
+            std::string element_equality(u32 module, u32 type,
+                                         const std::string& field,
+                                         const std::string& other);
+            std::string tuple_type_name(u32 module, u32 type);
+
+            // whether a node's value is a tuple, and the position a tuple's
+            // '[n]' wrote
+            bool is_a_tuple(u32 module, u32 node);
+            u32 position_of(u32 module, u32 node);
+
             void emit_field(u32 module, u32 node);
             // 'dispatched' is true only in a class: a struct has no vtable
             // (record 0065), and C++ lets a union hold no virtual method
@@ -527,6 +556,13 @@ namespace haard {
             std::set<std::string> adapters;
             std::set<std::pair<u32, u32>> closures;
             std::set<std::pair<u32, u32>> early_enums;
+
+            // record 0067: one of each tuple shape, as (module, type) for the
+            // walk, by name for what has been declared and what written
+            std::vector<std::pair<u32, u32>> tuples;
+            std::set<std::string> tuple_names;
+            std::set<std::string> tuples_written;
+            std::set<std::string> tuples_writing;
 
             // what 'this' is written as: 'this' in a method and the captured
             // pointer inside a closure's function, which is a free function

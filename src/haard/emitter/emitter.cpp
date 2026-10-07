@@ -114,6 +114,10 @@ bool Emitter::emit(std::ostream& stream) {
     adapters.clear();
     closures.clear();
     early_enums.clear();
+    tuples.clear();
+    tuple_names.clear();
+    tuples_written.clear();
+    tuples_writing.clear();
     compound_helpers.clear();
     needs_move_tag = false;
     self = "this";
@@ -239,6 +243,27 @@ void Emitter::emit_forward_declarations() {
         }
     }
 
+    // Record 0067: every tuple any module's table holds, one struct per
+    // shape. Its name is its mangling, which spells a shape the same way in
+    // every module, so a shape two modules both use is declared once
+    for (u32 i = 0; i < compilation->get_module_count(); i++) {
+        TypeTable* types = compilation->get_module(i)->get_types();
+
+        for (u32 type = 1; type < types->get_count(); type++) {
+            if (types->get_type(type)->kind != TYPE_TUPLE
+                || !is_concrete(i, type)) {
+                continue;
+            }
+
+            std::string name = tuple_type_name(i, type);
+
+            if (tuple_names.insert(name).second) {
+                tuples.push_back(std::make_pair(i, type));
+                out << "struct " << name << ";\n";
+            }
+        }
+    }
+
     out << "\n";
 }
 
@@ -261,6 +286,291 @@ void Emitter::emit_types() {
             }
         }
     }
+
+    // the tuples no type holds, which are most of them: a field holding one
+    // has already written it, through the same walk
+    for (const std::pair<u32, u32>& one : tuples) {
+        emit_tuple(one.first, one.second);
+    }
+}
+
+// Record 0067. A tuple is a struct with one field per element, 'e0', 'e1',
+// and nothing else: C++ copies, destroys and builds it from a braced list
+// member by member, by each member's own constructor. What it holds by value
+// has to be complete first, which is emit_type's walk
+void Emitter::emit_tuple(u32 module_index, u32 type) {
+    std::string name = tuple_type_name(module_index, type);
+
+    if (tuples_written.count(name) > 0) {
+        return;
+    }
+
+    if (tuples_writing.count(name) > 0) {
+        fail("a tuple that holds itself has no size");
+        return;
+    }
+
+    tuples_writing.insert(name);
+
+    std::vector<u32> elements =
+        compilation->get_module(module_index)->get_types()->get_arguments(type);
+
+    for (u32 element : elements) {
+        complete(module_index, element);
+    }
+
+    tuples_writing.erase(name);
+    tuples_written.insert(name);
+
+    out << "struct " << name << " {\n";
+
+    for (u32 i = 0; i < elements.size(); i++) {
+        out << "    "
+            << declare(module_index, elements[i], "e" + std::to_string(i))
+            << ";\n";
+    }
+
+    // record 0031's assignment, written the way a class holding such a field
+    // gets it: each element by its own rule. The second one takes what has
+    // no name, '(a, b)' on the right of an '=', and reads it as a place
+    if (declares_copy(module_index, type)) {
+        out << "\n    void m_assign(" << name << "& other) {\n"
+            << "        if (this == &other) {\n            return;\n"
+            << "        }\n\n";
+
+        for (u32 i = 0; i < elements.size(); i++) {
+            std::string field = "e" + std::to_string(i);
+
+            if (declares_copy(module_index, elements[i])) {
+                out << "        " << field << ".m_assign(other." << field
+                    << ");\n";
+            } else {
+                out << "        " << field << " = other." << field << ";\n";
+            }
+        }
+
+        out << "    }\n\n"
+            << "    void m_assign(" << name << "&& other) {\n"
+            << "        m_assign(other);\n    }\n";
+    }
+
+    // Record 0066 element by element: a tuple holding something that has a
+    // move 'init' is moved by moving that, and copying the rest. A function
+    // and not a constructor, because a constructor would make the struct no
+    // longer an aggregate and every '{a, b}' above would stop building one
+    if (tuple_moves(module_index, type)) {
+        out << "\n    static " << name << " __move(" << name << "& o) {\n"
+            << "        return " << name << "{";
+
+        for (u32 i = 0; i < elements.size(); i++) {
+            out << (i > 0 ? ", " : "")
+                << moved_element(module_index, elements[i],
+                                 "o.e" + std::to_string(i));
+        }
+
+        out << "};\n    }\n\n"
+            << "    void m_move_assign(" << name << "& o) {\n";
+
+        for (u32 i = 0; i < elements.size(); i++) {
+            std::string field = "e" + std::to_string(i);
+
+            // a class's takes the 'T&&' its move 'init' does, and a tuple's
+            // takes the place
+            if (moves(module_index, elements[i])
+                && compilation->get_module(module_index)->get_types()
+                           ->get_type(elements[i])->kind == TYPE_TUPLE) {
+                out << "        " << field << ".m_move_assign(o." << field
+                    << ");\n";
+            } else if (moves(module_index, elements[i])) {
+                std::string kind = declare(module_index, elements[i], "");
+
+                out << "        " << field << ".m_move_assign(static_cast<"
+                    << kind << "&&>(o." << field << "));\n";
+            } else if (declares_copy(module_index, elements[i])) {
+                out << "        " << field << ".m_assign(o." << field
+                    << ");\n";
+            } else {
+                out << "        " << field << " = o." << field << ";\n";
+            }
+        }
+
+        out << "    }\n";
+    }
+
+    out << "};\n\n";
+}
+
+// what a value of this type needs written before it can be held: a class or
+// an enum, a tuple, or an array of either
+void Emitter::complete(u32 module_index, u32 type) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    Type* entry = types->get_type(type);
+
+    switch ((TypeKind) entry->kind) {
+    case TYPE_NAMED: {
+        Module* owner = compilation->get_module(entry->module);
+
+        emit_type(entry->module,
+                  owner->get_symbols()->get_candidate(entry->subject)->ast_node);
+        return;
+    }
+
+    case TYPE_TUPLE:
+        emit_tuple(module_index, type);
+        return;
+
+    case TYPE_ARRAY:
+        complete(module_index, types->get_argument(entry->first_argument));
+        return;
+
+    default:
+        return;
+    }
+}
+
+// whether a type names nothing a generic left unbound. A generic's own body
+// is typed with its parameters, and a tuple of those is in the table too
+// The comparisons two tuples come to, one per path down to something that is
+// not a tuple: 'l.e0 == r.e0', 'l.e1.e0 == r.e1.e0'. The typer refused every
+// '==' that would reach an element with no comparison, so each has one. A
+// class is compared by the 'operator==' it wrote, which record 0034 emits as
+// a method, with the const_cast a tagged union's '__equals' writes for the
+// same reason: Haard has no 'const' (record 0029)
+void Emitter::equality_of(u32 module_index, u32 type, const std::string& left,
+                          const std::string& right,
+                          std::vector<std::string>& paths) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    std::vector<u32> elements = types->get_arguments(types->value_of(type));
+
+    for (u32 i = 0; i < elements.size(); i++) {
+        std::string field = "e" + std::to_string(i);
+        u32 value = types->value_of(elements[i]);
+
+        if (types->get_type(value)->kind == TYPE_TUPLE) {
+            equality_of(module_index, value, left + field + ".",
+                        right + field + ".", paths);
+            continue;
+        }
+
+        paths.push_back(
+            element_equality(module_index, value, left + field, right + field));
+    }
+}
+
+std::string Emitter::element_equality(u32 module_index, u32 type,
+                                      const std::string& field,
+                                      const std::string& other) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    u32 value = types->value_of(type);
+    Type* entry = types->get_type(value);
+
+    switch ((TypeKind) entry->kind) {
+    case TYPE_NAMED: {
+        Module* owner = compilation->get_module(entry->module);
+        u32 declaration =
+            owner->get_symbols()->get_candidate(entry->subject)->ast_node;
+
+        if (kind_of(entry->module, declaration) == AST_ENUM) {
+            std::string why;
+
+            if (!carries_a_payload(entry->module, declaration)) {
+                return field + " == " + other;
+            }
+
+            return union_compares(entry->module, declaration, why)
+                       ? field + ".__equals(" + other + ")"
+                       : "";
+        }
+
+        u32 compare = member_named(entry->module, declaration, "operator==");
+
+        if (compare == 0) {
+            return "";
+        }
+
+        std::string kind = declare(module_index, value, "");
+
+        return "const_cast<" + kind + "&>(" + field + ")."
+             + name_of(entry->module, compare) + "(const_cast<" + kind
+             + "&>(" + other + "))";
+    }
+
+    default:
+        break;
+    }
+
+    return field + " == " + other;
+}
+
+// whether a value of this type is moved by something other than its copy: a
+// class with a move 'init', or a tuple holding one by value
+bool Emitter::moves(u32 module_index, u32 type) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    Type* entry = types->get_type(type);
+
+    if (entry->kind == TYPE_TUPLE) {
+        return tuple_moves(module_index, type);
+    }
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    u32 declaration = compilation->get_module(entry->module)->get_symbols()
+                          ->get_candidate(entry->subject)->ast_node;
+
+    return kind_of(entry->module, declaration) != AST_ENUM
+        && move_init_of(entry->module, declaration) != 0;
+}
+
+bool Emitter::tuple_moves(u32 module_index, u32 type) {
+    for (u32 one : compilation->get_module(module_index)->get_types()
+                       ->get_arguments(type)) {
+        if (moves(module_index, one)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// one element of '__move', read out of 'held'
+std::string Emitter::moved_element(u32 module_index, u32 type,
+                                   const std::string& held) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    Type* entry = types->get_type(type);
+
+    if (!moves(module_index, type)) {
+        return held;
+    }
+
+    std::string name = declare(module_index, type, "");
+
+    if (entry->kind == TYPE_TUPLE) {
+        return name + "::__move(" + held + ")";
+    }
+
+    return name + "(__haard_move(), static_cast<" + name + "&&>(" + held + "))";
+}
+
+bool Emitter::is_concrete(u32 module_index, u32 type) {
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+
+    if (types->get_type(type)->kind == TYPE_GENERIC) {
+        return false;
+    }
+
+    for (u32 one : types->get_arguments(type)) {
+        if (!is_concrete(module_index, one)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+std::string Emitter::tuple_type_name(u32 module_index, u32 type) {
+    return "h_tup_" + mangle_type(module_index, type);
 }
 
 // An enum is a C++ 'enum class' over an i32: scoped, so a variant's name
@@ -960,6 +1270,8 @@ void Emitter::emit_type(u32 module_index, u32 declaration) {
                 owner->get_symbols()->get_candidate(entry->subject)->ast_node;
 
             emit_type(entry->module, held);
+        } else if (entry->kind == TYPE_TUPLE) {
+            emit_tuple(module_index, type);
         }
     }
 
@@ -1192,6 +1504,22 @@ bool Emitter::emit_moved(u32 module_index, u32 holder, u32 wanted, u32 node) {
     }
 
     Type* entry = there->get_type(wanted);
+
+    // record 0067: a tuple is moved element by element, by its '__move',
+    // which takes the place the '&&' was written in front of
+    if (entry->kind == TYPE_TUPLE) {
+        if (!tuple_moves(holder, wanted)) {
+            return false;
+        }
+
+        out << declare(holder, wanted, "") << "::__move(";
+        emit_expression(module_index, kind_of(module_index, node) == AST_MOVE
+                                          ? child_of(module_index, node, 0)
+                                          : node);
+        out << ")";
+
+        return true;
+    }
 
     if (entry->kind != TYPE_NAMED) {
         return false;
@@ -2337,6 +2665,47 @@ u32 Emitter::name_of_pattern(u32 module_index, u32 pattern) {
 // else falls through to the operator it was written with
 bool Emitter::emit_union_comparison(u32 module_index, u32 node, bool negated) {
     u32 left = child_of(module_index, node, 0);
+
+    // Record 0067: two tuples compare element by element, down to what is
+    // not a tuple. Each side is read once, by the lambda's parameters, and
+    // the two may be different shapes of the same values -- a tuple of
+    // references and a tuple of what they name
+    if (is_a_tuple(module_index, left)) {
+        u32 right = child_of(module_index, node, 1);
+        std::vector<std::string> paths;
+
+        equality_of(module_index, type_at(module_index, left), "l.", "r.",
+                    paths);
+
+        out << (negated ? "!" : "") << "[&](const "
+            << declare(module_index,
+                       compilation->get_module(module_index)->get_types()
+                           ->value_of(type_at(module_index, left)), "")
+            << "& l, const "
+            << declare(module_index,
+                       compilation->get_module(module_index)->get_types()
+                           ->value_of(type_at(module_index, right)), "")
+            << "& r) {\n";
+        indentation++;
+        out << std::string(indentation * 4 + 4, ' ') << "return ";
+
+        for (u32 i = 0; i < paths.size(); i++) {
+            out << (i > 0 ? "\n" + std::string(indentation * 4 + 8, ' ')
+                              + "&& "
+                          : "")
+                << paths[i];
+        }
+
+        out << ";\n" << std::string(indentation * 4, ' ') << "}(";
+        indentation--;
+        emit_expression(module_index, left);
+        out << ", ";
+        emit_expression(module_index, right);
+        out << ")";
+
+        return true;
+    }
+
     u32 holder = module_index;
     u32 owner = enum_of_type(module_index, left, holder);
 
@@ -2785,6 +3154,13 @@ void Emitter::emit_expression(u32 module, u32 node) {
             return;
         }
 
+        // record 0067: a tuple's '[n]' is its field, and n is written
+        if (is_a_tuple(module, child_of(module, node, 0))) {
+            emit_operand(module, child_of(module, node, 0), 2);
+            out << ".e" << position_of(module, child_of(module, node, 1));
+            return;
+        }
+
         emit_operand(module, child_of(module, node, 0), 2);
         out << "[";
         emit_expression(module, child_of(module, node, 1));
@@ -2990,6 +3366,35 @@ void Emitter::emit_expression(u32 module, u32 node) {
         return;
     }
 
+    // Record 0067: the struct of its shape, built from a braced list. Each
+    // element is built into what the shape holds, the way an argument is
+    // built into its parameter
+    case AST_TUPLE: {
+        u32 type = type_at(module, node);
+        std::vector<u32> elements =
+            compilation->get_module(module)->get_types()->get_arguments(type);
+        u32 at = 0;
+
+        out << tuple_type_name(module, type) << "{";
+
+        for (u32 child = child_of(module, node, 0); child != 0;
+             child = compilation->get_module(module)
+                         ->get_ast()
+                         ->get_node(child)
+                         ->get_sibling(),
+                 at++) {
+            out << (at > 0 ? ", " : "");
+
+            if (at >= elements.size()
+                || !emit_conversion(module, module, elements[at], child)) {
+                emit_expression(module, child);
+            }
+        }
+
+        out << "}";
+        return;
+    }
+
     case AST_DELETE:
         out << "delete ";
         emit_operand(module, child_of(module, node, 0), 3);
@@ -3030,7 +3435,7 @@ int Emitter::precedence_of(u32 module, u32 node) {
     case AST_FALSE: case AST_NULL_LITERAL: case AST_THIS: case AST_IDENTIFIER:
     case AST_SCOPE: case AST_GENERIC_NAME: case AST_PARENTHESIS: case AST_LIST:
     case AST_ARRAY: case AST_HASH: case AST_INCLUSIVE_RANGE:
-    case AST_EXCLUSIVE_RANGE: case AST_CLOSURE:
+    case AST_EXCLUSIVE_RANGE: case AST_CLOSURE: case AST_TUPLE:
         return 1;
 
     case AST_CALL: case AST_INDEX: case AST_DOT: case AST_ARROW:
@@ -3124,6 +3529,12 @@ bool Emitter::emitted_as_a_call(u32 module_index, u32 node) {
                              type_at(module_index, child_of(module_index, node,
                                                             0)));
     }
+
+    if ((kind == AST_EQUAL || kind == AST_NOT_EQUAL)
+        && is_a_tuple(module_index, child_of(module_index, node, 0))) {
+        return kind == AST_EQUAL;
+    }
+
 
     if (kind == AST_EQUAL || kind == AST_NOT_EQUAL) {
         u32 holder = module_index;
@@ -4400,6 +4811,18 @@ std::string Emitter::mangle_type(u32 module_index, u32 type) {
         return "a" + std::to_string(entry->subject)
              + mangle_type(module_index, inside);
 
+    // record 0067: the same shape, which is what makes a tuple's name its
+    // type in every module
+    case TYPE_TUPLE: {
+        std::string spelled = "t" + std::to_string(entry->argument_count);
+
+        for (u32 one : types->get_arguments(type)) {
+            spelled += mangle_type(module_index, one);
+        }
+
+        return spelled;
+    }
+
     // record 0058: how many it holds, then each of them, the return last --
     // so no two function types can spell the same
     case TYPE_FUNCTION: {
@@ -5188,7 +5611,20 @@ bool Emitter::emit_move_assignment(u32 module_index, u32 node) {
         return false;
     }
 
-    Type* entry = types->get_type(types->value_of(type_at(module_index, left)));
+    u32 target = types->value_of(type_at(module_index, left));
+    Type* entry = types->get_type(target);
+
+    // a tuple's 'm_move_assign' takes the place, as its '__move' does
+    if (entry->kind == TYPE_TUPLE && tuple_moves(module_index, target)) {
+        emit_operand(module_index, left, 2);
+        out << ".m_move_assign(";
+        emit_expression(module_index, kind_of(module_index, right) == AST_MOVE
+                                          ? child_of(module_index, right, 0)
+                                          : right);
+        out << ")";
+
+        return true;
+    }
 
     if (entry->kind != TYPE_NAMED) {
         return false;
@@ -5220,6 +5656,20 @@ bool Emitter::declares_copy(u32 module_index, u32 type) {
     // Logger, sorting an 'Array<Log>' in place
     TypeTable* types = compilation->get_module(module_index)->get_types();
     Type* entry = types->get_type(types->value_of(type));
+
+    // Record 0067: a tuple is assigned element by element when one of them
+    // asks for it -- or when one is a reference, which C++'s implicit '='
+    // will not assign at all and record 0035 assigns THROUGH
+    if (entry->kind == TYPE_TUPLE) {
+        for (u32 one : types->get_arguments(types->value_of(type))) {
+            if (types->get_type(one)->kind == TYPE_REFERENCE
+                || declares_copy(module_index, one)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     if (entry->kind != TYPE_NAMED) {
         return false;
@@ -5454,6 +5904,9 @@ std::string Emitter::declare(u32 module_index, u32 type,
     case TYPE_FUNCTION:
         return function_type_name(module_index, type) + tail;
 
+    case TYPE_TUPLE:
+        return tuple_type_name(module_index, type) + tail;
+
     case TYPE_ARRAY:
         if (entry->subject == NO_LENGTH) {
             fail("an array with no length cannot be emitted yet");
@@ -5541,4 +5994,30 @@ std::string Emitter::text_of(u32 module_index, u32 node) {
 
 void Emitter::line(const std::string& text) {
     out << std::string(indentation * 4, ' ') << text << '\n';
+}
+
+bool Emitter::is_a_tuple(u32 module_index, u32 node) {
+    u32 type = type_at(module_index, node);
+
+    if (type == INVALID_TYPE) {
+        return false;
+    }
+
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+
+    return types->get_type(types->value_of(type))->kind == TYPE_TUPLE;
+}
+
+// the number a tuple's subscript writes, which the typer has already said is
+// a literal inside the tuple
+u32 Emitter::position_of(u32 module_index, u32 node) {
+    u32 value = 0;
+
+    for (char digit : text_of(module_index, node)) {
+        if (digit >= '0' && digit <= '9') {
+            value = value * 10 + (u32) (digit - '0');
+        }
+    }
+
+    return value;
 }

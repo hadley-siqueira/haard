@@ -1,0 +1,103 @@
+# Record 0067: a tuple is a struct the compiler writes, one per shape, and
+# 't[0]' is its first field. The exit status adds up what was read back, so
+# swapping two fields, reading the wrong one, or a shape two modules spell
+# differently each move it.
+import lib.points
+
+class Holder:
+    pair : (i32, i64)
+
+    def init : void
+        @a : i32
+        @b : i64
+
+        pair = (a, b)
+
+# owns what it points at, so a tuple holding one is assigned element by
+# element: C++'s own '=' would share the pointer, and the two would be one
+class Box:
+    value : i32*
+
+    def init : void
+        @v : i32
+
+        value = new i32
+        *value = v
+
+    def init : void
+        @other : Box&
+
+        value = new i32
+        *value = *other.value
+
+    def destroy : void
+        delete value
+
+# built from a written string, by the 'init' the compiler calls (record 0037):
+# an element is built into what the shape holds, as an argument is
+class Name:
+    length : i32
+
+    def init : void
+        @text : char*
+
+        length = 0
+
+        while text[length] != '\0':
+            length += 1
+
+def min_max : (i32, i32)
+    @a : i32
+    @b : i32
+
+    if a < b:
+        return (a, b)
+
+    return (b, a)
+
+def twice<T> : (T, T)
+    @a : T
+
+    return (a, a)
+
+def nested : (i32, (bool, i32))
+    return (1, (true, 20))
+
+def main : i32
+    let t = min_max(9, 4)
+    let s = swapped((1, 2))
+    let h = Holder(3, 40)
+    let n = nested()
+    let d = twice(5)
+    let total = 0
+
+    # 4 - 9 = -5, then 2 - 1 = 1: the order of the fields is read
+    total += t[0] - t[1]
+    total += s[0] - s[1]
+
+    if n[1][0]:
+        total += n[1][1]
+
+    total += h.pair[0] + (h.pair[1] as i32)
+    total += d[0] * d[1]
+
+    t[0] = 100
+    total += t[0]
+
+    # assigned, then the source changed: 2 when the Box was copied, 50 when
+    # the two share one pointer
+    let a = (Box(1), 1)
+    let b = (Box(2), 2)
+
+    a = b
+    *b[0].value = 50
+    total += *a[0].value
+
+    # a char* value, not a literal: only the element's own conversion builds
+    # a Name out of it, since a literal is made a construction by the typer
+    let text : char* = "four"
+    let named : (Name, i32) = (text, 1)
+    total += named[0].length
+
+    # -5 + 1 + 20 + 43 + 25 + 100 + 2 + 4
+    return total

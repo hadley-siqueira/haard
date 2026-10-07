@@ -1054,14 +1054,17 @@ u32 Parser::parse_conditional(u32 node, u32 header_indentation) {
 // The type is not optional; the value is, and it is what the caller gets when
 // it leaves the argument out. The reference had neither.
 //
-//   param := '@' identifier ':' type ('=' expression)?
+// Record 0067: the name may be a pattern, '@(x, y) : (f64, f64)', which the
+// sugar pass takes apart at the top of the body.
+//
+//   param := '@' (identifier | pattern) ':' type ('=' expression)?
 u32 Parser::parse_param() {
     u32 token = current_token;
 
     begin_statement();
     expect(TK_AT);
 
-    u32 name = parse_binding_name();
+    u32 name = parse_binding_target();
     u32 type = parse_param_type();
     u32 value = parse_binding_expression();
 
@@ -1111,20 +1114,33 @@ u32 Parser::parse_binding_target() {
         return parse_binding_name();
     }
 
+    return builder.make_binding_name(parse_binding_pattern());
+}
+
+// Record 0067: a tuple taken apart may take a tuple inside it apart too, so a
+// pattern is a name or a bracketed list of patterns. '_' is a name here and
+// the sugar pass is what makes it bind nothing
+//
+//   pattern := identifier | '(' pattern (',' pattern)* ')'
+u32 Parser::parse_binding_pattern() {
+    if (!lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
+        return parse_identifier();
+    }
+
     u32 token = current_token;
 
     expect_on_same_line(TK_LEFT_PARENTHESIS);
 
     u32 tuple = builder.make_tuple(token);
-    u32 last = builder.add_child(tuple, 0, parse_identifier());
+    u32 last = builder.add_child(tuple, 0, parse_binding_pattern());
 
     while (match_on_same_line(TK_COMMA)) {
-        last = builder.add_child(tuple, last, parse_identifier());
+        last = builder.add_child(tuple, last, parse_binding_pattern());
     }
 
     expect_on_same_line(TK_RIGHT_PARENTHESIS);
 
-    return builder.make_binding_name(tuple);
+    return tuple;
 }
 
 //   binding_name := identifier
@@ -1343,12 +1359,12 @@ u32 Parser::parse_function_type() {
     return node;
 }
 
-// '(T)' is a tuple of one element: unlike an expression, where '(a)' groups and
-// only '(a,)' is a tuple, the brackets in a type always build one. Note the
-// postfix below does not reach a tuple, which is where the reference left it:
-// '(A, B)*' does not parse.
+// '(T)' is a node of one element here, and the type builder reads it as the
+// T it holds: record 0067 has no tuple of one, so the brackets group. The
+// postfix reaches a tuple since record 0067 too -- '(i32, i32)[]' is an array
+// of them, and '(A, B)&' a reference to one.
 //
-//   tuple_type := '(' type (',' type)* ')' | primary_type
+//   tuple_type := '(' type (',' type)* ')' postfix* | primary_type
 u32 Parser::parse_tuple_type() {
     if (!lookahead_on_same_line(TK_LEFT_PARENTHESIS)) {
         return parse_primary_type();
@@ -1367,7 +1383,7 @@ u32 Parser::parse_tuple_type() {
 
     expect_on_same_line(TK_RIGHT_PARENTHESIS);
 
-    return node;
+    return parse_type_postfix(node);
 }
 
 //   primary_type := (named_type | '[' type ']' | '{' type ':' type '}') postfix*
@@ -2454,9 +2470,11 @@ u32 Parser::parse_closure() {
     return node;
 }
 
-//   closure_parameter := identifier (':' type)?
+// and a closure's too, '|(x, y)| {...}' (record 0067)
+//
+//   closure_parameter := (identifier | pattern) (':' type)?
 u32 Parser::parse_closure_parameter() {
-    u32 name = parse_binding_name();
+    u32 name = parse_binding_target();
     u32 type = parse_binding_type();
 
     return builder.make_closure_parameter(name, type);

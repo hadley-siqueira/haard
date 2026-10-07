@@ -1,0 +1,75 @@
+# Record 0067: a switch over a tuple. A literal or a value is compared, '_'
+# matches anything, a name captures BY REFERENCE, a call is a variant matched
+# with what it carries, cases with no block share the next one's, and a value
+# no case matches -- with no 'default' -- runs nothing (Hadley, 2026-10-07).
+# The exit status adds up one bit per thing that held.
+
+enum Shape:
+    Dot
+    Circle : i32
+    Box : (i32, i32)
+
+def classify : i32
+    @t : (i32, Shape)
+
+    switch t:
+        case (0, _):
+            return 1
+        case (1, Circle(r)):
+            return 10 + r
+        case (1, Box(w, h)):
+            return 100 + w * h
+        case (2, _):
+        case (3, _):
+            return 7
+        case (n, Shape.Dot):
+            return 1000 + n
+
+    return -1
+
+def main : i32
+    let result = 0
+
+    # 1: a literal and '_'
+    if classify((0, Shape.Dot)) == 1:
+        result += 1
+
+    # 2: a variant with its payload, after a case whose variant did not match
+    if classify((1, Shape.Circle(5))) == 15 and classify((1, Shape.Box(2, 3))) == 106:
+        result += 2
+
+    # 4: two cases that share a block
+    if classify((2, Shape.Dot)) == 7 and classify((3, Shape.Circle(1))) == 7:
+        result += 4
+
+    # 8: a capture, and a variant written with its enum
+    if classify((9, Shape.Dot)) == 1009:
+        result += 8
+
+    # 16: nothing matches and there is no default: the switch runs nothing
+    if classify((9, Shape.Circle(1))) == -1:
+        result += 16
+
+    # 32: a capture is a reference into what is switched over
+    let pair = (1, 2)
+
+    switch pair:
+        case (a, _):
+            a = 50
+
+    if pair[0] == 50:
+        result += 32
+
+    # 64: a default runs when nothing else did, and only then
+    let seen = 0
+
+    switch (4, 4):
+        case (4, 4):
+            seen += 1
+        default:
+            seen += 10
+
+    if seen == 1:
+        result += 64
+
+    return result

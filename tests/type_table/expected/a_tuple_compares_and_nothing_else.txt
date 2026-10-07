@@ -1,0 +1,43 @@
+<unnamed>:
+    Plain  Plain
+    Equal  Equal
+    main  i32
+    n  i32
+    n  i32
+    operator==  Equal& -> bool
+    other  Equal&
+    t  (i32, f64)
+    same  bool
+    different  bool
+    nested  bool
+    x  i32
+    y  i32
+    refs  (i32&, i32&)
+    through  bool
+    classes  bool
+    sum  <none>
+    less  <none>
+    shapes  <none>
+    plain  <none>
+  31 types interned
+diagnostics:
+error: (i32, f64) is a tuple, and a tuple has only '==' and '!='
+  --> main.hd:29:17
+   |
+29 |     let sum = t + t
+   |                 ^
+error: (i32, f64) is a tuple, and a tuple has only '==' and '!='
+  --> main.hd:30:18
+   |
+30 |     let less = t < t
+   |                  ^
+error: cannot apply this to (i32, f64) and (i32, i32, i32)
+  --> main.hd:31:20
+   |
+31 |     let shapes = t == (1, 2, 3)
+   |                    ^^
+error: Plain has no '==', so a tuple holding one cannot be compared
+  --> main.hd:32:30
+   |
+32 |     let plain = (Plain(), 1) == (Plain(), 1)
+   |                              ^^

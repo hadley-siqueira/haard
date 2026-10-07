@@ -486,7 +486,20 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
         // and it is the one binding with nothing written that is a
         // REFERENCE to what it was given: record 0040 makes the loop
         // variable the element itself, so writing to it writes the container
-        return written_or_inferred(binding, scope, expected, true);
+        u32 type = written_or_inferred(binding, scope, expected, true);
+
+        // A cursor's 'next' gives a 'T&' and keeping it is enough. A fixed
+        // array's element is 'xs[__i0]', a place whose type is the element's
+        // own -- so keeping what it was given kept a COPY, and 'x += 10' in a
+        // loop over an 'i32[2]' changed nothing, in silence, from 2026-09-08
+        // until record 0067's 'for (a, b)' asked the same question
+        if (type != INVALID_TYPE
+            && module->get_types()->get_type(type)->kind != TYPE_REFERENCE
+            && typer.is_place(query.get_binding_expression(binding))) {
+            type = module->get_types()->reference(type);
+        }
+
+        return type;
     }
 
     // What a variant of an enum IS, and it is two things.
@@ -562,7 +575,25 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
                              query.get_written_type(found->ast_node));
     }
 
-    return written_or_inferred(found->ast_node, scope, found->type);
+    // record 0067: a name a 'for (k, v)' binds is a reference to its element,
+    // as a loop variable is -- marked by the sugar pass on the name's token
+    u32 name = name_node_of(found->ast_node);
+    bool refers = name != found->ast_node
+               && module->binds_by_reference(
+                      module->get_ast()->get_node(name)->get_token());
+    u32 type = written_or_inferred(found->ast_node, scope, found->type, refers);
+
+    // and what it is given is an element -- '__e0[1]', a field of the tuple
+    // the loop variable refers to -- so it refers to that place, which is
+    // what makes 'v += 1' write the container
+    if (refers && type != INVALID_TYPE
+        && module->get_types()->get_type(type)->kind != TYPE_REFERENCE) {
+        if (typer.is_place(query.get_binding_expression(found->ast_node))) {
+            type = module->get_types()->reference(type);
+        }
+    }
+
+    return type;
 }
 
 // What a variant carries, flattened: a tuple payload is its elements and

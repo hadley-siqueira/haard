@@ -1,0 +1,25 @@
+read back: hello 5: ok
+held by a class: tuple: ok
+assigned whole: hello: ok
+an element written: 9: ok
+a class assigned: tuple: ok
+walked: 4: ok
+nested: deep: ok
+written: (1, (deep, true)): ok
+a call written: (many, 3): ok
+called once: (1, 10): ok
+compared: ok
+converted: (built, 2): ok
+a copy: first third: ok
+a reference: changed: ok
+from a call: many 5: ok
+swapped: right left: ok
+declared: many 4: ok
+a Hash walked apart: 72: ok
+an Array walked apart: (x1, 1) (y2, 2): ok
+each: (a1, 1) (b2, 2): ok
+map: 3 4: ok
+a Hash's each: 41: ok
+switched: many: 3: ok
+--- files:
+--- exit: 0

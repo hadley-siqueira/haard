@@ -3,6 +3,8 @@
 
 #include <set>
 #include <haard/type_table/expression_typer.h>
+#include <haard/ast/ast_builder.h>
+#include <haard/symbol_table/symbol_collector.h>
 #include <map>
 
 namespace haard {
@@ -96,6 +98,32 @@ namespace haard {
             // here, so this is the one check that reads the block and not the
             // node
             void check_expression(u32 node, u32 scope);
+
+            // Record 0067: '${t}' on a tuple. A template string is a String
+            // and an 'append' per piece (record 0032), and no 'append' takes
+            // a tuple -- so a piece that is one becomes the appends of what
+            // it writes, '(', each element, ', ', ')', with the tuple bound
+            // to a name once. A nested tuple is one of those elements and
+            // comes back through here. True when the statement was taken
+            // apart, or when its piece was reported and the call is not
+            // worth typing again
+            bool expand_tuple_append(u32 node, u32 scope);
+            u32 make_append(u32 holder, u32 argument, u32 like);
+            u32 make_text(const std::string& text, u32 like);
+
+            // Record 0067: an assignment between two tuples of different
+            // shapes -- '(5, 6)' into an '(i32&, i32&)', a '(char*, i32)'
+            // into a '(String, i32)' -- is one assignment per element, each
+            // by its own rule. The right side is bound to a name first, so it
+            // is read once and whole before anything is written
+            void split_tuple_assignment(u32 node, u32 scope,
+                                        const std::vector<u32>& targets,
+                                        u32 value, u32 given);
+
+            // 'let <name> = <value>' with the type it was given, declared in
+            // this scope
+            u32 make_local(u32 scope, u32 name, u32 value, u32 type);
+            u32 make_position(u32 of, u32 position, u32 like);
             // a switch is a pattern match: the subject says what may be
             // written, and every case names a variant of it
             void check_switch(u32 node, u32 scope);
@@ -196,6 +224,12 @@ namespace haard {
 
             // record 0027: the assignments that declare the name they write
             std::set<u32> declaring;
+
+            // what record 0067's expansion builds with, and the number that
+            // keeps the names it writes apart across the compilation
+            AstBuilder builder;
+            SymbolCollector symbols;
+            u32 counter;
     };
 }
 

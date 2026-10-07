@@ -455,6 +455,10 @@ u32 ExpressionTyper::subscript(u32 scope, u32 node) {
     Type* entry = types->get_type(left);
     u32 element = element_of(left);
 
+    if (entry->kind == TYPE_TUPLE) {
+        return tuple_element(node, left);
+    }
+
     if (element == INVALID_TYPE) {
         // record 0034: a class says what '[]' means on it by declaring one.
         // Asked only once the builtin shapes have had their turn, so nothing
@@ -1310,8 +1314,57 @@ u32 ExpressionTyper::constructed_from(u32 scope, u32 node, u32 wanted, u32 own,
     return wanted;
 }
 
+// Record 0067: 't[0]' is the first field of the struct a tuple is, read
+// directly -- never a call to an 'operator[]'. So which field has to be known
+// here, and a position is a number written in the source: 't[i]' would make
+// the element's type depend on a value nobody has yet
+u32 ExpressionTyper::tuple_element(u32 node, u32 tuple) {
+    std::vector<u32> elements = module->get_types()->get_arguments(tuple);
+    u32 position = second_child(node);
+
+    if (kind_of(position) != AST_INTEGER_LITERAL) {
+        report(position, "a tuple is indexed by a number written in the "
+                         "source, since each element has a type of its own");
+        return INVALID_TYPE;
+    }
+
+    // the literal is typed like any other position, so the emitter finds it
+    // as it finds an array's
+    module->get_resolutions()->set_type(
+        position, module->get_types()->builtin(BUILTIN_I32));
+
+    std::string text = std::string(module->get_token_value(
+        module->get_ast()->get_node(position)->get_token()));
+    u32 value = 0;
+
+    for (char digit : text) {
+        if (digit >= '0' && digit <= '9') {
+            value = value * 10 + (u32) (digit - '0');
+        }
+    }
+
+    if (value >= elements.size()) {
+        report(position, name_of(tuple) + " has "
+                             + std::to_string(elements.size())
+                             + " elements, so " + text + " is past the last");
+        return INVALID_TYPE;
+    }
+
+    return elements[value];
+}
+
 u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {
     TypeTable* types = module->get_types();
+
+    // Record 0067: no tuple of one. '(a)' is a group already; '(a,)' still
+    // parses, so that it can be told it is not a tuple
+    if (first_child(node) != 0
+        && module->get_ast()->get_node(first_child(node))->get_sibling() == 0) {
+        report(node, "a tuple holds at least two elements; '(a)' without the "
+                     "comma is the value in brackets");
+        return INVALID_TYPE;
+    }
+
     std::vector<u32> wanted;
     std::vector<u32> elements;
     u32 at = 0;
@@ -1319,18 +1372,55 @@ u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {
     // a tuple of the same arity hands each of its own down, one per element,
     // which is what makes 'let p : (u8, f64) = (200, 1.5)' two literals that
     // took a type rather than two that were converted
+    u32 count = 0;
+
+    for (u32 child = first_child(node); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        count++;
+    }
+
+    // and only then: a tuple of another length is a different shape, which
+    // whatever compares the two says in those words
     if (expected != INVALID_TYPE
-        && types->get_type(expected)->kind == TYPE_TUPLE) {
+        && types->get_type(expected)->kind == TYPE_TUPLE
+        && types->get_arguments(expected).size() == count) {
         wanted = types->get_arguments(expected);
     }
 
     for (u32 child = first_child(node); child != 0;
          child = module->get_ast()->get_node(child)->get_sibling(), at++) {
+        // what is handed down is the value: a literal asked to be an 'i32&'
+        // would be refused for the one thing about it that is fine
         u32 one = type_of(index, scope, child,
-                          at < wanted.size() ? wanted[at] : INVALID_TYPE);
+                          at < wanted.size() ? types->value_of(wanted[at])
+                                             : INVALID_TYPE);
 
         if (one == INVALID_TYPE) {
             return INVALID_TYPE;
+        }
+
+        // record 0067: a literal holds copies, so a name of a 'T&' gives a
+        // T -- a reference is held only where the type wanted one is written
+        if (at >= wanted.size()
+            || types->get_type(wanted[at])->kind != TYPE_REFERENCE) {
+            one = types->value_of(one);
+        }
+
+        // and an element is given to what the shape holds the way an
+        // argument is given to its parameter: by record 0018's list, so
+        // '(text, 1)' with a char* text is a '(Name, i32)' when one is asked
+        // for, and the emitter builds the Name where the element is written
+        // A reference is held only to a place: '(x, a)' given to an
+        // '(i32&, i32&)' refers to x and a, and '(5, 6)' stays two values --
+        // which an assignment to such a tuple then writes through, element
+        // by element
+        bool refers = at < wanted.size()
+                   && types->get_type(wanted[at])->kind == TYPE_REFERENCE;
+
+        if (at < wanted.size() && one != wanted[at]
+            && (!refers || is_place(child))
+            && coercion.fits(index, one, wanted[at])) {
+            one = wanted[at];
         }
 
         elements.push_back(one);
@@ -1707,6 +1797,37 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
         return overloaded(scope, node, left, second_child(node));
     }
 
+    // Record 0067: a tuple has '==' and '!=' and nothing else, element by
+    // element, so every element has to be something that compares
+    if (types->get_type(left)->kind == TYPE_TUPLE) {
+        if (!comparison
+            || (kind_of(node) != AST_EQUAL && kind_of(node) != AST_NOT_EQUAL)) {
+            report(node, name_of(left) + " is a tuple, and a tuple has only "
+                                         "'==' and '!='");
+
+            return INVALID_TYPE;
+        }
+
+        // what is compared is the values, so a tuple of references and one
+        // of the values they name are the same shape here
+        if (value_shape(left) != value_shape(right)) {
+            report(node, "cannot apply this to " + name_of(left) + " and "
+                             + name_of(right));
+
+            return INVALID_TYPE;
+        }
+
+        std::string why;
+
+        if (!compares(left, why)) {
+            report(node, why);
+
+            return INVALID_TYPE;
+        }
+
+        return types->builtin(BUILTIN_BOOL);
+    }
+
     // record 0018 has nothing that would make two different types one, so the
     // operator is where that is said
     if (left != right) {
@@ -1728,6 +1849,79 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     }
 
     return comparison ? types->builtin(BUILTIN_BOOL) : left;
+}
+
+bool ExpressionTyper::has_member(u32 type, const std::string& name) {
+    u32 owner = index;
+
+    if (type == INVALID_TYPE
+        || module->get_types()->get_type(type)->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    return members_named(type, name, owner).size() > 0;
+}
+
+// a tuple with every reference in it, at any depth, read as what it names
+u32 ExpressionTyper::value_shape(u32 type) {
+    TypeTable* types = module->get_types();
+    u32 value = types->value_of(type);
+
+    if (types->get_type(value)->kind != TYPE_TUPLE) {
+        return value;
+    }
+
+    std::vector<u32> elements;
+
+    for (u32 one : types->get_arguments(value)) {
+        elements.push_back(value_shape(one));
+    }
+
+    return types->tuple(elements);
+}
+
+// What a tuple's '==' asks of each element: a builtin, a pointer and an enum
+// compare as they are, a class by the 'operator==' it wrote, and a tuple by
+// its own elements. 'why' names the first one that does not
+bool ExpressionTyper::compares(u32 type, std::string& why) {
+    TypeTable* types = module->get_types();
+    u32 value = types->value_of(type);
+    Type* entry = types->get_type(value);
+
+    switch ((TypeKind) entry->kind) {
+    case TYPE_BUILTIN:
+    case TYPE_POINTER:
+        return true;
+
+    case TYPE_TUPLE:
+        for (u32 one : types->get_arguments(value)) {
+            if (!compares(one, why)) {
+                return false;
+            }
+        }
+
+        return true;
+
+    case TYPE_NAMED: {
+        u32 owner = index;
+
+        if (is_an_enum(value)
+            || members_named(value, "operator==", owner).size() > 0) {
+            return true;
+        }
+
+        why = name_of(value) + " has no '==', so a tuple holding one cannot "
+                               "be compared";
+        return false;
+    }
+
+    default:
+        break;
+    }
+
+    why = name_of(value) + " cannot be compared, so a tuple holding one "
+                           "cannot be";
+    return false;
 }
 
 // Bits, which is arithmetic with one more rule. A float has no representation

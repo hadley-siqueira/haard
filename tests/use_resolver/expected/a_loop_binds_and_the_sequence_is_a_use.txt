@@ -1,4 +1,4 @@
-error: a 'for ... in' binds one name, and this writes 2
+error: a 'for ... in' binds one name, and this writes 2: a tuple is taken apart with its brackets, 'for (k, v) in'
  --> main.hd:3:5
   |
 3 |     for key, value in pairs:

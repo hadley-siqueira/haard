@@ -4,7 +4,9 @@
 #
 #   over a class      the cursor's 'next', which gives back a reference, so
 #                     writing the variable writes the element
-#   over a fixed array  the element, read through a subscript
+#   over a fixed array  the element, read through a subscript -- and a
+#                     reference to it, as over a class. It was a copy until
+#                     2026-10-07, so writing the variable changed nothing
 #   over a range      the type of the END, so a range up to a u32 walks with
 #                     a u32 and not with the i32 a bare '0' would be
 #

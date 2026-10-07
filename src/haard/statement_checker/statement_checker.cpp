@@ -36,6 +36,7 @@ StatementChecker::StatementChecker() {
     module = nullptr;
     index = 0;
     loops = 0;
+    counter = 0;
 }
 
 void StatementChecker::set_collector(TypeCollector* collector) {
@@ -56,6 +57,8 @@ void StatementChecker::check(u32 index) {
     module = compilation->get_module(index);
     table = module->get_symbols();
 
+    builder.set_ast(module->get_ast());
+    symbols.set_module(module);
     scope_of.clear();
     given_back.clear();
     declaring.clear();
@@ -730,6 +733,10 @@ void StatementChecker::check_return(u32 node, u32 scope, u32 result) {
 }
 
 void StatementChecker::check_expression(u32 node, u32 scope) {
+    if (expand_tuple_append(node, scope)) {
+        return;
+    }
+
     // No filtering, and none is needed: the typer has no case for a statement
     // kind, so asking about an 'if' or a 'let' gives back nothing in silence
     // and descends into nothing. An assignment is the one shape that was
@@ -739,6 +746,212 @@ void StatementChecker::check_expression(u32 node, u32 scope) {
     // Asked for nothing in particular, because what it gives back is thrown
     // away. The point is that everything inside it is looked at
     typer.type_of(index, scope, node, INVALID_TYPE);
+}
+
+bool StatementChecker::expand_tuple_append(u32 node, u32 scope) {
+    Ast* ast = module->get_ast();
+
+    // '__tsN.append(x)', which only the template string's lowering writes
+    if (kind_of(node) != AST_CALL || kind_of(first_child(node)) != AST_DOT) {
+        return false;
+    }
+
+    u32 callee = first_child(node);
+    u32 holder = first_child(callee);
+    u32 method = second_child(callee);
+    u32 argument = first_child(second_child(node));
+
+    if (kind_of(holder) != AST_IDENTIFIER
+        || text_of(holder).rfind("__ts", 0) != 0
+        || kind_of(method) != AST_IDENTIFIER || text_of(method) != "append"
+        || argument == 0 || ast->get_node(argument)->get_sibling() != 0) {
+        return false;
+    }
+
+    // a written value is never a tuple, and typing one on its own would give
+    // it a default type the call is about to give it properly
+    switch (kind_of(argument)) {
+    case AST_INTEGER_LITERAL: case AST_FLOAT_LITERAL: case AST_CHAR_LITERAL:
+    case AST_STRING_LITERAL: case AST_SYMBOL_LITERAL: case AST_TRUE:
+    case AST_FALSE: case AST_NULL_LITERAL:
+        return false;
+
+    default:
+        break;
+    }
+
+    u32 reported = module->get_logger()->count(LOG_ERROR);
+    u32 given = typer.type_of(index, scope, argument, INVALID_TYPE);
+
+    // what it said is all there is to say: typing the call would type the
+    // piece again and say it twice
+    if (module->get_logger()->count(LOG_ERROR) > reported) {
+        return true;
+    }
+
+    TypeTable* types = module->get_types();
+
+    if (given == INVALID_TYPE
+        || types->get_type(types->value_of(given))->kind != TYPE_TUPLE) {
+        return false;
+    }
+
+    u32 like = ast->get_node(argument)->get_token();
+    u32 count = types->get_arguments(types->value_of(given)).size();
+    std::vector<u32> written;
+    u32 name = ast->get_node(argument)->get_token();
+
+    // the tuple is read once per element, so an expression is bound to a
+    // name first: a reference to what has one, a copy of what does not
+    if (kind_of(argument) != AST_IDENTIFIER) {
+        name = module->add_synthetic_token(
+            TK_IDENTIFIER, "__tv" + std::to_string(counter++), like);
+
+        bool temporary = kind_of(argument) == AST_CALL
+                      || kind_of(argument) == AST_TUPLE;
+        u32 held = temporary ? types->value_of(given)
+                             : types->reference(types->value_of(given));
+        u32 binding = builder.make_binding(
+            builder.make_binding_name(builder.make_identifier(name)), 0,
+            builder.make_binding_expression(argument));
+        u32 statement = builder.make_let_declaration(
+            module->add_synthetic_token(TK_LET, "let", like), binding);
+
+        symbols.collect_declaration(scope, statement, "");
+
+        u32 candidate = module->get_symbols()->candidate_of(binding);
+
+        if (candidate != 0) {
+            module->get_symbols()->set_candidate_type(candidate, held);
+        }
+
+        written.push_back(statement);
+    }
+
+    written.push_back(make_append(holder, make_text("(", like), like));
+
+    for (u32 i = 0; i < count; i++) {
+        if (i > 0) {
+            written.push_back(make_append(holder, make_text(", ", like), like));
+        }
+
+        u32 position = builder.make_literal(
+            AST_INTEGER_LITERAL,
+            module->add_synthetic_token(TK_INTEGER_LITERAL, std::to_string(i),
+                                        like));
+        u32 element = builder.make_index(
+            module->add_synthetic_token(TK_LEFT_SQUARE_BRACKET, "[", like),
+            builder.make_identifier(name), position);
+
+        written.push_back(make_append(holder, element, like));
+    }
+
+    written.push_back(make_append(holder, make_text(")", like), like));
+
+    // the statement becomes a block of what it wrote, in place, so the block
+    // holding it still holds it -- and the walk reaches the new statements
+    // next, which is what types them and takes a nested tuple apart
+    AstNode* rewritten = ast->get_node(node);
+
+    rewritten->set_kind(AST_BLOCK);
+    rewritten->set_children(0);
+
+    u32 last = 0;
+
+    for (u32 one : written) {
+        last = builder.add_child(node, last, one);
+    }
+
+    return true;
+}
+
+void StatementChecker::split_tuple_assignment(u32 node, u32 scope,
+                                              const std::vector<u32>& targets,
+                                              u32 value, u32 given) {
+    Ast* ast = module->get_ast();
+    TypeTable* types = module->get_types();
+    u32 like = ast->get_node(node)->get_token();
+    u32 name = module->add_synthetic_token(
+        TK_IDENTIFIER, "__tv" + std::to_string(counter++), like);
+
+    ast->get_node(value)->set_sibling(0);
+
+    std::vector<u32> written;
+
+    // a copy, whole, before the first write: '(a, b) = (b, a)' swaps
+    written.push_back(make_local(scope, name, value, types->value_of(given)));
+
+    for (u32 i = 0; i < targets.size(); i++) {
+        u32 token = module->add_synthetic_token(TK_ASSIGNMENT, "=", like);
+
+        written.push_back(builder.make_binary_operator(
+            AST_ASSIGNMENT, token, targets[i],
+            make_position(builder.make_identifier(name), i, like)));
+    }
+
+    // in place, as a block, so the walk reaches each assignment next and
+    // checks it like one written by hand
+    AstNode* rewritten = ast->get_node(node);
+
+    rewritten->set_kind(AST_BLOCK);
+    rewritten->set_children(0);
+
+    u32 last = 0;
+
+    for (u32 one : written) {
+        last = builder.add_child(node, last, one);
+    }
+}
+
+u32 StatementChecker::make_local(u32 scope, u32 name, u32 value, u32 type) {
+    u32 binding = builder.make_binding(
+        builder.make_binding_name(builder.make_identifier(name)), 0,
+        builder.make_binding_expression(value));
+    u32 statement = builder.make_let_declaration(
+        module->add_synthetic_token(TK_LET, "let", name), binding);
+
+    symbols.collect_declaration(scope, statement, "");
+
+    u32 candidate = module->get_symbols()->candidate_of(binding);
+
+    if (candidate != 0) {
+        module->get_symbols()->set_candidate_type(candidate, type);
+    }
+
+    return statement;
+}
+
+// '<of>[<position>]', a tuple's field
+u32 StatementChecker::make_position(u32 of, u32 position, u32 like) {
+    u32 written = builder.make_literal(
+        AST_INTEGER_LITERAL,
+        module->add_synthetic_token(TK_INTEGER_LITERAL,
+                                    std::to_string(position), like));
+
+    return builder.make_index(
+        module->add_synthetic_token(TK_LEFT_SQUARE_BRACKET, "[", like), of,
+        written);
+}
+
+u32 StatementChecker::make_append(u32 holder, u32 argument, u32 like) {
+    u32 open = module->add_synthetic_token(TK_LEFT_PARENTHESIS, "(", like);
+    u32 callee = builder.make_binary_operator(
+        AST_DOT, module->add_synthetic_token(TK_DOT, ".", like),
+        builder.make_identifier(module->get_ast()->get_node(holder)->get_token()),
+        builder.make_identifier(
+            module->add_synthetic_token(TK_IDENTIFIER, "append", like)));
+    u32 arguments = builder.make_arguments(open);
+
+    builder.add_child(arguments, 0, argument);
+
+    return builder.make_call(open, callee, arguments);
+}
+
+u32 StatementChecker::make_text(const std::string& text, u32 like) {
+    return builder.make_literal(
+        AST_STRING_LITERAL,
+        module->add_synthetic_token(TK_STRING_LITERAL, "\"" + text + "\"",
+                                    like));
 }
 
 // A switch is a **pattern match**, and this is where a pattern stops being an
@@ -1152,7 +1365,58 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
         return;
     }
 
-    u32 right = typer.type_of(index, scope, value, left);
+    // Record 0067: what is assigned to a tuple of references is the values
+    // they will name, so '(q, p)' on the right is two values and not two
+    // more references -- read whole, before the first one is written
+    bool through = types->get_type(left)->kind == TYPE_TUPLE
+                && typer.value_shape(left) != left;
+    u32 right = typer.type_of(index, scope, value,
+                              through ? typer.value_shape(left) : left);
+
+    // and two tuples of one length and different shapes are assigned
+    // element by element, each by its own rule -- which a tuple of
+    // references always is, so 'swap = (q, p)' swaps
+    if (right != INVALID_TYPE && (through || types->value_of(right) != left)
+        && types->get_type(left)->kind == TYPE_TUPLE
+        && types->get_type(types->value_of(right))->kind == TYPE_TUPLE
+        && types->get_arguments(left).size()
+               == types->get_arguments(types->value_of(right)).size()) {
+        std::vector<u32> targets;
+        u32 like = module->get_ast()->get_node(target)->get_token();
+        u32 named = like;
+
+        // the target is read once per element too, so one that is not a name
+        // is referred to by one. A node sits in one place in the tree, so
+        // every element gets a name of its own
+        if (kind_of(target) != AST_IDENTIFIER) {
+            named = module->add_synthetic_token(
+                TK_IDENTIFIER, "__tw" + std::to_string(counter++), like);
+        }
+
+        for (u32 i = 0; i < types->get_arguments(left).size(); i++) {
+            targets.push_back(
+                make_position(builder.make_identifier(named), i, like));
+        }
+
+        if (named != like) {
+            module->get_ast()->get_node(target)->set_sibling(0);
+
+            u32 local = make_local(scope, named, target, types->reference(left));
+
+            split_tuple_assignment(node, scope, targets, value, right);
+
+            // the reference goes first, ahead of the copy of the right side
+            AstNode* block = module->get_ast()->get_node(node);
+
+            module->get_ast()->get_node(local)->set_sibling(
+                block->get_children());
+            block->set_children(local);
+            return;
+        }
+
+        split_tuple_assignment(node, scope, targets, value, right);
+        return;
+    }
 
     // record 0031, and an assignment is the one copy that also destroys: what
     // the target held has to go before it can hold something else

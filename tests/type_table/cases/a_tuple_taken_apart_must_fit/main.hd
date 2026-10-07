@@ -1,0 +1,15 @@
+# Record 0067: what 'let (a, b) = t' takes apart has to be a tuple of that
+# length, and a type written for it has to be one too.
+
+def main : i32
+    let t = (1, 2.5)
+    let (a, b) = t
+    let (c, (d, e)) = (1, (true, 'x'))
+
+    # refused: one name too many, something that is not a tuple, and a type of
+    # another length
+    let (f, g, h) = t
+    let (i, j) = 5
+    let (k, l) : (i32, f64, bool) = t
+
+    return 0

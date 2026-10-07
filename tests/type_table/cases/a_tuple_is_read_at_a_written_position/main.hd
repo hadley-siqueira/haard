@@ -1,0 +1,45 @@
+# Record 0067: 't[0]' is the first field of the struct a tuple is. The
+# position is a number written in the source and inside the tuple, since each
+# element has a type of its own; there is no tuple of one, so '(T)' in a type
+# is T in brackets and '(a,)' is refused.
+
+def min_max : (i32, i32)
+    @a : i32
+    @b : i32
+
+    if a < b:
+        return (a, b)
+
+    return (b, a)
+
+# a literal holds copies: a name of a reference gives the value it names
+def copies : (i32, i32)
+    @r : i32&
+
+    let both = (r, r)
+
+    return both
+
+def main : i32
+    let t = (1, 2.5, true)
+    let first = t[0]
+    let second = t[1]
+    let third = t[2]
+    let nested = (1, (true, 'c'))
+    let inner = nested[1][1]
+    let both = min_max(3, 2)
+    let low = both[0]
+    let grouped : (i32) = 4
+    let held = 7
+    let copied = (held, held)
+
+    # refused: a position that is not written, and one past the end
+    let i = 0
+    let a = t[i]
+    let b = t[3]
+    let c = t[-1]
+
+    # refused: a tuple of one
+    let d = (held,)
+
+    return low

@@ -1,0 +1,34 @@
+# Record 0067: a tuple has '==' and '!=', element by element, and no other
+# operator. Every element has to compare: a builtin, a pointer, an enum, a
+# class with an 'operator==', or a tuple of those. A tuple of references
+# compares with one of the values they name.
+
+class Plain:
+    n : i32
+
+class Equal:
+    n : i32
+
+    def operator== : bool
+        @other : Equal&
+
+        return n == other.n
+
+def main : i32
+    let t = (1, 2.5)
+    let same = t == (1, 2.5)
+    let different = t != (2, 2.5)
+    let nested = (1, (true, 'c')) == (1, (true, 'c'))
+    let x = 1
+    let y = 2
+    let refs : (i32&, i32&) = (x, y)
+    let through = refs == (1, 2)
+    let classes = (Equal(), 1) == (Equal(), 1)
+
+    # refused: arithmetic, an order, two shapes, and an element with no '=='
+    let sum = t + t
+    let less = t < t
+    let shapes = t == (1, 2, 3)
+    let plain = (Plain(), 1) == (Plain(), 1)
+
+    return 0

@@ -1,0 +1,106 @@
+# Record 0067, stage 2: a tuple compares element by element, may hold
+# references -- assigning to it writes through them -- and is moved element
+# by element, by the move 'init' of what it holds. The exit status adds up
+# one bit per thing that held, so each one that breaks moves it.
+
+enum Colour:
+    red
+    green
+
+class Equal:
+    n : i32
+
+    def init : void
+        @n : i32
+
+        this.n = n
+
+    def operator== : bool
+        @other : Equal&
+
+        return n == other.n
+
+# says how many times it was copied and moved, through a counter it is given
+class Counted:
+    copies : i32*
+    moves : i32*
+
+    def init : void
+        @copies : i32*
+        @moves : i32*
+
+        this.copies = copies
+        this.moves = moves
+
+    def init : void
+        @other : Counted&
+
+        copies = other.copies
+        moves = other.moves
+        *copies += 1
+
+    def init : void
+        @other : Counted&&
+
+        copies = other.copies
+        moves = other.moves
+        *moves += 1
+
+def main : i32
+    let result = 0
+
+    # 1: equal element by element, nested, with an enum and a class
+    let a = (1, (Colour.green, Equal(3)))
+    let b = (1, (Colour.green, Equal(3)))
+
+    if a == b:
+        result += 1
+
+    # 2: one element differs, deep down
+    if a != (1, (Colour.green, Equal(4))):
+        result += 2
+
+    # 4: a tuple of references is written through, element by element
+    let x = 1
+    let y = 2
+    let refs : (i32&, i32&) = (x, y)
+
+    refs = (10, 20)
+
+    if x == 10 and y == 20:
+        result += 4
+
+    # 8: and compares with the values it names
+    if refs == (10, 20):
+        result += 8
+
+    # 16: two shapes of one length assigned element by element: a swap
+    # through references reads the right side whole before writing
+    let p = 1
+    let q = 2
+    let swap : (i32&, i32&) = (p, q)
+
+    swap = (q, p)
+
+    if p == 2 and q == 1:
+        result += 16
+
+    # 32: moved, not copied -- and a plain copy is still a copy
+    let copies = 0
+    let moves = 0
+    let held = (Counted(&copies, &moves), 7)
+    let taken = &&held
+    let again = taken
+
+    if moves == 1 and copies == 1 and again[1] == 7:
+        result += 32
+
+    # 64: a move assignment moves too
+    let other = (Counted(&copies, &moves), 8)
+
+    other = &&taken
+
+    if moves == 2 and other[1] == 7:
+        result += 64
+
+    return result

@@ -1,0 +1,37 @@
+<unnamed>:
+    main  i32
+    t  (i32, f64)
+    a  i32
+    b  f64
+    __d0  (i32, (bool, char))
+    c  i32
+    d  bool
+    e  char
+    f  i32
+    g  f64
+    h  <none>
+    __d1  i32
+    i  <none>
+    j  <none>
+  21 types interned
+diagnostics:
+error: (i32, f64) has 2 elements, so 2 is past the last
+  --> main.hd:11:16
+   |
+11 |     let (f, g, h) = t
+   |                ^
+error: i32 cannot be indexed
+  --> main.hd:12:10
+   |
+12 |     let (i, j) = 5
+   |          ^
+error: i32 cannot be indexed
+  --> main.hd:12:13
+   |
+12 |     let (i, j) = 5
+   |             ^
+error: this takes 2 elements apart, and the type written for it has 3
+  --> main.hd:13:9
+   |
+13 |     let (k, l) : (i32, f64, bool) = t
+   |         ^

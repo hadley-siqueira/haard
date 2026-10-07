@@ -1,0 +1,14 @@
+# Record 0033's prelude: the containers, 'println' for the report, and
+# Option<T>, which a project puts in view by naming it here
+prelude
+    std -> std
+    import std.array
+    import std.list
+    import std.string
+    import std.io
+    import std.option
+
+root std = std
+
+root myapp = myapp
+    std -> std

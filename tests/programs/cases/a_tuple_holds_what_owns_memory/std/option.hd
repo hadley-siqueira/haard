@@ -1,0 +1,56 @@
+# std/option.hd -- Option<T>, a value that may not be there.
+#
+# Record 0043's enum with a payload, and generic (record 0043, amended
+# 2026-09-30): 'Some(3)' is an Option<i32>, 'None' is whichever Option the
+# context expects, and 'Option<i32>.None' says it out loud where nothing does.
+#
+# Its API is methods on the enum, Hadley 2026-09-30: an enum may write them,
+# and they are a struct's -- never virtual.
+#
+# There is no 'unwrap'. Taking the value out of a 'None' has nothing to give
+# back, and the language has no way yet to stop a program: record 0030's
+# natives have no 'abort'. 'unwrap_or' says what to give instead, and a
+# 'switch' takes the value out where both cases are written.
+enum Option<T>:
+    Some : T
+    None
+
+    def is_some : bool
+        switch *this:
+            case Some(value):
+                return true
+
+            case None:
+                return false
+
+        return false
+
+    def is_none : bool
+        return not is_some()
+
+    # the value, or 'fallback' when there is none
+    def unwrap_or : T
+        @fallback : T
+
+        switch *this:
+            case Some(value):
+                return value
+
+            case None:
+                return fallback
+
+        return fallback
+
+    # what 'f' makes of the value, and None stays None. A GENERIC method, so
+    # an Option nobody maps carries none of it (record 0055)
+    def map<U> : Option<U>
+        @f : T& -> U
+
+        switch *this:
+            case Some(value):
+                return Option<U>.Some(f(value))
+
+            case None:
+                return Option<U>.None
+
+        return Option<U>.None

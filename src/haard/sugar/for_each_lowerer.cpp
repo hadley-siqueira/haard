@@ -68,8 +68,10 @@ u32 ForEachLowerer::lower(u32 index, u32 scope, u32 for_each, u32& written) {
     // and record 0040 did not decide: it needs a way to take a value apart,
     // which is agenda 1.23's question and not this one's
     if (variables.size() != 1) {
-        report(for_each, "a 'for ... in' binds one name, and this writes " +
-                             std::to_string(variables.size()));
+        report(for_each, "a 'for ... in' binds one name, and this writes "
+                             + std::to_string(variables.size())
+                             + ": a tuple is taken apart with its brackets, "
+                               "'for (k, v) in'");
 
         return 0;
     }
@@ -116,6 +118,18 @@ u32 ForEachLowerer::lower(u32 index, u32 scope, u32 for_each, u32& written) {
     }
 
     if (entry->kind == TYPE_NAMED) {
+        // Record 0067: 'for (k, v) in c' walks 'c.items()' when what
+        // 'c.iterator()' gives is not a tuple of that length and the class
+        // has an 'items' -- any class, found by name the way 'iterator' is.
+        // So a Hash's 'for k in h' is still its keys
+        u32 length = module->get_pattern_length(token_of(for_each));
+
+        if (length > 1 && !gives_a_tuple(scope, container, value, length)
+            && typer.has_member(value, "items")) {
+            module->get_ast()->get_node(container)->set_sibling(0);
+            container = call_on(container, "items");
+        }
+
         return over_a_cursor(scope, for_each, variable, container);
     }
 
@@ -364,6 +378,38 @@ u32 ForEachLowerer::make_loop_binding(u32 variable, u32 expression) {
                              builder.make_binding_expression(expression));
 
     return builder.make_let_declaration(token, binding);
+}
+
+// whether walking this container gives a tuple of this length. Asked on a copy
+// of the container, so the tree stays as it was; and only through members
+// the class has, so asking reports nothing -- the walk itself will, if it
+// comes to that
+bool ForEachLowerer::gives_a_tuple(u32 scope, u32 container, u32 type,
+                                   u32 length) {
+    if (!typer.has_member(type, "iterator")) {
+        return true;
+    }
+
+    u32 made = call_on(builder.clone(container), "iterator");
+    u32 cursor = typer.type_of(index, scope, made, INVALID_TYPE);
+    TypeTable* types = module->get_types();
+
+    if (cursor == INVALID_TYPE
+        || !typer.has_member(types->value_of(cursor), "next")) {
+        return true;
+    }
+
+    u32 given = typer.type_of(index, scope, call_on(made, "next"),
+                              INVALID_TYPE);
+
+    if (given == INVALID_TYPE) {
+        return true;
+    }
+
+    given = types->value_of(given);
+
+    return types->get_type(given)->kind == TYPE_TUPLE
+        && types->get_arguments(given).size() == length;
 }
 
 u32 ForEachLowerer::call_on(u32 receiver, const std::string& method) {

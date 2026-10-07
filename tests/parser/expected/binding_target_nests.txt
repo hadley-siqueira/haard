@@ -1,0 +1,31 @@
+let (a, (b, _)) = t
+let ((x, y), z) : ((i32, i32), f64) = u
+--- tree
+module
+  let_declaration 'let'
+    binding
+      binding_name
+        tuple '('
+          identifier 'a'
+          tuple '('
+            identifier 'b'
+            identifier '_'
+      binding_expression
+        identifier 't'
+  let_declaration 'let'
+    binding
+      binding_name
+        tuple '('
+          tuple '('
+            identifier 'x'
+            identifier 'y'
+          identifier 'z'
+      binding_type
+        tuple_type '('
+          tuple_type '('
+            builtin_type 'i32'
+            builtin_type 'i32'
+          builtin_type 'f64'
+      binding_expression
+        identifier 'u'
+--- round trip: ok
