@@ -324,8 +324,10 @@ whenever a case is written as a tuple.
   Hadley asked for. Nothing is reported, and no warning either: one would need
   the coverage analysis that rule exists to avoid.
 
-**Decided while building it**: a bare name inside a tuple pattern **always
-captures**. `case (n, None)` would bind a capture called `None`; the variant
+**Decided while building it**, and **reversed** by Hadley the same day in
+record [0072](0072-a-bare-name-in-a-pattern-is-resolved.md) -- a bare name is
+the variant when its element's enum has one by that name: a bare name inside
+a tuple pattern **always captures**. `case (n, None)` would bind a capture called `None`; the variant
 is written `Option.None`, or as a call when it carries something. Telling a
 capture from a variant by name needs the names resolved, which is after the
 sugar pass -- and a capture has to be declared before the type phase infers
@@ -336,16 +338,91 @@ Cases: `tests/sugar/cases/a_switch_takes_a_tuple_apart`,
 `tests/emitter/cases/a_switch_takes_a_tuple_apart` (127, a bit per rule), and
 one check more in the whole-program case. Eight sabotages, each caught.
 
+## A tuple literal written as an argument, 2026-10-07
+
+Decided by Hadley after the stages above, as item 6, and built the same day.
+`bump((a, b))` with `bump` taking an `(i32&, i32&)` was refused -- *no 'bump'
+takes these arguments* -- although `let p : (i32&, i32&) = (a, b)` refers to
+a and b. A call typed every argument before choosing among its candidates, and
+a tuple with nothing asked of it holds copies. Not a question of semantics but
+of order: the binding knows its destination before it types the tuple, and the
+call did not.
+
+**The rule**: at a call a tuple literal is a literal, as `200` is (record
+0018). It is carried untyped, and each candidate asks it to be its parameter
+element by element: a number to be its element, `null` a pointer, a closure a
+function of as many parameters, a tuple inside the same way down, and anything
+else -- typed once, before the candidates, since it has a type of its own -- by
+the list every argument answers to. Once one wins the tuple is built against
+it, by the binding's own rule: a reference where the parameter writes one and
+the element is a place, and the tuple built is checked against the
+parameter. (`bump((a, 2))` was refused for its 2 until record
+[0068](0068-a-reference-takes-any-value.md), the same day, gave a `T&` any
+value.)
+
+```haard
+bump((a, b))             # refers to a and b
+pick((200, null))        # a u8 and a pointer, asked by the parameter
+over((a, b))             # the overload taking (i32&, i32&)
+over((a, 1.5))           # the one taking (i32, f64)
+f((a, b))                # f a value of type ((i32&, i32&)) -> void
+Box((7, 8))              # an 'init' is asked the same way
+```
+
+**Why**: Hadley, shown how C++ does it -- `bump({a, b})` into a
+`std::tuple<int&, int&>` refers to a and b, a braced list is asked by each
+overload, and `std::make_tuple(a, b)` fails exactly as Haard did -- and how
+Rust (the reference written at the call), C#, Swift and Zig (a literal typed
+by its destination, with no reference to take) do. The reference coming from
+the destination type is records 0035's and this one's model, and he chose
+**not** to reopen it. Typing the tuple by the parameter only when there is one
+candidate was refused for breaking at a distance: a second overload written
+elsewhere would make a call stop compiling.
+
+**Built**: `ExpressionTyper::tuple_argument` types what has a type of its own
+and gives the tuple's type with nothing asked of it, which is what a generic
+is solved from; `OverloadResolver::tuple_match` asks the shape;
+`ExpressionTyper::tuple_given` builds and checks the winner's, at a call, at a
+construction and at a call of a function value.
+
+Cases: `tests/emitter/cases/a_tuple_literal_takes_its_parameters_shape` (255,
+a bit per rule), `tests/type_table/cases/a_tuple_literal_argument_must_fit`.
+Eight sabotages, each caught.
+
+**Found on the way**, and closed the same day:
+
+- A bare variant of a generic enum was not asked by its parameter at a call
+  at all, tuple or not -- `take(Option.None)`, with `take` taking an
+  `Option<i32>`, said nothing says what `T` is, though `let o : Option<i32> =
+  None` worked. Now `None` and `Option.None` naming one variant of a generic
+  nobody instantiated **wait** for the parameter, as a number does
+  (`ExpressionTyper::waits_as_a_variant`, marked on the node with
+  `Module::wait_as_variant`): each candidate asks whether its parameter is a
+  clone of that enum, and the winner types it. Two candidates that both are
+  make an ambiguous call. Cases:
+  `tests/emitter/cases/a_bare_variant_waits_for_its_parameter` (31),
+  `tests/type_table/cases/a_bare_variant_needs_one_parameter`.
+- A generic was not solved through a tuple: record 0059's `unify` and
+  `substitute` had no tuple, so `first((a, 1))` and `first(t)`, with
+  `first<T>` taking a `(T, i32)`, both said nothing says what `T` is. A tuple
+  is now laid over a tuple of its own length, element by element. A closure
+  **inside** a tuple literal still says nothing about a generic, since the
+  tuple has no type of its own while the closure waits. Case:
+  `tests/emitter/cases/a_generic_is_solved_through_a_tuple` (15).
+
+Eight sabotages more, each caught.
+
 ## What is left open
 
 - `t.to_string()` written by hand: a tuple is written into a String only by
   `${}`.
 - `hash_of` of a tuple, so a tuple as a Hash key.
-- An argument to a **function value** is typed before the parameter is
-  known, so a tuple literal there holds copies where references were wanted
-  and a bare generic variant inside one has no `T` -- `f((key_at(i),
-  value_at(i)))`, `describe((7, Option.None, red))`. Binding it to a name with
-  its type written first works.
+- ~~An argument to a function value is typed before the parameter is
+  known~~ -- a tuple literal, and a bare variant of a generic enum, are asked
+  by their parameter since 2026-10-07 (the section above).
+- A closure inside a tuple literal does not help solve a generic:
+  `apply((|x| -> i32 { ... }, 4))` with `apply<T>` taking a
+  `((T) -> T, T)` has to write `apply<i32>`.
 - A generic body is typed with its parameters unbound, and two generics'
   `K`s are different types there, which is what made `HashItems.each` walk
   its cursor instead of building the pair itself.

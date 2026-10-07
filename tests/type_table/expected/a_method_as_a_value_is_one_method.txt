@@ -1,0 +1,32 @@
+<unnamed>:
+    Counter  Counter
+    make  Counter
+    main  i32
+    total  i32
+    add  i32 -> i32
+    add  i32 -> i32 -> i32
+    get  i32
+    n  i32
+    n  i32
+    m  i32
+    c  Counter
+    f  <none>
+    g  bool -> i32
+    h  <none>
+  23 types interned
+diagnostics:
+error: 'add' names 2 functions, so which one has to be said by the type written where it goes: 'let f : (A) -> R = ...'
+  --> main.hd:28:15
+   |
+28 |     let f = c.add
+   |               ^^^
+error: 'add' names 2 functions, so which one has to be said by the type written where it goes: 'let f : (A) -> R = ...'
+  --> main.hd:29:31
+   |
+29 |     let g : (bool) -> i32 = c.add
+   |                               ^^^
+error: a method of a value with no name cannot be given as a value: nothing would be left to call it on
+  --> main.hd:30:20
+   |
+30 |     let h = make().get
+   |                    ^^^

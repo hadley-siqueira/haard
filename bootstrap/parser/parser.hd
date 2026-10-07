@@ -2108,8 +2108,6 @@ def assignment_kind : AstNodeKind
             return AstNodeKind.TimesAssignment
         case DivisionAssignment:
             return AstNodeKind.DivisionAssignment
-        case BitwiseNotAssignment:
-            return AstNodeKind.BitwiseNotAssignment
         case IntegerDivisionAssignment:
             return AstNodeKind.IntegerDivisionAssignment
         case ModuloAssignment:

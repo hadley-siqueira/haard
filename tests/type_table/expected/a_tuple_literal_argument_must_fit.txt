@@ -1,0 +1,30 @@
+<unnamed>:
+    bump  (i32&, i32&) -> void
+    small  (u8, i32) -> void
+    main  i32
+    p  (i32&, i32&)
+    p  (u8, i32)
+    a  i32
+    f  (i32&, i32&) -> void
+  27 types interned
+diagnostics:
+error: no 'small' takes these arguments
+  --> main.hd:19:5
+   |
+19 |     small((300, 1))
+   |     ^^^^^
+error: no 'small' takes these arguments
+  --> main.hd:20:5
+   |
+20 |     small((1, 2, 3))
+   |     ^^^^^
+error: no 'bump' takes these arguments
+  --> main.hd:21:5
+   |
+21 |     bump((a, 1.5))
+   |     ^^^^
+error: expected (i32&, i32&), found (i32&, bool)
+  --> main.hd:22:7
+   |
+22 |     f((a, true))
+   |       ^

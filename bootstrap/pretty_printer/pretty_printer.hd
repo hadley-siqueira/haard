@@ -211,7 +211,6 @@ class PrettyPrinter:
             case BitwiseAndAssignment:
             case BitwiseOrAssignment:
             case BitwiseXorAssignment:
-            case BitwiseNotAssignment:
             case IntegerDivisionAssignment:
             case BitwiseLeftShiftAssignment:
             case BitwiseRightShiftAssignment:

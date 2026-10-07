@@ -69,7 +69,6 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"&=", TK_BITWISE_AND_ASSIGNMENT},
         {"|=", TK_BITWISE_OR_ASSIGNMENT},
         {"^=", TK_BITWISE_XOR_ASSIGNMENT},
-        {"~=", TK_BITWISE_NOT_ASSIGNMENT},
         {"<<=", TK_BITWISE_LEFT_SHIFT_ASSIGNMENT},
         {">>=", TK_BITWISE_RIGHT_SHIFT_ASSIGNMENT},
         {">>>=", TK_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT},

@@ -581,6 +581,17 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
     bool refers = name != found->ast_node
                && module->binds_by_reference(
                       module->get_ast()->get_node(name)->get_token());
+    // record 0072: a bare name in a tuple pattern that names a variant of its
+    // element's enum is that variant, and no binding at all
+    if (refers && module->is_pattern_name(
+                      module->get_ast()->get_node(name)->get_token())
+        && names_a_variant(found->ast_node, scope)) {
+        match_the_variant(found->ast_node, scope);
+        module->unname(candidate);
+
+        return INVALID_TYPE;
+    }
+
     u32 type = written_or_inferred(found->ast_node, scope, found->type, refers);
 
     // and what it is given is an element -- '__e0[1]', a field of the tuple
@@ -594,6 +605,141 @@ u32 TypeCollector::type_of(u32 candidate, u32 scope, bool given) {
     }
 
     return type;
+}
+
+bool TypeCollector::names_a_variant(u32 binding, u32 scope) {
+    AstQuery query;
+
+    query.set_module(module);
+
+    u32 given = typer.type_of(index, scope,
+                              query.get_binding_expression(binding),
+                              INVALID_TYPE);
+
+    if (given == INVALID_TYPE) {
+        return false;
+    }
+
+    Type* entry = module->get_types()->get_type(
+        module->get_types()->value_of(given));
+
+    if (entry->kind != TYPE_NAMED) {
+        return false;
+    }
+
+    // only an enum declares a variant, so the body of whatever the element
+    // names is asked for one and that is the whole test
+    Module* holder = compilation->get_module(entry->module);
+    SymbolTable* table = holder->get_symbols();
+    u32 body = table->scope_owned_by(
+        table->get_candidate(entry->subject)->ast_node);
+    std::string name = std::string(module->get_token_value(
+        module->get_ast()->get_node(name_node_of(binding))->get_token()));
+    u32 interned = holder->get_strings()->find(
+        hash_name(name), name);
+
+    if (body == 0 || interned == INVALID_STRING) {
+        return false;
+    }
+
+    u32 symbol = table->find(body, interned);
+
+    return symbol != 0
+        && (SymbolKind) table->get_candidate(
+               table->get_symbol(symbol)->candidates)->kind == SYMBOL_VARIANT;
+}
+
+// The sugar pass wrote the case as
+//
+//     if not __m and <tests>:
+//         __m = true
+//         let none = __sw[1]          <- this one
+//         <the rest of the case>
+//
+// and this makes it
+//
+//         __m = true
+//         switch __sw[1]:
+//             case None:
+//                 <the rest of the case>
+//             default:
+//                 __m = false
+//
+// in place, keeping the node: the statements after it move into the case
+// with their scopes as they were, so what they resolve is unchanged
+void TypeCollector::match_the_variant(u32 binding, u32 scope) {
+    Ast* ast = module->get_ast();
+    AstQuery query;
+    AstBuilder make;
+
+    query.set_module(module);
+    make.set_ast(ast);
+
+    u32 block = module->get_symbols()->get_scope(scope)->owner;
+    u32 statement = parent_of(block, binding);
+
+    if (statement == 0) {
+        return;
+    }
+
+    u32 like = ast->get_node(statement)->get_token();
+    u32 name = ast->get_node(name_node_of(binding))->get_token();
+    u32 element = query.get_binding_expression(binding);
+    u32 rest = ast->get_node(statement)->get_sibling();
+    u32 flag = module->flag_of_pattern_name(name);
+
+    u32 hit = make.make_case(
+        module->add_synthetic_token(TK_CASE, "case", like));
+    u32 inside = make.make_block();
+    u32 miss = make.make_default(
+        module->add_synthetic_token(TK_DEFAULT, "default", like));
+    u32 lowered = make.make_block();
+    u32 down = make.make_binary_operator(
+        AST_ASSIGNMENT, module->add_synthetic_token(TK_ASSIGNMENT, "=", like),
+        make.make_identifier(flag),
+        make.make_literal(AST_FALSE,
+                          module->add_synthetic_token(TK_FALSE, "false", like)));
+    u32 variant = make.make_identifier(name);
+
+    ast->get_node(inside)->set_children(rest);
+    make.add_child(hit, make.add_child(hit, 0, variant), inside);
+    make.add_child(lowered, 0, down);
+    make.add_child(miss, 0, lowered);
+    ast->get_node(element)->set_sibling(0);
+
+    // and the 'let' becomes the switch, keeping its place in the block
+    u32 token = module->add_synthetic_token(TK_SWITCH, "switch", like);
+    AstNode* rewritten = ast->get_node(statement);
+
+    rewritten->set_kind(AST_SWITCH);
+    rewritten->set_token(token);
+    rewritten->set_children(0);
+    rewritten->set_sibling(0);
+
+    u32 tail = make.add_child(statement, 0, element);
+
+    tail = make.add_child(statement, tail, hit);
+    make.add_child(statement, tail, miss);
+}
+
+// the node that holds this one, searched from 'root' down
+u32 TypeCollector::parent_of(u32 root, u32 node) {
+    Ast* ast = module->get_ast();
+
+    for (u32 child = ast->get_node(root)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling()) {
+        if (child == node) {
+            return root;
+        }
+
+        u32 found = parent_of(child, node);
+
+        if (found != 0) {
+            return found;
+        }
+    }
+
+    return 0;
 }
 
 // What a variant carries, flattened: a tuple payload is its elements and
@@ -904,6 +1050,12 @@ u32 TypeCollector::written_or_inferred(u32 node, u32 scope, u32 written,
     // so what is left here is two real types, and record 0018's list is what
     // says whether one may be given to the other -- the same list a call
     // asks, which is the point of it living in one place
+    // record 0068: 'let x : i32& = 2' refers to a 2 of its own, which lives
+    // as long as the block does
+    if (given != INVALID_TYPE && coercion.fits(index, given, written)) {
+        typer.given_to(expression, written);
+    }
+
     if (given != INVALID_TYPE && !coercion.fits(index, given, written)) {
         Token& token = module->get_tokens()->get_token(
             module->get_ast()->get_node(expression)->get_token());

@@ -1,0 +1,24 @@
+# Item 6 of record 0067: a tuple literal written as an argument is asked to be
+# the parameter element by element, and refused when it cannot. A number given
+# to a reference is not one of them: record 0068 holds it in a temporary.
+
+def bump : void
+    @p : (i32&, i32&)
+    p[1] += 1
+
+def small : void
+    @p : (u8, i32)
+    pass
+
+def main : i32
+    let a = 1
+    let f = bump
+
+    # refused: 300 is not a u8, the shape has another length, a float is not
+    # an i32 even held in a temporary, and a bool is not one either
+    small((300, 1))
+    small((1, 2, 3))
+    bump((a, 1.5))
+    f((a, true))
+
+    return 0

@@ -282,7 +282,8 @@ written as another operator.
 
 Not built, and not by this amendment: an assignment has **no type** as a value,
 so `let g = (f //= 2)` is *'g' has no type the emitter can write* -- and so is
-`let g = (f = 2)`. `~=` is still undecided.
+`let g = (f = 2)`. `~=` was removed by record
+[0069](0069-tilde-equal-is-not-an-operator.md) (2026-10-07).
 
 ## What is not decided here
 

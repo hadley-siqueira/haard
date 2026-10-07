@@ -54,6 +54,7 @@ Emitter::Emitter() {
     needs_floor_division = false;
     needs_floor_division_floating = false;
     needs_move_tag = false;
+    needs_abort = false;
     self = "this";
     method_holder = 0;
     returning = INVALID_TYPE;
@@ -120,6 +121,7 @@ bool Emitter::emit(std::ostream& stream) {
     tuples_writing.clear();
     compound_helpers.clear();
     needs_move_tag = false;
+    needs_abort = false;
     self = "this";
     method_holder = 0;
     returning = INVALID_TYPE;
@@ -183,7 +185,8 @@ bool Emitter::emit(std::ostream& stream) {
     // constants: what calls a function value and what a closure captures
     // needs only the types, and a closure's body may name a constant
     // the tag a move 'init' is told apart by, when the program wrote one
-    out << forward << (needs_move_tag ? "struct __haard_move {};\n\n" : "")
+    out << forward << (needs_abort ? "#include <cstdlib>\n\n" : "")
+        << (needs_move_tag ? "struct __haard_move {};\n\n" : "")
         << functions.str() << head << callables.str()
         << emit_symbol_table() << emit_arithmetic_helpers() << constants.str()
         << closure_bodies.str() << body;
@@ -1933,7 +1936,7 @@ void Emitter::emit_function_body(u32 module_index, u32 node, u32 holder) {
     out << "}\n\n";
 }
 
-// The floor of Haard's input and output: nine functions whose bodies this
+// The floor of Haard's input and output: ten functions whose bodies this
 // writes, because nothing in the language can reach a C library.
 //
 // It is by NAME and inside the module named 'std.low_io', which is the
@@ -1955,7 +1958,7 @@ void Emitter::emit_function_body(u32 module_index, u32 node, u32 holder) {
 // primitives covers the console and a file alike -- which is what lets a
 // 'File' written in Haard print to the terminal.
 //
-// One character at a time is deliberate. Everything above these nine --
+// One character at a time is deliberate. Everything above these ten --
 // printing a line, a number, a whole file -- is written in Haard, which is the
 // point of stopping here.
 std::string Emitter::native_body(u32 module_index, u32 node) {
@@ -2014,6 +2017,13 @@ std::string Emitter::native_body(u32 module_index, u32 node) {
 
     if (name == "__io_stderr") {
         return "return (int8_t*) stderr;";
+    }
+
+    // the one way a program stops on its own, Hadley 2026-10-07: what was
+    // printed goes out first, since abort() flushes nothing
+    if (name == "__abort") {
+        needs_abort = true;
+        return "fflush(stdout); fflush(stderr); abort();";
     }
 
     return "";
@@ -2908,6 +2918,8 @@ void Emitter::emit_binding(u32 module_index, u32 node) {
             return;
         }
 
+        hoist_temporaries(module_index, expression);
+
         // record 0021's dynamic array, which is a construction and not an
         // assignment: it needs two lines and the second one names the first.
         //
@@ -3024,6 +3036,14 @@ static std::string cpp_escapes(const std::string& body, char quote) {
 
 void Emitter::emit_expression(u32 module, u32 node) {
     if (node == 0) {
+        return;
+    }
+
+    // record 0068: a temporary a binding hoisted is read by its name
+    auto held = hoisted.find(std::make_pair(module, node));
+
+    if (held != hoisted.end()) {
+        out << held->second;
         return;
     }
 
@@ -3384,11 +3404,9 @@ void Emitter::emit_expression(u32 module, u32 node) {
                          ->get_sibling(),
                  at++) {
             out << (at > 0 ? ", " : "");
-
-            if (at >= elements.size()
-                || !emit_conversion(module, module, elements[at], child)) {
-                emit_expression(module, child);
-            }
+            emit_given(module, module,
+                       at < elements.size() ? elements[at] : INVALID_TYPE,
+                       child);
         }
 
         out << "}";
@@ -3784,9 +3802,7 @@ bool Emitter::emit_operator(u32 module_index, u32 node) {
     if (right != 0) {
         u32 wanted = raw_parameter_of(holder, candidate, 0);
 
-        if (!emit_conversion(module_index, holder, wanted, right)) {
-            emit_expression(module_index, right);
-        }
+        emit_given(module_index, holder, wanted, right);
     }
 
     out << ")";
@@ -3865,10 +3881,40 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
         return;
     }
 
+    u32 right = child_of(module, node, 1);
+    Resolution* named = compilation->get_module(module)->get_resolutions()
+                            ->get(right);
+    u32 as_value = type_at(module, node);
+
+    // Record 0071: a method named where a value goes, bound to the left. The
+    // value is record 0058's pair, holding what the method is called on --
+    // its address, or the pointer it already is -- and an adapter that calls
+    // the method through it, virtually, as any call of a method is
+    if (as_value != INVALID_TYPE
+        && compilation->get_module(module)->get_types()->get_type(as_value)
+                   ->kind == TYPE_FUNCTION
+        && named->candidate != 0
+        && (SymbolKind) compilation->get_module(named->module)->get_symbols()
+                   ->get_candidate(named->candidate)->kind
+               == SYMBOL_FUNCTION) {
+        u32 held = type_at(module, left);
+        TypeTable* types = compilation->get_module(module)->get_types();
+        bool pointer = arrow || (held != INVALID_TYPE
+                                 && types->get_type(types->value_of(held))
+                                            ->kind == TYPE_POINTER);
+
+        out << function_type_name(module, as_value) << "{(void *) "
+            << (pointer ? "" : "&");
+        emit_operand(module, left, 3);
+        out << ", &"
+            << bound_adapter_of(named->module, named->candidate, module,
+                                as_value)
+            << "}";
+        return;
+    }
+
     emit_operand(module, left, 2);
     out << (arrow ? "->" : ".");
-
-    u32 right = child_of(module, node, 1);
 
     // record 0055's generic method: the type arguments were the type phase's
     // business and what is left is the name they picked a clone with, which
@@ -4009,8 +4055,14 @@ void Emitter::emit_identifier(u32 module_index, u32 node) {
         && (SymbolKind) compilation->get_module(found->module)->get_symbols()
                    ->get_candidate(found->candidate)->kind
                == SYMBOL_FUNCTION) {
+        // record 0071: a method named bare inside its class is bound to
+        // the object the method around it was called on
         if (holder_of(found->module, found->candidate) != 0) {
-            fail("a method cannot be given as a value yet");
+            out << function_type_name(module_index, as_value) << "{(void *) "
+                << self << ", &"
+                << bound_adapter_of(found->module, found->candidate,
+                                    module_index, as_value)
+                << "}";
             return;
         }
 
@@ -4160,6 +4212,46 @@ std::string Emitter::adapter_of(u32 module_index, u32 candidate,
 
     callables << ") {\n"
               << "    return " << target << "(" << passes << ");\n"
+              << "}\n\n";
+
+    return name;
+}
+
+// Record 0071: what a method bound to an object is called through. 'self' is
+// what the pair holds, the object's address, and the call goes through its
+// class's pointer so an override is the one reached
+std::string Emitter::bound_adapter_of(u32 module_index, u32 candidate,
+                                      u32 value_module, u32 type) {
+    u32 holder = compilation->get_module(module_index)->get_symbols()
+                     ->candidate_of(holder_of(module_index, candidate));
+    std::string owner = name_of(module_index, holder);
+    std::string target = name_of(module_index, candidate);
+    std::string name = owner + "_" + target + "_bound";
+
+    if (!adapters.insert(name).second) {
+        return name;
+    }
+
+    TypeTable* types = compilation->get_module(value_module)->get_types();
+    std::vector<u32> parameters = types->get_arguments(type);
+    u32 result = parameters.back();
+    std::string passes;
+
+    parameters.pop_back();
+
+    callables << "static " << declare(value_module, result, "") << " " << name
+              << "(void *self";
+
+    for (u32 i = 0; i < parameters.size(); i++) {
+        std::string argument = "a" + std::to_string(i);
+
+        callables << ", " << declare(value_module, parameters[i], argument);
+        passes += (i > 0 ? ", " : "") + argument;
+    }
+
+    callables << ") {\n"
+              << "    return ((" << owner << " *) self)->" << target << "("
+              << passes << ");\n"
               << "}\n\n";
 
     return name;
@@ -4563,12 +4655,8 @@ void Emitter::emit_call(u32 module_index, u32 node) {
              argument = compilation->get_module(module_index)->get_ast()
                             ->get_node(argument)->get_sibling()) {
             out << ", ";
-
-            if (!emit_conversion(module_index, module_index,
-                                 parameters[written], argument)) {
-                emit_expression(module_index, argument);
-            }
-
+            emit_given(module_index, module_index, parameters[written],
+                       argument);
             written++;
         }
 
@@ -4599,6 +4687,69 @@ void Emitter::emit_call(u32 module_index, u32 node) {
                         candidate);
 }
 
+void Emitter::emit_given(u32 module_index, u32 holder, u32 wanted,
+                         u32 node) {
+    Module* module = compilation->get_module(module_index);
+
+    // already a local of its own, built and converted when it was hoisted
+    if (hoisted.count(std::make_pair(module_index, node)) > 0) {
+        emit_expression(module_index, node);
+        return;
+    }
+
+    if (emit_conversion(module_index, holder, wanted, node)) {
+        return;
+    }
+
+    if (!module->held_in_temporary(node)) {
+        emit_expression(module_index, node);
+        return;
+    }
+
+    // a temporary is an rvalue and C++ binds one only to a 'const T&', so it
+    // is bound to that and the 'const' taken off: the reference is a plain
+    // one, as Haard's is
+    std::string held = type_name(
+        module_index, module->get_types()->value_of(type_at(module_index, node)));
+
+    out << "const_cast<" << held << "&>(static_cast<const " << held << "&>(";
+    emit_expression(module_index, node);
+    out << "))";
+}
+
+// A binding is the one place a temporary has to outlive its statement: 'let
+// x : i32& = 2' goes on referring to its 2. So each is written as a local of
+// its own first -- the elements of a tuple before the tuple, since the tuple
+// is built out of them -- and the binding then names it
+void Emitter::hoist_temporaries(u32 module_index, u32 node) {
+    Module* module = compilation->get_module(module_index);
+
+    if (node == 0) {
+        return;
+    }
+
+    if (kind_of(module_index, node) == AST_TUPLE) {
+        for (u32 child = child_of(module_index, node, 0); child != 0;
+             child = module->get_ast()->get_node(child)->get_sibling()) {
+            hoist_temporaries(module_index, child);
+        }
+    }
+
+    if (!module->held_in_temporary(node)) {
+        return;
+    }
+
+    std::string name = "__rt" + std::to_string(constant_count++);
+    u32 type = module->get_types()->value_of(type_at(module_index, node));
+
+    out << std::string(indentation * 4, ' ')
+        << declare(module_index, type, name) << "(";
+    emit_expression(module_index, node);
+    out << ");\n";
+
+    hoisted[std::make_pair(module_index, node)] = name;
+}
+
 void Emitter::emit_call_arguments(u32 module_index, u32 arguments, u32 holder,
                                   u32 candidate) {
     Module* module = compilation->get_module(module_index);
@@ -4617,10 +4768,7 @@ void Emitter::emit_call_arguments(u32 module_index, u32 arguments, u32 holder,
                          ? INVALID_TYPE
                          : raw_parameter_of(holder, candidate, written);
 
-        if (!emit_conversion(module_index, holder, wanted, argument)) {
-            emit_expression(module_index, argument);
-        }
-
+        emit_given(module_index, holder, wanted, argument);
         written++;
     }
 

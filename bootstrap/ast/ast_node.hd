@@ -62,7 +62,6 @@ enum AstNodeKind:
     BitwiseAndAssignment
     BitwiseOrAssignment
     BitwiseXorAssignment
-    BitwiseNotAssignment
     BitwiseLeftShiftAssignment
     BitwiseRightShiftAssignment
     BitwiseUnsignedRightShiftAssignment

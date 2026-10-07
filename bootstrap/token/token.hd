@@ -80,7 +80,6 @@ enum TokenKind:
     BitwiseAndAssignment
     BitwiseOrAssignment
     BitwiseXorAssignment
-    BitwiseNotAssignment
     BitwiseLeftShiftAssignment
     BitwiseRightShiftAssignment
     BitwiseUnsignedRightShiftAssignment
@@ -357,9 +356,6 @@ def name_of : char*
 
         case BitwiseXorAssignment:
             return "TK_BITWISE_XOR_ASSIGNMENT"
-
-        case BitwiseNotAssignment:
-            return "TK_BITWISE_NOT_ASSIGNMENT"
 
         case BitwiseLeftShiftAssignment:
             return "TK_BITWISE_LEFT_SHIFT_ASSIGNMENT"

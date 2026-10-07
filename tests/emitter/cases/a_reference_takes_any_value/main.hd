@@ -1,0 +1,94 @@
+# Record 0068, Hadley 2026-10-07: a 'T&' takes any value. What is not a place
+# is held in a temporary the reference refers to -- to the end of the
+# statement inside an expression, to the end of the block for a binding. The
+# exit status adds up one bit per thing that held.
+
+def inc : i32
+    @x : i32&
+    x += 1
+    return x
+
+def give : i32
+    return 5
+
+def bump : void
+    @p : (i32&, i32&)
+    p[0] += 1
+    p[1] += 1
+
+# a number reaches the one taking a value: a temporary costs a step
+def take : i32
+    @x : i32
+    return 1
+
+def take : i32
+    @x : i32&
+    return 2
+
+class Money:
+    cents : i32
+
+    def init : void
+        @c : i32
+        cents = c
+
+    def operator+ : Money
+        @extra : i32&
+        return Money(cents + extra)
+
+class Box:
+    held : i32
+
+    def init : void
+        @n : i32&
+        n += 1
+        held = n
+
+def main : i32
+    let result = 0
+    let a = 1
+
+    # a number and a call giving back a value, each in a temporary
+    if inc(2) == 3:
+        result += 1
+
+    if inc(give()) == 6:
+        result += 2
+
+    # an element of a tuple: a is referred to, the 2 is a temporary
+    bump((a, 2))
+
+    if a == 2:
+        result += 4
+
+    if take(2) == 1:
+        result += 8
+
+    # a binding keeps its temporary until the block ends
+    let x : i32& = 10
+    let p : (i32&, i32&) = (a, 20)
+
+    x += 1
+    p[1] += 1
+    p[0] += 1
+
+    if x == 11 and p[1] == 21 and a == 3:
+        result += 16
+
+    # a value of a function type, an operator and an 'init' ask the same
+    let f = inc
+
+    if f(7) == 8:
+        result += 32
+
+    let sum = Money(1) + give()
+
+    if sum.cents == 6:
+        result += 64
+
+    let box = Box(41)
+
+    if box.held == 42:
+        result += 128
+
+    return result

@@ -9,7 +9,6 @@ def main : i32
     a &= b
     a |= b
     a ^= b
-    a ~= b
     a <<= b
     a >>= b
     a >>>= b
@@ -49,9 +48,6 @@ module
         identifier 'a'
         identifier 'b'
       bitwise_xor_assignment '^='
-        identifier 'a'
-        identifier 'b'
-      bitwise_not_assignment '~='
         identifier 'a'
         identifier 'b'
       left_shift_assignment '<<='

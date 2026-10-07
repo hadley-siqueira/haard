@@ -95,12 +95,24 @@ And stage 7: `switch` over a tuple, a chain of `if`s on a flag with a `switch`
 of its own around a variant. The record is built; what it leaves open is
 listed at its end.
 
+**Later the same day, 2026-10-07**, five more records, all built:
+a tuple literal written as an argument takes its shape from the parameter,
+as a number does (record 0067, item 6) -- and with it a bare variant of a
+generic enum, `take(None)`, waits for its parameter, and a generic is solved
+through a tuple; **a `T&` takes any value** (record 0068), a temporary holding
+what is not a place, where before `inc(give())` passed `hdc` and g++ refused
+it; **`~=` is not an operator** (0069); **`Option.unwrap` stops the program**
+with a message (0070), through a tenth native, `std.low_io.__abort`; **a
+method as a value is bound to its object** (0071), and an overloaded one is
+chosen by the type expected; and **a bare name in a tuple pattern is the
+variant** its element's enum declares, or a capture (0072).
+
 **`Option<T>` is in the library**, since 2026-09-30 -- `std.option`, with
 `is_some`, `is_none`, `unwrap_or` and `map`, as methods: an enum may write
 methods now (record 0043, amended), and one that does is emitted as a struct.
 Writing it found that no method of an enum had ever been emitted, and that a
-`switch` counted methods as variants. There is no `unwrap` -- nothing in the
-language can stop a program yet.
+`switch` counted methods as variants. `unwrap` came on 2026-10-07 (record
+0070).
 
 **A move is written**, since 2026-09-30 -- record 0066, Hadley. `T&&` parses,
 types and emits; a class is moved by `init(other : T&&)` beside its copy
@@ -1388,11 +1400,11 @@ in the meantime.
       (the 24 wrong programs became record 0063). Work with no decision:
       ~~`union`~~ (record 0064) and ~~`sizeof(T)`~~ (**done 2026-09-29**);
       then `//=` and `>>>=` (*cannot be emitted yet*), a generic enum's
-      variant (`Option<i32>.Some(3)`, written or inferred), and a method as a
-      value (`let f = c.get`: `hdc` accepts, g++ refuses). Waiting on
+      variant (`Option<i32>.Some(3)`, written or inferred), and ~~a method as
+      a value~~ (record 0071, 2026-10-07). Waiting on
       Hadley: `T&&` (what does it do -- move?), tuples (how is one
-      represented, how is it read, does `for k, v in` take one apart), `~=`
-      (proposed: `x = x & ~y`, Go's `&^=`). Small questions: `"\${"` works by
+      represented, how is it read, does `for k, v in` take one apart), ~~`~=`~~
+      (removed, record 0069). Small questions: `"\${"` works by
       a C++ accident, `Array` has no `pop`, `<...>` on a call to a
       non-generic is ignored in silence. **Then the IR**: re-read record
       0025's signals first.

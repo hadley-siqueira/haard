@@ -352,9 +352,6 @@ def name_of : char*
         case IntegerDivisionAssignment:
             return "integer_division_assignment"
 
-        case BitwiseNotAssignment:
-            return "bitwise_not_assignment"
-
         case ModuloAssignment:
             return "modulo_assignment"
 
@@ -638,7 +635,6 @@ def carries_a_token : bool
         case Division:
         case IntegerDivision:
         case IntegerDivisionAssignment:
-        case BitwiseNotAssignment:
         case Modulo:
         case Assignment:
         case PlusAssignment:

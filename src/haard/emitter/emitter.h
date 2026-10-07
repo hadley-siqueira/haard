@@ -237,6 +237,17 @@ namespace haard {
             void emit_unary(u32 module, u32 node, const std::string& oper);
             void emit_postfix(u32 module, u32 node, const std::string& oper);
             void emit_call(u32 module, u32 node);
+            // Record 0068: one value given to something of type 'wanted' --
+            // converted when it has to be, and held in a temporary when a
+            // 'T&' was given what is not a place. Inside an expression C++'s
+            // own temporary lives to the end of the statement, which is as
+            // long as a call needs; a binding hoists it first, below
+            void emit_given(u32 module, u32 holder, u32 wanted, u32 node);
+
+            // a binding's temporaries, written as locals before it so they
+            // live as long as the block, and read back by emit_expression
+            void hoist_temporaries(u32 module, u32 node);
+
             void emit_call_arguments(u32 module, u32 arguments, u32 holder,
                                      u32 candidate);
             u32 second_child_of(u32 module, u32 node);
@@ -498,6 +509,10 @@ namespace haard {
 
             // a 'def' given where an 'A -> R' is expected: its pair has no
             // environment, and its function is an adapter that drops one
+            // record 0071: the adapter a method bound to an object is called
+            // through
+            std::string bound_adapter_of(u32 module, u32 candidate,
+                                         u32 value_module, u32 type);
             std::string adapter_of(u32 module, u32 candidate, u32 value_module,
                                    u32 type);
 
@@ -543,8 +558,16 @@ namespace haard {
             // declared -- and a program without one carries none of it
             bool needs_move_tag;
 
+            // whether the program reached 'std.low_io's '__abort', whose body
+            // is C's abort() and so needs <cstdlib> -- included only then, so
+            // every other program's head stays the three it always had
+            bool needs_abort;
+
             std::ostringstream constants;
             u32 constant_count;
+
+            // record 0068: the name each hoisted temporary was written under
+            std::map<std::pair<u32, u32>, std::string> hoisted;
 
             // record 0058's three buffers: the function types, what calls
             // and captures (above the constants), and the closures' bodies

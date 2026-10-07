@@ -82,6 +82,9 @@ namespace haard {
 
             int match(u32 caller, const Argument& argument, u32 parameter);
 
+            // a tuple literal against one parameter, element by element
+            int tuple_match(u32 caller, u32 node, u32 parameter);
+
             // whether this argument is a literal the source WROTE, which is
             // what record 0037's rule turns on
             bool is_a_written_literal(u32 caller, u32 node);

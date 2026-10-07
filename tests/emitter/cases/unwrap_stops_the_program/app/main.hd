@@ -1,0 +1,21 @@
+# Hadley, 2026-10-07: 'unwrap' gives the value of a Some and stops the program
+# on a None, with a message on the error stream. It is the first way a Haard
+# program stops on its own -- std.low_io's '__abort', which is C's abort(), so
+# the exit status is 134 and nothing after the call runs. What was printed
+# before comes out before the message.
+import std.option
+import std.low_io
+
+def main : i32
+    let some : Option<i32> = Some(4)
+
+    if some.unwrap() != 4:
+        return 1
+
+    __io_write(__io_stdout(), 'k')
+    __io_write(__io_stdout(), '\n')
+
+    let none : Option<i32> = None
+    let never = none.unwrap()
+
+    return 2

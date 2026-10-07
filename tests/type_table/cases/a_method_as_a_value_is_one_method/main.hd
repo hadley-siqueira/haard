@@ -1,0 +1,32 @@
+# Record 0071: a method given as a value is one method, chosen by the type
+# written where it goes when the name has several, and it is bound to
+# something that outlives the statement.
+
+class Counter:
+    total : i32
+
+    def add : i32
+        @n : i32
+        return n
+
+    def add : i32
+        @n : i32
+        @m : i32
+        return n
+
+    def get : i32
+        return total
+
+def make : Counter
+    return Counter()
+
+def main : i32
+    let c = Counter()
+
+    # refused: nothing says which 'add', no 'add' is a (bool) -> i32, and a
+    # method of a value with no name
+    let f = c.add
+    let g : (bool) -> i32 = c.add
+    let h = make().get
+
+    return 0

@@ -1,5 +1,10 @@
+error: nothing may follow a statement on its line
+ --> cases/tilde_equal_is_not_an_operator.hd:2:7
+  |
+2 |     a ~= b
+  |       ^
 def main : i32
-    a ~= b
+    a
 --- tree
 module
   function 'def'
@@ -8,7 +13,5 @@ module
     function_return_type
       builtin_type 'i32'
     block
-      bitwise_not_assignment '~='
-        identifier 'a'
-        identifier 'b'
+      identifier 'a'
 --- round trip: ok

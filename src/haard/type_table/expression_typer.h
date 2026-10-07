@@ -47,6 +47,11 @@ namespace haard {
             // '&' takes the address of and what '++' changes
             bool is_place(u32 node);
 
+            // Record 0068: a value given to a 'T&' that is not a place is
+            // marked to be held in a temporary. Public because a binding with
+            // its type written is the collector's, not this typer's
+            void given_to(u32 node, u32 wanted);
+
             // Record 0067: a tuple with every reference in it, at any depth,
             // read as what it names -- what a tuple of references compares
             // with and is assigned from
@@ -213,6 +218,30 @@ namespace haard {
             // literal for the emitter to read
             u32 constructed_by_one(u32 node, u32 wanted, u32 own);
             u32 tuple(u32 scope, u32 node, u32 expected);
+
+            // Item 6 of record 0067: a tuple literal written as an argument.
+            // The elements with a type of their own are typed before any
+            // candidate is tried and the rest wait for the parameter; the
+            // tuple itself is built once one wins, and checked against it
+            u32 tuple_argument(u32 scope, u32 node);
+
+            // 'None' and 'Option.None' given to a parameter, written with
+            // nothing that says the generic enum's arguments: marked to wait
+            // for the parameter the way a number does, rather than typed
+            // alone and told nothing says what 'T' is
+            bool waits_as_a_variant(u32 scope, u32 node);
+
+            // Record 0071: a function named where a value goes has one type,
+            // so a name of several is chosen by the type expected there --
+            // or reported at 'at', and false. Several that are one method
+            // and the base's it overrides are one, the most derived
+            bool chosen_by_expected(u32 at, std::vector<Candidacy>& found,
+                                    u32 expected);
+
+            // and such a name written as an argument, marked to wait for the
+            // parameter that chooses: a bare name or a member
+            bool waits_as_a_function(u32 scope, u32 node);
+            u32 tuple_given(u32 scope, u32 node, u32 parameter);
 
             // 't[0]', the field of a tuple: the position is a written number
             // and within the tuple, or it is reported (record 0067)

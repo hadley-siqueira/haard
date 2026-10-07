@@ -99,6 +99,39 @@ namespace haard {
             void bind_by_reference(u32 name_token);
             bool binds_by_reference(u32 name_token);
 
+            // Record 0068: a value that is not a place, given to a 'T&', is
+            // held in a temporary the emitter writes. The type phase is what
+            // knows a place, so it marks the node and the emitter reads it
+            void hold_in_temporary(u32 node);
+            bool held_in_temporary(u32 node);
+
+            // a variant of a generic enum written with nothing that says its
+            // arguments -- 'None', 'Option.None' -- given to a parameter,
+            // which is what says them. The type phase marks it with the
+            // generic it belongs to, as (module, candidate), and each
+            // candidate of the call asks whether its parameter is a clone of
+            // that one. (0, 0) for a node that is not one
+            void wait_as_variant(u32 node, u32 owner, u32 enumeration);
+            std::pair<u32, u32> waiting_variant(u32 node);
+
+            // record 0071: a name of several functions given to a parameter,
+            // which is what chooses one -- so it waits, as a closure does
+            void wait_as_function(u32 node);
+            bool waits_as_function(u32 node);
+
+            // Record 0072: a bare name in a tuple pattern, by its token. The
+            // sugar pass writes it as a capture, and the type phase -- which
+            // knows the element's type -- makes it the variant it names when
+            // that element's enum has one by that name. The capture's
+            // candidate is then out of view, so the name finds the variant
+            // the token of the flag its case raises comes with it, which is
+            // what a variant that does not match puts back down
+            void mark_pattern_name(u32 name_token, u32 flag_token);
+            bool is_pattern_name(u32 name_token);
+            u32 flag_of_pattern_name(u32 name_token);
+            void unname(u32 candidate);
+            bool is_unnamed(u32 candidate);
+
             // how many elements a 'for' takes apart, by its 'for' token: what
             // tells it to walk 'items()' when 'iterator()' gives no such tuple
             void set_pattern_length(u32 for_token, u32 length);
@@ -162,6 +195,11 @@ namespace haard {
 
         private:
             std::set<u32> by_reference;
+            std::set<u32> temporaries;
+            std::map<u32, std::pair<u32, u32>> waiting_variants;
+            std::set<u32> waiting_functions;
+            std::map<u32, u32> pattern_names;
+            std::set<u32> unnamed;
             std::map<u32, u32> pattern_lengths;
             std::string name;
             u32 root;

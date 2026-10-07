@@ -1,0 +1,41 @@
+# A variant of a generic enum given to a parameter is asked by the parameter.
+# Two candidates that both take a clone of it are an ambiguous call, and one
+# that takes something else does not take it at all. A generic is solved
+# through a tuple only of its own length.
+enum Option<T>:
+    Some : T
+    None
+
+def take : i32
+    @o : Option<i32>
+    return 1
+
+def take : i32
+    @o : Option<bool>
+    return 2
+
+enum Maybe<T>:
+    Just : T
+    Nothing
+
+def other : i32
+    @m : Maybe<i32>
+    return 3
+
+def first<T> : T
+    @p : (T, i32)
+    return p[0]
+
+def count : i32
+    @n : i32
+    return n
+
+def main : i32
+    # refused: either 'take' could be meant, an i32 is not an Option and
+    # neither is a Maybe, and a tuple of three is not one of two
+    take(None)
+    count(Option.None)
+    other(Option.None)
+    first((1, 2, 3))
+
+    return 0

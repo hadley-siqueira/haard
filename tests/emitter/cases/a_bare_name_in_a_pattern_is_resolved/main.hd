@@ -1,0 +1,128 @@
+# Record 0072, Hadley 2026-10-07: a bare name in a tuple pattern is a variant
+# when the enum of its element declares one by that name, and a capture
+# otherwise -- so 'case (n, None)' matches a None and binds n. Until then it
+# always captured, and 'None' there was a name holding anything. The exit
+# status adds up one bit per thing that held.
+
+enum Maybe<T>:
+    Just : T
+    Nothing
+
+enum Light:
+    Red
+    Green
+    Off
+
+enum Power:
+    On
+    Off
+
+def describe : i32
+    @t : (i32, Maybe<i32>)
+
+    switch t:
+        case (0, Nothing):
+            return 1
+
+        # Nothing is the variant again inside the body
+        case (n, Nothing):
+            return n * 10 + count(Nothing)
+
+        case (n, Just(v)):
+            return n + v
+
+    return -1
+
+def count : i32
+    @m : Maybe<i32>
+
+    switch m:
+        case Just(v):
+            return v
+
+        case Nothing:
+            return 0
+
+    return 0
+
+# 'Off' is a variant of Light and of Power: the element says which
+def light : i32
+    @t : (Light, Power)
+
+    switch t:
+        case (Off, Off):
+            return 1
+
+        case (Red, Off):
+            return 2
+
+        case (_, On):
+            return 3
+
+        case (other, _):
+            return 4
+
+    return 0
+
+# 'Red' over an i32 element names no variant of it, so it captures
+def shadow : i32
+    @t : (i32, i32)
+
+    switch t:
+        case (Red, 0):
+            return Red
+
+        default:
+            return -1
+
+    return -2
+
+def nested : i32
+    @t : (i32, (Light, i32))
+
+    switch t:
+        case (a, (Green, b)):
+            return a + b
+
+        default:
+            return 0
+
+    return -1
+
+def first_or<T> : T
+    @t : (Maybe<T>, T)
+
+    switch t:
+        case (Nothing, fallback):
+            return fallback
+
+        case (Just(v), _):
+            return v
+
+    return t[1]
+
+def main : i32
+    let result = 0
+
+    if (describe((0, Maybe<i32>.Nothing)) == 1
+        and describe((3, Maybe<i32>.Nothing)) == 30
+        and describe((3, Maybe<i32>.Just(4))) == 7):
+        result += 1
+
+    if (light((Light.Off, Power.Off)) == 1
+        and light((Light.Red, Power.Off)) == 2
+        and light((Light.Off, Power.On)) == 3
+        and light((Light.Green, Power.Off)) == 4):
+        result += 2
+
+    if shadow((9, 0)) == 9 and shadow((9, 1)) == -1:
+        result += 4
+
+    if nested((1, (Light.Green, 2))) == 3 and nested((1, (Light.Red, 2))) == 0:
+        result += 8
+
+    if (first_or((Maybe<i32>.Nothing, 5)) == 5
+        and first_or((Maybe<i32>.Just(6), 5)) == 6):
+        result += 16
+
+    return result

@@ -702,7 +702,6 @@ class Scanner:
         word("&=", TokenKind.BitwiseAndAssignment)
         word("|=", TokenKind.BitwiseOrAssignment)
         word("^=", TokenKind.BitwiseXorAssignment)
-        word("~=", TokenKind.BitwiseNotAssignment)
         word("<<=", TokenKind.BitwiseLeftShiftAssignment)
         word(">>=", TokenKind.BitwiseRightShiftAssignment)
         word(">>>=", TokenKind.BitwiseUnsignedRightShiftAssignment)

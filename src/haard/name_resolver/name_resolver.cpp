@@ -129,8 +129,25 @@ bool NameResolver::gather_in_module(std::vector<Candidacy>& found, u32 module,
         // a function joins the set and keeps the walk going; anything else
         // shadows what is outside it and the walk stops here
         if (symbol != 0) {
+            size_t before = found.size();
+
             gather(found, module, symbol);
 
+            // record 0072: a tuple pattern's name the type phase found to be
+            // a variant is no name at all, and the search goes on out to it
+            for (size_t i = found.size(); i > before; i--) {
+                if (found[i - 1].module == module
+                    && importer->is_unnamed(found[i - 1].candidate)) {
+                    found.erase(found.begin() + (i - 1));
+                }
+            }
+
+            if (found.size() == before) {
+                symbol = 0;
+            }
+        }
+
+        if (symbol != 0) {
             if (!only_functions(module, symbol)) {
                 return true;
             }

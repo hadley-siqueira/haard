@@ -1,5 +1,6 @@
 #include <haard/string_table/string_table.h>
 #include <haard/type_table/expression_typer.h>
+#include <set>
 #include <haard/type_table/type_collector.h>
 
 using namespace haard;
@@ -293,6 +294,11 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
         u32 own = module->get_types()->pointer(
             module->get_types()->builtin(BUILTIN_CHAR));
 
+        // record 0068: a 'String&' takes a String held in a temporary
+        if (expected != INVALID_TYPE) {
+            expected = module->get_types()->value_of(expected);
+        }
+
         if (expected == INVALID_TYPE
             || module->get_types()->get_type(expected)->kind != TYPE_NAMED) {
             return own;
@@ -419,8 +425,10 @@ u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right,
 
     for (u32 i = 0; i < arguments.size() && i < chosen.parameters.size(); i++) {
         if (arguments[i].literal) {
-            module->get_resolutions()->set_type(arguments[i].node,
-                                                chosen.parameters[i]);
+            // record 0068: a literal given to a 'T&' is a T in a temporary
+            module->get_resolutions()->set_type(
+                arguments[i].node,
+                module->get_types()->value_of(chosen.parameters[i]));
         }
 
         // Record 0037, and here it is not a nicety: 'binary' types the right
@@ -436,6 +444,8 @@ u32 ExpressionTyper::overloaded(u32 scope, u32 node, u32 left, u32 right,
             type_of(index, scope, arguments[i].node,
                     module->get_types()->value_of(chosen.parameters[i]));
         }
+
+        given_to(arguments[i].node, chosen.parameters[i]);
     }
 
     return chosen.result;
@@ -1036,9 +1046,13 @@ std::vector<Argument> ExpressionTyper::construction_arguments(u32 scope,
         argument.literal = kind == AST_INTEGER_LITERAL
                         || kind == AST_FLOAT_LITERAL;
         argument.node = child;
-        argument.type = argument.literal || kind == AST_CLOSURE
-                            ? INVALID_TYPE
-                            : type_of(index, scope, child, INVALID_TYPE);
+        argument.type = kind == AST_TUPLE
+                            ? tuple_argument(scope, child)
+                            : argument.literal || kind == AST_CLOSURE
+                                      || waits_as_a_variant(scope, child)
+                                      || waits_as_a_function(scope, child)
+                                  ? INVALID_TYPE
+                                  : type_of(index, scope, child, INVALID_TYPE);
 
         arguments.push_back(argument);
     }
@@ -1095,14 +1109,30 @@ void ExpressionTyper::initialisation(u32 scope, u32 node, u32 made,
     for (u32 i = 0; i < arguments.size() && i < chosen.parameters.size();
          i++) {
         if (arguments[i].literal) {
-            module->get_resolutions()->set_type(arguments[i].node,
-                                                chosen.parameters[i]);
+            // record 0068: a literal given to a 'T&' is a T in a temporary
+            module->get_resolutions()->set_type(
+                arguments[i].node,
+                module->get_types()->value_of(chosen.parameters[i]));
         }
 
         // record 0058, as at a call
         if (kind_of(arguments[i].node) == AST_CLOSURE) {
             type_of(index, scope, arguments[i].node, chosen.parameters[i]);
         }
+
+        // and a tuple literal and a variant waiting for its enum, as at a
+        // call
+        if (kind_of(arguments[i].node) == AST_TUPLE) {
+            tuple_given(scope, arguments[i].node, chosen.parameters[i]);
+        }
+
+        if (module->waiting_variant(arguments[i].node).second != 0
+            || module->waits_as_function(arguments[i].node)) {
+            type_of(index, scope, arguments[i].node,
+                    module->get_types()->value_of(chosen.parameters[i]));
+        }
+
+        given_to(arguments[i].node, chosen.parameters[i]);
     }
 }
 
@@ -1414,12 +1444,13 @@ u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {
         // '(i32&, i32&)' refers to x and a, and '(5, 6)' stays two values --
         // which an assignment to such a tuple then writes through, element
         // by element
-        bool refers = at < wanted.size()
-                   && types->get_type(wanted[at])->kind == TYPE_REFERENCE;
-
+        //
+        // Record 0068 since 2026-10-07: what is not a place is referred to
+        // too, in a temporary the emitter writes, so '(x, 2)' given to an
+        // '(i32&, i32&)' refers to x and to a 2 of its own
         if (at < wanted.size() && one != wanted[at]
-            && (!refers || is_place(child))
             && coercion.fits(index, one, wanted[at])) {
+            given_to(child, wanted[at]);
             one = wanted[at];
         }
 
@@ -1427,6 +1458,202 @@ u32 ExpressionTyper::tuple(u32 scope, u32 node, u32 expected) {
     }
 
     return elements.size() == 0 ? INVALID_TYPE : types->tuple(elements);
+}
+
+// Item 6 of record 0067, Hadley 2026-10-07. A tuple literal written as an
+// argument takes its shape from the parameter, as it does from a written type
+// at a binding -- so it cannot be typed before a candidate wins, any more than
+// '200' can. What can be typed is every element with a type of its own, once:
+// a name, a call, a field. What waits for its element is left for the
+// candidates to ask, the way it is left at a call.
+//
+// The answer is the type the tuple has with nothing asked of it, which is what
+// a generic is solved from (record 0059), and INVALID_TYPE when one of its
+// elements has no type alone
+u32 ExpressionTyper::tuple_argument(u32 scope, u32 node) {
+    TypeTable* types = module->get_types();
+    std::vector<u32> elements;
+    bool known = true;
+
+    for (u32 child = first_child(node); child != 0;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        AstNodeKind kind = kind_of(child);
+        u32 one = INVALID_TYPE;
+
+        if (kind == AST_TUPLE) {
+            one = tuple_argument(scope, child);
+        } else if (kind == AST_INTEGER_LITERAL) {
+            one = types->builtin(BUILTIN_I32);
+        } else if (kind == AST_FLOAT_LITERAL) {
+            one = types->builtin(BUILTIN_F64);
+        } else if (!waits_for_its_parameter(child)
+                   && !waits_as_a_variant(scope, child)) {
+            // a copy, as a tuple with nothing asked of it holds
+            one = type_of(index, scope, child, INVALID_TYPE);
+            one = one == INVALID_TYPE ? one : types->value_of(one);
+        }
+
+        known = known && one != INVALID_TYPE;
+        elements.push_back(one);
+    }
+
+    return known && elements.size() > 1 ? types->tuple(elements)
+                                        : INVALID_TYPE;
+}
+
+// Record 0068, Hadley 2026-10-07: a 'T&' takes any value. What is not a place
+// -- a number, a call giving back a value, a tuple written there -- is held in
+// a temporary for the reference to refer to, which the emitter writes: until
+// the end of the statement inside an expression, and until the end of the
+// block for a binding. What the callee writes into it is lost, which is the
+// price, and Haard has no 'const' that would say a parameter is only read
+void ExpressionTyper::given_to(u32 node, u32 wanted) {
+    if (node != 0 && wanted != INVALID_TYPE
+        && module->get_types()->get_type(wanted)->kind == TYPE_REFERENCE
+        && kind_of(node) != AST_MOVE && !is_place(node)) {
+        module->hold_in_temporary(node);
+    }
+}
+
+bool ExpressionTyper::chosen_by_expected(u32 at,
+                                         std::vector<Candidacy>& found,
+                                         u32 expected) {
+    if (found.size() < 2) {
+        return true;
+    }
+
+    for (const Candidacy& one : found) {
+        if (compilation->get_module(one.module)->get_symbols()
+                ->get_candidate(one.candidate)->kind != SYMBOL_FUNCTION) {
+            return true;
+        }
+    }
+
+    u32 wanted = expected == INVALID_TYPE
+                     ? INVALID_TYPE
+                     : module->get_types()->value_of(expected);
+    std::vector<Candidacy> fitting;
+    std::set<u32> types;
+
+    for (const Candidacy& one : found) {
+        u32 type = builder.translate(
+            index, one.module,
+            compilation->get_module(one.module)->get_symbols()
+                ->get_candidate(one.candidate)->type);
+
+        if (wanted == INVALID_TYPE || type == wanted) {
+            fitting.push_back(one);
+            types.insert(type);
+        }
+    }
+
+    // a method and the base's it overrides have one signature, and the
+    // derived one is found first (record 0020)
+    if (fitting.size() > 0 && types.size() == 1) {
+        found = std::vector<Candidacy>(1, fitting[0]);
+        return true;
+    }
+
+    report(at, "'" + text_of(at) + "' names " + std::to_string(found.size())
+           + " functions, so which one has to be said by the type written "
+             "where it goes: 'let f : (A) -> R = ...'");
+
+    return false;
+}
+
+bool ExpressionTyper::waits_as_a_function(u32 scope, u32 node) {
+    std::vector<Candidacy> found;
+
+    if (kind_of(node) == AST_IDENTIFIER) {
+        found = named_by(scope, node);
+    } else if (kind_of(node) == AST_DOT || kind_of(node) == AST_ARROW) {
+        u32 left = type_of(index, scope, first_child(node), INVALID_TYPE);
+        u32 name = second_child(node);
+        u32 owner = index;
+        TypeTable* types = module->get_types();
+
+        if (left == INVALID_TYPE || name == 0
+            || kind_of(name) != AST_IDENTIFIER) {
+            return false;
+        }
+
+        left = types->value_of(left);
+
+        if (types->get_type(left)->kind == TYPE_POINTER) {
+            left = types->get_argument(types->get_type(left)->first_argument);
+        }
+
+        found = members_of(left, name, owner);
+    }
+
+    if (found.size() < 2) {
+        return false;
+    }
+
+    for (const Candidacy& one : found) {
+        if (compilation->get_module(one.module)->get_symbols()
+                ->get_candidate(one.candidate)->kind != SYMBOL_FUNCTION) {
+            return false;
+        }
+    }
+
+    module->wait_as_function(node);
+
+    return true;
+}
+
+// What 'None' or 'Option.None' names has to be one variant of one generic
+// enum nobody instantiated: then nothing but the parameter can say what it
+// is. A variant of a plain enum, or of a clone, has a type of its own
+bool ExpressionTyper::waits_as_a_variant(u32 scope, u32 node) {
+    u32 owner = 0;
+    u32 enumeration = 0;
+
+    if (kind_of(node) == AST_IDENTIFIER) {
+        std::vector<Candidacy> found = named_by(scope, node);
+
+        if (found.size() != 1 || !all_variants(found)) {
+            return false;
+        }
+
+        owner = found[0].module;
+        enumeration = enum_of_variant(found[0]);
+    } else if (kind_of(node) == AST_DOT
+               && kind_of(first_child(node)) == AST_IDENTIFIER) {
+        std::vector<Candidacy> found = named_by(scope, first_child(node));
+
+        if (found.size() != 1
+            || compilation->get_module(found[0].module)->get_symbols()
+                       ->get_candidate(found[0].candidate)->kind
+                   != SYMBOL_ENUM) {
+            return false;
+        }
+
+        owner = found[0].module;
+        enumeration = found[0].candidate;
+    }
+
+    if (enumeration == 0 || !is_unbound_generic(owner, enumeration)) {
+        return false;
+    }
+
+    module->wait_as_variant(node, owner, enumeration);
+
+    return true;
+}
+
+// and the tuple built once its parameter is known, which is the binding's own
+// rule: a reference where the parameter writes one and the element is a place
+u32 ExpressionTyper::tuple_given(u32 scope, u32 node, u32 parameter) {
+    u32 given = type_of(index, scope, node,
+                        module->get_types()->value_of(parameter));
+
+    if (given != INVALID_TYPE && !coercion.fits(index, given, parameter)) {
+        report(node, "expected " + name_of(parameter) + ", found "
+               + name_of(given));
+    }
+
+    return given;
 }
 
 u32 ExpressionTyper::literal(u32 node, u32 expected, BuiltinType fallback) {
@@ -1437,6 +1664,10 @@ u32 ExpressionTyper::literal(u32 node, u32 expected, BuiltinType fallback) {
     if (expected == INVALID_TYPE) {
         return types->builtin(fallback);
     }
+
+    // record 0068: a literal given to a 'T&' is a T, held in a temporary the
+    // reference refers to
+    expected = types->value_of(expected);
 
     Type* wanted = types->get_type(expected);
 
@@ -1520,6 +1751,10 @@ u32 ExpressionTyper::identifier(u32 scope, u32 node, u32 expected) {
 
     // an unknown name is the UseResolver's diagnostic, and a name with several
     // candidates is a call to resolve, not a type to read
+    if (!chosen_by_expected(node, found, expected)) {
+        return INVALID_TYPE;
+    }
+
     if (found.size() != 1) {
         return INVALID_TYPE;
     }
@@ -1736,11 +1971,11 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
         && !is_untyped_literal(kind_of(second_child(node)))) {
         right = types->value_of(
             type_of(index, scope, second_child(node), types->value_of(expected)));
-        left = type_of(index, scope, first_child(node), right);
+        left = type_of(index, scope, first_child(node), value_shape(right));
     } else {
         left = types->value_of(
             type_of(index, scope, first_child(node), types->value_of(expected)));
-        right = type_of(index, scope, second_child(node), left);
+        right = type_of(index, scope, second_child(node), value_shape(left));
     }
 
     right = types->value_of(right);
@@ -2207,9 +2442,13 @@ u32 ExpressionTyper::call(u32 scope, u32 node, u32 expected) {
                         || kind == AST_FLOAT_LITERAL
                         || kind == AST_NULL_LITERAL;
         argument.node = child;
-        argument.type = waits_for_its_parameter(child)
-                            ? INVALID_TYPE
-                            : type_of(index, scope, child, INVALID_TYPE);
+        argument.type = kind == AST_TUPLE
+                            ? tuple_argument(scope, child)
+                            : waits_for_its_parameter(child)
+                                      || waits_as_a_variant(scope, child)
+                                      || waits_as_a_function(scope, child)
+                                  ? INVALID_TYPE
+                                  : type_of(index, scope, child, INVALID_TYPE);
 
         arguments.push_back(argument);
     }
@@ -2268,8 +2507,10 @@ u32 ExpressionTyper::call(u32 scope, u32 node, u32 expected) {
         for (u32 i = 0;
              i < arguments.size() && i < chosen.parameters.size(); i++) {
             if (arguments[i].literal) {
-                module->get_resolutions()->set_type(arguments[i].node,
-                                                    chosen.parameters[i]);
+                // record 0068: a literal given to a 'T&' is a T in a temporary
+                module->get_resolutions()->set_type(
+                    arguments[i].node,
+                    module->get_types()->value_of(chosen.parameters[i]));
             }
 
             // Record 0058: a closure was only asked whether it COULD be the
@@ -2293,6 +2534,22 @@ u32 ExpressionTyper::call(u32 scope, u32 node, u32 expected) {
                 type_of(index, scope, arguments[i].node,
                         module->get_types()->value_of(chosen.parameters[i]));
             }
+
+            // item 6 of record 0067: a tuple literal only answered whether it
+            // COULD be the parameter, and is built as one now that it won
+            if (kind_of(arguments[i].node) == AST_TUPLE) {
+                arguments[i].type = tuple_given(scope, arguments[i].node,
+                                                chosen.parameters[i]);
+            }
+
+            if (module->waiting_variant(arguments[i].node).second != 0
+                || module->waits_as_function(arguments[i].node)) {
+                arguments[i].type = type_of(
+                    index, scope, arguments[i].node,
+                    module->get_types()->value_of(chosen.parameters[i]));
+            }
+
+            given_to(arguments[i].node, chosen.parameters[i]);
 
             // Record 0031, and this is the fourth of the four places a value
             // is given to something. It is asked here and not in the resolver
@@ -2638,6 +2895,26 @@ bool ExpressionTyper::unify(u32 parameter, u32 argument,
         return true;
     }
 
+    // a tuple is laid over a tuple of its length, element by element, so
+    // 'first<T>' taking a '(T, i32)' is solved from '(a, 1)'
+    case TYPE_TUPLE: {
+        std::vector<u32> left = types->get_arguments(parameter);
+        std::vector<u32> right = types->get_arguments(types->value_of(given));
+
+        if (types->get_type(types->value_of(given))->kind != TYPE_TUPLE
+            || left.size() != right.size()) {
+            return false;
+        }
+
+        for (u32 i = 0; i < left.size(); i++) {
+            if (!unify(left[i], right[i], bound)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // 'Array<U>' inside the generic is the DECLARATION with its arguments,
     // and an 'Array<i32>' is a clone, which carries none: record 0002 keeps
     // them on the record that made it, in the declaring module's table
@@ -2708,6 +2985,13 @@ u32 ExpressionTyper::substitute(
 
     case TYPE_ARRAY:
         return types->array(substitute(inside[0], bound), entry->subject);
+
+    case TYPE_TUPLE:
+        for (u32& one : inside) {
+            one = substitute(one, bound);
+        }
+
+        return types->tuple(inside);
 
     case TYPE_FUNCTION: {
         for (u32& one : inside) {
@@ -2793,6 +3077,11 @@ u32 ExpressionTyper::value_call(u32 scope, u32 node, u32 callee, u32 list,
         // since a 'String&' takes a String
         if (waits_for_its_parameter(written[i])) {
             type_of(index, scope, written[i], wanted);
+        } else if (waits_as_a_variant(scope, written[i])
+                   || waits_as_a_function(scope, written[i])) {
+            type_of(index, scope, written[i], types->value_of(wanted));
+        } else if (kind_of(written[i]) == AST_TUPLE) {
+            tuple_given(scope, written[i], wanted);
         } else if (kind_of(written[i]) == AST_STRING_LITERAL) {
             u32 given = type_of(index, scope, written[i],
                                 types->value_of(wanted));
@@ -2809,6 +3098,8 @@ u32 ExpressionTyper::value_call(u32 scope, u32 node, u32 callee, u32 list,
                        + name_of(given));
             }
         }
+
+        given_to(written[i], wanted);
 
         // record 0031, the fourth place a value is given to something -- and
         // a '&&x' into a class with a move 'init' is not a copy
@@ -3655,6 +3946,25 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer,
             report(name, "nothing here says what '" + unknown + "' is, so the "
                    "enum has to be written with it: " + name_of(left)
                    + "<...>." + text_of(name));
+
+            return INVALID_TYPE;
+        }
+    }
+
+    // Record 0071, Hadley 2026-10-07: a method named where a value goes is
+    // BOUND to what is on the left, which it refers to as a closure refers to
+    // what it captures (record 0058). One of several is chosen by the type
+    // expected, and a value with no name has nothing to be bound to: it is
+    // gone by the end of the statement
+    if (compilation->get_module(found[0].module)->get_symbols()
+            ->get_candidate(found[0].candidate)->kind == SYMBOL_FUNCTION) {
+        if (!chosen_by_expected(name, found, expected)) {
+            return INVALID_TYPE;
+        }
+
+        if (!pointer && !is_place(first_child(node))) {
+            report(name, "a method of a value with no name cannot be given as "
+                         "a value: nothing would be left to call it on");
 
             return INVALID_TYPE;
         }

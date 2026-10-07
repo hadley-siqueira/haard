@@ -952,6 +952,7 @@ void SugarLowerer::lower_tuple_switch(u32 node, u32 block) {
                                            false, captures[i]);
 
             module->bind_by_reference(captures[i]);
+            module->mark_pattern_name(captures[i], matched);
             last = builder.add_child(inner, last, statement);
         }
 

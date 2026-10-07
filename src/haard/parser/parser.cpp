@@ -48,7 +48,6 @@ static AstNodeKind assignment_kind(TokenKind kind) {
         case TK_MINUS_ASSIGNMENT: return AST_MINUS_ASSIGNMENT;
         case TK_TIMES_ASSIGNMENT: return AST_TIMES_ASSIGNMENT;
         case TK_DIVISION_ASSIGNMENT: return AST_DIVISION_ASSIGNMENT;
-        case TK_BITWISE_NOT_ASSIGNMENT: return AST_BITWISE_NOT_ASSIGNMENT;
 
         case TK_INTEGER_DIVISION_ASSIGNMENT:
             return AST_INTEGER_DIVISION_ASSIGNMENT;

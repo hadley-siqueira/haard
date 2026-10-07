@@ -93,7 +93,6 @@ static std::string name_of(AstNodeKind kind) {
         case AST_TIMES_ASSIGNMENT: return "times_assignment";
         case AST_DIVISION_ASSIGNMENT: return "division_assignment";
         case AST_INTEGER_DIVISION_ASSIGNMENT: return "integer_division_assignment";
-        case AST_BITWISE_NOT_ASSIGNMENT: return "bitwise_not_assignment";
         case AST_MODULO_ASSIGNMENT: return "modulo_assignment";
         case AST_BITWISE_AND_ASSIGNMENT: return "bitwise_and_assignment";
         case AST_BITWISE_OR_ASSIGNMENT: return "bitwise_or_assignment";
@@ -224,7 +223,6 @@ static bool carries_a_token(AstNodeKind kind) {
         case AST_DIVISION:
         case AST_INTEGER_DIVISION:
         case AST_INTEGER_DIVISION_ASSIGNMENT:
-        case AST_BITWISE_NOT_ASSIGNMENT:
         case AST_MODULO:
         case AST_ASSIGNMENT:
         case AST_PLUS_ASSIGNMENT:

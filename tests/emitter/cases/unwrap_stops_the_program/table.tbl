@@ -1,0 +1,4 @@
+root std = std
+
+root app = app
+    std -> std

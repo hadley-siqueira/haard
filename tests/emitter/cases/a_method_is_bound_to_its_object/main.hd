@@ -1,0 +1,110 @@
+# Record 0071, Hadley 2026-10-07: a method named where a value goes is bound
+# to the object on its left, which it refers to as a closure refers to what it
+# captures (record 0058). One of several is chosen by the type written where
+# it goes, and the call is virtual. The exit status adds up one bit per thing
+# that held.
+
+class Counter:
+    total : i32
+
+    def add : i32
+        @n : i32
+        total += n
+        return total
+
+    def add : i32
+        @n : i32
+        @m : i32
+        total += n * m
+        return total
+
+    # bare inside its class, and inside a closure there: bound to 'this'
+    def twice : i32
+        let f : (i32) -> i32 = add
+        let g = |x : i32| -> i32 {
+            let h : (i32) -> i32 = add
+            return h(x)
+        }
+
+        f(1)
+        return g(1)
+
+class Loud(Counter):
+    def add : i32
+        @n : i32
+        total += n * 100
+        return total
+
+class Box<T>:
+    held : T
+
+    def get : T
+        return held
+
+def main : i32
+    let result = 0
+    let c = Counter()
+
+    c.total = 0
+
+    # the object is referred to, not copied: c itself changes
+    let f : (i32) -> i32 = c.add
+
+    f(5)
+
+    if c.total == 5:
+        result += 1
+
+    # the other overload, chosen by its type, through a pointer
+    let p = &c
+    let g : (i32, i32) -> i32 = p.add
+
+    if g(2, 3) == 11:
+        result += 2
+
+    if c.twice() == 13:
+        result += 4
+
+    # an override, reached through a pointer to the base
+    let l = Loud()
+
+    l.total = 0
+
+    let base : Counter* = &l
+    let h : (i32) -> i32 = base.add
+
+    if h(1) == 100:
+        result += 8
+
+    # a method of a generic class, with nothing to choose
+    let b = Box<i32>()
+
+    b.held = 7
+
+    let k = b.get
+
+    if k() == 7:
+        result += 16
+
+    # handed to something taking a function
+    if apply(c.add, 2) == 15:
+        result += 32
+
+    # and between a parameter that is a function and one that is not
+    if describe(c.add) == 16:
+        result += 64
+
+    return result
+
+def describe : i32
+    @n : i32
+    return -1
+
+def describe : i32
+    @f : (i32) -> i32
+    return f(1)
+
+def apply : i32
+    @f : (i32) -> i32
+    @x : i32
+    return f(x)

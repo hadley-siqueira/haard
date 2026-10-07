@@ -1,0 +1,78 @@
+# 2026-10-07, found while building item 6 of record 0067: 'None' and
+# 'Option.None' given to a parameter were typed alone, and alone nothing says
+# what 'T' is -- so 'take(Option.None)' was refused although 'let o :
+# Option<i32> = None' was not. Now such a variant waits for its parameter the
+# way a number does, and each candidate asks whether its parameter is a clone
+# of that enum. The exit status adds up one bit per thing that held.
+enum Option<T>:
+    Some : T
+    None
+
+    def unwrap_or : T
+        @fallback : T
+
+        switch *this:
+            case Some(value):
+                return value
+
+            case None:
+                return fallback
+
+        return fallback
+
+def take : i32
+    @o : Option<i32>
+    return o.unwrap_or(-1)
+
+def flag : bool
+    @o : Option<bool>
+    return o.unwrap_or(true)
+
+def pick : i32
+    @p : (u8, Option<i32>)
+    return p[1].unwrap_or(-2)
+
+def or_else<T> : T
+    @o : Option<T>
+    @fallback : T
+    return o.unwrap_or(fallback)
+
+def keep : i32
+    @o : Option<i32>&
+    return o.unwrap_or(7)
+
+class Holder:
+    held : i32
+
+    def init : void
+        @o : Option<i32>
+        held = o.unwrap_or(9)
+
+def main : i32
+    let result = 0
+
+    # both spellings, and the enum chosen by the parameter
+    if take(Option.None) == -1 and take(None) == -1 and flag(None):
+        result += 1
+
+    # inside a tuple, through a 'def' and through a value of one
+    let f = pick
+
+    if pick((200, Option.None)) == -2 and f((1, None)) == -2:
+        result += 2
+
+    # a generic solved from the other argument, which then says what None is
+    if or_else(None, 4) == 4:
+        result += 4
+
+    # a reference, given a temporary (record 0068)
+    if keep(None) == 7:
+        result += 8
+
+    # and an 'init'
+    let holder = Holder(Option.None)
+
+    if holder.held == 9:
+        result += 16
+
+    return result

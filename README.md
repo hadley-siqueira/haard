@@ -687,7 +687,7 @@ row binds tighter than that row.
 
 | Level | Operators | Associativity |
 |---|---|---|
-| assignment | `=` `+=` `-=` `*=` `/=` `//=` `%=` `&=` `\|=` `^=` `~=` `<<=` `>>=` `>>>=` | right |
+| assignment | `=` `+=` `-=` `*=` `/=` `//=` `%=` `&=` `\|=` `^=` `<<=` `>>=` `>>>=` | right |
 | cast | `as` | see below |
 | logical or | `or` `\|\|` | left |
 | logical and | `and` `&&` | left |

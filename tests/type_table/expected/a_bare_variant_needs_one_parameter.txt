@@ -1,0 +1,55 @@
+<unnamed>:
+    Option  Option
+    take  Option<i32> -> i32
+    take  Option<bool> -> i32
+    Maybe  Maybe
+    other  Maybe<i32> -> i32
+    first  (T, i32) -> T
+    count  i32 -> i32
+    main  i32
+    Option  Option<i32>
+    Option  Option<bool>
+    Maybe  Maybe<i32>
+    T  T
+    Some  T -> Option
+    None  Option
+    o  Option<i32>
+    o  Option<bool>
+    T  T
+    Just  T -> Maybe
+    Nothing  Maybe
+    m  Maybe<i32>
+    T  T
+    p  (T, i32)
+    n  i32
+    T  i32
+    Some  i32 -> Option<i32>
+    None  Option<i32>
+    T  bool
+    Some  bool -> Option<bool>
+    None  Option<bool>
+    T  i32
+    Just  i32 -> Maybe<i32>
+    Nothing  Maybe<i32>
+  38 types interned
+diagnostics:
+error: this call matches more than one 'take' equally well
+  --> main.hd:36:5
+   |
+36 |     take(None)
+   |     ^^^^
+error: no 'count' takes these arguments
+  --> main.hd:37:5
+   |
+37 |     count(Option.None)
+   |     ^^^^^
+error: no 'other' takes these arguments
+  --> main.hd:38:5
+   |
+38 |     other(Option.None)
+   |     ^^^^^
+error: no 'first' takes these arguments
+  --> main.hd:39:5
+   |
+39 |     first((1, 2, 3))
+   |     ^^^^^

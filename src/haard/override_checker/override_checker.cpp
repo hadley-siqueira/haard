@@ -68,6 +68,12 @@ void OverrideChecker::check_duplicates() {
             for (u32 candidate = table->get_symbol(symbol)->candidates;
                  candidate != 0;
                  candidate = table->get_candidate(candidate)->next_candidate) {
+                // record 0072: a pattern's name that is a variant declares
+                // nothing, however many times the pattern writes it
+                if (module->is_unnamed(candidate)) {
+                    continue;
+                }
+
                 for (u32 earlier : seen) {
                     if (!same_declaration(earlier, candidate)) {
                         continue;

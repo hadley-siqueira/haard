@@ -1,0 +1,48 @@
+# Record 0059 laid a signature over its arguments without looking inside a
+# tuple, so 'first<T>' taking a '(T, i32)' was never solved -- from a literal
+# or from a name. Since 2026-10-07 a tuple is laid over a tuple of its length,
+# element by element. The exit status adds up one bit per thing that held.
+
+def first<T> : T
+    @p : (T, i32)
+    return p[0]
+
+def swap<A, B> : (B, A)
+    @p : (A, B)
+    return (p[1], p[0])
+
+def grow<T> : void
+    @p : (T&, T)
+    p[0] += p[1]
+
+def fold<T> : T
+    @start : T
+    @f : ((T, T)) -> T
+    return f((start, start))
+
+def main : i32
+    let a = 5
+    let t = (2.5, 7)
+    let r = 0
+
+    # from a tuple written there, and from a name holding one
+    if first((a, 1)) == 5 and first(t) == 2.5:
+        r += 1
+
+    # two parameters, and a tuple given back built of them
+    let s = swap((1, true))
+
+    if s[0] and s[1] == 1:
+        r += 2
+
+    # T laid over what a reference refers to, so a is written
+    grow((a, 3))
+
+    if a == 8:
+        r += 4
+
+    # a closure told its parameter, a tuple of what T was solved as
+    if fold(3, |(x, y)| -> i32 { return x * 10 + y }) == 33:
+        r += 8
+
+    return r

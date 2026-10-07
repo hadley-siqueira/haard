@@ -2,6 +2,7 @@
 #define HAARD_TYPE_COLLECTOR_H
 
 #include <haard/sugar/for_each_lowerer.h>
+#include <haard/ast/ast_builder.h>
 #include <haard/type_table/expression_typer.h>
 #include <map>
 #include <set>
@@ -192,6 +193,18 @@ namespace haard {
             u32 name_node_of(u32 declaration);
 
             void report(u32 node, const std::string& message);
+
+            // Record 0072: a capture the sugar pass wrote for a bare name in
+            // a tuple pattern, which is a VARIANT when the enum of its element
+            // has one by that name. Then its 'let' is rewritten in place as a
+            // switch over the element whose one case is that variant and
+            // holds the rest of the case, and whose 'default' puts the flag
+            // the chain is asked by back down -- so the next case is tried.
+            // Asked when the capture is typed: after its element, before the
+            // body that might read the name
+            bool names_a_variant(u32 binding, u32 scope);
+            void match_the_variant(u32 binding, u32 scope);
+            u32 parent_of(u32 root, u32 node);
 
         private:
             Compilation* compilation;

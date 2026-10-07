@@ -314,12 +314,66 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
         return taken + 1 == types->get_arguments(parameter).size() ? 0 : -1;
     }
 
+    // record 0071: a name of several functions is asked only whether the
+    // parameter is a function, the way a closure is; which one it names is
+    // the winner's parameter to say
+    if (argument.node != 0
+        && compilation->get_module(caller)->waits_as_function(argument.node)) {
+        TypeTable* types = compilation->get_module(caller)->get_types();
+
+        return types->get_type(types->value_of(parameter))->kind
+                       == TYPE_FUNCTION
+                   ? 0
+                   : -1;
+    }
+
+    // 'None' or 'Option.None' with nothing saying the enum's arguments: the
+    // parameter says them, so it has to be a clone of that generic enum
+    std::pair<u32, u32> variant =
+        argument.node == 0
+            ? std::make_pair(0u, 0u)
+            : compilation->get_module(caller)->waiting_variant(argument.node);
+
+    if (variant.second != 0) {
+        TypeTable* types = compilation->get_module(caller)->get_types();
+        Type* wanted = types->get_type(types->value_of(parameter));
+        const Instantiation* made =
+            wanted->kind != TYPE_NAMED
+                ? nullptr
+                : compilation->get_module(wanted->module)
+                      ->get_instantiation(wanted->subject);
+
+        if (made == nullptr || wanted->module != variant.first
+            || made->origin != variant.second) {
+            return -1;
+        }
+
+        // record 0068's step for a temporary given to a reference
+        return types->get_type(parameter)->kind == TYPE_REFERENCE ? 1 : 0;
+    }
+
+    // Item 6 of record 0067, Hadley 2026-10-07: a tuple literal takes its
+    // shape from where it goes, the way '(a, b)' given to an '(i32&, i32&)'
+    // binding refers to a and b. So it is a literal too, and each candidate
+    // asks it element by element -- a number to be its element, a place to
+    // be referred to, anything else by the list every argument answers to
+    if (argument.node != 0
+        && compilation->get_module(caller)->get_ast()
+                   ->get_node(argument.node)->get_kind()
+               == AST_TUPLE) {
+        return tuple_match(caller, argument.node, parameter);
+    }
+
     // record 0018: a literal has no type until its context gives it one, and
     // the context here is this parameter. So it is asked to be it, and the
     // question is about the value
     if (argument.literal) {
-        Type* wanted =
-            compilation->get_module(caller)->get_types()->get_type(parameter);
+        // record 0068: a 'T&' takes a number too, held in a temporary, and
+        // that costs a step more than a T, so 'f(2)' between 'f(i32)' and
+        // 'f(i32&)' is the one taking a value
+        TypeTable* types = compilation->get_module(caller)->get_types();
+        int held = types->get_type(parameter)->kind == TYPE_REFERENCE ? 1 : 0;
+        Type* wanted = types->get_type(types->value_of(parameter));
 
         if (wanted->kind != TYPE_BUILTIN
             || !fits(caller, argument, wanted->subject)) {
@@ -336,7 +390,7 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
         // It loosens: 'f(3)' between 'f(u8)' and 'f(i32)' was an ambiguous
         // call and now picks the i32. Loosening is the direction record 0018
         // says is safe, because every program that compiled still does
-        return wanted->subject == default_of(caller, argument) ? 0 : 1;
+        return held + (wanted->subject == default_of(caller, argument) ? 0 : 1);
     }
 
     // Record 0037's construction used to be ranked here, and only for a
@@ -346,6 +400,57 @@ int OverloadResolver::match(u32 caller, const Argument& argument,
     // call asks the same question the other three places ask and this is one
     // line again
     return coercion.steps(caller, argument.type, parameter);
+}
+
+// The typer gave a type to every element that has one of its own before any
+// candidate was tried, and left the rest -- a number, 'null', a closure, a
+// tuple inside -- for the parameter to say. A '(T&, ...)' parameter with a
+// tuple literal is a TEMPORARY tuple, so it is the value that is asked about
+int OverloadResolver::tuple_match(u32 caller, u32 node, u32 parameter) {
+    Module* module = compilation->get_module(caller);
+    TypeTable* types = module->get_types();
+    Ast* ast = module->get_ast();
+    u32 wanted = types->value_of(parameter);
+
+    if (types->get_type(wanted)->kind != TYPE_TUPLE) {
+        return -1;
+    }
+
+    std::vector<u32> shape = types->get_arguments(wanted);
+    int total = 0;
+    u32 at = 0;
+
+    for (u32 child = ast->get_node(node)->get_children(); child != 0;
+         child = ast->get_node(child)->get_sibling(), at++) {
+        AstNodeKind kind = (AstNodeKind) ast->get_node(child)->get_kind();
+        Argument part;
+
+        if (at >= shape.size()) {
+            return -1;
+        }
+
+        part.node = child;
+        part.literal = kind == AST_INTEGER_LITERAL || kind == AST_FLOAT_LITERAL;
+        part.type = module->get_resolutions()->get(child)->type;
+
+        // what the typer could not type alone and that is not one of the
+        // shapes that wait for their parameter was reported already
+        if (!part.literal && kind != AST_NULL_LITERAL && kind != AST_CLOSURE
+            && kind != AST_TUPLE && part.type == INVALID_TYPE
+            && module->waiting_variant(child).second == 0) {
+            return -1;
+        }
+
+        int step = match(caller, part, shape[at]);
+
+        if (step < 0) {
+            return -1;
+        }
+
+        total += step;
+    }
+
+    return at == shape.size() ? total : -1;
 }
 
 // A string literal, and only that one for now: the bracketed literals are

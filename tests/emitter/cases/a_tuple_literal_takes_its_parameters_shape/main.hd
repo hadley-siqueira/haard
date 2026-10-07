@@ -1,0 +1,98 @@
+# Item 6 of record 0067, Hadley 2026-10-07: a tuple literal written as an
+# argument takes its shape from the parameter, as it does from a type written
+# at a binding. Each candidate asks it element by element -- a number to be
+# its element, a place to be referred to -- and it is built once one wins. The
+# exit status adds up one bit per thing that held.
+
+def bump : void
+    @p : (i32&, i32&)
+    p[1] += 1
+
+def pick : i32
+    @p : (u8, i32*)
+
+    if p[1] == null:
+        return p[0] as i32
+
+    return 0
+
+def over : i32
+    @p : (i32&, i32&)
+    return 1
+
+def over : i32
+    @p : (i32, f64)
+    return 2
+
+def nest : void
+    @p : ((i32&, u8), i64)
+    p[0][0] += p[0][1] as i32
+
+def run : i32
+    @p : ((i32) -> i32, i32)
+    return p[0](p[1])
+
+class Box:
+    total : i64
+
+    def init : void
+        @p : (u8, i64)
+        total = (p[0] as i64) + p[1]
+
+    def add : void
+        @p : (i64&, i64)
+        p[0] += p[1]
+        total += p[1]
+
+def main : i32
+    let result = 0
+    let a = 1
+    let b = 2
+
+    # a reference to each, through a 'def' and through a value of one
+    bump((a, b))
+
+    if b == 3:
+        result += 1
+
+    let f = bump
+
+    f((a, b))
+
+    if b == 4:
+        result += 2
+
+    # a number asked to be a u8, and 'null' asked to be a pointer
+    if pick((200, null)) == 200:
+        result += 4
+
+    # the overload is chosen by the shape each candidate asks for
+    if over((a, b)) == 1 and over((a, 1.5)) == 2:
+        result += 8
+
+    # a tuple inside a tuple, asked the same way all the way down
+    nest(((a, 4), 6))
+
+    if a == 5:
+        result += 16
+
+    # a method is a call like any other: 'big' is referred to
+    let box = Box((7, 8))
+    let big : i64 = 0
+
+    box.add((big, 10))
+
+    if big == 10 and box.total == 25:
+        result += 32
+
+    # a closure inside takes its parameter from the element it is given to
+    if run((|x| -> i32 { return x * 3 }, 7)) == 21:
+        result += 64
+
+    # and an 'init' takes one too
+    let other = Box((200, 55))
+
+    if other.total == 255:
+        result += 128
+
+    return result

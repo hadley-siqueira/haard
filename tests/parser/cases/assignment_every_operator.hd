@@ -9,7 +9,6 @@ def main : i32
     a &= b
     a |= b
     a ^= b
-    a ~= b
     a <<= b
     a >>= b
     a >>>= b

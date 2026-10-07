@@ -121,6 +121,55 @@ bool Module::binds_by_reference(u32 name_token) {
     return by_reference.count(name_token) > 0;
 }
 
+void Module::hold_in_temporary(u32 node) {
+    temporaries.insert(node);
+}
+
+bool Module::held_in_temporary(u32 node) {
+    return temporaries.count(node) > 0;
+}
+
+void Module::mark_pattern_name(u32 name_token, u32 flag_token) {
+    pattern_names[name_token] = flag_token;
+}
+
+bool Module::is_pattern_name(u32 name_token) {
+    return pattern_names.count(name_token) > 0;
+}
+
+u32 Module::flag_of_pattern_name(u32 name_token) {
+    auto found = pattern_names.find(name_token);
+
+    return found == pattern_names.end() ? 0 : found->second;
+}
+
+void Module::unname(u32 candidate) {
+    unnamed.insert(candidate);
+}
+
+bool Module::is_unnamed(u32 candidate) {
+    return unnamed.count(candidate) > 0;
+}
+
+void Module::wait_as_function(u32 node) {
+    waiting_functions.insert(node);
+}
+
+bool Module::waits_as_function(u32 node) {
+    return waiting_functions.count(node) > 0;
+}
+
+void Module::wait_as_variant(u32 node, u32 owner, u32 enumeration) {
+    waiting_variants[node] = std::make_pair(owner, enumeration);
+}
+
+std::pair<u32, u32> Module::waiting_variant(u32 node) {
+    auto found = waiting_variants.find(node);
+
+    return found == waiting_variants.end() ? std::make_pair(0u, 0u)
+                                           : found->second;
+}
+
 void Module::set_pattern_length(u32 for_token, u32 length) {
     pattern_lengths[for_token] = length;
 }
