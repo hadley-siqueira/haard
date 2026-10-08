@@ -3,7 +3,9 @@
 Written 2026-10-08. The complete list, numbered once; it replaces every
 earlier list given in conversation. The reasoning behind each block is in
 [designing-the-ir.md](designing-the-ir.md), and the decisions already taken
-are record [0077](../0077-an-ir-for-the-processor.md).
+are record [0077](../0077-an-ir-for-the-processor.md). The explanation given
+for each question, before it was answered, is kept in
+[ir-questions-explained.md](ir-questions-explained.md).
 
 Answer by number. Where a question carries a **Recommended** option and there
 is no preference, the recommendation stands. "Open" is a valid answer for a
@@ -100,11 +102,34 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
    run-time test before vectorising. Coherent with answer 5.
 7. **Floating point**: (a) strict IEEE always; (b) strict, with opt-in
    relaxation (reassociation, FMA contraction) per function or block; (c)
-   relaxed by default. **Recommended (b)**.
+   relaxed by default. **Recommended (b)** at first, then **(a)** once
+   reproducibility across targets was weighed.
+
+   **Answer (Hadley, 2026-10-08): (a)**, strict always. Nothing is
+   reordered or contracted; `fma(a, b, c)` is a library function and an IR
+   instruction emitted only when written; reductions are vectorised by hand
+   with explicit vector types (question 47). The C++ path must be built
+   with `-ffp-contract=off` so both sides of the oracle agree bit for bit.
 8. **Rounding mode**: (a) fixed, to nearest; (b) changeable by the program.
    **Recommended (a)**.
+
+   **Answer (Hadley, 2026-10-08): (a)**, fixed: round to nearest, ties to
+   even. Every floating-point operation is a pure function of its operands;
+   constants fold at compile time with the run-time result. Interval
+   arithmetic, if ever needed, comes as library functions that fix the mode
+   on one operation (`add_down`, `add_up`), an attribute on the IR
+   instruction, never a global state.
 9. **Array bounds checks**: (a) never; (b) always, aborting; (c) only in a
-   debug mode. **Recommended (c)**.
+   debug mode. **Recommended (c)** at first, then **(b)**.
+
+   **Answer (Hadley, 2026-10-08): (b)**, always checked, aborting with a
+   message. Fixed arrays are checked by the compiler; `Array`, `List` and
+   `String` check in their own Haard `operator[]` (record 0034) through an
+   intrinsic that becomes a dedicated IR instruction (`check_index %i,
+   %size`), so the optimiser can eliminate it (a `for` over a range proves
+   the index) or hoist it before a loop, and the WCET sees a path that does
+   not return. Indexing a raw pointer (`T*`, `new T[n]`) is never checked:
+   that is the unchecked way out, with no keyword.
 10. **Reading uninitialised memory**: (a) an unspecified value with no other
     effect; (b) undefined, as in C. **Recommended (a)**.
 11. **Memory-mapped registers in Haard**: (a) `volatile` on a pointer type;
