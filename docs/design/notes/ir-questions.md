@@ -21,18 +21,83 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
    optimiser may assume it never happens. **Recommended (a)**; counted loops
    state their trip count by structure, so (c) would buy little. Unsigned
    always wraps.
+
+   **Answer (Hadley, 2026-10-08): (a)**, wraps.
 2. **Shift by a count ≥ the width** (or negative): (a) the count is masked to
    the width; (b) the result is 0 or the sign fill; (c) aborts.
-   **Recommended (a)**.
+   **Recommended (a)** at first.
+
+   **Answer (Hadley, 2026-10-08): (b)**, the arithmetic result, after the
+   recommendation was revised to (b). Masking (Java, C#, JavaScript; what
+   x86-64, ARM64 and RISC-V do in hardware) makes `(1 << n) - 1` give 0 for
+   `n = 32` instead of all ones; Go and Swift chose the arithmetic result.
+   So: `x << n` with `n` ≥ the width is 0; `x >> n` is 0, or the sign fill
+   for a signed `x`; a **negative** count counts as too large (same
+   results, never an abort); a **constant** count ≥ the width is a compile
+   error. Cost: about two instructions (compare, select) only when the
+   count is not constant, constant in time; the processor's own shift may
+   implement the rule directly.
 3. **Integer division by zero, and `MIN / -1`**: (a) aborts with a message;
    (b) undefined; (c) a defined value. **Recommended (a)**.
+
+   **Answer (Hadley, 2026-10-08): (a)**, with `MIN / -1` giving `MIN`.
+   Applies to `/`, `//` and `%` on whole numbers (floating point keeps
+   IEEE: infinity and NaN). A zero divisor aborts with a message, checked
+   only when the divisor is not a constant; a constant zero divisor is a
+   compile error. `MIN / -1` wraps to `MIN` and `MIN % -1` is 0, as
+   overflow wraps (answer 1) -- what Java and Go do and what ARM64 and
+   RISC-V give for free; x86-64 traps on it, so its back end checks a
+   non-constant signed divisor for -1. Why abort and not a value: on ARM
+   and RISC-V a division by zero silently yields 0 or -1, and a
+   cyber-physical controller would act on it.
 4. **Exceptions with unwinding**: (a) never, errors are values and the rest
    aborts; (b) someday. **Recommended (a)**.
+
+   **Answer (Hadley, 2026-10-08): (a)**, never. Expected errors are values
+   (`Option`, enums, a future `Result<T, E>` with propagation sugar, which
+   needs nothing from the IR); what should not happen aborts. So the IR has
+   no `invoke`, no landing pads, no unwind tables, one cleanup path per
+   scope, and no unwinder in any back end or in the interpreter. Why: table
+   unwinding nearly doubles the CFG's edges, costs thousands of cycles per
+   throw with a hard-to-bound time (JSF AV C++ forbids exceptions), takes
+   scratchpad space, and adding it later is the most invasive change a
+   language can make. What "abort" does on the processor (a safe-mode
+   routine?) belongs to question 29.
 5. **Aliasing between pointers and `T&`**: (a) they may always overlap; (b)
    `T&` parameters never overlap; (c) (a) plus an opt-in annotation, like C's
    `restrict`. **Recommended (c)**.
+
+   **Answer (Hadley, 2026-10-08): (a)**: any two pointers or references may
+   overlap, and there is no annotation -- Hadley does not want a new keyword
+   for it. Settled on the way: aliasing only matters when one side is
+   **written**; a function that only reads through its parameters is
+   optimised freely, so `v.dot(v)`, `a == a` and a `mul(m, m)` returning a
+   new matrix lose nothing. Fortran's rule is exactly that (overlap is
+   forbidden only when one of the overlapping arguments is modified), which
+   an earlier explanation overstated. Rejected (b) because the written
+   overlaps it would make undefined are common in Haard, where `T&` is also
+   the don't-copy convention: `xs.push(xs[0])` (push writes self and may
+   reallocate the buffer the element lives in), `list.append_all(list)`,
+   `m.mul_in_place(m)`. Consequences: the optimiser proves non-overlap
+   itself (distinct locals, globals, `new` results, and two distinct
+   `Array` objects, which own their buffers -- record 0031); where it
+   cannot, a vectoriser or a scratchpad/CGRA transfer needs a run-time
+   overlap test with a scalar fallback, whose duplicated code costs
+   scratchpad space and whose slower path is what the WCET counts.
 6. **Type-based aliasing** (C's strict aliasing): (a) none, any pointer may
    reach anything; (b) as in C. **Recommended (a)**.
+
+   **Answer (Hadley, 2026-10-08): (a)**: no type-based aliasing rule.
+   Reading memory as another type (a union, record 0064; a pointer cast,
+   record 0049; a byte buffer read as a struct; device registers) is always
+   legitimate, and no load or store in the IR carries type information for
+   aliasing (no TBAA). Why: C's rule makes exactly that code undefined (the
+   Linux kernel builds with `-fno-strict-aliasing`), and the gain is small
+   in Haard: a `for` over a range evaluates its bound once (checked: `for
+   i in 0...*n` copies `*n` before the loop), and whole-program analysis
+   proves much of the rest. What remains are `while` loops that re-read a
+   field while writing through a pointer: one reload per iteration, or a
+   run-time test before vectorising. Coherent with answer 5.
 7. **Floating point**: (a) strict IEEE always; (b) strict, with opt-in
    relaxation (reassociation, FMA contraction) per function or block; (c)
    relaxed by default. **Recommended (b)**.
