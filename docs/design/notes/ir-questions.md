@@ -132,34 +132,171 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
    that is the unchecked way out, with no keyword.
 10. **Reading uninitialised memory**: (a) an unspecified value with no other
     effect; (b) undefined, as in C. **Recommended (a)**.
+
+    **Answer (Hadley, 2026-10-08): (a)**: reading memory nobody wrote
+    (fields `init` left alone, record 0026; `new T[n]` buffers, record 0028;
+    an `Array`'s spare capacity) gives some bit pattern, the same one on
+    every read until a write, and has no other effect. The IR has no
+    `undef` and no `poison`; mem2reg may use a fixed constant (0) for a slot
+    read before any store. The interpreter gets a mode that fills new
+    memory with a garbage pattern, to catch programs that depend on it.
+    Zeroing everything (Go, Java) stays rejected by record 0026.
 11. **Memory-mapped registers in Haard**: (a) `volatile` on a pointer type;
     (b) intrinsic functions; (c) only compiler-generated. **Recommended (b)**.
+
+    Noted by Hadley (2026-10-08), before this question was discussed:
+    Haard has no `volatile` yet and it must be implemented in the future.
+    This question decides how it is spelled.
+
+    **Answer (Hadley, 2026-10-08): (b)**, intrinsic functions in the
+    library: `volatile_read<T>(p : T*) -> T`, `volatile_write<T>(p : T*, v :
+    T)` and `fence()`, with `T` limited to whole numbers of 8, 16, 32 and 64
+    bits (the width must be exact). No keyword and no change to the type
+    system; the compiler recognises the functions and emits volatile loads
+    and stores, which are full barriers in the IR (question 85) and visible
+    to the WCET. A `Register` class can be built on top in the library. A
+    type qualifier stays possible later, additively. Not implemented yet.
 12. **New numeric types**: which of `f16`, `bf16`, `i128`/`u128`, or none?
+
+    **Answer (Hadley, 2026-10-08): none for now.** The IR's type
+    representation stays open (integers of any width, floating-point formats
+    as an extensible list) so adding one later is cheap; adding a numeric
+    type changes no existing program. `f16`/`bf16` are to be reconsidered
+    with SIMD and the CGRA (questions 46-48, 51), where they pay; `bf16`
+    would need rounding rules of Haard's own to respect answer 7. The main
+    use of 128-bit integers, the full product of two `u64`, comes as a
+    library function returning a tuple: `let (high, low) = mul_wide(a, b)`.
 13. **Dynamic stack allocation**: (a) none, frames have a fixed size; (b)
     allowed. **Recommended (a)**, firmly: worst-case stack use stays
     computable.
+
+    **Answer (Hadley, 2026-10-08): (a)**: every stack frame has a size
+    known at compile time. The compiler computes each thread's worst-case
+    stack use; the IR never names the stack pointer (every slot is static
+    and the back end sizes the frame); no function needs a frame pointer for
+    this. Nothing in Haard needed it (every type has a fixed size, tuples
+    and closure environments included), so no program changes. Variable
+    buffers use a fixed maximum capacity, or a time-bounded pool
+    (question 60).
 14. **Guaranteed tail calls**: (a) no, only an optimisation; (b) guaranteed
     when written. **Recommended (a)**.
+
+    **Answer (Hadley, 2026-10-08): (a)**: tail calls are only an
+    optimisation. The machine-level optimiser may turn a call in tail
+    position into a jump when it is safe (no pending cleanups, no local lent
+    by reference, a compatible signature); programs may not rely on it. The
+    stack analysis runs on the final code, so it sees the effect. An
+    explicit form (as Zig's `@call(.always_tail, ...)`) stays possible
+    later, additively.
 
 ## B. The processor
 
 15. **Registers**: how many general purpose? A separate floating point bank?
     A vector bank?
+
+    **Answer (Hadley, 2026-10-08): partly open.** The general-purpose
+    count is still **16 or 32**. With 32, the design follows RISC-V and ARM.
+    With 16, there are 16 general-purpose registers **plus dedicated ones**:
+    stack pointer, frame pointer, thread pointer, instruction pointer and
+    link register, probably close to the address generation unit. Floating
+    point has a **separate bank** (likely 16 with 16 GPRs). The vector bank
+    (separate, or shared with floating point) is not decided. None of this
+    touches the IR; the back end needs the count per bank, the reserved
+    registers (question 20) and the calling convention (question 31).
 16. **Can the dedicated stack pointer be the base of a load or store**
     (`[sp + 16]`), or must it be copied into an ordinary register first?
+
+    **Answer (Hadley, 2026-10-08): the ARM64 model.** SP, FP, TP and IP
+    are usable as the **base of a load or store** with an immediate offset
+    (`[sp + 16]`, `[fp + 8]`, `[tp + 4]`, `[ip + 64]` for globals and
+    constants near the code), and an instruction computes `register = SP/FP
+    + immediate`, so taking the address of a local (a `T&` to it) is one
+    instruction. No general-purpose register is spent on a copy of SP.
 17. **Instructions that touch the stack pointer**: push/pop? add an immediate
     (how many bits)? copy SP ↔ register?
+
+    **Answer (Hadley, 2026-10-08): the ARM64 model**, and the architecture
+    will probably support every operation listed in the explanation:
+    `sp = sp ± immediate` (at least 12 bits), `sp = sp - register` for
+    larger frames, `register = sp/fp + immediate`, `fp = sp + immediate`
+    and `sp = fp + immediate`, `register = sp` and `sp = register` (start-up,
+    thread stacks, overflow checks; writing SP may be privileged), and store
+    / load pair with pre-decrement and post-increment (or multi-register
+    push / pop) for compact prologues and epilogues. Every instruction's
+    effect on SP outside start-up and thread creation is a constant, as the
+    stack analysis needs.
 18. **Frame pointer**: dedicated, an ordinary register by convention, or none?
+
+    **Answer (Hadley, 2026-10-08): keep the frame record always.** The
+    hardware side follows answer 15 (a dedicated FP with 16 general
+    registers; a general register by convention, as ARM64's x29, with 32).
+    The compiler always saves the pair old FP + return address and points FP
+    at it, so the frames form a linked list: the abort routine can print the
+    call history with no unwind tables (there are none, answer 4), and
+    debuggers and profilers walk the stack the same way. Cost: two or three
+    instructions per call with store pair (answer 17), fixed in the WCET.
+    The suggested exceptions (leaf functions, an opt-out option) were not
+    taken: always means always.
 19. **Return address**: (a) a link register (dedicated or ordinary?); (b)
     pushed by the call instruction.
+
+    **Answer (Hadley, 2026-10-08): the ARM64 model**: (a), a link register
+    (dedicated with 16 general registers, a general one by convention with
+    32). A call writes LR (`bl`), `ret` jumps to it, a leaf function never
+    touches memory for it, and a non-leaf saves it with FP as the frame
+    record (answer 18) in one store pair (answer 17). With it: a call
+    through a register (`blr`, needed by `vcall`, closures and bound
+    methods), a separate register for an interrupt's return address (as
+    ARM's ELR, question 65), and a direct-call range covering a scratchpad's
+    code, with veneers for farther calls (question 22).
 20. **Other dedicated registers**: zero? flags (does a compare write flags or
     a register)? a readable PC? global pointer? thread pointer?
+
+    **Answer (Hadley, 2026-10-08):** **no zero register**; a **dedicated
+    branch that compares with zero**; branches in the **RISC-V / MIPS
+    style** (compare and branch in one instruction, no condition flags for
+    branching); the architecture **has add with carry**; **GP is a dedicated
+    register**, like SP and FP. A readable PC (IP, usable as a base) and a
+    dedicated TP were already settled by answers 15 and 16. Open detail:
+    where the carry of an add-with-carry lives (a single carry bit, or a
+    register).
 21. **Stack**: growth direction, alignment, hardware overflow detection?
+
+    **Answer (Hadley, 2026-10-08):** the stack grows **down**; SP is
+    aligned to **16 bytes**, checked by the hardware as on ARM64 (to be
+    revisited if the SIMD registers are wider than 128 bits, question 46,
+    before the ABI freezes); overflow is caught by a **stack-limit register
+    per hardware thread** (as ARMv8-M's `MSPLIM` / `PSPLIM`), no
+    instructions spent. Real-time code is proven not to overflow at compile
+    time; the limit register is the safety net, and an overflow aborts with
+    a message through the abort routine (question 29).
 22. **Encoding**: fixed length (how many bits?), variable or compressed? Bits
     of the load/store, arithmetic and branch immediates?
+
+    **Answer (Hadley, 2026-10-08): instructions of 32 or 16 bits** (a
+    compressed form beside the 32-bit one). Immediates: **12 or 16 bits,
+    still open; at least 12**. Still open after the answer: the ranges of
+    conditional branches and of calls/jumps; whether load/store offsets are
+    scaled by the access size; whether a 32-bit instruction may start at a
+    2-byte boundary (and so cross a fetch word, which matters to the WCET);
+    which registers and immediates the 16-bit forms reach.
 23. **Pipeline**: (a) thread-interleaved (as PTARM / FlexPRET); (b) scalar
     in order; (c) VLIW; (d) other. Exposed pipeline (delay slots) or
     interlocks?
+
+    **Answer (Hadley, 2026-10-08): thread-interleaved, and a thread may
+    fetch more than one instruction in parallel.** The **compiler**
+    guarantees that instructions issued together can run in parallel; each
+    instruction has a **dedicated bit**, set by the compiler, saying whether
+    it runs in parallel with its neighbour (as the p-bit of TI's C6000 VLIW
+    or Hexagon's packets). So the back end has a scheduler/bundler and the
+    hardware does not check the bundles. A correct first back end may clear
+    the bit everywhere (fully sequential); bundling is then an optimisation.
+    Open details: the maximum instructions per bundle; which combinations
+    are allowed (functional units: how many memory, branch, FP per bundle);
+    the semantics inside a bundle (all reads before any write?); whether one
+    thread can issue bundles in consecutive cycles (interlocks between
+    bundles?); whether 16- and 32-bit instructions mix in one bundle.
 24. **Conditional execution**: a select or conditional move? Predicate
     registers?
 25. **Multiply and divide in hardware?** Fixed latency? Division by zero:
