@@ -1,0 +1,42 @@
+# 2026-10-07: laying 'T&' over a 'char*&' handed the reference on to the
+# pointer underneath, which then said no -- so a generic taking a 'T&' was
+# never solved from a pointer, and 'map' over an Array<char*> matched nothing
+# while over an Array<i32> it worked. The exit status adds up one bit per
+# thing that held.
+
+def same<T> : bool
+    @a : T&
+    @b : T&
+    return a == b
+
+class Box:
+    v : i32
+
+def main : i32
+    let result = 0
+    let words = ["a", "bb", "ccc"]
+
+    # 'map' and 'each' over pointers, each element a 'char*&'
+    let firsts = words.map(|w| -> char { return w[0] })
+
+    if firsts[2] == 'c':
+        result += 1
+
+    let count = 0
+
+    words.each(|w| { count += 1 })
+
+    if count == 3:
+        result += 2
+
+    # and a generic function, solved from two pointers to a class
+    let b = new Box()
+    let p = b
+    let q = b
+
+    if same(p, q):
+        result += 4
+
+    delete b
+
+    return result

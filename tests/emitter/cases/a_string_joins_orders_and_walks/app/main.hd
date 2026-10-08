@@ -1,0 +1,41 @@
+# Record 0075, Hadley 2026-10-07: a String joins with '+', is ordered by its
+# bytes with '<', '<=', '>' and '>=', finds another String inside it, and is
+# walked by 'for c in s', each 'c' a 'char&' into it. The exit status adds up
+# one bit per thing that held.
+
+def main : i32
+    let result = 0
+    let a : String = "abc"
+    let b : String = "abd"
+
+    # a new String, and neither side changed
+    let c = a + b
+
+    if c == "abcabd" and a == "abc" and a + "-" + "z" == "abc-z":
+        result += 1
+
+    # byte by byte, a prefix first, a literal on either side
+    if a < b and not (b <= a) and b > a and a >= a and "ab" < a:
+        result += 2
+
+    # a byte above 127 is read unsigned, so it comes after every letter
+    let high : String = "\xff"
+
+    if a < high:
+        result += 4
+
+    if (c.contains("cab") and c.contains("abd") and not c.contains("x")
+        and c.contains("")):
+        result += 8
+
+    # the characters, by reference
+    let count = 0
+
+    for ch in a:
+        ch = ch - ('a' - 'A')
+        count += 1
+
+    if count == 3 and a == "ABC":
+        result += 16
+
+    return result

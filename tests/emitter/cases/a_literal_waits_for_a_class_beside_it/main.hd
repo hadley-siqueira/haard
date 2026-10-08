@@ -1,0 +1,59 @@
+# 2026-10-07: a literal beside a class operand was typed before the operator
+# was looked up -- 'Money(1) + 5' said *a literal cannot be Money*, and '"a"
+# != name' was a 'char*' and a class with no operator between. Now a number
+# on the right is each 'operator+'s to ask, as a call's argument is (record
+# 0034), and a string literal on the left builds the class on the right
+# (record 0037). The exit status adds up one bit per thing that held.
+
+class Money:
+    cents : i32
+
+    def init : void
+        @c : i32
+        cents = c
+
+    def operator+ : Money
+        @extra : i32
+        return Money(cents + extra)
+
+    def operator* : Money
+        @k : f64
+        return Money(((cents as f64) * k) as i32)
+
+    def operator== : bool
+        @p : i8*
+        return p == null and cents == 0
+
+class Name:
+    first : char
+
+    def init : void
+        @text : char*
+        first = text[0]
+
+    def operator== : bool
+        @other : Name&
+        return first == other.first
+
+    def operator!= : bool
+        @other : Name&
+        return first != other.first
+
+def main : i32
+    let result = 0
+
+    if (Money(1) + 5).cents == 6:
+        result += 1
+
+    if (Money(10) * 1.5).cents == 15:
+        result += 2
+
+    if Money(0) == null:
+        result += 4
+
+    let n = Name("ann")
+
+    if "a" == n and not ("b" == n) and "b" != n:
+        result += 8
+
+    return result

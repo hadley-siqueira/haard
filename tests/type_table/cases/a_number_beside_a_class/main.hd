@@ -1,0 +1,20 @@
+# A number on the right of a class is asked to be each of its operator's
+# parameters; one on the left is not asked to be the class, since no operator
+# is looked up on the right -- so what is said is about the two types.
+
+class Money:
+    cents : i32
+
+    def operator+ : Money
+        @extra : i32
+        return Money()
+
+def main : i32
+    let m = Money()
+
+    # refused: no 'operator+' takes a float, and a number on the left of a
+    # class has no operator to reach
+    let a = m + 1.5
+    let b = 5 + m
+
+    return 0

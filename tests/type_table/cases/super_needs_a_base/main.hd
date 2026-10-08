@@ -1,0 +1,21 @@
+# Record 0074: 'super' is the object seen as its base, so it needs a class
+# with a base around it, and a method of it is called and not given as a
+# value -- through a value, the call would dispatch.
+
+class A:
+    def name : i32
+        return 1
+
+class B(A):
+    def name : i32
+        let f = super.name
+        return 2
+
+class Alone:
+    def name : i32
+        return super.name()
+
+def main : i32
+    let x = super.name()
+
+    return 0

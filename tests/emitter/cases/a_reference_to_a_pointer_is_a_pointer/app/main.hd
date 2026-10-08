@@ -1,0 +1,63 @@
+# 2026-10-07: the variable of a loop over a List<Shape*> is a 'Shape*&', and
+# '.', a method call and 'delete' asked whether it was a POINTER without
+# reading through the reference -- so 's.area()' had no member and 'delete s'
+# was refused. A reference is the thing it names (record 0035). The exit
+# status adds up one bit per thing that held.
+
+class Shape:
+    def area : i32
+        return 0
+
+class Square(Shape):
+    side : i32
+
+    def init : void
+        @s : i32
+        side = s
+
+    def area : i32
+        return side * side
+
+class Node:
+    value : i32
+
+def main : i32
+    let result = 0
+    let shapes = List<Shape*>()
+
+    shapes.push_back(new Square(2))
+    shapes.push_back(new Square(3))
+
+    # a method, virtually, through the reference
+    let total = 0
+
+    for s in shapes:
+        total += s.area()
+
+    if total == 13:
+        result += 1
+
+    # a field through '.' and through '->', and a comparison with null
+    let nodes = Array<Node*>()
+
+    nodes.add(new Node())
+    nodes.add(null)
+
+    let seen = 0
+
+    for n in nodes:
+        if n != null:
+            n->value = 3
+            n.value += 1
+            seen += n.value
+
+    if seen == 4:
+        result += 2
+
+    # and each deleted through the loop's reference
+    for s in shapes:
+        delete s
+
+    delete nodes[0]
+
+    return result

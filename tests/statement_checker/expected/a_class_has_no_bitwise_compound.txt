@@ -1,0 +1,10 @@
+error: V has no '&=': a class has no bitwise operators
+  --> main.hd:20:7
+   |
+20 |     a &= a
+   |       ^^
+error: W has no 'operator+'
+  --> main.hd:21:7
+   |
+21 |     w += w
+   |       ^^

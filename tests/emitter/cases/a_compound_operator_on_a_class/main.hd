@@ -1,0 +1,66 @@
+# Record 0073, Hadley 2026-10-07: 'a += b' on a class is 'a = a + b', as in
+# Python -- a class cannot declare 'operator+=', and the '+=' passed hdc and
+# g++ refused it. A target that is not a name is read once, through a
+# reference. The exit status adds up one bit per thing that held.
+
+let calls = 0
+
+class V:
+    x : i32
+
+    def init : void
+        @x0 : i32
+        x = x0
+
+    def operator+ : V
+        @o : V&
+        return V(x + o.x)
+
+    def operator* : V
+        @k : i32
+        return V(x * k)
+
+    def operator- : V
+        @o : V&
+        return V(x - o.x)
+
+class Holder:
+    items : V[3]
+
+def next : i32
+    calls += 1
+    return 1
+
+def main : i32
+    let result = 0
+    let a = V(1)
+
+    a += V(2)
+
+    if a.x == 3:
+        result += 1
+
+    # the right side is the operator's own argument, a number here
+    a *= 4
+
+    if a.x == 12:
+        result += 2
+
+    # a target that is not a name is evaluated once
+    let h = Holder()
+
+    h.items[1] = V(10)
+    h.items[next()] -= V(3)
+
+    if h.items[1].x == 7 and calls == 1:
+        result += 4
+
+    # and a reference writes through
+    let r : V& = a
+
+    r += V(1)
+
+    if a.x == 13:
+        result += 8
+
+    return result

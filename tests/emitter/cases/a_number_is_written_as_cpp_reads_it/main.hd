@@ -1,0 +1,23 @@
+# 2026-10-07: the scanner reads '_' between digits and an octal written '0o',
+# and the emitter copied the text -- so '1_000' and '0o17' passed hdc and g++
+# refused them. They are written as C++ reads the same number now. The exit
+# status adds up one bit per thing that held.
+
+def main : i32
+    let result = 0
+
+    if 1_000 == 1000 and 1_000.5 == 1000.5:
+        result += 1
+
+    if 0o17 == 15 and 0o1_0 == 8:
+        result += 2
+
+    if 0xff == 255 and 0b1010 == 10 and 0xF_F == 255 and 0b1_0 == 2:
+        result += 4
+
+    let big : u8 = 2_55
+
+    if big == 255:
+        result += 8
+
+    return result

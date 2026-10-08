@@ -1,0 +1,18 @@
+<unnamed>:
+    main  i32
+    c  char
+    d  <none>
+    e  char
+    f  char
+  18 types interned
+diagnostics:
+error: expected char, found an integer literal
+ --> main.hd:9:10
+  |
+9 |     c += 1
+  |          ^
+error: expected char, found an integer literal
+  --> main.hd:10:17
+   |
+10 |     let d = c + 1
+   |                 ^

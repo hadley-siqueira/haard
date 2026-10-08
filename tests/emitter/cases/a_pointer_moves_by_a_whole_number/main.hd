@@ -1,0 +1,47 @@
+# Record 0076, Hadley 2026-10-07: a pointer moves by a whole number with '+',
+# '-', '+=' and '-=', as in C, and two of one type are subtracted into the
+# distance between them, an i64. Before, 'p + 3' was *a literal cannot be
+# i32** and 'q - p' was typed a pointer that g++ refused to hold. The exit
+# status adds up one bit per thing that held.
+
+def main : i32
+    let result = 0
+    let p = new i32[8]
+
+    for i in 0 ... 8:
+        p[i] = i * 10
+
+    let n : u8 = 2
+
+    # a literal, a whole number of another width, and back
+    let q = p + 3
+    let r = q + n
+    let s = r - 1
+
+    if *q == 30 and *r == 50 and *s == 40:
+        result += 1
+
+    # the distance, both ways
+    let ahead = r - p
+    let behind = p - r
+
+    if ahead == 5 and behind == -5:
+        result += 2
+
+    # moved in place
+    let walk = p
+
+    walk += 4
+    walk -= 1
+    walk++
+
+    if *walk == 40 and walk - p == 4:
+        result += 4
+
+    # and compared, which a pointer always could be
+    if q < r and r > p and walk != p:
+        result += 8
+
+    delete[] p
+
+    return result

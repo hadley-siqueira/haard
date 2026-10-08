@@ -530,17 +530,5 @@ bool OverloadResolver::fits(u32 caller, const Argument& argument,
         module->get_ast()->get_node(argument.node)->get_token()));
     u64 value = 0;
 
-    for (char digit : digits) {
-        if (digit < '0' || digit > '9') {
-            return true;
-        }
-
-        value = value * 10 + (u64) (digit - '0');
-
-        if (value > limits[builtin]) {
-            return false;
-        }
-    }
-
-    return true;
+    return integer_value(digits, value) && value <= limits[builtin];
 }

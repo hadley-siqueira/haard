@@ -1,0 +1,16 @@
+# Record 0018 keeps a char a family of its own, and Hadley kept it so on
+# 2026-10-07 (asked by the second probe round): a number is not added to one.
+# Two chars are arithmetic with each other, and a cast says the rest.
+
+def main : i32
+    let c : char = 'a'
+
+    # refused: a number given to a char
+    c += 1
+    let d = c + 1
+
+    # and these are the ways to write it
+    let e = c + ('b' - 'a')
+    let f = ((c as i32) + 1) as char
+
+    return 0

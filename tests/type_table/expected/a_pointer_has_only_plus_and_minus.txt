@@ -1,0 +1,40 @@
+<unnamed>:
+    main  i32
+    p  i32*
+    q  i64*
+    a  <none>
+    b  <none>
+    c  <none>
+    d  <none>
+  22 types interned
+diagnostics:
+error: a pointer moves by a whole number with '+' and '-', and two of one type are subtracted -- this is i32* and i32*
+  --> main.hd:10:15
+   |
+10 |     let a = p + p
+   |               ^
+error: a pointer moves by a whole number with '+' and '-', and two of one type are subtracted -- this is i32* and i32*
+  --> main.hd:11:15
+   |
+11 |     let b = p * p
+   |               ^
+error: a pointer moves by a whole number with '+' and '-', and two of one type are subtracted -- this is i32* and i64*
+  --> main.hd:12:15
+   |
+12 |     let c = p - q
+   |               ^
+error: a pointer moves by a whole number with '+' and '-', and two of one type are subtracted -- this is i32* and f64
+  --> main.hd:13:15
+   |
+13 |     let d = p + 1.5
+   |               ^
+error: a pointer moves with '+=' and '-=' and has no other arithmetic
+  --> main.hd:14:7
+   |
+14 |     p *= 2
+   |       ^^
+error: a pointer moves by a whole number, and this is f64
+  --> main.hd:15:7
+   |
+15 |     p += 1.5
+   |       ^^

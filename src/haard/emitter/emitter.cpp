@@ -3048,10 +3048,29 @@ void Emitter::emit_expression(u32 module, u32 node) {
     }
 
     switch (kind_of(module, node)) {
+    // what C++ reads as the same number: no '_' between digits, and an
+    // octal written with a bare '0' rather than '0o'. C++ took '1_000' as a
+    // user-defined literal and refused it, after hdc had passed it
     case AST_INTEGER_LITERAL:
-    case AST_FLOAT_LITERAL:
-        out << text_of(module, node);
+    case AST_FLOAT_LITERAL: {
+        std::string text = text_of(module, node);
+        std::string written;
+
+        for (size_t i = 0; i < text.size(); i++) {
+            if (text[i] == '_') {
+                continue;
+            }
+
+            if (i == 1 && text[0] == '0' && (text[1] | 0x20) == 'o') {
+                continue;
+            }
+
+            written += text[i];
+        }
+
+        out << written;
         return;
+    }
 
     // Haard writes a string with either quote and C++ wants the double one.
     // The bytes between them are the same escapes in both languages but one
@@ -3784,7 +3803,16 @@ bool Emitter::emit_operator(u32 module_index, u32 node) {
     u32 holder = found->module;
     u32 candidate = found->candidate;
 
-    emit_operand(module_index, left, 2);
+    // a string literal on the left is the class it builds (record 0037),
+    // written in brackets since a method is called on it
+    if (is_a_construction(module_index, left)) {
+        out << "(";
+        emit_construction(module_index, left);
+        out << ")";
+    } else {
+        emit_operand(module_index, left, 2);
+    }
+
     out << (is_pointer(module_index, left) ? "->" : ".")
         << name_of(holder, candidate) << "(";
 
@@ -3885,6 +3913,36 @@ void Emitter::emit_member(u32 module, u32 node, bool arrow) {
     Resolution* named = compilation->get_module(module)->get_resolutions()
                             ->get(right);
     u32 as_value = type_at(module, node);
+
+    // Record 0074: 'super.value' is the member as the class that declares it
+    // has it, named so in C++ -- 'this->Base::value' -- which is a call that
+    // does not dispatch
+    if (kind_of(module, left) == AST_SUPER) {
+        // a field has no dispatch to skip, so it is the object's own
+        if (named->candidate != 0
+            && (SymbolKind) compilation->get_module(named->module)
+                       ->get_symbols()->get_candidate(named->candidate)->kind
+                   == SYMBOL_FIELD) {
+            out << self << "->" << name_at(module, right);
+            return;
+        }
+
+        u32 declared = named->candidate == 0
+                           ? 0
+                           : compilation->get_module(named->module)
+                                 ->get_symbols()
+                                 ->candidate_of(holder_of(named->module,
+                                                          named->candidate));
+
+        if (declared == 0) {
+            fail("a member of 'super' whose class could not be named");
+            return;
+        }
+
+        out << self << "->" << name_of(named->module, declared) << "::"
+            << name_at(module, right);
+        return;
+    }
 
     // Record 0071: a method named where a value goes, bound to the left. The
     // value is record 0058's pair, holding what the method is called on --
@@ -6095,8 +6153,10 @@ bool Emitter::is_pointer(u32 module, u32 node) {
         return false;
     }
 
-    return compilation->get_module(module)->get_types()->get_type(type)->kind
-        == TYPE_POINTER;
+    // a 'T*&' is a pointer too, read through the reference
+    TypeTable* types = compilation->get_module(module)->get_types();
+
+    return types->get_type(types->value_of(type))->kind == TYPE_POINTER;
 }
 
 u32 Emitter::type_at(u32 module, u32 node) {

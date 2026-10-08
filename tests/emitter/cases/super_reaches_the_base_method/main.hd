@@ -1,0 +1,54 @@
+# Record 0074, Hadley 2026-10-07: 'super.method()' calls the base's own
+# method, without dispatch -- C++'s 'Base::method()' -- so an override can
+# build on what it overrides. Only that call skips dispatch: what the base's
+# method calls is still virtual. 'super.field' is the object's own field.
+# The exit status adds up one bit per thing that held.
+
+class A:
+    base_value : i32
+
+    def name : i32
+        return 1
+
+    def twice : i32
+        return name() * 2
+
+class B(A):
+    def name : i32
+        return 10
+
+class C(B):
+    def name : i32
+        return 100 + super.name()
+
+    def grand : i32
+        return super.twice()
+
+    def field : i32
+        super.base_value = 7
+        return base_value
+
+    def in_closure : i32
+        let f = |x : i32| -> i32 { return x + super.name() }
+        return f(1)
+
+def main : i32
+    let result = 0
+    let c = C()
+
+    # the base's, and the base's base's through it
+    if c.name() == 110:
+        result += 1
+
+    # a grandparent's method, whose own call to 'name' still dispatches
+    if c.grand() == 220:
+        result += 2
+
+    if c.field() == 7:
+        result += 4
+
+    # inside a closure, which captures the object
+    if c.in_closure() == 11:
+        result += 8
+
+    return result

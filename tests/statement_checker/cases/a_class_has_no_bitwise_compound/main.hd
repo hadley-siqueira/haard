@@ -1,0 +1,23 @@
+# Record 0073: an arithmetic compound form on a class is its operator and an
+# assignment, and a bitwise one has nothing to be -- a class declares no '&'.
+# And with no 'operator+', 'a += b' says so about the '+'.
+
+class V:
+    x : i32
+
+    def operator+ : V
+        @o : V&
+        return V()
+
+class W:
+    x : i32
+
+def main : i32
+    let a = V()
+    let w = W()
+
+    # refused: a bitwise compound, and a '+' that W does not declare
+    a &= a
+    w += w
+
+    return 0

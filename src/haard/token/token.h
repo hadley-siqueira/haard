@@ -173,6 +173,12 @@ namespace haard {
             u16 length;
             u32 offset;
     };
+
+    // The value an integer literal's text writes: decimal, '0x', '0b' or
+    // '0o', with any '_' between digits. False when it does not fit in a u64,
+    // which is the one question the type phase asks of the digits -- whether
+    // they fit the width they are asked to be (record 0018)
+    bool integer_value(const std::string& text, u64& value);
 };
 
 #endif

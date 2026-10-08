@@ -1,0 +1,16 @@
+# Record 0018 asks whether a literal's digits fit the width they are asked to
+# be. Until 2026-10-07 only plain decimal was read, so a literal written in
+# another base, or with '_', fitted anything.
+
+def main : i32
+    # refused: each is one past what a u8 holds
+    let a : u8 = 0x100
+    let b : u8 = 0b1_0000_0000
+    let c : u8 = 0o400
+    let d : u8 = 2_56
+
+    # and these fit
+    let e : u8 = 0xff
+    let f : i8 = 0x7f
+
+    return 0

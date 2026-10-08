@@ -1,0 +1,17 @@
+# Record 0076: a pointer moves by a whole number and two of one type are
+# subtracted. Nothing else is arithmetic on one.
+
+def main : i32
+    let p = new i32[4]
+    let q = new i64[4]
+
+    # refused: two pointers added, multiplied, of two types subtracted, moved
+    # by a float, and moved in place by something that is not '+' or '-'
+    let a = p + p
+    let b = p * p
+    let c = p - q
+    let d = p + 1.5
+    p *= 2
+    p += 1.5
+
+    return 0

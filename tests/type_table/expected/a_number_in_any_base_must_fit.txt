@@ -1,0 +1,30 @@
+<unnamed>:
+    main  i32
+    a  u8
+    b  u8
+    c  u8
+    d  u8
+    e  u8
+    f  i8
+  18 types interned
+diagnostics:
+error: 0x100 does not fit in u8
+ --> main.hd:7:18
+  |
+7 |     let a : u8 = 0x100
+  |                  ^^^^^
+error: 0b1_0000_0000 does not fit in u8
+ --> main.hd:8:18
+  |
+8 |     let b : u8 = 0b1_0000_0000
+  |                  ^^^^^^^^^^^^^
+error: 0o400 does not fit in u8
+ --> main.hd:9:18
+  |
+9 |     let c : u8 = 0o400
+  |                  ^^^^^
+error: 2_56 does not fit in u8
+  --> main.hd:10:18
+   |
+10 |     let d : u8 = 2_56
+   |                  ^^^^

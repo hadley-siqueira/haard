@@ -1,0 +1,8 @@
+prelude
+    std -> std
+    import std.array
+
+root std = std
+
+root app = app
+    std -> std

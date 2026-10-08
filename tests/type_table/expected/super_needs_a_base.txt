@@ -1,0 +1,27 @@
+<unnamed>:
+    A  A
+    B  B
+    Alone  Alone
+    main  i32
+    name  i32
+    name  i32
+    f  <none>
+    name  i32
+    x  <none>
+  22 types interned
+diagnostics:
+error: a method of 'super' is called, not given as a value: through a value it would reach the override
+  --> main.hd:11:23
+   |
+11 |         let f = super.name
+   |                       ^^^^
+error: 'super' names the base of a class, and this class derives from nothing
+  --> main.hd:16:16
+   |
+16 |         return super.name()
+   |                ^^^^^
+error: 'super' names the base of a class, and this is not inside one
+  --> main.hd:19:13
+   |
+19 |     let x = super.name()
+   |             ^^^^^

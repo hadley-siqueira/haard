@@ -1,0 +1,21 @@
+<unnamed>:
+    Money  Money
+    main  i32
+    cents  i32
+    operator+  i32 -> Money
+    extra  i32
+    m  Money
+    a  <none>
+    b  <none>
+  20 types interned
+diagnostics:
+error: no 'operator+' takes these operands
+  --> main.hd:17:15
+   |
+17 |     let a = m + 1.5
+   |               ^
+error: cannot apply this to i32 and Money
+  --> main.hd:18:15
+   |
+18 |     let b = 5 + m
+   |               ^

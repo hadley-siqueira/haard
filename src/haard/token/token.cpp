@@ -188,3 +188,40 @@ std::string Token::get_kind_as_string() {
 
     return table.at((TokenKind) kind);
 }
+
+bool haard::integer_value(const std::string& text, u64& value) {
+    u64 base = 10;
+    size_t at = 0;
+
+    if (text.size() > 2 && text[0] == '0') {
+        char mark = text[1] | 0x20;
+
+        base = mark == 'x' ? 16 : mark == 'b' ? 2 : mark == 'o' ? 8 : 10;
+        at = base == 10 ? 0 : 2;
+    }
+
+    value = 0;
+
+    for (; at < text.size(); at++) {
+        char c = text[at];
+        u64 digit;
+
+        if (c == '_') {
+            continue;
+        }
+
+        if (c >= '0' && c <= '9') {
+            digit = (u64) (c - '0');
+        } else {
+            digit = (u64) ((c | 0x20) - 'a' + 10);
+        }
+
+        if (value > (~0ULL - digit) / base) {
+            return false;
+        }
+
+        value = value * base + digit;
+    }
+
+    return true;
+}

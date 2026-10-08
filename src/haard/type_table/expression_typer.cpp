@@ -194,6 +194,27 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
         return type;
     }
 
+    // Record 0074, Hadley 2026-10-07: 'super.value()' is the base's method,
+    // called without dispatch. As the left of a '.' it is the object seen as
+    // its base, so what is looked up is the base's and what is above it
+    case AST_SUPER: {
+        u32 inside = enclosing_class(scope);
+        u32 base = inside == 0
+                       ? INVALID_TYPE
+                       : module->get_symbols()->get_candidate(inside)->super;
+
+        if (inside == 0) {
+            report(node, "'super' names the base of a class, and this is not "
+                         "inside one");
+        } else if (base == INVALID_TYPE) {
+            report(node, "'super' names the base of a class, and this class "
+                         "derives from nothing");
+        }
+
+        return base == INVALID_TYPE ? INVALID_TYPE
+                                    : module->get_types()->pointer(base);
+    }
+
     case AST_INDEX:
         return subscript(scope, node);
 
@@ -263,8 +284,12 @@ u32 ExpressionTyper::work(u32 scope, u32 node, u32 expected) {
     case AST_DELETE_ARRAY: {
         u32 operand = type_of(index, scope, first_child(node), INVALID_TYPE);
 
+        // what a 'T*&' names is a pointer too (record 0035): the variable of
+        // a loop over a List<Shape*> is one, and it is deleted as one
         if (operand != INVALID_TYPE
-            && module->get_types()->get_type(operand)->kind != TYPE_POINTER) {
+            && module->get_types()->get_type(
+                   module->get_types()->value_of(operand))->kind
+                   != TYPE_POINTER) {
             report(node, "only a pointer can be deleted, and this is "
                    + name_of(operand));
         }
@@ -1967,15 +1992,53 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
     // handing 'i32&' down made the other side a literal asked to be one:
     // 'xs.at(0) + 1' was *a literal cannot be i32&*, which is a complaint
     // about the 1
-    if (is_untyped_literal(kind_of(first_child(node)))
-        && !is_untyped_literal(kind_of(second_child(node)))) {
+    //
+    // A string literal waits too, since 2026-10-07: it is what a String on
+    // the other side builds (record 0037), so '"a" != s' compares two
+    // Strings, where it was a 'char*' and a String with no operator between
+    AstNodeKind first = kind_of(first_child(node));
+    AstNodeKind second = kind_of(second_child(node));
+    bool waits = is_untyped_literal(first)
+              || (first == AST_STRING_LITERAL && second != AST_STRING_LITERAL);
+
+    if (waits && !is_untyped_literal(second)) {
         right = types->value_of(
             type_of(index, scope, second_child(node), types->value_of(expected)));
-        left = type_of(index, scope, first_child(node), value_shape(right));
+
+        // a number beside a class is not asked to be the class: no operator
+        // is looked up on the right, so what is said is about the two types
+        u32 asked = value_shape(right);
+
+        if (is_untyped_literal(first) && asked != INVALID_TYPE
+            && ((types->get_type(asked)->kind == TYPE_NAMED
+                 && !is_an_enum(asked))
+                || types->get_type(asked)->kind == TYPE_POINTER)) {
+            asked = INVALID_TYPE;
+        }
+
+        left = type_of(index, scope, first_child(node), asked);
     } else {
         left = types->value_of(
             type_of(index, scope, first_child(node), types->value_of(expected)));
-        right = type_of(index, scope, second_child(node), value_shape(left));
+
+        // and a number beside a class on the left is the operator's to type:
+        // each 'operator+' it declares asks it to be its parameter, as a
+        // call does (record 0034). Typed here against the class it was 'a
+        // literal cannot be Money' about 'Money(1) + 5'
+        if (left != INVALID_TYPE && types->get_type(left)->kind == TYPE_NAMED
+            && !is_an_enum(left)
+            && (is_untyped_literal(second) || second == AST_NULL_LITERAL)) {
+            right = left;
+        } else if (left != INVALID_TYPE && !comparison
+                   && types->get_type(left)->kind == TYPE_POINTER) {
+            // record 0076: what moves a pointer is a whole number, which
+            // is a number of its own and not one asked to be the pointer
+            right = type_of(index, scope, second_child(node),
+                            is_untyped_literal(second) ? INVALID_TYPE
+                                                       : value_shape(left));
+        } else {
+            right = type_of(index, scope, second_child(node), value_shape(left));
+        }
     }
 
     right = types->value_of(right);
@@ -2061,6 +2124,31 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
         }
 
         return types->builtin(BUILTIN_BOOL);
+    }
+
+    // Record 0076, Hadley 2026-10-07: a pointer moves by a whole number with
+    // '+' and '-', as in C, and two of one type are subtracted into the
+    // distance between them, an i64. Nothing else is arithmetic on one:
+    // until then 'p * q' passed here, two of one type, and g++ refused it
+    if (!comparison && types->get_type(left)->kind == TYPE_POINTER) {
+        AstNodeKind kind = kind_of(node);
+        Type* other = types->get_type(right);
+
+        if ((kind == AST_PLUS || kind == AST_MINUS)
+            && other->kind == TYPE_BUILTIN
+            && is_a_whole_number((BuiltinType) other->subject)) {
+            return left;
+        }
+
+        if (kind == AST_MINUS && right == left) {
+            return types->builtin(BUILTIN_I64);
+        }
+
+        report(node, "a pointer moves by a whole number with '+' and '-', "
+               "and two of one type are subtracted -- this is "
+               + name_of(left) + " and " + name_of(right));
+
+        return INVALID_TYPE;
     }
 
     // record 0018 has nothing that would make two different types one, so the
@@ -2286,6 +2374,9 @@ std::vector<Candidacy> ExpressionTyper::callee_of(u32 scope, u32 node) {
         }
 
         TypeTable* types = module->get_types();
+        // through a reference first, as 'member' does
+        left = types->value_of(left);
+
         Type* entry = types->get_type(left);
         bool pointer = entry->kind == TYPE_POINTER;
 
@@ -2859,9 +2950,14 @@ bool ExpressionTyper::unify(u32 parameter, u32 argument,
 
     // record 0018 gives a value to a reference, so a T& laid over an i32 is
     // T laid over the same i32
+    //
+    // laid over the VALUE when the argument is a reference too: 'T&' over a
+    // 'char*&' is T over 'char*', and handing the reference on made the
+    // pointer case below say no -- so 'map' over an Array<char*> matched
+    // nothing, while over an Array<i32> a builtin fell through (2026-10-07)
     case TYPE_REFERENCE:
-        return unify(types->get_argument(wanted->first_argument), given,
-                     bound);
+        return unify(types->get_argument(wanted->first_argument),
+                     types->value_of(given), bound);
 
     // and a T&& laid over '&&x' is T laid over what x is
     case TYPE_MOVE_REFERENCE:
@@ -3906,6 +4002,11 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer,
     }
 
     TypeTable* types = module->get_types();
+
+    // through a reference first: a loop over a List<Shape*> gives a
+    // 'Shape*&', and its members are the Shape's (2026-10-07)
+    left = types->value_of(left);
+
     Type* entry = types->get_type(left);
     bool pointer = entry->kind == TYPE_POINTER;
 
@@ -3965,6 +4066,15 @@ u32 ExpressionTyper::member(u32 scope, u32 node, bool through_pointer,
         if (!pointer && !is_place(first_child(node))) {
             report(name, "a method of a value with no name cannot be given as "
                          "a value: nothing would be left to call it on");
+
+            return INVALID_TYPE;
+        }
+
+        // record 0074: 'super.value' is a call that does not dispatch, and a
+        // bound method is called through the object, which does
+        if (kind_of(first_child(node)) == AST_SUPER) {
+            report(name, "a method of 'super' is called, not given as a "
+                         "value: through a value it would reach the override");
 
             return INVALID_TYPE;
         }
@@ -4305,23 +4415,10 @@ bool ExpressionTyper::fits(u32 node, u32 type) {
     TypeTable* types = module->get_types();
     u64 limit = limit_of((BuiltinType) types->get_type(type)->subject);
     u64 value = 0;
-    std::string digits = text_of(node);
 
-    for (char digit : digits) {
-        if (digit < '0' || digit > '9') {
-            // a literal written in another base, or with '_' separators, is
-            // not read here yet. Saying nothing beats saying something wrong
-            return true;
-        }
-
-        value = value * 10 + (u64) (digit - '0');
-
-        if (value > limit) {
-            return false;
-        }
-    }
-
-    return true;
+    // in any base and with '_' between digits, since 2026-10-07: until then
+    // only plain decimal was read, and 'let b : u8 = 0x1ff' passed in silence
+    return integer_value(text_of(node), value) && value <= limit;
 }
 
 void ExpressionTyper::report(u32 node, const std::string& message) {

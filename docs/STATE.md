@@ -107,6 +107,22 @@ method as a value is bound to its object** (0071), and an overloaded one is
 chosen by the type expected; and **a bare name in a tuple pattern is the
 variant** its element's enum declares, or a capture (0072).
 
+**A second probe round**, 2026-10-07: 73 small programs over the compiler
+as it stands, each checking its own answer, found five bugs that needed no
+decision, all fixed with a case each: a number written with `_` or as `0o17`
+passed `hdc` and g++ refused it, and one in another base fitted any width
+(`let b : u8 = 0x1ff`); a member, a method and `delete` through a `T*&` -- the
+variable of a loop over a `List<Shape*>` -- were refused; a literal beside a
+class operand was typed before the operator was looked up (`Money(1) + 5`,
+`"a" != name`); and `T&` laid over a `char*&` said no, so `map` over an
+`Array<char*>` matched nothing. Then Hadley's answers to the rest, all
+built: `a += b` on a class is `a = a + b` (record 0073), `super.method()` calls
+the base's without dispatch (0074), a String joins with `+`, orders with `<`,
+finds a String inside it and is walked by `for c in s` (0075), and a pointer
+moves by a whole number (0076). `c += 1` on a char stays refused, and `if` as
+an expression is not to be built. Of the round's 75 probes, those two are
+the only ones refused, both by decision.
+
 **`Option<T>` is in the library**, since 2026-09-30 -- `std.option`, with
 `is_some`, `is_none`, `unwrap_or` and `map`, as methods: an enum may write
 methods now (record 0043, amended), and one that does is emitted as a struct.

@@ -111,5 +111,5 @@ base's field before calling `super` reads whatever C++'s default constructor
 left. That is record 0026's rule about uninitialised fields, applied one class
 up, and nothing reports it.
 
-**`super.method()`** — reaching a base's *method* rather than its
+**`super.method()`** -- decided and built by record [0074](0074-super-reaches-the-base-method.md), 2026-10-07. Before it: reaching a base's *method* rather than its
 constructor. Not written, not needed yet, and the syntax is free.

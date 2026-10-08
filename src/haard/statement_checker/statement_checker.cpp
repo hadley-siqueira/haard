@@ -30,6 +30,49 @@ static bool is_assignment(AstNodeKind kind) {
     return false;
 }
 
+// Record 0073: the operator a compound form on a class is written as -- a
+// class cannot declare 'operator+=', so 'a += b' is 'a = a + b'. AST_UNKNOWN
+// for the forms a class has no operator for at all
+static AstNodeKind binary_of(AstNodeKind kind, TokenKind& token,
+                             const char*& text) {
+    switch (kind) {
+    case AST_PLUS_ASSIGNMENT:
+        token = TK_PLUS;
+        text = "+";
+        return AST_PLUS;
+
+    case AST_MINUS_ASSIGNMENT:
+        token = TK_MINUS;
+        text = "-";
+        return AST_MINUS;
+
+    case AST_TIMES_ASSIGNMENT:
+        token = TK_TIMES;
+        text = "*";
+        return AST_TIMES;
+
+    case AST_DIVISION_ASSIGNMENT:
+        token = TK_DIVISION;
+        text = "/";
+        return AST_DIVISION;
+
+    case AST_INTEGER_DIVISION_ASSIGNMENT:
+        token = TK_INTEGER_DIVISION;
+        text = "//";
+        return AST_INTEGER_DIVISION;
+
+    case AST_MODULO_ASSIGNMENT:
+        token = TK_MODULO;
+        text = "%";
+        return AST_MODULO;
+
+    default:
+        break;
+    }
+
+    return AST_UNKNOWN;
+}
+
 StatementChecker::StatementChecker() {
     compilation = nullptr;
     module = nullptr;
@@ -902,6 +945,56 @@ void StatementChecker::split_tuple_assignment(u32 node, u32 scope,
     }
 }
 
+// 'a += b' rewritten in place as 'a = a + b', and given back. A target that is
+// not a name is read once, through a reference to it, so 'xs[next()] += v'
+// calls 'next' once: then the statement becomes a block of the reference and
+// the assignment, the way a tuple assignment's is
+u32 StatementChecker::as_plain(u32 node, u32 scope, u32 left, AstNodeKind plain,
+                               TokenKind token, const char* text) {
+    Ast* ast = module->get_ast();
+    u32 target = first_child(node);
+    u32 value = second_child(node);
+    u32 like = ast->get_node(node)->get_token();
+    u32 named = ast->get_node(target)->get_token();
+    u32 local = 0;
+
+    ast->get_node(target)->set_sibling(0);
+    ast->get_node(value)->set_sibling(0);
+
+    if (kind_of(target) != AST_IDENTIFIER) {
+        named = module->add_synthetic_token(
+            TK_IDENTIFIER, "__tc" + std::to_string(counter++), like);
+        local = make_local(scope, named, target,
+                           module->get_types()->reference(left));
+    }
+
+    u32 read = builder.make_identifier(named);
+    u32 written = local == 0 ? target : builder.make_identifier(named);
+    u32 sum = builder.make_binary_operator(
+        plain, module->add_synthetic_token(token, text, like), read, value);
+
+    if (local == 0) {
+        AstNode* rewritten = ast->get_node(node);
+
+        rewritten->set_kind(AST_ASSIGNMENT);
+        rewritten->set_children(0);
+        builder.add_child(node, builder.add_child(node, 0, written), sum);
+
+        return node;
+    }
+
+    u32 assignment = builder.make_binary_operator(
+        AST_ASSIGNMENT, module->add_synthetic_token(TK_ASSIGNMENT, "=", like),
+        written, sum);
+    AstNode* block = ast->get_node(node);
+
+    block->set_kind(AST_BLOCK);
+    block->set_children(0);
+    builder.add_child(node, builder.add_child(node, 0, local), assignment);
+
+    return assignment;
+}
+
 u32 StatementChecker::make_local(u32 scope, u32 name, u32 value, u32 type) {
     u32 binding = builder.make_binding(
         builder.make_binding_name(builder.make_identifier(name)), 0,
@@ -1342,6 +1435,56 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
     TypeTable* types = compilation->get_module(index)->get_types();
 
     left = types->value_of(left);
+
+    // Record 0073, Hadley 2026-10-07: a compound form on a class is the
+    // assignment of the operator, as in Python -- 'a += b' is 'a = a + b' --
+    // since a class cannot declare 'operator+='. It passed here and g++
+    // refused the '+=' it was written as
+    if (kind_of(node) != AST_ASSIGNMENT
+        && types->get_type(left)->kind == TYPE_NAMED
+        && !typer.is_an_enum(left)) {
+        TokenKind token = TK_UNKNOWN;
+        const char* text = "";
+        AstNodeKind plain = binary_of(kind_of(node), token, text);
+
+        if (plain == AST_UNKNOWN) {
+            report(node, typer.name_of(left) + " has no '"
+                   + std::string(module->get_token_value(
+                         module->get_ast()->get_node(node)->get_token()))
+                   + "': a class has no bitwise operators");
+            return;
+        }
+
+        check_assignment(as_plain(node, scope, left, plain, token, text),
+                         scope);
+        return;
+    }
+
+    // record 0076: 'p += n' and 'p -= n' move a pointer by a whole number,
+    // which is asked to be nothing -- a literal on its own is an i32
+    if (kind_of(node) != AST_ASSIGNMENT
+        && types->get_type(left)->kind == TYPE_POINTER) {
+        u32 by = typer.type_of(index, scope, value, INVALID_TYPE);
+        bool moves = kind_of(node) == AST_PLUS_ASSIGNMENT
+                  || kind_of(node) == AST_MINUS_ASSIGNMENT;
+
+        if (by == INVALID_TYPE) {
+            return;
+        }
+
+        Type* other = types->get_type(types->value_of(by));
+
+        if (!moves) {
+            report(node, "a pointer moves with '+=' and '-=' and has no other "
+                         "arithmetic");
+        } else if (other->kind != TYPE_BUILTIN
+                   || !is_a_whole_number((BuiltinType) other->subject)) {
+            report(node, "a pointer moves by a whole number, and this is "
+                   + typer.name_of(by));
+        }
+
+        return;
+    }
 
     // Record 0034, and '=' joined its table on 2026-09-06: a class may say
     // what assigning to it means. 'a = "abc"' on a String is the reason --

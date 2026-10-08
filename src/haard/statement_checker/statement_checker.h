@@ -123,6 +123,10 @@ namespace haard {
             // 'let <name> = <value>' with the type it was given, declared in
             // this scope
             u32 make_local(u32 scope, u32 name, u32 value, u32 type);
+
+            // record 0073: 'a += b' on a class, rewritten as 'a = a + b'
+            u32 as_plain(u32 node, u32 scope, u32 left, AstNodeKind plain,
+                         TokenKind token, const char* text);
             u32 make_position(u32 of, u32 position, u32 like);
             // a switch is a pattern match: the subject says what may be
             // written, and every case names a variant of it
