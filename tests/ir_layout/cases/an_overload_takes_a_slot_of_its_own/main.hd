@@ -1,0 +1,28 @@
+# Record 0020: an override has the same name and the same parameters, and the
+# return is not compared (record 0012). Two overloads are two slots, and a
+# derived class overriding one of them takes only that one's slot.
+class Scaler:
+    def scale : i32
+        @n : i32
+        return n
+
+    def scale : f64
+        @n : f64
+        return n
+
+    def scale : i32
+        @n : i32
+        @m : i32
+        return n * m
+
+class Doubler(Scaler):
+    def scale : f64
+        @n : f64
+        return n * 2.0
+
+    def scale : i64
+        @n : i64
+        return n
+
+def main : i32
+    return 0

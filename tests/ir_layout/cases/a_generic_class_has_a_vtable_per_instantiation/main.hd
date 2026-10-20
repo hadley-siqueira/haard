@@ -1,0 +1,16 @@
+# Record 0002: each instantiation of a generic class is a class of its own,
+# with its own vtable; an operator is a method like any other (record 0034).
+class Box<T>:
+    held : T
+
+    def get : T
+        return held
+
+    def operator== : bool
+        @other : Box<T>&
+        return true
+
+def main : i32
+    let a : Box<i32>
+    let b : Box<f64>
+    return 0

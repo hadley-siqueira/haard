@@ -85,6 +85,7 @@ sources=(
     "$root/src/haard/ir/ir_type_table.cpp"
     "$root/src/haard/ir/ir_layout.cpp"
     "$root/src/haard/ir/ir_type_translator.cpp"
+    "$root/src/haard/ir/ir_class_table.cpp"
 )
 
 mkdir -p "$build" expected

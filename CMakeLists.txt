@@ -116,6 +116,7 @@ set(IR_SRC
     src/haard/ir/ir_type_table.cpp
     src/haard/ir/ir_layout.cpp
     src/haard/ir/ir_type_translator.cpp
+    src/haard/ir/ir_class_table.cpp
 )
 
 

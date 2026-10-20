@@ -1,0 +1,23 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+class Scaler: size 8, align 8, data 8
+    vptr at 0
+
+class Doubler: size 8, align 8, data 8
+    vptr at 0
+    base Scaler at 0
+
+vtable of Scaler:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: scale(i32), by Scaler
+    2: scale(f64), by Scaler
+    3: scale(i32, i32), by Scaler
+
+vtable of Doubler:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: scale(i32), by Scaler
+    2: scale(f64), by Doubler
+    3: scale(i32, i32), by Scaler
+    4: scale(i64), by Doubler

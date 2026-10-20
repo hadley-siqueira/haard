@@ -1,0 +1,43 @@
+# Hadley, 2026-10-20: slot 0 is the destructor, an empty one when the class
+# writes no 'destroy'. Then the base's slots in its order, an override taking
+# the slot of what it overrides, then the new methods in declaration order.
+# 'init' takes no slot: construction calls it directly. The return is not
+# compared (record 0012): 'clone' giving back a 'Square*' overrides the one
+# giving back a 'Shape*', as C++'s covariance allows (record 0020).
+class Shape:
+    def init : void
+        pass
+
+    def area : i32
+        return 0
+
+    def perimeter : i32
+        return 0
+
+    def clone : Shape*
+        return this
+
+class Square(Shape):
+    side : i32
+
+    def side_of : i32
+        return side
+
+    def area : i32
+        return side * side
+
+    def clone : Square*
+        return this
+
+    def destroy : void
+        pass
+
+class Cube(Square):
+    def destroy : void
+        pass
+
+    def volume : i32
+        return side * side * side
+
+def main : i32
+    return 0

@@ -1,0 +1,20 @@
+# Record 0016: a type index means nothing outside its module, so an override
+# from another module is matched by what its parameter types are. 'fit(Size)'
+# here is the shapes module's 'Size', and overrides; the local 'Size' is
+# another struct, and 'fit' taking it is a new slot.
+import shapes.base
+
+struct Other:
+    w : i32
+
+class Button(Widget):
+    def fit : i32
+        @s : Size
+        return 2
+
+    def fit : i32
+        @s : Other
+        return 3
+
+def main : i32
+    return 0

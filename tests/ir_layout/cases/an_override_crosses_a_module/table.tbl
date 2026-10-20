@@ -1,0 +1,4 @@
+root shapes = shapes
+
+root app = app
+    shapes -> shapes

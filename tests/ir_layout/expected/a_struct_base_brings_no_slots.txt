@@ -1,0 +1,14 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Point: size 4, align 4, data 4, pod
+    x : b32 at 0
+
+class Named: size 16, align 8, data 12
+    vptr at 0
+    base Point at 8
+
+vtable of Named:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: describe(), by Named
+    2: sum_twice(), by Named

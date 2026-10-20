@@ -1,0 +1,37 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+class Shape: size 8, align 8, data 8
+    vptr at 0
+
+class Square: size 16, align 8, data 12
+    vptr at 0
+    base Shape at 0
+    side : b32 at 8
+
+class Cube: size 16, align 8, data 12
+    vptr at 0
+    base Square at 0
+
+vtable of Shape:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: area(), by Shape
+    2: perimeter(), by Shape
+    3: clone(), by Shape
+
+vtable of Square:
+    before 0: the descriptor
+    0: destroy(), by Square
+    1: area(), by Square
+    2: perimeter(), by Shape
+    3: clone(), by Square
+    4: side_of(), by Square
+
+vtable of Cube:
+    before 0: the descriptor
+    0: destroy(), by Cube
+    1: area(), by Square
+    2: perimeter(), by Shape
+    3: clone(), by Square
+    4: side_of(), by Square
+    5: volume(), by Cube

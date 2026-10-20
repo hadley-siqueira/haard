@@ -1,0 +1,17 @@
+# Record 0065: a struct's methods are never virtual, so a class derived from
+# a struct starts a vtable of its own, with only its own methods.
+struct Point:
+    x : i32
+
+    def sum : i32
+        return x
+
+class Named(Point):
+    def describe : i32
+        return 1
+
+    def sum_twice : i32
+        return sum() * 2
+
+def main : i32
+    return 0

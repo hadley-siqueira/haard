@@ -1,0 +1,12 @@
+# The base, its parameter a struct of this module
+struct Size:
+    w : i32
+
+class Widget:
+    def fit : i32
+        @s : Size
+        return s.w
+
+    def fit : i32
+        @s : i32
+        return s

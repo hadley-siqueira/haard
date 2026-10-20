@@ -153,9 +153,39 @@ driven by a new requirement:
   included. An enum with written values takes the smallest unsigned width
   that holds its largest value.
 
-## Stage 1, built in part (2026-10-20)
+## The class table and introspection (Hadley, 2026-10-20)
 
-In `src/haard/ir/`, with the suite `tests/ir_layout` (15 cases, each rule
+- **Slots**: slot 0 is the destructor (the class's `destroy`, or an empty one
+  when it writes none; always virtual, record 0026); then the base's slots in
+  its order, an override taking the slot of what it overrides (same name, same
+  parameters, record 0020); then the class's new methods in declaration order,
+  a generic method's clones included. **`init` takes no slot**: construction
+  always calls it directly (question 83). A struct's methods are never slots
+  (record 0065), so a class derived from a struct starts its own.
+- **No copy of the Itanium vtable**: its two destructor entries, a virtual
+  `init` and the RTTI entries are accidents of the emitted C++ or serve nothing
+  Haard has, and vtables are the IR's own objects in a whole program.
+- **One entry before slot 0 points to the class's descriptor**, where the
+  Itanium ABI keeps its RTTI, so the method slots never move for it. The
+  descriptor is a read-only IR object (question 81), present only when
+  reachable. Version 1: name, size, base -- enough for a checked `downcast` and
+  "is it an X?". It is made to **grow**: a field table (name, offset, Haard
+  type) and a method table (name, signature, slot) can be added without
+  changing what exists. A field's type is the **Haard** type, not the IR's,
+  since question 79 took signedness out of the IR.
+- **Introspection yes, intercession no.** Reading a program's structure fits:
+  statically (the fields of `T` at compile time, what `json(T)` needs, agenda
+  1.23; front end only) and dynamically (through the descriptor). Changing it
+  while it runs -- adding a method, changing a class -- is out of the language
+  on principle: it breaks whole-program compilation (89), devirtualisation (83),
+  the closed list of call targets (61) and code placed in scratchpads (81).
+  Calling a method by name through the method table is an indirect call, under
+  61's rule in real-time code. How introspection is written in Haard is a
+  record of its own.
+
+## Stage 1, built (2026-10-20)
+
+In `src/haard/ir/`, with the suite `tests/ir_layout` (20 cases, each rule
 proven by sabotage):
 
 - `Target` and `find_target`: the three targets above.
@@ -165,6 +195,9 @@ proven by sabotage):
   by the module and node that declare it (record 0016), a tuple by its IR
   element types, a function value as `{env, call}`.
 - `LayoutTable`: the Itanium allocation for single inheritance, per target.
+- `IrClassTable`: every class's vtable slots by the rules above, with
+  `slot_of` for the lowering of a `vcall`. The descriptor's place is kept; the
+  descriptor itself is an object, made with the object table in stage 2.
 
 On x86-64 the suite builds the emitted C++ with a probe and checks that g++
 lays out every aggregate exactly as the IR does; it agrees on every case. For
@@ -172,8 +205,8 @@ that, the C++ emitter's enum tag moved from `int32_t` to the smallest unsigned
 width (record 0043, amended), which changes what `sizeof` gives for an enum in
 a program; no exit status of the emitter suite moved.
 
-Not built yet: the class table (each class's base, fields, vtable slots and
-destructor slot), the last piece of stage 1.
+Next is stage 2: the IR's storage (question 91), the `IrBuilder`, the
+`IrPrinter` (`--emit-ir`) and the verifier (question 88).
 
 ## Consequences
 

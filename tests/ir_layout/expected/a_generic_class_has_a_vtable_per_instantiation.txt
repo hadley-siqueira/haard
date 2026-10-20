@@ -1,0 +1,21 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+class Box<i32>: size 16, align 8, data 12
+    vptr at 0
+    held : b32 at 8
+
+class Box<f64>: size 16, align 8, data 16
+    vptr at 0
+    held : f64 at 8
+
+vtable of Box<i32>:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: get(), by Box<i32>
+    2: operator==(Box<i32>&), by Box<i32>
+
+vtable of Box<f64>:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: get(), by Box<f64>
+    2: operator==(Box<f64>&), by Box<f64>

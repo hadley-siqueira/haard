@@ -19,3 +19,7 @@ class Dynamic: size 16, align 8, data 9
     vptr at 0
     base Nothing at 0
     x : b8 at 8
+
+vtable of Dynamic:
+    before 0: the descriptor
+    0: destroy, implicit

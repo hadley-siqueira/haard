@@ -10,8 +10,8 @@ No frameworks. Only needs `g++`, `bash`, `diff` and `timeout`.
 Or, with the other suites, from the build directory: `make check`.
 
 Stage 1 of the IR (record 0077): the program's types translated into the IR's
-(`IrTypeTranslator`), one table for the whole program (`IrTypeTable`), and laid
-out for one target (`LayoutTable`). Every directory in `cases/` is a project,
+(`IrTypeTranslator`), one table for the whole program (`IrTypeTable`), laid
+out for one target (`LayoutTable`), and every class's vtable (`IrClassTable`). Every directory in `cases/` is a project,
 with an optional `target` file naming `x86_64-linux` (the default),
 `arm64-linux` or `pret`. The golden is every aggregate with its size,
 alignment, data size and each field's offset:
@@ -68,6 +68,26 @@ An **empty** struct takes 1 byte alone and none as a base, unless that would put
 two empty subobjects of one type at one address: `Twice` derives from `Nothing`
 and holds a `Nothing` first, which moves to 1.
 
+## The class table
+
+After the layouts, the golden lists every class's vtable (`IrClassTable`,
+Hadley 2026-10-20): slot 0 the destructor, then the base's slots, an override
+taking the slot of what it overrides, then the new methods; `init` takes none,
+and a struct base brings none. The entry before slot 0 is the place of the
+class's descriptor (introspection), which no method moves for.
+
+```
+vtable of Square:
+    before 0: the descriptor
+    0: destroy(), by Square
+    1: area(), by Square
+    2: perimeter(), by Shape
+```
+
+g++ does not check these: the emitted C++'s Itanium vtable is a different
+one on purpose (two destructor entries, a slot for `init`, RTTI), so only the
+goldens and the sabotage below pin it.
+
 ## Sabotage
 
 Each rule was broken on purpose, one at a time, and the suite run. A restored
@@ -91,3 +111,10 @@ sabotaged object: its date is older than the object built from the sabotage.
 | a function value's two fields swapped | `a_function_value_is_two_pointers` |
 | `pret` little endian | `padding_on_pret` |
 | no check for a type holding itself | `a_struct_that_holds_itself_has_no_size` |
+| an override never takes its base's slot | three cases |
+| an override matched by name only | `an_overload_takes_a_slot_of_its_own`, `an_override_crosses_a_module` |
+| the return compared too, against covariance | `a_vtable_starts_with_the_destructor` |
+| `init` takes a slot | `a_vtable_starts_with_the_destructor` |
+| `destroy` an ordinary slot, not slot 0 | `a_vtable_starts_with_the_destructor` |
+| a struct base brings its slots | `a_struct_base_brings_no_slots` |
+| a named parameter type compared without its module | `an_override_crosses_a_module` |

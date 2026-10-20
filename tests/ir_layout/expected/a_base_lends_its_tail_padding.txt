@@ -53,3 +53,11 @@ class OverBuilt: size 16, align 8, data 14
     vptr at 0
     base Built at 8
     c : b8 at 13
+
+vtable of Over:
+    before 0: the descriptor
+    0: destroy, implicit
+
+vtable of OverBuilt:
+    before 0: the descriptor
+    0: destroy, implicit

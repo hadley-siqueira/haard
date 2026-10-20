@@ -1,0 +1,27 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct app.main.Other: size 4, align 4, data 4, pod
+    w : b32 at 0
+
+class app.main.Button: size 8, align 8, data 8
+    vptr at 0
+    base shapes.base.Widget at 0
+
+class shapes.base.Widget: size 8, align 8, data 8
+    vptr at 0
+
+struct shapes.base.Size: size 4, align 4, data 4, pod
+    w : b32 at 0
+
+vtable of app.main.Button:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: fit(Size), by app.main.Button
+    2: fit(i32), by shapes.base.Widget
+    3: fit(Other), by app.main.Button
+
+vtable of shapes.base.Widget:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: fit(Size), by shapes.base.Widget
+    2: fit(i32), by shapes.base.Widget

@@ -16,3 +16,20 @@ class Deeper: size 24, align 8, data 24
     vptr at 0
     base Derived at 0
     c : b64 at 16
+
+vtable of Shape:
+    before 0: the descriptor
+    0: destroy, implicit
+    1: area(), by Shape
+
+vtable of Base:
+    before 0: the descriptor
+    0: destroy, implicit
+
+vtable of Derived:
+    before 0: the descriptor
+    0: destroy, implicit
+
+vtable of Deeper:
+    before 0: the descriptor
+    0: destroy, implicit

@@ -12,6 +12,7 @@
 // g++ could check every one, and this is where it does.
 #include <haard/compilation/compilation.h>
 #include <haard/emitter/emitter.h>
+#include <haard/ir/ir_class_table.h>
 #include <haard/ir/ir_layout.h>
 #include <haard/ir/ir_type_translator.h>
 
@@ -25,6 +26,7 @@ using namespace haard;
 static Compilation compilation;
 static IrTypeTable types;
 static LayoutTable layouts;
+static IrClassTable classes;
 
 static AstNodeKind kind_of(const IrAggregate* aggregate) {
     return compilation.get_module(aggregate->module)
@@ -90,6 +92,49 @@ static void dump(const Target& target) {
             std::cout << "    " << aggregate->fields[f].name << " : "
                       << types.name_of(aggregate->fields[f].type) << " at "
                       << layout->offsets[f] << "\n";
+        }
+    }
+}
+
+// a method as a reader tells overloads apart: its name and its parameters,
+// written as the source writes them
+static std::string signature_of(const IrSlot& slot) {
+    ExpressionTyper typer;
+    Module* module = compilation.get_module(slot.module);
+    std::vector<u32> parameters = module->get_types()->get_arguments(
+        module->get_symbols()->get_candidate(slot.candidate)->type);
+    std::string out;
+
+    typer.set_compilation(&compilation);
+
+    for (u32 i = 0; i + 1 < parameters.size(); i++) {
+        out += (i > 0 ? ", " : "") + typer.name_in(slot.module, parameters[i]);
+    }
+
+    return slot.name + "(" + out + ")";
+}
+
+static void vtables() {
+    for (u32 i = 1; i < types.get_count(); i++) {
+        IrTypeId type = {i};
+        const IrClass* entry = classes.get_class(type);
+
+        if (entry == nullptr) {
+            continue;
+        }
+
+        std::cout << "\nvtable of " << types.name_of(type) << ":\n"
+                  << "    before 0: the descriptor\n";
+
+        for (u32 s = 0; s < entry->slots.size(); s++) {
+            const IrSlot& slot = entry->slots[s];
+
+            std::cout << "    " << s << ": "
+                      << (slot.candidate == 0 ? slot.name + ", implicit"
+                                              : signature_of(slot) + ", by "
+                                                    + types.name_of(
+                                                        slot.implemented_by))
+                      << "\n";
         }
     }
 }
@@ -320,6 +365,11 @@ int main(int argc, char* argv[]) {
     }
 
     dump(target);
+
+    classes.set_compilation(&compilation);
+    classes.set_types(&types);
+    classes.build();
+    vtables();
 
     return 0;
 }
