@@ -1,0 +1,10 @@
+func @f() {
+^1:
+  %2 = const b64 1
+>>br ^2(%2)
+^2(%1: b32):
+  ret
+}
+
+verifier:
+    @f, br #2: its block argument operand is b64, not b32

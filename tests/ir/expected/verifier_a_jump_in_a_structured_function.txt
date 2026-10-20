@@ -1,0 +1,6 @@
+func @f() {
+>>br ^1
+}
+
+verifier:
+    @f, br #1: a jump of the CFG form in a structured function

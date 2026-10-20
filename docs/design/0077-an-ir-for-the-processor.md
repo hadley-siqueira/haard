@@ -205,8 +205,76 @@ that, the C++ emitter's enum tag moved from `int32_t` to the smallest unsigned
 width (record 0043, amended), which changes what `sizeof` gives for an enum in
 a program; no exit status of the emitter suite moved.
 
-Next is stage 2: the IR's storage (question 91), the `IrBuilder`, the
-`IrPrinter` (`--emit-ir`) and the verifier (question 88).
+## Stage 2, built (2026-10-20)
+
+In `src/haard/ir/`, with the suite `tests/ir` (48 cases built by hand with
+the builder, every verifier rule proven by sabotage):
+
+- `IrOpcode` and the effects table (question 85), its length checked by a
+  `static_assert`, so an opcode without its effects does not compile.
+- `IrFunction`: question 91's storage -- typed four-byte ids, fixed-size
+  instructions with an operand pool, an index-linked list per block, regions
+  owning their blocks, positions as a side table. `IrProgram`: the types, the
+  class table, the objects (functions and data, question 81) and interned
+  signatures.
+- `IrBuilder`, which takes a position on every call (question 86).
+- `IrPrinter`, the text above; `IrVerifier`, question 88's rules.
+
+Choices made while building, none of which changes a decision:
+
+- A **slot is an instruction** (`%2 = slot Point`, as LLVM's `alloca`) and not
+  a table of its own; question 91's `SlotId` is the instruction's id.
+- **Block arguments** go on `br` only; a `cond_br` or a `switch` may not
+  target a block with parameters (the verifier says so). Memory form needs
+  none; mem2reg will widen this when it comes.
+- **Compaction and the alias table** (question 91) wait for the first pass
+  that removes or replaces anything, which is stage 3's flatten: no code
+  without a case to break it.
+- Question 88 listed "8 and 16 bits only in memory" (from 2026-10-08, the
+  untyped QBE-level IR). **Dropped** (Hadley, 2026-10-20): `b8` and `b16` are
+  values like the others (`add b8` wraps at 8 bits), and each back end
+  promotes them to its registers' width, as LLVM's type legalisation does.
+  The IR stays as high as possible, and a vectoriser still sees bytes.
+
+Next is stage 3: the `IrInterpreter` on the CFG form (question 87) and the
+flatten pass.
+
+## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
+
+The first instruction set:
+
+| Group | Instructions |
+|---|---|
+| Constants | `const T v`, `null`, `addr @object`, `size T` |
+| Integers | `add sub mul`, `sdiv udiv srem urem`, `smulhi umulhi`, `and or xor`, `shl lshr ashr`, `neg not` |
+| Floating point | `fadd fsub fmul fdiv fneg` |
+| Comparisons | `eq ne slt sle sgt sge ult ule ugt uge`, `feq fne flt fle fgt fge` |
+| Conversions | `trunc zext sext`, `sitofp uitofp fptosi fptoui`, `fpext fptrunc`, `ptrtoint inttoptr` |
+| Choice | `select` |
+| Memory | `slot T`, `load T`, `store T`, `copy T`, `field`, `index`, `upcast`, `downcast` |
+| Calls | `call @f`, `call_indirect`, `vcall Class.method` |
+| Barriers (85) | `volatile_load`, `volatile_store`, `fence` |
+| Structured (78) | `block`, `if`/`else`, `loop` (with its bound), `break $r`, `continue $r` |
+| CFG | `br`, `cond_br`, `switch`, with block parameters |
+| Leaving | `ret`, `abort "message"` |
+
+Timing instructions (64) and transfers wait for the hardware; the effects
+table already has their class. And five choices:
+
+1. **Haard's semantics is on the instruction, with no undefined behaviour**:
+   `add` wraps (1a), a shift by the width or more gives the arithmetic result
+   (2b), `sdiv` by zero aborts and `MIN / -1` is `MIN` (3a). Each back end
+   writes the check its machine needs. The IR has no `undef` and no `poison`
+   (10), and no optimiser reasons about undefined behaviour.
+2. **No `for` region yet**: the lowering makes `loop`s until loop passes and
+   the counted loop come (82).
+3. **`abort` is a terminator**, like `ret`, for `unwrap` and the bounds checks
+   (9b); its message is a read-only object.
+4. **A value is visible after its definition, in its region and the regions
+   inside it**, and never leaves a region: what has to goes through a slot.
+   Dominance in the structured form is a scope rule.
+5. **Text**: `%n` a value, `@name` an object, `$name` a region, `^name` a CFG
+   block, the type written on the instruction (80).
 
 ## Consequences
 

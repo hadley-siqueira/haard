@@ -1,0 +1,26 @@
+class Shape { origin: Point }
+vtable Shape { 0: destroy, 1: area }
+struct Point { x: b32, y: b32 }
+class Square : Shape { side: b32 }
+vtable Square { 0: destroy, 1: area }
+
+func @memory(%1: ptr) -> b32 {
+  %2 = slot Point
+  %3 = slot Point
+  copy Point %3, %2
+  %4 = field %2, Point.x
+  %5 = const b32 7
+  store b32 %5, %4
+  %6 = slot b32[4]
+  %7 = const b64 2
+  %8 = index %6, %7 : b32
+  %9 = load b32, %4
+  store b32 %9, %8
+  %10 = upcast %1, Square -> Shape
+  %11 = downcast %10, Shape -> Square
+  %12 = field %11, Square.side
+  %13 = load b32, %12
+  ret b32 %13
+}
+
+verifier: ok

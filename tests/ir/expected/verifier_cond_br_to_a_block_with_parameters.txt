@@ -1,0 +1,11 @@
+func @f(%1: bool) {
+^1:
+>>cond_br %1, ^2, ^3
+^2(%2: b32):
+  ret
+^3:
+  ret
+}
+
+verifier:
+    @f, cond_br #1: jumps to ^2, which takes arguments only a 'br' gives

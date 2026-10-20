@@ -1,0 +1,7 @@
+func @f(%1: b64) {
+>>%2 = zext b64 %1 to b32
+  ret
+}
+
+verifier:
+    @f, zext #1: widens, and b64 to b32 does not

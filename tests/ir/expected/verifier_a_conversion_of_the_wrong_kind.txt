@@ -1,0 +1,7 @@
+func @f(%1: f32) {
+>>%2 = sitofp f32 %1 to f64
+  ret
+}
+
+verifier:
+    @f, sitofp #1: cannot convert f32 to f64

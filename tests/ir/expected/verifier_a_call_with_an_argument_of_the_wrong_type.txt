@@ -1,0 +1,12 @@
+func @callee(%1: b64) {
+  ret
+}
+
+func @f() {
+  %1 = const b32 1
+>>call @callee(%1)
+  ret
+}
+
+verifier:
+    @f, call #2: its argument 1 operand is b32, not b64

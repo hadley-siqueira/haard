@@ -1,0 +1,14 @@
+func @f(%1: bool) -> b32 {
+^1:
+  cond_br %1, ^2, ^3
+^2:
+  %2 = const b32 1
+  br ^4
+^3:
+  br ^4
+^4:
+>>ret b32 %2
+}
+
+verifier:
+    @f, ret #5: its value operand %2 is not defined before it, around it

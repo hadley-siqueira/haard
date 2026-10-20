@@ -117,6 +117,12 @@ set(IR_SRC
     src/haard/ir/ir_layout.cpp
     src/haard/ir/ir_type_translator.cpp
     src/haard/ir/ir_class_table.cpp
+    src/haard/ir/ir_opcode.cpp
+    src/haard/ir/ir_function.cpp
+    src/haard/ir/ir_program.cpp
+    src/haard/ir/ir_builder.cpp
+    src/haard/ir/ir_printer.cpp
+    src/haard/ir/ir_verifier.cpp
 )
 
 
@@ -205,6 +211,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/sugar/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/ir_layout/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/ir/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/bootstrap/tests/run.sh

@@ -1,0 +1,8 @@
+func @f(%1: f32) {
+  %2 = slot b32[2]
+>>%3 = index %2, %1 : b32
+  ret
+}
+
+verifier:
+    @f, index #2: indexes by f32, which is not a whole number

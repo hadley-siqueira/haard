@@ -1,0 +1,20 @@
+func @sum(%1: b32) -> b32 {
+^1:
+  %4 = const b32 0
+  %5 = const b32 0
+  br ^2(%4, %5)
+^2(%2: b32, %3: b32):
+  %6 = slt b32 %2, %1
+  cond_br %6, ^3, ^4
+^3:
+  switch b32 %2, default ^5 [0: ^4, 7: ^5]
+^4:
+  ret b32 %1
+^5:
+  %7 = const b32 1
+  %8 = add b32 %2, %7
+  %9 = add b32 %3, %2
+  br ^2(%8, %9)
+}
+
+verifier: ok

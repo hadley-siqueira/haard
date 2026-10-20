@@ -1,0 +1,7 @@
+func @f(%1: b32) {
+>>%2 = select b32 %1, %1, %1
+  ret
+}
+
+verifier:
+    @f, select #1: its condition operand is b32, not bool

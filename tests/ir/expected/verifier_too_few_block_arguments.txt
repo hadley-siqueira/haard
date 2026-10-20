@@ -1,0 +1,9 @@
+func @f() {
+^1:
+>>br ^2
+^2(%1: b32):
+  ret
+}
+
+verifier:
+    @f, br #1: gives 0 arguments to ^2, which takes 1

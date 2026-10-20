@@ -1,0 +1,9 @@
+func @f() {
+  $1: block {
+>>  continue $1
+  }
+  ret
+}
+
+verifier:
+    @f, continue #2: continues $1, which is not a loop

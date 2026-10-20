@@ -1,0 +1,7 @@
+func @f() {
+^1:
+>>br ^9
+}
+
+verifier:
+    @f, br #1: jumps to ^9, which is not a block of this function

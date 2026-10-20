@@ -1,0 +1,13 @@
+class Shape { origin: Point }
+vtable Shape { 0: destroy, 1: area }
+struct Point { x: b32, y: b32 }
+class Square : Shape { side: b32 }
+vtable Square { 0: destroy, 1: area }
+
+func @f(%1: ptr) {
+>>%2 = upcast %1, Square -> Point
+  ret
+}
+
+verifier:
+    @f, upcast #1: Point is not a base of Square

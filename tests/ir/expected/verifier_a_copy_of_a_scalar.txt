@@ -1,0 +1,8 @@
+func @f() {
+  %1 = slot b32
+>>copy b32 %1, %1
+  ret
+}
+
+verifier:
+    @f, copy #2: copies b32, which a load and a store would

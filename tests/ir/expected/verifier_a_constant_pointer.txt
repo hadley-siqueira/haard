@@ -1,0 +1,7 @@
+func @f() {
+>>%1 = const ptr 0
+  ret
+}
+
+verifier:
+    @f, const #1: a constant of ptr, which is not a number or a bool

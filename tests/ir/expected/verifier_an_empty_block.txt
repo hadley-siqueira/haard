@@ -1,0 +1,8 @@
+func @f() {
+^1:
+  br ^2
+^2:
+}
+
+verifier:
+    @f: block ^2 is empty, and a block ends in a terminator

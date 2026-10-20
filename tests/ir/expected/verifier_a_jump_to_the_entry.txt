@@ -1,0 +1,7 @@
+func @f() {
+^1:
+>>br ^1
+}
+
+verifier:
+    @f, br #1: nothing may jump to the entry ^1

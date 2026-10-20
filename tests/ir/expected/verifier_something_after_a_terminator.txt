@@ -1,0 +1,7 @@
+func @f() {
+>>ret
+  fence
+}
+
+verifier:
+    @f, ret #1: ends its block, and something follows it

@@ -656,6 +656,10 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
     that just ran, the function's dump with the culprit marked, then abort.
     Its suite: IR broken on purpose, one case per rule, built with the
     `IrBuilder` in C++ (the text is only a dump), each proven by sabotage.
+    Amended the same day: the rule "8 and 16 bits only in memory" (2) is
+    **dropped**, Hadley approving: it belonged to the untyped IR of
+    2026-10-08, and in the typed one `b8`/`b16` are values, promoted by
+    each back end.
 89. **Whole-program compilation**.
 
     **Answer (Hadley, 2026-10-20): approved, (a) whole program always**, on

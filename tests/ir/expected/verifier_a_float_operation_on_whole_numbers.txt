@@ -1,0 +1,9 @@
+func @f() {
+  %1 = const b32 1
+  %2 = const b32 2
+>>%3 = fadd b32 %1, %2
+  ret
+}
+
+verifier:
+    @f, fadd #3: works on floats, not on b32

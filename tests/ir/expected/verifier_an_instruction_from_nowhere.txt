@@ -1,0 +1,7 @@
+func @f() {
+>>fence  ; at nowhere
+  ret  ; at 0:0
+}
+
+verifier:
+    @f, fence #1: has no position in the source

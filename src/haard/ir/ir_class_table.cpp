@@ -25,6 +25,11 @@ void IrClassTable::build() {
     }
 }
 
+void IrClassTable::add_class(const IrClass& made) {
+    by_type[made.type.index] = (u32) classes.size();
+    classes.push_back(made);
+}
+
 const IrClass* IrClassTable::get_class(IrTypeId type) {
     std::map<u32, u32>::iterator found = by_type.find(type.index);
 
@@ -70,6 +75,7 @@ void IrClassTable::build_class(IrTypeId type) {
         destructor.module = 0;
         destructor.candidate = 0;
         destructor.implemented_by = type;
+        destructor.signature = 0;
         made.slots.push_back(destructor);
     }
 
@@ -99,6 +105,7 @@ void IrClassTable::build_class(IrTypeId type) {
         slot.module = module_index;
         slot.candidate = candidate;
         slot.implemented_by = type;
+        slot.signature = 0;
 
         if (name == "destroy") {
             made.slots[0] = slot;

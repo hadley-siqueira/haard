@@ -1,0 +1,11 @@
+func @f() {
+  $1: block {
+  }
+  $2: block {
+>>  break $1
+  }
+  ret
+}
+
+verifier:
+    @f, break #3: leaves $1, which is not around it

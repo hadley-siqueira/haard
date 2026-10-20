@@ -1,0 +1,10 @@
+func @f() realtime {
+  $1: loop bound 8 {
+  }
+>>$2: loop {
+  }
+  ret
+}
+
+verifier:
+    @f, loop #2: a loop of real-time code has no bound

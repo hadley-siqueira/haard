@@ -1,0 +1,9 @@
+func @device(%1: ptr) -> b32 {
+  %2 = const b32 1
+  volatile_store b32 %2, %1
+  fence
+  %3 = volatile_load b32, %1
+  ret b32 %3
+}
+
+verifier: ok

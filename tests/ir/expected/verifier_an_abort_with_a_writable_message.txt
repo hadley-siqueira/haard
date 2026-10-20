@@ -1,0 +1,8 @@
+data @message : b8 = zero
+
+func @f() {
+>>abort @message
+}
+
+verifier:
+    @f, abort #1: its message is not read-only data

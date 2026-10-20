@@ -1,0 +1,81 @@
+const:
+null:
+addr:
+size:
+add:
+sub:
+mul:
+sdiv: traps
+udiv: traps
+srem: traps
+urem: traps
+smulhi:
+umulhi:
+and:
+or:
+xor:
+shl:
+lshr:
+ashr:
+neg:
+not:
+fadd:
+fsub:
+fmul:
+fdiv:
+fneg:
+eq:
+ne:
+slt:
+sle:
+sgt:
+sge:
+ult:
+ule:
+ugt:
+uge:
+feq:
+fne:
+flt:
+fle:
+fgt:
+fge:
+trunc:
+zext:
+sext:
+sitofp:
+uitofp:
+fptosi:
+fptoui:
+fpext:
+fptrunc:
+ptrtoint:
+inttoptr:
+select:
+slot:
+load: reads
+store: writes
+copy: reads writes
+field:
+index:
+upcast:
+downcast:
+call: reads writes barrier
+call_indirect: reads writes barrier
+vcall: reads writes barrier
+volatile_load: reads barrier
+volatile_store: writes barrier
+fence: barrier
+block:
+if:
+loop:
+break: terminator
+continue: terminator
+br: terminator
+cond_br: terminator
+switch: terminator
+ret: terminator
+abort: barrier terminator
+
+
+verifier: ok

@@ -1,0 +1,14 @@
+class Shape { origin: Point }
+vtable Shape { 0: destroy, 1: area }
+struct Point { x: b32, y: b32 }
+class Square : Shape { side: b32 }
+vtable Square { 0: destroy, 1: area }
+
+func @f() {
+  %1 = slot Point
+>>%2 = field %1, Point.?
+  ret
+}
+
+verifier:
+    @f, field #2: Point has no field 2

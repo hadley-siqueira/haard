@@ -1,0 +1,12 @@
+func @callee() {
+  ret
+}
+
+func @f() {
+  %1 = const b32 1
+>>call @callee(%1)
+  ret
+}
+
+verifier:
+    @f, call #2: gives 1 argument to a function that takes 0

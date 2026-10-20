@@ -1,0 +1,9 @@
+func @f() {
+  %1 = const b32 1
+  %2 = const b64 2
+>>%3 = add b32 %1, %2
+  ret
+}
+
+verifier:
+    @f, add #3: its second operand is b64, not b32

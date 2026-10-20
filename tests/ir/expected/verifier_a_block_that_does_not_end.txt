@@ -1,0 +1,7 @@
+func @f() {
+^1:
+>>fence
+}
+
+verifier:
+    @f, fence #1: the last instruction of ^1 is not a terminator

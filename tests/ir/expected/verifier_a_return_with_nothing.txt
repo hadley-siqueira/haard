@@ -1,0 +1,6 @@
+func @f() -> b32 {
+>>ret
+}
+
+verifier:
+    @f, ret #1: gives nothing back from a function that gives b32

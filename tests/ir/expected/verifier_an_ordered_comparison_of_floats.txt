@@ -1,0 +1,7 @@
+func @f(%1: f32) {
+>>%2 = slt f32 %1, %1
+  ret
+}
+
+verifier:
+    @f, slt #1: orders whole numbers, not f32

@@ -1,0 +1,21 @@
+data @counter : b64 = zero
+data @table : b8[3] = "\01\02\ff"
+data @greeting : b8[10] = readonly "hi \22you\22\0a\00"
+
+func @constants() -> b64 {
+  %1 = const b8 255
+  %2 = const b64 18446744073709551615
+  %3 = const bool true
+  %4 = const bool false
+  %5 = const f64 0.5
+  %6 = const f32 0.333333343
+  %7 = null
+  %8 = addr @table
+  %9 = addr @counter
+  %10 = size b32[10] as b64
+  store b64 %10, %9
+  %11 = load b64, %9
+  ret b64 %11
+}
+
+verifier: ok

@@ -1,0 +1,9 @@
+func @f() {
+>>%1 = add b32 %2, %2
+  %2 = const b32 1
+  ret
+}
+
+verifier:
+    @f, add #1: its first operand %2 is not defined before it, around it
+    @f, add #1: its second operand %2 is not defined before it, around it

@@ -1,0 +1,7 @@
+func @f() -> b32 {
+  %1 = const b64 1
+>>ret b64 %1
+}
+
+verifier:
+    @f, ret #2: its value operand is b64, not b32

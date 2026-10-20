@@ -19,6 +19,10 @@ namespace haard {
 
         // the class whose method fills it, which is this class or one above
         IrTypeId implemented_by;
+
+        // the IR signature a 'vcall' through it must match, receiver first;
+        // 0 until the lowering translates the method's
+        u32 signature;
     };
 
     struct IrClass {
@@ -54,6 +58,10 @@ namespace haard {
 
             // every class aggregate of the type table
             void build();
+
+            // a class made by hand, for a program with no Haard source:
+            // the IR's own tests
+            void add_class(const IrClass& made);
 
             // nullptr when the type is not a class
             const IrClass* get_class(IrTypeId type);

@@ -1,0 +1,9 @@
+data @data : b32 = zero
+
+func @f() {
+>>call @data()
+  ret
+}
+
+verifier:
+    @f, call #1: calls something that is not a function
