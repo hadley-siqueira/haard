@@ -1,0 +1,46 @@
+# Record 0077, stage 4, step 1. A 'while' is a loop that breaks when its
+# condition fails; a 'for' runs its body in a block of its own, so a
+# 'continue' leaves that block and the increment still runs; 'elif' is an
+# 'if' in an 'else'; 'and' and 'or' run their right side only when they
+# must, which the division by zero below would show. 45 + 25 + 6 + 2 = 78.
+def classify : i32
+    @n : i32
+
+    if n < 0:
+        return 0
+    elif n == 0:
+        return 1
+    elif n < 10:
+        return 2
+    else:
+        return 3
+
+def main : i32
+    let total = 0
+    let i = 0
+
+    while true:
+        i = i + 1
+
+        if i > 9:
+            break
+
+        total += i
+
+    for j = 0; j < 10; j++:
+        if j % 2 == 0:
+            continue
+
+        total = total + j
+
+    total = total + classify(-5) + classify(0) + classify(4) + classify(99)
+
+    let zero = 0
+
+    if zero != 0 and 10 / zero > 1:
+        return 1
+
+    if zero == 0 or 10 / zero > 1:
+        total = total + 2
+
+    return total

@@ -22,6 +22,7 @@ IrBuilder::IrBuilder() {
     program = nullptr;
     current.index = 0;
     block.index = 0;
+    last_entry_slot.index = 0;
 }
 
 void IrBuilder::set_program(IrProgram* program) {
@@ -33,6 +34,7 @@ void IrBuilder::begin_function(IrObjectId object) {
 
     current = object;
     open.clear();
+    last_entry_slot.index = 0;
 
     const IrSignature& signature =
         program->get_signature(function().signature);
@@ -107,6 +109,15 @@ IrValueId IrBuilder::select(IrTypeId type, IrValueId condition,
 IrValueId IrBuilder::slot(IrTypeId type, IrPosition at) {
     return result_of(
         emit(IR_SLOT, type, 0, 0, 0, 0, no_pool(), pointer(), at));
+}
+
+IrValueId IrBuilder::entry_slot(IrTypeId type, IrPosition at) {
+    IrInstId made = emit(IR_SLOT, type, 0, 0, 0, 0, no_pool(), pointer(), at);
+
+    move_after(made, function().body, last_entry_slot);
+    last_entry_slot = made;
+
+    return result_of(made);
 }
 
 IrValueId IrBuilder::load(IrTypeId type, IrValueId from, IrPosition at) {
@@ -245,6 +256,13 @@ void IrBuilder::end() {
     open.pop_back();
 }
 
+bool IrBuilder::ended() {
+    IrInstId last = function().get(block).last;
+
+    return last.index != 0
+        && opcode_info((IrOpcode) function().get(last).opcode).terminator;
+}
+
 void IrBuilder::break_to(IrInstId region, IrPosition at) {
     emit(IR_BREAK, NO_TYPE, 0, 0, 0, region.index, no_pool(), NO_TYPE, at);
 }
@@ -358,6 +376,44 @@ IrInstId IrBuilder::emit(IrOpcode opcode, IrTypeId type, u32 a, u32 b, u32 c,
     body.get(block).last = made;
 
     return made;
+}
+
+// out of the block 'emit' appended it to, and into its place in another
+void IrBuilder::move_after(IrInstId id, IrBlockId target, IrInstId after) {
+    IrFunction& body = function();
+    IrInst& inst = body.get(id);
+    IrBlock& from = body.get(inst.block);
+
+    if (inst.previous.index != 0) {
+        body.get(inst.previous).next = inst.next;
+    } else {
+        from.first = inst.next;
+    }
+
+    if (inst.next.index != 0) {
+        body.get(inst.next).previous = inst.previous;
+    } else {
+        from.last = inst.previous;
+    }
+
+    IrBlock& to = body.get(target);
+    IrInstId following = after.index != 0 ? body.get(after).next : to.first;
+
+    inst.block = target;
+    inst.previous = after;
+    inst.next = following;
+
+    if (after.index != 0) {
+        body.get(after).next = id;
+    } else {
+        to.first = id;
+    }
+
+    if (following.index != 0) {
+        body.get(following).previous = id;
+    } else {
+        to.last = id;
+    }
 }
 
 IrBlockId IrBuilder::add_block(IrInstId region) {

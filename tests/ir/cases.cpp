@@ -1119,6 +1119,33 @@ static void run_an_if_whose_two_sides_return(Fixture& f) {
     f.build.ret(f.b32, f.build.call(sign, {below}, f.at()), f.at());
 }
 
+// an 'if' in the 'else' of another, every side returning: found by the
+// first program lowered from Haard ('elif' is this shape). The block after
+// the inner 'if' is dead and empty, and a jump from it to the block after the
+// outer one kept that one alive, empty, and the verifier refused it
+static void run_an_if_chain_whose_every_side_returns(Fixture& f) {
+    IrObjectId classify = f.function("classify", {f.b32}, f.b32,
+                                     IR_FORM_STRUCTURED);
+    IrValueId n = f.build.parameter(0);
+    IrValueId zero = f.number(f.b32, 0);
+
+    f.build.begin_if(f.build.binary(IR_SLT, f.b32, n, zero, f.at()), f.at());
+    f.build.ret(f.b32, f.number(f.b32, 1), f.at());
+    f.build.begin_else();
+    f.build.begin_if(f.build.binary(IR_EQ, f.b32, n, zero, f.at()), f.at());
+    f.build.ret(f.b32, f.number(f.b32, 2), f.at());
+    f.build.begin_else();
+    f.build.ret(f.b32, f.number(f.b32, 3), f.at());
+    f.build.end();
+    f.build.end();
+
+    f.function("main", {}, f.b32, IR_FORM_STRUCTURED);
+
+    IrValueId nothing = f.number(f.b32, 0);
+
+    f.build.ret(f.b32, f.build.call(classify, {nothing}, f.at()), f.at());
+}
+
 static void run_calls_a_recursion_and_a_pointer(Fixture& f) {
     IrObjectId factorial = f.function("factorial", {f.b64}, f.b64,
                                       IR_FORM_STRUCTURED);
@@ -1365,6 +1392,8 @@ static const Case CASES[] = {
     {"run_a_continue_of_the_outer_loop_is_its_turn",
      run_a_continue_of_the_outer_loop_is_its_turn},
     {"run_an_if_whose_two_sides_return", run_an_if_whose_two_sides_return},
+    {"run_an_if_chain_whose_every_side_returns",
+     run_an_if_chain_whose_every_side_returns},
     {"run_calls_a_recursion_and_a_pointer",
      run_calls_a_recursion_and_a_pointer},
     {"run_a_virtual_call", run_a_virtual_call},

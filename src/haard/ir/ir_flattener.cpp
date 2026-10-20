@@ -59,7 +59,7 @@ void IrFlattener::flatten_block(IrBlockId block) {
             frames.push_back(frame);
             flatten_block({inst.extra});
 
-            if (!ended()) {
+            if (falls()) {
                 jump(frame.after, at);
             }
 
@@ -79,7 +79,7 @@ void IrFlattener::flatten_block(IrBlockId block) {
             place(chosen);
             flatten_block({inst.extra});
 
-            if (!ended()) {
+            if (falls()) {
                 jump(frame.after, at);
             }
 
@@ -87,7 +87,7 @@ void IrFlattener::flatten_block(IrBlockId block) {
                 place(otherwise);
                 flatten_block({inst.c});
 
-                if (!ended()) {
+                if (falls()) {
                     jump(frame.after, at);
                 }
             }
@@ -112,7 +112,7 @@ void IrFlattener::flatten_block(IrBlockId block) {
             place(top);
             flatten_block({inst.extra});
 
-            if (!ended()) {
+            if (falls()) {
                 jump(top, at);
             }
 
@@ -217,6 +217,16 @@ void IrFlattener::place(IrBlockId block) {
     out.get(block).loop = out.get(block).header ? block : loop;
     out.order.push_back(block);
     current = block;
+}
+
+// whether the block being written goes on to what follows it: not when it
+// ended in a terminator, and not when it is empty and nothing jumps to it --
+// the place after an 'if' whose sides all left, which close() drops. A jump
+// written from there would keep the block after it alive for nothing
+bool IrFlattener::falls() {
+    return !ended()
+        && !(out.get(current).first.index == 0
+             && jumps_to[current.index] == 0 && current.index != out.body.index);
 }
 
 bool IrFlattener::ended() {

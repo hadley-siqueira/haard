@@ -1,4 +1,6 @@
 #include <haard/driver/driver.h>
+#include <haard/ir/ir_printer.h>
+#include <haard/lowering/ir_lowerer.h>
 #include <iostream>
 #include <stdexcept>
 
@@ -10,6 +12,7 @@ Driver::Driver() {
     show_tokens = false;
     show_pretty_print = false;
     emit_cpp = false;
+    emit_ir = false;
 }
 
 int Driver::run(int argc, char* argv[]) {
@@ -81,6 +84,8 @@ bool Driver::read_arguments(int argc, char* argv[]) {
             show_tokens = true;
         } else if (argument == "--emit-cpp") {
             emit_cpp = true;
+        } else if (argument == "--emit-ir") {
+            emit_ir = true;
         } else if (argument == "--pretty-print") {
             show_pretty_print = true;
         } else if (argument == "--pkg") {
@@ -118,6 +123,7 @@ void Driver::print_usage(std::ostream& out) {
         << "  -h, --help          show this message\n"
         << "      --tokens        dump the token stream\n"
         << "      --emit-cpp      write the program as C++, for a C++ compiler\n"
+        << "      --emit-ir       write the program's IR, as text to read\n"
         << "      --pretty-print  print the source back from the ast\n"
         << "      --pkg <file>    the manifest ('haard.pkg'), which says what\n"
         << "                      this library is and what it needs. hdc\n"
@@ -197,6 +203,28 @@ int Driver::compile() {
             std::cerr << program << ": " << emitter.get_error() << '\n';
             return 1;
         }
+    }
+
+    // record 0077: the structured form the lowering wrote, for reading. The
+    // text is a dump and nothing parses it back
+    if (emit_ir) {
+        Target target;
+        IrProgram ir;
+        IrLowerer lowerer;
+        IrPrinter printer;
+
+        find_target("x86_64-linux", target);
+        lowerer.set_compilation(&compilation);
+        lowerer.set_target(&target);
+        lowerer.set_program(&ir);
+
+        if (!lowerer.lower()) {
+            std::cerr << program << ": " << lowerer.get_error() << '\n';
+            return 1;
+        }
+
+        printer.set_program(&ir);
+        printer.print(std::cout);
     }
 
     if (show_pretty_print) {

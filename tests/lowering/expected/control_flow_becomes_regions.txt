@@ -1,0 +1,151 @@
+func @classify(%1: b32) -> b32 {
+  %2 = slot b32
+  store b32 %1, %2
+  %3 = load b32, %2
+  %4 = const b32 0
+  %5 = slt b32 %3, %4
+  $6: if %5 {
+    %6 = const b32 0
+    ret b32 %6
+  } else {
+    %7 = load b32, %2
+    %8 = const b32 0
+    %9 = eq b32 %7, %8
+    $12: if %9 {
+      %10 = const b32 1
+      ret b32 %10
+    } else {
+      %11 = load b32, %2
+      %12 = const b32 10
+      %13 = slt b32 %11, %12
+      $18: if %13 {
+        %14 = const b32 2
+        ret b32 %14
+      } else {
+        %15 = const b32 3
+        ret b32 %15
+      }
+    }
+  }
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot b32
+  %16 = slot b32
+  %47 = slot b32
+  %49 = slot bool
+  %60 = slot bool
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = const b32 0
+  store b32 %4, %3
+  $7: loop {
+    %5 = const bool true
+    %6 = not bool %5
+    $10: if %6 {
+      break $7
+    }
+    %7 = load b32, %3
+    %8 = const b32 1
+    %9 = add b32 %7, %8
+    store b32 %9, %3
+    %10 = load b32, %3
+    %11 = const b32 9
+    %12 = sgt b32 %10, %11
+    $19: if %12 {
+      break $7
+    }
+    %13 = load b32, %1
+    %14 = load b32, %3
+    %15 = add b32 %13, %14
+    store b32 %15, %1
+  }
+  %17 = const b32 0
+  store b32 %17, %16
+  $28: loop {
+    %18 = load b32, %16
+    %19 = const b32 10
+    %20 = slt b32 %18, %19
+    %21 = not bool %20
+    $33: if %21 {
+      break $28
+    }
+    $35: block {
+      %22 = load b32, %16
+      %23 = const b32 2
+      %24 = srem b32 %22, %23
+      %25 = const b32 0
+      %26 = eq b32 %24, %25
+      $41: if %26 {
+        break $35
+      }
+      %27 = load b32, %1
+      %28 = load b32, %16
+      %29 = add b32 %27, %28
+      store b32 %29, %1
+    }
+    %30 = load b32, %16
+    %31 = const b32 1
+    %32 = add b32 %30, %31
+    store b32 %32, %16
+  }
+  %33 = load b32, %1
+  %34 = const b32 5
+  %35 = neg b32 %34
+  %36 = call @classify(%35)
+  %37 = add b32 %33, %36
+  %38 = const b32 0
+  %39 = call @classify(%38)
+  %40 = add b32 %37, %39
+  %41 = const b32 4
+  %42 = call @classify(%41)
+  %43 = add b32 %40, %42
+  %44 = const b32 99
+  %45 = call @classify(%44)
+  %46 = add b32 %43, %45
+  store b32 %46, %1
+  %48 = const b32 0
+  store b32 %48, %47
+  %50 = load b32, %47
+  %51 = const b32 0
+  %52 = ne b32 %50, %51
+  store bool %52, %49
+  $74: if %52 {
+    %53 = const b32 10
+    %54 = load b32, %47
+    %55 = sdiv b32 %53, %54
+    %56 = const b32 1
+    %57 = sgt b32 %55, %56
+    store bool %57, %49
+  }
+  %58 = load bool, %49
+  $82: if %58 {
+    %59 = const b32 1
+    ret b32 %59
+  }
+  %61 = load b32, %47
+  %62 = const b32 0
+  %63 = eq b32 %61, %62
+  store bool %63, %60
+  %64 = not bool %63
+  $91: if %64 {
+    %65 = const b32 10
+    %66 = load b32, %47
+    %67 = sdiv b32 %65, %66
+    %68 = const b32 1
+    %69 = sgt b32 %67, %68
+    store bool %69, %60
+  }
+  %70 = load bool, %60
+  $99: if %70 {
+    %71 = load b32, %1
+    %72 = const b32 2
+    %73 = add b32 %71, %72
+    store b32 %73, %1
+  }
+  %74 = load b32, %1
+  ret b32 %74
+}
+
+--- exit: 78

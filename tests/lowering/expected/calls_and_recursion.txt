@@ -1,0 +1,83 @@
+func @fib(%1: b32) -> b32 {
+  %2 = slot b32
+  store b32 %1, %2
+  %3 = load b32, %2
+  %4 = const b32 2
+  %5 = slt b32 %3, %4
+  $6: if %5 {
+    %6 = load b32, %2
+    ret b32 %6
+  }
+  %7 = load b32, %2
+  %8 = const b32 1
+  %9 = sub b32 %7, %8
+  %10 = call @fib(%9)
+  %11 = load b32, %2
+  %12 = const b32 2
+  %13 = sub b32 %11, %12
+  %14 = call @fib(%13)
+  %15 = add b32 %10, %14
+  ret b32 %15
+}
+
+func @is_even(%1: b32) -> bool {
+  %2 = slot b32
+  store b32 %1, %2
+  %3 = load b32, %2
+  %4 = const b32 0
+  %5 = eq b32 %3, %4
+  $6: if %5 {
+    %6 = const bool true
+    ret bool %6
+  }
+  %7 = load b32, %2
+  %8 = const b32 1
+  %9 = sub b32 %7, %8
+  %10 = call @is_odd(%9)
+  ret bool %10
+}
+
+func @is_odd(%1: b32) -> bool {
+  %2 = slot b32
+  store b32 %1, %2
+  %3 = load b32, %2
+  %4 = const b32 0
+  %5 = eq b32 %3, %4
+  $6: if %5 {
+    %6 = const bool false
+    ret bool %6
+  }
+  %7 = load b32, %2
+  %8 = const b32 1
+  %9 = sub b32 %7, %8
+  %10 = call @is_even(%9)
+  ret bool %10
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %4 = slot bool
+  %2 = const b32 10
+  %3 = call @fib(%2)
+  store b32 %3, %1
+  %5 = const b32 12
+  %6 = call @is_even(%5)
+  store bool %6, %4
+  $9: if %6 {
+    %7 = const b32 7
+    %8 = call @is_even(%7)
+    %9 = not bool %8
+    store bool %9, %4
+  }
+  %10 = load bool, %4
+  $15: if %10 {
+    %11 = load b32, %1
+    %12 = const b32 1
+    %13 = add b32 %11, %12
+    store b32 %13, %1
+  }
+  %14 = load b32, %1
+  ret b32 %14
+}
+
+--- exit: 56

@@ -44,8 +44,6 @@ func @main() -> b32 {
   %7 = add b32 %5, %3
   store b32 %7, %1
   br ^2
-^7:
-  br ^2
 ^3:
   %8 = load b32, %1
   ret b32 %8

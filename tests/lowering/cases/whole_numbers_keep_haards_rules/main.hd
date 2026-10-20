@@ -1,0 +1,44 @@
+# Record 0077, stage 4, step 1: the operators on each width and sign, as
+# questions 1 to 3 and record 0057 define them. Each line adds one bit when
+# it holds, so a wrong one shows as a missing bit: 255 when all eight do.
+def main : i32
+    let result = 0
+    let small : i8 = 127
+    let byte : u8 = 200
+    let minus : i32 = 0 - 7
+
+    small = small + 1
+
+    # (-127 - 1: the literal -128 is refused, small pending item 6)
+    if small == -127 - 1:
+        result = result | 1
+
+    byte = byte + 100
+
+    if byte == 44:
+        result = result | 2
+
+    if minus / 2 == -3 and minus % 2 == -1:
+        result = result | 4
+
+    if minus // 2 == -4:
+        result = result | 8
+
+    if 2 ** 10 == 1024 and (0 - 2) ** 3 == -8:
+        result = result | 16
+
+    if minus >> 1 == -4 and minus >>> 28 == 15:
+        result = result | 32
+
+    let wide = i64(minus)
+    let narrow = u8(wide)
+
+    if wide == -7 and narrow == 249:
+        result = result | 64
+
+    let letter = 'b'
+
+    if letter > 'a' and letter < 'c':
+        result = result | 128
+
+    return result

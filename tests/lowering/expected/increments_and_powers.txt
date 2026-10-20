@@ -1,0 +1,332 @@
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot b32
+  %5 = slot b32
+  %9 = slot b32
+  %13 = slot bool
+  %14 = slot bool
+  %29 = slot b32
+  %31 = slot b32
+  %35 = slot bool
+  %36 = slot bool
+  %56 = slot b32
+  %57 = slot b32
+  %84 = slot b32
+  %85 = slot b32
+  %109 = slot bool
+  %115 = slot b32
+  %116 = slot b32
+  %143 = slot b32
+  %144 = slot b32
+  %169 = slot b8
+  %171 = slot bool
+  %174 = slot b8
+  %175 = slot b8
+  %188 = slot b8
+  %189 = slot b8
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = const b32 5
+  store b32 %4, %3
+  %6 = load b32, %3
+  %7 = const b32 1
+  %8 = add b32 %6, %7
+  store b32 %8, %3
+  store b32 %6, %5
+  %10 = load b32, %3
+  %11 = const b32 1
+  %12 = add b32 %10, %11
+  store b32 %12, %3
+  store b32 %12, %9
+  %15 = load b32, %5
+  %16 = const b32 5
+  %17 = eq b32 %15, %16
+  store bool %17, %14
+  $25: if %17 {
+    %18 = load b32, %9
+    %19 = const b32 7
+    %20 = eq b32 %18, %19
+    store bool %20, %14
+  }
+  %21 = load bool, %14
+  store bool %21, %13
+  $32: if %21 {
+    %22 = load b32, %3
+    %23 = const b32 7
+    %24 = eq b32 %22, %23
+    store bool %24, %13
+  }
+  %25 = load bool, %13
+  $38: if %25 {
+    %26 = load b32, %1
+    %27 = const b32 1
+    %28 = or b32 %26, %27
+    store b32 %28, %1
+  }
+  %30 = const b32 3
+  store b32 %30, %29
+  %32 = load b32, %29
+  %33 = const b32 1
+  %34 = sub b32 %32, %33
+  store b32 %34, %29
+  store b32 %32, %31
+  %37 = load b32, %31
+  %38 = const b32 3
+  %39 = eq b32 %37, %38
+  store bool %39, %36
+  $58: if %39 {
+    %40 = load b32, %29
+    %41 = const b32 2
+    %42 = eq b32 %40, %41
+    store bool %42, %36
+  }
+  %43 = load bool, %36
+  store bool %43, %35
+  $65: if %43 {
+    %44 = load b32, %29
+    %45 = const b32 1
+    %46 = sub b32 %44, %45
+    store b32 %46, %29
+    %47 = const b32 1
+    %48 = eq b32 %46, %47
+    store bool %48, %35
+  }
+  %49 = load bool, %35
+  $74: if %49 {
+    %50 = load b32, %1
+    %51 = const b32 2
+    %52 = or b32 %50, %51
+    store b32 %52, %1
+  }
+  %53 = const b32 2
+  %54 = const b32 1
+  %55 = neg b32 %54
+  %58 = const b32 0
+  %59 = const b32 1
+  store b32 %59, %56
+  store b32 %58, %57
+  %60 = sub b32 %58, %59
+  %61 = slt b32 %55, %58
+  $90: if %61 {
+    %62 = const b32 2
+    %63 = srem b32 %55, %62
+    %64 = eq b32 %63, %58
+    %65 = select b32 %64, %59, %60
+    %66 = eq b32 %53, %60
+    %67 = eq b32 %53, %59
+    %68 = select b32 %66, %65, %58
+    %69 = select b32 %67, %59, %68
+    store b32 %69, %56
+  } else {
+    $100: loop {
+      %70 = load b32, %57
+      %71 = sge b32 %70, %55
+      $103: if %71 {
+        break $100
+      }
+      %72 = load b32, %56
+      %73 = mul b32 %72, %53
+      store b32 %73, %56
+      %74 = add b32 %70, %59
+      store b32 %74, %57
+    }
+  }
+  %75 = load b32, %56
+  %76 = const b32 0
+  %77 = eq b32 %75, %76
+  $113: if %77 {
+    %78 = load b32, %1
+    %79 = const b32 4
+    %80 = or b32 %78, %79
+    store b32 %80, %1
+  }
+  %81 = const b32 1
+  %82 = const b32 5
+  %83 = neg b32 %82
+  %86 = const b32 0
+  %87 = const b32 1
+  store b32 %87, %84
+  store b32 %86, %85
+  %88 = sub b32 %86, %87
+  %89 = slt b32 %83, %86
+  $129: if %89 {
+    %90 = const b32 2
+    %91 = srem b32 %83, %90
+    %92 = eq b32 %91, %86
+    %93 = select b32 %92, %87, %88
+    %94 = eq b32 %81, %88
+    %95 = eq b32 %81, %87
+    %96 = select b32 %94, %93, %86
+    %97 = select b32 %95, %87, %96
+    store b32 %97, %84
+  } else {
+    $139: loop {
+      %98 = load b32, %85
+      %99 = sge b32 %98, %83
+      $142: if %99 {
+        break $139
+      }
+      %100 = load b32, %84
+      %101 = mul b32 %100, %81
+      store b32 %101, %84
+      %102 = add b32 %98, %87
+      store b32 %102, %85
+    }
+  }
+  %103 = load b32, %84
+  %104 = const b32 1
+  %105 = eq b32 %103, %104
+  $152: if %105 {
+    %106 = load b32, %1
+    %107 = const b32 8
+    %108 = or b32 %106, %107
+    store b32 %108, %1
+  }
+  %110 = const b32 0
+  %111 = const b32 1
+  %112 = sub b32 %110, %111
+  %113 = const b32 3
+  %114 = neg b32 %113
+  %117 = const b32 0
+  %118 = const b32 1
+  store b32 %118, %115
+  store b32 %117, %116
+  %119 = sub b32 %117, %118
+  %120 = slt b32 %114, %117
+  $171: if %120 {
+    %121 = const b32 2
+    %122 = srem b32 %114, %121
+    %123 = eq b32 %122, %117
+    %124 = select b32 %123, %118, %119
+    %125 = eq b32 %112, %119
+    %126 = eq b32 %112, %118
+    %127 = select b32 %125, %124, %117
+    %128 = select b32 %126, %118, %127
+    store b32 %128, %115
+  } else {
+    $181: loop {
+      %129 = load b32, %116
+      %130 = sge b32 %129, %114
+      $184: if %130 {
+        break $181
+      }
+      %131 = load b32, %115
+      %132 = mul b32 %131, %112
+      store b32 %132, %115
+      %133 = add b32 %129, %118
+      store b32 %133, %116
+    }
+  }
+  %134 = load b32, %115
+  %135 = const b32 1
+  %136 = neg b32 %135
+  %137 = eq b32 %134, %136
+  store bool %137, %109
+  $196: if %137 {
+    %138 = const b32 0
+    %139 = const b32 1
+    %140 = sub b32 %138, %139
+    %141 = const b32 4
+    %142 = neg b32 %141
+    %145 = const b32 0
+    %146 = const b32 1
+    store b32 %146, %143
+    store b32 %145, %144
+    %147 = sub b32 %145, %146
+    %148 = slt b32 %142, %145
+    $210: if %148 {
+      %149 = const b32 2
+      %150 = srem b32 %142, %149
+      %151 = eq b32 %150, %145
+      %152 = select b32 %151, %146, %147
+      %153 = eq b32 %140, %147
+      %154 = eq b32 %140, %146
+      %155 = select b32 %153, %152, %145
+      %156 = select b32 %154, %146, %155
+      store b32 %156, %143
+    } else {
+      $220: loop {
+        %157 = load b32, %144
+        %158 = sge b32 %157, %142
+        $223: if %158 {
+          break $220
+        }
+        %159 = load b32, %143
+        %160 = mul b32 %159, %140
+        store b32 %160, %143
+        %161 = add b32 %157, %146
+        store b32 %161, %144
+      }
+    }
+    %162 = load b32, %143
+    %163 = const b32 1
+    %164 = eq b32 %162, %163
+    store bool %164, %109
+  }
+  %165 = load bool, %109
+  $235: if %165 {
+    %166 = load b32, %1
+    %167 = const b32 16
+    %168 = or b32 %166, %167
+    store b32 %168, %1
+  }
+  %170 = const b8 3
+  store b8 %170, %169
+  %172 = load b8, %169
+  %173 = const b8 5
+  %176 = const b8 0
+  %177 = const b8 1
+  store b8 %177, %174
+  store b8 %176, %175
+  $252: loop {
+    %178 = load b8, %175
+    %179 = uge b8 %178, %173
+    $255: if %179 {
+      break $252
+    }
+    %180 = load b8, %174
+    %181 = mul b8 %180, %172
+    store b8 %181, %174
+    %182 = add b8 %178, %177
+    store b8 %182, %175
+  }
+  %183 = load b8, %174
+  %184 = const b8 243
+  %185 = eq b8 %183, %184
+  store bool %185, %171
+  $266: if %185 {
+    %186 = load b8, %169
+    %187 = const b8 6
+    %190 = const b8 0
+    %191 = const b8 1
+    store b8 %191, %188
+    store b8 %190, %189
+    $275: loop {
+      %192 = load b8, %189
+      %193 = uge b8 %192, %187
+      $278: if %193 {
+        break $275
+      }
+      %194 = load b8, %188
+      %195 = mul b8 %194, %186
+      store b8 %195, %188
+      %196 = add b8 %192, %191
+      store b8 %196, %189
+    }
+    %197 = load b8, %188
+    %198 = const b8 217
+    %199 = eq b8 %197, %198
+    store bool %199, %171
+  }
+  %200 = load bool, %171
+  $290: if %200 {
+    %201 = load b32, %1
+    %202 = const b32 32
+    %203 = or b32 %201, %202
+    store b32 %203, %1
+  }
+  %204 = load b32, %1
+  ret b32 %204
+}
+
+--- exit: 63

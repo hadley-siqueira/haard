@@ -127,6 +127,11 @@ set(IR_SRC
     src/haard/ir/ir_interpreter.cpp
 )
 
+set(LOWERING_SRC
+    src/haard/lowering/ir_lowerer.cpp
+    src/haard/lowering/function_lowerer.cpp
+)
+
 
 set(SOURCES
     src/main.cpp
@@ -154,6 +159,7 @@ set(SOURCES
     ${DRIVER_SRC}
     ${PRETTY_SRC}
     ${IR_SRC}
+    ${LOWERING_SRC}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -214,6 +220,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/ir_layout/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/ir/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/lowering/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/bootstrap/tests/run.sh

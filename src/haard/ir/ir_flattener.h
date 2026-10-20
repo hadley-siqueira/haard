@@ -59,6 +59,7 @@ namespace haard {
             void place(IrBlockId block);
             void close();
             bool ended();
+            bool falls();
             const Frame& frame_of(u32 region);
 
         private:

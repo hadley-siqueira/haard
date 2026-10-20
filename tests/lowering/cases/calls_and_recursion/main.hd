@@ -1,0 +1,34 @@
+# Record 0077, stage 4, step 1: a call is a call to the function's object, a
+# parameter a slot it is copied into, and recursion is nothing special --
+# fib(10) is 55, and 12 is even by asking whether 11 is odd.
+def fib : i32
+    @n : i32
+
+    if n < 2:
+        return n
+
+    return fib(n - 1) + fib(n - 2)
+
+def is_even : bool
+    @n : i32
+
+    if n == 0:
+        return true
+
+    return is_odd(n - 1)
+
+def is_odd : bool
+    @n : i32
+
+    if n == 0:
+        return false
+
+    return is_even(n - 1)
+
+def main : i32
+    let answer = fib(10)
+
+    if is_even(12) and not is_even(7):
+        answer = answer + 1
+
+    return answer

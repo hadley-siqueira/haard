@@ -1,0 +1,58 @@
+func @classify(%1: b32) -> b32 {
+  %2 = const b32 0
+  %3 = slt b32 %1, %2
+  $3: if %3 {
+    %4 = const b32 1
+    ret b32 %4
+  } else {
+    %5 = eq b32 %1, %2
+    $7: if %5 {
+      %6 = const b32 2
+      ret b32 %6
+    } else {
+      %7 = const b32 3
+      ret b32 %7
+    }
+  }
+}
+
+func @main() -> b32 {
+  %1 = const b32 0
+  %2 = call @classify(%1)
+  ret b32 %2
+}
+
+verifier: ok
+
+after flatten:
+
+func @classify(%1: b32) -> b32 {
+^1:
+  %2 = const b32 0
+  %3 = slt b32 %1, %2
+  cond_br %3, ^2, ^3
+^2:
+  %4 = const b32 1
+  ret b32 %4
+^3:
+  %5 = eq b32 %1, %2
+  cond_br %5, ^5, ^6
+^5:
+  %6 = const b32 2
+  ret b32 %6
+^6:
+  %7 = const b32 3
+  ret b32 %7
+}
+
+func @main() -> b32 {
+^1:
+  %1 = const b32 0
+  %2 = call @classify(%1)
+  ret b32 %2
+}
+
+verifier: ok
+
+run on x86_64-linux:
+exit 2

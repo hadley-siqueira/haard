@@ -52,6 +52,12 @@ namespace haard {
 
         public:
             IrValueId slot(IrTypeId type, IrPosition at);
+
+            // a slot at the top of the function's body, after the slots
+            // already there, wherever the builder is writing: question 13
+            // gives every frame a fixed size, so the lowering puts every local
+            // and every temporary there, as clang does
+            IrValueId entry_slot(IrTypeId type, IrPosition at);
             IrValueId load(IrTypeId type, IrValueId from, IrPosition at);
             void store(IrTypeId type, IrValueId value, IrValueId to,
                        IrPosition at);
@@ -95,6 +101,10 @@ namespace haard {
             // 'bound' is IR_NO_BOUND when none is known (question 84)
             IrInstId begin_loop(u32 bound, IrPosition at);
             void end();
+
+            // whether the block being written ends in a terminator already,
+            // so nothing more may be written in it
+            bool ended();
             void break_to(IrInstId region, IrPosition at);
             void continue_to(IrInstId region, IrPosition at);
 
@@ -126,6 +136,10 @@ namespace haard {
                           u32 extra, const std::vector<u32>& pool,
                           IrTypeId result, IrPosition at);
 
+            // links an instruction made by 'emit' elsewhere: after 'after' in
+            // its block, or first when 'after' is 0
+            void move_after(IrInstId inst, IrBlockId block, IrInstId after);
+
             IrBlockId add_block(IrInstId region);
             IrValueId add_value(IrValueKind kind, IrTypeId type, u32 owner);
             IrValueId result_of(IrInstId inst);
@@ -136,6 +150,9 @@ namespace haard {
             IrProgram* program;
             IrObjectId current;
             IrBlockId block;
+
+            // the last slot 'entry_slot' put at the top of the body
+            IrInstId last_entry_slot;
 
             // the regions open, innermost last, and the block each was
             // opened in

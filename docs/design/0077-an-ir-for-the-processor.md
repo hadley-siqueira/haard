@@ -281,8 +281,40 @@ controller must not act on a value that means nothing. Saturating (Rust,
 Java, ARM64 in hardware) was the other choice. `fptosi` and `fptoui` trap in
 the effects table, so they are never speculated.
 
-Next is stage 4: the lowering from the Ast and the ResolutionTable, one
-feature at a time, each compared against the C++ path.
+## Stage 4: the lowering, as planned (Hadley, 2026-10-20)
+
+`src/haard/lowering/`: an `IrLowerer` for the program (types, an object per
+function, global and literal, vtables as data with relocations, then verify,
+flatten, verify) and a `FunctionLowerer` per function (the cleanup stack,
+temporaries, construction). Two oracles: every case of `tests/emitter` (and
+later `tests/programs`) also runs through the IR, and must give the exit
+status its golden already holds, with a list of cases not lowered yet that
+fails when one of them starts working; and `tests/lowering`, a small suite
+with the IR's text as golden, one construct per case. `hdc --emit-ir` prints
+it. Six steps, each closed when its emitter cases agree: (1) functions,
+locals, arithmetic, control flow, calls; (2) pointers, references, fixed
+arrays, globals, literals, `new`/`delete`; (3) structs, methods,
+`init`/`destroy`, the cleanup stack, temporaries; (4) classes, vtables,
+`vcall`, `super`; (5) enums and `switch`, tuples, unions, closures, symbols;
+(6) the standard library. Choices: every slot in the entry block (question
+13's fixed frames); bounds checks (9b) lowered from the start; a position is
+the token of the node that made it; the lowering writes only the structured
+form; `main` with arguments comes with step 6.
+
+**Step 1 built (2026-10-20)**: `src/haard/lowering/` and `tests/lowering`.
+Functions with scalar parameters and results, locals and parameters in
+slots at the top of the body (`IrBuilder::entry_slot`), the arithmetic,
+bitwise and comparison operators with signedness picked from the Haard type,
+`//` (floor) and `**` (a loop, as the C++ path's helper) on whole numbers,
+`and`/`or` through a slot, conversions (`i64(x)`, `x as T`), `if`/`elif`/
+`else`, `while`, C-shaped `for`, `break`, `continue`, `return`, calls. Four
+cases of its own, each checked against the C++ path, and 5 of the 70
+emitter programs that have an answer now end the same way through the IR;
+65 wait in `not_yet`. `hdc --emit-ir` prints the structured form. The first
+emitter program through the IR found a bug in flatten (a dead, empty block
+after an inner `if` kept the block after the outer one alive), fixed and
+pinned in `tests/ir`. Not in step 1: `**` and `//` on floats, which need the
+library's `pow` and `floor`.
 
 ## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
 
