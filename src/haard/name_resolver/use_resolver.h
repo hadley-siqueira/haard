@@ -35,9 +35,6 @@ namespace haard {
     //
     //   an AST_SCOPE is one of the two qualified forms and goes to the
     //   resolver's own entry points for them
-    //
-    //   a label and a goto name a namespace this table does not model, so
-    //   neither is resolved and neither is reported
     class UseResolver {
         public:
             UseResolver();

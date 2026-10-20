@@ -1645,3 +1645,504 @@ allowed (how many memory, branch, floating-point operations per bundle);
 the semantics inside a bundle (all reads before any write?); whether one
 thread can issue bundles in consecutive cycles (interlocks between
 bundles?); whether 16- and 32-bit instructions mix in one bundle.
+
+## 24. Conditional execution
+
+**The question.** Besides a conditional branch, can the processor do
+something conditionally **without branching**? For `if a < b: x = a else
+x = b`, a branch makes the time depend on the path taken; a select
+(`x = c ? a : b`) takes the same time either way. On this processor that
+matters for three reasons: **single-path / constant-time code** (question
+66), the central technique of **Patmos**; **filling bundles** (answer 23),
+since the scheduler works inside a basic block and every branch cuts one
+(if-conversion lengthens blocks, which is why C6000, Hexagon and Itanium
+invest in it); and **not** raw speed, since in a thread-interleaved
+pipeline a branch is nearly free (it resolves before the thread's next
+fetch).
+
+**(a) Branches only.** Simplest hardware. A select can be built from
+arithmetic when a compare writes 0/1 into a register (`slt`):
+`m = -c; x = (a & m) | (b & ~m)`, about four instructions. It cannot make a
+**side effect** (a store) conditional.
+
+**(b) A select / conditional move** (x86 `cmov`, ARM64 `csel`, MIPS
+`movz`/`movn`, RISC-V Zicond), e.g. `sel rd, rc, ra, rb`. The cost is a
+**third source operand**, so a third register-file read port, growing with
+bundles. ARM64 avoids it by taking the condition from flags, which this
+processor does not have (answer 20). Zicond avoids it with `czero.eqz`,
+`czero.nez` and an `or`: two reads each, but three instructions per select
+(two cycles if the `czero`s share a bundle). A select chooses **values**;
+a conditional store still needs a branch, or the trick of always storing
+(to the right address or to a dummy one, or writing the old value back).
+
+**(c) Full predication**: predicate registers and (nearly) every
+instruction conditional -- ARM32 (4-bit condition field, dropped in ARM64
+for its encoding cost), Itanium (64 predicates), Hexagon (4), C6000,
+**Patmos** (8 predicates, every instruction predicated, built for
+single-path code and WCET). It covers everything, conditional loads and
+stores included, and if-conversion becomes trivial (both sides of an `if`
+in one bundle under opposite predicates). The cost: 3-4 bits in every
+instruction, very tight in the **16-bit** forms (answer 22); a predicate
+bank and compares that write it; predicate allocation and real
+if-conversion in the back end.
+
+**(d) A middle way.** (d1) a select plus a **conditional store** only;
+(d2) a Thumb-2 style `IT` prefix making the next few instructions
+conditional with no bits in them (awkward with bundles); (d3) predication
+only on the 32-bit forms.
+
+**What the IR sees: little.** The IR has a `select` in every case (the
+if-conversion target; x86 and ARM map it directly; Haard has no
+if-expression, so it comes from optimisation or the single-path
+transform). Predication does **not** rise into the IR: as in LLVM for
+Hexagon, it appears after instruction selection. The question decides the
+ISA, the back end and what the timing analysis can do.
+
+The suggestion was (d1), a 3-source select plus a conditional store,
+deciding full predication together with question 66: (c), probably on the
+32-bit forms only, if single-path code is central; (d1) if it is
+occasional.
+
+**Answer: open.** Not decidable yet; it waits on 66. The IR is not
+affected.
+
+## 78. One IR, two control forms
+
+**The question.** Control flow can be held in two ways: **structured**,
+nested regions (`if`, `loop`, `for`, `block`) with `break` and `continue`,
+as the source is written (WebAssembly); or a **CFG**, basic blocks joined by
+jumps (`br`, `cond_br`, `switch`), with block parameters instead of φ (LLVM,
+QBE, Cranelift). The proposal: **one** instruction set, type table, printer
+and verifier, with control in one of the two forms. The lowering produces
+the structured form; a **flatten** pass turns it into the CFG; below that,
+each back end has its own machine IR.
+
+**Why two.** Each form suits a kind of work:
+
+| Work | Needs to know | Natural form |
+|---|---|---|
+| A loop bound for the WCET (84) | that this is a loop, and how many times it runs | structured |
+| Vectorisation, CGRA kernels, DMA double buffering | induction variable, step, trip count | structured |
+| Splitting functions for overlays | single-entry, single-exit regions | structured |
+| mem2reg, constant propagation, dead code | dominators, merges | CFG |
+| Instruction selection, register allocation | blocks and edges | CFG |
+| The interpreter (87) | a plain `pc = next block` loop | CFG |
+
+In a CFG a loop is only a cycle of blocks; vectorising means **recovering**
+the structure (LLVM's LoopInfo and ScalarEvolution, among its heaviest
+parts). For the WCET, each loop's bound must survive every pass: in the
+structured form it is written on the region itself; in a CFG it is metadata
+on a header block, which any pass may drop.
+
+**(a) CFG only, with loop annotations** (LLVM). One form, every pass written
+once; but a loop analysis to write, metadata every pass must preserve (LLVM
+loses loop metadata often), and vectorising or extracting kernels the hard
+way.
+
+**(b) Structured only** (WebAssembly, structured SPIR-V). No flatten; but
+mem2reg, scalar optimisations and instruction selection are awkward (SSA
+over regions needs region arguments and results everywhere, as MLIR `scf`
+does), and so is the interpreter.
+
+**(c) Two separate IRs** (HIR/LIR; MLIR's `scf` → `cf`; Swift SIL → LLVM).
+Each clean, but two builders, printers and verifiers and a translation
+between them. This was §3.3 of designing-the-ir.md, dropped because with
+the low IR typed and reading fields by name, the **only** difference left
+would be the shape of control.
+
+**(d) One IR, two control forms** (the proposal). Instructions, types and
+printer shared; only control changes. The cost: a verifier that knows both,
+a flatten pass (easy: each region becomes 2-3 blocks), and loop passes that
+must run **before** flatten.
+
+The proposal argued that Haard has no `goto`, so every Haard program is
+already structured and the lowering is direct (`while` → `loop`, a range
+`for` → `for`, `switch` → nested `block`s), never having to rebuild
+structure out of jumps (Emscripten's "relooper", the hard part of the
+structured model in languages with `goto`).
+
+Three details fixed by approving it:
+1. **A function is in one form at a time**; no regions inside blocks, as
+   MLIR allows. Simpler verifier and passes.
+2. **Flatten is one way**; there is no pass back from CFG to structured.
+   Passes needing loops (vectorisation, CGRA, overlay splitting, collecting
+   flow facts) run before it; a CFG pass that needs loops later (hoisting
+   invariant code) uses natural-loop analysis, cheap over dominators. Flatten
+   copies each loop's **bound** onto its header as a flow fact, and the
+   verifier keeps checking it is there (84).
+3. **The interpreter runs only the CFG form** (87); the structured form is
+   always tested through flatten, and a flatten bug shows as a difference
+   from the C++ path, so the oracle covers both.
+
+Recommendation: (d), with the three details.
+
+**Correction: Haard had `goto`.** Hadley asked to check, and it did:
+`label name` and `goto name` (record 0063), checked by the StatementChecker
+(a label of the same body, written once; backward always fine; forward may
+not land where a skipped declaration is in view) and emitted as C++'s
+`goto`. Nothing forbade jumping **into** a block, a loop included, or two
+`goto` loops crossing, so a Haard program could have **irreducible**
+control flow, a loop with two entries:
+
+```
+if x:
+    goto middle
+label top
+a()
+label middle
+b()
+if c:
+    goto top
+```
+
+No nesting of regions holds that. `break` and `continue` took no label, so
+leaving nested loops was only possible with `goto`. (`yield` is also
+scanned and parsed, but nothing past the parser handles it; if it ever
+becomes generators, the IR will need coroutines.)
+
+The options then:
+
+- **(a) A function using `goto` is lowered straight to the CFG form.**
+  Functions without it, nearly all, keep the structured path; those with it
+  stay out of loop passes, their loops found by CFG analysis, and an
+  irreducible one needs a written bound or is refused in real-time code.
+  Cost: the lowering emits control two ways (expressions, calls and the
+  cleanup stack shared; only the ~6 control statements doubled).
+- **(b) The structured form gets named `block`/`loop` and `br name`**
+  (WebAssembly style); the common uses of `goto` (leaving nested loops,
+  "try again") fit, and only irreducible ones fall back to (a).
+- **(c) Change the language**: remove `goto`, possibly adding a labelled
+  `break`/`continue`. Haard is then fully structured and question 78 is
+  exactly as first stated.
+
+The recommendation was (a), keeping `goto` and reaching (b) later as an
+optimisation. Either way, a `goto` leaving a scope must run the
+destructors of what is in it, as C++ does.
+
+**Answer: (d) approved, and `goto` and `label` removed** (option (c), record
+[0078](../0078-goto-and-label-are-removed.md)), so every function is
+structured. A labelled `break` was not added; whether to is open.
+
+## 79. Signedness: in the type or in the instruction?
+
+**The question.** A 32-bit register holds the same bits for an `i32` and a
+`u32`; only some operations differ. (a) **In the type** (the original
+proposal, designing-the-ir.md §3.4): values are `i32` or `u32` and `div`
+picks from its operands. (b) **In the instruction**: types carry only the
+width, and the sign-dependent operations come in two versions.
+
+**What depends on the sign.** With overflow wrapping (1a), `add`, `sub`,
+`mul`, `and`, `or`, `xor`, `shl`, `==` and `!=` give the same bits either
+way. Only these differ:
+
+| Operation | Signed | Unsigned |
+|---|---|---|
+| divide, remainder | `sdiv`, `srem` (with `MIN / -1`, 3a) | `udiv`, `urem` |
+| shift right | sign fill (2b) | zero fill |
+| `<` `<=` `>` `>=` | `slt`… | `ult`… |
+| widening | `sext` | `zext` |
+| integer ↔ float | `sitofp`, `fptosi` | `uitofp`, `fptoui` |
+| high half of `mul_wide` (12a) | signed | unsigned |
+| the shift count (2b) | negative counts as too large | -- |
+
+About 8 pairs out of ~40 operations.
+
+**How others do it.** LLVM, Cranelift, QBE, WebAssembly and GCC's RTL keep
+the sign in the instruction; LLVM had signed types (`sbyte`, `ubyte`, up to
+2.0, 2007) and **removed** them. MLIR, after a long debate, made `arith`
+signless, keeping signed types only in high-level dialects near the front
+end. SPIR-V is a hybrid: the type declares a sign but the instructions are
+explicit (`OpSDiv`/`OpUDiv`) and the type's sign is mostly ignored.
+
+**What (a) costs.** No-op conversions: `x as u32` on an `i32` becomes a
+`cast` that changes no bit but sits in the IR, and passes trip on it (common
+subexpressions do not see that `x` and `x as u32` are the same bits;
+instruction selection patterns must look through it). Every rule is written
+per type: the verifier checks `add` takes two `i32` or two `u32`, never one
+of each; every pattern-matching optimisation considers both variants. And
+the machine has no sign: registers, instruction selection and the
+processor's ISA speak in widths, so the sign has to be erased anyway, later.
+
+**What (a) gives.** A readable `--emit-ir` showing source types, and a
+verifier that catches a lowering that mixes `i32` and `u32`. The second is
+small in practice: in (b) the choice between `sdiv` and `udiv` is made in
+**one place** of the lowering, from the Haard type the ResolutionTable
+already gives, and a wrong choice is caught by the oracle (the IR
+interpreter disagrees with the C++ path). The source type for a debugger
+comes from the mapping of 86, not from the IR type.
+
+Nothing else depends on it: vectorisation, the CGRA, WCET and placement are
+indifferent. It is about the simplicity of the IR and its passes.
+
+**Details with (b).**
+1. **Type names**: not `i32`, which in Haard **is** signed. Proposed `b8`,
+   `b16`, `b32`, `b64` ("bits"), with `bool`, `f32`, `f64`, `ptr`.
+2. **`char`** is `b8`; **`isize`/`usize`** take the target's width in the
+   lowering (`b64` on every target today, read from the target table).
+3. **A conversion between `i32` and `u32` disappears**: the same value is
+   used. Widening and narrowing are `sext`/`zext`/`trunc`, as in LLVM.
+
+**Recommendation: (b)**, overturning my own proposal: (a) came from
+"Haard's model", but the IR talks to the machine, and LLVM's and MLIR's
+experience was precisely to take the sign out of the type. A conscious
+exception to keeping the IR as high level as possible: its level comes from
+struct and class types, fields by name, `vcall` and regions, not from the
+sign of an integer.
+
+**Answer: (b)**, with the three details.
+
+## 80. Pointers, fields and the layout table
+
+**The question.** Three parts: **typed pointers** (`ptr<Point>`); **fields
+by name and elements by index** (`field %p, Point.x`, `index %p, %i`), no
+offsets in instructions; **explicit tables** of structs, classes and
+vtables, with the **layout** (size, alignment, field offsets, endianness)
+computed per target and read only by instruction selection and the
+interpreter. The second and third are the heart of a high-level IR and
+stay. The first changes, for the reason of 79.
+
+**(a) Typed `ptr<T>`** (the original proposal). **(b) Opaque `ptr`**, the
+type written on the instruction: `load b32, %p`, `field %p, Point.x`,
+`index %p, %i : f32`. This is what **LLVM did in versions 15-17
+(2022-23)**: twenty years of typed pointers, migrated to opaque `ptr`.
+
+LLVM's reasons hold for Haard:
+- **No-op bitcasts.** Haard converts any pointer to any other (`p as i8*`,
+  record 0049), down a hierarchy unchecked, and through a `union`. With
+  typed pointers each is a no-op instruction in the way of passes, like
+  `i32`/`u32` in 79.
+- **The pointer's type says nothing extra**: the operation (`load`,
+  `field`, `index`) names the type it needs anyway.
+- **It does not even help alias analysis in Haard**: 6a ruled out
+  type-based aliasing.
+
+Lost: the verifier no longer checks that a `field %p, Point.x` got a
+pointer that came from a `Point`. LLVM accepted that; the interpreter oracle
+covers it.
+
+**The reservation for 35 fits here**: the pointer carries an **address
+space**, `ptr` (generic, the default) or e.g. `ptr(spm0)`. Always generic
+for now.
+
+**Details.**
+1. **Aggregates are never values.** Struct, class, tuple and fixed array
+   always live in memory, in a slot; IR values are scalars only (`bool`,
+   `bN`, `fN`, `ptr`, `vec` later). A by-value argument is a copy made by
+   the caller (with the copy `init`, record 0038) and its pointer is
+   passed; a by-value result gets a **destination pointer** (record 0045's
+   temporary written in place). Splitting small structs into registers is
+   the ABI's job in instruction selection, and later SROA's (mem2reg for
+   aggregates). LLVM allows aggregate values and advises against them;
+   forbidding them simplifies. So `mul_wide` (12a), which gives back a
+   tuple, becomes `mul` + `smulhi`/`umulhi`, and no instruction has two
+   results.
+2. **Address instructions**: `field`, `index`, `upcast D→B`, `downcast
+   B→D`, each offset resolved only by the layout. `upcast` exists for a
+   concrete reason: a class may derive from a struct (record 0065); the
+   class has a vptr and the struct has not, so the base is **not at offset
+   0** and going up adds an offset. C++ does it silently today; the IR has
+   to write it.
+3. **Tables**: struct, class (base, fields, vtable slots, destructor),
+   union, fixed array. **Enum and tuple are not kinds of their own**: the
+   lowering turns them into what the emitter already makes, a `{tag;
+   union}` struct and a struct per shape (decided 2026-10-07). A `switch` on
+   an enum reaches the IR as a `switch` on the tag.
+4. **Layout rules**: fields **in declaration order, never reordered**
+   (predictable for memory-mapped registers and DMA); natural alignment
+   with padding; **vptr first** in a class, as in C++; all computed by
+   **one function** from the tables and the target. Haard's `sizeof` is a
+   `size T` constant resolved by the target's layout.
+
+**Recommendation: (b), opaque pointer with an address space**, plus
+details 1-4.
+
+**Answer: (b)**, with details 1-4.
+
+## 81. Everything in memory is a named entity
+
+**The question.** Every thing that occupies memory is a **named object** in
+the IR: each function's code, each global, each literal (strings, constant
+`{1,2,3}`, record 0041's symbol table), each vtable, each stack.
+Instructions refer to them **by symbol** (`call @f`, `addr @str.0`), never
+by a numeric address. **Where** each object lives (which scratchpad, which
+part of main memory, which overlay group) is in a **separate table**,
+applied only at final layout, so **analyse → place → analyse again** runs
+without redoing instruction selection.
+
+**Why it matters on this processor.** With no cache and scratchpads, where
+an object lives decides whether the program fits and how long it takes (a
+scratchpad read is 1 cycle, main memory N). The classic approach (WCC at
+Dortmund, Suhendra et al.) iterates: place, compute the WCET, move what is
+on the worst path into the scratchpad, repeat. Placement must be **data
+that is recomputed**, not something written into each object.
+
+**(a) An attribute on the object** (LLVM `section`, GCC
+`__attribute__((section(".spm")))`), fixed when the object is made, by the
+programmer or a heuristic; changing it means rewriting attributes, and
+iterating with the WCET is awkward. **(b) A separate table** (the proposal):
+object → region or overlay group, a side table keyed by object id (91);
+recomputing is producing another table. **(c) Leave it to the linker
+script**, as nearly every embedded system does: the compiler does not know
+where things are and cannot compute the WCET or iterate. Ruled out for the
+processor.
+
+On x86 and ARM (b) is trivial: the table puts everything in `.text`,
+`.rodata`, `.data`, `.bss` and the linker chooses addresses. One mechanism
+for the three targets; only the target's region table changes.
+
+**Details.**
+1. **What is an object**: functions, globals, literals, vtables, stacks (one
+   per hardware thread). **Local slots are not**: they are positions in a
+   frame inside the stack object, even when their address escapes. A heap,
+   if any (42, open), is a region, not an object.
+2. **Objects born below the IR join the same table**: constant pools for
+   64-bit constants (30), a `switch`'s jump tables. Born in selection,
+   placed by the same mechanism.
+3. **Each object carries its contents**: initial bytes (made by the layout
+   in the target's endianness) or "zeroed" (`.bss`); an object may be
+   **read-only**, which allows ROM or flash.
+4. **Placement is per whole object**; to place part of a function it is
+   split first (function splitting, in the structured form) and the part
+   becomes an object.
+5. **Regions belong to the target description** (base, size, latency, code
+   or data, private or shared, reachable by DMA); **the placement table
+   belongs to the program**, since compilation is whole-program (89).
+
+**A tension with 35 (open).** If the ISA reaches every memory with the
+**same** loads and stores, re-placing changes only addresses and costs,
+selection is not redone, and (b) works exactly as described. If there are
+**different instructions per memory** (as Patmos), moving data changes the
+instruction of whoever accesses it: data placement must come before
+selection, or selection is redone per iteration (code placement is
+unaffected). The IR's shape is the same (the address space in the pointer,
+80); only the order of the processor back end's passes changes.
+
+**Recommendation: (b)**, with details 1-5, the dependency on 35 recorded.
+
+**Answer: (b).** On 35, Hadley: probably the same instructions, not
+certain yet.
+
+## 82. Locals: value or slot
+
+**The question.** An IR local lives either as a **value** (an IR name
+defined once, in a register) or in a **slot** (a piece of the stack frame,
+read by `load` and written by `store`). The proposal: a **scalar** never
+**rewritten** after its definition and whose **address is never taken** is
+a value; everything else gets a slot; mem2reg promotes later.
+
+**(a) Everything is a slot** (clang: `alloca` for every variable, mem2reg
+cleans up). The simplest lowering; until mem2reg the IR is heavy (every use
+a `load`) and the code poor. **(b) The proposal**: most Haard `let`s are
+written once (`let n = xs.size()`) and become values for free; the front end
+knows everything needed (the ResolutionTable links each use to its
+declaration). **(c) SSA directly in the lowering** (Braun et al. 2013,
+Cranelift's front end): even rewritten variables become values, no slots or
+mem2reg for scalars; but in the structured form every region must carry the
+values that change in it (`if` results, loop-carried arguments as MLIR's
+`scf.for` `iter_args`), more complex exactly in the form the lowering
+produces.
+
+**"Address taken" in Haard** is more than `&x`: passing `x` to a `T&` or
+`T&&` parameter (`&&x` included), `let r : T& = x`, **capture by a closure**
+(by reference, record 0058), and a method call on `x` (`this` is the
+address; only aggregates, already slots by 80). A **parameter** follows the
+same rule, copied into a slot at entry when needed.
+
+**Found while checking `for`.** `for i in 0..n` does not reach the IR as a
+counted loop: the ForEachLowerer (record 0040) rewrites it first into
+`let __e = n; let i = 0; for ; i < __e ; i = i + 1:`. Under (b) `i` would be
+a slot and the loop a generic `loop`, losing induction, step and count. The
+proposal was for the lowering to recognise the canonical counted loop in the
+C-style `for` (step `i = i + c` with constant `c`, condition `i < e` or
+`i <= e` with `e` not written in the body, `i` not written or
+address-taken in the body) and make a `for` region with `i` as its
+argument, any other loop a `loop` with a slot.
+
+**And a real bug**, tested: `let last : u8 = 255; for i in 0..last:` never
+ended. `i <= 255` is always true for a `u8`; with wrapping (1a) `i` goes
+from 255 to 0 and the loop never ends (the classic C inclusive-`for` bug).
+The inclusive range must test **before** stepping, or count as
+`e - a + 1` in a wider type.
+
+The recommendation was (b), with the counted-loop recognition, the analysis
+as a pre-pass over each body in the lowering, and mem2reg later in the CFG
+form (a promotion on the structured form when vectorisation comes).
+
+**Answer: (a), every local a slot**; mem2reg later; an inefficient IR is
+fine in the first versions. The counted-loop recognition waits for loop
+passes. The bug was fixed the same day: the inclusive range asks whether
+there is another turn before stepping, and steps at the top of the next
+turn (record 0040, amended;
+`tests/emitter/cases/an_inclusive_range_reaches_the_top_of_its_type`).
+While writing that case, `let low : i8 = -128` was refused with *128 does
+not fit in i8*: the literal is checked before the minus is applied (added to
+the small pending items).
+
+## 83. Virtual calls, destructors and temporaries
+
+**Virtual calls.** Every method of a class is virtual (record 0020), a
+struct's never is (0065). A virtual call can reach the IR **already
+expanded** (LLVM, what C++ produces: load the vptr, load the vtable entry,
+call indirect) or as **its own instruction**, `%r = vcall Shape.area(%s)`,
+expanded only by instruction selection (Swift SIL's `class_method`, the
+JVM's `invokevirtual`). The instruction makes devirtualisation a trivial
+rewrite (`vcall` becomes `call` when the dynamic class is known, where the
+expanded form needs a proof about memory), gives the WCET the possible
+targets (the class table lists every override, the program being compiled
+whole, 89; an indirect call through a pointer cannot satisfy the real-time
+rule on indirect calls, 61), and keeps `--emit-ir` readable. The cost is
+one expansion in selection; the interpreter dispatches through the vtable
+table it already has for the layout.
+
+Two rules are semantics, not optimisation: a receiver held **by value**
+calls directly (its dynamic class is its static one), and so does
+`super.method()` (record 0074). The third is the vptr during construction
+and destruction. Under the **C++ rule** (the current behaviour, since
+record 0026 emits `init`/`destroy` as C++ constructor and destructor) the
+object **is** its base while the base's `init` runs, so a virtual call made
+there reaches the base's version; the derived vptr is stored once the base
+is done, and destruction runs the other way. The **Java/C# rule** stores
+the most derived vptr from the start, letting a base call an override that
+reads fields of the derived class that have no value yet (record 0026 leaves
+a field without an initialiser without a value), and the oracle would stop
+matching the C++ path. Construction: build the base (recursively), store
+the own vptr, initialise the fields with a written value, run the `init`
+body. Destruction: store the own vptr, run `destroy`, destroy the fields,
+destroy the base.
+
+**Cleanups.** The IR has no implicit end of scope: every `destroy` is a
+`call` written by the lowering, placed by a **cleanup stack** (clang's
+`EHScopeStack`): each scope pushes what must run when it is left, and every
+exit emits the calls innermost first. Much simpler than clang's because
+there are no exceptions (4a): no landing pads, no unwinding, every exit is
+visible (`return`, `break`, `continue`, the end of a block). The other
+option, regions carrying an "on exit" attachment expanded later, would make
+every pass understand the attachment.
+
+The rules, those the C++ path already follows: reverse order of
+declaration; a `return` emits the cleanups of every scope it leaves, a
+`break`/`continue` those inside the loop; the return value is written to
+its destination **before** the cleanups. Temporaries (record 0068) die at
+the end of the statement, one bound to a `T&` at the end of the block. A
+temporary made on one path only (`f() or g().ok()`) gets a **flag slot**,
+false at first, set when it is made, and its destructor runs only when the
+flag is set (clang's technique; with every local a slot, 82, it costs a
+store and a test). A moved-from object (`&&x`) is still destroyed. `new
+T(args)` is `call @__alloc(size T)` plus the construction; `delete p` is
+`vcall destroy` plus `call @__free`, runtime intrinsics whose meaning on
+the processor waits on 42.
+
+Two details were added to the recommendation: `delete` of a null pointer
+does nothing (C++); and an aggregate crossing a call (a consequence of 80)
+is copied by the **caller** and destroyed by the caller at the end of the
+statement (the Itanium ABI rule), while a result by value is constructed by
+the callee **straight into the destination** pointer (C++17's guaranteed
+elision), so `let s = make()` calls no copy constructor.
+
+**Answer: approved** with every rule above: `vcall` until selection; direct
+calls for a by-value receiver and `super`; the C++ vptr rule; explicit
+cleanups through a stack, in reverse order, the return value written first;
+temporaries per record 0068; a flag for a conditional temporary; a moved-from
+object still destroyed; `new`/`delete` through `__alloc`/`__free`, `delete`
+of null doing nothing; by-value arguments copied and destroyed by the
+caller; results constructed in the destination.

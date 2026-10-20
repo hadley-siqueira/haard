@@ -331,8 +331,6 @@ u32 AstQuery::get_given_back(u32 closure) {
     case AST_BREAK:
     case AST_CONTINUE:
     case AST_YIELD:
-    case AST_GOTO:
-    case AST_LABEL:
     case AST_ASSIGNMENT:
     case AST_PLUS_ASSIGNMENT:
     case AST_MINUS_ASSIGNMENT:

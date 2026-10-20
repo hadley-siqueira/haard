@@ -88,12 +88,6 @@ void UseResolver::walk(u32 node, u32 scope) {
     case AST_GENERIC_PARAMETERS:
         return;
 
-    // a namespace this table does not model. Neither is resolved, and neither
-    // is reported as missing
-    case AST_LABEL:
-    case AST_GOTO:
-        return;
-
     case AST_IDENTIFIER:
         use(node, scope);
         return;

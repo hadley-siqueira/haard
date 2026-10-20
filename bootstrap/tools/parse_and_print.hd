@@ -295,12 +295,6 @@ def name_of : char*
         case Yield:
             return "yield"
 
-        case Goto:
-            return "goto"
-
-        case Label:
-            return "label"
-
         case Param:
             return "param"
 
@@ -627,8 +621,6 @@ def carries_a_token : bool
         case Break:
         case Continue:
         case Yield:
-        case Goto:
-        case Label:
         case Plus:
         case Minus:
         case Times:

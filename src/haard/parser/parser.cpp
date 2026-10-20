@@ -670,7 +670,7 @@ u32 Parser::parse_pass() {
 //
 //   statement := let_declaration | const_declaration
 //              | if | while | for
-//              | return | break | continue | yield | goto | label
+//              | return | break | continue | yield
 //              | expression
 u32 Parser::parse_statement() {
     // the same rules the module level uses: a binding is a binding wherever it
@@ -715,31 +715,10 @@ u32 Parser::parse_statement() {
         return parse_jump(TK_YIELD, AST_YIELD);
     }
 
-    if (lookahead(TK_GOTO)) {
-        return parse_jump(TK_GOTO, AST_GOTO);
-    }
-
-    if (lookahead(TK_LABEL)) {
-        return parse_label();
-    }
-
     return parse_expression();
 }
 
-// what a 'goto' jumps to. The name is written after the word rather than before
-// a colon, so nothing here has to be told apart from an expression statement
-//
-//   label := 'label' identifier
-u32 Parser::parse_label() {
-    u32 token = current_token;
-
-    begin_statement();
-    expect(TK_LABEL);
-
-    return builder.make_label(token, parse_identifier());
-}
-
-// The five that leave a block: one shape, and the expression after the keyword
+// The four that leave a block: one shape, and the expression after the keyword
 // is optional for all of them, exactly as the old compiler had it.
 //
 // What decides whether there is one is the **line**: 'return' on its own is a
@@ -747,7 +726,7 @@ u32 Parser::parse_label() {
 // not the value. That is the same rule as everywhere else here, and it is the
 // only thing standing between 'return' and swallowing whatever comes after it.
 //
-//   jump := ('return' | 'break' | 'continue' | 'yield' | 'goto') expression?
+//   jump := ('return' | 'break' | 'continue' | 'yield') expression?
 u32 Parser::parse_jump(TokenKind keyword, AstNodeKind kind) {
     u32 token = current_token;
 

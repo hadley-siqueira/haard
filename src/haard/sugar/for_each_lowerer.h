@@ -96,6 +96,13 @@ namespace haard {
             // body, because a 'continue' would jump over that step
             u32 counted_loop(u32 name, u32 condition, u32 body);
 
+            // 'for ; <condition> ; <stepped>:' around a body
+            u32 loop_of(u32 condition, u32 stepped, u32 body);
+
+            // '<name> = <value>' and '<name> + <value>'
+            u32 assign(u32 name, u32 value);
+            u32 sum_of(u32 name, u32 value);
+
             // '<name> < <limit>', or '<=' for an inclusive range
             u32 condition_of(u32 name, u32 limit, bool inclusive);
 

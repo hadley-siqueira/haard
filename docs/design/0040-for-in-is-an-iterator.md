@@ -87,6 +87,31 @@ while i < __e0:
 as `AST_EXCLUSIVE_RANGE` / `AST_INCLUSIVE_RANGE` under the `in`, so this is
 syntax and needs no type — which is as well, since `0..10` still has none.
 
+**Amended 2026-10-20: the inclusive form is not that loop.** With `<=`, an
+end that is the largest value of its type makes the condition always true:
+`for i in 0..last` over a `u8` ending at 255 wrapped `i` back to 0 and never
+ended (found while answering IR question 82). It now asks whether there is
+another turn **before** stepping, and steps at the top of the next one, by
+nothing the first time:
+
+```haard
+let __e0 = last
+let i = 0
+let __m1 = i <= __e0
+let __d2 = __e0 - __e0      # a zero of the end's type
+
+for ; __m1; __m1 = i < __e0:
+    i = i + __d2
+    __d2 = 1
+    ...
+```
+
+A step only follows a turn that found `i` below the end, so `i` never passes
+it. Writing to `i` in the body still moves the walk on, and `continue` still
+lands on the question, as in the exclusive form. Case
+`tests/emitter/cases/an_inclusive_range_reaches_the_top_of_its_type` (31):
+every `u8`, every `i8`, a `continue`, an empty range, a write to `i`.
+
 ## What `x` is
 
 **A reference to the element**, and it needs nothing written to be one: `let x

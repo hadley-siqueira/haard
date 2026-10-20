@@ -196,8 +196,14 @@ a construction is **passed** to a function taking a written
 solved inside a generic, waiting for its clone. Reading `p.first` and
 `q->first.second` is what found that a fresh clone's fields had no type.
 
-## What the record 0063 case pins
+## What the 2026-10-20 cases pin
 
-**`a_goto_reaches_its_label`** -- 7, three turns of a backward jump and the
-4 a forward jump keeps. The label was written as the word `label` itself
-until 2026-09-24, so no `goto` had ever compiled.
+**`goto_and_label_are_ordinary_names`** -- 7, a function `goto` and a local
+`label`. Record 0078 removed both words from the language; putting `goto`
+back as a keyword fails it.
+
+**`an_inclusive_range_reaches_the_top_of_its_type`** -- 31, one bit per
+thing that held: every `u8` (256 turns, the end at 255), every `i8` (from
+its bottom to its top), a `continue` that still steps, an empty range, and a
+write to the variable moving the walk on. With the old `<=` loop the first
+one never ended (exit 99, the case's own guard). Record 0040, amended.

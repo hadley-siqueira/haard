@@ -11,9 +11,11 @@
 #                     a u32 and not with the i32 a bare '0' would be
 #
 # The locals with the unwritable names are this pass's own: '__c' a cursor,
-# '__i' a position, '__e' an end evaluated once. They are declarations like
-# any other by the time this table is filled, which is the point of lowering
-# into an ordinary tree.
+# '__i' a position, '__e' an end evaluated once, and for an inclusive range
+# '__m' whether there is another turn and '__d' the step, nothing the first
+# time (2026-10-20, so an end at the top of its type ends). They are
+# declarations like any other by the time this table is filled, which is the
+# point of lowering into an ordinary tree.
 class Bag:
     data : i32[4]
     size : i32

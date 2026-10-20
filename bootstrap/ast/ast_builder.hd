@@ -314,16 +314,6 @@ class AstBuilder:
 
         return node
 
-    def make_label : i32
-        @token : i32
-        @name : i32
-
-        let node = make_node(AstNodeKind.Label, token)
-
-        add_child(node, 0, name)
-
-        return node
-
     def make_sizeof : i32
         @token : i32
         @expression : i32

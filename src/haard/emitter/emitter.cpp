@@ -2318,17 +2318,6 @@ void Emitter::emit_statement(u32 module, u32 node) {
         line("continue;");
         return;
 
-    // the name is the label's child: its own token is the word 'label',
-    // which is what this wrote until 2026-09-24 -- so every 'goto' pointed at
-    // a label C++ never saw
-    case AST_LABEL:
-        out << text_of(module, child_of(module, node, 0)) << ":;\n";
-        return;
-
-    case AST_GOTO:
-        line("goto " + text_of(module, child_of(module, node, 0)) + ";");
-        return;
-
     default:
         break;
     }

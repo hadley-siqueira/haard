@@ -56,8 +56,6 @@ TokenKind get_token_kind(const std::string& lexeme) {
         {"usize", TK_USIZE},
         {"symbol", TK_SYMBOL},
         {"pass", TK_PASS},
-        {"goto", TK_GOTO},
-        {"label", TK_LABEL},
         {"operator", TK_OPERATOR},
         {"=", TK_ASSIGNMENT},
         {"+=", TK_PLUS_ASSIGNMENT},

@@ -101,7 +101,6 @@ namespace haard {
             u32 parse_for_condition();
             u32 parse_for_increment();
             u32 parse_jump(TokenKind keyword, AstNodeKind kind);
-            u32 parse_label();
             u32 parse_conditional(u32 node, u32 header_indentation);
 
             u32 parse_binding();

@@ -114,8 +114,6 @@ std::string Token::get_kind_as_string() {
         { TK_USIZE, "TK_USIZE" },
         { TK_SYMBOL, "TK_SYMBOL" },
         { TK_PASS, "TK_PASS" },
-        { TK_GOTO, "TK_GOTO" },
-        { TK_LABEL, "TK_LABEL" },
         { TK_INTEGER_LITERAL, "TK_INTEGER_LITERAL" },
         { TK_FLOAT_LITERAL, "TK_FLOAT_LITERAL" },
         { TK_STRING_LITERAL, "TK_STRING_LITERAL" },

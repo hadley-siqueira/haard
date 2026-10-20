@@ -172,9 +172,10 @@ until then.
 **The front end refuses what is not a program**, since 2026-09-24 — record
 0063. Of 24 wrong programs, 23 used to pass it and reach g++, the emitter or
 nothing at all. Now each is a diagnostic with a caret: `break` outside a loop,
-writing to a value, a `goto` with nowhere to go, a local read before it is
-made, `this` in a free function, a name declared twice in a scope, and a
-function that can end without giving back what it promised.
+writing to a value, a `goto` with nowhere to go (`goto` itself was removed on
+2026-10-20, record 0078), a local read before it is made, `this` in a free
+function, a name declared twice in a scope, and a function that can end
+without giving back what it promised.
 
 **What a statement builds is built when it runs**, since 2026-09-24 — record
 0061. A template string or an unbound literal on the right of `and`/`or`, in a

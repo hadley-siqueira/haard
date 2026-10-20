@@ -299,6 +299,13 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
     bundles?); whether 16- and 32-bit instructions mix in one bundle.
 24. **Conditional execution**: a select or conditional move? Predicate
     registers?
+
+    **Answer (Hadley, 2026-10-19): open.** Not decidable yet; it is tied to
+    66 (single-path code). The IR has a `select` either way and predication
+    lives below instruction selection, so the IR is not affected. The
+    suggestion on the table: a 3-source `select` plus a conditional store
+    (d1), moving to full predication (on the 32-bit forms) if single-path
+    code becomes central.
 25. **Multiply and divide in hardware?** Fixed latency? Division by zero:
     trap or a value?
 26. **Unaligned access**: allowed, or a trap?
@@ -322,6 +329,10 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
 35. Does the ISA reach every memory **with the same load/store instructions**
     (by address), or with **different instructions** per memory (as Patmos
     does)? (The second puts an address space in the pointer type.)
+
+    **Leaning (Hadley, 2026-10-20): probably the same instructions** for
+    every memory, not certain yet. Still open.
+
 36. **Latencies**: fixed per memory? Is main memory predictable (a PRET
     memory controller)?
 37. **DMA**: is there an engine? Asynchronous (start, then wait)? Is its
@@ -432,17 +443,114 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
 
 78. **One IR, two control forms** (structured and CFG), with a flatten pass,
     instead of two IRs.
+
+    **Answer (Hadley, 2026-10-20): approved**, and **`goto` and `label`
+    removed from Haard** (record
+    [0078](../0078-goto-and-label-are-removed.md)). The proposal assumed
+    Haard had no `goto`; it had one, able to jump into a loop and write
+    irreducible control flow, which no nesting of regions holds. Of the
+    three ways out (functions with `goto` lowered straight to CFG; labelled
+    regions in the structured form; removing `goto`), Hadley chose the
+    third, so every function is structured and the lowering is direct. With
+    it, the three details of the proposal: a function is in **one form at a
+    time** (no mixing); **flatten is one way**, loop passes run before it and
+    it copies each loop's bound onto its header; the **interpreter runs only
+    the CFG form**, so the structured form is always tested through flatten.
 79. **Typed values**, signedness in the type (`i32` ≠ `u32`).
+
+    **Answer (Hadley, 2026-10-20): overturned, (b) signedness in the
+    instruction**, on my revised recommendation. IR integer types carry only
+    the width and are named `b8`, `b16`, `b32`, `b64` (so they are never read
+    as Haard's signed `i32`); with `bool`, `f32`, `f64` and pointers. The
+    eight sign-dependent operations come in pairs: `sdiv`/`udiv`,
+    `srem`/`urem`, `sshr`/`ushr`, signed and unsigned ordered compares,
+    `sext`/`zext`, `sitofp`/`uitofp` and back, the high half of `mul_wide`;
+    the shift-count rule of 2b reads the count's source signedness. The
+    lowering picks the variant in one place from the Haard type. `char` is
+    `b8`; `isize`/`usize` take the target's width (`b64` on every target
+    today). A conversion between `i32` and `u32` disappears (same value);
+    widening and narrowing are `sext`/`zext`/`trunc`. The source type for a
+    debugger comes from the mapping of 86, not from the IR type.
 80. **Typed pointers, fields by name, elements by index**; layout, classes
     and vtables in explicit tables, the layout computed per target.
+
+    **Answer (Hadley, 2026-10-20): (b), an opaque `ptr`** (LLVM's move of
+    versions 15-17) with the type on the instruction (`load b32, %p`,
+    `field %p, Point.x`, `index %p, %i : f32`), carrying an **address
+    space** (generic by default; the reservation for 35). Fields by name and
+    the tables stay. With it: (1) **aggregates are never values** -- structs,
+    classes, tuples and fixed arrays live in slots; by-value arguments are a
+    caller-made copy passed by pointer, a by-value result gets a destination
+    pointer; `mul_wide` becomes `mul` + `smulhi`/`umulhi`, no instruction has
+    two results; (2) address instructions `field`, `index`, `upcast`,
+    `downcast`, offsets only from the layout (`upcast` is needed: a class
+    deriving from a struct puts its base after the vptr, record 0065);
+    (3) tables for struct, class (base, fields, vtable slots, destructor),
+    union and fixed array; enums become `{tag; union}` structs and tuples a
+    struct per shape in the lowering; (4) layout in declaration order, no
+    reordering, natural alignment with padding, vptr first, one function per
+    target; `sizeof` is a `size T` constant resolved by the layout.
 81. **Every object in memory is a named entity** (function code, global,
     literal, vtable, stack); instructions refer to it by symbol; **placement
     is a table** applied at final layout, so it can be recomputed.
+
+    **Answer (Hadley, 2026-10-20): approved (b)**, the separate placement
+    table (object id → region or overlay group), over a per-object
+    attribute (LLVM `section`) or a linker script. Details: (1) objects are
+    functions, globals, literals, vtables and one stack per hardware thread;
+    local slots are positions in a frame inside the stack object, even when
+    their address escapes; a heap (42) is a region, not an object; (2)
+    objects born below the IR (constant pools for 30, jump tables) go in the
+    same table; (3) each object carries its initial bytes (made by the
+    layout in the target's endianness) or is zero-filled (`.bss`), and may
+    be read-only (ROM, flash); (4) placement is per whole object, a function
+    is split first to place part of it; (5) regions belong to the target
+    description, the placement table to the program. On x86/ARM the table
+    is `.text`/`.rodata`/`.data`/`.bss` and the linker places. Tied to 35:
+    with the same instructions for every memory (Hadley's leaning),
+    re-placing changes only addresses and costs; with per-memory
+    instructions, data placement must precede selection or selection is
+    redone per iteration (code placement is unaffected). The IR's shape is
+    the same either way (the address space in `ptr`, 80).
 82. **Locals**: a name never rewritten and whose address is never taken is a
     value; the rest get a slot. mem2reg later.
+
+    **Answer (Hadley, 2026-10-20): overturned, (a) every local is a slot**,
+    parameters included (copied into a slot at entry, as clang does);
+    mem2reg comes later. An inefficient IR is fine in the first versions.
+    Values in the IR are then only the results of instructions. Recognising
+    the canonical counted loop (a `for` region with its induction as an
+    argument) is left for when loop passes and mem2reg come. Found while
+    answering: the inclusive range `for i in 0..last` never ended when
+    `last` is the top of its type; fixed the same day (record 0040,
+    amended).
 83. **`vcall` and the classes stay until instruction selection**;
     destructors and temporaries become explicit calls through a cleanup
     stack.
+
+    **Answer (Hadley, 2026-10-20): approved**, with these rules. Calls:
+    (1) `vcall Class.method` names the class and the method and is expanded
+    (vptr load, vtable load, indirect call) only by instruction selection;
+    the interpreter dispatches through the vtable table; (2) a receiver
+    held by value, and `super.method()` (record 0074), become a direct
+    `call`; (3) the vptr follows the C++ rule: construction builds the base,
+    stores its own vptr, initialises the fields with a written value, then
+    runs the `init` body; destruction stores its own vptr, runs `destroy`,
+    destroys the fields, then the base. Cleanups: (4) the lowering emits
+    every destructor call explicitly through a cleanup stack, innermost
+    first, at every exit it leaves (`return`, `break`, `continue`, the end
+    of a block); no exceptions (4a), so no landing pads; (5) the return
+    value is written to its destination before the cleanups run; (6) a
+    temporary dies at the end of its statement, one bound to a `T&` at the
+    end of its block (record 0068); (7) a temporary made on one path only
+    (`and`/`or`) gets a flag slot and is destroyed only if made; (8) a
+    moved-from object is still destroyed; (9) `new T(args)` is
+    `__alloc(size T)` plus construction, `delete p` is nothing when `p` is
+    null, else `vcall destroy` plus `__free` (what they are on the processor
+    waits on 42); (10) an aggregate passed by value is copied by the caller
+    and destroyed by the caller at the end of the statement; a result by
+    value is constructed by the callee straight into the destination
+    pointer, with no copy.
 84. **Flow facts in the IR**: a bound on each loop region, kept by every
     pass, checked by the verifier.
 85. **Timing instructions, volatile accesses and memory transfers (copy,

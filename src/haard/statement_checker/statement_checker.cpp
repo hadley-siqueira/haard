@@ -103,7 +103,6 @@ void StatementChecker::check(u32 index) {
     symbols.set_module(module);
     scope_of.clear();
     given_back.clear();
-    declaring.clear();
     loops = 0;
 
     // a diagnostic may name a type before any expression has been typed --
@@ -116,16 +115,6 @@ void StatementChecker::check(u32 index) {
 
         if (owner != 0) {
             scope_of[owner] = scope;
-        }
-    }
-
-    for (u32 candidate = 1; candidate < table->get_candidate_count();
-         candidate++) {
-        Candidate* one = table->get_candidate(candidate);
-
-        if (one->kind == SYMBOL_VARIABLE
-            && kind_of(one->ast_node) == AST_ASSIGNMENT) {
-            declaring.insert(one->ast_node);
         }
     }
 
@@ -247,7 +236,6 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
         AstQuery query;
 
         query.set_module(module);
-        check_jumps(body);
         check_ends(body, result, node,
                    "'" + query.get_declaration_name(node) + "'");
         break;
@@ -290,7 +278,6 @@ void StatementChecker::walk(u32 node, u32 scope, u32 result) {
             }
         }
 
-        check_jumps(body);
 
         // a body of one expression gives it back, and that is its end
         if (given == 0) {
@@ -438,9 +425,9 @@ void StatementChecker::check_ends(u32 body, u32 result, u32 at,
 }
 
 // Deliberately the simple rules, the ones a reader checks by eye: a 'return'
-// or a 'goto' ends a path; an 'if' ends every path only with an 'else', and
-// only when every branch does; a 'switch' when every case with a body does and
-// nothing is left uncovered; and a loop only when it runs forever -- a 'while
+// ends a path; an 'if' ends every path only with an 'else', and only when
+// every branch does; a 'switch' when every case with a body does and nothing
+// is left uncovered; and a loop only when it runs forever -- a 'while
 // true' or a 'for' with no condition -- with no 'break' of its own inside
 bool StatementChecker::terminates(u32 node) {
     if (node == 0) {
@@ -449,7 +436,6 @@ bool StatementChecker::terminates(u32 node) {
 
     switch (kind_of(node)) {
     case AST_RETURN:
-    case AST_GOTO:
         return true;
 
     case AST_BLOCK:
@@ -580,139 +566,6 @@ bool StatementChecker::breaks_out(u32 node) {
     }
 
     return false;
-}
-
-void StatementChecker::check_jumps(u32 body) {
-    if (body == 0) {
-        return;
-    }
-
-    std::vector<Placed> labels;
-    std::vector<Placed> gotos;
-    std::vector<Placed> declarations;
-    std::vector<u32> blocks;
-    u32 order = 0;
-
-    collect_jumps(body, blocks, order, labels, gotos, declarations);
-
-    std::map<std::string, u32> named;
-
-    for (u32 i = 0; i < labels.size(); i++) {
-        std::string name = text_of(first_child(labels[i].node));
-
-        if (named.count(name) > 0) {
-            report(labels[i].node, "the label '" + name + "' is already "
-                   "written in this function");
-            continue;
-        }
-
-        named[name] = i;
-    }
-
-    AstQuery query;
-
-    query.set_module(module);
-
-    for (const Placed& jump : gotos) {
-        std::string name = text_of(first_child(jump.node));
-        auto found = named.find(name);
-
-        if (found == named.end()) {
-            report(jump.node, "there is no label '" + name
-                   + "' in this function");
-            continue;
-        }
-
-        const Placed& target = labels[found->second];
-
-        // a jump backwards leaves the declarations it passes, which is fine;
-        // one forwards lands where a declaration it skipped is in view, and
-        // that one would be used without ever having been made
-        if (target.order < jump.order) {
-            continue;
-        }
-
-        for (const Placed& declared : declarations) {
-            if (declared.order < jump.order || declared.order > target.order
-                || declared.blocks.size() == 0) {
-                continue;
-            }
-
-            u32 inside = declared.blocks.back();
-            bool in_view = false;
-
-            for (u32 block : target.blocks) {
-                in_view = in_view || block == inside;
-            }
-
-            if (!in_view) {
-                continue;
-            }
-
-            std::string what = kind_of(declared.node) == AST_ASSIGNMENT
-                ? text_of(first_child(declared.node))
-                : query.get_binding_names(declared.node).front();
-
-            report(jump.node, "this 'goto' jumps over the declaration of '"
-                   + what + "', which is in view where it lands");
-            break;
-        }
-    }
-}
-
-void StatementChecker::collect_jumps(u32 node, std::vector<u32>& blocks,
-                                     u32& order,
-                                     std::vector<Placed>& labels,
-                                     std::vector<Placed>& gotos,
-                                     std::vector<Placed>& declarations) {
-    if (node == 0) {
-        return;
-    }
-
-    order++;
-
-    switch (kind_of(node)) {
-    // a function of its own, with labels of its own
-    case AST_CLOSURE:
-        return;
-
-    case AST_LABEL:
-        labels.push_back(Placed{node, order, blocks});
-        return;
-
-    case AST_GOTO:
-        gotos.push_back(Placed{node, order, blocks});
-        return;
-
-    case AST_LET_DECLARATION:
-        declarations.push_back(Placed{node, order, blocks});
-        break;
-
-    case AST_ASSIGNMENT:
-        if (declaring.count(node) > 0) {
-            declarations.push_back(Placed{node, order, blocks});
-        }
-
-        break;
-
-    default:
-        break;
-    }
-
-    bool block = kind_of(node) == AST_BLOCK;
-
-    if (block) {
-        blocks.push_back(node);
-    }
-
-    for (u32 child = first_child(node); child != 0;
-         child = module->get_ast()->get_node(child)->get_sibling()) {
-        collect_jumps(child, blocks, order, labels, gotos, declarations);
-    }
-
-    if (block) {
-        blocks.pop_back();
-    }
 }
 
 std::string StatementChecker::text_of(u32 node) {

@@ -163,12 +163,6 @@ class PrettyPrinter:
             case Yield:
                 print_yield(node)
 
-            case Goto:
-                print_goto(node)
-
-            case Label:
-                print_label(node)
-
             case Param:
                 print_param(node)
 
@@ -557,12 +551,6 @@ class PrettyPrinter:
         print_string(" : ")
         print_children(node)
 
-    def print_label : void
-        @node : i32
-
-        print_string("label ")
-        print_children(node)
-
     def print_param : void
         @node : i32
 
@@ -865,11 +853,6 @@ class PrettyPrinter:
         @node : i32
 
         print_jump(node, "yield")
-
-    def print_goto : void
-        @node : i32
-
-        print_jump(node, "goto")
 
     def print_if : void
         @node : i32

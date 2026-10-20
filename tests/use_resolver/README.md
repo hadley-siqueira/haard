@@ -47,8 +47,6 @@ the grammar grows:
   `cannot find 'absent' in 'p1'` and `cannot find 'known' in 'nope'`, while
   `p1::known` and `::here` resolve — the second one from inside a class that
   has a field named `here`, which is what `::` is for.
-- **A label and a goto name a namespace this table does not model**, so neither
-  is resolved and `goto never_written` is not reported.
 
 `a_use_may_come_before_its_declaration` pins that the module scope has no
 ordering rule: a function may call one written below it.
@@ -59,7 +57,6 @@ ordering rule: a function may call one written below it.
 |---|---|
 | every use is resolved from the module scope | 4 |
 | the right side of a dot is resolved through the scope chain | 1 |
-| a label and a goto are resolved | 1 |
 | an `AST_SCOPE` is walked as ordinary children | 1 |
 | a binding name is walked, so every declaration is a use | **0** |
 | generic parameters are walked | **0** |

@@ -689,8 +689,6 @@ class Scanner:
         word("usize", TokenKind.Usize)
         word("symbol", TokenKind.Symbol)
         word("pass", TokenKind.Pass)
-        word("goto", TokenKind.Goto)
-        word("label", TokenKind.Label)
         word("operator", TokenKind.Operator)
         word("=", TokenKind.Assignment)
         word("+=", TokenKind.PlusAssignment)

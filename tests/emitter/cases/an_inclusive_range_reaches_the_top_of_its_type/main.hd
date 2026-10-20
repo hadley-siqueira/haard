@@ -1,0 +1,66 @@
+# An inclusive range whose end is the largest value of its type. Until
+# 2026-10-20 'for i in 0..last' was 'for ; i <= last; i = i + 1', and over a
+# u8 ending at 255 the test was always true: i wrapped to 0 and the loop never
+# ended. The exit status adds up one bit per thing that held.
+def main : i32
+    let result = 0
+
+    # every u8, 256 turns
+    let last : u8 = 255
+    let turns = 0
+
+    for i in 0..last:
+        turns += 1
+
+        if turns > 1000:
+            return 99
+
+    if turns == 256:
+        result += 1
+
+    # every i8, from the bottom of its type to the top
+    let low : i8 = -127 - 1
+    let high : i8 = 127
+    let count = 0
+
+    for j in low..high:
+        count += 1
+
+        if count > 1000:
+            return 98
+
+    if count == 256:
+        result += 2
+
+    # a 'continue' still steps
+    let seen = 0
+
+    for k in 1..5:
+        if k == 3:
+            continue
+
+        seen += k
+
+    if seen == 12:
+        result += 4
+
+    # an empty range runs no turn
+    let none = 0
+
+    for m in 5..3:
+        none += 1
+
+    if none == 0:
+        result += 8
+
+    # writing the variable moves the walk on, as it always has: 0, 5, 10
+    let steps = 0
+
+    for n in 0..10:
+        steps += 1
+        n = n + 4
+
+    if steps == 3:
+        result += 16
+
+    return result

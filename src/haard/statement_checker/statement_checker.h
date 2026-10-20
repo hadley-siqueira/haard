@@ -167,25 +167,6 @@ namespace haard {
             // inside a loop of its own or a closure does not
             bool breaks_out(u32 node);
 
-            // The 'goto's of one body against its labels: a label that is not
-            // there, one written twice, and a jump forward over a declaration
-            // still in view where it lands -- which C++ refuses as crossing
-            // an initialisation
-            void check_jumps(u32 body);
-
-            // A statement of a body in source order, with the blocks it sits
-            // in, outermost first
-            struct Placed {
-                u32 node;
-                u32 order;
-                std::vector<u32> blocks;
-            };
-
-            void collect_jumps(u32 node, std::vector<u32>& blocks, u32& order,
-                               std::vector<Placed>& labels,
-                               std::vector<Placed>& gotos,
-                               std::vector<Placed>& declarations);
-
             std::string text_of(u32 node);
 
             // the type a 'def' gives back: the last argument of the signature
@@ -225,9 +206,6 @@ namespace haard {
             // being walked: a closure's body is a function of its own and
             // starts again at none
             u32 loops;
-
-            // record 0027: the assignments that declare the name they write
-            std::set<u32> declaring;
 
             // what record 0067's expansion builds with, and the number that
             // keeps the names it writes apart across the compilation

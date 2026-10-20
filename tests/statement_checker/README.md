@@ -139,9 +139,6 @@ that refused too much fails as surely as one that refused too little.
   `3 = 4`, `five() = 6`, `a + b += 1`, `&(a + 1)`, `++5`. And every place:
   a variable, a parenthesis around one, a field, an element, a call that
   gives back a `T&`, what a pointer points at.
-- **`a_goto_needs_its_label`** -- a label that is not there, one in another
-  function, one written twice, and a jump forward over a declaration in view.
-  A jump backwards, and one forwards over a block that has ended, stand.
 - **`a_function_gives_back_on_every_path`** -- five functions and a closure
   that can reach their end, and nine that cannot: both branches, every
   variant, a `default`, `while true`, `for ; ; :`, a `break` of an inner loop,

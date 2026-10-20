@@ -264,7 +264,30 @@ u32 ForEachLowerer::over_a_fixed_array(u32 scope, u32 for_each, u32 variable,
 //
 // The end is bound to a local because it is evaluated **once**: written into
 // the condition it would run every turn, and 'for i in 0..xs.length()' would
-// be a call per element
+// be a call per element.
+//
+// The inclusive form cannot be the same loop with '<=': an end that is the
+// largest value of its type makes 'i <= __e0' always true, and i wraps to the
+// bottom and walks again -- 'for i in 0..last' over a u8 ending at 255 never
+// ended, until 2026-10-20. So it asks whether there is another turn **before**
+// stepping, and steps at the top of the next one, by nothing the first time:
+//
+//     let __e0 = last
+//     let i = 0
+//     let __m1 = i <= __e0
+//     let __d2 = __e0 - __e0
+//
+//     for ; __m1; __m1 = i < __e0:
+//         i = i + __d2
+//         __d2 = 1
+//
+// A step only follows a turn that found i below the end, so i never passes
+// it. Writing to i still moves the walk on, as in the exclusive form; and a
+// 'continue' runs the question and lands on the step, as it does there.
+//
+// The zero is written as the end minus itself because a local is typed again
+// from what it is given, and a written '0' alone would make __d2 an i32 beside
+// a u8
 u32 ForEachLowerer::over_a_range(u32 scope, u32 for_each, u32 variable,
                                  u32 range, u32& written) {
     u32 body = child_of(for_each, AST_BLOCK);
@@ -294,28 +317,52 @@ u32 ForEachLowerer::over_a_range(u32 scope, u32 for_each, u32 variable,
 
     u32 limit = make_local(scope, name, to, written);
     u32 declaration = make_loop_binding(variable, from);
-    u32 loop = counted_loop(
-        token_of(variable),
-        condition_of(token_of(variable), identifier_like(name),
-                     kind_of(range) == AST_INCLUSIVE_RANGE),
+    u32 counter = token_of(variable);
+
+    if (kind_of(range) == AST_EXCLUSIVE_RANGE) {
+        u32 loop = counted_loop(
+            counter, condition_of(counter, identifier_like(name), false),
+            body);
+
+        rewrite_into_block(for_each,
+                           std::vector<u32>{limit, declaration, loop});
+
+        return first_child(declaration);
+    }
+
+    u32 more = name_for("__m");
+    u32 step = name_for("__d");
+    u32 asked = make_local(scope, more,
+                           condition_of(counter, identifier_like(name), true),
+                           module->get_types()->builtin(BUILTIN_BOOL));
+    u32 minus = module->add_synthetic_token(TK_MINUS, "-", like);
+    u32 by = make_local(scope, step,
+                        builder.make_binary_operator(AST_MINUS, minus,
+                                                     identifier_like(name),
+                                                     identifier_like(name)),
+                        written);
+
+    prepend(body, assign(step, integer("1")));
+    prepend(body,
+            assign(counter, sum_of(counter, identifier_like(step))));
+
+    u32 loop = loop_of(
+        identifier_like(more),
+        assign(more, condition_of(counter, identifier_like(name), false)),
         body);
 
     rewrite_into_block(for_each,
-                       std::vector<u32>{limit, declaration, loop});
+                       std::vector<u32>{limit, declaration, asked, by, loop});
 
     return first_child(declaration);
 }
 
 u32 ForEachLowerer::counted_loop(u32 name, u32 condition, u32 body) {
+    return loop_of(condition, assign(name, sum_of(name, integer("1"))), body);
+}
+
+u32 ForEachLowerer::loop_of(u32 condition, u32 stepped, u32 body) {
     u32 token = module->add_synthetic_token(TK_FOR, "for", like);
-    u32 plus = module->add_synthetic_token(TK_PLUS, "+", like);
-    u32 assignment = module->add_synthetic_token(TK_ASSIGNMENT, "=", like);
-
-    u32 sum = builder.make_binary_operator(AST_PLUS, plus,
-                                           identifier_like(name), integer("1"));
-    u32 stepped = builder.make_binary_operator(
-        AST_ASSIGNMENT, assignment, identifier_like(name), sum);
-
     u32 loop = builder.make_for(token);
     u32 last = builder.add_child(loop, 0, builder.make_for_head());
     u32 part = builder.make_for_condition();
@@ -331,6 +378,20 @@ u32 ForEachLowerer::counted_loop(u32 name, u32 condition, u32 body) {
     builder.add_child(loop, last, body);
 
     return loop;
+}
+
+u32 ForEachLowerer::assign(u32 name, u32 value) {
+    u32 token = module->add_synthetic_token(TK_ASSIGNMENT, "=", like);
+
+    return builder.make_binary_operator(AST_ASSIGNMENT, token,
+                                        identifier_like(name), value);
+}
+
+u32 ForEachLowerer::sum_of(u32 name, u32 value) {
+    u32 token = module->add_synthetic_token(TK_PLUS, "+", like);
+
+    return builder.make_binary_operator(AST_PLUS, token,
+                                        identifier_like(name), value);
 }
 
 u32 ForEachLowerer::condition_of(u32 name, u32 limit, bool inclusive) {

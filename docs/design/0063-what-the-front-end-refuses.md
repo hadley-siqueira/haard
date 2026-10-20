@@ -7,7 +7,7 @@ problems, and make sure they do not reach the emitter"*.
 |---|---|
 | `break` and `continue` outside a loop are errors, and a closure's body is outside the loop it is written in | **decided** |
 | An assignment, `&` and `++`/`--` need a **place**; a value is refused | **decided** |
-| A `goto` names a label of its own function, a label is written once, and a jump forward may not skip a declaration still in view where it lands | **decided** |
+| A `goto` names a label of its own function, a label is written once, and a jump forward may not skip a declaration still in view where it lands | **superseded** by [0078](0078-goto-and-label-are-removed.md), 2026-10-20: `goto` and `label` are no longer in the language |
 | A local is in view from the **end** of the statement that declares it | **decided** |
 | `this` outside a class is an error | **decided** |
 | One scope holds one declaration of a name, except an overload set of **different** parameters | **decided**, Hadley |
@@ -49,6 +49,9 @@ is (record 0035). An assignment, `&` and the four increments ask it. A
 literal, a sum, and a call that gives back a value are values.
 
 ### A label -- the StatementChecker
+
+*Removed 2026-10-20 with `goto` and `label` themselves, record
+[0078](0078-goto-and-label-are-removed.md). Kept for the history.*
 
 Per body, closures apart: every `goto` names a label written in that body,
 and each label is written once. A jump **backwards** is always fine. A jump

@@ -3,5 +3,4 @@ def main : i32
         break
         continue
         yield n
-        goto start
     return 0

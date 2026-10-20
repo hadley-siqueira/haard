@@ -42,8 +42,6 @@ enum AstNodeKind:
     Break
     Continue
     Yield
-    Goto
-    Label
     Binding
     BindingName
     BindingType

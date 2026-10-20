@@ -457,7 +457,7 @@ class Parser:
 
     #   statement := let_declaration | const_declaration
     #              | if | while | for
-    #              | return | break | continue | yield | goto | label
+    #              | return | break | continue | yield
     #              | expression
     def parse_statement : i32
         if lookahead(TokenKind.Let):
@@ -490,24 +490,9 @@ class Parser:
         if lookahead(TokenKind.Yield):
             return parse_jump(TokenKind.Yield, AstNodeKind.Yield)
 
-        if lookahead(TokenKind.Goto):
-            return parse_jump(TokenKind.Goto, AstNodeKind.Goto)
-
-        if lookahead(TokenKind.Label):
-            return parse_label()
-
         return parse_expression()
 
-    #   label := 'label' identifier
-    def parse_label : i32
-        let token = current_token
-
-        begin_statement()
-        expect(TokenKind.Label)
-
-        return builder.make_label(token, parse_identifier())
-
-    #   jump := ('return' | 'break' | 'continue' | 'yield' | 'goto') expression?
+    #   jump := ('return' | 'break' | 'continue' | 'yield') expression?
     def parse_jump : i32
         @keyword : TokenKind
         @kind : AstNodeKind

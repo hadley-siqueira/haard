@@ -1,0 +1,13 @@
+# Record 0078, Hadley 2026-10-20: 'goto' and 'label' are no longer in the
+# language, so both words are ordinary names again. The exit status is the
+# label kept plus what goto gives back.
+
+def goto : i32
+    @n : i32
+
+    return n * 2
+
+def main : i32
+    let label = 3
+
+    return label + goto(2)

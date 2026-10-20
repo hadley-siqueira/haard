@@ -68,7 +68,11 @@ int32_t h0_21_main() {
     {
         int32_t h0_55___e4 = 4;
         int32_t h0_29_i = 1;
-        for (; h0_29_i <= h0_55___e4; h0_29_i = h0_29_i + 1) {
+        bool h0_56___m5 = h0_29_i <= h0_55___e4;
+        int32_t h0_57___d6 = h0_55___e4 - h0_55___e4;
+        for (; h0_56___m5; h0_56___m5 = h0_29_i < h0_55___e4) {
+            h0_29_i = h0_29_i + h0_57___d6;
+            h0_57___d6 = 1;
             if (h0_29_i == 3) {
                 continue;
             }
@@ -76,9 +80,9 @@ int32_t h0_21_main() {
         }
     }
     {
-        int32_t h0_56___e5 = 4;
+        int32_t h0_58___e7 = 4;
         int32_t h0_30_j = 1;
-        for (; h0_30_j < h0_56___e5; h0_30_j = h0_30_j + 1) {
+        for (; h0_30_j < h0_58___e7; h0_30_j = h0_30_j + 1) {
             h0_23_total = h0_23_total + h0_30_j;
         }
     }
@@ -97,9 +101,9 @@ void h0_31_Bag::m_add_b6(int32_t h0_37_value) {
 int32_t h0_31_Bag::m_counted() {
     int32_t h0_39_count = 0;
     {
-        h0_43_BagCursor h0_57___c6 = this->m_iterator();
-        while (h0_57___c6.m_has_next()) {
-            int32_t &h0_40_x = h0_57___c6.m_next();
+        h0_43_BagCursor h0_59___c8 = this->m_iterator();
+        while (h0_59___c8.m_has_next()) {
+            int32_t &h0_40_x = h0_59___c8.m_next();
             h0_39_count = h0_39_count + 1;
         }
     }

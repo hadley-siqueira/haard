@@ -57,8 +57,6 @@ enum TokenKind:
     Usize
     Symbol
     Pass
-    Goto
-    Label
     IntegerLiteral
     FloatLiteral
     StringLiteral
@@ -287,12 +285,6 @@ def name_of : char*
 
         case Pass:
             return "TK_PASS"
-
-        case Goto:
-            return "TK_GOTO"
-
-        case Label:
-            return "TK_LABEL"
 
         case IntegerLiteral:
             return "TK_INTEGER_LITERAL"
