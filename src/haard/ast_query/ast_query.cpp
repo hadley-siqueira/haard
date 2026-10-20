@@ -485,3 +485,29 @@ u32 AstQuery::import_segment(u32 import, bool last) {
 std::string AstQuery::text_of(u32 node) {
     return std::string(module->get_token_value(ast->get_node(node)->get_token()));
 }
+
+u32 AstQuery::get_largest_tag(u32 declaration) {
+    u32 tag = 0;
+    u32 largest = 0;
+
+    for (u32 member : get_variants(declaration)) {
+        if (ast->get_node(member)->get_kind() != AST_FIELD) {
+            continue;
+        }
+
+        u32 value = get_binding_expression(member);
+
+        if (value != 0 && get_written_type(member) == 0
+            && ast->get_node(value)->get_kind() == AST_INTEGER_LITERAL) {
+            tag = (u32) std::stoul(text_of(value));
+        }
+
+        if (tag > largest) {
+            largest = tag;
+        }
+
+        tag++;
+    }
+
+    return largest;
+}

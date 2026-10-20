@@ -22,7 +22,7 @@ struct h0_20_Holder {
 };
 
 struct h0_28_Option {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_30_Some;
     };
@@ -55,7 +55,7 @@ h0_28_Option h0_28_Option_h0_31_None() {
 }
 
 struct h0_35_Option {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { bool _0; } h0_37_Some;
     };

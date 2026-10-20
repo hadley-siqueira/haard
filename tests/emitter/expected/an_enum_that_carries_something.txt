@@ -7,7 +7,7 @@ struct h0_1_Action;
 struct h0_14_Shape;
 
 struct h0_1_Action {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; int32_t _1; } h0_3_Click;
         struct { int32_t _0; } h0_4_Increment;
@@ -67,7 +67,7 @@ h0_1_Action h0_1_Action_h0_6_Move(int32_t a0 = 0, int32_t a1 = 0) {
 }
 
 struct h0_14_Shape {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_16_Circle;
         struct { int32_t _0; } h0_17_Square;

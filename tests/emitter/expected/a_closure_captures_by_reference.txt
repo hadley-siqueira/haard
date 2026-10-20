@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <new>
 
-enum class h0_1_Colour : int32_t;
+enum class h0_1_Colour : uint8_t;
 struct h0_19_Counter;
 struct h0_26_Holder;
 
@@ -22,13 +22,13 @@ struct h_fn_f3b6b6b6 {
     int32_t (*call)(void *, int32_t, int32_t);
 };
 
-enum class h0_1_Colour : int32_t;
+enum class h0_1_Colour : uint8_t;
 struct h_fn_f2n0c1b6 {
     void *env;
     int32_t (*call)(void *, h0_1_Colour);
 };
 
-enum class h0_1_Colour : int32_t {
+enum class h0_1_Colour : uint8_t {
     h0_2_red,
     h0_3_green,
 };

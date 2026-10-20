@@ -1,0 +1,31 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Action: size 24, align 8, data 24
+    tag : b8 at 0
+    payload : Action.payload at 8
+
+union Action.payload: size 16, align 8, data 16, pod
+    Click : Action.Click at 0
+    Increment : Action.Increment at 0
+    Far : Action.Far at 0
+
+struct Action.Click: size 8, align 4, data 8, pod
+    _0 : b32 at 0
+    _1 : b32 at 4
+
+struct Action.Increment: size 1, align 1, data 1, pod
+    _0 : b8 at 0
+
+struct Action.Far: size 16, align 8, data 9, pod
+    _0 : b64 at 0
+    _1 : bool at 8
+
+struct Named: size 1, align 1, data 1
+    tag : b8 at 0
+
+struct Holds: size 40, align 8, data 33, pod
+    c : b8 at 0
+    w : b16 at 2
+    h : b32 at 4
+    a : Action at 8
+    n : Named at 32

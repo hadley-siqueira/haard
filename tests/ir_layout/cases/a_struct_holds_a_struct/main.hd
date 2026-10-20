@@ -1,0 +1,20 @@
+# A struct held by value is a block of its own size and alignment, and a
+# fixed array is its element times its length: 'Line' is two 'Point's, and
+# 'Path' holds three of them after a byte that the array's alignment pads.
+struct Point:
+    x : i32
+    y : i32
+
+struct Line:
+    from : Point
+    to : Point
+
+struct Path:
+    closed : bool
+    points : Point[3]
+    bytes : u8[5]
+
+def main : i32
+    let p : Path
+    let l : Line
+    return 0

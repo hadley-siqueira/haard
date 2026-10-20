@@ -1,0 +1,55 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Plain: size 8, align 4, data 5, pod
+    a : b32 at 0
+    b : b8 at 4
+
+struct Built: size 8, align 4, data 5
+    a : b32 at 0
+    b : b8 at 4
+
+struct Ending: size 8, align 4, data 5
+    a : b32 at 0
+    b : b8 at 4
+
+struct Seeded: size 8, align 4, data 5
+    a : b32 at 0
+    b : b8 at 4
+
+struct Methods: size 8, align 4, data 5, pod
+    a : b32 at 0
+    b : b8 at 4
+
+struct FromPlain: size 12, align 4, data 9
+    base Plain at 0
+    c : b8 at 8
+
+struct FromBuilt: size 8, align 4, data 6
+    base Built at 0
+    c : b8 at 5
+
+struct FromEnding: size 8, align 4, data 6
+    base Ending at 0
+    c : b8 at 5
+
+struct FromSeeded: size 8, align 4, data 6
+    base Seeded at 0
+    c : b8 at 5
+
+struct FromMethods: size 12, align 4, data 9
+    base Methods at 0
+    c : b8 at 8
+
+struct Grand: size 12, align 4, data 10
+    base FromPlain at 0
+    d : b8 at 9
+
+class Over: size 24, align 8, data 17
+    vptr at 0
+    base Plain at 8
+    c : b8 at 16
+
+class OverBuilt: size 16, align 8, data 14
+    vptr at 0
+    base Built at 8
+    c : b8 at 13

@@ -3,12 +3,12 @@
 #include <cstdio>
 #include <new>
 
-enum class h0_1_Colour : int32_t;
+enum class h0_1_Colour : uint8_t;
 union h0_4_Word;
 union h0_8_Cell;
 union h0_14_Seeded;
 
-enum class h0_1_Colour : int32_t {
+enum class h0_1_Colour : uint8_t {
     h0_2_red,
     h0_3_green,
 };

@@ -1,0 +1,20 @@
+# Record 0064: a union is C's. Every field starts at 0, the size is the
+# largest field rounded to the largest alignment.
+struct Point:
+    x : i32
+    y : i32
+
+union Word:
+    whole : u32
+    bytes : u8[4]
+
+union Wide:
+    flag : bool
+    point : Point
+    big : i64
+    tail : u8[9]
+
+def main : i32
+    let w : Word
+    let v : Wide
+    return 0

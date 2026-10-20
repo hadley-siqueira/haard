@@ -7,7 +7,7 @@ struct h0_1_Light;
 struct h0_7_Shape;
 
 struct h0_1_Light {
-    int32_t tag;
+    uint8_t tag;
 
     h0_1_Light m_next();
     bool m_is_go();
@@ -41,7 +41,7 @@ h0_1_Light h0_1_Light_h0_4_Green() {
 }
 
 struct h0_7_Shape {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_8_Circle;
         struct { int32_t _0; } h0_9_Square;

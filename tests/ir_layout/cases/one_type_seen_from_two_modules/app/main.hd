@@ -1,0 +1,14 @@
+# Record 0016: a type index does not cross a module, so the IR interns a
+# declaration by the module and node that declare it. 'Point' reached from
+# here and from the geometry module is one IR type.
+import geometry.shapes
+
+struct Segment:
+    from : Point
+    to : Point
+    tag : u8
+
+def main : i32
+    let s : Segment
+    let p : Point
+    return 0

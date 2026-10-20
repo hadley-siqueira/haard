@@ -8,7 +8,7 @@ struct h_tup_t2b6n0c1;
 struct h_tup_t2b6b6;
 
 struct h0_1_Shape {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_3_Circle;
         struct { int32_t _0; int32_t _1; } h0_4_Box;

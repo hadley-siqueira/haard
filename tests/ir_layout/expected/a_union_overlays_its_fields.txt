@@ -1,0 +1,15 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Point: size 8, align 4, data 8, pod
+    x : b32 at 0
+    y : b32 at 4
+
+union Word: size 4, align 4, data 4
+    whole : b32 at 0
+    bytes : b8[4] at 0
+
+union Wide: size 16, align 8, data 16
+    flag : bool at 0
+    point : Point at 0
+    big : b64 at 0
+    tail : b8[9] at 0

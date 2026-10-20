@@ -1,0 +1,40 @@
+# Hadley, 2026-10-20: an enum's tag is the smallest unsigned width that holds
+# its largest tag. With no payload the tag is the whole value; with one, the
+# enum is a struct of the tag and a union of one struct per variant that
+# carries something (question 80), and so is an enum that writes a method.
+enum Colour:
+    red
+    green
+
+enum Wide:
+    small
+    large = 300
+
+enum Huge:
+    first
+    last = 70000
+
+enum Action:
+    Idle
+    Click : (i32, i32)
+    Increment : i8
+    Stop = 40
+    Far : (i64, bool)
+
+enum Named:
+    one
+    two
+
+    def number : i32
+        return 2
+
+struct Holds:
+    c : Colour
+    w : Wide
+    h : Huge
+    a : Action
+    n : Named
+
+def main : i32
+    let h : Holds
+    return 0

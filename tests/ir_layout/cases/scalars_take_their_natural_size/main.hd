@@ -1,0 +1,26 @@
+# Record 0077, stage 1: every builtin in memory takes its natural size and is
+# aligned to it. Signedness is gone (question 79): i8 and u8 are both b8, and
+# a char is one byte. isize and usize take the target's width, and a symbol,
+# a pointer and a reference are all one 'ptr'.
+struct Everything:
+    a : u8
+    b : i8
+    c : u16
+    d : i16
+    e : u32
+    f : i32
+    g : u64
+    h : i64
+    i : isize
+    j : usize
+    k : f32
+    l : f64
+    m : bool
+    n : char
+    o : symbol
+    p : i32*
+    q : char**
+
+def main : i32
+    let e : Everything
+    return 0

@@ -135,6 +135,46 @@ driven by a new requirement:
   function that knows every side table, no use lists (an alias table),
   access always by id.
 
+## Stage 1: four details of the layout (Hadley, 2026-10-20)
+
+- An **empty struct** has size 1, as in C++: two objects never share an
+  address, and the C++ path agrees.
+- An **enum's tag** is the smallest unsigned width that holds its variant
+  count (`b8` up to 256 variants).
+- A **`bool`** in memory is 1 byte.
+- Stage 1 starts with **three targets**: `x86_64-linux` and `arm64-linux`
+  (little endian, 64-bit) and `pret` (big endian, 64-bit, provisional until
+  the ISA is settled).
+- **Inheritance follows the Itanium C++ ABI**, as g++ lays the emitted C++
+  out on x86-64 and ARM64: a base that is not POD for the purpose of layout
+  lends its tail padding to the derived class's first fields, and an empty
+  base takes no bytes (the empty base optimisation). Chosen over a simpler
+  rule of our own so that g++ can check every layout, classes with a base
+  included. An enum with written values takes the smallest unsigned width
+  that holds its largest value.
+
+## Stage 1, built in part (2026-10-20)
+
+In `src/haard/ir/`, with the suite `tests/ir_layout` (15 cases, each rule
+proven by sabotage):
+
+- `Target` and `find_target`: the three targets above.
+- `IrTypeTable`: one table for the program; scalars seeded, pointers and
+  arrays interned, aggregates by identity.
+- `IrTypeTranslator`: every Haard type to its IR type, a declaration interned
+  by the module and node that declare it (record 0016), a tuple by its IR
+  element types, a function value as `{env, call}`.
+- `LayoutTable`: the Itanium allocation for single inheritance, per target.
+
+On x86-64 the suite builds the emitted C++ with a probe and checks that g++
+lays out every aggregate exactly as the IR does; it agrees on every case. For
+that, the C++ emitter's enum tag moved from `int32_t` to the smallest unsigned
+width (record 0043, amended), which changes what `sizeof` gives for an enum in
+a program; no exit status of the emitter suite moved.
+
+Not built yet: the class table (each class's base, fields, vtable slots and
+destructor slot), the last piece of stage 1.
+
 ## Consequences
 
 - The order of the work in the notes (section 11) starts: stage 1 is the

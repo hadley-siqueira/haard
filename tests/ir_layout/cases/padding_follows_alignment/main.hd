@@ -1,0 +1,22 @@
+# Declaration order, never reordered, each field at the next offset its own
+# alignment allows, and the size rounded up to the largest alignment: 'b' at 8
+# leaves seven bytes of padding after 'a', and two more close the struct.
+struct Spread:
+    a : u8
+    b : i64
+    c : u16
+
+struct Tight:
+    a : u8
+    b : u8
+    c : u16
+    d : u32
+
+struct One:
+    a : u8
+
+def main : i32
+    let s : Spread
+    let t : Tight
+    let o : One
+    return 0

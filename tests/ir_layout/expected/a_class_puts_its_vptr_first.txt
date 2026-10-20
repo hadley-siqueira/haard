@@ -1,0 +1,18 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+class Shape: size 8, align 8, data 8
+    vptr at 0
+
+class Base: size 16, align 8, data 9
+    vptr at 0
+    a : b8 at 8
+
+class Derived: size 16, align 8, data 10
+    vptr at 0
+    base Base at 0
+    b : b8 at 9
+
+class Deeper: size 24, align 8, data 24
+    vptr at 0
+    base Derived at 0
+    c : b64 at 16

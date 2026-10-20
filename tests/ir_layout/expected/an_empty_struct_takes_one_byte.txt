@@ -1,0 +1,21 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Nothing: size 1, align 1, data 0, pod, empty
+
+struct Holds: size 8, align 4, data 8, pod
+    n : Nothing at 0
+    x : b32 at 4
+
+struct Inherits: size 4, align 4, data 4
+    base Nothing at 0
+    x : b32 at 0
+
+struct Twice: size 8, align 4, data 8
+    base Nothing at 0
+    n : Nothing at 1
+    x : b32 at 4
+
+class Dynamic: size 16, align 8, data 9
+    vptr at 0
+    base Nothing at 0
+    x : b8 at 8

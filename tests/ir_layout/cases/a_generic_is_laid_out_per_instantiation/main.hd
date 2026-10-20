@@ -1,0 +1,10 @@
+# Record 0002: a generic is cloned per instantiation, and each clone is a
+# struct of its own with its own layout. The generic itself has none.
+struct Pair<A, B>:
+    first : A
+    second : B
+
+def main : i32
+    let small : Pair<i8, u8>
+    let wide : Pair<u8, i64>
+    return 0

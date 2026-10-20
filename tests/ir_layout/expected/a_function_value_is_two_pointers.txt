@@ -1,0 +1,10 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Callbacks: size 40, align 8, data 40, pod
+    flag : bool at 0
+    each : function at 8
+    pick : function at 24
+
+struct function: size 16, align 8, data 16, pod
+    env : ptr at 0
+    call : ptr at 8

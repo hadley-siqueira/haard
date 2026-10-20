@@ -1,0 +1,29 @@
+# Hadley, 2026-10-20: an empty struct has size 1, as in C++, so no two objects
+# share an address. As a BASE it takes no bytes (the Itanium empty base
+# optimisation), unless another subobject of the same type would then sit at
+# the same address: 'Twice' holds a 'Nothing' as its first field, which cannot
+# share offset 0 with its 'Nothing' base, and moves to 1.
+struct Nothing:
+    def answer : i32
+        return 1
+
+struct Holds:
+    n : Nothing
+    x : i32
+
+struct Inherits(Nothing):
+    x : i32
+
+struct Twice(Nothing):
+    n : Nothing
+    x : i32
+
+class Dynamic(Nothing):
+    x : u8
+
+def main : i32
+    let a : Nothing
+    let b : Holds
+    let c : Inherits
+    let d : Twice
+    return 0

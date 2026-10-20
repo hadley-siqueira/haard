@@ -85,6 +85,12 @@ namespace haard {
 
             const std::string& get_error();
 
+            // The C++ spelling of a type and of a declaration, once emit has
+            // run: what tests/ir_layout needs to ask g++ about the layout of
+            // what was emitted, and to compare it with the IR's
+            std::string cpp_type(u32 module, u32 type);
+            std::string cpp_name(u32 module, u32 candidate);
+
         private:
             // the sections, in the order they are written
             void emit_forward_declarations();
@@ -366,6 +372,10 @@ namespace haard {
             // the number a variant's tag holds: the C rule, a counter an
             // explicit value resets, asked by the maker and by the label
             u32 tag_of(u32 module, u32 declaration, u32 wanted);
+
+            // the C++ type a tag is held in: the smallest unsigned width that
+            // holds the largest (Hadley, 2026-10-20), which is the IR's
+            std::string tag_type(u32 module, u32 declaration);
 
             // the enum an expression's TYPE names, and the identifier a
             // pattern carries

@@ -1,0 +1,5 @@
+# A struct declared here and held by a struct in another module: the IR has
+# one type for it, whichever module's table named it
+struct Point:
+    x : i32
+    y : i16

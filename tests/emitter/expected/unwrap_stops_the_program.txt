@@ -8,7 +8,7 @@ struct h1_21_Option;
 #include <cstdlib>
 
 struct h1_21_Option {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h1_23_Some;
     };

@@ -229,15 +229,15 @@ void Emitter::emit_forward_declarations() {
             }
 
             // An enum too, declared the way it is defined: a scoped enum
-            // over an i32, or the struct a tagged union is. A method taking
-            // one by value only needs it declared, and the order section two
-            // writes the types in follows fields and bases -- not
-            // parameters. So 'def make : i32 @kind : AstNodeKind' in a class
-            // emitted before the enum was a C++ error: found by the
+            // over its tag type, or the struct a tagged union is. A method
+            // taking one by value only needs it declared, and the order
+            // section two writes the types in follows fields and bases --
+            // not parameters. So 'def make : i32 @kind : AstNodeKind' in a
+            // class emitted before the enum was a C++ error: found by the
             // bootstrap's AstBuilder, whose makers all take a kind
             if (kind == AST_ENUM && !carries_a_payload(i, declaration)) {
-                out << "enum class " << name_of(i, candidate)
-                    << " : int32_t;\n";
+                out << "enum class " << name_of(i, candidate) << " : "
+                    << tag_type(i, declaration) << ";\n";
                 continue;
             }
 
@@ -576,10 +576,11 @@ std::string Emitter::tuple_type_name(u32 module_index, u32 type) {
     return "h_tup_" + mangle_type(module_index, type);
 }
 
-// An enum is a C++ 'enum class' over an i32: scoped, so a variant's name
-// cannot collide with anything, and with **no implicit conversion to an
-// integer**, which is record 0018's rule arriving in the emitted code for
-// free.
+// An enum is a C++ 'enum class' over the smallest unsigned width that holds
+// its largest tag (Hadley, 2026-10-20, so it matches the IR): scoped, so a
+// variant's name cannot collide with anything, and with **no implicit
+// conversion to an integer**, which is record 0018's rule arriving in the
+// emitted code for free.
 //
 // A variant that carries a payload is not written yet -- that is the tagged
 // union half, and it is refused by name rather than emitted as something else
@@ -600,7 +601,8 @@ void Emitter::emit_enum(u32 module_index, u32 declaration) {
         return;
     }
 
-    out << "enum class " << name_of(module_index, candidate) << " : int32_t {\n";
+    out << "enum class " << name_of(module_index, candidate) << " : "
+        << tag_type(module_index, declaration) << " {\n";
 
     for (u32 member : query.get_variants(declaration)) {
         if (kind_of(module_index, member) != AST_FIELD) {
@@ -696,7 +698,7 @@ void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
     query.set_module(module);
 
     out << "struct " << name << " {\n";
-    out << "    int32_t tag;\n";
+    out << "    " << tag_type(module_index, declaration) << " tag;\n";
 
     // an enum here only for its methods carries nothing, and C++ has no
     // union of nothing
@@ -824,6 +826,17 @@ void Emitter::emit_tagged_union(u32 module_index, u32 declaration,
 //
 // A written value on a variant that CARRIES something is not a tag: it is a
 // default payload, which is not written yet
+std::string Emitter::tag_type(u32 module_index, u32 declaration) {
+    AstQuery query;
+
+    query.set_module(compilation->get_module(module_index));
+
+    u32 largest = query.get_largest_tag(declaration);
+
+    return largest <= 0xff ? "uint8_t" : largest <= 0xffff ? "uint16_t"
+                                                           : "uint32_t";
+}
+
 u32 Emitter::tag_of(u32 module_index, u32 declaration, u32 wanted) {
     Module* module = compilation->get_module(module_index);
     AstQuery query;
@@ -4221,13 +4234,14 @@ void Emitter::declare_enum_early(u32 module_index, u32 type) {
 
     // the two shapes record 0043 writes an enum as, declared the way each is
     // defined: a tagged union is a struct, and one with no payload is a
-    // scoped enum over an i32
+    // scoped enum over its tag type
     if (carries_a_payload(entry->module, found->ast_node)) {
         functions << "struct " << name_of(entry->module, entry->subject)
                   << ";\n";
     } else {
         functions << "enum class " << name_of(entry->module, entry->subject)
-                  << " : int32_t;\n";
+                  << " : " << tag_type(entry->module, found->ast_node)
+                  << ";\n";
     }
 }
 
@@ -5046,6 +5060,14 @@ std::string Emitter::name_at(u32 module, u32 node) {
     }
 
     return name_of(found->module, found->candidate);
+}
+
+std::string Emitter::cpp_type(u32 module, u32 type) {
+    return declare(module, type, "");
+}
+
+std::string Emitter::cpp_name(u32 module, u32 candidate) {
+    return name_of(module, candidate);
 }
 
 std::string Emitter::type_name(u32 module, u32 type) {

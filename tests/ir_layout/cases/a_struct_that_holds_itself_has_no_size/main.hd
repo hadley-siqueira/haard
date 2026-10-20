@@ -1,0 +1,14 @@
+# A struct holding itself by value, directly or through another, has no size.
+# A pointer to itself is fine.
+struct Node:
+    next : Node*
+    value : i32
+
+struct Loop:
+    other : Other
+
+struct Other:
+    back : Loop
+
+def main : i32
+    return 0

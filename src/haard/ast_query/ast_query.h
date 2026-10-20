@@ -167,6 +167,13 @@ namespace haard {
             // AST_BINDING child instead of one for the statement
             std::string get_declaration_name(u32 declaration);
 
+            // Record 0043's tags, the C rule: a counter from 0 over an enum's
+            // variants that a written number resets. This is the largest one,
+            // which decides the tag's width (Hadley, 2026-10-20: the smallest
+            // unsigned width that holds it). A tag written as anything but a
+            // number is not counted; the emitter refuses it
+            u32 get_largest_tag(u32 declaration);
+
         private:
             // A declaration is a child of the root and never deeper. Walking
             // the node vector instead would be both wrong and slower: a method

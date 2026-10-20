@@ -1,0 +1,17 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Holds: size 32, align 8, data 32, pod
+    pair : (b32, b8) at 0
+    nested : ((b64, b8), b8) at 8
+
+struct (b32, b8): size 8, align 4, data 5, pod
+    e0 : b32 at 0
+    e1 : b8 at 4
+
+struct (b64, b8): size 16, align 8, data 9, pod
+    e0 : b64 at 0
+    e1 : b8 at 8
+
+struct ((b64, b8), b8): size 24, align 8, data 17, pod
+    e0 : (b64, b8) at 0
+    e1 : b8 at 16

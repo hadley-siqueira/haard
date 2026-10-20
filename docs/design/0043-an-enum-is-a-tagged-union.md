@@ -75,9 +75,15 @@ different types is the same mistake one step in, and is reported too.
 
 ## What it compiles to
 
-**Nothing carries anything** — a C++ `enum class` over an `int32_t`. Scoped, so
-a variant's name cannot collide, and with no implicit conversion to an integer,
-which is record 0018's rule arriving in the emitted code for free.
+**Nothing carries anything** — a C++ `enum class` over the tag's type. Scoped,
+so a variant's name cannot collide, and with no implicit conversion to an
+integer, which is record 0018's rule arriving in the emitted code for free.
+
+The tag's type was an `int32_t` until 2026-10-20. Since then it is the
+smallest unsigned width that holds the largest tag (`uint8_t` up to 255,
+`uint16_t`, `uint32_t`), in the IR and in the emitted C++ alike, so that
+g++ can check the IR's layout of an enum (record 0077, stage 1). The example
+below keeps the old spelling of the tag.
 
 **Something carries something** — a struct with a tag and an anonymous union,
 and a **maker per variant**:

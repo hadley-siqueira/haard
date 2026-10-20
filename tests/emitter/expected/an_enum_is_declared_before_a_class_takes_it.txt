@@ -4,7 +4,7 @@
 #include <new>
 
 struct h0_1_Maker;
-enum class h0_8_Kind : int32_t;
+enum class h0_8_Kind : uint8_t;
 struct h0_11_Shape;
 
 struct h0_1_Maker {
@@ -14,13 +14,13 @@ struct h0_1_Maker {
     virtual ~h0_1_Maker();
 };
 
-enum class h0_8_Kind : int32_t {
+enum class h0_8_Kind : uint8_t {
     h0_9_Small,
     h0_10_Large,
 };
 
 struct h0_11_Shape {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_12_Square;
     };

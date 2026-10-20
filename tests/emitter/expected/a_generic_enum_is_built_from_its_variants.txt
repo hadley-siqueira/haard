@@ -9,7 +9,7 @@ struct h0_39_Option;
 struct h0_44_Option;
 
 struct h0_31_Option {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_33_Some;
     };
@@ -41,7 +41,7 @@ h0_31_Option h0_31_Option_h0_34_None() {
 }
 
 struct h0_35_Seq {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; h0_35_Seq *_1; } h0_37_Cons;
     };
@@ -74,7 +74,7 @@ h0_35_Seq h0_35_Seq_h0_38_Nil() {
 }
 
 struct h0_39_Option {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int64_t _0; } h0_41_Some;
     };
@@ -106,7 +106,7 @@ h0_39_Option h0_39_Option_h0_42_None() {
 }
 
 struct h0_44_Option {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { bool _0; } h0_46_Some;
     };

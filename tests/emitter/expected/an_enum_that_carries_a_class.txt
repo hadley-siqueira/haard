@@ -23,7 +23,7 @@ struct h0_1_Text {
 };
 
 struct h0_13_Message {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { h0_1_Text _0; } h0_15_Say;
         struct { int32_t _0; int32_t _1; } h0_16_Move;

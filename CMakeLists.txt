@@ -111,6 +111,13 @@ set(DRIVER_SRC
     src/haard/driver/driver.cpp
 )
 
+set(IR_SRC
+    src/haard/ir/target.cpp
+    src/haard/ir/ir_type_table.cpp
+    src/haard/ir/ir_layout.cpp
+    src/haard/ir/ir_type_translator.cpp
+)
+
 
 set(SOURCES
     src/main.cpp
@@ -137,6 +144,7 @@ set(SOURCES
     ${LOG_SRC}
     ${DRIVER_SRC}
     ${PRETTY_SRC}
+    ${IR_SRC}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -195,6 +203,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/override_checker/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/sugar/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/emitter/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/ir_layout/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/bootstrap/tests/run.sh

@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <new>
 
-enum class h0_1_Colour : int32_t;
+enum class h0_1_Colour : uint8_t;
 struct h0_4_Equal;
 struct h0_10_Counted;
 struct h_tup_t2rb6rb6;
@@ -14,7 +14,7 @@ struct h_tup_t2b6b6;
 
 struct __haard_move {};
 
-enum class h0_1_Colour : int32_t {
+enum class h0_1_Colour : uint8_t {
     h0_2_red,
     h0_3_green,
 };

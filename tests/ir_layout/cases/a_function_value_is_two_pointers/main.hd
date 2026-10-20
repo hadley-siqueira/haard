@@ -1,0 +1,10 @@
+# Record 0058: a function value is the environment it captured and the
+# function that reads it, in that order, whatever its signature.
+struct Callbacks:
+    flag : bool
+    each : i32 -> void
+    pick : (i32, i32) -> i32
+
+def main : i32
+    let c : Callbacks
+    return 0

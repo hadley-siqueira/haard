@@ -1,0 +1,14 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Point: size 8, align 4, data 8, pod
+    x : b32 at 0
+    y : b32 at 4
+
+struct Line: size 16, align 4, data 16, pod
+    from : Point at 0
+    to : Point at 8
+
+struct Path: size 36, align 4, data 33, pod
+    closed : bool at 0
+    points : Point[3] at 4
+    bytes : b8[5] at 28

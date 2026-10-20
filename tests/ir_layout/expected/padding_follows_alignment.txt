@@ -1,0 +1,15 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Spread: size 24, align 8, data 18, pod
+    a : b8 at 0
+    b : b64 at 8
+    c : b16 at 16
+
+struct Tight: size 8, align 4, data 8, pod
+    a : b8 at 0
+    b : b8 at 1
+    c : b16 at 2
+    d : b32 at 4
+
+struct One: size 1, align 1, data 1, pod
+    a : b8 at 0

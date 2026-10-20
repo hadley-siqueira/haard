@@ -1,0 +1,60 @@
+# The Itanium rule (Hadley, 2026-10-20): a base that is POD for the purpose of
+# layout keeps its tail padding, one that is not lends it to the first fields
+# of the derived class. The emitted C++ decides which: an 'init' becomes a
+# constructor, a 'destroy' a destructor, a field with a value a member
+# initialiser, and any of those, or a base, makes it not POD.
+struct Plain:
+    a : i32
+    b : i8
+
+struct Built:
+    a : i32
+    b : i8
+
+    def init : void
+        a = 1
+
+struct Ending:
+    a : i32
+    b : i8
+
+    def destroy : void
+        pass
+
+struct Seeded:
+    a : i32 = 4
+    b : i8
+
+struct Methods:
+    a : i32
+    b : i8
+
+    def sum : i32
+        return a + i32(b)
+
+struct FromPlain(Plain):
+    c : i8
+
+struct FromBuilt(Built):
+    c : i8
+
+struct FromEnding(Ending):
+    c : i8
+
+struct FromSeeded(Seeded):
+    c : i8
+
+struct FromMethods(Methods):
+    c : i8
+
+struct Grand(FromPlain):
+    d : i8
+
+class Over(Plain):
+    c : i8
+
+class OverBuilt(Built):
+    c : i8
+
+def main : i32
+    return 0

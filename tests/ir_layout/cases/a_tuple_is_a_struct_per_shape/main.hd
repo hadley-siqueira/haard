@@ -1,0 +1,10 @@
+# Record 0067: a tuple is a struct with one field per element. Its IR name is
+# its shape in IR types, so '(i32, u8)' and '(u32, i8)' are one struct.
+struct Holds:
+    pair : (i32, u8)
+    nested : ((i64, u8), u8)
+
+def main : i32
+    let h : Holds
+    let t : (u32, i8) = (1, 2)
+    return 0

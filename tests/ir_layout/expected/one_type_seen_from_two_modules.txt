@@ -1,0 +1,10 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct app.main.Segment: size 20, align 4, data 17, pod
+    from : geometry.shapes.Point at 0
+    to : geometry.shapes.Point at 8
+    tag : b8 at 16
+
+struct geometry.shapes.Point: size 8, align 4, data 6, pod
+    x : b32 at 0
+    y : b16 at 4

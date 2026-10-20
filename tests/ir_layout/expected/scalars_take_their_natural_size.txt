@@ -1,0 +1,20 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Everything: size 96, align 8, data 96, pod
+    a : b8 at 0
+    b : b8 at 1
+    c : b16 at 2
+    d : b16 at 4
+    e : b32 at 8
+    f : b32 at 12
+    g : b64 at 16
+    h : b64 at 24
+    i : b64 at 32
+    j : b64 at 40
+    k : f32 at 48
+    l : f64 at 56
+    m : bool at 64
+    n : b8 at 65
+    o : ptr at 72
+    p : ptr at 80
+    q : ptr at 88

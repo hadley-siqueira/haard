@@ -3,8 +3,8 @@
 #include <cstdio>
 #include <new>
 
-enum class h0_5_Light : int32_t;
-enum class h0_9_Power : int32_t;
+enum class h0_5_Light : uint8_t;
+enum class h0_9_Power : uint8_t;
 struct h0_51_Maybe;
 struct h_tup_t2b6n0c51;
 struct h_tup_t2n0c5n0c9;
@@ -13,19 +13,19 @@ struct h_tup_t2n0c5b6;
 struct h_tup_t2b6t2n0c5b6;
 struct h_tup_t2n0c51b6;
 
-enum class h0_5_Light : int32_t {
+enum class h0_5_Light : uint8_t {
     h0_6_Red,
     h0_7_Green,
     h0_8_Off,
 };
 
-enum class h0_9_Power : int32_t {
+enum class h0_9_Power : uint8_t {
     h0_10_On,
     h0_11_Off,
 };
 
 struct h0_51_Maybe {
-    int32_t tag;
+    uint8_t tag;
     union {
         struct { int32_t _0; } h0_53_Just;
     };

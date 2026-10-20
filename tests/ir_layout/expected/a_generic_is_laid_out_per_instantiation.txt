@@ -1,0 +1,9 @@
+target x86_64-linux: little endian, pointers of 8 bytes
+
+struct Pair<i8, u8>: size 2, align 1, data 2, pod
+    first : b8 at 0
+    second : b8 at 1
+
+struct Pair<u8, i64>: size 16, align 8, data 16, pod
+    first : b8 at 0
+    second : b64 at 8

@@ -1,0 +1,20 @@
+# Every class has a vtable (record 0020, its destructor is virtual), so its
+# pointer comes first, at 0. A class derived from a class shares that pointer:
+# the base is at 0 and the derived fields follow. A class is never POD for
+# the purpose of layout, so 'Derived' starts in its base's tail padding: 'b'
+# at 9, inside the 16 bytes 'Base' rounds up to.
+class Shape:
+    def area : i32
+        return 0
+
+class Base:
+    a : i8
+
+class Derived(Base):
+    b : i8
+
+class Deeper(Derived):
+    c : i64
+
+def main : i32
+    return 0
