@@ -14,6 +14,13 @@ namespace haard {
         IR_OBJECT_DATA,
     } IrObjectKind;
 
+    // a datum's place that holds another object's address, filled in when
+    // the object is placed: a vtable's slots, a pointer in a global
+    struct IrRelocation {
+        u32 offset;
+        IrObjectId target;
+    };
+
     // Question 81: everything that occupies memory is named, and an
     // instruction reaches it by this name and never by an address. Where it
     // goes is the placement table's business, at the end
@@ -24,12 +31,18 @@ namespace haard {
         // a function's body, by index into the program's functions
         u32 function;
 
+        // a function with no body, whose behaviour is known by its name: the
+        // natives of 'std.low_io' (record 0030), which the interpreter and
+        // each back end write
+        bool native;
+
         // what a datum holds, its initial bytes in the target's order --
         // none when it starts zeroed -- and whether it may be written
         IrTypeId type;
         std::vector<u8> bytes;
         bool zeroed;
         bool read_only;
+        std::vector<IrRelocation> relocations;
     };
 
     // a function's parameters and its result, 0 for none
@@ -56,6 +69,12 @@ namespace haard {
             // a function's object and its empty body, in this form
             IrObjectId add_function(const std::string& name, u32 signature,
                                     IrForm form);
+
+            IrObjectId add_native(const std::string& name, u32 signature);
+
+            // the bytes at 'offset' in this datum hold 'target''s address
+            void add_relocation(IrObjectId data, u32 offset,
+                                IrObjectId target);
 
             IrObjectId add_data(const std::string& name, IrTypeId type,
                                 const std::vector<u8>& bytes, bool read_only);

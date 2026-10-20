@@ -52,6 +52,10 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
    non-constant signed divisor for -1. Why abort and not a value: on ARM
    and RISC-V a division by zero silently yields 0 or -1, and a
    cyber-physical controller would act on it.
+   **Added (Hadley, 2026-10-20)**, while building the interpreter: a float
+   converted to a whole number it does not fit, or a NaN, **aborts with a
+   message** too, for the same reason; saturating (Rust, Java, ARM64) was
+   the alternative (record 0077, stage 3).
 4. **Exceptions with unwinding**: (a) never, errors are values and the rest
    aborts; (b) someday. **Recommended (a)**.
 

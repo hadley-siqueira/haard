@@ -86,6 +86,8 @@ sources=(
     "$root/src/haard/ir/ir_builder.cpp"
     "$root/src/haard/ir/ir_printer.cpp"
     "$root/src/haard/ir/ir_verifier.cpp"
+    "$root/src/haard/ir/ir_flattener.cpp"
+    "$root/src/haard/ir/ir_interpreter.cpp"
 )
 
 mkdir -p "$build" expected

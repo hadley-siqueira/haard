@@ -123,6 +123,8 @@ set(IR_SRC
     src/haard/ir/ir_builder.cpp
     src/haard/ir/ir_printer.cpp
     src/haard/ir/ir_verifier.cpp
+    src/haard/ir/ir_flattener.cpp
+    src/haard/ir/ir_interpreter.cpp
 )
 
 

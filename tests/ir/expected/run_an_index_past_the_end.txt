@@ -1,0 +1,25 @@
+func @main() -> b32 {
+  %1 = slot b32[4]
+  %2 = const b64 4
+  %3 = index %1, %2 : b32
+  %4 = load b32, %3
+  ret b32 %4
+}
+
+verifier: ok
+
+after flatten:
+
+func @main() -> b32 {
+^1:
+  %1 = slot b32[4]
+  %2 = const b64 4
+  %3 = index %1, %2 : b32
+  %4 = load b32, %3
+  ret b32 %4
+}
+
+verifier: ok
+
+run on x86_64-linux:
+stopped in @main at #4: an access of 4 bytes at 16 in a slot, which has 16

@@ -1,0 +1,23 @@
+func @main() -> b32 {
+  %1 = const b32 10
+  %2 = const b32 0
+  %3 = sdiv b32 %1, %2
+  ret b32 %3
+}
+
+verifier: ok
+
+after flatten:
+
+func @main() -> b32 {
+^1:
+  %1 = const b32 10
+  %2 = const b32 0
+  %3 = sdiv b32 %1, %2
+  ret b32 %3
+}
+
+verifier: ok
+
+run on x86_64-linux:
+aborted in @main at #3: division by zero

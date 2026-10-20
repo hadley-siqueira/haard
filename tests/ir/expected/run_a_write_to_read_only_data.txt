@@ -1,0 +1,29 @@
+data @hello : b8[6] = readonly "hello\00"
+
+func @main() -> b32 {
+  %1 = addr @hello
+  %2 = const b8 106
+  store b8 %2, %1
+  %3 = const b32 0
+  ret b32 %3
+}
+
+verifier: ok
+
+after flatten:
+
+data @hello : b8[6] = readonly "hello\00"
+
+func @main() -> b32 {
+^1:
+  %1 = addr @hello
+  %2 = const b8 106
+  store b8 %2, %1
+  %3 = const b32 0
+  ret b32 %3
+}
+
+verifier: ok
+
+run on x86_64-linux:
+stopped in @main at #3: a write to @hello, which is read-only

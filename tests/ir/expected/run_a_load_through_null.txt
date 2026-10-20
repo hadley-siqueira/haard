@@ -1,0 +1,21 @@
+func @main() -> b32 {
+  %1 = null
+  %2 = load b32, %1
+  ret b32 %2
+}
+
+verifier: ok
+
+after flatten:
+
+func @main() -> b32 {
+^1:
+  %1 = null
+  %2 = load b32, %1
+  ret b32 %2
+}
+
+verifier: ok
+
+run on x86_64-linux:
+stopped in @main at #2: an access through a null pointer

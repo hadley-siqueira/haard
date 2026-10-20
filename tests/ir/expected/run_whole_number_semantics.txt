@@ -1,0 +1,300 @@
+native @__io_stdout() -> ptr
+
+native @__io_write(%1: ptr, %2: b8)
+
+func @print(%1: b64) {
+  %2 = call @__io_stdout()
+  %3 = const b64 0
+  %4 = const b64 1
+  %5 = const b64 10
+  %6 = const b64 20
+  %7 = const b8 48
+  %8 = slot b64
+  %9 = slot b8[20]
+  %10 = slot b64
+  %11 = slt b64 %1, %3
+  store b64 %1, %8
+  store b64 %6, %10
+  $13: if %11 {
+    %12 = const b8 45
+    call @__io_write(%2, %12)
+    %13 = neg b64 %1
+    store b64 %13, %8
+  }
+  $18: loop bound 20 {
+    %14 = load b64, %8
+    %15 = urem b64 %14, %5
+    %16 = load b64, %10
+    %17 = sub b64 %16, %4
+    %18 = trunc b64 %15 to b8
+    %19 = add b8 %18, %7
+    %20 = udiv b64 %14, %5
+    store b64 %17, %10
+    %21 = index %9, %17 : b8
+    store b8 %19, %21
+    store b64 %20, %8
+    %22 = eq b64 %20, %3
+    $31: if %22 {
+      break $18
+    }
+  }
+  $33: loop bound 20 {
+    %23 = load b64, %10
+    %24 = uge b64 %23, %6
+    $36: if %24 {
+      break $33
+    }
+    %25 = index %9, %23 : b8
+    %26 = load b8, %25
+    call @__io_write(%2, %26)
+    %27 = add b64 %23, %4
+    store b64 %27, %10
+  }
+  %28 = const b8 10
+  call @__io_write(%2, %28)
+  ret
+}
+
+func @main() -> b32 {
+  %1 = const b32 2147483647
+  %2 = const b32 1
+  %3 = const b32 2147483648
+  %4 = const b32 4294967295
+  %5 = const b32 40
+  %6 = const b32 7
+  %7 = const b32 4294967289
+  %8 = const b32 2
+  %9 = add b32 %1, %2
+  %10 = sext b32 %9 to b64
+  call @print(%10)
+  %11 = sdiv b32 %3, %4
+  %12 = sext b32 %11 to b64
+  call @print(%12)
+  %13 = srem b32 %3, %4
+  %14 = sext b32 %13 to b64
+  call @print(%14)
+  %15 = sdiv b32 %7, %8
+  %16 = sext b32 %15 to b64
+  call @print(%16)
+  %17 = srem b32 %7, %8
+  %18 = sext b32 %17 to b64
+  call @print(%18)
+  %19 = udiv b32 %4, %6
+  %20 = sext b32 %19 to b64
+  call @print(%20)
+  %21 = shl b32 %6, %5
+  %22 = sext b32 %21 to b64
+  call @print(%22)
+  %23 = lshr b32 %7, %5
+  %24 = sext b32 %23 to b64
+  call @print(%24)
+  %25 = ashr b32 %7, %5
+  %26 = sext b32 %25 to b64
+  call @print(%26)
+  %27 = ashr b32 %7, %2
+  %28 = sext b32 %27 to b64
+  call @print(%28)
+  %29 = shl b32 %6, %4
+  %30 = sext b32 %29 to b64
+  call @print(%30)
+  %31 = smulhi b32 %7, %1
+  %32 = sext b32 %31 to b64
+  call @print(%32)
+  %33 = umulhi b32 %4, %4
+  %34 = sext b32 %33 to b64
+  call @print(%34)
+  %35 = const b64 9223372036854775808
+  %36 = const b64 4
+  %37 = const b64 18446744073709551615
+  %38 = umulhi b64 %35, %36
+  call @print(%38)
+  %39 = smulhi b64 %37, %37
+  call @print(%39)
+  %40 = smulhi b64 %35, %36
+  call @print(%40)
+  %41 = const b8 100
+  %42 = const b8 200
+  %43 = add b8 %42, %41
+  %44 = zext b8 %43 to b64
+  call @print(%44)
+  %45 = const b8 200
+  %46 = sext b8 %45 to b64
+  call @print(%46)
+  %47 = const b64 18446744073709551615
+  %48 = sdiv b64 %35, %47
+  call @print(%48)
+  %49 = srem b64 %35, %47
+  call @print(%49)
+  %50 = const b32 0
+  ret b32 %50
+}
+
+verifier: ok
+
+after flatten:
+
+native @__io_stdout() -> ptr
+
+native @__io_write(%1: ptr, %2: b8)
+
+func @print(%1: b64) {
+^1:
+  %2 = call @__io_stdout()
+  %3 = const b64 0
+  %4 = const b64 1
+  %5 = const b64 10
+  %6 = const b64 20
+  %7 = const b8 48
+  %8 = slot b64
+  %9 = slot b8[20]
+  %10 = slot b64
+  %11 = slt b64 %1, %3
+  store b64 %1, %8
+  store b64 %6, %10
+  cond_br %11, ^2, ^3
+^2:
+  %12 = const b8 45
+  call @__io_write(%2, %12)
+  %13 = neg b64 %1
+  store b64 %13, %8
+  br ^3
+^3:
+  br ^4
+^4 loop bound 20:
+  %14 = load b64, %8
+  %15 = urem b64 %14, %5
+  %16 = load b64, %10
+  %17 = sub b64 %16, %4
+  %18 = trunc b64 %15 to b8
+  %19 = add b8 %18, %7
+  %20 = udiv b64 %14, %5
+  store b64 %17, %10
+  %21 = index %9, %17 : b8
+  store b8 %19, %21
+  store b64 %20, %8
+  %22 = eq b64 %20, %3
+  cond_br %22, ^6, ^7
+^6:
+  br ^5
+^7:
+  br ^4
+^5:
+  br ^8
+^8 loop bound 20:
+  %23 = load b64, %10
+  %24 = uge b64 %23, %6
+  cond_br %24, ^10, ^11
+^10:
+  br ^9
+^11:
+  %25 = index %9, %23 : b8
+  %26 = load b8, %25
+  call @__io_write(%2, %26)
+  %27 = add b64 %23, %4
+  store b64 %27, %10
+  br ^8
+^9:
+  %28 = const b8 10
+  call @__io_write(%2, %28)
+  ret
+}
+
+func @main() -> b32 {
+^1:
+  %1 = const b32 2147483647
+  %2 = const b32 1
+  %3 = const b32 2147483648
+  %4 = const b32 4294967295
+  %5 = const b32 40
+  %6 = const b32 7
+  %7 = const b32 4294967289
+  %8 = const b32 2
+  %9 = add b32 %1, %2
+  %10 = sext b32 %9 to b64
+  call @print(%10)
+  %11 = sdiv b32 %3, %4
+  %12 = sext b32 %11 to b64
+  call @print(%12)
+  %13 = srem b32 %3, %4
+  %14 = sext b32 %13 to b64
+  call @print(%14)
+  %15 = sdiv b32 %7, %8
+  %16 = sext b32 %15 to b64
+  call @print(%16)
+  %17 = srem b32 %7, %8
+  %18 = sext b32 %17 to b64
+  call @print(%18)
+  %19 = udiv b32 %4, %6
+  %20 = sext b32 %19 to b64
+  call @print(%20)
+  %21 = shl b32 %6, %5
+  %22 = sext b32 %21 to b64
+  call @print(%22)
+  %23 = lshr b32 %7, %5
+  %24 = sext b32 %23 to b64
+  call @print(%24)
+  %25 = ashr b32 %7, %5
+  %26 = sext b32 %25 to b64
+  call @print(%26)
+  %27 = ashr b32 %7, %2
+  %28 = sext b32 %27 to b64
+  call @print(%28)
+  %29 = shl b32 %6, %4
+  %30 = sext b32 %29 to b64
+  call @print(%30)
+  %31 = smulhi b32 %7, %1
+  %32 = sext b32 %31 to b64
+  call @print(%32)
+  %33 = umulhi b32 %4, %4
+  %34 = sext b32 %33 to b64
+  call @print(%34)
+  %35 = const b64 9223372036854775808
+  %36 = const b64 4
+  %37 = const b64 18446744073709551615
+  %38 = umulhi b64 %35, %36
+  call @print(%38)
+  %39 = smulhi b64 %37, %37
+  call @print(%39)
+  %40 = smulhi b64 %35, %36
+  call @print(%40)
+  %41 = const b8 100
+  %42 = const b8 200
+  %43 = add b8 %42, %41
+  %44 = zext b8 %43 to b64
+  call @print(%44)
+  %45 = const b8 200
+  %46 = sext b8 %45 to b64
+  call @print(%46)
+  %47 = const b64 18446744073709551615
+  %48 = sdiv b64 %35, %47
+  call @print(%48)
+  %49 = srem b64 %35, %47
+  call @print(%49)
+  %50 = const b32 0
+  ret b32 %50
+}
+
+verifier: ok
+
+run on x86_64-linux:
+-2147483648
+-2147483648
+0
+-3
+-1
+613566756
+0
+0
+-1
+-4
+0
+-4
+-2
+2
+0
+-2
+44
+-56
+-9223372036854775808
+0
+exit 0

@@ -236,8 +236,53 @@ Choices made while building, none of which changes a decision:
   promotes them to its registers' width, as LLVM's type legalisation does.
   The IR stays as high as possible, and a vectoriser still sees bytes.
 
-Next is stage 3: the `IrInterpreter` on the CFG form (question 87) and the
-flatten pass.
+## Stage 3, built (2026-10-20)
+
+In `src/haard/ir/`, with 21 more cases in `tests/ir` (69 in all): every
+well-formed program is flattened and verified again, and the ones with a
+`@main` run.
+
+- `IrFlattener` (question 78): a structured function rebuilt as a CFG. A
+  `block` and an `if` get a block after them, a `loop` a header and a block
+  after; `break` and `continue` become `br`; values keep their numbers; the
+  jumps it writes take their region's position (86). A **loop's body falling
+  off its end goes round again**, as Rust's `loop`: the way out is a `break`.
+  The header carries the bound (84), and every block knows the innermost loop
+  it is in.
+- `IrInterpreter` (question 87): memory by object, a pointer the block in
+  its high 32 bits and the offset in its low 32; it stops, saying where, on
+  an access outside a block, through null, to a slot of a returned frame, a
+  write to read-only data, a call through what is not a function, a loop past
+  its bound; new slots hold a fixed pattern (10); bytes in the target's order
+  by its layout; a `vcall` reads the vptr at the receiver's offset 0 and the
+  slot it points into, as selection will write it. Its devices are the
+  natives of `std.low_io` (the three handles, `__io_write`, `__io_flush`,
+  `__abort`); the file ones stop, saying they are not there yet.
+- `IrProgram` gained **natives** (a function object with no body) and
+  **relocations** (a datum's bytes holding another object's address), which
+  a vtable needs.
+
+What a loop's **bound** counts, made precise here: how many times the loop
+may go **back** to its header per entry, by a `continue` or by falling off
+the end. A `while i < n` that runs its body n times goes back n times and has
+bound n; the last pass, which tests and leaves, is the WCET's "final test".
+
+Not built, and why:
+
+- **Garbage upper bits** (question 87, detail 5) followed the untyped IR of
+  2026-10-08, as the 8-and-16-bit rule did: in a typed IR a missing extension
+  is a type error the verifier already refuses. Dropped with that rule.
+- **Cycle counting** waits for the timing table (62, open).
+
+And one answer the interpreter needed: **a float converted to a whole number
+it does not fit, or a NaN, aborts with a message** (Hadley, 2026-10-20,
+recommended), as a division by zero does (3a), and for the same reason: a
+controller must not act on a value that means nothing. Saturating (Rust,
+Java, ARM64 in hardware) was the other choice. `fptosi` and `fptoui` trap in
+the effects table, so they are never speculated.
+
+Next is stage 4: the lowering from the Ast and the ResolutionTable, one
+feature at a time, each compared against the C++ path.
 
 ## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
 

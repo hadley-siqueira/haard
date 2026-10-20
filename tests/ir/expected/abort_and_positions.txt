@@ -9,3 +9,19 @@ func @unwrap(%1: bool) -> b32 {
 }
 
 verifier: ok
+
+after flatten:
+
+data @unwrapped : b8[15] = readonly "unwrap of None\00"
+
+func @unwrap(%1: bool) -> b32 {
+^1:
+  cond_br %1, ^2, ^3  ; at 0:0
+^2:
+  abort @unwrapped  ; at 0:4
+^3:
+  %2 = const b32 1  ; at 0:8
+  ret b32 %2  ; at 0:12
+}
+
+verifier: ok

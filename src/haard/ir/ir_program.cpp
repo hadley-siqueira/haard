@@ -8,6 +8,7 @@ IrProgram::IrProgram() {
 
     nothing.kind = IR_OBJECT_NONE;
     nothing.function = 0;
+    nothing.native = false;
     nothing.type.index = 0;
     nothing.zeroed = false;
     nothing.read_only = false;
@@ -68,6 +69,7 @@ IrObjectId IrProgram::add_function(const std::string& name, u32 signature,
     object.kind = IR_OBJECT_FUNCTION;
     object.name = name;
     object.function = (u32) functions.size();
+    object.native = false;
     object.type.index = 0;
     object.zeroed = false;
     object.read_only = true;
@@ -81,6 +83,23 @@ IrObjectId IrProgram::add_function(const std::string& name, u32 signature,
     return id;
 }
 
+IrObjectId IrProgram::add_native(const std::string& name, u32 signature) {
+    IrObjectId id = add_function(name, signature, IR_FORM_CFG);
+
+    objects[id.index].native = true;
+
+    return id;
+}
+
+void IrProgram::add_relocation(IrObjectId data, u32 offset,
+                               IrObjectId target) {
+    IrRelocation made;
+
+    made.offset = offset;
+    made.target = target;
+    objects[data.index].relocations.push_back(made);
+}
+
 IrObjectId IrProgram::add_data(const std::string& name, IrTypeId type,
                                const std::vector<u8>& bytes, bool read_only) {
     IrObject object;
@@ -89,6 +108,7 @@ IrObjectId IrProgram::add_data(const std::string& name, IrTypeId type,
     object.kind = IR_OBJECT_DATA;
     object.name = name;
     object.function = 0;
+    object.native = false;
     object.type = type;
     object.bytes = bytes;
     object.zeroed = false;

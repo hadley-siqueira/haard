@@ -38,6 +38,32 @@ verifier:
     @f, ret #3: its value operand %1 is not defined before it, around it
 ```
 
+## Stage 3: flatten and run
+
+A program the verifier passes is then **flattened** (every structured function
+becomes a CFG) and verified again, and the golden shows it under
+`after flatten:`. When it has a `@main`, it then **runs** in the
+`IrInterpreter`, on `x86_64-linux` unless the case names another target, and
+the golden ends with what it printed and how it ended:
+
+```
+run on x86_64-linux:
+4
+285
+exit 29
+```
+
+`exit` is what the operating system keeps of `main`'s value (the low byte);
+`aborted` is the program stopping itself (an `abort`, a division by zero);
+`stopped` is the interpreter refusing what the program did (an access outside
+a block, a loop past its bound), with the function and the instruction.
+
+The `run_` cases print through `@print`, a function the fixture writes in IR
+by hand over `std.low_io`'s natives, so printing a number already runs loops,
+`break`s, `index` and native calls. Every value they print was checked by hand
+against Haard's answers to questions 1 to 3: wrapping, `MIN / -1`, shifts by
+the width or more, the high halves of products, a byte wrapping at 8 bits.
+
 ## Order matters in a case
 
 C++ leaves the order of a call's arguments unspecified, so two instructions
@@ -92,3 +118,44 @@ shared object cache keeps the sabotaged object.
 | an `abort`'s message read-only | `verifier_an_abort_with_a_writable_message` |
 | a position on every instruction | `verifier_an_instruction_from_nowhere` |
 | a bound on a real-time loop | `verifier_a_real_time_loop_with_no_bound` |
+
+And for stage 3, the interpreter and flatten:
+
+| Broken | Fails |
+|---|---|
+| no division-by-zero check | `run_a_division_by_zero_aborts` |
+| `MIN / -1` left to the host (which traps at 64 bits) | `run_whole_number_semantics` |
+| a shift count masked, as the hardware does | `run_whole_number_semantics` |
+| `ashr` with no sign fill past the width | `run_whole_number_semantics` |
+| the 64-bit `smulhi` without its sign correction | `run_whole_number_semantics` |
+| loads in little endian on every target | `run_big_endian_bytes` |
+| a slot alive after its frame | `run_a_slot_used_after_its_frame` |
+| read-only data written | `run_a_write_to_read_only_data` |
+| no bounds on a block | `run_an_index_past_the_end` |
+| a loop's turns not counted per entry | `run_a_nested_loop_counts_per_entry` |
+| a loop's bound not checked | `run_a_loop_past_its_bound` |
+| a `vcall` reading the slot before its own | `run_a_virtual_call` |
+| an upcast that does not move past the vptr | `run_an_upcast_past_the_vptr` |
+| new memory zeroed instead of patterned | `run_memory_nobody_wrote` |
+
+Three of these first passed, each showing a case missing: `MIN / -1` was only
+tried at 32 bits, where the host's own division agrees; the big-endian case
+read one byte, which has no order; the only upcast was to a primary base, at
+offset 0. The cases were added and the three run again.
+
+And flatten:
+
+| Broken | Fails |
+|---|---|
+| a loop's bound not copied to its header, or no header at all | 13 cases |
+| a `break` to the innermost region, not the one it names | 13 cases |
+| a loop falling off its end leaving instead of going round | 13 cases |
+| an `if`'s `else` never taken | `regions_nest` |
+| a loop's header not knowing the loop around it | `run_a_continue_of_the_outer_loop_is_its_turn` |
+| an empty block nothing jumps to kept | `run_an_if_whose_two_sides_return` |
+| a value's definition left pointing at the old instruction | 26 cases |
+
+The last two first passed. Writing their cases found a **bug**: the empty
+block after an `if` that returns on both sides was dropped only when another
+block came after it, so at the end of a function it stayed, and the verifier
+refused the flattened function. Fixed: the last block is closed the same way.

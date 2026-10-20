@@ -129,14 +129,23 @@ void IrPrinter::print_data(std::ostream& out, IrObjectId id) {
         }
     }
 
-    out << "\"\n";
+    out << "\"";
+
+    for (u32 i = 0; i < object.relocations.size(); i++) {
+        out << (i == 0 ? " with " : ", ") << "@"
+            << program->get_object(object.relocations[i].target).name
+            << " at " << object.relocations[i].offset;
+    }
+
+    out << "\n";
 }
 
 void IrPrinter::print_function(std::ostream& out, IrObjectId id) {
     IrFunction& function = program->get_function(id);
     const IrSignature& taken = program->get_signature(function.signature);
 
-    out << "func @" << program->get_object(id).name << "(";
+    out << (program->get_object(id).native ? "native @" : "func @")
+        << program->get_object(id).name << "(";
 
     for (u32 i = 0; i < taken.parameters.size(); i++) {
         out << (i > 0 ? ", " : "") << value(function.parameter(i)) << ": "
@@ -147,6 +156,11 @@ void IrPrinter::print_function(std::ostream& out, IrObjectId id) {
 
     if (taken.result.index != 0) {
         out << " -> " << type(taken.result);
+    }
+
+    if (program->get_object(id).native) {
+        out << "\n";
+        return;
     }
 
     out << (function.real_time ? " realtime" : "") << " {\n";
@@ -168,6 +182,14 @@ void IrPrinter::print_function(std::ostream& out, IrObjectId id) {
                 }
 
                 out << ")";
+            }
+
+            if (function.get(block).header) {
+                out << " loop";
+
+                if (function.get(block).bound != IR_NO_BOUND) {
+                    out << " bound " << function.get(block).bound;
+                }
             }
 
             out << ":\n";

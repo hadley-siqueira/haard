@@ -25,3 +25,36 @@ func @caller(%1: ptr) -> b32 {
 }
 
 verifier: ok
+
+after flatten:
+
+class Shape { origin: Point }
+vtable Shape { 0: destroy, 1: area }
+struct Point { x: b32, y: b32 }
+class Square : Shape { side: b32 }
+vtable Square { 0: destroy, 1: area }
+
+func @twice(%1: b32) -> b32 {
+^1:
+  %2 = add b32 %1, %1
+  ret b32 %2
+}
+
+func @nothing() {
+^1:
+  ret
+}
+
+func @caller(%1: ptr) -> b32 {
+^1:
+  %2 = const b32 3
+  %3 = call @twice(%2)
+  call @nothing()
+  %4 = addr @twice
+  %5 = call_indirect %4(%3) : (b32) -> b32
+  %6 = vcall Shape.area(%1)
+  %7 = add b32 %5, %6
+  ret b32 %7
+}
+
+verifier: ok

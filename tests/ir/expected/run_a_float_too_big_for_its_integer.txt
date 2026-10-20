@@ -1,0 +1,21 @@
+func @main() -> b32 {
+  %1 = const f64 1e+20
+  %2 = fptosi f64 %1 to b32
+  ret b32 %2
+}
+
+verifier: ok
+
+after flatten:
+
+func @main() -> b32 {
+^1:
+  %1 = const f64 1e+20
+  %2 = fptosi f64 %1 to b32
+  ret b32 %2
+}
+
+verifier: ok
+
+run on x86_64-linux:
+aborted in @main at #2: a float that does not fit in the whole number

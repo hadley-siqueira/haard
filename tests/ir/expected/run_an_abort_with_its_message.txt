@@ -1,0 +1,21 @@
+data @unwrapped : b8[15] = readonly "unwrap of None\00"
+
+func @main() -> b32 {
+  abort @unwrapped
+}
+
+verifier: ok
+
+after flatten:
+
+data @unwrapped : b8[15] = readonly "unwrap of None\00"
+
+func @main() -> b32 {
+^1:
+  abort @unwrapped
+}
+
+verifier: ok
+
+run on x86_64-linux:
+aborted in @main at #1: unwrap of None

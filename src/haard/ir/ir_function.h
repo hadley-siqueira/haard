@@ -104,6 +104,16 @@ namespace haard {
         // a CFG block's parameters, as values in the pool
         u32 pool_start;
         u32 pool_count;
+
+        // Question 84 in the CFG form, written by flatten: a loop's header
+        // carries the loop's bound, and every block knows the innermost
+        // loop it is in -- a header the loop it heads, and 'outer' the one
+        // around that. What the interpreter counts a loop's turns by, and
+        // what the WCET will read
+        bool header;
+        u32 bound;
+        IrBlockId loop;
+        IrBlockId outer;
     };
 
     // A function's IR, in one form at a time (question 78). Everything is

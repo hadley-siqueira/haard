@@ -23,8 +23,24 @@ bool IrVerifier::verify() {
     for (u32 i = 1; i < program->get_object_count(); i++) {
         IrObjectId id = {i};
 
-        if (program->get_object(id).kind == IR_OBJECT_FUNCTION) {
+        IrObject& object = program->get_object(id);
+
+        if (object.kind == IR_OBJECT_FUNCTION && !object.native) {
             verify_function(id);
+        }
+
+        for (const IrRelocation& one : object.relocations) {
+            if (!is_object(one.target.index, IR_OBJECT_NONE)
+                || one.offset >= object.bytes.size()) {
+                IrVerifierError error;
+
+                error.function = id;
+                error.inst.index = 0;
+                error.message = "@" + object.name + ": a relocation at "
+                              + std::to_string(one.offset)
+                              + " names no object or lies outside it";
+                errors.push_back(error);
+            }
         }
     }
 
@@ -83,6 +99,12 @@ void IrVerifier::verify_cfg() {
             report(none, "block ^" + std::to_string(block.index)
                              + " is empty, and a block ends in a terminator");
             continue;
+        }
+
+        if (entry.header && function->real_time
+            && entry.bound == IR_NO_BOUND) {
+            report(entry.first, "the loop at ^" + std::to_string(block.index)
+                                    + " is real-time code and has no bound");
         }
 
         if (!opcode_info((IrOpcode) function->get(entry.last).opcode)

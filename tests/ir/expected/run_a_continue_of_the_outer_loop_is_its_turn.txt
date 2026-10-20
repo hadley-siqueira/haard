@@ -1,0 +1,57 @@
+func @main() -> b32 {
+  %1 = slot b32
+  %2 = const b32 5
+  %3 = const b32 1
+  %4 = const b32 0
+  store b32 %4, %1
+  $6: loop bound 2 {
+    %5 = load b32, %1
+    %6 = sge b32 %5, %2
+    $9: if %6 {
+      break $6
+    }
+    $11: loop bound 1 {
+      %7 = add b32 %5, %3
+      store b32 %7, %1
+      continue $6
+    }
+  }
+  %8 = load b32, %1
+  ret b32 %8
+}
+
+verifier: ok
+
+after flatten:
+
+func @main() -> b32 {
+^1:
+  %1 = slot b32
+  %2 = const b32 5
+  %3 = const b32 1
+  %4 = const b32 0
+  store b32 %4, %1
+  br ^2
+^2 loop bound 2:
+  %5 = load b32, %1
+  %6 = sge b32 %5, %2
+  cond_br %6, ^4, ^5
+^4:
+  br ^3
+^5:
+  br ^6
+^6 loop bound 1:
+  %7 = add b32 %5, %3
+  store b32 %7, %1
+  br ^2
+^7:
+  br ^2
+^3:
+  %8 = load b32, %1
+  ret b32 %8
+}
+
+verifier: ok
+
+run on x86_64-linux:
+stopped in @main at #14: the loop at ^2 went round more than its bound of 2

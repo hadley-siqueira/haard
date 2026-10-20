@@ -122,7 +122,8 @@ namespace haard {
     const u8 IR_EFFECT_READS = 1;
     const u8 IR_EFFECT_WRITES = 2;
 
-    // it may abort the program, so it is never speculated: a division
+    // it may abort the program, so it is never speculated: a division, a
+    // float converted to a whole number
     const u8 IR_EFFECT_TRAPS = 4;
 
     // nothing crosses it, it is never removed, never run more or fewer

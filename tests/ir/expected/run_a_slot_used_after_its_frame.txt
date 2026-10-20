@@ -1,0 +1,32 @@
+func @leak() -> ptr {
+  %1 = slot b32
+  ret ptr %1
+}
+
+func @main() -> b32 {
+  %1 = call @leak()
+  %2 = load b32, %1
+  ret b32 %2
+}
+
+verifier: ok
+
+after flatten:
+
+func @leak() -> ptr {
+^1:
+  %1 = slot b32
+  ret ptr %1
+}
+
+func @main() -> b32 {
+^1:
+  %1 = call @leak()
+  %2 = load b32, %1
+  ret b32 %2
+}
+
+verifier: ok
+
+run on x86_64-linux:
+stopped in @main at #2: an access to a slot of a function that returned

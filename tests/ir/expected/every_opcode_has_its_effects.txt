@@ -45,8 +45,8 @@ zext:
 sext:
 sitofp:
 uitofp:
-fptosi:
-fptoui:
+fptosi: traps
+fptoui: traps
 fpext:
 fptrunc:
 ptrtoint:
