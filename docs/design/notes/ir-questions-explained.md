@@ -2146,3 +2146,365 @@ temporaries per record 0068; a flag for a conditional temporary; a moved-from
 object still destroyed; `new`/`delete` through `__alloc`/`__free`, `delete`
 of null doing nothing; by-value arguments copied and destroyed by the
 caller; results constructed in the destination.
+
+## 84. Loop bounds (flow facts) in the IR
+
+**The question.** Static WCET has three steps: flow analysis (how many
+times each loop runs), microarchitectural analysis (cycles per block) and
+the worst path (an integer linear program). On a PRET processor the second
+is simple; the hard one is the first, and the compiler knows the answer:
+`for i in 0...64` states its count. Tools reading the binary (aiT, OTAWA)
+lose it and ask for hand annotations. The question is how each loop's bound
+lives in the IR, and who keeps it right after every pass.
+
+**Elsewhere.** LLVM has loop metadata (`llvm.loop`) that any pass may drop
+silently, the known problem for WCET built on it. platin (T-CREST, Patmos)
+and WCC (TU Dortmund) carry flow facts from the source to the machine code,
+and every optimisation must update them; WCC reads a `loopbound min 0 max
+10` pragma in C. aiT reads annotations from a separate file (`loop "f" + 1
+loop max 10`), written by hand when it cannot infer.
+
+**The options.** (a) Optional metadata in a side table, as LLVM: a pass
+that does not know it loses it. (b) A mandatory field of the loop: on the
+`loop`/`for` region and, after flatten, on the loop header (78); only a
+pass that rewrites a loop's bound may change that loop (unroll by k turns N
+into ⌈N/k⌉, vectorise by 4 gives ⌈N/4⌉ plus an epilogue of at most 3, peel
+gives N-1); the verifier (88) requires it on every loop of real-time code.
+(c) Nothing in the IR, the bound recomputed on machine code: the failure of
+the binary tools again.
+
+**Details of (b).** (1) A constant maximum per entry into the loop;
+symbolic bounds ("at most `n`") lead to parametric WCET, research for now.
+(2) Relative facts later: in a triangular nest (`for j in 0...i` inside
+`for i in 0...n`) the inner loop is bounded by n per entry and the total
+comes out n² where the truth is n²/2, pessimistic but safe, and a total
+bound can be added without changing anything. (3) The interpreter checks
+every bound on every run and fails the test when a loop goes past it,
+catching a wrong annotation or a pass that updated it wrongly: a second
+oracle for free. (4) A field of the region, not a side table, on purpose,
+an exception to 91: a field cannot be forgotten by whatever copies or
+rewrites the loop. (5) The IR does not depend on 57 (where the real-time
+restrictions apply) or 58 (bounds inferred or annotated, and the spelling):
+it holds an optional maximum per loop; the verifier decides when it is
+required.
+
+**Answer: approved, (b)** with the five details.
+
+## 85. What a barrier is
+
+**The question.** Three kinds of instruction cannot be treated as ordinary
+arithmetic by the optimiser: **timing instructions** (`get_time`,
+`delay_until`; which exist is 64), **volatile accesses** (`volatile_read`,
+`volatile_write`, `fence`; 11 already made them full barriers) and
+**memory transfers** (copying an object into a scratchpad, starting a DMA
+and waiting for it). The proposal calls them barriers; the question is what
+exactly a pass may not do with them and with the code around them.
+
+**Elsewhere.** In C/C++ and LLVM a `volatile` access is ordered only against
+other volatiles; ordinary loads and stores may cross it, so writing a
+buffer and then the register that starts a DMA needs an explicit `fence`,
+a classic bug. Linux's `writel` embeds the barrier to avoid it. LLVM and
+MLIR have every opcode declare its effects (reads memory, writes memory,
+has side effects) in one place all passes ask (`mayReadFromMemory`,
+`MemoryEffects`). WCET-aware compilers (WCC, platin) move no code across
+timing instructions, since the interval between two time marks is what is
+being measured.
+
+**The options.** (a) A full barrier: no instruction crosses the three
+classes, in either direction; simple and pessimistic. (b) Fine effect
+classes as in C: contradicts 11 and brings the DMA bug back. (c) (a),
+written as a table of effects per opcode, with explicit rules.
+
+**The rules of (c).** (1) Nothing crosses, not even pure arithmetic;
+between barriers the optimiser is free. (2) Never removed, even when the
+result is unused. (3) The dynamic count and the order among them are kept:
+unrolling copies the text, but each execution still happens once and in the
+same order. (4) Never speculated: an if-conversion that runs both sides
+(`select`) may not include one; real predication, where the instruction
+does not execute, may. (5) Visible to the WCET, each with its cost in the
+timing table. (6) One table: every opcode declares its effects (reads,
+writes, barrier) and every pass asks it, never a list of its own. (7) In
+the first version a call is a full barrier too; with whole-program
+compilation (89), per-function effect summaries ("touches no memory",
+"contains no timing instruction") can loosen this later without changing
+the IR. There is no optimiser yet, so it costs nothing today.
+
+**Answer: approved, (c)** with the seven rules.
+
+## 86. Source positions and the machine ↔ IR ↔ source mapping
+
+**The question.** Does each IR instruction know where in the source it came
+from, and each machine instruction which IR instruction it came from? This
+feeds the WCET report with the worst path in source lines (68), DWARF later
+(76), the messages of late passes ("this loop has no bound", 84) and
+debugging the compiler itself.
+
+**Elsewhere.** LLVM gives every instruction a `DILocation` (line, column,
+scope, and an `inlinedAt` for inlined code); passes should keep it, CSE
+merging two instructions of different lines sets line 0, and in practice the
+information is often lost, a chronic source of debugging bugs. Cranelift
+keeps a `SourceLoc` per instruction in a side table, and its machine code
+knows the IR instruction it came from. Go and Zig have a position per
+instruction from day one. Small compilers (QBE, chibicc) keep a line per
+statement, or nothing.
+
+**The options.** (a) Nothing until DWARF: expensive to add later, every pass
+already written would have to be revisited. (b) A position per instruction
+now, with a machine → IR mapping (the proposal). (c) A position per
+statement or block: too coarse for the WCET's worst path and for DWARF.
+
+**The details of (b).** (1) A position is `(module, byte offset)`, as tokens
+and the logger already have it; line and column are derived only when
+shown. An instruction gets the token of the Ast node that produced it: the
+operator of `a + b`, the name of a call. (2) It lives in a side table keyed
+by instruction id (91). So it is not forgotten, the IR builder takes the
+position as an argument of every creation, and the verifier (88) checks
+that no instruction lacks one. A field of the record, as in 84, is not
+needed, since a position never changes meaning in a pass: it is only
+copied. (3) An instruction the compiler makes (83's cleanups, a vptr store,
+a flag slot, an argument copy) gets the position of the construct
+responsible: the `return` or `break` that runs a cleanup, the declaration
+for an end-of-block cleanup, the `init` for a vptr store. The WCET report
+then says "destructor of `buf`, exit at line 12", never "line 0". (4) A
+pass merging two instructions keeps one of the positions, never none: an
+approximate line is worth more to the WCET than no line. (5) Inlining: an
+optional `inlined_at` (the id of the call the instruction came from), in a
+table of inline sites, reserved and always empty until an inliner exists.
+(6) Machine → IR: every machine instruction keeps the id of the IR
+instruction that made it, one IR instruction possibly making several;
+prologue, epilogue and spills point to the function's entry or to the
+instruction that caused the spill. (7) Types for a debugger (left by 79):
+every local being a slot (82), each slot keeps the id of its declaration,
+which gives the name and the Haard type. mem2reg will need an equivalent of
+LLVM's `dbg.value`, when it comes.
+
+**Answer: approved, (b)** with the seven details.
+
+## 87. The IR interpreter
+
+**The question.** 78 decided that the `IrInterpreter` runs only the CFG
+form. It is the oracle: every program of the emitter suites goes through
+both paths (C++ and IR) and must give the same exit status. Left to decide:
+how it represents memory, and which checking modes it has, which together
+set how many bugs it can catch.
+
+**Elsewhere.** Flat memory (ISA simulators, QEMU, LLVM's `lli`): a byte
+vector with real addresses, faithful to the machine, but an access outside
+an object silently reads its neighbour. Memory by object (Rust's Miri,
+CompCert, the Cerberus interpreter for C): each object is a separate block
+and a pointer is `(object, offset)`; an access outside the block, or to a
+freed one, stops the program with a diagnostic. To allow pointer ↔ integer,
+Miri gives each object a fictitious base address and arithmetic still
+works.
+
+**The options.** (a) Flat memory with the addresses of the layout and the
+placement. (b) Memory by object, with a base address per object for
+conversions to integers.
+
+**The details of (b).** (1) The objects are 81's (functions, globals,
+literals, vtables), plus a block per slot of every stack frame and one per
+heap allocation; bytes in the target's endianness, by the layout (80). (2)
+It stops with a diagnostic and a source position (86) on an access outside
+an object, a use after `__free` or after the frame is left, a double
+`__free`, and a touch of an overlaid object that is not resident. Nearly
+every lowering mistake lands in one of these; the residency check already
+needed object identity, which (b) gives for free. (3) MMIO: a range of the
+memory map may be declared a device, and a `volatile_read`/`volatile_write`
+there calls a model of it; at first the only devices are the natives of
+`std.low_io`. (4) Parameters: the target description (endianness, pointer
+width, layout), the memory map with regions and latencies, the timing
+table. (5) Checking modes, all on by default in the tests, with a fixed
+seed so a result is reproducible: garbage upper bits (the 2026-10-08
+decision that upper bits are undefined: a missing extension changes the
+exit status); new memory filled with a garbage pattern (10); loop bounds
+checked (84); cycle counting with the timing table, the test checking
+measured ≤ WCET (69), on only when the target is the processor. (6) Aborts
+(9b's bounds check, `unwrap`) exit with the same status as the C++ path, so
+the oracle stays comparable. (7) One hardware thread for now; several come
+with 63, still open. (8) Simple: a loop with a `switch` over the opcode, no
+JIT, no tricks; speed matters only if the suites get slow.
+
+**Answer: approved, (b)** with the eight details.
+
+## 88. The verifier
+
+**The question.** The verifier checks that the IR is well formed (whether
+the program is right is the interpreter's job). The proposal runs it after
+the lowering and after every pass, always in the tests. Left to decide:
+what it checks, when it runs outside the tests, and what happens when it
+fails.
+
+**Elsewhere.** LLVM's `Verifier` runs after the front end; after every pass
+(`-verify-each`) is optional, expensive with hundreds of passes. Cranelift's
+verifier is on by default, in production too, its cost judged small next
+to its value. MLIR has every operation declare its invariants, verified
+between passes by default. A failure is always a compiler bug, never the
+user's: all of them stop with an internal error and the function's dump.
+
+**The options.** (a) Only in tests and debug builds. (b) Always, in
+production too, with a flag to turn it off. (c) Only after the lowering.
+
+**Recommended (b)**: its cost is linear in the IR, and the 2026-09-09
+measurement (500k lines in 37 s) leaves room; if it weighs, it is turned
+off after measuring, never out of the suites. What it checks: (1) form
+(78): one form per function; in the structured form regions well nested
+and `break`/`continue` aiming at an enclosing region; in the CFG every
+block ending in exactly one terminator, targets existing, the entry with no
+predecessors. (2) Types: operands matching the opcode (`add b32` takes two
+`b32`), 8 and 16 bits only in memory (2026-10-08), the fields and elements
+of `field`/`index` existing in the layout table (80). (3) Every use
+dominated by its definition. (4) Calls: arity and types matching the
+signature, a `call`'s target existing, a `vcall` naming a method of its
+class (83). (5) Every referenced object in 81's table, every slot belonging
+to its own function. (6) Side tables: every instruction with a position
+(86), every loop of real-time code with a bound (84; what counts as
+real-time code is 57). (7) The effects table (85) with an entry for every
+opcode, checked once in a test. (8) A failure: an internal error naming the
+pass that just ran, the function's dump with the culprit instruction
+marked, then abort. (9) Its suite: IR broken on purpose, one case per rule,
+built with the `IrBuilder` in C++ (the text is only a dump, so there is no
+IR parser), each case proven by sabotage.
+
+**Answer: approved, (b)** with the nine details.
+
+## 89. Whole-program compilation
+
+**The question.** Does hdc compile the whole program at once, into one IR
+and one object, or module by module, joined at link time?
+
+**What Haard already does**, without having decided it: dependencies are
+source, not binaries (records 0010, 0044); generics are monomorphised
+(0002), an instantiation existing only where something uses it; the C++
+emitter writes the whole program in one file (`emitter.h`); the 2026-09-09
+measurement gave 500k lines in 37 s with no cache.
+
+**What depends on it in the IR**: the WCET needs the complete call graph
+and every target of indirect calls (61, 83); the worst stack use is a sum
+over that graph; overlays need to know what is never live together (81);
+devirtualising a `vcall` needs to know no other override exists. None of
+it works with separate compilation.
+
+**Elsewhere.** C and C++ compile separately, the whole program only through
+LTO, optional and slow. Rust's unit is the crate, LTO optional. MLton
+(SML), Zig, Go, GraalVM native-image and the WCET compilers (WCC, platin)
+compile the whole program; Zig and Go compile everything from source on
+purpose.
+
+**The options.** (a) Whole program always, on every target. (b) Module by
+module, a link phase rebuilding the graph. (c) Whole program only on the
+processor.
+
+**Recommended (a)**: it is already the model; (b) would redo LLVM's LTO,
+(c) would mean two pipelines. Details: (1) one IR per program, the tables
+of 80 and 81 global, one object per back end, given to the system's `ld` on
+x86/ARM (71). (2) Only what is reachable goes in: roots are `main` and
+exported functions, following calls, referenced objects and the vtables of
+classes someone constructs; this matters to fit the scratchpads. Dropping
+methods of classes never constructed (Rapid Type Analysis) comes later.
+(3) External C functions (74) are opaque: calling one is a full barrier
+(85); it enters the WCET only with an annotated cost, so real-time code
+calling one needs the annotation (a record of its own); it may not call
+back into Haard through a pointer without an annotation (61's rule). (4) No
+Haard dynamic libraries for now; a Haard program may later export functions
+with the C ABI, as extra roots. (5) Incremental recompilation stays with
+record 0015: a cache, if it comes, keeps the front end's result per module;
+the IR and the back end always run whole, decided after measuring if it
+gets slow.
+
+**Answer: approved, (a)** with the five details.
+
+## 90. The WCET computed by hdc
+
+**The question.** The proposal has hdc compute the WCET itself on the
+processor's final machine code. The question is how: the classic
+worst-path technique, IPET, is an integer linear program and needs an ILP
+solver, and the rule against external dependencies forbids taking one
+(lp_solve, CPLEX).
+
+**Elsewhere.** IPET (aiT, OTAWA, platin): a variable per block counting its
+executions, constraints for flow and loop bounds, maximise the sum of
+costs; the industry standard, handling any CFG, relative bounds and
+infeasible paths ("through A, then not through B"). The timing schema, or
+tree-based analysis (Shaw 1989, Puschner and Koza), walks the program's
+structure: a sequence is a sum, an `if` the maximum of its sides plus the
+condition, a loop bound × (body + test) + the final test, a call the
+callee's WCET. It needs structured code, which is why it fell out of use
+for C with `goto`, and it cannot express relative bounds.
+
+**What changed in Haard.** With `goto` removed (0078) every Haard program is
+structured, and flatten makes a reducible CFG with a bound on each loop
+header (78, 84). The tree-based analysis holds for everything, and on a
+PRET machine with fixed latencies it is exact per block.
+
+**The options.** (a) Tree-based first, IPET later with a solver of our own
+when relative bounds (84, detail 2) or infeasible paths come. (b) IPET now,
+with our own solver (simplex plus branch and bound): more code up front, a
+gain only with facts that do not exist yet. (c) An external tool (OTAWA):
+breaks the dependency rule; possible later as an optional export.
+
+**Recommended (a)**, with: (1) input: the final machine code after placement
+and overlays (81), with the machine → IR → source mapping (86), the bounds
+on the headers (84), the timing table (62, open) and each memory region's
+latency, the cost of overlay loads and of barriers and transfers (85). (2)
+The loop nesting is rebuilt from the reducible CFG, no extra markers
+needed. (3) Calls bottom-up over the call graph (89); a `vcall` costs the
+maximum over the class table's targets (83); a recursive function, or an
+external C function without an annotated cost, is unbounded. (4) Unbounded
+is not an error by itself: the report says "unbounded" with the reason and
+the position (loop without bound, recursion, C call); it is an error only
+in real-time code (57). (5) Outputs: WCET per function; the worst path in
+source lines (68), which in a tree-based analysis is recording which side
+of each `if` gave the maximum; the worst stack use (55), a sum along the
+graph. (6) In every test on the processor, the cycles the interpreter
+measures are ≤ WCET (69, 87). (7) Interleaved threads (23): the
+interleaving being fixed, each thread sees fixed latencies, given per
+thread by the timing table; hardware threads sharing memory come with 63.
+(8) No WCET on x86/ARM.
+
+**Answer: approved, (a)** with the eight details.
+
+## 91. How the IR is stored
+
+**The question.** Is the IR a graph of pointers between objects (LLVM: each
+`Instruction` a heap object, linked by pointers, with use lists) or plain
+data indexed by id (Cranelift, Zig)? If by id: where the data lives, how
+order is kept, how ids survive edits.
+
+**Elsewhere.** LLVM and GCC: a pointer graph with use lists; replacing every
+use of a value is easy, but each instruction is an allocation and a side
+table becomes a hash map. Cranelift: arenas per function, 4-byte ids, order
+inside a block as an index-linked list, an alias table instead of use
+lists. Zig (ZIR/AIR) and Carbon: contiguous vectors and indices, chosen for
+speed. Haard's Ast is already so, and the rule "never hold a pointer into a
+vector across an insertion" already cost bugs there.
+
+**The options.** (a) Plain data by id, stored per function (the proposal).
+(b) A pointer graph as LLVM: natural in C++, hard to rewrite one to one in
+Haard, side tables expensive. (c) One global arena for the whole program:
+cloning, removing or processing one function alone gets hard.
+
+**Recommended (a)**, with: (1) per function, vectors of instructions,
+blocks, slots and values (an instruction's result and the parameters);
+4-byte ids, each kind in a struct of its own (`InstId`, `BlockId`,
+`SlotId`) so the C++ compiler refuses mixing them, plain C++ with no
+templates per the bootstrap rule. (2) Fixed-size instructions: opcode, type
+and up to three operands inline; calls, `switch` and regions keep their
+operand list in the function's operand pool as (start, count). (3) Order
+inside a block is a doubly linked list by index (previous/next): insertion
+and removal in O(1) without moving anything. (4) In the structured form a
+region (`if`, `loop`, `for`, `block`) is an instruction owning child
+blocks, kept in the pool; flatten rewrites them into CFG blocks. (5) What
+belongs to the program (80's types, layout and classes, 81's objects and
+placement, 86's inline sites) is global, by id too. (6) Side tables
+(positions, analysis results, the machine mapping) are parallel vectors
+keyed by id; the decided exception is the loop bound, a field (84). (7) Ids
+are stable inside a pass: removal only marks; compaction runs between
+passes and returns a remap. One compaction function knows every side table
+of a function, registered in one place, so none is forgotten; the verifier
+(88) checks they all have the right size. (8) No use lists: "replace every
+use" goes through an alias table, resolved on read and emptied at
+compaction. (9) Access always by id, never by a pointer or reference held
+into a vector: the Ast's lesson.
+
+**Answer: approved, (a)** with the nine details. Block G (78-91) is
+complete.
