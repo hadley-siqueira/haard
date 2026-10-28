@@ -23,7 +23,11 @@ breaks when its condition fails, a `for`'s body in a `block` its `continue`
 leaves so the increment still runs.
 
 Each one's exit status was checked against the C++ path by hand when it was
-written (`hdc --emit-cpp`, built and run): 78, 255, 56 and 63.
+written (`hdc --emit-cpp`, built and run): 78, 255, 56 and 63 for step 1;
+15, 15, 15, 15 and 7 for step 2's five that end in one. Step 2's other three
+show what only the IR says, since the C++ is undefined there or does not
+check yet: an index past a fixed array aborts (question 9b), a read after a
+`delete` and a second `delete` stop the interpreter.
 
 ## Every program of tests/emitter
 
@@ -41,7 +45,7 @@ otherwise than the C++ is a failure whether it is listed or not.
 
 The list shrinks step by step, in the order record 0077 gives: (1)
 functions, locals, arithmetic, control flow, calls -- done; (2) pointers,
-references, fixed arrays, globals, literals, `new`/`delete`; (3) structs,
+references, fixed arrays, globals, literals, `new`/`delete` -- done; (3) structs,
 methods, `init`/`destroy`, the cleanup stack, temporaries; (4) classes,
 vtables, `vcall`, `super`; (5) enums and `switch`, tuples, unions, closures,
 symbols; (6) the standard library.
@@ -54,6 +58,14 @@ run through the IR, and its `classify` -- an `if` with two `elif`s and an
 was dead and empty, and the jump flatten wrote out of it kept the block after
 the outer one alive, empty, and the verifier refused it. Fixed in flatten, and
 pinned in `tests/ir` by `run_an_if_chain_whose_every_side_returns`.
+
+## What step 2 found
+
+Three things on the C++ path, none in the IR, while writing its cases: a
+braced literal of braced literals (`{{1, 2, 3}, {4, 5, 6}}`) and a fixed array
+copied by `let b = a` pass the front end and come out as C++ g++ refuses; and
+a global whose value reads a global declared below it gets no type. The
+cases were written around them; record 0077 lists them.
 
 ## Sabotage
 
@@ -78,3 +90,24 @@ sabotaged object.
 only caught by the golden's text, since no case raised to one; both were
 written into `increments_and_powers`, checked against the C++ path, and the
 two run again.
+
+And each of step 2's, the same way:
+
+| Broken | Fails |
+|---|---|
+| `check_index` never aborting | `an_index_past_a_fixed_array_aborts`, and `tests/ir` |
+| `check_index` reading the index as signed | `tests/ir`'s `run_check_index_aborts_past_the_length` |
+| no `check_index` written | three cases |
+| a count always widened by `zext` | six cases |
+| `p - n` moving on | `pointers_move_and_compare`, `emitter/a_pointer_moves_by_a_whole_number` |
+| `q - p` in bytes | the same two |
+| a `T&` parameter given a copy | five cases |
+| a reference local not read through | `a_reference_is_an_address`, `emitter/an_inclusive_range_reaches_the_top_of_its_type` |
+| `new T` not zeroed | `the_heap_is_two_natives`, and one more |
+| `__free` leaving the allocation live | the two that free, and `tests/ir` |
+| the initialisers not run | `globals_are_given_their_values_before_main`, and `tests/ir` |
+| `\$` kept as written | that, and `emitter/a_dollar_sign_is_escaped` |
+| `argc` of 0 | `emitter/main_takes_argc_and_argv` |
+| `sizeof` measuring a pointer | `emitter/sizeof_measures_a_type` |
+| a braced literal written one element on | five cases |
+| `p--` moving on | `pointers_move_and_compare` |

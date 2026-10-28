@@ -137,6 +137,24 @@ IrObjectId IrProgram::add_text(const std::string& name,
                     bytes, true);
 }
 
+void IrProgram::add_initialiser(IrObjectId function) {
+    initialisers.push_back(function);
+}
+
+const std::vector<IrObjectId>& IrProgram::get_initialisers() {
+    return initialisers;
+}
+
+bool IrProgram::is_initialiser(IrObjectId function) {
+    for (IrObjectId one : initialisers) {
+        if (one.index == function.index) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 IrObject& IrProgram::get_object(IrObjectId id) {
     return objects[id.index];
 }

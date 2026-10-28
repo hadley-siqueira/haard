@@ -17,6 +17,16 @@ namespace haard {
     //                                   block $b { B }; i }
     //
     // A 'continue' in a 'for' leaves $b, so the increment still runs.
+    //
+    // A place -- what can be written, or have its address taken -- is an
+    // address: a local's slot, a global's object, what a pointer points at,
+    // an element. A 'T&' is the address of what it names (record 0035), so
+    // a reference local is a slot holding a pointer, and reading one is a
+    // step through it; a 'T&' parameter is given the place of its argument,
+    // or a temporary's when the argument is not one.
+    //
+    // A fixed array is never a value either: where one is wanted it is the
+    // address of its first element, C's decay, which record 0018 lists.
     class FunctionLowerer {
         public:
             FunctionLowerer(IrLowerer* owner, IrProgram* program);
@@ -26,7 +36,12 @@ namespace haard {
             // reported to its owner
             bool lower(u32 module, u32 node, IrObjectId function);
 
+            // the body of a module's initialiser: each global given its
+            // value, in source order
+            bool lower_globals(u32 module, IrObjectId function);
+
         private:
+            void begin(u32 module, IrObjectId function);
             void lower_block(u32 node);
             void lower_statement(u32 node);
             void lower_if(u32 node);
@@ -36,6 +51,10 @@ namespace haard {
             void lower_binding(u32 node);
             void lower_declaring_assignment(u32 node);
             void lower_return(u32 node);
+
+            // what 'given' means, written into 'place', which holds a 'type'
+            void initialise(IrValueId place, u32 type, u32 given,
+                            IrPosition at);
 
             // an expression's value, in the IR type of its Haard type
             IrValueId value_of(u32 node);
@@ -47,9 +66,41 @@ namespace haard {
             IrValueId logical(u32 node);
             IrValueId assignment(u32 node);
             IrValueId increment(u32 node);
+            IrValueId string_literal(u32 node);
+            IrValueId size_of(u32 node);
+            IrValueId allocation(u32 node);
+            IrValueId release(u32 node);
 
-            // where a name that can be written lives: its slot
+            // a braced literal where a value is wanted: a temporary array,
+            // decayed
+            IrValueId brace_literal(u32 node);
+
+            // a place's value: a load, or a fixed array's decay
+            IrValueId read(u32 node);
+
+            // 'p + n' and 'p - n', n elements on, and 'q - p' the elements
+            // between
+            IrValueId step(u32 pointer, IrValueId base, IrValueId count,
+                           u32 count_type, bool back, IrPosition at);
+            IrValueId distance(u32 pointer, IrValueId left, IrValueId right,
+                               IrPosition at);
+
+            // where something that can be written lives
             IrValueId place_of(u32 node);
+            IrValueId place_of_name(u32 node);
+            IrValueId place_of_index(u32 node);
+            bool is_place(u32 node);
+
+            // what a 'T&' is given: the place, or a temporary holding the
+            // value when it is not one
+            IrValueId reference_to(u32 node);
+
+            // the function a call reaches, its module and candidate, and the
+            // Haard types of its parameters and result; false when it is not
+            // a call to a function
+            bool callee_of(u32 node, u32& module, u32& candidate);
+            std::vector<u32> signature_of(u32 module, u32 candidate);
+            bool returns_reference(u32 node);
 
             // the opcode of an arithmetic or a bitwise operator on this type
             IrOpcode opcode_of(AstNodeKind kind, u32 type);
@@ -59,7 +110,27 @@ namespace haard {
                             IrPosition at);
 
             u32 type_at(u32 node);
+
+            // the IR type of a value of this Haard type, a reference read
+            // through: a scalar, since an aggregate is never a value
+            // (question 80)
             IrTypeId ir_type(u32 type);
+
+            // what a slot or a global holding one is: a pointer for a 'T&',
+            // an array for a 'T[n]'
+            IrTypeId slot_type(u32 type);
+
+            // a pointer's pointee or a fixed array's element, in the IR
+            IrTypeId element_of(u32 type);
+            IrTypeId usize();
+
+            // to a whole number of another width, by the sign of 'type'
+            IrValueId to_width(IrValueId value, u32 type, IrTypeId to,
+                               IrPosition at);
+
+            // the kind of this type with a reference read through
+            u8 kind_of_type(u32 type);
+            bool is_reference_type(u32 module, u32 type);
             bool is_signed_type(u32 type);
             bool is_float_type(u32 type);
             bool is_whole_type(u32 type);
@@ -67,6 +138,9 @@ namespace haard {
             AstNodeKind kind_of(u32 node);
             u32 child_of(u32 node, u32 which);
             std::string text_of(u32 node);
+
+            // a literal's body, its escapes read: C's, and Haard's '\$'
+            std::string unescape(const std::string& body);
 
             void not_yet(const std::string& what);
 
@@ -79,6 +153,10 @@ namespace haard {
             u32 module_index;
             Module* module;
             IrTypeId result;
+
+            // the Haard type the function gives back, which says whether a
+            // 'return' gives a place
+            u32 returning;
 
             // a local's or a parameter's candidate, in this module, to its slot
             std::map<u32, IrValueId> slots;

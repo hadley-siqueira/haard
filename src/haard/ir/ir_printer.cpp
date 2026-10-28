@@ -163,7 +163,8 @@ void IrPrinter::print_function(std::ostream& out, IrObjectId id) {
         return;
     }
 
-    out << (function.real_time ? " realtime" : "") << " {\n";
+    out << (function.real_time ? " realtime" : "")
+        << (program->is_initialiser(id) ? " init" : "") << " {\n";
 
     if (function.form == IR_FORM_STRUCTURED) {
         print_block(out, function, function.body, 1);
@@ -307,6 +308,11 @@ void IrPrinter::print_inst(std::ostream& out, IrFunction& function,
     case IR_INDEX:
         line += name + " " + value(inst.a) + ", " + value(inst.b) + " : "
               + type(inst.type);
+        break;
+
+    case IR_CHECK_INDEX:
+        line += name + " " + type(inst.type) + " " + value(inst.a) + ", "
+              + value(inst.b);
         break;
 
     case IR_UPCAST:

@@ -97,7 +97,8 @@ int main(int argc, char* argv[]) {
     interpreter.set_target(&target);
     interpreter.set_output(&output);
 
-    IrRunResult ran = interpreter.run(main_function, {});
+    // C++'s argv[0] is the path the binary was run by; any name does here
+    IrRunResult ran = interpreter.run_main(main_function, {"main"});
     std::string printed = output.str();
 
     // as the shell's $(...) keeps it: without its trailing newlines

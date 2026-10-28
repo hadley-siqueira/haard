@@ -1,0 +1,170 @@
+data @late : b32 = zero
+data @later : b32 = zero
+data @table : b32[3] = zero
+data @greeting : ptr = zero
+data @text.0 : b8[5] = readonly "a\09b$\00"
+
+func @bump() {
+  %1 = addr @late
+  %2 = load b32, %1
+  %3 = const b32 10
+  %4 = add b32 %2, %3
+  store b32 %4, %1
+  ret
+}
+
+func @length(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %3 = slot b32
+  store ptr %1, %2
+  %4 = const b32 0
+  store b32 %4, %3
+  $6: loop {
+    %5 = load ptr, %2
+    %6 = load b32, %3
+    %7 = sext b32 %6 to b64
+    %8 = index %5, %7 : b8
+    %9 = load b8, %8
+    %10 = const b8 0
+    %11 = ne b8 %9, %10
+    %12 = not bool %11
+    $15: if %12 {
+      break $6
+    }
+    %13 = load b32, %3
+    %14 = const b32 1
+    %15 = add b32 %13, %14
+    store b32 %15, %3
+  }
+  %16 = load b32, %3
+  ret b32 %16
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot bool
+  %41 = slot bool
+  %42 = slot bool
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = addr @later
+  %5 = load b32, %4
+  %6 = const b32 6
+  %7 = eq b32 %5, %6
+  store bool %7, %3
+  $10: if %7 {
+    %8 = addr @late
+    %9 = load b32, %8
+    %10 = const b32 5
+    %11 = eq b32 %9, %10
+    store bool %11, %3
+  }
+  %12 = load bool, %3
+  $17: if %12 {
+    %13 = load b32, %1
+    %14 = const b32 1
+    %15 = add b32 %13, %14
+    store b32 %15, %1
+  }
+  call @bump()
+  call @bump()
+  %16 = addr @late
+  %17 = load b32, %16
+  %18 = const b32 25
+  %19 = eq b32 %17, %18
+  $28: if %19 {
+    %20 = load b32, %1
+    %21 = const b32 2
+    %22 = add b32 %20, %21
+    store b32 %22, %1
+  }
+  %23 = addr @table
+  %24 = const b32 0
+  %25 = sext b32 %24 to b64
+  %26 = const b64 3
+  check_index b64 %25, %26
+  %27 = index %23, %25 : b32
+  %28 = load b32, %27
+  %29 = addr @table
+  %30 = const b32 2
+  %31 = sext b32 %30 to b64
+  %32 = const b64 3
+  check_index b64 %31, %32
+  %33 = index %29, %31 : b32
+  %34 = load b32, %33
+  %35 = add b32 %28, %34
+  %36 = const b32 16
+  %37 = eq b32 %35, %36
+  $50: if %37 {
+    %38 = load b32, %1
+    %39 = const b32 4
+    %40 = add b32 %38, %39
+    store b32 %40, %1
+  }
+  %43 = addr @greeting
+  %44 = load ptr, %43
+  %45 = call @length(%44)
+  %46 = const b32 4
+  %47 = eq b32 %45, %46
+  store bool %47, %42
+  $63: if %47 {
+    %48 = addr @greeting
+    %49 = load ptr, %48
+    %50 = const b32 3
+    %51 = sext b32 %50 to b64
+    %52 = index %49, %51 : b8
+    %53 = load b8, %52
+    %54 = const b8 36
+    %55 = eq b8 %53, %54
+    store bool %55, %42
+  }
+  %56 = load bool, %42
+  store bool %56, %41
+  $75: if %56 {
+    %57 = addr @text.0
+    %58 = call @length(%57)
+    %59 = const b32 4
+    %60 = eq b32 %58, %59
+    store bool %60, %41
+  }
+  %61 = load bool, %41
+  $82: if %61 {
+    %62 = load b32, %1
+    %63 = const b32 8
+    %64 = add b32 %62, %63
+    store b32 %64, %1
+  }
+  %65 = load b32, %1
+  ret b32 %65
+}
+
+func @globals() init {
+  %1 = addr @late
+  %2 = const b32 5
+  store b32 %2, %1
+  %3 = addr @later
+  %4 = addr @late
+  %5 = load b32, %4
+  %6 = const b32 1
+  %7 = add b32 %5, %6
+  store b32 %7, %3
+  %8 = addr @table
+  %9 = const b64 0
+  %10 = index %8, %9 : b32
+  %11 = const b32 7
+  store b32 %11, %10
+  %12 = const b64 1
+  %13 = index %8, %12 : b32
+  %14 = const b32 8
+  store b32 %14, %13
+  %15 = const b64 2
+  %16 = index %8, %15 : b32
+  %17 = const b32 9
+  store b32 %17, %16
+  %18 = addr @greeting
+  %19 = addr @text.0
+  store ptr %19, %18
+  ret
+}
+
+--- exit: 15

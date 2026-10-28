@@ -1,0 +1,44 @@
+# Record 0077, stage 4, step 2: a global is a datum that starts zeroed, and
+# the module's initialiser -- a function marked 'init', run before main --
+# gives each its value in source order, as C++ does, so 'later' reads the
+# 'late' given just above it. A function can write a global, and a string
+# literal is a read-only text, one object however often it is written. The
+# exit status adds up one bit per thing that held.
+let late = 5
+let later = late + 1
+let table : i32[3] = {7, 8, 9}
+let greeting = "a\tb\$"
+
+def bump : void
+    late += 10
+
+def length : i32
+    @text : char*
+
+    let n = 0
+
+    while text[n] != '\0':
+        n++
+
+    return n
+
+def main : i32
+    let result = 0
+
+    if later == 6 and late == 5:
+        result += 1
+
+    bump()
+    bump()
+
+    if late == 25:
+        result += 2
+
+    if table[0] + table[2] == 16:
+        result += 4
+
+    # four characters: the tab is one, and '\$' is a dollar sign
+    if length(greeting) == 4 and greeting[3] == '$' and length("a\tb\$") == 4:
+        result += 8
+
+    return result

@@ -1,0 +1,9 @@
+func @f() {
+  %1 = const b32 1
+  %2 = const b64 2
+>>check_index b64 %1, %2
+  ret
+}
+
+verifier:
+    @f, check_index #3: its index operand is b32, not b64

@@ -1,0 +1,58 @@
+# Record 0077, stage 4, step 2: a 'T&' is the address of what it names
+# (record 0035). A reference local is a slot holding a pointer, a 'T&'
+# parameter is given its argument's place -- or a temporary's, when the
+# argument is not a place -- and a function giving back a 'T&' gives back a
+# place, which can be written through. The exit status adds up one bit per
+# thing that held.
+def swap : void
+    @a : i32&
+    @b : i32&
+
+    let kept = a
+    a = b
+    b = kept
+
+def larger : i32&
+    @a : i32&
+    @b : i32&
+
+    if a > b:
+        return a
+
+    return b
+
+def twice : i32
+    @n : i32&
+    return n + n
+
+def main : i32
+    let result = 0
+    let x = 3
+    let y = 8
+
+    swap(x, y)
+
+    if x == 8 and y == 3:
+        result += 1
+
+    # written through what a call gave back
+    larger(x, y) = 20
+
+    if x == 20 and y == 3:
+        result += 2
+
+    # a reference local, read, written and its address taken
+    let r : i32& = y
+    r += 4
+
+    let p = &r
+    *p = *p * 2
+
+    if y == 14 and r == 14:
+        result += 4
+
+    # a literal is not a place, so a temporary is given
+    if twice(21) == 42 and twice(r) == 28:
+        result += 8
+
+    return result

@@ -1,0 +1,220 @@
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot b64[8]
+  %28 = slot ptr
+  %29 = slot b8
+  %32 = slot b8
+  %34 = slot ptr
+  %39 = slot ptr
+  %44 = slot bool
+  %45 = slot bool
+  %46 = slot bool
+  %80 = slot ptr
+  %94 = slot bool
+  %106 = slot b32
+  %108 = slot ptr
+  %109 = slot ptr
+  %113 = slot bool
+  %125 = slot ptr
+  %127 = slot bool
+  %128 = slot bool
+  %129 = slot bool
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = const b64 0
+  %5 = index %3, %4 : b64
+  %6 = const b64 0
+  store b64 %6, %5
+  %7 = const b64 1
+  %8 = index %3, %7 : b64
+  %9 = const b64 10
+  store b64 %9, %8
+  %10 = const b64 2
+  %11 = index %3, %10 : b64
+  %12 = const b64 20
+  store b64 %12, %11
+  %13 = const b64 3
+  %14 = index %3, %13 : b64
+  %15 = const b64 30
+  store b64 %15, %14
+  %16 = const b64 4
+  %17 = index %3, %16 : b64
+  %18 = const b64 40
+  store b64 %18, %17
+  %19 = const b64 5
+  %20 = index %3, %19 : b64
+  %21 = const b64 50
+  store b64 %21, %20
+  %22 = const b64 6
+  %23 = index %3, %22 : b64
+  %24 = const b64 60
+  store b64 %24, %23
+  %25 = const b64 7
+  %26 = index %3, %25 : b64
+  %27 = const b64 70
+  store b64 %27, %26
+  store ptr %3, %28
+  %30 = const b8 1
+  %31 = neg b8 %30
+  store b8 %31, %29
+  %33 = const b8 3
+  store b8 %33, %32
+  %35 = load ptr, %28
+  %36 = load b8, %32
+  %37 = zext b8 %36 to b64
+  %38 = index %35, %37 : b64
+  store ptr %38, %34
+  %40 = load ptr, %34
+  %41 = load b8, %29
+  %42 = sext b8 %41 to b64
+  %43 = index %40, %42 : b64
+  store ptr %43, %39
+  %47 = load ptr, %34
+  %48 = load b64, %47
+  %49 = const b64 30
+  %50 = eq b64 %48, %49
+  store bool %50, %46
+  $66: if %50 {
+    %51 = load ptr, %39
+    %52 = load b64, %51
+    %53 = const b64 20
+    %54 = eq b64 %52, %53
+    store bool %54, %46
+  }
+  %55 = load bool, %46
+  store bool %55, %45
+  $74: if %55 {
+    %56 = load ptr, %39
+    %57 = load ptr, %28
+    %58 = ptrtoint ptr %56 to b64
+    %59 = ptrtoint ptr %57 to b64
+    %60 = sub b64 %58, %59
+    %61 = size b64 as b64
+    %62 = sdiv b64 %60, %61
+    %63 = const b64 2
+    %64 = eq b64 %62, %63
+    store bool %64, %45
+  }
+  %65 = load bool, %45
+  store bool %65, %44
+  $87: if %65 {
+    %66 = load ptr, %28
+    %67 = load ptr, %34
+    %68 = ptrtoint ptr %66 to b64
+    %69 = ptrtoint ptr %67 to b64
+    %70 = sub b64 %68, %69
+    %71 = size b64 as b64
+    %72 = sdiv b64 %70, %71
+    %73 = const b64 3
+    %74 = neg b64 %73
+    %75 = eq b64 %72, %74
+    store bool %75, %44
+  }
+  %76 = load bool, %44
+  $100: if %76 {
+    %77 = load b32, %1
+    %78 = const b32 1
+    %79 = add b32 %77, %78
+    store b32 %79, %1
+  }
+  %81 = load ptr, %28
+  store ptr %81, %80
+  %82 = load ptr, %80
+  %83 = const b32 5
+  %84 = sext b32 %83 to b64
+  %85 = index %82, %84 : b64
+  store ptr %85, %80
+  %86 = load ptr, %80
+  %87 = const b64 18446744073709551615
+  %88 = index %86, %87 : b64
+  store ptr %88, %80
+  %89 = load ptr, %80
+  %90 = const b32 2
+  %91 = sext b32 %90 to b64
+  %92 = neg b64 %91
+  %93 = index %89, %92 : b64
+  store ptr %93, %80
+  %95 = load ptr, %80
+  %96 = load b64, %95
+  %97 = const b64 20
+  %98 = eq b64 %96, %97
+  store bool %98, %94
+  $129: if %98 {
+    %99 = load ptr, %80
+    %100 = load ptr, %39
+    %101 = eq ptr %99, %100
+    store bool %101, %94
+  }
+  %102 = load bool, %94
+  $135: if %102 {
+    %103 = load b32, %1
+    %104 = const b32 2
+    %105 = add b32 %103, %104
+    store b32 %105, %1
+  }
+  %107 = const b32 7
+  store b32 %107, %106
+  store ptr %106, %108
+  store ptr %108, %109
+  %110 = load ptr, %109
+  %111 = load ptr, %110
+  %112 = const b32 9
+  store b32 %112, %111
+  %114 = load b32, %106
+  %115 = const b32 9
+  %116 = eq b32 %114, %115
+  store bool %116, %113
+  $156: if %116 {
+    %117 = load ptr, %108
+    %118 = load b32, %117
+    %119 = const b32 9
+    %120 = eq b32 %118, %119
+    store bool %120, %113
+  }
+  %121 = load bool, %113
+  $163: if %121 {
+    %122 = load b32, %1
+    %123 = const b32 4
+    %124 = add b32 %122, %123
+    store b32 %124, %1
+  }
+  %126 = null
+  store ptr %126, %125
+  %130 = load ptr, %28
+  %131 = load ptr, %34
+  %132 = ult ptr %130, %131
+  store bool %132, %129
+  $178: if %132 {
+    %133 = load ptr, %34
+    %134 = load ptr, %39
+    %135 = ugt ptr %133, %134
+    store bool %135, %129
+  }
+  %136 = load bool, %129
+  store bool %136, %128
+  $185: if %136 {
+    %137 = load ptr, %108
+    %138 = null
+    %139 = ne ptr %137, %138
+    store bool %139, %128
+  }
+  %140 = load bool, %128
+  store bool %140, %127
+  $192: if %140 {
+    %141 = load ptr, %125
+    %142 = null
+    %143 = eq ptr %141, %142
+    store bool %143, %127
+  }
+  %144 = load bool, %127
+  $198: if %144 {
+    %145 = load b32, %1
+    %146 = const b32 8
+    %147 = add b32 %145, %146
+    store b32 %147, %1
+  }
+  %148 = load b32, %1
+  ret b32 %148
+}
+
+--- exit: 15

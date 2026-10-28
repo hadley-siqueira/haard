@@ -1,0 +1,51 @@
+# Record 0077, stage 4, step 2: a fixed array is a slot of its own type, a
+# braced literal writes it element by element, and an element is an 'index'
+# after a 'check_index' (question 9b). Where a value is wanted it is the
+# address of its first element -- the decay of record 0018 -- so a braced
+# literal given to a pointer is a temporary array. The exit status adds up
+# one bit per thing that held.
+def sum : i32
+    @from : i32*
+    @count : i32
+
+    let total = 0
+
+    for i in 0 ... count:
+        total += from[i]
+
+    return total
+
+def main : i32
+    let result = 0
+    let row : i32[4] = {1, 2, 3, 4}
+    let grid : i32[3][2]
+
+    row[3] = 10
+
+    # an array of arrays, an element at a time: two rows of three
+    for r in 0 ... 2:
+        for c in 0 ... 3:
+            grid[r][c] = r * 3 + c + 1
+
+    if sum(row, 4) == 16 and sum({5, 6}, 2) == 11:
+        result += 1
+
+    if grid[1][2] == 6 and grid[0][1] == 2:
+        result += 2
+
+    # an index of another width
+    let at : u8 = 2
+
+    grid[1][at] = 60
+
+    if sum(grid[1], 3) == 69:
+        result += 4
+
+    # through a pointer, which is not checked
+    let first : i32* = row
+    first[1] = 7
+
+    if row[1] == 7:
+        result += 8
+
+    return result

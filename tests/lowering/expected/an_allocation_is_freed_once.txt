@@ -1,0 +1,24 @@
+func @main() -> b32 {
+  %1 = slot ptr
+  %7 = slot ptr
+  %2 = size b32 as b64
+  %3 = const b32 4
+  %4 = sext b32 %3 to b64
+  %5 = mul b64 %2, %4
+  %6 = call @__alloc(%5)
+  store ptr %6, %1
+  %8 = load ptr, %1
+  store ptr %8, %7
+  %9 = load ptr, %1
+  call @__free(%9)
+  %10 = load ptr, %7
+  call @__free(%10)
+  %11 = const b32 0
+  ret b32 %11
+}
+
+native @__alloc(%1: b64) -> ptr
+
+native @__free(%1: ptr)
+
+--- stopped in @main at #14: frees an allocation of 16 bytes a second time

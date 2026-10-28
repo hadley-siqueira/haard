@@ -147,6 +147,12 @@ IrValueId IrBuilder::index(IrTypeId element, IrValueId of, IrValueId which,
                           no_pool(), pointer(), at));
 }
 
+void IrBuilder::check_index(IrTypeId type, IrValueId index,
+                            IrValueId length, IrPosition at) {
+    emit(IR_CHECK_INDEX, type, index.index, length.index, 0, 0, no_pool(),
+         NO_TYPE, at);
+}
+
 IrValueId IrBuilder::upcast(IrTypeId from, IrTypeId to, IrValueId of,
                             IrPosition at) {
     return result_of(emit(IR_UPCAST, from, of.index, 0, 0, to.index,

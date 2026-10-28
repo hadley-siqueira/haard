@@ -316,6 +316,39 @@ after an inner `if` kept the block after the outer one alive), fixed and
 pinned in `tests/ir`. Not in step 1: `**` and `//` on floats, which need the
 library's `pow` and `floor`.
 
+**Step 2 built (2026-10-28)**. A place (what is written, or has its address
+taken) is an address: a local's slot, a global's object, what a pointer
+points at, an element. A `T&` is the address of what it names (record
+0035): a reference local is a slot holding a pointer, a `T&` parameter is
+given its argument's place, or a temporary's when the argument is not one,
+and a function giving back a `T&` gives back a place. `&&x` is `x`. Pointer
+arithmetic (record 0076) is `index` by the count widened to a `usize` by its
+own sign, and `q - p` is the bytes between them divided by the size of one.
+A fixed array is a slot of its array type, a braced literal writes it an
+element at a time, and where a value is wanted it decays to the address of
+its first element. Its index goes through **`check_index`**, the instruction
+question 9b named, added to the set: it aborts unless the index, read as
+unsigned, is below the length, so a negative index is out of range too. A
+global is a datum that starts zeroed, and each module that has any gets a
+function marked `init` giving them their values in source order;
+`IrProgram` keeps the initialisers and the interpreter runs them, in module
+order, before the entry, which is the order the C++ emitter writes them in.
+A string literal is a read-only text, one object per text. `new T` is C++'s
+`new T()`, the scalar zeroed; `new T[n]` leaves its n unwritten; both call
+the native `__alloc` (a size in bytes), and `delete` calls `__free`. The
+interpreter keeps the heap by object like everything else, so a read after a
+free, a second free, and a free of what no allocation gave all stop it.
+`sizeof` is `size`. C's `main(argc, argv)` came early, being only pointers
+(`IrInterpreter::run_main` builds the argument vector); the `List` form waits
+for step 6. Eight cases of the suite's own, the five that give an exit
+status checked against the C++ path (15, 15, 15, 15, 7); the other three
+show what only the IR says (an index past the end aborts, a read after a
+free and a second free stop). Six more emitter programs agree, 15 in all; 59
+wait. Found on the C++ path while writing them, not fixed: a braced literal
+of braced literals (`{{1, 2}, {3, 4}}`) and a fixed array copied by `let b =
+a` are accepted by the front end and written as C++ g++ refuses; and a global
+whose value reads a global declared below it gets no type.
+
 ## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
 
 The first instruction set:
@@ -328,7 +361,7 @@ The first instruction set:
 | Comparisons | `eq ne slt sle sgt sge ult ule ugt uge`, `feq fne flt fle fgt fge` |
 | Conversions | `trunc zext sext`, `sitofp uitofp fptosi fptoui`, `fpext fptrunc`, `ptrtoint inttoptr` |
 | Choice | `select` |
-| Memory | `slot T`, `load T`, `store T`, `copy T`, `field`, `index`, `upcast`, `downcast` |
+| Memory | `slot T`, `load T`, `store T`, `copy T`, `field`, `index`, `check_index` (step 4.2, question 9b), `upcast`, `downcast` |
 | Calls | `call @f`, `call_indirect`, `vcall Class.method` |
 | Barriers (85) | `volatile_load`, `volatile_store`, `fence` |
 | Structured (78) | `block`, `if`/`else`, `loop` (with its bound), `break $r`, `continue $r` |

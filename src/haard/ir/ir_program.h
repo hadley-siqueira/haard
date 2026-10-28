@@ -85,6 +85,13 @@ namespace haard {
             IrObjectId add_text(const std::string& name,
                                 const std::string& text);
 
+            // a function taking nothing and giving nothing back, run before
+            // the entry: what C++ calls dynamic initialisation, a module's
+            // globals given their values. In the order they are added
+            void add_initialiser(IrObjectId function);
+            const std::vector<IrObjectId>& get_initialisers();
+            bool is_initialiser(IrObjectId function);
+
             IrObject& get_object(IrObjectId id);
             u32 get_object_count();
             IrFunction& get_function(IrObjectId id);
@@ -96,6 +103,7 @@ namespace haard {
             std::vector<IrObject> objects;
             std::vector<IrFunction> functions;
             std::vector<IrSignature> signatures;
+            std::vector<IrObjectId> initialisers;
             std::map<std::vector<u32>, u32> signature_index;
     };
 }

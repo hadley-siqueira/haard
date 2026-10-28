@@ -48,11 +48,17 @@ namespace haard {
     //   - a write to a read-only object
     //   - a call through something that is not a function
     //   - a loop going round more often than its bound (question 84)
+    //   - an access to an allocation after it was freed, a free of one
+    //     freed already, and a free of what no allocation gave
     //
     // Bytes are in the target's order, by the target's layout. New memory is
     // filled with a fixed pattern when asked (question 10), so a program that
     // reads what nobody wrote gives an answer it cannot rely on. The natives
     // of 'std.low_io' are its devices: output goes to the stream it is given.
+    // '__alloc' and '__free' are the heap's, which 'new' and 'delete' call.
+    //
+    // The program's initialisers run first, in their order, and then the
+    // function asked for.
     class IrInterpreter {
         public:
             IrInterpreter();
@@ -66,11 +72,20 @@ namespace haard {
             IrRunResult run(IrObjectId function,
                             const std::vector<u64>& arguments);
 
+            // a program's 'main': given nothing when it takes nothing, and
+            // C's pair when it takes two -- the count, and the arguments as
+            // text ending in a null pointer, as C hands them over
+            IrRunResult run_main(IrObjectId main,
+                                 const std::vector<std::string>& arguments);
+
         private:
             struct Memory {
                 std::vector<u8> bytes;
                 bool live;
                 bool read_only;
+
+                // made by '__alloc', so '__free' may end it
+                bool heap;
 
                 // the object it holds, 0 for a slot or a device
                 IrObjectId object;
@@ -86,6 +101,11 @@ namespace haard {
                 // entered, by header
                 std::map<u32, u32> turns;
             };
+
+            // every object in its block, false when the layout failed
+            bool prepare();
+            IrRunResult finish(IrObjectId function,
+                               const std::vector<u64>& arguments);
 
             u64 call(IrObjectId function, const std::vector<u64>& arguments);
             u64 native(IrObjectId function, const std::vector<u64>& arguments);

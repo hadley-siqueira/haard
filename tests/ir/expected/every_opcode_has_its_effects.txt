@@ -58,6 +58,7 @@ store: writes
 copy: reads writes
 field:
 index:
+check_index: traps
 upcast:
 downcast:
 call: reads writes barrier

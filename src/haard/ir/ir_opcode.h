@@ -85,6 +85,11 @@ namespace haard {
         IR_COPY,
         IR_FIELD,
         IR_INDEX,
+
+        // question 9b: aborts unless the index, read as unsigned, is below
+        // the length. A fixed array's by the compiler, Array's and its kin
+        // through an intrinsic, so the optimiser can drop or hoist it
+        IR_CHECK_INDEX,
         IR_UPCAST,
         IR_DOWNCAST,
 

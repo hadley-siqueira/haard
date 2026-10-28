@@ -1,0 +1,32 @@
+# Record 0077, stage 4, step 2: 'new' and 'delete' are calls to two natives,
+# '__alloc' given a size in bytes and '__free'. 'new T' is C++'s 'new T()', so
+# the scalar it makes is zero; 'new T[n]' is n of them, unwritten. The exit
+# status adds up one bit per thing that held.
+def main : i32
+    let result = 0
+    let one = new i32
+    let empty = new i32*
+
+    if *one == 0 and *empty == null:
+        result += 1
+
+    *one = 5
+    *empty = one
+
+    if **empty == 5:
+        result += 2
+
+    let count = 6
+    let many = new i32[count]
+
+    for i in 0 ... count:
+        many[i] = i * 100
+
+    if many[5] == 500 and *(many + 2) == 200:
+        result += 4
+
+    delete one
+    delete empty
+    delete[] many
+
+    return result

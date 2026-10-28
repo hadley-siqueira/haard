@@ -1,0 +1,133 @@
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot ptr
+  %7 = slot ptr
+  %11 = slot bool
+  %36 = slot b32
+  %38 = slot ptr
+  %44 = slot b32
+  %46 = slot b32
+  %62 = slot bool
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = size b32 as b64
+  %5 = call @__alloc(%4)
+  %6 = const b32 0
+  store b32 %6, %5
+  store ptr %5, %3
+  %8 = size ptr as b64
+  %9 = call @__alloc(%8)
+  %10 = null
+  store ptr %10, %9
+  store ptr %9, %7
+  %12 = load ptr, %3
+  %13 = load b32, %12
+  %14 = const b32 0
+  %15 = eq b32 %13, %14
+  store bool %15, %11
+  $22: if %15 {
+    %16 = load ptr, %7
+    %17 = load ptr, %16
+    %18 = null
+    %19 = eq ptr %17, %18
+    store bool %19, %11
+  }
+  %20 = load bool, %11
+  $29: if %20 {
+    %21 = load b32, %1
+    %22 = const b32 1
+    %23 = add b32 %21, %22
+    store b32 %23, %1
+  }
+  %24 = load ptr, %3
+  %25 = const b32 5
+  store b32 %25, %24
+  %26 = load ptr, %7
+  %27 = load ptr, %3
+  store ptr %27, %26
+  %28 = load ptr, %7
+  %29 = load ptr, %28
+  %30 = load b32, %29
+  %31 = const b32 5
+  %32 = eq b32 %30, %31
+  $45: if %32 {
+    %33 = load b32, %1
+    %34 = const b32 2
+    %35 = add b32 %33, %34
+    store b32 %35, %1
+  }
+  %37 = const b32 6
+  store b32 %37, %36
+  %39 = size b32 as b64
+  %40 = load b32, %36
+  %41 = sext b32 %40 to b64
+  %42 = mul b64 %39, %41
+  %43 = call @__alloc(%42)
+  store ptr %43, %38
+  %45 = load b32, %36
+  store b32 %45, %44
+  %47 = const b32 0
+  store b32 %47, %46
+  $66: loop {
+    %48 = load b32, %46
+    %49 = load b32, %44
+    %50 = slt b32 %48, %49
+    %51 = not bool %50
+    $71: if %51 {
+      break $66
+    }
+    $73: block {
+      %52 = load ptr, %38
+      %53 = load b32, %46
+      %54 = sext b32 %53 to b64
+      %55 = index %52, %54 : b32
+      %56 = load b32, %46
+      %57 = const b32 100
+      %58 = mul b32 %56, %57
+      store b32 %58, %55
+    }
+    %59 = load b32, %46
+    %60 = const b32 1
+    %61 = add b32 %59, %60
+    store b32 %61, %46
+  }
+  %63 = load ptr, %38
+  %64 = const b32 5
+  %65 = sext b32 %64 to b64
+  %66 = index %63, %65 : b32
+  %67 = load b32, %66
+  %68 = const b32 500
+  %69 = eq b32 %67, %68
+  store bool %69, %62
+  $95: if %69 {
+    %70 = load ptr, %38
+    %71 = const b32 2
+    %72 = sext b32 %71 to b64
+    %73 = index %70, %72 : b32
+    %74 = load b32, %73
+    %75 = const b32 200
+    %76 = eq b32 %74, %75
+    store bool %76, %62
+  }
+  %77 = load bool, %62
+  $105: if %77 {
+    %78 = load b32, %1
+    %79 = const b32 4
+    %80 = add b32 %78, %79
+    store b32 %80, %1
+  }
+  %81 = load ptr, %3
+  call @__free(%81)
+  %82 = load ptr, %7
+  call @__free(%82)
+  %83 = load ptr, %38
+  call @__free(%83)
+  %84 = load b32, %1
+  ret b32 %84
+}
+
+native @__alloc(%1: b64) -> ptr
+
+native @__free(%1: ptr)
+
+--- exit: 7

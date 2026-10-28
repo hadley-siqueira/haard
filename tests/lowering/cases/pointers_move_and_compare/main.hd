@@ -1,0 +1,45 @@
+# Record 0077, stage 4, step 2: a pointer is an address, '&x' a local's slot
+# and '*p' what it points at. Record 0076's arithmetic is an 'index' by a
+# whole number widened to a usize by its own sign, so a u8 of 200 moves on and
+# an i8 of -1 moves back; two pointers subtract into the elements between
+# them. A pointer to a pointer is one more step. The exit status adds up one
+# bit per thing that held.
+def main : i32
+    let result = 0
+    let cells : i64[8] = {0, 10, 20, 30, 40, 50, 60, 70}
+    let p : i64* = cells
+    let back : i8 = -1
+    let on : u8 = 3
+
+    let q = p + on
+    let r = q + back
+
+    if *q == 30 and *r == 20 and r - p == 2 and p - q == -3:
+        result += 1
+
+    # moved in place, both ways
+    let walk = p
+    walk += 5
+    walk--
+    walk -= 2
+
+    if *walk == 20 and walk == r:
+        result += 2
+
+    # written through, and through a pointer to it
+    let n = 7
+    let to_n = &n
+    let to_to_n = &to_n
+
+    **to_to_n = 9
+
+    if n == 9 and *to_n == 9:
+        result += 4
+
+    # ordered, and compared with null
+    let none : i32* = null
+
+    if p < q and q > r and to_n != null and none == null:
+        result += 8
+
+    return result

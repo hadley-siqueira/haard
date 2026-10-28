@@ -1,0 +1,27 @@
+native @__free(%1: ptr)
+
+func @main() -> b32 {
+  %1 = slot b32
+  call @__free(%1)
+  %2 = const b32 0
+  ret b32 %2
+}
+
+verifier: ok
+
+after flatten:
+
+native @__free(%1: ptr)
+
+func @main() -> b32 {
+^1:
+  %1 = slot b32
+  call @__free(%1)
+  %2 = const b32 0
+  ret b32 %2
+}
+
+verifier: ok
+
+run on x86_64-linux:
+stopped in @main at #2: frees what no allocation gave

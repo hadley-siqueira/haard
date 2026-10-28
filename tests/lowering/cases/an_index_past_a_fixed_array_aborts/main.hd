@@ -1,0 +1,15 @@
+# Question 9b (Hadley, 2026-10-08): indexing a fixed array is always checked,
+# and an index past its end aborts -- 134, as C's abort() -- where a pointer's
+# never is. A negative index is read as unsigned, so it is past the end too.
+#
+# The C++ path does not write the check yet (a pending item), so there this
+# is undefined; the IR is the side that already says what Haard means.
+def main : i32
+    let row : i32[3] = {1, 2, 3}
+    let i = 0
+
+    while i < 4:
+        row[i] = 0
+        i++
+
+    return 0

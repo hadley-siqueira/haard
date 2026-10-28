@@ -463,6 +463,16 @@ void IrVerifier::verify_types(IrInstId id) {
 
         return;
 
+    case IR_CHECK_INDEX:
+        if (!is_integer(inst.type)) {
+            report(id, "checks whole numbers, not " + name(inst.type));
+            return;
+        }
+
+        operand(id, inst.a, "index", inst.type);
+        operand(id, inst.b, "length", inst.type);
+        return;
+
     case IR_UPCAST:
     case IR_DOWNCAST: {
         IrTypeId to = {inst.extra};

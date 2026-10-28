@@ -1,0 +1,22 @@
+func @main() -> b32 {
+  %1 = slot ptr
+  %2 = size b32 as b64
+  %3 = call @__alloc(%2)
+  %4 = const b32 0
+  store b32 %4, %3
+  store ptr %3, %1
+  %5 = load ptr, %1
+  %6 = const b32 5
+  store b32 %6, %5
+  %7 = load ptr, %1
+  call @__free(%7)
+  %8 = load ptr, %1
+  %9 = load b32, %8
+  ret b32 %9
+}
+
+native @__alloc(%1: b64) -> ptr
+
+native @__free(%1: ptr)
+
+--- stopped in @main at #13: an access to an allocation of 4 bytes after it was freed

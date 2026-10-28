@@ -1,0 +1,29 @@
+func @main() -> b32 {
+  %1 = const b32 3
+  %2 = const b32 2
+  %3 = const b32 4294967295
+  check_index b32 %2, %1
+  check_index b32 %3, %1
+  %4 = const b32 0
+  ret b32 %4
+}
+
+verifier: ok
+
+after flatten:
+
+func @main() -> b32 {
+^1:
+  %1 = const b32 3
+  %2 = const b32 2
+  %3 = const b32 4294967295
+  check_index b32 %2, %1
+  check_index b32 %3, %1
+  %4 = const b32 0
+  ret b32 %4
+}
+
+verifier: ok
+
+run on x86_64-linux:
+aborted in @main at #5: index -1 out of range for length 3

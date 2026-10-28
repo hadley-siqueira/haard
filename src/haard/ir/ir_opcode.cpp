@@ -77,6 +77,7 @@ static const IrOpcodeInfo OPCODES[] = {
     {"copy", READS | WRITES, false},
     {"field", 0, false},
     {"index", 0, false},
+    {"check_index", TRAPS, false},
     {"upcast", 0, false},
     {"downcast", 0, false},
 

@@ -104,6 +104,43 @@ void IrInterpreter::set_garbage(bool garbage) {
 
 IrRunResult IrInterpreter::run(IrObjectId function,
                                const std::vector<u64>& arguments) {
+    if (!prepare()) {
+        return result;
+    }
+
+    return finish(function, arguments);
+}
+
+IrRunResult IrInterpreter::run_main(IrObjectId main,
+                                    const std::vector<std::string>& arguments) {
+    if (!prepare()) {
+        return result;
+    }
+
+    const IrSignature& taken =
+        program->get_signature(program->get_function(main).signature);
+
+    if (taken.parameters.size() != 2) {
+        return finish(main, {});
+    }
+
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+    u32 each = target->pointer_size;
+    u32 table = allocate((u32) (arguments.size() + 1) * each, "argv", false);
+
+    for (u32 i = 0; i < arguments.size(); i++) {
+        u32 text = allocate((u32) arguments[i].size() + 1,
+                            "argv[" + std::to_string(i) + "]", false);
+
+        std::memcpy(memory[text].bytes.data(), arguments[i].data(),
+                    arguments[i].size());
+        store(pointer_to(table, i * each), pointer, pointer_to(text, 0));
+    }
+
+    return finish(main, {arguments.size(), pointer_to(table, 0)});
+}
+
+bool IrInterpreter::prepare() {
     halted = false;
     depth = 0;
     result = IrRunResult();
@@ -123,7 +160,7 @@ IrRunResult IrInterpreter::run(IrObjectId function,
 
     if (!layouts.lay_out_all()) {
         stop(layouts.get_error());
-        return result;
+        return false;
     }
 
     memory.assign(1, Memory());
@@ -169,7 +206,18 @@ IrRunResult IrInterpreter::run(IrObjectId function,
     stderr_handle = pointer_to(allocate(1, "stderr", false), 0);
     stdin_handle = pointer_to(allocate(1, "stdin", false), 0);
 
-    u64 value = call(function, arguments);
+    return true;
+}
+
+IrRunResult IrInterpreter::finish(IrObjectId function,
+                                  const std::vector<u64>& arguments) {
+    for (IrObjectId one : program->get_initialisers()) {
+        if (!halted) {
+            call(one, {});
+        }
+    }
+
+    u64 value = halted ? 0 : call(function, arguments);
 
     if (!halted) {
         result.value = value;
@@ -418,6 +466,18 @@ u64 IrInterpreter::execute(Frame& frame, IrFunction& function, IrInstId id,
         made = values[inst.a] + layouts.get_layout(inst.type)->offsets[inst.extra];
         break;
 
+    case IR_CHECK_INDEX: {
+        u32 width = bits(inst.type);
+
+        if (mask(values[inst.a], width) >= mask(values[inst.b], width)) {
+            abort("index " + std::to_string(widen(values[inst.a], width))
+                  + " out of range for length "
+                  + std::to_string(mask(values[inst.b], width)));
+        }
+
+        break;
+    }
+
     // the index is read as signed, as a pointer may step back
     case IR_INDEX:
         made = values[inst.a]
@@ -594,6 +654,48 @@ u64 IrInterpreter::native(IrObjectId id, const std::vector<u64>& arguments) {
 
     if (name == "__abort") {
         abort("__abort");
+        return 0;
+    }
+
+    // what is not written is the garbage pattern, as a slot's is
+    if (name == "__alloc" && arguments.size() == 1) {
+        if (arguments[0] > ((u64) 1 << 30)) {
+            stop("an allocation of " + std::to_string(arguments[0])
+                 + " bytes");
+            return 0;
+        }
+
+        u32 made = allocate((u32) arguments[0],
+                            "an allocation of "
+                                + std::to_string(arguments[0]) + " bytes",
+                            garbage);
+
+        memory[made].heap = true;
+
+        return pointer_to(made, 0);
+    }
+
+    // C++'s 'delete' of a null pointer does nothing, and so does this
+    if (name == "__free" && arguments.size() == 1) {
+        u32 block = block_of(arguments[0]);
+
+        if (arguments[0] == 0) {
+            return 0;
+        }
+
+        if (block >= memory.size() || !memory[block].heap
+            || offset_of(arguments[0]) != 0) {
+            stop("frees what no allocation gave");
+            return 0;
+        }
+
+        if (!memory[block].live) {
+            stop("frees " + memory[block].what + " a second time");
+            return 0;
+        }
+
+        memory[block].live = false;
+
         return 0;
     }
 
@@ -838,6 +940,7 @@ u32 IrInterpreter::allocate(u32 size, const std::string& what,
 
     made.bytes.assign(size, 0);
     made.live = true;
+    made.heap = false;
     made.read_only = false;
     made.object.index = 0;
     made.what = what;
@@ -873,6 +976,11 @@ u8* IrInterpreter::reach(u64 address, u32 size, bool write) {
     }
 
     Memory& held = memory[block];
+
+    if (!held.live && held.heap) {
+        stop("an access to " + held.what + " after it was freed");
+        return nullptr;
+    }
 
     if (!held.live) {
         stop("an access to " + held.what + " of a function that returned");

@@ -1,0 +1,40 @@
+data @answer : b32 = zero
+
+func @setup() init {
+  %1 = addr @answer
+  %2 = const b32 42
+  store b32 %2, %1
+  ret
+}
+
+func @main() -> b32 {
+  %1 = addr @answer
+  %2 = load b32, %1
+  ret b32 %2
+}
+
+verifier: ok
+
+after flatten:
+
+data @answer : b32 = zero
+
+func @setup() init {
+^1:
+  %1 = addr @answer
+  %2 = const b32 42
+  store b32 %2, %1
+  ret
+}
+
+func @main() -> b32 {
+^1:
+  %1 = addr @answer
+  %2 = load b32, %1
+  ret b32 %2
+}
+
+verifier: ok
+
+run on x86_64-linux:
+exit 42

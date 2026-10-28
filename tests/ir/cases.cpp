@@ -598,6 +598,15 @@ static void verifier_operands_of_two_widths(Fixture& f) {
     f.build.ret(f.at());
 }
 
+static void verifier_check_index_of_two_widths(Fixture& f) {
+    f.function("f", {}, NOTHING, IR_FORM_STRUCTURED);
+    IrValueId index = f.number(f.b32, 1);
+    IrValueId length = f.number(f.b64, 2);
+
+    f.build.check_index(f.b64, index, length, f.at());
+    f.build.ret(f.at());
+}
+
 static void verifier_a_float_operation_on_whole_numbers(Fixture& f) {
     f.function("f", {}, NOTHING, IR_FORM_STRUCTURED);
     IrValueId one = f.number(f.b32, 1);
@@ -1297,6 +1306,68 @@ static void run_an_index_past_the_end(Fixture& f) {
                 f.at());
 }
 
+// question 9b: the index is read as unsigned, so 2 of 3 passes and -1 is
+// past the end
+static void run_check_index_aborts_past_the_length(Fixture& f) {
+    f.function("main", {}, f.b32, IR_FORM_STRUCTURED);
+
+    IrValueId three = f.number(f.b32, 3);
+    IrValueId two = f.number(f.b32, 2);
+    IrValueId minus_one = f.number(f.b32, 0xffffffff);
+
+    f.build.check_index(f.b32, two, three, f.at());
+    f.build.check_index(f.b32, minus_one, three, f.at());
+    f.build.ret(f.b32, f.number(f.b32, 0), f.at());
+}
+
+// '__alloc' and '__free', and a read of the allocation after it
+static void run_a_load_after_free(Fixture& f) {
+    IrObjectId alloc = f.program.add_native(
+        "__alloc", f.program.signature({f.b64}, f.ptr));
+    IrObjectId release = f.program.add_native(
+        "__free", f.program.signature({f.ptr}, NOTHING));
+
+    f.function("main", {}, f.b32, IR_FORM_STRUCTURED);
+
+    IrValueId made = f.build.call(alloc, {f.number(f.b64, 4)}, f.at());
+
+    f.build.store(f.b32, f.number(f.b32, 7), made, f.at());
+
+    IrValueId kept = f.build.load(f.b32, made, f.at());
+
+    f.build.call(release, {made}, f.at());
+    f.build.load(f.b32, made, f.at());
+    f.build.ret(f.b32, kept, f.at());
+}
+
+// a slot is not the heap's to free
+static void run_a_free_of_a_slot(Fixture& f) {
+    IrObjectId release = f.program.add_native(
+        "__free", f.program.signature({f.ptr}, NOTHING));
+
+    f.function("main", {}, f.b32, IR_FORM_STRUCTURED);
+
+    IrValueId slot = f.build.slot(f.b32, f.at());
+
+    f.build.call(release, {slot}, f.at());
+    f.build.ret(f.b32, f.number(f.b32, 0), f.at());
+}
+
+// an initialiser runs before the function asked for: @main reads 42
+static void run_an_initialiser_runs_first(Fixture& f) {
+    IrObjectId global = f.program.add_zeroed("answer", f.b32);
+    IrObjectId setup = f.function("setup", {}, NOTHING, IR_FORM_STRUCTURED);
+
+    f.program.add_initialiser(setup);
+    f.build.store(f.b32, f.number(f.b32, 42),
+                  f.build.address(global, f.at()), f.at());
+    f.build.ret(f.at());
+    f.function("main", {}, f.b32, IR_FORM_STRUCTURED);
+    f.build.ret(f.b32,
+                f.build.load(f.b32, f.build.address(global, f.at()), f.at()),
+                f.at());
+}
+
 static void run_a_write_to_read_only_data(Fixture& f) {
     IrObjectId text = f.program.add_text("hello", "hello");
 
@@ -1400,6 +1471,11 @@ static const Case CASES[] = {
     {"run_an_upcast_past_the_vptr", run_an_upcast_past_the_vptr},
     {"run_a_slot_used_after_its_frame", run_a_slot_used_after_its_frame},
     {"run_an_index_past_the_end", run_an_index_past_the_end},
+    {"run_check_index_aborts_past_the_length",
+     run_check_index_aborts_past_the_length},
+    {"run_a_load_after_free", run_a_load_after_free},
+    {"run_a_free_of_a_slot", run_a_free_of_a_slot},
+    {"run_an_initialiser_runs_first", run_an_initialiser_runs_first},
     {"run_a_write_to_read_only_data", run_a_write_to_read_only_data},
     {"run_a_load_through_null", run_a_load_through_null},
     {"run_memory_nobody_wrote", run_memory_nobody_wrote},
@@ -1425,6 +1501,7 @@ static const Case CASES[] = {
      verifier_a_break_out_of_no_region_around_it},
     {"verifier_a_continue_of_a_block", verifier_a_continue_of_a_block},
     {"verifier_operands_of_two_widths", verifier_operands_of_two_widths},
+    {"verifier_check_index_of_two_widths", verifier_check_index_of_two_widths},
     {"verifier_a_float_operation_on_whole_numbers",
      verifier_a_float_operation_on_whole_numbers},
     {"verifier_an_ordered_comparison_of_floats",

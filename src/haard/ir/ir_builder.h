@@ -67,6 +67,10 @@ namespace haard {
                             IrPosition at);
             IrValueId index(IrTypeId element, IrValueId of, IrValueId which,
                             IrPosition at);
+
+            // both of this whole-number type
+            void check_index(IrTypeId type, IrValueId index, IrValueId length,
+                             IrPosition at);
             IrValueId upcast(IrTypeId from, IrTypeId to, IrValueId of,
                              IrPosition at);
             IrValueId downcast(IrTypeId from, IrTypeId to, IrValueId of,
