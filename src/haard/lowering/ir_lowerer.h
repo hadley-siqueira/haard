@@ -1,6 +1,7 @@
 #ifndef HAARD_IR_LOWERER_H
 #define HAARD_IR_LOWERER_H
 
+#include <haard/ir/ir_layout.h>
 #include <haard/ir/ir_program.h>
 #include <haard/ir/ir_type_translator.h>
 
@@ -116,6 +117,24 @@ namespace haard {
             bool lowerable(IrTypeId type);
 
             IrObjectId structor(StructorKind kind, IrTypeId type, u32 init);
+
+            // A class's vtable (record 0077, stage 1): its descriptor, then
+            // each slot's function, slot 0 the destructor. A datum with
+            // relocations, made the first time a class is built, with the
+            // descriptor -- name, size, base -- beside it
+            IrObjectId vtable_of(IrTypeId type);
+
+            // the slot a method of a class fills, -1 for one that fills none
+            // ('init', a struct's method)
+            i32 slot_of_method(u32 module, u32 candidate);
+
+            // the class a method's object is passed as: the highest class
+            // whose vtable has the method's slot, so every override of it
+            // takes the same; the method's own class or struct otherwise
+            IrTypeId receiver_type(u32 module, u32 candidate);
+
+            // the same for the destructor, which is slot 0
+            IrTypeId top_class(IrTypeId type);
             const StructorJob& get_structor(IrObjectId function);
 
             // a struct's own methods, as candidates of its module, 0 when it
@@ -125,6 +144,11 @@ namespace haard {
             u32 copy_init_of(IrTypeId type);
             u32 move_init_of(IrTypeId type);
             u32 empty_init_of(IrTypeId type);
+
+            // by name and number of parameters; for an 'init' of one, 'kind'
+            // 1 asks for one taking this struct, 2 a 'T&&' of it, 0 anything
+            u32 method_named(IrTypeId type, const std::string& name,
+                             u32 parameters, u8 kind);
             bool has_init(IrTypeId type);
 
             // through the base, the fields and an array's elements: whether
@@ -145,9 +169,9 @@ namespace haard {
         private:
             bool declare_functions();
             bool declare_function(u32 module, u32 node, u32 holder);
+            IrObjectId descriptor_of(IrTypeId type);
+            IrTypeId introducer_of(IrTypeId type, u32 slot);
             bool lower_structors();
-            u32 method_named(IrTypeId type, const std::string& name,
-                             u32 parameters, u8 kind);
             bool declare_globals();
             bool lower_bodies();
             bool lower_globals();
@@ -180,6 +204,9 @@ namespace haard {
             std::map<std::vector<u32>, u32> made_structors;
             std::vector<StructorJob> structors;
             std::map<u32, u32> structor_index;
+
+            std::map<u32, u32> vtables;
+            std::map<u32, u32> descriptors;
 
             IrObjectId alloc_native;
             IrObjectId free_native;

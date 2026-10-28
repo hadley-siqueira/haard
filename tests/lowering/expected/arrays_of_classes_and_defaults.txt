@@ -1,0 +1,443 @@
+class Cell { id: b64 }
+vtable Cell { 0: destroy }
+class Bag { items: b32[4], count: b32 }
+vtable Bag { 0: destroy, 1: contains }
+class Name { first: b8 }
+vtable Name { 0: destroy }
+
+data @trace : b64 = zero
+data @text.0 : b8[6] = readonly "haard\00"
+data @Cell.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Cell.descriptor at 0, @Cell.~Cell at 8
+data @Cell.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.1 at 0
+data @text.1 : b8[5] = readonly "Cell\00"
+data @Bag.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Bag.descriptor at 0, @Bag.~Bag at 8, @Bag.contains at 16
+data @Bag.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00 \00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.2 at 0
+data @text.2 : b8[4] = readonly "Bag\00"
+data @Name.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Name.descriptor at 0, @Name.~Name at 8
+data @Name.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.3 at 0
+data @text.3 : b8[5] = readonly "Name\00"
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %6 = slot Cell[3]
+  %8 = slot b64
+  %35 = slot b64
+  %55 = slot ptr
+  %65 = slot b64
+  %91 = slot b64
+  %109 = slot Bag
+  %112 = slot bool
+  %113 = slot bool
+  %126 = slot Name
+  %2 = const b32 0
+  store b32 %2, %1
+  %3 = addr @trace
+  %4 = const b64 0
+  store b64 %4, %3
+  %5 = const bool true
+  $8: if %5 {
+    %7 = const b64 3
+    %9 = const b64 0
+    store b64 %9, %8
+    $14: loop bound 3 {
+      %10 = load b64, %8
+      %11 = uge b64 %10, %7
+      $17: if %11 {
+        break $14
+      }
+      %12 = index %6, %10 : Cell
+      call @Cell.Cell(%12)
+      %13 = load b64, %8
+      %14 = const b64 1
+      %15 = add b64 %13, %14
+      store b64 %15, %8
+    }
+    %16 = const b32 0
+    %17 = sext b32 %16 to b64
+    %18 = const b64 3
+    check_index b64 %17, %18
+    %19 = index %6, %17 : Cell
+    %20 = field %19, Cell.id
+    %21 = const b64 1
+    store b64 %21, %20
+    %22 = const b32 1
+    %23 = sext b32 %22 to b64
+    %24 = const b64 3
+    check_index b64 %23, %24
+    %25 = index %6, %23 : Cell
+    %26 = field %25, Cell.id
+    %27 = const b64 2
+    store b64 %27, %26
+    %28 = const b32 2
+    %29 = sext b32 %28 to b64
+    %30 = const b64 3
+    check_index b64 %29, %30
+    %31 = index %6, %29 : Cell
+    %32 = field %31, Cell.id
+    %33 = const b64 3
+    store b64 %33, %32
+    %34 = const b64 3
+    %36 = const b64 0
+    store b64 %36, %35
+    $53: loop bound 3 {
+      %37 = load b64, %35
+      %38 = uge b64 %37, %34
+      $56: if %38 {
+        break $53
+      }
+      %39 = const b64 1
+      %40 = sub b64 %34, %37
+      %41 = sub b64 %40, %39
+      %42 = index %6, %41 : Cell
+      call @Cell.~Cell(%42)
+      %43 = load b64, %35
+      %44 = const b64 1
+      %45 = add b64 %43, %44
+      store b64 %45, %35
+    }
+  }
+  %46 = addr @trace
+  %47 = load b64, %46
+  %48 = const b64 555321
+  %49 = eq b64 %47, %48
+  $71: if %49 {
+    %50 = load b32, %1
+    %51 = const b32 1
+    %52 = add b32 %50, %51
+    store b32 %52, %1
+  }
+  %53 = addr @trace
+  %54 = const b64 0
+  store b64 %54, %53
+  %56 = size Cell as b64
+  %57 = const b32 2
+  %58 = sext b32 %57 to b64
+  %59 = mul b64 %56, %58
+  %60 = size b64 as b64
+  %61 = add b64 %59, %60
+  %62 = call @__alloc(%61)
+  store b64 %58, %62
+  %63 = const b64 1
+  %64 = index %62, %63 : b64
+  %66 = const b64 0
+  store b64 %66, %65
+  $93: loop {
+    %67 = load b64, %65
+    %68 = uge b64 %67, %58
+    $96: if %68 {
+      break $93
+    }
+    %69 = index %64, %67 : Cell
+    call @Cell.Cell(%69)
+    %70 = load b64, %65
+    %71 = const b64 1
+    %72 = add b64 %70, %71
+    store b64 %72, %65
+  }
+  store ptr %64, %55
+  %73 = load ptr, %55
+  %74 = const b32 0
+  %75 = sext b32 %74 to b64
+  %76 = index %73, %75 : Cell
+  %77 = field %76, Cell.id
+  %78 = const b64 4
+  store b64 %78, %77
+  %79 = load ptr, %55
+  %80 = const b32 1
+  %81 = sext b32 %80 to b64
+  %82 = index %79, %81 : Cell
+  %83 = field %82, Cell.id
+  %84 = const b64 6
+  store b64 %84, %83
+  %85 = load ptr, %55
+  %86 = null
+  %87 = ne ptr %85, %86
+  $122: if %87 {
+    %88 = const b64 18446744073709551615
+    %89 = index %85, %88 : b64
+    %90 = load b64, %89
+    %92 = const b64 0
+    store b64 %92, %91
+    $129: loop {
+      %93 = load b64, %91
+      %94 = uge b64 %93, %90
+      $132: if %94 {
+        break $129
+      }
+      %95 = const b64 1
+      %96 = sub b64 %90, %93
+      %97 = sub b64 %96, %95
+      %98 = index %85, %97 : Cell
+      call @Cell.~Cell(%98)
+      %99 = load b64, %91
+      %100 = const b64 1
+      %101 = add b64 %99, %100
+      store b64 %101, %91
+    }
+    call @__free(%89)
+  }
+  %102 = addr @trace
+  %103 = load b64, %102
+  %104 = const b64 5564
+  %105 = eq b64 %103, %104
+  $148: if %105 {
+    %106 = load b32, %1
+    %107 = const b32 2
+    %108 = add b32 %106, %107
+    store b32 %108, %1
+  }
+  %110 = const b32 7
+  %111 = const b32 8
+  call @Bag.Bag(%109, %110, %111)
+  %114 = const b32 7
+  %115 = vcall Bag.contains(%109, %114)
+  store bool %115, %113
+  $162: if %115 {
+    %116 = const b32 8
+    %117 = vcall Bag.contains(%109, %116)
+    store bool %117, %113
+  }
+  %118 = load bool, %113
+  store bool %118, %112
+  $168: if %118 {
+    %119 = const b32 9
+    %120 = vcall Bag.contains(%109, %119)
+    %121 = not bool %120
+    store bool %121, %112
+  }
+  %122 = load bool, %112
+  $174: if %122 {
+    %123 = load b32, %1
+    %124 = const b32 4
+    %125 = add b32 %123, %124
+    store b32 %125, %1
+  }
+  %127 = addr @text.0
+  call @Name.Name(%126, %127)
+  %128 = field %126, Name.first
+  %129 = load b8, %128
+  %130 = const b8 104
+  %131 = eq b8 %129, %130
+  $186: if %131 {
+    %132 = load b32, %1
+    %133 = const b32 8
+    %134 = add b32 %132, %133
+    store b32 %134, %1
+  }
+  %135 = load b32, %1
+  ret b32 %135
+}
+
+func @Cell.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Cell.id
+  %5 = const b64 0
+  store b64 %5, %4
+  %6 = const b64 5
+  call @note(%6)
+  ret
+}
+
+func @Cell.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Cell.id
+  %5 = load b64, %4
+  call @note(%5)
+  ret
+}
+
+func @Bag.init(%1: ptr, %2: b32, %3: b32) {
+  %4 = slot ptr
+  %5 = slot b32
+  %6 = slot b32
+  store ptr %1, %4
+  store b32 %2, %5
+  store b32 %3, %6
+  %7 = load ptr, %4
+  %8 = field %7, Bag.items
+  %9 = const b32 0
+  %10 = sext b32 %9 to b64
+  %11 = const b64 4
+  check_index b64 %10, %11
+  %12 = index %8, %10 : b32
+  %13 = load b32, %5
+  store b32 %13, %12
+  %14 = load ptr, %4
+  %15 = field %14, Bag.items
+  %16 = const b32 1
+  %17 = sext b32 %16 to b64
+  %18 = const b64 4
+  check_index b64 %17, %18
+  %19 = index %15, %17 : b32
+  %20 = load b32, %6
+  store b32 %20, %19
+  %21 = load ptr, %4
+  %22 = field %21, Bag.count
+  %23 = const b32 2
+  store b32 %23, %22
+  ret
+}
+
+func @Bag.contains(%1: ptr, %2: b32) -> bool {
+  %3 = slot ptr
+  %4 = slot b32
+  %5 = slot b32
+  %9 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %6 = load ptr, %3
+  %7 = field %6, Bag.count
+  %8 = load b32, %7
+  store b32 %8, %5
+  %10 = const b32 0
+  store b32 %10, %9
+  $13: loop {
+    %11 = load b32, %9
+    %12 = load b32, %5
+    %13 = slt b32 %11, %12
+    %14 = not bool %13
+    $18: if %14 {
+      break $13
+    }
+    $20: block {
+      %15 = load ptr, %3
+      %16 = field %15, Bag.items
+      %17 = load b32, %9
+      %18 = sext b32 %17 to b64
+      %19 = const b64 4
+      check_index b64 %18, %19
+      %20 = index %16, %18 : b32
+      %21 = load b32, %20
+      %22 = load b32, %4
+      %23 = eq b32 %21, %22
+      $31: if %23 {
+        %24 = const bool true
+        ret bool %24
+      }
+    }
+    %25 = load b32, %9
+    %26 = const b32 1
+    %27 = add b32 %25, %26
+    store b32 %27, %9
+  }
+  %28 = const bool false
+  ret bool %28
+}
+
+func @Name.init(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Name.first
+  %7 = load ptr, %4
+  %8 = const b32 0
+  %9 = sext b32 %8 to b64
+  %10 = index %7, %9 : b8
+  %11 = load b8, %10
+  store b8 %11, %6
+  ret
+}
+
+func @Cell.Cell(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Cell.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @Cell.init(%3)
+  ret
+}
+
+func @Cell.~Cell(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Cell.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @Cell.destroy(%3)
+  ret
+}
+
+native @__alloc(%1: b64) -> ptr
+
+native @__free(%1: ptr)
+
+func @Bag.Bag(%1: ptr, %2: b32, %3: b32) {
+  %4 = slot ptr
+  store ptr %1, %4
+  %5 = load ptr, %4
+  %6 = addr @Bag.vtable
+  %7 = const b64 1
+  %8 = index %6, %7 : ptr
+  store ptr %8, %5
+  %9 = field %5, Bag.items
+  call @Bag.init(%5, %2, %3)
+  ret
+}
+
+func @Name.Name(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @Name.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @Name.init(%4, %2)
+  ret
+}
+
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
+  ret
+}
+
+func @Bag.~Bag(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Bag.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @Name.~Name(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Name.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+--- exit: 15

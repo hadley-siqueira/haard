@@ -381,6 +381,38 @@ checked against the C++ path (7, 63, 15, 31). No emitter program is only
 structs, so none moved off `not_yet`. One bug found before it was committed:
 a temporary on the right of an `and` was ended whether or not it was made.
 
+**Step 4 built (2026-10-28)**: classes. The lowering translates every type
+first and builds the class table. A class's vtable is a read-only datum made
+the first time the class is built: the descriptor's address, then each
+slot's function, slot 0 the destructor (`A.~A`); the descriptor beside it,
+version 1 (the name's text, the size, the base's descriptor). The vptr,
+first in the object, points at slot 0. Each constructor writes it after its
+base is built and each destructor before it runs (C++'s rule), so a call
+made from a base's `init` or `destroy` reaches the base's method. A method
+call is a `vcall` through its slot, the object passed as the class that
+introduced the slot -- every override takes the same, and downcasts to its
+own on entry -- with the object the first argument and a destination after
+it (question 83); `super.f()` and `init` are direct. `delete` of a class
+ends it through slot 0. A class is never copied or assigned by its bytes,
+since a class derived from it would bring its vptr: the copy writes its
+own, the assignment goes field by field. `T()` zeroes a struct or class with
+no `init` before building it (C++'s value-initialisation), as `new T` does.
+Closing step 3's gaps, which the emitter's programs met: a fixed array of
+structs or classes is built first to last and ended last to first; `new
+T[n]` of a class, or of a struct that ends, keeps n before the elements, as
+the Itanium ABI's cookie does, for `delete[]`; a parameter left out is given
+its default, worked out where it is called in the module that wrote it; `x
+in c` is `c.contains(x)`; a bracket, braced or string literal a class takes,
+and a range written as a value, are built by the `init` the emitter calls.
+The interpreter got its file devices: files kept in memory for a run, with
+C's `fopen`/`fgetc`/`feof` behaviour. A `main` taking a list is refused by
+name until step 6. Three cases of the suite's own, checked against the C++
+path (31, 15, 15); 28 emitter programs moved off `not_yet`, 55 agree in all,
+34 wait. Found on the C++ path, not fixed: **a class value given to a `T&`
+of its base is copied into a temporary of the base** (`which(Base(d))`), so
+a virtual call through the reference runs the base's method -- record 0035
+says a reference is the thing it names, and the IR binds it.
+
 ## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
 
 The first instruction set:

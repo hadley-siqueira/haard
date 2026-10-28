@@ -54,7 +54,10 @@ namespace haard {
     // Bytes are in the target's order, by the target's layout. New memory is
     // filled with a fixed pattern when asked (question 10), so a program that
     // reads what nobody wrote gives an answer it cannot rely on. The natives
-    // of 'std.low_io' are its devices: output goes to the stream it is given.
+    // of 'std.low_io' are its devices: output goes to the stream it is given,
+    // and a file is kept in memory for the run, as C's stdio would read and
+    // write it -- 'at_end' true once a read has found the end, a read past it
+    // giving back the char -1 does.
     // '__alloc' and '__free' are the heap's, which 'new' and 'delete' call.
     //
     // The program's initialisers run first, in their order, and then the
@@ -149,6 +152,20 @@ namespace haard {
             u64 stdout_handle;
             u64 stderr_handle;
             u64 stdin_handle;
+
+            // the files of a run, by name, and each open one by its handle
+            struct OpenFile {
+                std::string name;
+                bool writing;
+                u32 position;
+                bool at_end;
+            };
+
+            std::map<std::string, std::vector<u8>> files;
+            std::map<u64, OpenFile> open_files;
+
+            // a char* argument read as the text it points at
+            std::string text_at(u64 address);
 
             // where execution is, for a stop's report
             IrObjectId at_function;

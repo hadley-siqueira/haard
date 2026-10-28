@@ -205,6 +205,8 @@ bool IrInterpreter::prepare() {
     stdout_handle = pointer_to(allocate(1, "stdout", false), 0);
     stderr_handle = pointer_to(allocate(1, "stderr", false), 0);
     stdin_handle = pointer_to(allocate(1, "stdin", false), 0);
+    files.clear();
+    open_files.clear();
 
     return true;
 }
@@ -635,6 +637,84 @@ u64 IrInterpreter::native(IrObjectId id, const std::vector<u64>& arguments) {
         return stdin_handle;
     }
 
+    // fopen's answer for a file that is not there is null
+    if ((name == "__io_open_read" || name == "__io_open_write")
+        && arguments.size() == 1) {
+        std::string path = text_at(arguments[0]);
+        bool writing = name == "__io_open_write";
+
+        if (halted || (!writing && files.count(path) == 0)) {
+            return 0;
+        }
+
+        if (writing) {
+            files[path].clear();
+        }
+
+        u64 handle = pointer_to(allocate(1, "the file '" + path + "'", false),
+                                0);
+        OpenFile made = {path, writing, 0, false};
+
+        open_files[handle] = made;
+
+        return handle;
+    }
+
+    if ((name == "__io_read" || name == "__io_at_end" || name == "__io_close"
+         || (name == "__io_write" && arguments[0] != stdout_handle
+             && arguments[0] != stderr_handle))
+        && arguments.size() >= 1 && arguments[0] != stdin_handle) {
+        std::map<u64, OpenFile>::iterator found = open_files.find(arguments[0]);
+
+        if (found == open_files.end()) {
+            stop("@" + name + " of a handle that is not an open file");
+            return 0;
+        }
+
+        OpenFile& file = found->second;
+        std::vector<u8>& bytes = files[file.name];
+
+        if (name == "__io_close") {
+            open_files.erase(found);
+            return 0;
+        }
+
+        if (name == "__io_at_end") {
+            return file.at_end ? 1 : 0;
+        }
+
+        if (name == "__io_write") {
+            if (!file.writing) {
+                stop("writes to '" + file.name + "', opened for reading");
+                return 0;
+            }
+
+            bytes.push_back((u8) arguments[1]);
+            return 0;
+        }
+
+        if (file.writing) {
+            stop("reads from '" + file.name + "', opened for writing");
+            return 0;
+        }
+
+        if (file.position >= bytes.size()) {
+            file.at_end = true;
+            return 0xff;
+        }
+
+        return bytes[file.position++];
+    }
+
+    // nothing is typed in: the console's input is at its end at once
+    if (name == "__io_read" && arguments.size() == 1) {
+        return 0xff;
+    }
+
+    if (name == "__io_at_end" && arguments.size() == 1) {
+        return 1;
+    }
+
     if (name == "__io_write" && arguments.size() == 2) {
         if (arguments[0] != stdout_handle && arguments[0] != stderr_handle) {
             stop("writes to a handle that is not stdout or stderr");
@@ -702,6 +782,22 @@ u64 IrInterpreter::native(IrObjectId id, const std::vector<u64>& arguments) {
     stop("the native @" + name + " is not in the interpreter yet");
 
     return 0;
+}
+
+std::string IrInterpreter::text_at(u64 address) {
+    std::string made;
+
+    for (u64 at = address; !halted; at++) {
+        u8* byte = reach(at, 1, false);
+
+        if (byte == nullptr || *byte == 0) {
+            break;
+        }
+
+        made += (char) *byte;
+    }
+
+    return made;
 }
 
 u64 IrInterpreter::arithmetic(IrOpcode opcode, IrTypeId type, u64 left,

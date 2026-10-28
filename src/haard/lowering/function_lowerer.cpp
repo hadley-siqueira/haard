@@ -46,16 +46,26 @@ bool FunctionLowerer::lower(u32 module, u32 node, IrObjectId function) {
 
     returning = written.size() == 0 ? INVALID_TYPE : written.back();
 
-    if (shape & SHAPE_DESTINATION) {
-        destination = build.parameter(first++);
-        named_result = named_result_of(query.get_block(node));
-    }
-
+    // a method filling a slot is given its object as the class that
+    // introduced the slot, and sees it as its own
     if (shape & SHAPE_METHOD) {
+        IrTypeId given = owner->receiver_type(module, own);
+        IrValueId object = build.parameter(first++);
+
         holder = owner->type_of_declaration(module,
                                             owner->holder_of(module, own));
         self = build.entry_slot(pointer, at(node));
-        build.store(pointer, build.parameter(first++), self, at(node));
+
+        if (given.index != holder.index) {
+            object = build.downcast(given, holder, object, at(node));
+        }
+
+        build.store(pointer, object, self, at(node));
+    }
+
+    if (shape & SHAPE_DESTINATION) {
+        destination = build.parameter(first++);
+        named_result = named_result_of(query.get_block(node));
     }
 
     // every parameter is copied into a slot on entry (question 82); a struct
@@ -134,7 +144,19 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
     here = at(aggregate->declaration);
     holder = job.type;
     self = build.entry_slot(pointer, here);
-    build.store(pointer, build.parameter(0), self, here);
+
+    // a class's destructor fills slot 0, so it is given its object as the
+    // class at the top of the chain
+    IrValueId given = build.parameter(0);
+    bool is_class = types->get_type(job.type)->kind == IR_CLASS;
+
+    if (job.kind == STRUCTOR_DESTROY && is_class
+        && owner->top_class(job.type).index != job.type.index) {
+        given = build.downcast(owner->top_class(job.type), job.type, given,
+                               here);
+    }
+
+    build.store(pointer, given, self, here);
     open_scope(false);
 
     IrValueId object = build.load(pointer, self, here);
@@ -175,6 +197,10 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
             }
         }
 
+        if (is_class) {
+            store_vptr(object, job.type, here);
+        }
+
         for (u32 i = 0; i < fields.size() && !failed; i++) {
             IrValueId to = build.field(job.type, object, i, here);
             IrValueId from = build.field(job.type, other, i, here);
@@ -192,10 +218,14 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
 
     // the 'destroy' method, then the fields last to first, then the base
     case STRUCTOR_DESTROY: {
-        u32 destroy = owner->destroy_of(job.type);
+        u32 destroy_method = owner->destroy_of(job.type);
 
-        if (destroy != 0) {
-            build.call(owner->function_of(owning, destroy), {object}, here);
+        if (is_class) {
+            store_vptr(object, job.type, here);
+        }
+
+        if (destroy_method != 0) {
+            call_method(owning, destroy_method, {object}, false, here);
         }
 
         for (u32 i = fields.size(); i > 0 && !failed; i--) {
@@ -205,18 +235,11 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
                 continue;
             }
 
-            if (types->get_type(one)->kind == IR_ARRAY) {
-                not_yet("an array of structs that end");
-                break;
-            }
-
-            build.call(owner->structor(STRUCTOR_DESTROY, one, 0),
-                       {build.field(job.type, object, i - 1, here)}, here);
+            destroy(build.field(job.type, object, i - 1, here), one, here);
         }
 
         if (base.index != 0 && owner->has_destructor(base)) {
-            build.call(owner->structor(STRUCTOR_DESTROY, base, 0),
-                       {build.upcast(job.type, base, object, here)}, here);
+            destroy(build.upcast(job.type, base, object, here), base, here);
         }
 
         break;
@@ -236,10 +259,10 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
         build.end();
 
         if (copy != 0) {
-            u32 destroy = owner->destroy_of(job.type);
+            u32 destroy_method = owner->destroy_of(job.type);
 
-            if (destroy != 0) {
-                build.call(owner->function_of(owning, destroy), {object}, here);
+            if (destroy_method != 0) {
+                call_method(owning, destroy_method, {object}, false, here);
             }
 
             build.call(owner->function_of(owning, copy), {object, other}, here);
@@ -266,11 +289,8 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
             if (owner->declares_copy(one)) {
                 build.call(owner->structor(STRUCTOR_ASSIGN, one, 0), {to, from},
                            here);
-            } else if (types->is_aggregate(one)
-                       || types->get_type(one)->kind == IR_ARRAY) {
-                build.copy(one, to, from, here);
             } else {
-                build.store(one, build.load(one, from, here), to, here);
+                assign_value(one, to, from, here);
             }
         }
 
@@ -305,6 +325,10 @@ void FunctionLowerer::prepare(IrValueId object, IrTypeId type) {
         construct_by_default(build.upcast(type, base, object,
                                           at(aggregate->declaration)),
                              base, at(aggregate->declaration));
+    }
+
+    if (types->get_type(type)->kind == IR_CLASS) {
+        store_vptr(object, type, at(aggregate->declaration));
     }
 
     for (u32 i = 0; i < fields.size() && !failed; i++) {
@@ -375,12 +399,12 @@ void FunctionLowerer::run_cleanups(u32 depth, IrPosition here) {
             IrTypeId boolean = program->get_types()->scalar(IR_BOOL);
 
             if (one.flag.index == 0) {
-                build.call(one.destructor, {one.place}, here);
+                destroy(one.place, one.type, here);
                 continue;
             }
 
             build.begin_if(build.load(boolean, one.flag, here), here);
-            build.call(one.destructor, {one.place}, here);
+            destroy(one.place, one.type, here);
             build.store(boolean, build.constant(boolean, 0, here), one.flag,
                         here);
             build.end();
@@ -398,7 +422,7 @@ void FunctionLowerer::add_cleanup(IrValueId place, IrTypeId type, bool local,
     u32 at_scope = scopes.size() - 1;
 
     made.place = place;
-    made.destructor = owner->structor(STRUCTOR_DESTROY, type, 0);
+    made.type = type;
     made.flag.index = 0;
 
     // a local, and a temporary a binding keeps, ends with the block
@@ -728,9 +752,16 @@ void FunctionLowerer::lower_binding(u32 node) {
                              ? destination
                              : build.entry_slot(ir, at(binding));
         u32 given = query.get_binding_expression(binding);
+        // a struct, or a fixed array of them, is built and ended
         IrTypeId built = is_reference_type(module_index, type)
                              ? IrTypeId{0}
                              : struct_of(type);
+
+        if (built.index == 0 && kind_of_type(type) == TYPE_ARRAY
+            && !is_reference_type(module_index, type)
+            && (owner->constructs(ir) || owner->has_destructor(ir))) {
+            built = ir;
+        }
 
         slots[candidate] = slot;
 
@@ -861,12 +892,8 @@ void FunctionLowerer::initialise(IrValueId place, u32 type, u32 given,
     if (kind == TYPE_ARRAY) {
         IrValueId from = place_of(given);
 
-        if (owner->copies_by_init(slot_type(type))) {
-            not_yet("a copy of an array of structs that say how to copy");
-        }
-
         if (!failed) {
-            build.copy(slot_type(type), place, from, here);
+            copy_construct(place, slot_type(type), from, here);
         }
 
         return;
@@ -892,9 +919,14 @@ IrValueId FunctionLowerer::value_of(u32 node) {
     if (kind != AST_CALL && kind != AST_IDENTIFIER && kind != AST_NEW
         && module->get_resolutions()->get(node)->candidate != 0) {
         if (kind == AST_STRING_LITERAL || kind == AST_ARRAY
-            || kind == AST_LIST) {
-            not_yet("a literal that builds a class");
-            return none;
+            || kind == AST_LIST || kind == AST_INCLUSIVE_RANGE
+            || kind == AST_EXCLUSIVE_RANGE) {
+            if (struct_of(type_at(node)).index == 0) {
+                not_yet("a literal that builds a class");
+                return none;
+            }
+
+            return reference_to(node);
         }
 
         IrValueId made = operator_call(node, none);
@@ -1220,7 +1252,7 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
         std::vector<IrValueId> values;
 
         if (built.index == 0) {
-            not_yet("a construction of a class, a union or an enum");
+            not_yet("a construction of a union or an enum");
             return none;
         }
 
@@ -1230,7 +1262,13 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
             place = build.entry_slot(built, at(node));
         }
 
+        // 'T()' is C++'s value-initialisation: a struct or a class with no
+        // 'init' is zeroed before it is built, as 'new T' is
         if (chosen->candidate == 0) {
+            if (!owner->has_init(built)) {
+                zero(place, built, at(node));
+            }
+
             construct_by_default(place, built, at(node));
         } else if (arguments_for(chosen->module, chosen->candidate, first,
                                  values)) {
@@ -1270,6 +1308,10 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
 
     // question 80: a struct given back is built where the caller says, a
     // temporary when the caller says nowhere
+    if (shape & SHAPE_METHOD) {
+        values.push_back(receiver_of(callee, found->module, found->candidate));
+    }
+
     if (shape & SHAPE_DESTINATION) {
         built = struct_of(signature_of(found->module, found->candidate).back(),
                           found->module);
@@ -1281,16 +1323,20 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
         values.push_back(place);
     }
 
-    if (shape & SHAPE_METHOD) {
-        values.push_back(receiver_of(callee, found->module, found->candidate));
-    }
-
     if (failed
         || !arguments_for(found->module, found->candidate, first, values)) {
         return none;
     }
 
-    IrValueId given = build.call(target, values, at(node));
+    // 'super.f()' is the base's own, called without dispatch (record 0074)
+    bool through_super = (kind_of(callee) == AST_DOT
+                          || kind_of(callee) == AST_ARROW)
+                      && kind_of(child_of(callee, 0)) == AST_SUPER;
+    IrValueId given =
+        (shape & SHAPE_METHOD)
+            ? call_method(found->module, found->candidate, values,
+                          !through_super, at(node))
+            : build.call(target, values, at(node));
 
     if (shape & SHAPE_DESTINATION) {
         if (into.index == 0) {
@@ -1304,12 +1350,12 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
 }
 
 bool FunctionLowerer::arguments_for(u32 callee_module, u32 candidate,
-                                    u32 first,
-                                    std::vector<IrValueId>& values) {
+                                    u32 first, std::vector<IrValueId>& values,
+                                    u32 limit) {
     std::vector<u32> written = signature_of(callee_module, candidate);
     u32 at_parameter = 0;
 
-    for (u32 one = first; one != 0;
+    for (u32 one = first; one != 0 && at_parameter < limit;
          one = module->get_ast()->get_node(one)->get_sibling(), at_parameter++) {
         u32 wanted = at_parameter + 1 < written.size() ? written[at_parameter]
                                                        : INVALID_TYPE;
@@ -1336,12 +1382,64 @@ bool FunctionLowerer::arguments_for(u32 callee_module, u32 candidate,
         }
     }
 
+    // record 0012: what is left out is the default the parameter declares
     if (at_parameter + 1 < written.size()) {
-        not_yet("a call that leaves a parameter to its default");
-        return false;
+        u32 function = compilation->get_module(callee_module)->get_symbols()
+                           ->get_candidate(candidate)->ast_node;
+        AstQuery query;
+
+        query.set_module(compilation->get_module(callee_module));
+
+        std::vector<u32> parameters = query.get_params(function);
+
+        for (; at_parameter + 1 < written.size() && !failed; at_parameter++) {
+            u32 wanted = written[at_parameter];
+            IrTypeId built = struct_of(wanted, callee_module);
+
+            if (built.index != 0
+                && !is_reference_type(callee_module, wanted)) {
+                not_yet("a default of a struct given by value");
+                return false;
+            }
+
+            values.push_back(default_of(callee_module,
+                                        parameters[at_parameter],
+                                        is_reference_type(callee_module,
+                                                          wanted)));
+        }
     }
 
-    return true;
+    return !failed;
+}
+
+IrValueId FunctionLowerer::default_of(u32 owning, u32 parameter,
+                                      bool reference) {
+    IrValueId none = {0};
+    AstQuery query;
+
+    query.set_module(compilation->get_module(owning));
+
+    u32 given = query.get_binding_expression(parameter);
+
+    if (given == 0) {
+        not_yet("a call that leaves out a parameter with no default");
+        return none;
+    }
+
+    // read in the module that wrote it, and only there: its nodes, types and
+    // resolutions are that module's (record 0016)
+    u32 kept_index = module_index;
+    Module* kept = module;
+
+    module_index = owning;
+    module = compilation->get_module(owning);
+
+    IrValueId made = reference ? reference_to(given) : value_of(given);
+
+    module_index = kept_index;
+    module = kept;
+
+    return made;
 }
 
 // a method's object: 'this' inside one, the left of a '.' or a '->' --
@@ -1350,14 +1448,15 @@ IrValueId FunctionLowerer::receiver_of(u32 callee, u32 callee_module,
                                        u32 candidate) {
     IrValueId none = {0};
     u32 declaration = owner->holder_of(callee_module, candidate);
-    IrTypeId target = owner->type_of_declaration(callee_module, declaration);
+    IrTypeId target = owner->receiver_type(callee_module, candidate);
     IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
     IrValueId object = none;
     IrTypeId from = holder;
+    AstNodeKind declared = compilation->get_module(callee_module)->get_ast()
+                               ->get_node(declaration)->get_kind();
 
-    if (compilation->get_module(callee_module)->get_ast()
-            ->get_node(declaration)->get_kind() != AST_STRUCT) {
-        not_yet("a call of a class's method");
+    if (declared != AST_STRUCT && declared != AST_CLASS) {
+        not_yet("a call of a method of a union or an enum");
         return none;
     }
 
@@ -1390,7 +1489,8 @@ IrValueId FunctionLowerer::upcast_to(IrValueId pointer, IrTypeId from,
 }
 
 // Record 0034: 'a + b' is 'a.operator+(b)', the emitter's reading too: the
-// left operand is the object, through it when it is a pointer
+// left operand is the object, through it when it is a pointer. 'x in c' is
+// 'c.contains(x)', the operands the other way round, and 'not in' its 'not'
 IrValueId FunctionLowerer::operator_call(u32 node, IrValueId into) {
     IrValueId none = {0};
     Resolution* chosen = module->get_resolutions()->get(node);
@@ -1401,25 +1501,14 @@ IrValueId FunctionLowerer::operator_call(u32 node, IrValueId into) {
         return none;
     }
 
-    u32 left = child_of(node, 0);
-    u32 declaration = owner->holder_of(chosen->module, chosen->candidate);
-    IrTypeId target_type = owner->type_of_declaration(chosen->module,
-                                                      declaration);
+    bool membership = kind_of(node) == AST_IN || kind_of(node) == AST_NOT_IN;
+    u32 left = membership ? child_of(node, 1) : child_of(node, 0);
+    IrTypeId target_type = owner->receiver_type(chosen->module,
+                                                chosen->candidate);
     u8 shape = owner->shape_of(target);
     std::vector<IrValueId> values;
     IrValueId place = into;
     IrTypeId built = {0};
-
-    if (shape & SHAPE_DESTINATION) {
-        built = struct_of(signature_of(chosen->module, chosen->candidate).back(),
-                          chosen->module);
-
-        if (place.index == 0) {
-            place = build.entry_slot(built, at(node));
-        }
-
-        values.push_back(place);
-    }
 
     IrValueId object = kind_of_type(type_at(left)) == TYPE_POINTER
                            ? value_of(left)
@@ -1434,13 +1523,32 @@ IrValueId FunctionLowerer::operator_call(u32 node, IrValueId into) {
 
     values.push_back(upcast_to(object, from, target_type, at(node)));
 
+    if (shape & SHAPE_DESTINATION) {
+        built = struct_of(signature_of(chosen->module, chosen->candidate).back(),
+                          chosen->module);
+
+        if (place.index == 0) {
+            place = build.entry_slot(built, at(node));
+        }
+
+        values.push_back(place);
+    }
+
     if (!arguments_for(chosen->module, chosen->candidate,
-                       module->get_ast()->get_node(left)->get_sibling(),
-                       values)) {
+                       membership
+                           ? child_of(node, 0)
+                           : module->get_ast()->get_node(left)->get_sibling(),
+                       values, membership ? 1 : 0xffffffff)) {
         return none;
     }
 
-    IrValueId given = build.call(target, values, at(node));
+    IrValueId given = call_method(chosen->module, chosen->candidate, values,
+                                  true, at(node));
+
+    if (kind_of(node) == AST_NOT_IN) {
+        return build.unary(IR_NOT, program->get_types()->scalar(IR_BOOL),
+                           given, at(node));
+    }
 
     if (shape & SHAPE_DESTINATION) {
         if (into.index == 0) {
@@ -1792,7 +1900,7 @@ IrValueId FunctionLowerer::assignment(u32 node) {
             build.call(owner->structor(STRUCTOR_ASSIGN, built, 0), {to, from},
                        at(node));
         } else {
-            build.copy(built, to, from, at(node));
+            assign_value(built, to, from, at(node));
         }
 
         return none;
@@ -1932,7 +2040,7 @@ IrValueId FunctionLowerer::allocation(u32 node) {
     }
 
     if (types->is_aggregate(element) && !owner->lowerable(element)) {
-        not_yet("a 'new' of a class, a union, an enum or a tuple");
+        not_yet("a 'new' of a union, an enum, a tuple or a function");
         return none;
     }
 
@@ -1942,20 +2050,45 @@ IrValueId FunctionLowerer::allocation(u32 node) {
         u32 length = child_of(written, 1);
         IrValueId count = value_of(length);
 
-        if (types->is_aggregate(element) && owner->constructs(element)) {
-            not_yet("a 'new' of an array of structs built with nothing");
-            return none;
-        }
-
         if (failed) {
             return none;
         }
 
-        bytes = build.binary(IR_MUL, usize(), bytes,
-                             to_width(count, type_at(length), usize(), at(node)),
-                             at(node));
+        IrValueId n = to_width(count, type_at(length), usize(), at(node));
 
-        return build.call(owner->allocator(), {bytes}, at(node));
+        bytes = build.binary(IR_MUL, usize(), bytes, n, at(node));
+
+        if (!types->is_aggregate(element)
+            || (!keeps_count(element) && !owner->constructs(element))) {
+            return build.call(owner->allocator(), {bytes}, at(node));
+        }
+
+        // the count first, where 'delete[]' finds it, then the elements,
+        // each built with nothing, first to last
+        IrValueId first = {0};
+
+        if (keeps_count(element)) {
+            IrValueId cookie = build.size(usize(), usize(), at(node));
+            IrValueId start = build.call(
+                owner->allocator(),
+                {build.binary(IR_ADD, usize(), bytes, cookie, at(node))},
+                at(node));
+
+            build.store(usize(), n, start, at(node));
+            first = build.index(usize(), start,
+                                build.constant(usize(), 1, at(node)), at(node));
+        } else {
+            first = build.call(owner->allocator(), {bytes}, at(node));
+        }
+
+        IrValueId turn = {0};
+        IrValueId each = begin_elements(first, element, n, IR_NO_BOUND, false,
+                                        turn, at(node));
+
+        construct_by_default(each, element, at(node));
+        end_elements(turn, at(node));
+
+        return first;
     }
 
     IrValueId made = build.call(owner->allocator(), {bytes}, at(node));
@@ -2012,23 +2145,59 @@ IrValueId FunctionLowerer::release(u32 node) {
 
     if (program->get_types()->is_aggregate(element)
         && !owner->lowerable(element)) {
-        not_yet("a 'delete' of a class, a union, an enum or a tuple");
+        not_yet("a 'delete' of a union, an enum, a tuple or a function");
         return none;
     }
 
-    if (owner->has_destructor(element)) {
-        if (kind_of(node) == AST_DELETE_ARRAY) {
-            not_yet("a 'delete[]' of structs that end");
-            return none;
-        }
+    // 'delete[]' ends each element, last to first, by the count kept before
+    // them, and frees from the count on
+    if (kind_of(node) == AST_DELETE_ARRAY
+        && program->get_types()->is_aggregate(element)
+        && keeps_count(element)) {
+        IrTypeId pointer_type = program->get_types()->pointer(IR_SPACE_GENERIC);
+
+        build.begin_if(build.binary(IR_NE, pointer_type, pointer,
+                                    build.null(at(node)), at(node)),
+                       at(node));
+
+        IrValueId start = build.index(usize(), pointer,
+                                      build.constant(usize(), (u64) -1,
+                                                     at(node)),
+                                      at(node));
+        IrValueId n = build.load(usize(), start, at(node));
+        IrValueId turn = {0};
+        IrValueId each = begin_elements(pointer, element, n, IR_NO_BOUND, true,
+                                        turn, at(node));
+
+        destroy(each, element, at(node));
+        end_elements(turn, at(node));
+        build.call(owner->deallocator(), {start}, at(node));
+        build.end();
+
+        return none;
+    }
+
+    // a class ends by its slot 0, which is whatever class it really is
+    // (record 0026: the destructor is always virtual)
+    if (program->get_types()->get_type(element)->kind == IR_CLASS) {
+        IrTypeId top = owner->top_class(element);
+        IrObjectId ending = owner->structor(STRUCTOR_DESTROY, top, 0);
 
         build.begin_if(build.binary(IR_NE,
                                     program->get_types()->pointer(
                                         IR_SPACE_GENERIC),
                                     pointer, build.null(at(node)), at(node)),
                        at(node));
-        build.call(owner->structor(STRUCTOR_DESTROY, element, 0), {pointer},
-                   at(node));
+        build.vcall(top, 0, program->get_function(ending).signature,
+                    {upcast_to(pointer, element, top, at(node))}, at(node));
+        build.end();
+    } else if (owner->has_destructor(element)) {
+        build.begin_if(build.binary(IR_NE,
+                                    program->get_types()->pointer(
+                                        IR_SPACE_GENERIC),
+                                    pointer, build.null(at(node)), at(node)),
+                       at(node));
+        destroy(pointer, element, at(node));
         build.end();
     }
 
@@ -2086,9 +2255,62 @@ void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
         break;
     }
 
+    case AST_ARRAY:
+    case AST_LIST:
+        build_from_literal(place, type, node);
+        return;
+
+    // record 0037: a string literal a class takes is built by the 'init'
+    // the typer chose, given the literal's text
+    case AST_STRING_LITERAL: {
+        Resolution* chosen = module->get_resolutions()->get(node);
+
+        if (chosen->candidate == 0) {
+            break;
+        }
+
+        construct(place, type, chosen->candidate, {string_literal(node)},
+                  at(node));
+        return;
+    }
+
+    // Record 0052: a range written as a value is its class built from the
+    // start, one past the end -- the inclusive '..' adds the step -- and a
+    // step of 1, by the 'init' taking those three
+    case AST_INCLUSIVE_RANGE:
+    case AST_EXCLUSIVE_RANGE: {
+        u32 init = owner->method_named(type, "init", 3, 0);
+
+        if (init == 0) {
+            not_yet("a range whose class has no 'init' of three");
+            return;
+        }
+
+        IrTypeId each = program->get_signature(
+                            program->get_function(owner->function_of(
+                                program->get_types()->get_aggregate(type)
+                                    ->module,
+                                init)).signature)
+                            .parameters[1];
+        IrValueId start = value_of(child_of(node, 0));
+        IrValueId stop = value_of(child_of(node, 1));
+        IrValueId one = build.constant(each, 1, at(node));
+
+        if (failed) {
+            return;
+        }
+
+        if (kind_of(node) == AST_INCLUSIVE_RANGE) {
+            stop = build.binary(IR_ADD, each, stop, one, at(node));
+        }
+
+        construct(place, type, init, {start, stop, one}, at(node));
+        return;
+    }
+
     default:
         if (module->get_resolutions()->get(node)->candidate != 0
-            && !is_place(node)) {
+            && !is_place(node) && kind_of(node) != AST_STRING_LITERAL) {
             operator_call(node, place);
             return;
         }
@@ -2113,6 +2335,85 @@ void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
                    upcast_to(from, given.index == 0 ? type : given, type,
                              at(node)),
                    at(node));
+}
+
+void FunctionLowerer::build_from_literal(IrValueId place, IrTypeId type,
+                                         u32 node) {
+    Resolution* chosen = module->get_resolutions()->get(node);
+    IrTypeTable* types = program->get_types();
+    IrTypeId count_type = types->scalar(IR_B32);
+    u32 first = child_of(node, 0);
+    u32 count = 0;
+
+    for (u32 one = first; one != 0;
+         one = module->get_ast()->get_node(one)->get_sibling()) {
+        count++;
+    }
+
+    // the fixed array, or nothing to point at when it is empty
+    IrValueId elements = build.null(at(node));
+
+    if (first != 0) {
+        u32 element = type_at(first);
+        IrTypeId each = slot_type(element);
+
+        if (failed) {
+            return;
+        }
+
+        elements = build.entry_slot(types->array(each, count), at(node));
+
+        u64 at_index = 0;
+
+        for (u32 one = first; one != 0 && !failed;
+             one = module->get_ast()->get_node(one)->get_sibling()) {
+            initialise(build.index(each, elements,
+                                   build.constant(usize(), at_index++, at(node)),
+                                   at(node)),
+                       element, one, at(node));
+        }
+    }
+
+    std::vector<IrValueId> taken = {elements,
+                                    build.constant(count_type, count, at(node))};
+
+    // nothing chosen: the literal is its own class, by its 'init' of two
+    if (chosen->candidate == 0) {
+        u32 init = owner->method_named(type, "init", 2, 0);
+
+        if (init == 0) {
+            not_yet("a literal of a class with no 'init' of a pointer and a "
+                    "count");
+            return;
+        }
+
+        construct(place, type, init, taken, at(node));
+        return;
+    }
+
+    std::vector<u32> written = signature_of(chosen->module, chosen->candidate);
+
+    if (written.size() == 3) {
+        construct(place, type, chosen->candidate, taken, at(node));
+        return;
+    }
+
+    // one parameter: the value it takes is built first, into a local of its
+    // own, as the emitter does
+    IrTypeId middle = struct_of(written[0], chosen->module);
+    u32 init = middle.index == 0 ? 0 : owner->method_named(middle, "init", 2, 0);
+
+    if (init == 0) {
+        not_yet("a literal given to an 'init' of a class with no 'init' of a "
+                "pointer and a count");
+        return;
+    }
+
+    IrValueId held = build.entry_slot(middle, at(node));
+
+    construct(held, middle, init, taken, at(node));
+    add_cleanup(held, middle, true, at(node));
+    construct(place, type, chosen->candidate, {held}, at(node));
 }
 
 IrValueId FunctionLowerer::materialise(u32 node) {
@@ -2147,7 +2448,11 @@ void FunctionLowerer::construct_by_default(IrValueId place, IrTypeId type,
 
     if (types->get_type(type)->kind == IR_ARRAY) {
         if (owner->constructs(type)) {
-            not_yet("an array of structs built with nothing");
+            IrValueId turn = {0};
+            IrValueId each = begin_elements(place, type, false, turn, here);
+
+            construct_by_default(each, types->get_type(type)->element, here);
+            end_elements(turn, here);
         }
 
         return;
@@ -2180,7 +2485,13 @@ void FunctionLowerer::construct_by_default(IrValueId place, IrTypeId type,
         }
 
         if (every) {
-            not_yet("an 'init' that answers to nothing by its defaults");
+            u32 candidate = owning->get_symbols()->candidate_of(member);
+            std::vector<IrValueId> values;
+
+            if (arguments_for(aggregate->module, candidate, 0, values)) {
+                construct(place, type, candidate, values, here);
+            }
+
             return;
         }
     }
@@ -2196,7 +2507,14 @@ void FunctionLowerer::copy_construct(IrValueId place, IrTypeId type,
     }
 
     if (program->get_types()->get_type(type)->kind == IR_ARRAY) {
-        not_yet("a copy of an array of structs that say how to copy");
+        IrTypeId element = program->get_types()->get_type(type)->element;
+        IrValueId turn = {0};
+        IrValueId each = begin_elements(place, type, false, turn, here);
+        IrValueId source = build.index(element, from,
+                                       build.load(usize(), turn, here), here);
+
+        copy_construct(each, element, source, here);
+        end_elements(turn, here);
         return;
     }
 
@@ -2222,14 +2540,115 @@ void FunctionLowerer::copy_fields(IrTypeId type, IrValueId to, IrValueId from,
     for (u32 i = 0; i < fields.size(); i++) {
         IrValueId into = build.field(type, to, i, here);
         IrValueId out_of = build.field(type, from, i, here);
-        IrTypeId one = fields[i].type;
-
-        if (types->is_aggregate(one) || types->get_type(one)->kind == IR_ARRAY) {
-            build.copy(one, into, out_of, here);
-        } else {
-            build.store(one, build.load(one, out_of, here), into, here);
-        }
+        assign_value(fields[i].type, into, out_of, here);
     }
+}
+
+void FunctionLowerer::assign_value(IrTypeId type, IrValueId to, IrValueId from,
+                                   IrPosition here) {
+    IrTypeTable* types = program->get_types();
+
+    if (types->get_type(type)->kind == IR_CLASS) {
+        copy_fields(type, to, from, here);
+    } else if (types->is_aggregate(type)
+               || types->get_type(type)->kind == IR_ARRAY) {
+        build.copy(type, to, from, here);
+    } else {
+        build.store(type, build.load(type, from, here), to, here);
+    }
+}
+
+void FunctionLowerer::store_vptr(IrValueId object, IrTypeId type,
+                                 IrPosition here) {
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+    IrValueId table = build.address(owner->vtable_of(type), here);
+
+    build.store(pointer,
+                build.index(pointer, table, build.constant(usize(), 1, here),
+                            here),
+                object, here);
+}
+
+void FunctionLowerer::destroy(IrValueId place, IrTypeId type, IrPosition here) {
+    if (program->get_types()->get_type(type)->kind == IR_ARRAY) {
+        IrValueId turn = {0};
+        IrValueId each = begin_elements(place, type, true, turn, here);
+
+        destroy(each, program->get_types()->get_type(type)->element, here);
+        end_elements(turn, here);
+        return;
+    }
+
+    if (program->get_types()->get_type(type)->kind == IR_CLASS) {
+        place = upcast_to(place, type, owner->top_class(type), here);
+    }
+
+    build.call(owner->structor(STRUCTOR_DESTROY, type, 0), {place}, here);
+}
+
+IrValueId FunctionLowerer::call_method(u32 callee_module, u32 candidate,
+                                       const std::vector<IrValueId>& values,
+                                       bool virtually, IrPosition here) {
+    IrObjectId target = owner->function_of(callee_module, candidate);
+    i32 slot = owner->slot_of_method(callee_module, candidate);
+
+    if (!virtually || slot < 0) {
+        return build.call(target, values, here);
+    }
+
+    return build.vcall(owner->receiver_type(callee_module, candidate),
+                       (u32) slot, program->get_function(target).signature,
+                       values, here);
+}
+
+// 'turn' counts up from 0 whichever way the elements are walked, and its
+// bound is the array's length
+IrValueId FunctionLowerer::begin_elements(IrValueId place, IrTypeId array,
+                                          bool backwards, IrValueId& turn,
+                                          IrPosition here) {
+    const IrType* entry = program->get_types()->get_type(array);
+
+    return begin_elements(place, entry->element,
+                          build.constant(usize(), entry->subject, here),
+                          entry->subject, backwards, turn, here);
+}
+
+IrValueId FunctionLowerer::begin_elements(IrValueId place, IrTypeId element,
+                                          IrValueId length, u32 bound,
+                                          bool backwards, IrValueId& turn,
+                                          IrPosition here) {
+    turn = build.entry_slot(usize(), here);
+    build.store(usize(), build.constant(usize(), 0, here), turn, here);
+
+    IrInstId loop = build.begin_loop(bound, here);
+    IrValueId i = build.load(usize(), turn, here);
+
+    build.begin_if(build.binary(IR_UGE, usize(), i, length, here), here);
+    build.break_to(loop, here);
+    build.end();
+
+    if (backwards) {
+        i = build.binary(IR_SUB, usize(),
+                         build.binary(IR_SUB, usize(), length, i, here),
+                         build.constant(usize(), 1, here), here);
+    }
+
+    return build.index(element, place, i, here);
+}
+
+bool FunctionLowerer::keeps_count(IrTypeId element) {
+    return program->get_types()->get_type(element)->kind == IR_CLASS
+        || owner->has_destructor(element);
+}
+
+void FunctionLowerer::end_elements(IrValueId turn, IrPosition here) {
+    IrValueId i = build.load(usize(), turn, here);
+
+    build.store(usize(),
+                build.binary(IR_ADD, usize(), i,
+                             build.constant(usize(), 1, here), here),
+                turn, here);
+    build.end();
 }
 
 void FunctionLowerer::zero(IrValueId place, IrTypeId type, IrPosition here) {
@@ -2238,25 +2657,11 @@ void FunctionLowerer::zero(IrValueId place, IrTypeId type, IrPosition here) {
 
     if (entry->kind == IR_ARRAY) {
         IrTypeId element = entry->element;
-        u32 length = entry->subject;
-        IrValueId turn = build.entry_slot(usize(), here);
-        IrValueId one = build.constant(usize(), 1, here);
+        IrValueId turn = {0};
+        IrValueId each = begin_elements(place, type, false, turn, here);
 
-        build.store(usize(), build.constant(usize(), 0, here), turn, here);
-
-        IrInstId loop = build.begin_loop(length, here);
-        IrValueId i = build.load(usize(), turn, here);
-
-        build.begin_if(build.binary(IR_UGE, usize(), i,
-                                    build.constant(usize(), length, here),
-                                    here),
-                       here);
-        build.break_to(loop, here);
-        build.end();
-        zero(build.index(element, place, i, here), element, here);
-        build.store(usize(), build.binary(IR_ADD, usize(), i, one, here), turn,
-                    here);
-        build.end();
+        zero(each, element, here);
+        end_elements(turn, here);
         return;
     }
 
@@ -2694,7 +3099,7 @@ IrTypeId FunctionLowerer::slot_type(u32 type) {
     IrTypeId ir = owner->type_of(module_index, type);
 
     if (ir.index == 0 || !owner->lowerable(ir)) {
-        not_yet("a value of a class, a union, an enum or a tuple");
+        not_yet("a value of a union, an enum, a tuple or a function");
         return none;
     }
 
@@ -2721,8 +3126,10 @@ IrTypeId FunctionLowerer::struct_of(u32 type, u32 owning) {
 
     IrTypeId ir = owner->type_of(owning, value);
 
-    return ir.index != 0 && program->get_types()->get_type(ir)->kind == IR_STRUCT
-                   && owner->lowerable(ir)
+    u8 kind = ir.index == 0 ? IR_TYPE_NONE
+                            : program->get_types()->get_type(ir)->kind;
+
+    return (kind == IR_STRUCT || kind == IR_CLASS) && owner->lowerable(ir)
                ? ir
                : none;
 }

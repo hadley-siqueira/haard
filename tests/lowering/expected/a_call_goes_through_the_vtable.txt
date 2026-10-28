@@ -1,0 +1,330 @@
+struct Point { x: b32, y: b32 }
+class A : Point {}
+vtable A { 0: destroy, 1: name, 2: twice }
+class B : A {}
+vtable B { 0: destroy, 1: name, 2: twice }
+class C : B {}
+vtable C { 0: destroy, 1: name, 2: twice, 3: grand }
+
+data @trace : b64 = zero
+data @C.vtable : ptr[5] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @C.descriptor at 0, @C.~C at 8, @C.name at 16, @A.twice at 24, @C.grand at 32
+data @C.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.0 at 0, @B.descriptor at 16
+data @text.0 : b8[2] = readonly "C\00"
+data @B.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.1 at 0, @A.descriptor at 16
+data @text.1 : b8[2] = readonly "B\00"
+data @A.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.2 at 0
+data @text.2 : b8[2] = readonly "A\00"
+data @B.vtable : ptr[4] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @B.descriptor at 0, @B.~B at 8, @B.name at 16, @A.twice at 24
+data @A.vtable : ptr[4] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @A.descriptor at 0, @A.~A at 8, @A.name at 16, @A.twice at 24
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @total(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall A.name(%3)
+  %5 = load ptr, %2
+  %6 = vcall A.twice(%5)
+  %7 = add b32 %4, %6
+  ret b32 %7
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot C
+  %11 = slot bool
+  %23 = slot ptr
+  %51 = slot ptr
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = upcast %3, C -> B
+  %5 = upcast %4, B -> A
+  %6 = upcast %5, A -> Point
+  %7 = field %6, Point.x
+  %8 = const b32 0
+  store b32 %8, %7
+  %9 = field %6, Point.y
+  %10 = const b32 0
+  store b32 %10, %9
+  call @C.C(%3)
+  %12 = upcast %3, C -> A
+  %13 = vcall A.name(%12)
+  %14 = const b32 110
+  %15 = eq b32 %13, %14
+  store bool %15, %11
+  $21: if %15 {
+    %16 = vcall C.grand(%3)
+    %17 = const b32 220
+    %18 = eq b32 %16, %17
+    store bool %18, %11
+  }
+  %19 = load bool, %11
+  $27: if %19 {
+    %20 = load b32, %1
+    %21 = const b32 1
+    %22 = add b32 %20, %21
+    store b32 %22, %1
+  }
+  store ptr %3, %23
+  %24 = load ptr, %23
+  %25 = call @total(%24)
+  %26 = const b32 330
+  %27 = eq b32 %25, %26
+  $38: if %27 {
+    %28 = load b32, %1
+    %29 = const b32 2
+    %30 = add b32 %28, %29
+    store b32 %30, %1
+  }
+  %31 = upcast %3, C -> B
+  %32 = upcast %31, B -> A
+  %33 = upcast %32, A -> Point
+  %34 = field %33, Point.x
+  %35 = const b32 3
+  store b32 %35, %34
+  %36 = upcast %3, C -> B
+  %37 = upcast %36, B -> A
+  %38 = upcast %37, A -> Point
+  %39 = field %38, Point.y
+  %40 = const b32 4
+  store b32 %40, %39
+  %41 = load ptr, %23
+  %42 = upcast %41, A -> Point
+  %43 = call @Point.sum(%42)
+  %44 = const b32 7
+  %45 = eq b32 %43, %44
+  $60: if %45 {
+    %46 = load b32, %1
+    %47 = const b32 4
+    %48 = add b32 %46, %47
+    store b32 %48, %1
+  }
+  %49 = addr @trace
+  %50 = const b64 0
+  store b64 %50, %49
+  %52 = size B as b64
+  %53 = call @__alloc(%52)
+  %54 = upcast %53, B -> A
+  %55 = upcast %54, A -> Point
+  %56 = field %55, Point.x
+  %57 = const b32 0
+  store b32 %57, %56
+  %58 = field %55, Point.y
+  %59 = const b32 0
+  store b32 %59, %58
+  call @B.B(%53)
+  store ptr %53, %51
+  %60 = load ptr, %51
+  %61 = vcall A.name(%60)
+  %62 = const b32 10
+  %63 = eq b32 %61, %62
+  $85: if %63 {
+    %64 = load b32, %1
+    %65 = const b32 8
+    %66 = add b32 %64, %65
+    store b32 %66, %1
+  }
+  %67 = load ptr, %51
+  %68 = null
+  %69 = ne ptr %67, %68
+  $93: if %69 {
+    vcall A.destroy(%67)
+  }
+  call @__free(%67)
+  %70 = addr @trace
+  %71 = load b64, %70
+  %72 = const b64 21
+  %73 = eq b64 %71, %72
+  $100: if %73 {
+    %74 = load b32, %1
+    %75 = const b32 16
+    %76 = add b32 %74, %75
+    store b32 %76, %1
+  }
+  %77 = load b32, %1
+  %78 = upcast %3, C -> A
+  call @C.~C(%78)
+  ret b32 %77
+}
+
+func @Point.sum(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Point.x
+  %5 = load b32, %4
+  %6 = load ptr, %2
+  %7 = field %6, Point.y
+  %8 = load b32, %7
+  %9 = add b32 %5, %8
+  ret b32 %9
+}
+
+func @A.name(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b32 1
+  ret b32 %3
+}
+
+func @A.twice(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall A.name(%3)
+  %5 = const b32 2
+  %6 = mul b32 %4, %5
+  ret b32 %6
+}
+
+func @A.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b64 1
+  call @note(%3)
+  ret
+}
+
+func @B.name(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %3 = downcast %1, A -> B
+  store ptr %3, %2
+  %4 = const b32 10
+  ret b32 %4
+}
+
+func @B.destroy(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, A -> B
+  store ptr %3, %2
+  %4 = const b64 2
+  call @note(%4)
+  ret
+}
+
+func @C.name(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %3 = downcast %1, A -> C
+  store ptr %3, %2
+  %4 = const b32 100
+  %5 = load ptr, %2
+  %6 = upcast %5, C -> A
+  %7 = call @B.name(%6)
+  %8 = add b32 %4, %7
+  ret b32 %8
+}
+
+func @C.grand(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, C -> A
+  %5 = call @A.twice(%4)
+  ret b32 %5
+}
+
+func @C.C(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, C -> B
+  call @B.B(%4)
+  %5 = addr @C.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %3
+  ret
+}
+
+native @__alloc(%1: b64) -> ptr
+
+func @B.B(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, B -> A
+  call @A.A(%4)
+  %5 = addr @B.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %3
+  ret
+}
+
+func @A.~A(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @A.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @A.destroy(%3)
+  ret
+}
+
+native @__free(%1: ptr)
+
+func @C.~C(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, A -> C
+  store ptr %3, %2
+  %4 = load ptr, %2
+  %5 = addr @C.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  %8 = upcast %4, C -> B
+  %9 = upcast %8, B -> A
+  call @B.~B(%9)
+  ret
+}
+
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
+  ret
+}
+
+func @A.A(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, A -> Point
+  %5 = addr @A.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %3
+  ret
+}
+
+func @B.~B(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, A -> B
+  store ptr %3, %2
+  %4 = load ptr, %2
+  %5 = addr @B.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @B.destroy(%4)
+  %8 = upcast %4, B -> A
+  call @A.~A(%8)
+  ret
+}
+
+--- exit: 31

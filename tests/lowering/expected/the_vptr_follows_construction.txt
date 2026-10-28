@@ -1,0 +1,392 @@
+class Base { value: b32 }
+vtable Base { 0: destroy, 1: kind }
+class Derived : Base {}
+vtable Derived { 0: destroy, 1: kind }
+class Plain { value: b32 }
+vtable Plain { 0: destroy, 1: kind }
+class Fancy : Plain {}
+vtable Fancy { 0: destroy, 1: kind }
+
+data @trace : b64 = zero
+data @Derived.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Derived.descriptor at 0, @Derived.~Derived at 8, @Derived.kind at 16
+data @Derived.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.0 at 0, @Base.descriptor at 16
+data @text.0 : b8[8] = readonly "Derived\00"
+data @Base.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.1 at 0
+data @text.1 : b8[5] = readonly "Base\00"
+data @Base.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Base.descriptor at 0, @Base.~Base at 8, @Base.kind at 16
+data @Plain.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Plain.descriptor at 0, @Plain.~Plain at 8, @Plain.kind at 16
+data @Plain.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.2 at 0
+data @text.2 : b8[6] = readonly "Plain\00"
+data @Fancy.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Fancy.descriptor at 0, @Fancy.~Fancy at 8, @Fancy.kind at 16
+data @Fancy.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.3 at 0, @Plain.descriptor at 16
+data @text.3 : b8[6] = readonly "Fancy\00"
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @which(%1: ptr) -> b64 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall Base.kind(%3)
+  ret b64 %4
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %6 = slot Derived
+  %15 = slot Derived
+  %19 = slot ptr
+  %20 = slot Base
+  %22 = slot bool
+  %23 = slot bool
+  %40 = slot Derived
+  %44 = slot ptr
+  %46 = slot bool
+  %58 = slot Plain
+  %59 = slot Fancy
+  %66 = slot ptr
+  %67 = slot ptr
+  %72 = slot bool
+  %2 = const b32 0
+  store b32 %2, %1
+  %3 = addr @trace
+  %4 = const b64 0
+  store b64 %4, %3
+  %5 = const bool true
+  $8: if %5 {
+    call @Derived.Derived(%6)
+    %7 = upcast %6, Derived -> Base
+    call @Derived.~Derived(%7)
+  }
+  %8 = addr @trace
+  %9 = load b64, %8
+  %10 = const b64 121
+  %11 = eq b64 %9, %10
+  $17: if %11 {
+    %12 = load b32, %1
+    %13 = const b32 1
+    %14 = add b32 %12, %13
+    store b32 %14, %1
+  }
+  call @Derived.Derived(%15)
+  %16 = upcast %15, Derived -> Base
+  %17 = field %16, Base.value
+  %18 = const b32 5
+  store b32 %18, %17
+  store ptr %15, %19
+  %21 = load ptr, %19
+  call @Base.Base(%20, %21)
+  %24 = call @which(%20)
+  %25 = const b64 1
+  %26 = eq b64 %24, %25
+  store bool %26, %23
+  $39: if %26 {
+    %27 = field %20, Base.value
+    %28 = load b32, %27
+    %29 = const b32 5
+    %30 = eq b32 %28, %29
+    store bool %30, %23
+  }
+  %31 = load bool, %23
+  store bool %31, %22
+  $47: if %31 {
+    %32 = load ptr, %19
+    %33 = vcall Base.kind(%32)
+    %34 = const b64 2
+    %35 = eq b64 %33, %34
+    store bool %35, %22
+  }
+  %36 = load bool, %22
+  $54: if %36 {
+    %37 = load b32, %1
+    %38 = const b32 2
+    %39 = add b32 %37, %38
+    store b32 %39, %1
+  }
+  call @Derived.Derived(%40)
+  %41 = upcast %40, Derived -> Base
+  %42 = field %41, Base.value
+  %43 = const b32 9
+  store b32 %43, %42
+  store ptr %40, %44
+  %45 = load ptr, %44
+  call @Base.assign(%20, %45)
+  %47 = call @which(%20)
+  %48 = const b64 1
+  %49 = eq b64 %47, %48
+  store bool %49, %46
+  $74: if %49 {
+    %50 = field %20, Base.value
+    %51 = load b32, %50
+    %52 = const b32 9
+    %53 = eq b32 %51, %52
+    store bool %53, %46
+  }
+  %54 = load bool, %46
+  $81: if %54 {
+    %55 = load b32, %1
+    %56 = const b32 4
+    %57 = add b32 %55, %56
+    store b32 %57, %1
+  }
+  call @Plain.Plain(%58)
+  %60 = upcast %59, Fancy -> Plain
+  %61 = field %60, Plain.value
+  %62 = const b32 0
+  store b32 %62, %61
+  call @Fancy.Fancy(%59)
+  %63 = upcast %59, Fancy -> Plain
+  %64 = field %63, Plain.value
+  %65 = const b32 6
+  store b32 %65, %64
+  store ptr %59, %66
+  store ptr %58, %67
+  %68 = load ptr, %66
+  %69 = field %58, Plain.value
+  %70 = field %68, Plain.value
+  %71 = load b32, %70
+  store b32 %71, %69
+  %73 = load ptr, %67
+  %74 = vcall Plain.kind(%73)
+  %75 = const b64 3
+  %76 = eq b64 %74, %75
+  store bool %76, %72
+  $113: if %76 {
+    %77 = field %58, Plain.value
+    %78 = load b32, %77
+    %79 = const b32 6
+    %80 = eq b32 %78, %79
+    store bool %80, %72
+  }
+  %81 = load bool, %72
+  $120: if %81 {
+    %82 = load b32, %1
+    %83 = const b32 8
+    %84 = add b32 %82, %83
+    store b32 %84, %1
+  }
+  %85 = load b32, %1
+  %86 = upcast %40, Derived -> Base
+  call @Derived.~Derived(%86)
+  call @Base.~Base(%20)
+  %87 = upcast %15, Derived -> Base
+  call @Derived.~Derived(%87)
+  ret b32 %85
+}
+
+func @Base.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall Base.kind(%3)
+  call @note(%4)
+  ret
+}
+
+func @Base.init#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Base.value
+  %7 = load ptr, %4
+  %8 = field %7, Base.value
+  %9 = load b32, %8
+  store b32 %9, %6
+  ret
+}
+
+func @Base.kind(%1: ptr) -> b64 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b64 1
+  ret b64 %3
+}
+
+func @Base.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall Base.kind(%3)
+  call @note(%4)
+  ret
+}
+
+func @Derived.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, Derived -> Base
+  %5 = vcall Base.kind(%4)
+  call @note(%5)
+  ret
+}
+
+func @Derived.kind(%1: ptr) -> b64 {
+  %2 = slot ptr
+  %3 = downcast %1, Base -> Derived
+  store ptr %3, %2
+  %4 = const b64 2
+  ret b64 %4
+}
+
+func @Plain.kind(%1: ptr) -> b64 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b64 3
+  ret b64 %3
+}
+
+func @Fancy.kind(%1: ptr) -> b64 {
+  %2 = slot ptr
+  %3 = downcast %1, Plain -> Fancy
+  store ptr %3, %2
+  %4 = const b64 4
+  ret b64 %4
+}
+
+func @Derived.Derived(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, Derived -> Base
+  call @Base.Base#1(%4)
+  %5 = addr @Derived.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %3
+  call @Derived.init(%3)
+  ret
+}
+
+func @Derived.~Derived(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, Base -> Derived
+  store ptr %3, %2
+  %4 = load ptr, %2
+  %5 = addr @Derived.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  %8 = upcast %4, Derived -> Base
+  call @Base.~Base(%8)
+  ret
+}
+
+func @Base.Base(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @Base.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @Base.init#1(%4, %2)
+  ret
+}
+
+func @Base.assign(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = eq ptr %4, %2
+  $5: if %5 {
+    ret
+  }
+  call @Base.destroy(%4)
+  call @Base.init#1(%4, %2)
+  ret
+}
+
+func @Plain.Plain(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Plain.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @Fancy.Fancy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, Fancy -> Plain
+  call @Plain.Plain(%4)
+  %5 = addr @Fancy.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %3
+  ret
+}
+
+func @Base.~Base(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Base.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @Base.destroy(%3)
+  ret
+}
+
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
+  ret
+}
+
+func @Base.Base#1(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Base.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @Base.init(%3)
+  ret
+}
+
+func @Plain.~Plain(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Plain.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @Fancy.~Fancy(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, Plain -> Fancy
+  store ptr %3, %2
+  %4 = load ptr, %2
+  %5 = addr @Fancy.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  ret
+}
+
+--- exit: 15

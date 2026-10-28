@@ -26,7 +26,8 @@ Each one's exit status was checked against the C++ path by hand when it was
 written (`hdc --emit-cpp`, built and run): 78, 255, 56 and 63 for step 1;
 15, 15, 15, 15 and 7 for step 2's five that end in one. Step 3's four:
 7, 63, 15 and 31, each counting with a global the order `init`s and
-`destroy`s ran in, since printing needs `String`, a class. Step 2's other three
+`destroy`s ran in, since printing needs `String`, a class. Step 4's three: 31, 15 and
+15. Step 2's other three
 show what only the IR says, since the C++ is undefined there or does not
 check yet: an index past a fixed array aborts (question 9b), a read after a
 `delete` and a second `delete` stop the interpreter.
@@ -49,7 +50,7 @@ The list shrinks step by step, in the order record 0077 gives: (1)
 functions, locals, arithmetic, control flow, calls -- done; (2) pointers,
 references, fixed arrays, globals, literals, `new`/`delete` -- done; (3) structs,
 methods, `init`/`destroy`, the cleanup stack, temporaries -- done; (4) classes,
-vtables, `vcall`, `super`; (5) enums and `switch`, tuples, unions, closures,
+vtables, `vcall`, `super` -- done; (5) enums and `switch`, tuples, unions, closures,
 symbols; (6) the standard library.
 
 ## What step 1 found
@@ -77,6 +78,18 @@ expression is on one side only was never raised. And two sabotages first
 passed because they were too weak, not the cases: reversing the fields'
 order changed only their types, both `T`; and dropping the depth's `++`
 left its `--` to wrap round, after which every temporary had a flag.
+
+## What step 4 found
+
+Running the emitter's programs through it: a method given back a struct got
+its destination before its object, and the interpreter's `vcall` read the
+vptr out of the destination; `Point()` was built without the zero C++'s
+value-initialisation gives it; a literal a class takes went down the path
+of an operator; and a fixed array of classes bound with no value was never
+built. All four fixed before the step closed. And one on the C++ path, not
+fixed: a class value given to a `T&` of its base is copied into a temporary
+of the base, so a virtual call through the reference runs the base's method;
+`the_vptr_follows_construction` checks the dispatch through a `let` instead.
 
 ## Sabotage
 
@@ -147,3 +160,26 @@ And step 3's:
 | `super(...)` not run | `a_struct_is_built_where_it_goes` |
 | a result built in a temporary instead of where the caller said | three cases |
 | the `destroy` method never run | three cases |
+
+And step 4's:
+
+| Broken | Fails |
+|---|---|
+| no vptr written when a class is built | 27 programs |
+| no vptr written when one ends | the three class cases |
+| every method called directly | seven programs |
+| `super.f()` dispatched | `a_call_goes_through_the_vtable` |
+| `delete` ending the static class | the same |
+| a class copied by its bytes | three programs |
+| a class assigned by its bytes | `the_vptr_follows_construction` |
+| no count kept before `new T[n]` | `arrays_of_classes_and_defaults` |
+| an array ended first to last | the same |
+| defaults left out | it, and `emitter/a_program_of_many_modules` |
+| `not in` not negated | it, and `emitter/four_operators_cpp_has_no_spelling_for` |
+| `T()` not zeroed | two programs |
+| a file never at its end | `emitter/input_and_output` |
+| a method given no object | 32 programs |
+
+`a class assigned by its bytes` first passed: the one class assigned in the
+case wrote a copy `init`, which is the other path. A class that says
+nothing about copying, assigned from one derived from it, was added.

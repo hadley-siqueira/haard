@@ -1,0 +1,98 @@
+# Record 0077, stage 4, step 4: C++'s rule, which the C++ path follows: each
+# constructor points the vptr at its own class's vtable after its base is
+# built, and each destructor at its own before it runs, so a method called
+# from a base's 'init' or 'destroy' is the base's. A copy writes its own
+# class's vptr, so a derived class copied as its base is the base; and an
+# assignment copies the fields and never the vptr. The exit status adds up
+# one bit per thing that held.
+let trace : i64 = 0
+
+def note : void
+    @digit : i64
+    trace = trace * 10 + digit
+
+class Base:
+    value : i32
+
+    def init : void
+        note(kind())
+
+    def init : void
+        @other : Base&
+        value = other.value
+
+    def kind : i64
+        return 1
+
+    def destroy : void
+        note(kind())
+
+class Derived(Base):
+    def init : void
+        note(kind())
+
+    def kind : i64
+        return 2
+
+class Plain:
+    value : i32
+
+    def kind : i64
+        return 3
+
+class Fancy(Plain):
+    def kind : i64
+        return 4
+
+def which : i64
+    @b : Base&
+    return b.kind()
+
+def main : i32
+    let result = 0
+
+    trace = 0
+
+    if true:
+        let d = Derived()
+
+    if trace == 121:
+        result += 1
+
+    let d = Derived()
+    d.value = 5
+
+    # a Derived seen through a Base&, and copied as the Base it is seen as
+    let seen : Base& = d
+    let b : Base = seen
+
+    if which(b) == 1 and b.value == 5 and seen.kind() == 2:
+        result += 2
+
+    let e = Derived()
+
+    e.value = 9
+
+    let other : Base& = e
+
+    b = other
+
+    if which(b) == 1 and b.value == 9:
+        result += 4
+
+    # a class that says nothing about copying is assigned field by field,
+    # and keeps its own vptr
+    let plain : Plain
+    let fancy = Fancy()
+
+    fancy.value = 6
+
+    let as_plain : Plain& = fancy
+    let kept : Plain& = plain
+
+    plain = as_plain
+
+    if kept.kind() == 3 and plain.value == 6:
+        result += 8
+
+    return result

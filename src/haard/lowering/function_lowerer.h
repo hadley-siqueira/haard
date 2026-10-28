@@ -117,6 +117,12 @@ namespace haard {
             // statement; its address
             IrValueId materialise(u32 node);
 
+            // record 0037: a bracket or braced literal a class takes, a
+            // fixed array of its elements given to an 'init' taking a
+            // pointer and a count -- or, for an 'init' taking one value,
+            // given to the one that builds that value first
+            void build_from_literal(IrValueId place, IrTypeId type, u32 node);
+
             void construct(IrValueId place, IrTypeId type, u32 init,
                            const std::vector<IrValueId>& arguments,
                            IrPosition at);
@@ -133,11 +139,36 @@ namespace haard {
             // for a struct with no 'init'
             void zero(IrValueId place, IrTypeId type, IrPosition at);
 
+            // a loop over a fixed array's elements, first to last or last
+            // to first: 'begin_elements' opens it and gives the element's
+            // address, 'end_elements' closes it
+            IrValueId begin_elements(IrValueId place, IrTypeId array,
+                                     bool backwards, IrValueId& turn,
+                                     IrPosition at);
+
+            // the same over 'length' elements, a usize known only when it
+            // runs: what 'new T[n]' and 'delete[]' walk
+            IrValueId begin_elements(IrValueId place, IrTypeId element,
+                                     IrValueId length, u32 bound,
+                                     bool backwards, IrValueId& turn,
+                                     IrPosition at);
+
+            // whether 'new T[n]' keeps n before the elements, as the
+            // Itanium ABI's cookie does: when 'delete[]' has to end each
+            bool keeps_count(IrTypeId element);
+            void end_elements(IrValueId turn, IrPosition at);
+
+            // a parameter's default, written where the function is declared
+            // and worked out where it is called, as C++ does
+            IrValueId default_of(u32 module, u32 parameter, bool reference);
+
             // what a call is given for each argument, by the Haard types of
             // the callee's parameters: a place for a 'T&', a copy the caller
             // made for a struct, the value for the rest
-            bool arguments_for(u32 module, u32 candidate, u32 arguments,
-                               std::vector<IrValueId>& values);
+            // at most 'limit' of them, from 'first' on
+            bool arguments_for(u32 module, u32 candidate, u32 first,
+                               std::vector<IrValueId>& values,
+                               u32 limit = 0xffffffff);
 
             // record 0034: an operator a struct declares, a call to it with
             // the left operand as the object
@@ -151,6 +182,26 @@ namespace haard {
             // a pointer to a 'from' seen as the 'to' it derives from
             IrValueId upcast_to(IrValueId pointer, IrTypeId from, IrTypeId to,
                                 IrPosition at);
+
+            // a class's vptr pointed at its own vtable's slot 0: what C++
+            // does at the start of each constructor and each destructor, so
+            // a call made from one runs this class's method
+            void store_vptr(IrValueId object, IrTypeId type, IrPosition at);
+
+            // the destructor of a 'type' called on 'place'; a class's takes
+            // its object as the class at the top of its vtable's chain
+            void destroy(IrValueId place, IrTypeId type, IrPosition at);
+
+            // what C++'s implicit '=' does to one held in a field: a struct's
+            // bytes, a class field by field, so its vptr stays its own
+            void assign_value(IrTypeId type, IrValueId to, IrValueId from,
+                              IrPosition at);
+
+            // a method called directly, or through its slot when it fills
+            // one and 'virtually' says so
+            IrValueId call_method(u32 module, u32 candidate,
+                                  const std::vector<IrValueId>& values,
+                                  bool virtually, IrPosition at);
 
             // a place's value: a load, or a fixed array's decay
             IrValueId read(u32 node);
@@ -262,7 +313,7 @@ namespace haard {
 
             struct Cleanup {
                 IrValueId place;
-                IrObjectId destructor;
+                IrTypeId type;
 
                 // 0 for one made on every path
                 IrValueId flag;

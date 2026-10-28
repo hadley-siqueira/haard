@@ -38,7 +38,7 @@ func @main() -> b32 {
   %7 = const b32 2
   store b32 %7, %6
   %9 = const b32 3
-  call @Point.scaled(%8, %3, %9)
+  call @Point.scaled(%3, %8, %9)
   %12 = call @Point.sum(%8)
   %13 = const b32 9
   %14 = eq b32 %12, %13
@@ -153,16 +153,16 @@ func @Point.sum(%1: ptr) -> b32 {
 func @Point.scaled(%1: ptr, %2: ptr, %3: b32) {
   %4 = slot ptr
   %5 = slot b32
-  store ptr %2, %4
+  store ptr %1, %4
   store b32 %3, %5
-  %6 = field %1, Point.x
+  %6 = field %2, Point.x
   %7 = load ptr, %4
   %8 = field %7, Point.x
   %9 = load b32, %8
   %10 = load b32, %5
   %11 = mul b32 %9, %10
   store b32 %11, %6
-  %12 = field %1, Point.y
+  %12 = field %2, Point.y
   %13 = load ptr, %4
   %14 = field %13, Point.y
   %15 = load b32, %14

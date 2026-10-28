@@ -55,7 +55,7 @@ func @main() -> b32 {
   %6 = field %3, Vec.y
   %7 = const b32 2
   store b32 %7, %6
-  call @Vec.operator+(%8, %3, %3)
+  call @Vec.operator+(%3, %8, %3)
   %9 = call @Vec.first(%8)
   %10 = const b32 5
   store b32 %10, %9
@@ -269,9 +269,9 @@ func @T.ok(%1: ptr) -> bool {
 func @Vec.operator+(%1: ptr, %2: ptr, %3: ptr) {
   %4 = slot ptr
   %5 = slot ptr
-  store ptr %2, %4
+  store ptr %1, %4
   store ptr %3, %5
-  %6 = field %1, Vec.x
+  %6 = field %2, Vec.x
   %7 = load ptr, %4
   %8 = field %7, Vec.x
   %9 = load b32, %8
@@ -280,7 +280,7 @@ func @Vec.operator+(%1: ptr, %2: ptr, %3: ptr) {
   %12 = load b32, %11
   %13 = add b32 %9, %12
   store b32 %13, %6
-  %14 = field %1, Vec.y
+  %14 = field %2, Vec.y
   %15 = load ptr, %4
   %16 = field %15, Vec.y
   %17 = load b32, %16

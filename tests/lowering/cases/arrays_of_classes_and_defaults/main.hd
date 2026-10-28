@@ -1,0 +1,83 @@
+# Record 0077, stage 4, step 4. A fixed array of classes builds each element
+# first to last and ends them last to first. 'new T[n]' of a class keeps n
+# before the elements, as the Itanium ABI's cookie does, so 'delete[]' ends
+# each; a parameter left out is given its default, worked out where it is
+# called; 'x in c' is 'c.contains(x)'; a literal a class takes is built by
+# its 'init'. The exit status adds up one bit per thing that held.
+let trace : i64 = 0
+
+def note : void
+    @digit : i64
+    trace = trace * 10 + digit
+
+class Cell:
+    id : i64
+
+    def init : void
+        id = 0
+        note(5)
+
+    def destroy : void
+        note(id)
+
+class Bag:
+    items : i32[4]
+    count : i32
+
+    def init : void
+        @first : i32 = 7
+        @second : i32 = 8
+        items[0] = first
+        items[1] = second
+        count = 2
+
+    def contains : bool
+        @one : i32
+        for i in 0 ... count:
+            if items[i] == one:
+                return true
+        return false
+
+class Name:
+    first : char
+
+    def init : void
+        @text : char*
+        first = text[0]
+
+def main : i32
+    let result = 0
+
+    trace = 0
+
+    if true:
+        let row : Cell[3]
+        row[0].id = 1
+        row[1].id = 2
+        row[2].id = 3
+
+    if trace == 555321:
+        result += 1
+
+    trace = 0
+
+    let many = new Cell[2]
+
+    many[0].id = 4
+    many[1].id = 6
+    delete[] many
+
+    if trace == 5564:
+        result += 2
+
+    let bag = Bag()
+
+    if 7 in bag and 8 in bag and 9 not in bag:
+        result += 4
+
+    let name : Name = "haard"
+
+    if name.first == 'h':
+        result += 8
+
+    return result

@@ -1,0 +1,80 @@
+# Record 0077, stage 4, step 4: a class's vtable is a read-only datum -- its
+# descriptor's address, then each slot's function, slot 0 the destructor --
+# and its vptr, first in the object, points at slot 0. A method call is a
+# 'vcall' through that slot, the object passed as the class that introduced
+# it; 'super.f()' and 'init' are called directly. A class derived from a
+# struct starts a vtable of its own and holds the struct after its vptr.
+# 'delete' through a base pointer ends the derived class by slot 0. The exit
+# status adds up one bit per thing that held.
+let trace : i64 = 0
+
+def note : void
+    @digit : i64
+    trace = trace * 10 + digit
+
+struct Point:
+    x : i32
+    y : i32
+
+    def sum : i32
+        return x + y
+
+class A(Point):
+    def name : i32
+        return 1
+
+    def twice : i32
+        return name() * 2
+
+    def destroy : void
+        note(1)
+
+class B(A):
+    def name : i32
+        return 10
+
+    def destroy : void
+        note(2)
+
+class C(B):
+    def name : i32
+        return 100 + super.name()
+
+    def grand : i32
+        return super.twice()
+
+def total : i32
+    @a : A*
+    return a.name() + a.twice()
+
+def main : i32
+    let result = 0
+    let c = C()
+
+    if c.name() == 110 and c.grand() == 220:
+        result += 1
+
+    let as_a : A* = &c
+
+    if total(as_a) == 330:
+        result += 2
+
+    c.x = 3
+    c.y = 4
+
+    if as_a.sum() == 7:
+        result += 4
+
+    trace = 0
+
+    let held : A* = new B()
+
+    if held.name() == 10:
+        result += 8
+
+    delete held
+
+    if trace == 21:
+        result += 16
+
+    return result

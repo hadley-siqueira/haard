@@ -32,6 +32,15 @@ bool IrLowerer::lower() {
     translator.set_target(target);
     translator.set_types(program->get_types());
 
+    // every class translated before the vtables are worked out
+    if (!translator.translate_program()) {
+        fail("not lowered yet: " + translator.get_error());
+        return false;
+    }
+
+    program->get_classes()->set_compilation(compilation);
+    program->get_classes()->build();
+
     return declare_functions() && declare_globals() && lower_bodies()
         && lower_globals() && lower_structors() && verify("lowering");
 }
@@ -136,8 +145,7 @@ void IrLowerer::fail(const std::string& message) {
 // An object for every function first, so a call can name one declared
 // further down or in another module. A function of 'std.low_io' is a native
 // (record 0030), and the entry module's 'main' is the one called 'main'. A
-// struct's methods are functions too, named after it; a class's wait for
-// step 4 and its vtable
+// struct's and a class's methods are functions too, named after it
 bool IrLowerer::declare_functions() {
     for (u32 i = 0; i < compilation->get_module_count(); i++) {
         Module* module = compilation->get_module(i);
@@ -152,8 +160,10 @@ bool IrLowerer::declare_functions() {
         }
 
         for (u32 declaration : query.get_declarations()) {
-            if (module->get_ast()->get_node(declaration)->get_kind()
-                    != AST_STRUCT
+            AstNodeKind kind =
+                module->get_ast()->get_node(declaration)->get_kind();
+
+            if ((kind != AST_STRUCT && kind != AST_CLASS)
                 || is_generic(i, declaration)) {
                 continue;
             }
@@ -174,7 +184,8 @@ bool IrLowerer::declare_functions() {
 
 // Question 80: an aggregate is never a value. One given by value is a copy
 // the caller made and passes by its address; one given back is built where
-// the caller says, a pointer passed first. A method's object comes next
+// the caller says, a pointer passed before the parameters. A method's object
+// comes first of all, where a 'vcall' finds it (question 83)
 bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
     Module* module = compilation->get_module(i);
     SymbolTable* symbols = module->get_symbols();
@@ -196,10 +207,15 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
                                           : type_of(i, written.back());
     u8 shape = 0;
 
+    if (holder != 0) {
+        parameters.push_back(pointer);
+        shape |= SHAPE_METHOD;
+    }
+
     if (types->is_aggregate(result)) {
         if (!lowerable(result)) {
-            fail("not lowered yet: a function giving back a class, a union, "
-                 "an enum or a tuple");
+            fail("not lowered yet: a function giving back a union, an enum "
+                 "or a tuple");
             return false;
         }
 
@@ -208,17 +224,12 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
         shape |= SHAPE_DESTINATION;
     }
 
-    if (holder != 0) {
-        parameters.push_back(pointer);
-        shape |= SHAPE_METHOD;
-    }
-
     for (u32 p = 0; p + 1 < written.size(); p++) {
         IrTypeId one = type_of(i, written[p]);
 
         if (one.index == 0 || !lowerable(one)) {
-            fail("not lowered yet: a parameter of a class, a union, an enum "
-                 "or a tuple");
+            fail("not lowered yet: a parameter of a union, an enum, a tuple "
+                 "or a function");
             return false;
         }
 
@@ -226,6 +237,13 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
     }
 
     std::string name = query.get_declaration_name(node);
+
+    // record 0051's third entry point builds a List of Strings, the
+    // standard library's -- step 6
+    if (i == 0 && holder == 0 && name == "main" && written.size() == 2) {
+        fail("not lowered yet: a 'main' taking its arguments as a list");
+        return false;
+    }
 
     if (holder != 0) {
         name = types->get_aggregate(translator.translate_declaration(i, holder))
@@ -417,10 +435,14 @@ bool IrLowerer::lowerable(IrTypeId type) {
 
     IrAggregate* aggregate = types->get_aggregate(type);
 
-    if (entry->kind != IR_STRUCT || aggregate->declaration == 0
-        || compilation->get_module(aggregate->module)->get_ast()
-                   ->get_node(aggregate->declaration)->get_kind()
-               != AST_STRUCT) {
+    AstNodeKind declared =
+        aggregate->declaration == 0
+            ? AST_UNKNOWN
+            : compilation->get_module(aggregate->module)->get_ast()
+                  ->get_node(aggregate->declaration)->get_kind();
+
+    if (!(entry->kind == IR_STRUCT && declared == AST_STRUCT)
+        && !(entry->kind == IR_CLASS && declared == AST_CLASS)) {
         return false;
     }
 
@@ -604,7 +626,7 @@ bool IrLowerer::has_destructor(IrTypeId type) {
         return has_destructor(types->get_type(type)->element);
     }
 
-    if (types->get_type(type)->kind != IR_STRUCT) {
+    if (!types->is_aggregate(type) || types->get_type(type)->kind == IR_UNION) {
         return false;
     }
 
@@ -624,11 +646,17 @@ bool IrLowerer::has_destructor(IrTypeId type) {
     return false;
 }
 
+// a class always is: its copy writes its own vptr, which the bytes of what
+// it is copied from -- perhaps a class derived from it -- would not
 bool IrLowerer::copies_by_init(IrTypeId type) {
     IrTypeTable* types = program->get_types();
 
     if (types->get_type(type)->kind == IR_ARRAY) {
         return copies_by_init(types->get_type(type)->element);
+    }
+
+    if (types->get_type(type)->kind == IR_CLASS) {
+        return true;
     }
 
     if (types->get_type(type)->kind != IR_STRUCT) {
@@ -653,11 +681,16 @@ bool IrLowerer::copies_by_init(IrTypeId type) {
 
 // record 0026: a field with a value written on it is given that value by
 // every constructor, the implicit one included
+// a class always is, since building one writes its vptr
 bool IrLowerer::constructs(IrTypeId type) {
     IrTypeTable* types = program->get_types();
 
     if (types->get_type(type)->kind == IR_ARRAY) {
         return constructs(types->get_type(type)->element);
+    }
+
+    if (types->get_type(type)->kind == IR_CLASS) {
+        return true;
     }
 
     if (types->get_type(type)->kind != IR_STRUCT) {
@@ -688,13 +721,16 @@ bool IrLowerer::constructs(IrTypeId type) {
 }
 
 bool IrLowerer::declares_copy(IrTypeId type) {
-    return program->get_types()->get_type(type)->kind == IR_STRUCT
+    u8 kind = program->get_types()->get_type(type)->kind;
+
+    return (kind == IR_STRUCT || kind == IR_CLASS)
         && (copy_init_of(type) != 0 || assigns_by_field(type));
 }
 
 bool IrLowerer::assigns_by_field(IrTypeId type) {
-    if (program->get_types()->get_type(type)->kind != IR_STRUCT
-        || copy_init_of(type) != 0) {
+    u8 kind = program->get_types()->get_type(type)->kind;
+
+    if ((kind != IR_STRUCT && kind != IR_CLASS) || copy_init_of(type) != 0) {
         return false;
     }
 
@@ -711,6 +747,127 @@ bool IrLowerer::assigns_by_field(IrTypeId type) {
     }
 
     return false;
+}
+
+IrObjectId IrLowerer::vtable_of(IrTypeId type) {
+    std::map<u32, u32>::iterator found = vtables.find(type.index);
+
+    if (found != vtables.end()) {
+        return {found->second};
+    }
+
+    const IrClass* entry = program->get_classes()->get_class(type);
+    IrTypeTable* types = program->get_types();
+    u32 each = target->pointer_size;
+    u32 count = (u32) entry->slots.size() + 1;
+    IrObjectId table = program->add_data(
+        unique(types->get_aggregate(type)->name + ".vtable"),
+        types->array(types->pointer(IR_SPACE_GENERIC), count),
+        std::vector<u8>(count * each, 0), true);
+
+    vtables[type.index] = table.index;
+    program->add_relocation(table, 0, descriptor_of(type));
+
+    for (u32 s = 0; s < entry->slots.size(); s++) {
+        const IrSlot& slot = entry->slots[s];
+        IrObjectId filled =
+            s == 0 ? structor(STRUCTOR_DESTROY, type, 0)
+                   : function_of(slot.module, slot.candidate);
+
+        if (filled.index == 0) {
+            fail("not lowered yet: the slot '" + slot.name + "' of '"
+                 + types->get_aggregate(type)->name + "'");
+            return table;
+        }
+
+        program->add_relocation(table, (s + 1) * each, filled);
+    }
+
+    return table;
+}
+
+// version 1 (record 0077, stage 1): the name, the size, the base's
+IrObjectId IrLowerer::descriptor_of(IrTypeId type) {
+    std::map<u32, u32>::iterator found = descriptors.find(type.index);
+
+    if (found != descriptors.end()) {
+        return {found->second};
+    }
+
+    IrTypeTable* types = program->get_types();
+    IrAggregate* aggregate = types->get_aggregate(type);
+    std::string name = aggregate->name;
+    IrTypeId base = aggregate->base;
+    u32 each = target->pointer_size;
+    LayoutTable layouts;
+
+    layouts.set_target(target);
+    layouts.set_types(types);
+    layouts.lay_out_all();
+
+    u64 size = layouts.size_of(type);
+    std::vector<u8> bytes(3 * each, 0);
+
+    for (u32 i = 0; i < each; i++) {
+        u32 at = target->big_endian ? each - 1 - i : i;
+
+        bytes[each + at] = (u8) (size >> (8 * i));
+    }
+
+    IrObjectId made = program->add_data(
+        unique(name + ".descriptor"),
+        types->array(types->pointer(IR_SPACE_GENERIC), 3), bytes, true);
+
+    descriptors[type.index] = made.index;
+    program->add_relocation(made, 0, text(name));
+
+    if (base.index != 0 && types->get_type(base)->kind == IR_CLASS) {
+        program->add_relocation(made, 2 * each, descriptor_of(base));
+    }
+
+    return made;
+}
+
+i32 IrLowerer::slot_of_method(u32 module, u32 candidate) {
+    u32 declaration = holder_of(module, candidate);
+
+    if (declaration == 0
+        || compilation->get_module(module)->get_ast()->get_node(declaration)
+                   ->get_kind()
+               != AST_CLASS) {
+        return -1;
+    }
+
+    return program->get_classes()->slot_of(
+        type_of_declaration(module, declaration), module, candidate);
+}
+
+IrTypeId IrLowerer::receiver_type(u32 module, u32 candidate) {
+    IrTypeId holding = type_of_declaration(module, holder_of(module, candidate));
+    i32 slot = slot_of_method(module, candidate);
+
+    return slot < 0 ? holding : introducer_of(holding, (u32) slot);
+}
+
+IrTypeId IrLowerer::top_class(IrTypeId type) {
+    return introducer_of(type, 0);
+}
+
+// a base's slots are the first of its derived class's, so the class that
+// introduced a slot is the highest one whose vtable is that long
+IrTypeId IrLowerer::introducer_of(IrTypeId type, u32 slot) {
+    IrTypeTable* types = program->get_types();
+
+    while (true) {
+        IrTypeId base = types->get_aggregate(type)->base;
+
+        if (base.index == 0 || types->get_type(base)->kind != IR_CLASS
+            || program->get_classes()->get_class(base)->slots.size() <= slot) {
+            return type;
+        }
+
+        type = base;
+    }
 }
 
 // question 88: always, after the lowering and after flatten. A failure here
