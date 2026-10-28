@@ -1,0 +1,402 @@
+struct T { id: b64 }
+struct Pair { first: T, second: T }
+
+data @trace : b64 = zero
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @by_value(%1: ptr) -> b64 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  ret b64 %5
+}
+
+func @find(%1: b32) -> b32 {
+  %2 = slot b32
+  %3 = slot b32
+  %5 = slot b32
+  %11 = slot T
+  %13 = slot b32
+  %15 = slot b32
+  store b32 %1, %2
+  %4 = const b32 10
+  store b32 %4, %3
+  %6 = const b32 0
+  store b32 %6, %5
+  $9: loop {
+    %7 = load b32, %5
+    %8 = load b32, %3
+    %9 = slt b32 %7, %8
+    %10 = not bool %9
+    $14: if %10 {
+      break $9
+    }
+    $16: block {
+      %12 = const b64 5
+      call @T.T(%11, %12)
+      %14 = const b32 10
+      store b32 %14, %13
+      %16 = const b32 0
+      store b32 %16, %15
+      $26: loop {
+        %17 = load b32, %15
+        %18 = load b32, %13
+        %19 = slt b32 %17, %18
+        %20 = not bool %19
+        $31: if %20 {
+          break $26
+        }
+        $33: block {
+          %21 = load b32, %5
+          %22 = load b32, %15
+          %23 = mul b32 %21, %22
+          %24 = load b32, %2
+          %25 = eq b32 %23, %24
+          $39: if %25 {
+            %26 = load b32, %5
+            %27 = const b32 10
+            %28 = mul b32 %26, %27
+            %29 = load b32, %15
+            %30 = add b32 %28, %29
+            call @T.~T(%11)
+            ret b32 %30
+          }
+        }
+        %31 = load b32, %15
+        %32 = const b32 1
+        %33 = add b32 %31, %32
+        store b32 %33, %15
+      }
+      call @T.~T(%11)
+    }
+    %34 = load b32, %5
+    %35 = const b32 1
+    %36 = add b32 %34, %35
+    store b32 %36, %5
+  }
+  %37 = const b32 1
+  %38 = neg b32 %37
+  ret b32 %38
+}
+
+func @check(%1: b32, %2: b64) -> b32 {
+  %3 = slot b32
+  %4 = slot b64
+  store b32 %1, %3
+  store b64 %2, %4
+  %5 = addr @trace
+  %6 = load b64, %5
+  %7 = load b64, %4
+  %8 = eq b64 %6, %7
+  $9: if %8 {
+    %9 = load b32, %3
+    ret b32 %9
+  }
+  %10 = const b32 0
+  ret b32 %10
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %6 = slot T
+  %8 = slot T
+  %17 = slot T
+  %27 = slot T
+  %29 = slot b64
+  %30 = slot T
+  %40 = slot Pair
+  %54 = slot b32
+  %56 = slot b32
+  %62 = slot T
+  %2 = const b32 0
+  store b32 %2, %1
+  %3 = addr @trace
+  %4 = const b64 0
+  store b64 %4, %3
+  %5 = const bool true
+  $8: if %5 {
+    %7 = const b64 1
+    call @T.T(%6, %7)
+    %9 = const b64 2
+    call @T.T(%8, %9)
+    call @T.~T(%8)
+    call @T.~T(%6)
+  }
+  %10 = load b32, %1
+  %11 = const b32 1
+  %12 = const b64 1221
+  %13 = call @check(%11, %12)
+  %14 = add b32 %10, %13
+  store b32 %14, %1
+  %15 = addr @trace
+  %16 = const b64 0
+  store b64 %16, %15
+  %18 = const b64 3
+  call @T.T(%17, %18)
+  %19 = call @T.ok(%17)
+  call @T.~T(%17)
+  %20 = load b32, %1
+  %21 = const b32 2
+  %22 = const b64 33
+  %23 = call @check(%21, %22)
+  %24 = add b32 %20, %23
+  store b32 %24, %1
+  %25 = addr @trace
+  %26 = const b64 0
+  store b64 %26, %25
+  %28 = const b64 1
+  call @T.T(%27, %28)
+  call @T.T#1(%30, %27)
+  %31 = call @by_value(%30)
+  store b64 %31, %29
+  call @T.~T(%30)
+  %32 = load b32, %1
+  %33 = const b32 4
+  %34 = const b64 191
+  %35 = call @check(%33, %34)
+  %36 = add b32 %32, %35
+  store b32 %36, %1
+  %37 = addr @trace
+  %38 = const b64 0
+  store b64 %38, %37
+  %39 = const bool true
+  $59: if %39 {
+    call @Pair.Pair(%40)
+    %41 = field %40, Pair.first
+    %42 = field %41, T.id
+    %43 = const b64 1
+    store b64 %43, %42
+    %44 = field %40, Pair.second
+    %45 = field %44, T.id
+    %46 = const b64 2
+    store b64 %46, %45
+    call @Pair.~Pair(%40)
+  }
+  %47 = load b32, %1
+  %48 = const b32 8
+  %49 = const b64 4721
+  %50 = call @check(%48, %49)
+  %51 = add b32 %47, %50
+  store b32 %51, %1
+  %52 = addr @trace
+  %53 = const b64 0
+  store b64 %53, %52
+  %55 = const b32 4
+  store b32 %55, %54
+  %57 = const b32 1
+  store b32 %57, %56
+  $86: loop {
+    %58 = load b32, %56
+    %59 = load b32, %54
+    %60 = slt b32 %58, %59
+    %61 = not bool %60
+    $91: if %61 {
+      break $86
+    }
+    $93: block {
+      %63 = load b32, %56
+      %64 = sext b32 %63 to b64
+      call @T.T(%62, %64)
+      %65 = load b32, %56
+      %66 = const b32 2
+      %67 = eq b32 %65, %66
+      $101: if %67 {
+        call @T.~T(%62)
+        break $93
+      }
+      %68 = load b32, %56
+      %69 = const b32 3
+      %70 = eq b32 %68, %69
+      $107: if %70 {
+        call @T.~T(%62)
+        break $86
+      }
+      call @T.~T(%62)
+    }
+    %71 = load b32, %56
+    %72 = const b32 1
+    %73 = add b32 %71, %72
+    store b32 %73, %56
+  }
+  %74 = load b32, %1
+  %75 = const b32 16
+  %76 = const b64 112233
+  %77 = call @check(%75, %76)
+  %78 = add b32 %74, %77
+  store b32 %78, %1
+  %79 = addr @trace
+  %80 = const b64 0
+  store b64 %80, %79
+  %81 = const b32 6
+  %82 = call @find(%81)
+  %83 = const b32 16
+  %84 = eq b32 %82, %83
+  $128: if %84 {
+    %85 = load b32, %1
+    %86 = const b32 32
+    %87 = const b64 5555
+    %88 = call @check(%86, %87)
+    %89 = add b32 %85, %88
+    store b32 %89, %1
+  }
+  %90 = load b32, %1
+  call @T.~T(%27)
+  ret b32 %90
+}
+
+func @T.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = const b64 0
+  store b64 %5, %4
+  ret
+}
+
+func @T.init#1(%1: ptr, %2: b64) {
+  %3 = slot ptr
+  %4 = slot b64
+  store ptr %1, %3
+  store b64 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, T.id
+  %7 = load b64, %4
+  store b64 %7, %6
+  %8 = load b64, %4
+  call @note(%8)
+  ret
+}
+
+func @T.init#2(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, T.id
+  %7 = load ptr, %4
+  %8 = field %7, T.id
+  %9 = load b64, %8
+  store b64 %9, %6
+  %10 = const b64 9
+  call @note(%10)
+  ret
+}
+
+func @T.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  call @note(%5)
+  ret
+}
+
+func @T.ok(%1: ptr) -> bool {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  %6 = const b64 0
+  %7 = sgt b64 %5, %6
+  ret bool %7
+}
+
+func @Pair.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b64 4
+  call @note(%3)
+  ret
+}
+
+func @Pair.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b64 7
+  call @note(%3)
+  ret
+}
+
+func @T.T(%1: ptr, %2: b64) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  call @T.init#1(%4, %2)
+  ret
+}
+
+func @T.~T(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  call @T.destroy(%3)
+  ret
+}
+
+func @T.T#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  call @T.init#2(%4, %2)
+  ret
+}
+
+func @Pair.Pair(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Pair.first
+  call @T.T#2(%4)
+  %5 = field %3, Pair.second
+  call @T.T#2(%5)
+  call @Pair.init(%3)
+  ret
+}
+
+func @Pair.~Pair(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  call @Pair.destroy(%3)
+  %4 = field %3, Pair.second
+  call @T.~T(%4)
+  %5 = field %3, Pair.first
+  call @T.~T(%5)
+  ret
+}
+
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
+  ret
+}
+
+func @T.T#2(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  call @T.init(%3)
+  ret
+}
+
+--- exit: 63

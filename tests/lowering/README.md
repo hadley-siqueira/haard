@@ -24,7 +24,9 @@ leaves so the increment still runs.
 
 Each one's exit status was checked against the C++ path by hand when it was
 written (`hdc --emit-cpp`, built and run): 78, 255, 56 and 63 for step 1;
-15, 15, 15, 15 and 7 for step 2's five that end in one. Step 2's other three
+15, 15, 15, 15 and 7 for step 2's five that end in one. Step 3's four:
+7, 63, 15 and 31, each counting with a global the order `init`s and
+`destroy`s ran in, since printing needs `String`, a class. Step 2's other three
 show what only the IR says, since the C++ is undefined there or does not
 check yet: an index past a fixed array aborts (question 9b), a read after a
 `delete` and a second `delete` stop the interpreter.
@@ -46,7 +48,7 @@ otherwise than the C++ is a failure whether it is listed or not.
 The list shrinks step by step, in the order record 0077 gives: (1)
 functions, locals, arithmetic, control flow, calls -- done; (2) pointers,
 references, fixed arrays, globals, literals, `new`/`delete` -- done; (3) structs,
-methods, `init`/`destroy`, the cleanup stack, temporaries; (4) classes,
+methods, `init`/`destroy`, the cleanup stack, temporaries -- done; (4) classes,
 vtables, `vcall`, `super`; (5) enums and `switch`, tuples, unions, closures,
 symbols; (6) the standard library.
 
@@ -66,6 +68,15 @@ braced literal of braced literals (`{{1, 2, 3}, {4, 5, 6}}`) and a fixed array
 copied by `let b = a` pass the front end and come out as C++ g++ refuses; and
 a global whose value reads a global declared below it gets no type. The
 cases were written around them; record 0077 lists them.
+
+## What step 3 found
+
+Its own bug, before it was committed: a temporary made on the right of an
+`and` was ended whether or not that side ran, since the depth that says an
+expression is on one side only was never raised. And two sabotages first
+passed because they were too weak, not the cases: reversing the fields'
+order changed only their types, both `T`; and dropping the depth's `++`
+left its `--` to wrap round, after which every temporary had a flag.
 
 ## Sabotage
 
@@ -111,3 +122,28 @@ And each of step 2's, the same way:
 | `sizeof` measuring a pointer | `emitter/sizeof_measures_a_type` |
 | a braced literal written one element on | five cases |
 | `p--` moving on | `pointers_move_and_compare` |
+
+And step 3's:
+
+| Broken | Fails |
+|---|---|
+| a scope's locals ended first to last | two cases |
+| a `break` ending nothing | `a_struct_ends_with_its_scope` |
+| a `return` ending nothing | two cases |
+| a temporary kept to the end of its block | two cases |
+| a struct given by value not copied | two cases |
+| no named return value | three cases |
+| the fields ended first to last | two cases |
+| a field's written value not given | `a_struct_is_built_where_it_goes` |
+| an assignment without its self check | `copies_moves_and_assignments` |
+| an assignment that does not destroy first | the same |
+| `= &&x` copying instead of moving | the same |
+| a struct assigned by its bytes | the same |
+| a struct copied by its bytes | two cases |
+| `new T` not zeroed | `operators_and_the_heap_of_structs` |
+| `delete` not ending the struct | the same |
+| `delete` of null ending it | the same |
+| no flag for a temporary on one side | the same |
+| `super(...)` not run | `a_struct_is_built_where_it_goes` |
+| a result built in a temporary instead of where the caller said | three cases |
+| the `destroy` method never run | three cases |

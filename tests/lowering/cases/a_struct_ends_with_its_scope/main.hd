@@ -1,0 +1,117 @@
+# Record 0077, stage 4, step 3: what has to end is pushed on a cleanup stack
+# (question 83). A local ends with its block, last made first ended; a
+# temporary with its statement; a copy given by value after the call; and a
+# 'break', a 'continue' and a 'return' end everything they leave. A struct's
+# fields are built before its 'init' runs and ended after its 'destroy', last
+# to first. 'trace' records the order, a digit at a time, the way the C++ path
+# runs it. The exit status adds up one bit per thing that held.
+let trace : i64 = 0
+
+def note : void
+    @digit : i64
+    trace = trace * 10 + digit
+
+struct T:
+    id : i64
+
+    def init : void
+        id = 0
+
+    def init : void
+        @id : i64
+        this.id = id
+        note(id)
+
+    def init : void
+        @other : T&
+        id = other.id
+        note(9)
+
+    def destroy : void
+        note(id)
+
+    def ok : bool
+        return id > 0
+
+struct Pair:
+    first : T
+    second : T
+
+    def init : void
+        note(4)
+
+    def destroy : void
+        note(7)
+
+def by_value : i64
+    @t : T
+    return t.id
+
+def find : i32
+    @limit : i32
+    for i in 0 ... 10:
+        let t = T(5)
+
+        for j in 0 ... 10:
+            if i * j == limit:
+                return i * 10 + j
+
+    return -1
+
+def check : i32
+    @which : i32
+    @want : i64
+    if trace == want:
+        return which
+    return 0
+
+def main : i32
+    let result = 0
+
+    trace = 0
+
+    if true:
+        let one = T(1)
+        let two = T(2)
+
+    result += check(1, 1221)
+
+    trace = 0
+    T(3).ok()
+    result += check(2, 33)
+
+    trace = 0
+
+    let kept = T(1)
+    let got = by_value(kept)
+
+    result += check(4, 191)
+
+    trace = 0
+
+    if true:
+        let p : Pair
+        p.first.id = 1
+        p.second.id = 2
+
+    result += check(8, 4721)
+
+    trace = 0
+
+    for i in 1 ... 4:
+        let t = T(i64(i))
+
+        if i == 2:
+            continue
+
+        if i == 3:
+            break
+
+    result += check(16, 112233)
+
+    trace = 0
+
+    if find(6) == 16:
+        result += check(32, 5555)
+
+    return result

@@ -144,6 +144,10 @@ const std::string& IrTypeTranslator::get_error() {
     return error;
 }
 
+IrTypeId IrTypeTranslator::translate_declaration(u32 module, u32 declaration) {
+    return of_declaration(module, declaration);
+}
+
 IrTypeId IrTypeTranslator::of_declaration(u32 module_index, u32 declaration) {
     std::pair<u32, u32> key(module_index, declaration);
     std::map<std::pair<u32, u32>, u32>::iterator found =

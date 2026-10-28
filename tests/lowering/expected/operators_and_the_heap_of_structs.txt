@@ -1,0 +1,358 @@
+struct T { id: b64 }
+struct Vec { x: b32, y: b32 }
+
+data @trace : b64 = zero
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @make(%1: ptr, %2: b64) {
+  %3 = slot b64
+  store b64 %2, %3
+  %4 = load b64, %3
+  call @T.T(%1, %4)
+  ret
+}
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot Vec
+  %8 = slot Vec
+  %11 = slot Vec
+  %22 = slot ptr
+  %29 = slot ptr
+  %33 = slot bool
+  %34 = slot bool
+  %59 = slot ptr
+  %73 = slot bool
+  %75 = slot bool
+  %77 = slot T
+  %79 = slot bool
+  %89 = slot bool
+  %91 = slot bool
+  %93 = slot T
+  %95 = slot bool
+  %96 = const bool false
+  store bool %96, %95
+  %80 = const bool false
+  store bool %80, %79
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = field %3, Vec.x
+  %5 = const b32 1
+  store b32 %5, %4
+  %6 = field %3, Vec.y
+  %7 = const b32 2
+  store b32 %7, %6
+  call @Vec.operator+(%8, %3, %3)
+  %9 = call @Vec.first(%8)
+  %10 = const b32 5
+  store b32 %10, %9
+  %12 = field %11, Vec.x
+  %13 = const b32 5
+  store b32 %13, %12
+  %14 = field %11, Vec.y
+  %15 = const b32 4
+  store b32 %15, %14
+  %16 = call @Vec.operator==(%8, %11)
+  $24: if %16 {
+    %17 = load b32, %1
+    %18 = const b32 1
+    %19 = add b32 %17, %18
+    store b32 %19, %1
+  }
+  %20 = addr @trace
+  %21 = const b64 0
+  store b64 %21, %20
+  %23 = size Vec as b64
+  %24 = call @__alloc(%23)
+  %25 = field %24, Vec.x
+  %26 = const b32 0
+  store b32 %26, %25
+  %27 = field %24, Vec.y
+  %28 = const b32 0
+  store b32 %28, %27
+  store ptr %24, %22
+  %30 = size T as b64
+  %31 = call @__alloc(%30)
+  %32 = const b64 3
+  call @T.T(%31, %32)
+  store ptr %31, %29
+  %35 = load ptr, %22
+  %36 = field %35, Vec.x
+  %37 = load b32, %36
+  %38 = const b32 0
+  %39 = eq b32 %37, %38
+  store bool %39, %34
+  $56: if %39 {
+    %40 = load ptr, %22
+    %41 = field %40, Vec.y
+    %42 = load b32, %41
+    %43 = const b32 0
+    %44 = eq b32 %42, %43
+    store bool %44, %34
+  }
+  %45 = load bool, %34
+  store bool %45, %33
+  $65: if %45 {
+    %46 = load ptr, %29
+    %47 = field %46, T.id
+    %48 = load b64, %47
+    %49 = const b64 3
+    %50 = eq b64 %48, %49
+    store bool %50, %33
+  }
+  %51 = load bool, %33
+  $73: if %51 {
+    %52 = load b32, %1
+    %53 = const b32 2
+    %54 = add b32 %52, %53
+    store b32 %54, %1
+  }
+  %55 = load ptr, %22
+  call @__free(%55)
+  %56 = load ptr, %29
+  %57 = null
+  %58 = ne ptr %56, %57
+  $83: if %58 {
+    call @T.~T(%56)
+  }
+  call @__free(%56)
+  %60 = null
+  store ptr %60, %59
+  %61 = load ptr, %59
+  %62 = null
+  %63 = ne ptr %61, %62
+  $92: if %63 {
+    call @T.~T(%61)
+  }
+  call @__free(%61)
+  %64 = addr @trace
+  %65 = load b64, %64
+  %66 = const b64 33
+  %67 = eq b64 %65, %66
+  $99: if %67 {
+    %68 = load b32, %1
+    %69 = const b32 4
+    %70 = add b32 %68, %69
+    store b32 %70, %1
+  }
+  %71 = addr @trace
+  %72 = const b64 0
+  store b64 %72, %71
+  %74 = const bool false
+  store bool %74, %73
+  %76 = load bool, %73
+  store bool %76, %75
+  $113: if %76 {
+    %78 = const b64 4
+    call @make(%77, %78)
+    %81 = const bool true
+    store bool %81, %79
+    %82 = call @T.ok(%77)
+    store bool %82, %75
+  }
+  %83 = load bool, %75
+  %84 = load bool, %79
+  $126: if %84 {
+    call @T.~T(%77)
+    %85 = const bool false
+    store bool %85, %79
+  }
+  $130: if %83 {
+    %86 = load b32, %1
+    %87 = const b32 100
+    %88 = add b32 %86, %87
+    store b32 %88, %1
+  }
+  %90 = const bool true
+  store bool %90, %89
+  %92 = load bool, %89
+  store bool %92, %91
+  $141: if %92 {
+    %94 = const b64 6
+    call @make(%93, %94)
+    %97 = const bool true
+    store bool %97, %95
+    %98 = call @T.ok(%93)
+    store bool %98, %91
+  }
+  %99 = load bool, %91
+  %100 = load bool, %95
+  $154: if %100 {
+    call @T.~T(%93)
+    %101 = const bool false
+    store bool %101, %95
+  }
+  $158: if %99 {
+    %102 = load b32, %1
+    %103 = const b32 8
+    %104 = add b32 %102, %103
+    store b32 %104, %1
+  }
+  %105 = addr @trace
+  %106 = load b64, %105
+  %107 = const b64 66
+  %108 = eq b64 %106, %107
+  $167: if %108 {
+    %109 = load b32, %1
+    %110 = const b32 16
+    %111 = add b32 %109, %110
+    store b32 %111, %1
+  }
+  %112 = load b32, %1
+  ret b32 %112
+}
+
+func @T.init(%1: ptr, %2: b64) {
+  %3 = slot ptr
+  %4 = slot b64
+  store ptr %1, %3
+  store b64 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, T.id
+  %7 = load b64, %4
+  store b64 %7, %6
+  %8 = load b64, %4
+  call @note(%8)
+  ret
+}
+
+func @T.init#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, T.id
+  %7 = load ptr, %4
+  %8 = field %7, T.id
+  %9 = load b64, %8
+  store b64 %9, %6
+  %10 = const b64 9
+  call @note(%10)
+  ret
+}
+
+func @T.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  call @note(%5)
+  ret
+}
+
+func @T.ok(%1: ptr) -> bool {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  %6 = const b64 0
+  %7 = sgt b64 %5, %6
+  ret bool %7
+}
+
+func @Vec.operator+(%1: ptr, %2: ptr, %3: ptr) {
+  %4 = slot ptr
+  %5 = slot ptr
+  store ptr %2, %4
+  store ptr %3, %5
+  %6 = field %1, Vec.x
+  %7 = load ptr, %4
+  %8 = field %7, Vec.x
+  %9 = load b32, %8
+  %10 = load ptr, %5
+  %11 = field %10, Vec.x
+  %12 = load b32, %11
+  %13 = add b32 %9, %12
+  store b32 %13, %6
+  %14 = field %1, Vec.y
+  %15 = load ptr, %4
+  %16 = field %15, Vec.y
+  %17 = load b32, %16
+  %18 = load ptr, %5
+  %19 = field %18, Vec.y
+  %20 = load b32, %19
+  %21 = add b32 %17, %20
+  store b32 %21, %14
+  ret
+}
+
+func @Vec.operator==(%1: ptr, %2: ptr) -> bool {
+  %3 = slot ptr
+  %4 = slot ptr
+  %5 = slot bool
+  store ptr %1, %3
+  store ptr %2, %4
+  %6 = load ptr, %3
+  %7 = field %6, Vec.x
+  %8 = load b32, %7
+  %9 = load ptr, %4
+  %10 = field %9, Vec.x
+  %11 = load b32, %10
+  %12 = eq b32 %8, %11
+  store bool %12, %5
+  $14: if %12 {
+    %13 = load ptr, %3
+    %14 = field %13, Vec.y
+    %15 = load b32, %14
+    %16 = load ptr, %4
+    %17 = field %16, Vec.y
+    %18 = load b32, %17
+    %19 = eq b32 %15, %18
+    store bool %19, %5
+  }
+  %20 = load bool, %5
+  ret bool %20
+}
+
+func @Vec.first(%1: ptr) -> ptr {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Vec.x
+  ret ptr %4
+}
+
+func @T.T(%1: ptr, %2: b64) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  call @T.init(%4, %2)
+  ret
+}
+
+native @__alloc(%1: b64) -> ptr
+
+native @__free(%1: ptr)
+
+func @T.~T(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  call @T.destroy(%3)
+  ret
+}
+
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
+  ret
+}
+
+--- exit: 31

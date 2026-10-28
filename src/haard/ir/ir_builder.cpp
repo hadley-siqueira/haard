@@ -120,6 +120,26 @@ IrValueId IrBuilder::entry_slot(IrTypeId type, IrPosition at) {
     return result_of(made);
 }
 
+IrValueId IrBuilder::entry_flag(IrPosition at) {
+    IrTypeId boolean = program->get_types()->scalar(IR_BOOL);
+    IrValueId slot = entry_slot(boolean, at);
+    u32 index = (u32) function().constants.size();
+
+    function().constants.push_back(0);
+
+    IrInstId zero =
+        emit(IR_CONST, boolean, 0, 0, 0, index, no_pool(), boolean, at);
+
+    move_after(zero, function().body, last_entry_slot);
+
+    IrInstId written = emit(IR_STORE, boolean, result_of(zero).index,
+                            slot.index, 0, 0, no_pool(), NO_TYPE, at);
+
+    move_after(written, function().body, zero);
+
+    return slot;
+}
+
 IrValueId IrBuilder::load(IrTypeId type, IrValueId from, IrPosition at) {
     return result_of(
         emit(IR_LOAD, type, from.index, 0, 0, 0, no_pool(), type, at));

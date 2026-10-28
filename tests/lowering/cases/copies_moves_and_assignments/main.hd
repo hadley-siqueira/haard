@@ -1,0 +1,109 @@
+# Record 0077, stage 4, step 3. A struct with a copy 'init' is copied by it,
+# after its fields are made ready; one without is copied member by member,
+# each by its own rule. Assigning destroys, then copies (record 0031) -- or
+# field by field, when only a field says how -- and '&&' moves by the move
+# 'init' (Hadley, 2026-09-30). The one local every 'return' gives back is
+# built in the destination and never copied, as g++ does; two locals given
+# back on two paths are copied out. The exit status adds up one bit per thing
+# that held.
+let trace : i64 = 0
+
+def note : void
+    @digit : i64
+    trace = trace * 10 + digit
+
+struct T:
+    id : i64
+
+    def init : void
+        id = 0
+
+    def init : void
+        @id : i64
+        this.id = id
+        note(id)
+
+    def init : void
+        @other : T&
+        id = other.id + 1
+        note(9)
+
+    def init : void
+        @other : T&&
+        id = other.id
+        other.id = 0
+        note(8)
+
+    def destroy : void
+        note(id)
+
+struct Pair:
+    first : T
+    second : T
+
+def named : T
+    let made = T(2)
+    made.id = 3
+    return made
+
+def pick : T
+    @first : bool
+    let a = T(5)
+    let b = T(6)
+
+    if first:
+        return a
+
+    return b
+
+def check : i32
+    @which : i32
+    @want : i64
+    if trace == want:
+        return which
+    return 0
+
+def main : i32
+    let result = 0
+
+    trace = 0
+
+    let n = named()
+
+    if n.id == 3:
+        result += check(1, 2)
+
+    trace = 0
+
+    let chosen = pick(true)
+
+    if chosen.id == 6:
+        result += check(2, 56965)
+
+    trace = 0
+
+    let one = T(1)
+    let a = T(5)
+
+    a = one
+
+    # assigning one to itself does nothing at all
+    a = a
+    a = &&n
+
+    if a.id == 3 and n.id == 0:
+        result += check(4, 155928)
+
+    let p : Pair
+    p.first.id = 1
+    p.second.id = 2
+    trace = 0
+
+    let q = p
+
+    q = p
+
+    if q.first.id == 2 and q.second.id == 3:
+        result += check(8, 992939)
+
+    return result

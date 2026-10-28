@@ -349,6 +349,38 @@ of braced literals (`{{1, 2}, {3, 4}}`) and a fixed array copied by `let b =
 a` are accepted by the front end and written as C++ g++ refuses; and a global
 whose value reads a global declared below it gets no type.
 
+**Step 3 built (2026-10-28)**: structs. A class waits for step 4, since
+building one writes its vptr. A struct's methods are functions named after
+it (`Point.sum`), the object passed first; a struct given back is built
+where the caller says, a pointer passed before everything; one given by
+value is a copy the caller makes and ends after the statement. Fields are
+`field`, found up through the bases with `upcast`; `super(...)` runs the
+base's `init`, `super.f()` its method. What C++ writes for a struct
+unasked, the IR writes as functions made the first time one is needed
+(`IrLowerer::structor`): a constructor (`Point.Point`: the base built with
+nothing, each field given the value written on it or built with nothing,
+then the `init` chosen), the member-by-member copy (`Point.Point(copy)`),
+the destructor (`Point.~Point`: `destroy`, the fields last to first, the
+base) and record 0031's assignment (`Point.assign`, `Point.move_assign`); a
+struct whose tree writes none of these is copied and assigned by `copy`, and
+built and ended by nothing. The cleanup stack: a scope per block and per
+statement, a local ending with its block and a temporary with its statement
+(one a `T&` binding keeps, with the block, record 0068), each scope's run
+last to first wherever it is left, a `return` leaving them all after the
+value given back is written. A temporary on one side of an `and` or an `or`
+is guarded by a flag (`IrBuilder::entry_flag`). `new T` is C++'s `new T()`,
+zeroing a struct with no `init` before building it; `delete` ends the struct
+first, unless the pointer is null. Operators a struct declares are calls,
+the left operand the object (record 0034). **The named return value is
+g++'s**: when every `return` gives back the same local of the type given
+back, that local is built in the destination and never copied; otherwise
+each `return` copies. Not written in any record before, and observable
+through a copy `init` that does something; the C++ path does it because g++
+does, so the IR does it the same way. Four cases of the suite's own, each
+checked against the C++ path (7, 63, 15, 31). No emitter program is only
+structs, so none moved off `not_yet`. One bug found before it was committed:
+a temporary on the right of an `and` was ended whether or not it was made.
+
 ## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
 
 The first instruction set:

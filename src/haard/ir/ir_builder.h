@@ -58,6 +58,11 @@ namespace haard {
             // gives every frame a fixed size, so the lowering puts every local
             // and every temporary there, as clang does
             IrValueId entry_slot(IrTypeId type, IrPosition at);
+
+            // a bool slot at the top of the body that starts false, written
+            // there too: what says a temporary made on one path only was made
+            // (question 83)
+            IrValueId entry_flag(IrPosition at);
             IrValueId load(IrTypeId type, IrValueId from, IrPosition at);
             void store(IrTypeId type, IrValueId value, IrValueId to,
                        IrPosition at);

@@ -50,6 +50,9 @@ namespace haard {
             // index 0 for a type with none
             IrTypeId translate(u32 module, u32 type);
 
+            // the aggregate a struct, a class or a union declares
+            IrTypeId translate_declaration(u32 module, u32 declaration);
+
             const std::string& get_error();
 
         private:

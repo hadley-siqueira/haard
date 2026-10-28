@@ -1,0 +1,105 @@
+# Record 0077, stage 4, step 3. An operator a struct declares is its method,
+# the left operand the object (record 0034), and a method may give back a
+# place. 'new T' is C++'s 'new T()', which zeroes a struct with no 'init'
+# before building it; 'new T(...)' runs the 'init' chosen; 'delete' ends the
+# struct and then frees it, and does nothing to null. A temporary made on one
+# side of an 'and' only is ended only when it was made, by a flag (question
+# 83). The exit status adds up one bit per thing that held.
+let trace : i64 = 0
+
+def note : void
+    @digit : i64
+    trace = trace * 10 + digit
+
+struct T:
+    id : i64
+
+    def init : void
+        @id : i64
+        this.id = id
+        note(id)
+
+    def init : void
+        @other : T&
+        id = other.id
+        note(9)
+
+    def destroy : void
+        note(id)
+
+    def ok : bool
+        return id > 0
+
+struct Vec:
+    x : i32
+    y : i32
+
+    def operator+ : Vec
+        @other : Vec&
+        let made : Vec
+        made.x = x + other.x
+        made.y = y + other.y
+        return made
+
+    def operator== : bool
+        @other : Vec&
+        return x == other.x and y == other.y
+
+    def first : i32&
+        return x
+
+def make : T
+    @id : i64
+    return T(id)
+
+def main : i32
+    let result = 0
+    let a : Vec
+    a.x = 1
+    a.y = 2
+
+    let b = a + a
+
+    b.first() = 5
+
+    let c : Vec
+    c.x = 5
+    c.y = 4
+
+    if b == c:
+        result += 1
+
+    trace = 0
+
+    let v = new Vec
+    let t = new T(3)
+
+    if v.x == 0 and v.y == 0 and t.id == 3:
+        result += 2
+
+    delete v
+    delete t
+
+    let nothing : T* = null
+
+    delete nothing
+
+    if trace == 33:
+        result += 4
+
+    trace = 0
+
+    let no = false
+
+    if no and make(4).ok():
+        result += 100
+
+    let yes = true
+
+    if yes and make(6).ok():
+        result += 8
+
+    if trace == 66:
+        result += 16
+
+    return result

@@ -1,0 +1,76 @@
+# Record 0077, stage 4, step 3: a struct is never a value (question 80). A
+# local is a slot of its type, a field an address, a method a function given
+# the object first, and a struct given back is built where the caller says --
+# a pointer passed before everything else. One given by value is a copy the
+# caller makes. A struct derived from another holds it as its base, reached by
+# an 'upcast'; 'super(...)' runs the base's 'init' and 'super.get()' its
+# method. The exit status adds up one bit per thing that held.
+struct Point:
+    x : i32
+    y : i32
+
+    def sum : i32
+        return x + y
+
+    def scaled : Point
+        @by : i32
+        let made : Point
+        made.x = x * by
+        made.y = this.y * by
+        return made
+
+struct Point3(Point):
+    z : i32 = 7
+
+    def total : i32
+        return sum() + z
+
+struct Base:
+    value : i32
+
+    def init : void
+        @v : i32
+        value = v
+
+    def get : i32
+        return value
+
+struct Derived(Base):
+    def init : void
+        super(40)
+
+    def more : i32
+        return super.get() + 2
+
+# the copy the caller made, so writing it changes nothing outside
+def total_of : i32
+    @p : Point
+    p.x = 100
+    return p.sum()
+
+def main : i32
+    let result = 0
+    let p : Point
+    p.x = 1
+    p.y = 2
+
+    let q = p.scaled(3)
+
+    if q.sum() == 9 and total_of(q) == 106 and q.x == 3:
+        result += 1
+
+    let r : Point3
+    r.x = 1
+    r.y = 1
+
+    let pr = &r
+
+    if r.total() == 9 and pr->total() == 9 and pr.z == 7:
+        result += 2
+
+    let d = Derived()
+
+    if d.value == 40 and d.more() == 42 and d.get() == 40:
+        result += 4
+
+    return result
