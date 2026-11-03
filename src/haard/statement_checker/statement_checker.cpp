@@ -1339,6 +1339,32 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
         return;
     }
 
+    // record 0079, Hadley 2026-11-03: 'c += n' and 'c -= n' move a
+    // character by a whole number, as 'c = c + n' does, and the number is
+    // asked to be nothing, as a pointer's is. Another character on the
+    // right is what it was before: 'char + char', open
+    if ((kind_of(node) == AST_PLUS_ASSIGNMENT
+         || kind_of(node) == AST_MINUS_ASSIGNMENT)
+        && types->get_type(left)->kind == TYPE_BUILTIN
+        && types->get_type(left)->subject == BUILTIN_CHAR) {
+        u32 by = typer.type_of(index, scope, value, INVALID_TYPE);
+
+        if (by == INVALID_TYPE) {
+            return;
+        }
+
+        Type* other = types->get_type(types->value_of(by));
+
+        if (other->kind != TYPE_BUILTIN
+            || (other->subject != BUILTIN_CHAR
+                && !is_a_whole_number((BuiltinType) other->subject))) {
+            report(node, "a character moves by a whole number, and this is "
+                   + typer.name_of(by));
+        }
+
+        return;
+    }
+
     // Record 0034, and '=' joined its table on 2026-09-06: a class may say
     // what assigning to it means. 'a = "abc"' on a String is the reason --
     // without it the char* becomes a temporary String and record 0031's

@@ -376,7 +376,8 @@ g++'s**: when every `return` gives back the same local of the type given
 back, that local is built in the destination and never copied; otherwise
 each `return` copies. Not written in any record before, and observable
 through a copy `init` that does something; the C++ path does it because g++
-does, so the IR does it the same way. Four cases of the suite's own, each
+does, so the IR does it the same way. Decided as the language's rule
+on 2026-11-03: record [0080](0080-a-returned-local-is-built-where-it-goes.md). Four cases of the suite's own, each
 checked against the C++ path (7, 63, 15, 31). No emitter program is only
 structs, so none moved off `not_yet`. One bug found before it was committed:
 a temporary on the right of an `and` was ended whether or not it was made.

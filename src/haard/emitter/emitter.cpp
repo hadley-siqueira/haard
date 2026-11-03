@@ -5623,6 +5623,39 @@ bool Emitter::emit_conversion(u32 module_index, u32 holder, u32 wanted,
 
         return true;
     }
+
+    // A derived class given to a reference of its base IS the object, which
+    // C++ binds as it is (record 0035: a reference is the thing it names).
+    // Until 2026-11-03 this fell to the construction below and wrote
+    // 'Base(d)', a sliced temporary, so a virtual call through the reference
+    // ran the base's method -- found by the IR, which bound it
+    if (there->get_type(wanted)->kind == TYPE_REFERENCE && from->kind == TYPE_NAMED) {
+        u32 at_module = from->module;
+        u32 at_subject = from->subject;
+
+        while (true) {
+            Module* owning = compilation->get_module(at_module);
+            u32 base = owning->get_symbols()->get_candidate(at_subject)->super;
+
+            if (base == INVALID_TYPE || base == 0) {
+                break;
+            }
+
+            Type* above = owning->get_types()->get_type(base);
+
+            if (above->kind != TYPE_NAMED) {
+                break;
+            }
+
+            if (above->module == entry->module && above->subject == entry->subject) {
+                return false;
+            }
+
+            at_module = above->module;
+            at_subject = above->subject;
+        }
+    }
+
     std::string name = name_of(entry->module, entry->subject);
 
     // a temporary is an rvalue and C++ will not bind one to a plain reference

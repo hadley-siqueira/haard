@@ -1,0 +1,53 @@
+# Record 0035: a reference is the thing it names, so a derived class given to
+# a reference of its base is the object itself, and a virtual call through
+# that reference runs the derived class's method.
+#
+# Until 2026-11-03 the emitter wrote 'which(Base(d))', a sliced copy, and
+# every line below ran Base's 'name' instead. The IR bound the object, and
+# the two paths disagreed.
+#
+# One bit per way of giving the object.
+
+class Base:
+    def name : i32
+        return 1
+
+class Derived(Base):
+    def name : i32
+        return 2
+
+class Lower(Derived):
+    def name : i32
+        return 3
+
+def which : i32
+    @b : Base&
+
+    return b.name()
+
+def main : i32
+    let d = Derived()
+    let l = Lower()
+    let bits = 0
+
+    # a variable
+    if which(d) == 2:
+        bits = bits | 1
+
+    # two levels down
+    if which(l) == 3:
+        bits = bits | 2
+
+    # a binding of the base's reference
+    let r : Base& = l
+
+    if r.name() == 3:
+        bits = bits | 4
+
+    # through a reference of the middle class
+    let m : Derived& = l
+
+    if which(m) == 3:
+        bits = bits | 8
+
+    return bits

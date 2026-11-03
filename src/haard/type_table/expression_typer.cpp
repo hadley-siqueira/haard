@@ -844,6 +844,12 @@ bool ExpressionTyper::may_cast(u32 from, u32 to) {
     return (read != from || into != to) && may_cast(read, into);
 }
 
+bool ExpressionTyper::is_char(u32 type) {
+    Type* entry = module->get_types()->get_type(type);
+
+    return entry->kind == TYPE_BUILTIN && entry->subject == BUILTIN_CHAR;
+}
+
 bool ExpressionTyper::holds_a_pointer(u32 type) {
     Type* entry = module->get_types()->get_type(type);
 
@@ -2030,9 +2036,11 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
             && (is_untyped_literal(second) || second == AST_NULL_LITERAL)) {
             right = left;
         } else if (left != INVALID_TYPE && !comparison
-                   && types->get_type(left)->kind == TYPE_POINTER) {
+                   && (types->get_type(left)->kind == TYPE_POINTER
+                       || is_char(left))) {
             // record 0076: what moves a pointer is a whole number, which
-            // is a number of its own and not one asked to be the pointer
+            // is a number of its own and not one asked to be the pointer;
+            // and what moves a character, the same way (Hadley 2026-11-03)
             right = type_of(index, scope, second_child(node),
                             is_untyped_literal(second) ? INVALID_TYPE
                                                        : value_shape(left));
@@ -2149,6 +2157,26 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
                + name_of(left) + " and " + name_of(right));
 
         return INVALID_TYPE;
+    }
+
+    // Hadley 2026-11-03, the shape record 0076 gives a pointer: a character
+    // moves by a whole number with '+' and '-' and stays a character, and
+    // two are subtracted into the distance between them, an i32 with its
+    // sign. '(c - 'a')' is the index of a letter and 'a' - 'b' is -1, not a
+    // character that wrapped; 'ch - ('a' - 'A')' is the upper case of 'ch'
+    if (!comparison && is_char(left)) {
+        AstNodeKind kind = kind_of(node);
+        Type* other = types->get_type(right);
+
+        if ((kind == AST_PLUS || kind == AST_MINUS)
+            && other->kind == TYPE_BUILTIN
+            && is_a_whole_number((BuiltinType) other->subject)) {
+            return left;
+        }
+
+        if (kind == AST_MINUS && right == left) {
+            return types->builtin(BUILTIN_I32);
+        }
     }
 
     // record 0018 has nothing that would make two different types one, so the

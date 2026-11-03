@@ -6,7 +6,17 @@ remaining work and open questions. The records and the agenda
 (`docs/design/README.md`) keep the reasoning; this file keeps the list.
 
 Take an item off when it is fixed, decided or dropped, and say where it went.
-Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`).
+Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
+date 2026-11-03, after Hadley's five answers (1a, 2a, 3a, 4a, 5a).
+
+Taken off on 2026-11-03: *`char - char`* (record 0079), *lower only what is
+reachable* (built, question 89), *the named return value* (record 0080),
+*whether record 0018's list composes* (already answered by record 0046: a
+value reaches a `T&` of a class it builds, at a cost of two; only the open
+lines of records 0035, 0037 and 0038 had not been updated), *the unary minus
+against `**`* (record 0057 amended), and *a class value given to a `T&` of
+its base is copied on the C++ path* (fixed in `Emitter::emit_conversion`,
+case `a_derived_class_is_its_base_by_reference`).
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -26,26 +36,34 @@ Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`).
    - so is a fixed array copied by `let b = a`;
    - a global whose value reads a global declared **below** it gets no type
      in the front end, while the emitter's comment says it reads zero.
-5. **A class value given to a `T&` of its base is copied on the C++ path**
-   (found 2026-10-28, IR step 4). `which(d)` with `@b : Base&` is emitted as
-   `which(Base(d))` (`Emitter::emit_conversion`, the *not the same class*
-   branch): a temporary Base, so a virtual call through the reference runs
-   Base's method. Record 0035 says a reference is the thing it names, and the
-   IR binds it. Not fixed.
-6. **A generic's body is typed with its parameters unbound**, so
+5. **A generic's body is typed with its parameters unbound**, so
    `left = 0` in a `Pair<T>` is reported although every instantiation would
    be fine, and two generics' `K`s are different types there. Records 0036
    and 0067.
-7. **The `HashItems.each` workaround** in `std/hash.hd` (walking its cursor
+6. **The `HashItems.each` workaround** in `std/hash.hd` (walking its cursor
    instead of building the pair) could be simplified now. Low priority.
-8. **The name `__tsN` of a template string's temporary is writable** by a
+7. **The name `__tsN` of a template string's temporary is writable** by a
    program, which would collide with it. Record 0032.
-9. **An assignment has no type as a value**: `let g = (f = 2)` is *'g' has no
+8. **An assignment has no type as a value**: `let g = (f = 2)` is *'g' has no
    type the emitter can write*. Record 0057.
-10. **A base's own copy**: the emitted copy constructor default-constructs the
+9. **A base's own copy**: the emitted copy constructor default-constructs the
     base and then runs the copy `init`, so a derived class's copy has to copy
     what its base holds. Record 0031; check whether `super(...)` (record 0053)
     settled it.
+10. **A `char*` value bound to a `T&` of a class on the C++ path**:
+    `let s : String& = p`, `p` a `char*`, passes the front end (record
+    0046) and is emitted as `String& s = p`, which g++ refuses (a temporary
+    to a plain reference). The IR builds and holds the temporary. The same
+    as an argument works. Found 2026-11-03.
+11. **A number literal given to a class by its `init`**: `by_value(5)` with
+    `by_value(m : Meters)` and `Meters.init(n : i32)` is *no 'by_value'
+    takes these arguments*, while `by_value(n)` with `n : i32` works.
+    Record 0046 says a literal and a value are one question. Found
+    2026-11-03.
+12. **A `char` past 127 reads differently on the two paths**: the C++
+    `char` is signed on x86-64, the IR's is not (`c as i32` is a `zext`),
+    so `'z' + 10` as an `i32` is -124 in C++ and 132 in the IR. Whether a
+    Haard `char` has a sign is not decided anywhere. Record 0079.
 
 ## 2. Decided, not built
 
@@ -73,31 +91,19 @@ Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`).
 
 ## 3. Waiting on a decision
 
-1. **`char - char`**, as in `(c - 'a') as i32`. C++ promotes to `int`;
-   Haard's rule is not decided; the IR refuses it (*arithmetic on this
-   type*). Two `String` programs of `tests/emitter` wait on it.
-2. **Lower only what is reachable** (question 89 already says so). Many
-   emitter programs wait in `tests/lowering/not_yet` only because their copy
-   of the library has a method taking a closure that nobody calls.
-3. **The named return value** (IR step 3, 2026-10-28): when every `return`
-   gives back the same local, it is built in the destination and never
-   copied, which is g++'s rule. It was never in a record and is observable
-   through a copy `init` that does something; both paths follow g++ today.
-   To confirm, or to replace with a rule of Haard's own.
-4. **Whether record 0018's list composes**: `char*` → `String&` needs two
-   steps and gets none. Records 0035, 0037, 0038.
-5. **The unary minus against `**`**: `-2 ** 2` is `(-2) ** 2` in Haard and
-   `-(2 ** 2)` in Python. Record 0057.
-6. **What replaces a `goto` that left several loops** (a labelled `break`,
+1. **The rest of a character's arithmetic** (record 0079): `c + d`,
+   `c * d` and the rest between two characters are still typed as a `char`
+   (and `c += d` takes one), and the IR refuses them.
+2. **What replaces a `goto` that left several loops** (a labelled `break`,
    say). Record 0078.
-7. **The foreign interface** that replaces the natives of `std.low_io`.
+3. **The foreign interface** that replaces the natives of `std.low_io`.
    Record 0030 is temporary on purpose and says what replaces it.
-8. **How introspection is written in Haard**: the descriptor exists in the
+4. **How introspection is written in Haard**: the descriptor exists in the
    IR, the spelling is a record of its own. Record 0077, stage 1.
-9. **Versions, a registry and a lock file** for packages. Records 0010 and
+5. **Versions, a registry and a lock file** for packages. Records 0010 and
    0044.
-10. **Record 0012 is marked partly decided**: what it left open should be
-    checked against what was built since.
+6. **Record 0012 is marked partly decided**: what it left open should be
+   checked against what was built since.
 
 ## 4. Deferred on purpose
 
@@ -121,7 +127,10 @@ Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`).
 ## 5. The IR (record 0077)
 
 1. **Stage 4, step 5**: enums and `switch`, tuples, unions, closures,
-   symbols. Most of the 34 programs in `tests/lowering/not_yet` wait here.
+   symbols. Most of the 31 programs in `tests/lowering/not_yet` wait here
+   (2026-11-03, now that only what is reachable is lowered: every one of
+   them really uses a tuple, an enum, a union, a closure or a symbol, but
+   one float operator and `main` taking a `List`).
 2. **Stage 4, step 6**: the standard library -- `main` taking its arguments
    as a `List`, floats' `**` and `//` (the library's `pow` and `floor`), a
    global of a class type, and the `String` programs.

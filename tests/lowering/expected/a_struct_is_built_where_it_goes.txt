@@ -3,18 +3,6 @@ struct Point3 : Point { z: b32 }
 struct Base { value: b32 }
 struct Derived : Base {}
 
-func @total_of(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = field %3, Point.x
-  %5 = const b32 100
-  store b32 %5, %4
-  %6 = load ptr, %2
-  %7 = call @Point.sum(%6)
-  ret b32 %7
-}
-
 func @main() -> b32 {
   %1 = slot b32
   %3 = slot Point
@@ -137,19 +125,6 @@ func @main() -> b32 {
   ret b32 %75
 }
 
-func @Point.sum(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = field %3, Point.x
-  %5 = load b32, %4
-  %6 = load ptr, %2
-  %7 = field %6, Point.y
-  %8 = load b32, %7
-  %9 = add b32 %5, %8
-  ret b32 %9
-}
-
 func @Point.scaled(%1: ptr, %2: ptr, %3: b32) {
   %4 = slot ptr
   %5 = slot b32
@@ -172,58 +147,28 @@ func @Point.scaled(%1: ptr, %2: ptr, %3: b32) {
   ret
 }
 
-func @Point3.total(%1: ptr) -> b32 {
+func @Point.sum(%1: ptr) -> b32 {
   %2 = slot ptr
   store ptr %1, %2
   %3 = load ptr, %2
-  %4 = upcast %3, Point3 -> Point
-  %5 = call @Point.sum(%4)
+  %4 = field %3, Point.x
+  %5 = load b32, %4
   %6 = load ptr, %2
-  %7 = field %6, Point3.z
+  %7 = field %6, Point.y
   %8 = load b32, %7
   %9 = add b32 %5, %8
   ret b32 %9
 }
 
-func @Base.init(%1: ptr, %2: b32) {
-  %3 = slot ptr
-  %4 = slot b32
-  store ptr %1, %3
-  store b32 %2, %4
-  %5 = load ptr, %3
-  %6 = field %5, Base.value
-  %7 = load b32, %4
-  store b32 %7, %6
-  ret
-}
-
-func @Base.get(%1: ptr) -> b32 {
+func @total_of(%1: ptr) -> b32 {
   %2 = slot ptr
   store ptr %1, %2
   %3 = load ptr, %2
-  %4 = field %3, Base.value
-  %5 = load b32, %4
-  ret b32 %5
-}
-
-func @Derived.init(%1: ptr) {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = upcast %3, Derived -> Base
-  %5 = const b32 40
-  call @Base.init(%4, %5)
-  ret
-}
-
-func @Derived.more(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = upcast %3, Derived -> Base
-  %5 = call @Base.get(%4)
-  %6 = const b32 2
-  %7 = add b32 %5, %6
+  %4 = field %3, Point.x
+  %5 = const b32 100
+  store b32 %5, %4
+  %6 = load ptr, %2
+  %7 = call @Point.sum(%6)
   ret b32 %7
 }
 
@@ -238,6 +183,29 @@ func @Point3.Point3(%1: ptr) {
   ret
 }
 
+func @Point3.total(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, Point3 -> Point
+  %5 = call @Point.sum(%4)
+  %6 = load ptr, %2
+  %7 = field %6, Point3.z
+  %8 = load b32, %7
+  %9 = add b32 %5, %8
+  ret b32 %9
+}
+
+func @Derived.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, Derived -> Base
+  %5 = const b32 40
+  call @Base.init(%4, %5)
+  ret
+}
+
 func @Derived.Derived(%1: ptr) {
   %2 = slot ptr
   store ptr %1, %2
@@ -245,6 +213,38 @@ func @Derived.Derived(%1: ptr) {
   %4 = upcast %3, Derived -> Base
   call @Base.Base(%4)
   call @Derived.init(%3)
+  ret
+}
+
+func @Derived.more(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, Derived -> Base
+  %5 = call @Base.get(%4)
+  %6 = const b32 2
+  %7 = add b32 %5, %6
+  ret b32 %7
+}
+
+func @Base.get(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Base.value
+  %5 = load b32, %4
+  ret b32 %5
+}
+
+func @Base.init(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %4 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Base.value
+  %7 = load b32, %4
+  store b32 %7, %6
   ret
 }
 

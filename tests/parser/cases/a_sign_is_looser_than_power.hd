@@ -1,0 +1,9 @@
+def main : i32
+    let a = -x ** 2
+    let b = (-x) ** 2
+    let c = - -x ** 2
+    let d = -x ** y ** z
+    let e = 2 ** -x ** 2
+    let f = -x | y ** 2
+    let g = -x * y ** 2
+    return +x ** 2

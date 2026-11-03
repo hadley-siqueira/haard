@@ -1,0 +1,26 @@
+# Record 0079, Hadley 2026-11-03, which overturns what this case said on
+# 2026-10-07 (*a number is not added to a char*): a character moves by a
+# whole number and stays a character, and two are subtracted into an i32,
+# the shape record 0076 gives a pointer.
+
+def main : i32
+    let c : char = 'a'
+    let n : i64 = 2
+
+    # a character moved: each is a char
+    c += 1
+    c -= n
+    let d = c + 1
+    let e = c - ('a' - 'A')
+
+    # the distance between two: an i32
+    let g = c - 'a'
+
+    # refused: the number goes on the right, it is a whole one, and nothing
+    # but '+' and '-' moves a character
+    let h = 1 + c
+    let i = c + 1.5
+    let j = c * 2
+    c += 1.5
+
+    return 0

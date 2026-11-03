@@ -72,11 +72,36 @@ from the right, and why Python, Ruby, Fortran, Haskell, F#, Perl, R and
 JavaScript all do. The old compiler folded it left; that was a mistake and not
 a decision.
 
-The interaction with the unary minus is **not** changed here: `-2 ** 2` is
+The interaction with the unary minus was **not** changed here: `-2 ** 2` was
 `(-2) ** 2` in Haard and `-(2 ** 2)` in Python. Python gets that by giving
 `**` a right operand at the unary level and a left operand at the primary
 level, which this cascade cannot express without also changing what `- a | b`
-means. It is open.
+means. It was left open.
+
+**Amended 2026-11-03, Hadley (option a of three; the others were keeping it
+and refusing the line without parentheses): a sign is looser than the `**`
+right after its operand**, so `-2 ** 2` is `-(2 ** 2)`, which is `-4`, the
+way mathematics, Python, Ruby and Fortran read `-x²`. The cascade is not
+moved. The sign itself, at the unary level, takes a `**` that follows its
+operand directly, and that `**`'s right operand is the power level's own:
+
+| written | read |
+|---|---|
+| `-x ** 2` | `-(x ** 2)` |
+| `(-x) ** 2` | as written |
+| `- -x ** 2` | `-(-(x ** 2))` |
+| `-x ** y ** z` | `-(x ** (y ** z))` |
+| `2 ** -x ** 2` | `2 ** (-(x ** 2))` |
+| `-x \| y ** 2` | `((-x) \| y) ** 2`, unchanged: the `**` does not follow the sign's operand |
+| `-x * y ** 2` | `(-x) * (y ** 2)`, unchanged |
+
+Only `-` and `+`. `~`, `!`, `*`, `&` and `&&` still bind tighter than `**`:
+`~a ** b` is `(~a) ** b`, which is what `tests/parser/cases/precedence_unary_over_binary`
+checks now (it read `-a ** ...` before). It changes what a program written
+before computes, and none of the suites had one. Built in both parsers
+(`Parser::parse_unary_expression`, and `bootstrap/parser/parser.hd`);
+cases `tests/parser/cases/a_sign_is_looser_than_power` and
+`tests/emitter/cases/a_sign_is_looser_than_power`, which the IR runs too.
 
 `**` is typed and emitted since the same day, below, so this is visible in a
 program that runs. The parser suite dumps the tree, which is where the

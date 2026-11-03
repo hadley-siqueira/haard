@@ -12,10 +12,13 @@ IrLowerer::IrLowerer() {
     program = nullptr;
     alloc_native.index = 0;
     free_native.index = 0;
+    next_body = 0;
+    next_structor = 0;
 }
 
 void IrLowerer::set_compilation(Compilation* compilation) {
     this->compilation = compilation;
+    type_builder.set_compilation(compilation);
 }
 
 void IrLowerer::set_target(const Target* target) {
@@ -41,8 +44,11 @@ bool IrLowerer::lower() {
     program->get_classes()->set_compilation(compilation);
     program->get_classes()->build();
 
-    return declare_functions() && declare_globals() && lower_bodies()
-        && lower_globals() && lower_structors() && verify("lowering");
+    // Question 89: only what is reachable goes in. The roots are 'main' and
+    // every global's value; a function is declared when something asks for
+    // it, and its body lowered after, which may ask for more
+    return declare_main() && declare_globals() && lower_globals() && drain()
+        && verify("lowering");
 }
 
 bool IrLowerer::finish() {
@@ -127,9 +133,51 @@ IrObjectId IrLowerer::deallocator() {
 IrObjectId IrLowerer::function_of(u32 module, u32 candidate) {
     std::map<std::pair<u32, u32>, u32>::iterator found =
         functions.find(std::make_pair(module, candidate));
-    IrObjectId id = {found == functions.end() ? 0 : found->second};
 
-    return id;
+    if (found != functions.end()) {
+        return {found->second};
+    }
+
+    IrObjectId none = {0};
+    Module* owning = compilation->get_module(module);
+
+    if (candidate == 0) {
+        return none;
+    }
+
+    u32 node = owning->get_symbols()->get_candidate(candidate)->ast_node;
+
+    if (node == 0 || owning->get_ast()->get_node(node)->get_kind() != AST_FUNCTION
+        || is_generic(module, node)) {
+        return none;
+    }
+
+    // a method of a struct or a class; a union's and an enum's wait for
+    // step 5, and a free function's scope is the module's
+    u32 holder = holder_of(module, candidate);
+    AstNodeKind held = holder == 0
+                           ? AST_UNKNOWN
+                           : owning->get_ast()->get_node(holder)->get_kind();
+
+    if (held == AST_UNION || held == AST_ENUM) {
+        return none;
+    }
+
+    if (held != AST_STRUCT && held != AST_CLASS) {
+        holder = 0;
+    } else if (is_generic(module, holder)) {
+        return none;
+    }
+
+    if (!declare_function(module, node, holder)) {
+        return none;
+    }
+
+    return {functions[std::make_pair(module, candidate)]};
+}
+
+void IrLowerer::use_slot(IrTypeId receiver, u32 slot) {
+    used_slots.insert(std::make_pair(receiver.index, slot));
 }
 
 IrTypeId IrLowerer::type_of(u32 module, u32 type) {
@@ -146,36 +194,18 @@ void IrLowerer::fail(const std::string& message) {
 // further down or in another module. A function of 'std.low_io' is a native
 // (record 0030), and the entry module's 'main' is the one called 'main'. A
 // struct's and a class's methods are functions too, named after it
-bool IrLowerer::declare_functions() {
-    for (u32 i = 0; i < compilation->get_module_count(); i++) {
-        Module* module = compilation->get_module(i);
-        AstQuery query;
+// the program's entry point, the one root a function is; module 0 is the
+// one hdc was given
+bool IrLowerer::declare_main() {
+    Module* module = compilation->get_module(0);
+    AstQuery query;
 
-        query.set_module(module);
+    query.set_module(module);
 
-        for (u32 node : query.get_functions()) {
-            if (!is_generic(i, node) && !declare_function(i, node, 0)) {
-                return false;
-            }
-        }
-
-        for (u32 declaration : query.get_declarations()) {
-            AstNodeKind kind =
-                module->get_ast()->get_node(declaration)->get_kind();
-
-            if ((kind != AST_STRUCT && kind != AST_CLASS)
-                || is_generic(i, declaration)) {
-                continue;
-            }
-
-            for (u32 member : query.get_members(declaration)) {
-                if (module->get_ast()->get_node(member)->get_kind()
-                        == AST_FUNCTION
-                    && !is_generic(i, member)
-                    && !declare_function(i, member, declaration)) {
-                    return false;
-                }
-            }
+    for (u32 node : query.get_functions()) {
+        if (query.get_declaration_name(node) == "main"
+            && !is_generic(0, node)) {
+            return declare_function(0, node, 0);
         }
     }
 
@@ -334,19 +364,79 @@ bool IrLowerer::declare_globals() {
     return true;
 }
 
-bool IrLowerer::lower_bodies() {
-    for (const std::pair<u32, u32>& one : bodies) {
-        Module* module = compilation->get_module(one.first);
-        u32 candidate = module->get_symbols()->candidate_of(one.second);
-        FunctionLowerer body(this, program);
+// Every body asked for, every constructor, and every slot of a vtable some
+// 'vcall' goes through -- each may ask for more, so until nothing is left
+bool IrLowerer::drain() {
+    while (true) {
+        if (next_body < bodies.size()) {
+            std::pair<u32, u32> one = bodies[next_body++];
+            Module* module = compilation->get_module(one.first);
+            u32 candidate = module->get_symbols()->candidate_of(one.second);
+            FunctionLowerer body(this, program);
 
-        if (!body.lower(one.first, one.second,
-                        function_of(one.first, candidate))) {
-            return false;
+            if (!body.lower(one.first, one.second,
+                            function_of(one.first, candidate))
+                || error.size() > 0) {
+                return false;
+            }
+
+            continue;
+        }
+
+        if (next_structor < structors.size()) {
+            StructorJob job = structors[next_structor++];
+            FunctionLowerer body(this, program);
+
+            if (!body.lower_structor(job) || error.size() > 0) {
+                return false;
+            }
+
+            continue;
+        }
+
+        if (!fill_vtables()) {
+            return error.size() == 0;
+        }
+    }
+}
+
+// whether a slot was filled, which may have asked for a body
+bool IrLowerer::fill_vtables() {
+    IrTypeTable* types = program->get_types();
+    u32 each = target->pointer_size;
+    bool filled = false;
+
+    for (u32 at = 0; at < vtable_classes.size() && error.size() == 0; at++) {
+        IrTypeId type = {vtable_classes[at]};
+        const IrClass* entry = program->get_classes()->get_class(type);
+
+        for (u32 s = 1; s < entry->slots.size(); s++) {
+            std::pair<u32, u32> mine = std::make_pair(type.index, s);
+            std::pair<u32, u32> used =
+                std::make_pair(introducer_of(type, s).index, s);
+
+            if (filled_slots.count(mine) > 0 || used_slots.count(used) == 0) {
+                continue;
+            }
+
+            const IrSlot& slot = entry->slots[s];
+            IrObjectId function = function_of(slot.module, slot.candidate);
+
+            filled_slots.insert(mine);
+            filled = true;
+
+            if (function.index == 0) {
+                fail("not lowered yet: the slot '" + slot.name + "' of '"
+                     + types->get_aggregate(type)->name + "'");
+                return false;
+            }
+
+            program->add_relocation({vtables[type.index]}, (s + 1) * each,
+                                    function);
         }
     }
 
-    return true;
+    return filled;
 }
 
 bool IrLowerer::lower_globals() {
@@ -381,21 +471,6 @@ std::string IrLowerer::unique(const std::string& name) {
     u32 taken = names[name]++;
 
     return taken > 0 ? name + "#" + std::to_string(taken) : name;
-}
-
-// a constructor of each struct is asked for while a body is lowered, and
-// lowering one may ask for more: the list grows while it is walked
-bool IrLowerer::lower_structors() {
-    for (u32 i = 0; i < structors.size(); i++) {
-        StructorJob job = structors[i];
-        FunctionLowerer body(this, program);
-
-        if (!body.lower_structor(job)) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 u8 IrLowerer::shape_of(IrObjectId function) {
@@ -586,6 +661,48 @@ u32 IrLowerer::method_named(IrTypeId type, const std::string& name,
     return 0;
 }
 
+u32 IrLowerer::init_from(IrTypeId type, u32 caller, u32 given) {
+    IrAggregate* aggregate = program->get_types()->get_aggregate(type);
+    Module* module = compilation->get_module(aggregate->module);
+    SymbolTable* table = module->get_symbols();
+    TypeTable* types = module->get_types();
+    u32 value = compilation->get_module(caller)->get_types()->value_of(given);
+    AstQuery query;
+
+    query.set_module(module);
+
+    // its own 'init's only, which is record 0026's rule about construction
+    for (u32 member : query.get_members(aggregate->declaration)) {
+        if (module->get_ast()->get_node(member)->get_kind() != AST_FUNCTION
+            || query.get_declaration_name(member) != "init") {
+            continue;
+        }
+
+        u32 candidate = table->candidate_of(member);
+
+        if (candidate == 0) {
+            continue;
+        }
+
+        std::vector<u32> written =
+            types->get_arguments(table->get_candidate(candidate)->type);
+
+        if (written.size() != 2) {
+            continue;
+        }
+
+        // written in the struct's module, read in the caller's (record 0016)
+        u32 taken =
+            type_builder.translate(caller, aggregate->module, written[0]);
+
+        if (taken == given || taken == value) {
+            return candidate;
+        }
+    }
+
+    return 0;
+}
+
 u32 IrLowerer::destroy_of(IrTypeId type) {
     return method_named(type, "destroy", 0, 0);
 }
@@ -766,22 +883,12 @@ IrObjectId IrLowerer::vtable_of(IrTypeId type) {
         std::vector<u8>(count * each, 0), true);
 
     vtables[type.index] = table.index;
+    vtable_classes.push_back(type.index);
     program->add_relocation(table, 0, descriptor_of(type));
 
-    for (u32 s = 0; s < entry->slots.size(); s++) {
-        const IrSlot& slot = entry->slots[s];
-        IrObjectId filled =
-            s == 0 ? structor(STRUCTOR_DESTROY, type, 0)
-                   : function_of(slot.module, slot.candidate);
-
-        if (filled.index == 0) {
-            fail("not lowered yet: the slot '" + slot.name + "' of '"
-                 + types->get_aggregate(type)->name + "'");
-            return table;
-        }
-
-        program->add_relocation(table, (s + 1) * each, filled);
-    }
+    // the destructor always, since ending one is always written; the other
+    // slots when a 'vcall' through them is (fill_vtables)
+    program->add_relocation(table, each, structor(STRUCTOR_DESTROY, type, 0));
 
     return table;
 }

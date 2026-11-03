@@ -4,8 +4,10 @@
 #include <haard/ir/ir_layout.h>
 #include <haard/ir/ir_program.h>
 #include <haard/ir/ir_type_translator.h>
+#include <haard/type_table/type_builder.h>
 
 #include <map>
+#include <set>
 #include <utility>
 
 namespace haard {
@@ -100,8 +102,16 @@ namespace haard {
             IrObjectId allocator();
             IrObjectId deallocator();
 
-            // the object a function's candidate became, 0 when none
+            // the object a function's candidate became, 0 when none. Only
+            // what is reachable is lowered (question 89): a function is
+            // declared the first time one is asked for, and its body joins
+            // the list still to lower
             IrObjectId function_of(u32 module, u32 candidate);
+
+            // a 'vcall' through this slot is written, so every vtable that
+            // has the slot gets its function (question 89): 'receiver' is the
+            // class that introduced it, receiver_type's answer
+            void use_slot(IrTypeId receiver, u32 slot);
 
             // SHAPE_DESTINATION and SHAPE_METHOD
             u8 shape_of(IrObjectId function);
@@ -121,7 +131,9 @@ namespace haard {
             // A class's vtable (record 0077, stage 1): its descriptor, then
             // each slot's function, slot 0 the destructor. A datum with
             // relocations, made the first time a class is built, with the
-            // descriptor -- name, size, base -- beside it
+            // descriptor -- name, size, base -- beside it. A slot no 'vcall'
+            // goes through stays null, so a method nobody calls is never
+            // lowered (question 89)
             IrObjectId vtable_of(IrTypeId type);
 
             // the slot a method of a class fills, -1 for one that fills none
@@ -151,6 +163,11 @@ namespace haard {
                              u32 parameters, u8 kind);
             bool has_init(IrTypeId type);
 
+            // record 0046: the 'init' of one parameter a value of 'given'
+            // (a type of module 'caller') builds this struct from, the same
+            // question Coercion::builds_from asks; 0 when there is none
+            u32 init_from(IrTypeId type, u32 caller, u32 given);
+
             // through the base, the fields and an array's elements: whether
             // ending one runs anything, whether copying one calls an 'init',
             // whether one built with nothing runs anything, and the emitter's
@@ -167,13 +184,13 @@ namespace haard {
             void fail(const std::string& message);
 
         private:
-            bool declare_functions();
+            bool declare_main();
             bool declare_function(u32 module, u32 node, u32 holder);
+            bool drain();
+            bool fill_vtables();
             IrObjectId descriptor_of(IrTypeId type);
             IrTypeId introducer_of(IrTypeId type, u32 slot);
-            bool lower_structors();
             bool declare_globals();
-            bool lower_bodies();
             bool lower_globals();
 
             // a name no other object has: a clone or an overload of a
@@ -187,6 +204,7 @@ namespace haard {
             const Target* target;
             IrProgram* program;
             IrTypeTranslator translator;
+            TypeBuilder type_builder;
 
             // (module, candidate) to the function's object, and each body
             // still to lower as (module, node)
@@ -207,6 +225,16 @@ namespace haard {
 
             std::map<u32, u32> vtables;
             std::map<u32, u32> descriptors;
+
+            // what is lowered so far of 'bodies' and 'structors'; each
+            // vtable's class, in order; the slots a 'vcall' goes through, as
+            // (introducing class, slot); and the slots filled, as (vtable's
+            // class, slot)
+            u32 next_body;
+            u32 next_structor;
+            std::vector<u32> vtable_classes;
+            std::set<std::pair<u32, u32>> used_slots;
+            std::set<std::pair<u32, u32>> filled_slots;
 
             IrObjectId alloc_native;
             IrObjectId free_native;

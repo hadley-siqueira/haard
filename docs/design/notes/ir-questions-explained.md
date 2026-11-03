@@ -2413,6 +2413,17 @@ gets slow.
 
 **Answer: approved, (a)** with the five details.
 
+**Built 2026-11-03** (detail 2). Before, the lowering declared and lowered
+every function of every module, so a program waited on step 5 if its copy of
+the library had a method taking a closure, even one nobody called. Now a
+function is declared the first time something asks for it and its body is
+lowered after, starting from `main` and the globals' values. A vtable needed
+one more step than the answer said: every method of a class is virtual
+(record 0020), so building an `Array` would have brought in `Array.each`
+through its slot. So a slot other than the destructor is filled only once
+some `vcall` goes through it, and stays null otherwise. No code can reach a
+null slot, because no call site uses it.
+
 ## 90. The WCET computed by hdc
 
 **The question.** The proposal has hdc compute the WCET itself on the

@@ -1943,6 +1943,7 @@ u32 Parser::parse_shift_expression() {
 //
 //   unary_expression := ('!' | '&' | '&&' | '*' | '**' | '~' | '-' | '+'
 //                       | '++' | '--') unary_expression
+//                     | ('-' | '+') unary_expression '**' power_expression
 //                     | postfix_expression
 u32 Parser::parse_unary_expression() {
     AstNodeKind kind;
@@ -1993,6 +1994,19 @@ u32 Parser::parse_unary_expression() {
 
     u32 oper = matched;
     u32 operand = parse_unary_expression();
+
+    // A sign is looser than the '**' right after its operand, Hadley
+    // 2026-11-03: '-2 ** 2' is '-(2 ** 2)', the way mathematics, Python, Ruby
+    // and Fortran read '-x²'. Only a sign, and only a '**' that follows its
+    // operand directly, so '-a | b' stays '(-a) | b' and '-a | b ** 2' stays
+    // '((-a) | b) ** 2'. The right operand is the power level's own, so the
+    // tower still folds from the right: '-a ** b ** c' is '-(a ** (b ** c))'
+    if ((kind == AST_UNARY_MINUS || kind == AST_UNARY_PLUS) && match_on_same_line(TK_POWER)) {
+        u32 power = matched;
+        u32 right = parse_power_expression();
+
+        operand = builder.make_binary_operator(AST_POWER, power, operand, right);
+    }
 
     return builder.make_unary_operator(kind, oper, operand);
 }

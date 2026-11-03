@@ -176,7 +176,7 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
                 values.push_back(build.parameter(p));
             }
 
-            build.call(owner->function_of(owning, job.init), values, here);
+            build.call(function_of(owning, job.init), values, here);
         }
 
         break;
@@ -265,7 +265,7 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
                 call_method(owning, destroy_method, {object}, false, here);
             }
 
-            build.call(owner->function_of(owning, copy), {object, other}, here);
+            build.call(function_of(owning, copy), {object, other}, here);
             break;
         }
 
@@ -851,7 +851,7 @@ void FunctionLowerer::initialise(IrValueId place, u32 type, u32 given,
 
         // record 0068: a temporary a binding refers to lives as long as the
         // binding does
-        if (built.index != 0 && !is_place(given)) {
+        if (built.index != 0 && (!is_place(given) || converts(given, built))) {
             target = build.entry_slot(built, here);
             build_into(target, built, given);
             add_cleanup(target, built, true, here);
@@ -1198,7 +1198,7 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
     // constructor has already built
     if (kind_of(callee) == AST_SUPER) {
         Resolution* chosen = module->get_resolutions()->get(node);
-        IrObjectId target = owner->function_of(chosen->module,
+        IrObjectId target = function_of(chosen->module,
                                                chosen->candidate);
         IrTypeId base = holder.index == 0
                             ? IrTypeId{0}
@@ -1288,7 +1288,7 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
     }
 
     Resolution* found = module->get_resolutions()->get(name);
-    IrObjectId target = owner->function_of(found->module, found->candidate);
+    IrObjectId target = function_of(found->module, found->candidate);
 
     if (target.index == 0) {
         u32 holding = found->candidate == 0
@@ -1365,7 +1365,8 @@ bool FunctionLowerer::arguments_for(u32 callee_module, u32 candidate,
 
         // a 'T&' is given a place; a struct by value a copy the caller makes
         // and ends with the statement (question 83, Itanium's rule)
-        if (wanted != INVALID_TYPE && is_reference_type(callee_module, wanted)) {
+        if (wanted != INVALID_TYPE && is_reference_type(callee_module, wanted)
+            && !converts(one, built)) {
             values.push_back(reference_to(one));
         } else if (built.index != 0) {
             IrValueId copy = build.entry_slot(built, at(one));
@@ -1494,7 +1495,7 @@ IrValueId FunctionLowerer::upcast_to(IrValueId pointer, IrTypeId from,
 IrValueId FunctionLowerer::operator_call(u32 node, IrValueId into) {
     IrValueId none = {0};
     Resolution* chosen = module->get_resolutions()->get(node);
-    IrObjectId target = owner->function_of(chosen->module, chosen->candidate);
+    IrObjectId target = function_of(chosen->module, chosen->candidate);
 
     if (target.index == 0) {
         not_yet("an operator a class overloads, or a construction");
@@ -1643,7 +1644,39 @@ IrValueId FunctionLowerer::arithmetic(u32 node) {
                                    at(node));
     }
 
+    // Hadley 2026-11-03: two characters subtract into an i32, each widened
+    // as 'c as i32' widens one, with no sign; and a character moves by a
+    // whole number, cut to the character's width, wrapping as any eight bits
+    if (kind == AST_MINUS && is_char_type(left_type)
+        && is_char_type(right_type)) {
+        IrTypeId wide = ir_type(type);
+
+        left = build.convert(IR_ZEXT, wide, left, at(node));
+        right = build.convert(IR_ZEXT, wide, right, at(node));
+
+        return build.binary(IR_SUB, wide, left, right, at(node));
+    }
+
+    if (is_char_type(left_type) && is_whole_type(right_type)
+        && (kind == AST_PLUS || kind == AST_MINUS)) {
+        return move_char(left_type, left, right, right_type,
+                         kind == AST_MINUS, at(node));
+    }
+
     return apply(kind, type, left, right, at(node));
+}
+
+// record 0079: a character moved by a whole number, cut to its eight bits
+IrValueId FunctionLowerer::move_char(u32 type, IrValueId character,
+                                     IrValueId by, u32 by_type, bool minus,
+                                     IrPosition here) {
+    IrTypeId narrow = ir_type(type);
+
+    if (ir_type(by_type).index != narrow.index) {
+        by = build.convert(IR_TRUNC, narrow, by, here);
+    }
+
+    return build.binary(minus ? IR_SUB : IR_ADD, narrow, character, by, here);
 }
 
 IrValueId FunctionLowerer::apply(AstNodeKind kind, u32 type, IrValueId left,
@@ -1949,11 +1982,13 @@ IrValueId FunctionLowerer::assignment(u32 node) {
         return none;
     }
 
+    u32 by_type = type_at(child_of(node, 1));
+    bool moves = plain == AST_PLUS || plain == AST_MINUS;
     IrValueId made =
-        kind_of_type(type) == TYPE_POINTER
-                && (plain == AST_PLUS || plain == AST_MINUS)
-            ? step(type, old, right, type_at(child_of(node, 1)),
-                   plain == AST_MINUS, at(node))
+        moves && kind_of_type(type) == TYPE_POINTER
+            ? step(type, old, right, by_type, plain == AST_MINUS, at(node))
+        : moves && is_char_type(type) && is_whole_type(by_type)
+            ? move_char(type, old, right, by_type, plain == AST_MINUS, at(node))
             : apply(plain, type, old, right, at(node));
 
     if (!failed) {
@@ -2226,6 +2261,24 @@ IrValueId FunctionLowerer::brace_literal(u32 node) {
 // is copied, or moved from when '&&' says so and the struct has a move
 // 'init'; a struct derived from this one is copied as this one, C++'s slice
 void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
+    // Record 0046: a value that is not one of these is built by the 'init'
+    // taking it -- 'by_value(p)' with 'p' a 'char*' and 'String' having an
+    // 'init(char*)'. A literal's construction is the typer's, below
+    if (converts(node, type)) {
+        u32 init = owner->init_from(type, module_index, type_at(node));
+        u32 holder_module = program->get_types()->get_aggregate(type)->module;
+        std::vector<u32> written = signature_of(holder_module, init);
+        IrValueId value = is_reference_type(holder_module, written[0])
+                              ? reference_to(node)
+                              : value_of(node);
+
+        if (!failed) {
+            construct(place, type, init, {value}, at(node));
+        }
+
+        return;
+    }
+
     switch (kind_of(node)) {
     case AST_PARENTHESIS:
         build_into(place, type, child_of(node, 0));
@@ -2287,7 +2340,7 @@ void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
         }
 
         IrTypeId each = program->get_signature(
-                            program->get_function(owner->function_of(
+                            program->get_function(function_of(
                                 program->get_types()->get_aggregate(type)
                                     ->module,
                                 init)).signature)
@@ -2589,16 +2642,36 @@ void FunctionLowerer::destroy(IrValueId place, IrTypeId type, IrPosition here) {
 IrValueId FunctionLowerer::call_method(u32 callee_module, u32 candidate,
                                        const std::vector<IrValueId>& values,
                                        bool virtually, IrPosition here) {
-    IrObjectId target = owner->function_of(callee_module, candidate);
+    IrObjectId target = function_of(callee_module, candidate);
     i32 slot = owner->slot_of_method(callee_module, candidate);
+
+    if (failed) {
+        return {0};
+    }
 
     if (!virtually || slot < 0) {
         return build.call(target, values, here);
     }
 
-    return build.vcall(owner->receiver_type(callee_module, candidate),
-                       (u32) slot, program->get_function(target).signature,
-                       values, here);
+    IrTypeId receiver = owner->receiver_type(callee_module, candidate);
+
+    // question 89: every vtable with this slot needs its function now
+    owner->use_slot(receiver, (u32) slot);
+
+    return build.vcall(receiver, (u32) slot,
+                       program->get_function(target).signature, values, here);
+}
+
+// the owner's, which declares a function the first time one is asked for;
+// a declaration that could not be made stops this body too
+IrObjectId FunctionLowerer::function_of(u32 callee_module, u32 candidate) {
+    IrObjectId found = owner->function_of(callee_module, candidate);
+
+    if (owner->get_error().size() > 0) {
+        failed = true;
+    }
+
+    return found;
 }
 
 // 'turn' counts up from 0 whichever way the elements are walked, and its
@@ -3028,7 +3101,7 @@ bool FunctionLowerer::callee_of(u32 node, u32& callee_module, u32& candidate) {
     Resolution* found = module->get_resolutions()->get(name);
 
     if (found->candidate == 0
-        || owner->function_of(found->module, found->candidate).index == 0) {
+        || function_of(found->module, found->candidate).index == 0) {
         return false;
     }
 
@@ -3180,6 +3253,13 @@ u8 FunctionLowerer::kind_of_type(u32 type) {
                                 : types->get_type(types->value_of(type))->kind;
 }
 
+// record 0046: whether 'node' reaches the struct 'built' by an 'init' that
+// takes it, rather than being one already
+bool FunctionLowerer::converts(u32 node, IrTypeId built) {
+    return built.index != 0 && struct_of(type_at(node)).index == 0
+        && owner->init_from(built, module_index, type_at(node)) != 0;
+}
+
 bool FunctionLowerer::is_reference_type(u32 owning, u32 type) {
     if (type == INVALID_TYPE) {
         return false;
@@ -3201,6 +3281,12 @@ bool FunctionLowerer::is_float_type(u32 type) {
 
     return entry->kind == TYPE_BUILTIN
         && (entry->subject == BUILTIN_F32 || entry->subject == BUILTIN_F64);
+}
+
+bool FunctionLowerer::is_char_type(u32 type) {
+    Type* entry = module->get_types()->get_type(module->get_types()->value_of(type));
+
+    return entry->kind == TYPE_BUILTIN && entry->subject == BUILTIN_CHAR;
 }
 
 bool FunctionLowerer::is_whole_type(u32 type) {

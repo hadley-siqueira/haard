@@ -1,0 +1,51 @@
+# Hadley 2026-11-03, the shape record 0076 gives a pointer: a character moves
+# by a whole number with '+' and '-' and stays a character, and two are
+# subtracted into the distance between them, an i32 with its sign.
+#
+# One bit per line that has to come out right, so the exit status names the
+# one that did not. Everything stays below 128, where a C++ 'char' and the
+# IR's eight bits read the same.
+
+def upper : char
+    @ch : char
+
+    if ch >= 'a' and ch <= 'z':
+        return ch - ('a' - 'A')
+
+    return ch
+
+def main : i32
+    let c = 'h'
+    let n : i64 = 2
+    let bits = 0
+
+    # the index of a letter, an i32 without any 'as'
+    let index : i32 = c - 'a'
+
+    if index == 7:
+        bits = bits | 1
+
+    # and with its sign: not a character that wrapped
+    if 'a' - c == -7:
+        bits = bits | 2
+
+    if upper(c) == 'H' and upper('Q') == 'Q':
+        bits = bits | 4
+
+    # a number literal beside a character is a whole number
+    if c + 1 == 'i' and c - 1 == 'g':
+        bits = bits | 8
+
+    # and so is a typed one, of any width
+    if c + n == 'j':
+        bits = bits | 16
+
+    # and in place
+    let k = c
+    k += 3
+    k -= n
+
+    if k == 'i':
+        bits = bits | 32
+
+    return bits

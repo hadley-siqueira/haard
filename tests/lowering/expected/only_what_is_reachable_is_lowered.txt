@@ -1,0 +1,124 @@
+class Shape { side: b32 }
+vtable Shape { 0: destroy, 1: area, 2: walk }
+class Square : Shape {}
+vtable Square { 0: destroy, 1: area, 2: walk }
+
+data @Square.vtable : ptr[4] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Square.descriptor at 0, @Square.~Square at 8, @Square.area at 16
+data @Square.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.0 at 0, @Shape.descriptor at 16
+data @text.0 : b8[7] = readonly "Square\00"
+data @Shape.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.1 at 0
+data @text.1 : b8[6] = readonly "Shape\00"
+data @Shape.vtable : ptr[4] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Shape.descriptor at 0, @Shape.~Shape at 8, @Shape.area at 16
+
+func @main() -> b32 {
+  %1 = slot Square
+  %2 = const b32 5
+  call @Square.Square(%1, %2)
+  %3 = call @measure(%1)
+  ret b32 %3
+}
+
+func @Square.init(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %4 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %5 = load ptr, %3
+  %6 = upcast %5, Square -> Shape
+  %7 = load b32, %4
+  call @Shape.init(%6, %7)
+  ret
+}
+
+func @Square.Square(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = upcast %4, Square -> Shape
+  call @Shape.Shape(%5)
+  %6 = addr @Square.vtable
+  %7 = const b64 1
+  %8 = index %6, %7 : ptr
+  store ptr %8, %4
+  call @Square.init(%4, %2)
+  ret
+}
+
+func @measure(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall Shape.area(%3)
+  ret b32 %4
+}
+
+func @Shape.init(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %4 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Shape.side
+  %7 = load b32, %4
+  store b32 %7, %6
+  ret
+}
+
+func @Shape.area(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b32 0
+  ret b32 %3
+}
+
+func @Shape.Shape(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Shape.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @Square.~Square(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, Shape -> Square
+  store ptr %3, %2
+  %4 = load ptr, %2
+  %5 = addr @Square.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  ret
+}
+
+func @Shape.~Shape(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Shape.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @Square.area(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %3 = downcast %1, Shape -> Square
+  store ptr %3, %2
+  %4 = load ptr, %2
+  %5 = upcast %4, Square -> Shape
+  %6 = field %5, Shape.side
+  %7 = load b32, %6
+  %8 = load ptr, %2
+  %9 = upcast %8, Square -> Shape
+  %10 = field %9, Shape.side
+  %11 = load b32, %10
+  %12 = mul b32 %7, %11
+  ret b32 %12
+}
+
+--- exit: 25

@@ -1,34 +1,3 @@
-func @classify(%1: b32) -> b32 {
-  %2 = slot b32
-  store b32 %1, %2
-  %3 = load b32, %2
-  %4 = const b32 0
-  %5 = slt b32 %3, %4
-  $6: if %5 {
-    %6 = const b32 0
-    ret b32 %6
-  } else {
-    %7 = load b32, %2
-    %8 = const b32 0
-    %9 = eq b32 %7, %8
-    $12: if %9 {
-      %10 = const b32 1
-      ret b32 %10
-    } else {
-      %11 = load b32, %2
-      %12 = const b32 10
-      %13 = slt b32 %11, %12
-      $18: if %13 {
-        %14 = const b32 2
-        ret b32 %14
-      } else {
-        %15 = const b32 3
-        ret b32 %15
-      }
-    }
-  }
-}
-
 func @main() -> b32 {
   %1 = slot b32
   %3 = slot b32
@@ -146,6 +115,37 @@ func @main() -> b32 {
   }
   %74 = load b32, %1
   ret b32 %74
+}
+
+func @classify(%1: b32) -> b32 {
+  %2 = slot b32
+  store b32 %1, %2
+  %3 = load b32, %2
+  %4 = const b32 0
+  %5 = slt b32 %3, %4
+  $6: if %5 {
+    %6 = const b32 0
+    ret b32 %6
+  } else {
+    %7 = load b32, %2
+    %8 = const b32 0
+    %9 = eq b32 %7, %8
+    $12: if %9 {
+      %10 = const b32 1
+      ret b32 %10
+    } else {
+      %11 = load b32, %2
+      %12 = const b32 10
+      %13 = slt b32 %11, %12
+      $18: if %13 {
+        %14 = const b32 2
+        ret b32 %14
+      } else {
+        %15 = const b32 3
+        ret b32 %15
+      }
+    }
+  }
 }
 
 --- exit: 78

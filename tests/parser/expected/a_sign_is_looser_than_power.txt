@@ -1,0 +1,96 @@
+def main : i32
+    let a = -x ** 2
+    let b = (-x) ** 2
+    let c = - -x ** 2
+    let d = -x ** y ** z
+    let e = 2 ** -x ** 2
+    let f = -x | y ** 2
+    let g = -x * y ** 2
+    return +x ** 2
+--- tree
+module
+  function 'def'
+    binding_name
+      identifier 'main'
+    function_return_type
+      builtin_type 'i32'
+    block
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'a'
+          binding_expression
+            unary_minus '-'
+              power '**'
+                identifier 'x'
+                integer '2'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'b'
+          binding_expression
+            power '**'
+              parenthesis '('
+                unary_minus '-'
+                  identifier 'x'
+              integer '2'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'c'
+          binding_expression
+            unary_minus '-'
+              unary_minus '-'
+                power '**'
+                  identifier 'x'
+                  integer '2'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'd'
+          binding_expression
+            unary_minus '-'
+              power '**'
+                identifier 'x'
+                power '**'
+                  identifier 'y'
+                  identifier 'z'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'e'
+          binding_expression
+            power '**'
+              integer '2'
+              unary_minus '-'
+                power '**'
+                  identifier 'x'
+                  integer '2'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'f'
+          binding_expression
+            power '**'
+              bitwise_or '|'
+                unary_minus '-'
+                  identifier 'x'
+                identifier 'y'
+              integer '2'
+      let_declaration 'let'
+        binding
+          binding_name
+            identifier 'g'
+          binding_expression
+            times '*'
+              unary_minus '-'
+                identifier 'x'
+              power '**'
+                identifier 'y'
+                integer '2'
+      return 'return'
+        unary_plus '+'
+          power '**'
+            identifier 'x'
+            integer '2'
+--- round trip: ok

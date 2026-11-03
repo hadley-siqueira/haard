@@ -17,31 +17,6 @@ data @text.2 : b8[2] = readonly "A\00"
 data @B.vtable : ptr[4] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @B.descriptor at 0, @B.~B at 8, @B.name at 16, @A.twice at 24
 data @A.vtable : ptr[4] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @A.descriptor at 0, @A.~A at 8, @A.name at 16, @A.twice at 24
 
-func @note(%1: b64) {
-  %2 = slot b64
-  store b64 %1, %2
-  %3 = addr @trace
-  %4 = addr @trace
-  %5 = load b64, %4
-  %6 = const b64 10
-  %7 = mul b64 %5, %6
-  %8 = load b64, %2
-  %9 = add b64 %7, %8
-  store b64 %9, %3
-  ret
-}
-
-func @total(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = vcall A.name(%3)
-  %5 = load ptr, %2
-  %6 = vcall A.twice(%5)
-  %7 = add b32 %4, %6
-  ret b32 %7
-}
-
 func @main() -> b32 {
   %1 = slot b32
   %3 = slot C
@@ -160,58 +135,23 @@ func @main() -> b32 {
   ret b32 %77
 }
 
-func @Point.sum(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = field %3, Point.x
-  %5 = load b32, %4
-  %6 = load ptr, %2
-  %7 = field %6, Point.y
-  %8 = load b32, %7
-  %9 = add b32 %5, %8
-  ret b32 %9
-}
-
-func @A.name(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = const b32 1
-  ret b32 %3
-}
-
-func @A.twice(%1: ptr) -> b32 {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = vcall A.name(%3)
-  %5 = const b32 2
-  %6 = mul b32 %4, %5
-  ret b32 %6
-}
-
-func @A.destroy(%1: ptr) {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = const b64 1
-  call @note(%3)
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
   ret
 }
 
-func @B.name(%1: ptr) -> b32 {
+func @C.C(%1: ptr) {
   %2 = slot ptr
-  %3 = downcast %1, A -> B
-  store ptr %3, %2
-  %4 = const b32 10
-  ret b32 %4
-}
-
-func @B.destroy(%1: ptr) {
-  %2 = slot ptr
-  %3 = downcast %1, A -> B
-  store ptr %3, %2
-  %4 = const b64 2
-  call @note(%4)
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = upcast %3, C -> B
+  call @B.B(%4)
+  %5 = addr @C.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %3
   ret
 }
 
@@ -236,17 +176,28 @@ func @C.grand(%1: ptr) -> b32 {
   ret b32 %5
 }
 
-func @C.C(%1: ptr) {
+func @total(%1: ptr) -> b32 {
   %2 = slot ptr
   store ptr %1, %2
   %3 = load ptr, %2
-  %4 = upcast %3, C -> B
-  call @B.B(%4)
-  %5 = addr @C.vtable
-  %6 = const b64 1
-  %7 = index %5, %6 : ptr
-  store ptr %7, %3
-  ret
+  %4 = vcall A.name(%3)
+  %5 = load ptr, %2
+  %6 = vcall A.twice(%5)
+  %7 = add b32 %4, %6
+  ret b32 %7
+}
+
+func @Point.sum(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Point.x
+  %5 = load b32, %4
+  %6 = load ptr, %2
+  %7 = field %6, Point.y
+  %8 = load b32, %7
+  %9 = add b32 %5, %8
+  ret b32 %9
 }
 
 native @__alloc(%1: b64) -> ptr
@@ -262,6 +213,13 @@ func @B.B(%1: ptr) {
   %7 = index %5, %6 : ptr
   store ptr %7, %3
   ret
+}
+
+func @A.name(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b32 1
+  ret b32 %3
 }
 
 func @A.~A(%1: ptr) {
@@ -293,11 +251,22 @@ func @C.~C(%1: ptr) {
   ret
 }
 
-func @globals() init {
-  %1 = addr @trace
-  %2 = const b64 0
-  store b64 %2, %1
-  ret
+func @B.name(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %3 = downcast %1, A -> B
+  store ptr %3, %2
+  %4 = const b32 10
+  ret b32 %4
+}
+
+func @A.twice(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = vcall A.name(%3)
+  %5 = const b32 2
+  %6 = mul b32 %4, %5
+  ret b32 %6
 }
 
 func @A.A(%1: ptr) {
@@ -324,6 +293,37 @@ func @B.~B(%1: ptr) {
   call @B.destroy(%4)
   %8 = upcast %4, B -> A
   call @A.~A(%8)
+  ret
+}
+
+func @A.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = const b64 1
+  call @note(%3)
+  ret
+}
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @B.destroy(%1: ptr) {
+  %2 = slot ptr
+  %3 = downcast %1, A -> B
+  store ptr %3, %2
+  %4 = const b64 2
+  call @note(%4)
   ret
 }
 

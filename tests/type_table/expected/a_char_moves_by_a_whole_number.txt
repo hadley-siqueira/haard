@@ -1,0 +1,32 @@
+<unnamed>:
+    main  i32
+    c  char
+    n  i64
+    d  char
+    e  char
+    g  i32
+    h  <none>
+    i  <none>
+    j  <none>
+  18 types interned
+diagnostics:
+error: expected char, found an integer literal
+  --> main.hd:21:13
+   |
+21 |     let h = 1 + c
+   |             ^
+error: cannot apply this to char and f64
+  --> main.hd:22:15
+   |
+22 |     let i = c + 1.5
+   |               ^
+error: cannot apply this to char and i32
+  --> main.hd:23:15
+   |
+23 |     let j = c * 2
+   |               ^
+error: a character moves by a whole number, and this is f64
+  --> main.hd:24:7
+   |
+24 |     c += 1.5
+   |       ^^

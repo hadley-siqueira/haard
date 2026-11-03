@@ -1411,6 +1411,7 @@ class Parser:
         return node
 
     #   unary := ('!' | '&' | '*' | '**' | '~' | '-' | '+' | '++' | '--') unary
+    #          | ('-' | '+') unary '**' power
     #          | postfix
     def parse_unary_expression : i32
         if lookahead_on_same_line(TokenKind.New):
@@ -1458,6 +1459,16 @@ class Parser:
 
         let oper = matched
         let operand = parse_unary_expression()
+
+        # a sign is looser than the '**' right after its operand, Hadley
+        # 2026-11-03: '-2 ** 2' is '-(2 ** 2)', and '-a | b' stays '(-a) | b'
+        if kind == AstNodeKind.UnaryMinus or kind == AstNodeKind.UnaryPlus:
+            if match_on_same_line(TokenKind.Power):
+                let power = matched
+                let right = parse_power_expression()
+
+                operand = builder.make_binary_operator(AstNodeKind.Power,
+                                                       power, operand, right)
 
         return builder.make_unary_operator(kind, oper, operand)
 

@@ -150,6 +150,7 @@ namespace haard {
             // 'char' and 'bool'. Not 'void', which holds nothing, and not
             // 'symbol', which is a name (record 0041)
             bool is_a_number(u32 type);
+            bool is_char(u32 type);
 
             // an integer wide enough to hold a pointer, which is i64 or u64.
             // Haard has no target model, so sixty-four is an assumption

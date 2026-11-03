@@ -276,6 +276,11 @@ namespace haard {
             bool is_signed_type(u32 type);
             bool is_float_type(u32 type);
             bool is_whole_type(u32 type);
+            bool is_char_type(u32 type);
+            bool converts(u32 node, IrTypeId built);
+            IrValueId move_char(u32 type, IrValueId character, IrValueId by,
+                                u32 by_type, bool minus, IrPosition here);
+            IrObjectId function_of(u32 callee_module, u32 candidate);
             IrPosition at(u32 node);
             AstNodeKind kind_of(u32 node);
             u32 child_of(u32 node, u32 which);

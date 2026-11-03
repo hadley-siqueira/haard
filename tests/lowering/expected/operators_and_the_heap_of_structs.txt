@@ -3,28 +3,6 @@ struct Vec { x: b32, y: b32 }
 
 data @trace : b64 = zero
 
-func @note(%1: b64) {
-  %2 = slot b64
-  store b64 %1, %2
-  %3 = addr @trace
-  %4 = addr @trace
-  %5 = load b64, %4
-  %6 = const b64 10
-  %7 = mul b64 %5, %6
-  %8 = load b64, %2
-  %9 = add b64 %7, %8
-  store b64 %9, %3
-  ret
-}
-
-func @make(%1: ptr, %2: b64) {
-  %3 = slot b64
-  store b64 %2, %3
-  %4 = load b64, %3
-  call @T.T(%1, %4)
-  ret
-}
-
 func @main() -> b32 {
   %1 = slot b32
   %3 = slot Vec
@@ -215,55 +193,11 @@ func @main() -> b32 {
   ret b32 %112
 }
 
-func @T.init(%1: ptr, %2: b64) {
-  %3 = slot ptr
-  %4 = slot b64
-  store ptr %1, %3
-  store b64 %2, %4
-  %5 = load ptr, %3
-  %6 = field %5, T.id
-  %7 = load b64, %4
-  store b64 %7, %6
-  %8 = load b64, %4
-  call @note(%8)
+func @globals() init {
+  %1 = addr @trace
+  %2 = const b64 0
+  store b64 %2, %1
   ret
-}
-
-func @T.init#1(%1: ptr, %2: ptr) {
-  %3 = slot ptr
-  %4 = slot ptr
-  store ptr %1, %3
-  store ptr %2, %4
-  %5 = load ptr, %3
-  %6 = field %5, T.id
-  %7 = load ptr, %4
-  %8 = field %7, T.id
-  %9 = load b64, %8
-  store b64 %9, %6
-  %10 = const b64 9
-  call @note(%10)
-  ret
-}
-
-func @T.destroy(%1: ptr) {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = field %3, T.id
-  %5 = load b64, %4
-  call @note(%5)
-  ret
-}
-
-func @T.ok(%1: ptr) -> bool {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = field %3, T.id
-  %5 = load b64, %4
-  %6 = const b64 0
-  %7 = sgt b64 %5, %6
-  ret bool %7
 }
 
 func @Vec.operator+(%1: ptr, %2: ptr, %3: ptr) {
@@ -290,6 +224,14 @@ func @Vec.operator+(%1: ptr, %2: ptr, %3: ptr) {
   %21 = add b32 %17, %20
   store b32 %21, %14
   ret
+}
+
+func @Vec.first(%1: ptr) -> ptr {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Vec.x
+  ret ptr %4
 }
 
 func @Vec.operator==(%1: ptr, %2: ptr) -> bool {
@@ -320,12 +262,20 @@ func @Vec.operator==(%1: ptr, %2: ptr) -> bool {
   ret bool %20
 }
 
-func @Vec.first(%1: ptr) -> ptr {
-  %2 = slot ptr
-  store ptr %1, %2
-  %3 = load ptr, %2
-  %4 = field %3, Vec.x
-  ret ptr %4
+native @__alloc(%1: b64) -> ptr
+
+func @T.init(%1: ptr, %2: b64) {
+  %3 = slot ptr
+  %4 = slot b64
+  store ptr %1, %3
+  store b64 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, T.id
+  %7 = load b64, %4
+  store b64 %7, %6
+  %8 = load b64, %4
+  call @note(%8)
+  ret
 }
 
 func @T.T(%1: ptr, %2: b64) {
@@ -335,8 +285,6 @@ func @T.T(%1: ptr, %2: b64) {
   call @T.init(%4, %2)
   ret
 }
-
-native @__alloc(%1: b64) -> ptr
 
 native @__free(%1: ptr)
 
@@ -348,10 +296,46 @@ func @T.~T(%1: ptr) {
   ret
 }
 
-func @globals() init {
-  %1 = addr @trace
-  %2 = const b64 0
-  store b64 %2, %1
+func @T.ok(%1: ptr) -> bool {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  %6 = const b64 0
+  %7 = sgt b64 %5, %6
+  ret bool %7
+}
+
+func @make(%1: ptr, %2: b64) {
+  %3 = slot b64
+  store b64 %2, %3
+  %4 = load b64, %3
+  call @T.T(%1, %4)
+  ret
+}
+
+func @note(%1: b64) {
+  %2 = slot b64
+  store b64 %1, %2
+  %3 = addr @trace
+  %4 = addr @trace
+  %5 = load b64, %4
+  %6 = const b64 10
+  %7 = mul b64 %5, %6
+  %8 = load b64, %2
+  %9 = add b64 %7, %8
+  store b64 %9, %3
+  ret
+}
+
+func @T.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, T.id
+  %5 = load b64, %4
+  call @note(%5)
   ret
 }
 

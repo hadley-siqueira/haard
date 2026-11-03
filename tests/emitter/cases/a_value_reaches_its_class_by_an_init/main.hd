@@ -1,0 +1,60 @@
+# Record 0046: a value converts to a class by the class's own 'init' taking
+# it, and nothing names the class. 'a_char_pointer_reaching_a_string' has the
+# history; this is the shapes it does not write, which the IR's lowering got
+# wrong until 2026-11-03 by handing the 'char*' over as if it were the String
+# -- a value a call gave back, by value and by reference, and one a function
+# gives back as its String.
+#
+# 3777 in all, which is 193 as an exit status.
+class String:
+    data : char*
+    size : i32
+
+    def init : void
+        data = ""
+        size = 0
+
+    def init : void
+        @text : char*
+
+        data = text
+        size = 0
+
+        while text[size] != '\0':
+            size = size + 1
+
+    def length : i32
+        return size
+
+    def operator= : void
+        @text : char*
+
+        data = text
+        size = 0
+
+        while text[size] != '\0':
+            size = size + 1
+
+def by_reference : i32
+    @s : String&
+    return s.length()
+
+def by_value : i32
+    @s : String
+    return s.length()
+
+def raw : char*
+    return "seven!!"
+
+def gives : String
+    let p = "four"
+    return p
+
+def main : i32
+    let plain = "abc"
+    let bound : String = plain
+    let a = by_value(raw())
+    let b = by_reference(raw())
+    let c = by_reference(plain)
+    let d = gives().length()
+    return bound.length() * 1000 + a * 100 + b * 10 + c + d

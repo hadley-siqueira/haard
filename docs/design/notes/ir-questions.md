@@ -684,6 +684,18 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
     with record 0015: a cache, if one comes, keeps the front end's result
     per module, the IR and the back end always run whole; decided after
     measuring if it gets slow.
+
+    **Built 2026-11-03** (detail 2), Hadley confirming: the lowering
+    declares a function the first time something asks for it
+    (`IrLowerer::function_of`) and lowers its body after; the roots are
+    `main` and every global's value. A vtable is made when its class is
+    constructed and holds the destructor; any other slot is filled only once
+    a `vcall` goes through it (`IrLowerer::use_slot`, keyed by the class that
+    introduced the slot), and stays null otherwise, which no code can reach.
+    That is a step past "the vtables of classes someone constructs": every
+    class's method is virtual (record 0020), so `Array.each` taking a closure
+    sat in every Array's vtable. Case
+    `tests/lowering/cases/only_what_is_reachable_is_lowered`.
 90. **WCET computed by hdc** on the processor's final machine IR.
 
     **Answer (Hadley, 2026-10-20): approved, (a) tree-based first (timing

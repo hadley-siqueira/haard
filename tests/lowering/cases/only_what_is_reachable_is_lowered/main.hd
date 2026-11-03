@@ -1,0 +1,55 @@
+# Question 89: only what is reachable goes in. The roots are 'main' and the
+# globals' values; a function is lowered when something calls it, and a
+# class's vtable slot is filled when a 'vcall' goes through it.
+#
+# Everything below that nobody reaches takes a closure, which the lowering
+# does not do yet (step 5) -- so this program lowers only if none of it is
+# asked for. The golden shows what is left: no 'each', no 'never', and no
+# 'Shape.walk' or 'Square.walk' in a vtable.
+
+class Shape:
+    side : i32
+
+    def init : void
+        @side : i32
+
+        this.side = side
+
+    def area : i32
+        return 0
+
+    # a virtual method nobody calls, so its slot stays null
+    def walk : void
+        @f : (i32) -> void
+
+        f(side)
+
+class Square(Shape):
+    def init : void
+        @side : i32
+
+        super(side)
+
+    def area : i32
+        return side * side
+
+    def walk : void
+        @f : (i32) -> void
+
+        f(side * 4)
+
+# a free function nobody calls
+def never : i32
+    @f : (i32) -> i32
+
+    return f(1)
+
+def measure : i32
+    @s : Shape&
+
+    return s.area()
+
+def main : i32
+    let square = Square(5)
+
+    return measure(square)

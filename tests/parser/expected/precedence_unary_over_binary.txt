@@ -1,5 +1,5 @@
 def main : i32
-    return -a ** ~b & !c
+    return ~a ** -b & !c
 --- tree
 module
   function 'def'
@@ -10,10 +10,10 @@ module
     block
       return 'return'
         power '**'
-          unary_minus '-'
+          bitwise_not '~'
             identifier 'a'
           bitwise_and '&'
-            bitwise_not '~'
+            unary_minus '-'
               identifier 'b'
             logical_not_operator '!'
               identifier 'c'
