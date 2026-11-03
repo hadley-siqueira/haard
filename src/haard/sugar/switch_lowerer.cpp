@@ -225,14 +225,17 @@ u32 SwitchLowerer::condition_of(u32 name, u32 one_case, u32 from, u32 to) {
 
     for (u32 child = from; child != 0; child = sibling_of(child)) {
         u32 equal = module->add_synthetic_token(TK_EQUAL, "==", like);
+        u32 pattern = first_child(child);
         u32 one = builder.make_binary_operator(
-            AST_EQUAL, equal, builder.make_identifier(name),
-            first_child(child));
+            AST_EQUAL, equal, builder.make_identifier(name), pattern);
 
         // the pattern leaves the case and becomes the right side, so what it
         // used to be followed by there is the block -- which this branch has
-        // already taken
-        ast->get_node(one)->set_sibling(0);
+        // already taken. Until 2026-11-03 this cut the sibling of the '=='
+        // instead, which has none, and the pattern still led to the block: the
+        // emitter reads two operands and never saw it, the IR's lowering
+        // walks an operator's arguments by sibling and lowered the block
+        ast->get_node(pattern)->set_sibling(0);
 
         if (whole == 0) {
             whole = one;

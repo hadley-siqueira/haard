@@ -14,6 +14,8 @@ IrLowerer::IrLowerer() {
     free_native.index = 0;
     next_body = 0;
     next_structor = 0;
+    next_closure = 0;
+    next_adapter = 0;
 }
 
 void IrLowerer::set_compilation(Compilation* compilation) {
@@ -106,6 +108,21 @@ IrObjectId IrLowerer::text(const std::string& bytes) {
     return made;
 }
 
+IrObjectId IrLowerer::symbol(const std::string& name) {
+    std::map<std::string, u32>::iterator found = symbols.find(name);
+
+    if (found != symbols.end()) {
+        return {found->second};
+    }
+
+    IrObjectId made = program->add_text(
+        "symbol." + std::to_string(symbols.size()), name);
+
+    symbols[name] = made.index;
+
+    return made;
+}
+
 IrObjectId IrLowerer::allocator() {
     if (alloc_native.index == 0) {
         IrTypeTable* types = program->get_types();
@@ -152,18 +169,15 @@ IrObjectId IrLowerer::function_of(u32 module, u32 candidate) {
         return none;
     }
 
-    // a method of a struct or a class; a union's and an enum's wait for
-    // step 5, and a free function's scope is the module's
+    // a method of a struct, a class, a union (record 0064) or an enum
+    // (record 0043); a free function's scope is the module's
     u32 holder = holder_of(module, candidate);
     AstNodeKind held = holder == 0
                            ? AST_UNKNOWN
                            : owning->get_ast()->get_node(holder)->get_kind();
 
-    if (held == AST_UNION || held == AST_ENUM) {
-        return none;
-    }
-
-    if (held != AST_STRUCT && held != AST_CLASS) {
+    if (held != AST_STRUCT && held != AST_CLASS && held != AST_UNION
+        && held != AST_ENUM) {
         holder = 0;
     } else if (is_generic(module, holder)) {
         return none;
@@ -244,8 +258,8 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
 
     if (types->is_aggregate(result)) {
         if (!lowerable(result)) {
-            fail("not lowered yet: a function giving back a union, an enum "
-                 "or a tuple");
+            fail("not lowered yet: a function giving back a union or an enum ("
+                 + types->name_of(result) + ")");
             return false;
         }
 
@@ -258,12 +272,21 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
         IrTypeId one = type_of(i, written[p]);
 
         if (one.index == 0 || !lowerable(one)) {
-            fail("not lowered yet: a parameter of a union, an enum, a tuple "
-                 "or a function");
+            fail("not lowered yet: a parameter of a union, an enum or a "
+                 "function ("
+                 + (one.index == 0 ? std::string("no type")
+                                   : types->name_of(one))
+                 + ")");
             return false;
         }
 
-        parameters.push_back(types->is_aggregate(one) ? pointer : one);
+        // a struct by value is the caller's copy, given by its address; a
+        // fixed array decays to the address of its first element, as C++
+        // passes one (record 0077, step 2)
+        parameters.push_back(types->is_aggregate(one)
+                                     || types->get_type(one)->kind == IR_ARRAY
+                                 ? pointer
+                                 : one);
     }
 
     std::string name = query.get_declaration_name(node);
@@ -377,6 +400,28 @@ bool IrLowerer::drain() {
             if (!body.lower(one.first, one.second,
                             function_of(one.first, candidate))
                 || error.size() > 0) {
+                return false;
+            }
+
+            continue;
+        }
+
+        if (next_adapter < adapters.size()) {
+            AdapterJob job = adapters[next_adapter++];
+            FunctionLowerer body(this, program);
+
+            if (!body.lower_adapter(job) || error.size() > 0) {
+                return false;
+            }
+
+            continue;
+        }
+
+        if (next_closure < closures.size()) {
+            ClosureJob job = closures[next_closure++];
+            FunctionLowerer body(this, program);
+
+            if (!body.lower_closure(job) || error.size() > 0) {
                 return false;
             }
 
@@ -510,14 +555,37 @@ bool IrLowerer::lowerable(IrTypeId type) {
 
     IrAggregate* aggregate = types->get_aggregate(type);
 
+    // record 0058: '{env, call}', two pointers
+    if (is_function_value(type)) {
+        return true;
+    }
+
+    // record 0067: a tuple, a struct per shape, holds what its elements do
+    if (is_tuple(type)) {
+        for (const IrField& field : aggregate->fields) {
+            if (!lowerable(field.type)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     AstNodeKind declared =
         aggregate->declaration == 0
             ? AST_UNKNOWN
             : compilation->get_module(aggregate->module)->get_ast()
                   ->get_node(aggregate->declaration)->get_kind();
 
+    // record 0043: an enum is '{tag; payload}', its payload a union of one
+    // struct per variant that carries something (declared by the variant);
+    // record 0064: a union is C's
     if (!(entry->kind == IR_STRUCT && declared == AST_STRUCT)
-        && !(entry->kind == IR_CLASS && declared == AST_CLASS)) {
+        && !(entry->kind == IR_CLASS && declared == AST_CLASS)
+        && !(entry->kind == IR_STRUCT && declared == AST_ENUM)
+        && !(entry->kind == IR_UNION && declared == AST_ENUM)
+        && !(entry->kind == IR_STRUCT && declared == AST_FIELD)
+        && !(entry->kind == IR_UNION && declared == AST_UNION)) {
         return false;
     }
 
@@ -615,6 +683,12 @@ const StructorJob& IrLowerer::get_structor(IrObjectId function) {
 u32 IrLowerer::method_named(IrTypeId type, const std::string& name,
                             u32 parameters, u8 kind) {
     IrAggregate* aggregate = program->get_types()->get_aggregate(type);
+
+    // a tuple is a struct no declaration holds (record 0067): no methods
+    if (aggregate->declaration == 0) {
+        return 0;
+    }
+
     Module* module = compilation->get_module(aggregate->module);
     SymbolTable* table = module->get_symbols();
     TypeTable* types = module->get_types();
@@ -719,8 +793,292 @@ u32 IrLowerer::empty_init_of(IrTypeId type) {
     return method_named(type, "init", 0, 0);
 }
 
+bool IrLowerer::is_function_value(IrTypeId type) {
+    IrTypeTable* types = program->get_types();
+
+    if (!types->is_aggregate(type)) {
+        return false;
+    }
+
+    IrAggregate* aggregate = types->get_aggregate(type);
+
+    return aggregate->declaration == 0 && aggregate->source_type != 0
+        && compilation->get_module(aggregate->module)->get_types()
+                   ->get_type(aggregate->source_type)->kind
+               == TYPE_FUNCTION;
+}
+
+u32 IrLowerer::signature_of_value(u32 module, u32 type, bool& destination) {
+    TypeTable* table = compilation->get_module(module)->get_types();
+    std::vector<u32> written = table->get_arguments(table->value_of(type));
+    IrTypeTable* types = program->get_types();
+    IrTypeId pointer = types->pointer(IR_SPACE_GENERIC);
+    std::vector<IrTypeId> parameters = {pointer};
+    IrTypeId result = written.size() == 0 ? IrTypeId{0}
+                                          : type_of(module, written.back());
+
+    destination = false;
+
+    if (types->is_aggregate(result)) {
+        parameters.push_back(pointer);
+        result.index = 0;
+        destination = true;
+    }
+
+    for (u32 p = 0; p + 1 < written.size(); p++) {
+        IrTypeId one = type_of(module, written[p]);
+
+        if (one.index == 0 || !lowerable(one)) {
+            fail("not lowered yet: a closure's parameter of a union or an "
+                 "enum");
+            return 0;
+        }
+
+        parameters.push_back(types->is_aggregate(one)
+                                     || types->get_type(one)->kind == IR_ARRAY
+                                 ? pointer
+                                 : one);
+    }
+
+    return program->signature(parameters, result);
+}
+
+IrObjectId IrLowerer::closure_of(u32 module, u32 node, IrTypeId holder) {
+    std::pair<u32, u32> key = std::make_pair(module, node);
+    std::map<std::pair<u32, u32>, u32>::iterator found =
+        made_closures.find(key);
+
+    if (found != made_closures.end()) {
+        return closures[found->second].function;
+    }
+
+    Module* owning = compilation->get_module(module);
+    u32 type = owning->get_resolutions()->get(node)->type;
+    bool destination = false;
+    u32 signature = signature_of_value(module, type, destination);
+
+    if (error.size() > 0) {
+        return {0};
+    }
+
+    ClosureJob job;
+    IrTypeTable* types = program->get_types();
+    std::string name = unique("closure");
+
+    job.module = module;
+    job.node = node;
+    job.holder = holder;
+    job.function = program->add_function(name, signature, IR_FORM_STRUCTURED);
+    job.captures = captures_of(module, node, job.uses_self);
+    job.environment.index = 0;
+    shapes[job.function.index] = destination ? SHAPE_DESTINATION : 0;
+
+    if (job.captures.size() > 0 || job.uses_self) {
+        std::vector<IrField> fields;
+        IrField field;
+
+        field.type = types->pointer(IR_SPACE_GENERIC);
+        field.candidate = 0;
+
+        for (u32 i = 0; i < job.captures.size(); i++) {
+            field.name = "c" + std::to_string(i);
+            fields.push_back(field);
+        }
+
+        if (job.uses_self) {
+            field.name = "self";
+            fields.push_back(field);
+        }
+
+        job.environment = types->aggregate(IR_STRUCT, name + ".env");
+
+        IrAggregate* aggregate = types->get_aggregate(job.environment);
+
+        aggregate->fields = fields;
+        aggregate->pod_for_layout = true;
+        aggregate->module = module;
+    }
+
+    made_closures[key] = (u32) closures.size();
+    closures.push_back(job);
+
+    return job.function;
+}
+
+IrObjectId IrLowerer::adapter_of(u32 module, u32 candidate, IrTypeId from,
+                                 u32 at, u32 type) {
+    std::vector<u32> key = {module, candidate, from.index};
+    std::map<std::vector<u32>, u32>::iterator found = made_adapters.find(key);
+
+    if (found != made_adapters.end()) {
+        return adapters[found->second].function;
+    }
+
+    bool destination = false;
+    u32 signature = signature_of_value(at, type, destination);
+
+    if (error.size() > 0) {
+        return {0};
+    }
+
+    AdapterJob job;
+
+    job.module = module;
+    job.candidate = candidate;
+    job.from = from;
+    job.method = from.index != 0;
+    job.function = program->add_function(unique("adapter"), signature,
+                                         IR_FORM_STRUCTURED);
+    shapes[job.function.index] = destination ? SHAPE_DESTINATION : 0;
+    made_adapters[key] = (u32) adapters.size();
+    adapters.push_back(job);
+
+    return job.function;
+}
+
+const ClosureJob& IrLowerer::closure_job(u32 module, u32 node) {
+    return closures[made_closures[std::make_pair(module, node)]];
+}
+
+// the emitter's own walk (Emitter::captures_of), so the two paths capture
+// the same names
+std::vector<u32> IrLowerer::captures_of(u32 module_index, u32 closure,
+                                        bool& uses_self) {
+    Module* module = compilation->get_module(module_index);
+    SymbolTable* table = module->get_symbols();
+    Ast* ast = module->get_ast();
+    u32 own = table->scope_owned_by(closure);
+    std::set<u32> inside;
+    std::set<u32> seen;
+    std::vector<u32> found;
+    std::vector<u32> pending;
+
+    uses_self = false;
+
+    // what is declared inside is its own, at any depth, and what is declared
+    // at module scope is a global, reached without being captured
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        bool within = scope == table->get_module_scope();
+
+        for (u32 at = scope; at != 0 && !within;
+             at = table->get_scope(at)->parent) {
+            within = at == own;
+        }
+
+        if (!within) {
+            continue;
+        }
+
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+                 one = table->get_candidate(one)->next_candidate) {
+                inside.insert(one);
+            }
+        }
+    }
+
+    pending.push_back(closure);
+
+    while (pending.size() > 0) {
+        u32 node = pending.back();
+        AstNodeKind kind = (AstNodeKind) ast->get_node(node)->get_kind();
+
+        pending.pop_back();
+
+        if (kind == AST_THIS || kind == AST_SUPER) {
+            uses_self = true;
+        }
+
+        if (kind == AST_IDENTIFIER) {
+            Resolution* named = module->get_resolutions()->get(node);
+
+            if (named->candidate != 0 && named->module == module_index) {
+                SymbolKind what = (SymbolKind) table->get_candidate(
+                                      named->candidate)->kind;
+
+                if ((what == SYMBOL_VARIABLE || what == SYMBOL_PARAM)
+                    && inside.count(named->candidate) == 0
+                    && seen.insert(named->candidate).second) {
+                    found.push_back(named->candidate);
+                }
+
+                if (what == SYMBOL_FIELD
+                    || (what == SYMBOL_FUNCTION
+                        && holder_of(module_index, named->candidate) != 0)) {
+                    uses_self = true;
+                }
+            }
+        }
+
+        // the right side of a '.' is a member of whatever the left side is,
+        // and never something the closure reaches by itself
+        u32 last = 0;
+
+        for (u32 child = ast->get_node(node)->get_children(); child != 0;
+             child = ast->get_node(child)->get_sibling()) {
+            if ((kind == AST_DOT || kind == AST_ARROW) && last != 0) {
+                break;
+            }
+
+            pending.push_back(child);
+            last = child;
+        }
+    }
+
+    std::vector<u32> ordered;
+
+    for (u32 one : found) {
+        ordered.insert(ordered.begin(), one);
+    }
+
+    return ordered;
+}
+
+u32 IrLowerer::enum_of_variant(u32 module, u32 candidate) {
+    SymbolTable* table = compilation->get_module(module)->get_symbols();
+
+    for (u32 scope = 1; scope < table->get_scope_count(); scope++) {
+        for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+             symbol = table->get_symbol(symbol)->sibling_or_next) {
+            for (u32 one = table->get_symbol(symbol)->candidates; one != 0;
+                 one = table->get_candidate(one)->next_candidate) {
+                if (one == candidate) {
+                    return table->get_scope(scope)->owner;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+u32 IrLowerer::translate_type(u32 into, u32 from, u32 type) {
+    return into == from ? type : type_builder.translate(into, from, type);
+}
+
+bool IrLowerer::is_tuple(IrTypeId type) {
+    IrTypeTable* types = program->get_types();
+
+    if (!types->is_aggregate(type)) {
+        return false;
+    }
+
+    IrAggregate* aggregate = types->get_aggregate(type);
+
+    return aggregate->declaration == 0 && aggregate->source_type != 0
+        && compilation->get_module(aggregate->module)->get_types()
+                   ->get_type(aggregate->source_type)->kind
+               == TYPE_TUPLE;
+}
+
 bool IrLowerer::has_init(IrTypeId type) {
     IrAggregate* aggregate = program->get_types()->get_aggregate(type);
+
+    if (aggregate->declaration == 0) {
+        return false;
+    }
+
     Module* module = compilation->get_module(aggregate->module);
     AstQuery query;
 
@@ -736,11 +1094,51 @@ bool IrLowerer::has_init(IrTypeId type) {
     return false;
 }
 
+// Record 0043: an enum whose variants carry something, '{tag; payload}'.
+// Which member of the payload is alive is the tag's to say, so ending,
+// copying and assigning one is a question about the variants' fields
+bool IrLowerer::is_tagged(IrTypeId type) {
+    IrTypeTable* types = program->get_types();
+
+    if (!types->is_aggregate(type) || types->get_type(type)->kind != IR_STRUCT) {
+        return false;
+    }
+
+    IrAggregate* aggregate = types->get_aggregate(type);
+
+    return aggregate->declaration != 0 && aggregate->fields.size() == 2
+        && compilation->get_module(aggregate->module)->get_ast()
+                   ->get_node(aggregate->declaration)->get_kind()
+               == AST_ENUM;
+}
+
+// whether a field of some variant answers 'asked': 0 has a destructor, 1
+// copies by an 'init'
+bool IrLowerer::variants_ask(IrTypeId type, u8 asked) {
+    IrTypeTable* types = program->get_types();
+    IrTypeId payload = types->get_aggregate(type)->fields[1].type;
+
+    for (const IrField& member : types->get_aggregate(payload)->fields) {
+        for (const IrField& field : types->get_aggregate(member.type)->fields) {
+            if ((asked == 0 && has_destructor(field.type))
+                || (asked == 1 && copies_by_init(field.type))) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 bool IrLowerer::has_destructor(IrTypeId type) {
     IrTypeTable* types = program->get_types();
 
     if (types->get_type(type)->kind == IR_ARRAY) {
         return has_destructor(types->get_type(type)->element);
+    }
+
+    if (is_tagged(type)) {
+        return variants_ask(type, 0);
     }
 
     if (!types->is_aggregate(type) || types->get_type(type)->kind == IR_UNION) {
@@ -770,6 +1168,10 @@ bool IrLowerer::copies_by_init(IrTypeId type) {
 
     if (types->get_type(type)->kind == IR_ARRAY) {
         return copies_by_init(types->get_type(type)->element);
+    }
+
+    if (is_tagged(type)) {
+        return variants_ask(type, 1);
     }
 
     if (types->get_type(type)->kind == IR_CLASS) {
@@ -810,7 +1212,9 @@ bool IrLowerer::constructs(IrTypeId type) {
         return true;
     }
 
-    if (types->get_type(type)->kind != IR_STRUCT) {
+    u8 kind = types->get_type(type)->kind;
+
+    if (kind != IR_STRUCT && kind != IR_UNION) {
         return false;
     }
 
@@ -820,16 +1224,29 @@ bool IrLowerer::constructs(IrTypeId type) {
 
     query.set_module(module);
 
+    // a union is built when it writes an 'init' or gives a field a value
+    // (record 0064); an enum's payload is a union whose members are variants,
+    // and what a variant writes is its tag or its default, never a field's
+    if (kind == IR_UNION
+        && (aggregate->declaration == 0
+            || module->get_ast()->get_node(aggregate->declaration)->get_kind()
+                   != AST_UNION)) {
+        return false;
+    }
+
     if (has_init(type)
         || (aggregate->base.index != 0 && constructs(aggregate->base))) {
         return true;
     }
 
     for (const IrField& field : aggregate->fields) {
-        u32 node = module->get_symbols()->get_candidate(field.candidate)
-                       ->ast_node;
+        u32 node = field.candidate == 0
+                       ? 0
+                       : module->get_symbols()->get_candidate(field.candidate)
+                             ->ast_node;
 
-        if (query.get_binding_expression(node) != 0 || constructs(field.type)) {
+        if ((node != 0 && query.get_binding_expression(node) != 0)
+            || (kind == IR_STRUCT && constructs(field.type))) {
             return true;
         }
     }
@@ -839,6 +1256,12 @@ bool IrLowerer::constructs(IrTypeId type) {
 
 bool IrLowerer::declares_copy(IrTypeId type) {
     u8 kind = program->get_types()->get_type(type)->kind;
+
+    // record 0031 one level down: the member alive is destroyed, then the
+    // other's is copied in, whenever either says how
+    if (is_tagged(type)) {
+        return variants_ask(type, 0) || variants_ask(type, 1);
+    }
 
     return (kind == IR_STRUCT || kind == IR_CLASS)
         && (copy_init_of(type) != 0 || assigns_by_field(type));

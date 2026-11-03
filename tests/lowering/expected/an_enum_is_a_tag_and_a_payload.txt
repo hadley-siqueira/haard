@@ -1,0 +1,276 @@
+struct Shape { tag: b8, payload: Shape.payload }
+union Shape.payload { Circle: Shape.Circle, Rect: Shape.Rect }
+struct Shape.Circle { _0: b32 }
+struct Shape.Rect { _0: b32, _1: b32 }
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot bool
+  %4 = slot Shape
+  %14 = slot Shape
+  %30 = slot Shape
+  %39 = slot bool
+  %40 = slot Shape
+  %49 = slot Shape
+  %62 = slot bool
+  %101 = slot Shape
+  %110 = slot Shape
+  %123 = slot bool
+  %2 = const b32 0
+  store b32 %2, %1
+  %5 = field %4, Shape.tag
+  %6 = const b8 1
+  store b8 %6, %5
+  %7 = field %4, Shape.payload
+  %8 = field %7, Shape.payload.Circle
+  %9 = field %8, Shape.Circle._0
+  %10 = const b32 2
+  store b32 %10, %9
+  %11 = call @area(%4)
+  %12 = const b32 12
+  %13 = eq b32 %11, %12
+  store bool %13, %3
+  $18: if %13 {
+    %15 = field %14, Shape.tag
+    %16 = const b8 2
+    store b8 %16, %15
+    %17 = field %14, Shape.payload
+    %18 = field %17, Shape.payload.Rect
+    %19 = field %18, Shape.Rect._0
+    %20 = const b32 3
+    store b32 %20, %19
+    %21 = field %18, Shape.Rect._1
+    %22 = const b32 4
+    store b32 %22, %21
+    %23 = call @area(%14)
+    %24 = const b32 12
+    %25 = eq b32 %23, %24
+    store bool %25, %3
+  }
+  %26 = load bool, %3
+  $36: if %26 {
+    %27 = load b32, %1
+    %28 = const b32 1
+    %29 = or b32 %27, %28
+    store b32 %29, %1
+  }
+  %31 = field %30, Shape.tag
+  %32 = const b8 0
+  store b8 %32, %31
+  %33 = call @area(%30)
+  %34 = const b32 0
+  %35 = eq b32 %33, %34
+  $48: if %35 {
+    %36 = load b32, %1
+    %37 = const b32 2
+    %38 = or b32 %36, %37
+    store b32 %38, %1
+  }
+  %41 = field %40, Shape.tag
+  %42 = const b8 2
+  store b8 %42, %41
+  %43 = field %40, Shape.payload
+  %44 = field %43, Shape.payload.Rect
+  %45 = field %44, Shape.Rect._0
+  %46 = const b32 1
+  store b32 %46, %45
+  %47 = field %44, Shape.Rect._1
+  %48 = const b32 2
+  store b32 %48, %47
+  %50 = field %49, Shape.tag
+  %51 = const b8 2
+  store b8 %51, %50
+  %52 = field %49, Shape.payload
+  %53 = field %52, Shape.payload.Rect
+  %54 = field %53, Shape.Rect._0
+  %55 = const b32 1
+  store b32 %55, %54
+  %56 = field %53, Shape.Rect._1
+  %57 = const b32 2
+  store b32 %57, %56
+  %58 = field %40, Shape.tag
+  %59 = load b8, %58
+  %60 = field %49, Shape.tag
+  %61 = load b8, %60
+  %63 = eq b8 %59, %61
+  store bool %63, %62
+  %64 = const b8 1
+  %65 = eq b8 %59, %64
+  %66 = load bool, %62
+  %67 = and bool %66, %65
+  $89: if %67 {
+    %68 = field %40, Shape.payload
+    %69 = field %68, Shape.payload.Circle
+    %70 = field %49, Shape.payload
+    %71 = field %70, Shape.payload.Circle
+    %72 = const bool true
+    %73 = field %71, Shape.Circle._0
+    %74 = field %69, Shape.Circle._0
+    %75 = load b32, %73
+    %76 = load b32, %74
+    %77 = eq b32 %76, %75
+    %78 = and bool %72, %77
+    store bool %78, %62
+  }
+  %79 = const b8 2
+  %80 = eq b8 %59, %79
+  %81 = load bool, %62
+  %82 = and bool %81, %80
+  $106: if %82 {
+    %83 = field %40, Shape.payload
+    %84 = field %83, Shape.payload.Rect
+    %85 = field %49, Shape.payload
+    %86 = field %85, Shape.payload.Rect
+    %87 = const bool true
+    %88 = field %86, Shape.Rect._0
+    %89 = field %84, Shape.Rect._0
+    %90 = load b32, %88
+    %91 = load b32, %89
+    %92 = eq b32 %91, %90
+    %93 = and bool %87, %92
+    %94 = field %86, Shape.Rect._1
+    %95 = field %84, Shape.Rect._1
+    %96 = load b32, %94
+    %97 = load b32, %95
+    %98 = eq b32 %97, %96
+    %99 = and bool %93, %98
+    store bool %99, %62
+  }
+  %100 = load bool, %62
+  store bool %100, %39
+  $127: if %100 {
+    %102 = field %101, Shape.tag
+    %103 = const b8 2
+    store b8 %103, %102
+    %104 = field %101, Shape.payload
+    %105 = field %104, Shape.payload.Rect
+    %106 = field %105, Shape.Rect._0
+    %107 = const b32 1
+    store b32 %107, %106
+    %108 = field %105, Shape.Rect._1
+    %109 = const b32 2
+    store b32 %109, %108
+    %111 = field %110, Shape.tag
+    %112 = const b8 2
+    store b8 %112, %111
+    %113 = field %110, Shape.payload
+    %114 = field %113, Shape.payload.Rect
+    %115 = field %114, Shape.Rect._0
+    %116 = const b32 2
+    store b32 %116, %115
+    %117 = field %114, Shape.Rect._1
+    %118 = const b32 1
+    store b32 %118, %117
+    %119 = field %101, Shape.tag
+    %120 = load b8, %119
+    %121 = field %110, Shape.tag
+    %122 = load b8, %121
+    %124 = eq b8 %120, %122
+    store bool %124, %123
+    %125 = const b8 1
+    %126 = eq b8 %120, %125
+    %127 = load bool, %123
+    %128 = and bool %127, %126
+    $163: if %128 {
+      %129 = field %101, Shape.payload
+      %130 = field %129, Shape.payload.Circle
+      %131 = field %110, Shape.payload
+      %132 = field %131, Shape.payload.Circle
+      %133 = const bool true
+      %134 = field %132, Shape.Circle._0
+      %135 = field %130, Shape.Circle._0
+      %136 = load b32, %134
+      %137 = load b32, %135
+      %138 = eq b32 %137, %136
+      %139 = and bool %133, %138
+      store bool %139, %123
+    }
+    %140 = const b8 2
+    %141 = eq b8 %120, %140
+    %142 = load bool, %123
+    %143 = and bool %142, %141
+    $180: if %143 {
+      %144 = field %101, Shape.payload
+      %145 = field %144, Shape.payload.Rect
+      %146 = field %110, Shape.payload
+      %147 = field %146, Shape.payload.Rect
+      %148 = const bool true
+      %149 = field %147, Shape.Rect._0
+      %150 = field %145, Shape.Rect._0
+      %151 = load b32, %149
+      %152 = load b32, %150
+      %153 = eq b32 %152, %151
+      %154 = and bool %148, %153
+      %155 = field %147, Shape.Rect._1
+      %156 = field %145, Shape.Rect._1
+      %157 = load b32, %155
+      %158 = load b32, %156
+      %159 = eq b32 %158, %157
+      %160 = and bool %154, %159
+      store bool %160, %123
+    }
+    %161 = load bool, %123
+    %162 = not bool %161
+    store bool %162, %39
+  }
+  %163 = load bool, %39
+  $203: if %163 {
+    %164 = load b32, %1
+    %165 = const b32 4
+    %166 = or b32 %164, %165
+    store b32 %166, %1
+  }
+  %167 = load b32, %1
+  ret b32 %167
+}
+
+func @area(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %14 = slot ptr
+  %25 = slot ptr
+  %29 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Shape.tag
+  %5 = load b8, %4
+  $6: block {
+    %6 = const b8 0
+    %7 = eq b8 %5, %6
+    $9: if %7 {
+      %8 = const b32 0
+      ret b32 %8
+    }
+    %9 = const b8 1
+    %10 = eq b8 %5, %9
+    $14: if %10 {
+      %11 = field %3, Shape.payload
+      %12 = field %11, Shape.payload.Circle
+      %13 = field %12, Shape.Circle._0
+      store ptr %13, %14
+      %15 = const b32 3
+      %16 = load ptr, %14
+      %17 = load b32, %16
+      %18 = mul b32 %15, %17
+      %19 = load ptr, %14
+      %20 = load b32, %19
+      %21 = mul b32 %18, %20
+      ret b32 %21
+    }
+    %22 = field %3, Shape.payload
+    %23 = field %22, Shape.payload.Rect
+    %24 = field %23, Shape.Rect._0
+    store ptr %24, %25
+    %26 = field %3, Shape.payload
+    %27 = field %26, Shape.payload.Rect
+    %28 = field %27, Shape.Rect._1
+    store ptr %28, %29
+    %30 = load ptr, %25
+    %31 = load b32, %30
+    %32 = load ptr, %29
+    %33 = load b32, %32
+    %34 = mul b32 %31, %33
+    ret b32 %34
+  }
+}
+
+--- exit: 7

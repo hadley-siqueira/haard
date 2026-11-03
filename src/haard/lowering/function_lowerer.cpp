@@ -80,11 +80,13 @@ bool FunctionLowerer::lower(u32 module, u32 node, IrObjectId function) {
         build.store(type, build.parameter(first + i), slot, at(parameters[i]));
         slots[candidate] = slot;
 
-        if (struct_of(this->module->get_symbols()->get_candidate(candidate)
-                          ->type).index != 0
-            && !is_reference_type(module, this->module->get_symbols()
-                                              ->get_candidate(candidate)
-                                              ->type)) {
+        u32 written = this->module->get_symbols()->get_candidate(candidate)
+                          ->type;
+
+        // and a fixed array decays to the address of its first element, as
+        // C++ passes one (record 0077, step 2): the caller's, not a copy
+        if ((struct_of(written).index != 0 || kind_of_type(written) == TYPE_ARRAY)
+            && !is_reference_type(module, written)) {
             indirect.insert(candidate);
         }
     }
@@ -186,6 +188,11 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
     case STRUCTOR_COPY: {
         IrValueId other = build.parameter(1);
 
+        if (owner->is_tagged(job.type)) {
+            copy_alive(job.type, object, other, here);
+            break;
+        }
+
         if (base.index != 0) {
             IrValueId to = build.upcast(job.type, base, object, here);
             IrValueId from = build.upcast(job.type, base, other, here);
@@ -228,6 +235,11 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
             call_method(owning, destroy_method, {object}, false, here);
         }
 
+        if (owner->is_tagged(job.type)) {
+            destroy_alive(job.type, object, here);
+            break;
+        }
+
         for (u32 i = fields.size(); i > 0 && !failed; i--) {
             IrTypeId one = fields[i - 1].type;
 
@@ -257,6 +269,13 @@ bool FunctionLowerer::lower_structor(const StructorJob& job) {
         build.begin_if(build.binary(IR_EQ, pointer, object, other, here), here);
         build.ret(here);
         build.end();
+
+        // an enum: the member alive ended, then the other's copied in
+        if (owner->is_tagged(job.type)) {
+            destroy_alive(job.type, object, here);
+            copy_alive(job.type, object, other, here);
+            break;
+        }
 
         if (copy != 0) {
             u32 destroy_method = owner->destroy_of(job.type);
@@ -553,7 +572,7 @@ void FunctionLowerer::lower_statement(u32 node) {
         return;
 
     case AST_SWITCH:
-        not_yet("a switch");
+        lower_switch(node);
         return;
 
     default:
@@ -617,24 +636,336 @@ void FunctionLowerer::lower_branches(u32 condition, u32 block, u32 next,
     build.end();
 }
 
-void FunctionLowerer::lower_while(u32 node) {
-    IrInstId loop = build.begin_loop(IR_NO_BOUND, at(node));
+// Record 0043's switch, over an integer, a char or an enum -- the others the
+// sugar pass made a chain of 'if's. A 'block' with an 'if' per group of
+// cases, each leaving the block when it is done: no fall through, and a
+// 'break' inside still leaves the loop around it. The subject is read once,
+// and an enum that carries something is switched over by its tag; what a
+// case binds refers into the payload of its variant
+void FunctionLowerer::lower_switch(u32 node) {
+    u32 subject = child_of(node, 0);
+    u32 type = module->get_types()->value_of(type_at(subject));
+    IrTypeId tagged = struct_of(type);
+    IrTypeId boolean = program->get_types()->scalar(IR_BOOL);
+    IrValueId whole = {0};
+    IrValueId tag = {0};
+    IrTypeId tag_type = {0};
 
-    open_scope(true);
+    // the subject's temporaries live as long as the switch does
+    open_scope(false);
 
-    IrValueId test = value_of(child_of(node, 0));
+    if (tagged.index != 0) {
+        whole = reference_to(subject);
+        tag_type = program->get_types()->get_aggregate(tagged)->fields[0].type;
 
-    close_scope(at(node));
+        if (!failed) {
+            tag = build.load(tag_type, build.field(tagged, whole, 0, at(node)),
+                             at(node));
+        }
+    } else {
+        tag_type = ir_type(type);
+        tag = value_of(subject);
+    }
 
     if (failed) {
         return;
     }
 
-    build.begin_if(build.unary(IR_NOT, program->get_types()->scalar(IR_BOOL),
-                               test, at(node)),
-                   at(node));
-    build.break_to(loop, at(node));
+    IrInstId region = build.begin_block(at(node));
+    std::vector<u32> group;
+    u32 fallback = 0;
+    u32 last = 0;
+
+    for (u32 child = module->get_ast()->get_node(subject)->get_sibling();
+         child != 0; child = module->get_ast()->get_node(child)->get_sibling()) {
+        if (kind_of(child) == AST_DEFAULT) {
+            fallback = child_of(child, 0);
+        } else {
+            last = child;
+        }
+    }
+
+    // Record 0043: a switch over an enum names every variant or has a
+    // 'default', so with none its last group is what is left and runs
+    // without a test -- and the end of the switch is not reached when every
+    // case gives back, which the IR has to see
+    bool exhaustive = fallback == 0
+                   && module->get_types()->get_type(type)->kind == TYPE_NAMED;
+
+    for (u32 child = module->get_ast()->get_node(subject)->get_sibling();
+         child != 0 && !failed;
+         child = module->get_ast()->get_node(child)->get_sibling()) {
+        if (kind_of(child) == AST_DEFAULT) {
+            continue;
+        }
+
+        u32 pattern = child_of(child, 0);
+        u32 block = module->get_ast()->get_node(pattern)->get_sibling();
+
+        group.push_back(child);
+
+        if (block == 0) {
+            continue;
+        }
+
+        if (exhaustive && child == last) {
+            open_scope(false);
+            bind_captures(type, group, tagged, whole, tag, tag_type);
+            lower_block(block);
+            close_scope(at(child));
+            group.clear();
+            break;
+        }
+
+        IrValueId any = {0};
+
+        for (u32 one : group) {
+            IrValueId label = case_label(type, child_of(one, 0), tag_type);
+
+            if (failed) {
+                return;
+            }
+
+            IrValueId same = build.binary(IR_EQ, tag_type, tag, label,
+                                          at(one));
+
+            any = any.index == 0 ? same
+                                 : build.binary(IR_OR, boolean, any, same,
+                                                at(one));
+        }
+
+        build.begin_if(any, at(child));
+        open_scope(false);
+        bind_captures(type, group, tagged, whole, tag, tag_type);
+        lower_block(block);
+        close_scope(at(child));
+
+        if (!build.ended()) {
+            build.break_to(region, at(child));
+        }
+
+        build.end();
+        group.clear();
+    }
+
+    if (fallback != 0 && !failed) {
+        lower_block(fallback);
+    }
+
     build.end();
+    close_scope(at(node));
+}
+
+// what a case is compared with: a variant's tag, or the value written
+IrValueId FunctionLowerer::case_label(u32 type, u32 pattern,
+                                      IrTypeId tag_type) {
+    u32 variant_module = 0;
+    u32 variant = variant_of_pattern(type, pattern, variant_module);
+
+    if (variant != 0) {
+        return build.constant(tag_type, tag_of_variant(variant_module, variant),
+                              at(pattern));
+    }
+
+    return value_of(pattern);
+}
+
+// The variant a case names, found by its name among the variants of the
+// enum switched over, as the emitter finds it: 'Click(x, y)', 'E.Click' and
+// a bare 'Click' (record 0072); 0 over a switch that is not an enum's
+u32 FunctionLowerer::variant_of_pattern(u32 type, u32 pattern,
+                                        u32& in_module) {
+    Type* entry = module->get_types()->get_type(type);
+
+    if (entry->kind != TYPE_NAMED) {
+        return 0;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+    u32 declaration =
+        holder->get_symbols()->get_candidate(entry->subject)->ast_node;
+    u32 name = pattern;
+
+    if (kind_of(name) == AST_CALL) {
+        name = child_of(name, 0);
+    }
+
+    if (kind_of(name) == AST_DOT) {
+        name = child_of(name, 1);
+    }
+
+    std::string wanted = text_of(name);
+    AstQuery theirs;
+
+    theirs.set_module(holder);
+
+    for (u32 member : theirs.get_variants(declaration)) {
+        if (theirs.get_declaration_name(member) == wanted) {
+            in_module = entry->module;
+            return holder->get_symbols()->candidate_of(member);
+        }
+    }
+
+    return 0;
+}
+
+// Each name a group of cases binds, in the scope the cases share: a
+// reference to the field of the payload member of the variant that matched.
+// Every case in a group binds the same names for the same types (Hadley's
+// rule), so which member it comes out of is a question about the tag
+void FunctionLowerer::bind_captures(u32 type, const std::vector<u32>& group,
+                                    IrTypeId tagged, IrValueId whole,
+                                    IrValueId tag, IrTypeId tag_type) {
+    AstQuery query;
+
+    query.set_module(module);
+
+    if (group.size() == 0 || tagged.index == 0) {
+        return;
+    }
+
+    std::vector<u32> captures = query.get_captures(group.back());
+
+    if (captures.size() == 0) {
+        return;
+    }
+
+    SymbolTable* table = module->get_symbols();
+    IrTypeTable* types = program->get_types();
+    IrAggregate* aggregate = types->get_aggregate(tagged);
+    IrTypeId payload = aggregate->fields[1].type;
+    IrTypeId pointer = types->pointer(IR_SPACE_GENERIC);
+    u32 scope = table->scope_owned_by(group.back());
+
+    for (u32 i = 0; i < captures.size() && !failed; i++) {
+        u32 candidate = capture_named(scope, captures[i]);
+
+        if (candidate == 0) {
+            not_yet("a case that binds a name nothing declared");
+            return;
+        }
+
+        IrPosition here = at(captures[i]);
+        IrValueId address = {0};
+
+        for (u32 one : group) {
+            u32 variant_module = 0;
+            u32 variant = variant_of_pattern(type, child_of(one, 0),
+                                             variant_module);
+
+            IrAggregate* members = types->get_aggregate(payload);
+            u32 member = 0;
+
+            while (member < members->fields.size()
+                   && members->fields[member].candidate != variant) {
+                member++;
+            }
+
+            if (member == members->fields.size()) {
+                not_yet("a case that binds from a variant carrying nothing");
+                return;
+            }
+
+            IrTypeId carried = members->fields[member].type;
+            IrValueId inside = build.field(
+                carried,
+                build.field(payload, build.field(tagged, whole, 1, here),
+                            member, here),
+                i, here);
+
+            if (address.index == 0) {
+                address = inside;
+            } else {
+                IrValueId is = build.binary(
+                    IR_EQ, tag_type, tag,
+                    build.constant(tag_type,
+                                   tag_of_variant(variant_module, variant),
+                                   here),
+                    here);
+
+                address = build.select(pointer, is, inside, address, here);
+            }
+        }
+
+        u32 type = table->get_candidate(candidate)->type;
+        IrValueId slot = build.entry_slot(pointer, here);
+
+        // record 0043: a capture is a reference to what the variant holds
+        if (!is_reference_type(module_index, type)) {
+            IrTypeId held = slot_type(type);
+
+            if (failed) {
+                return;
+            }
+
+            IrValueId copy = build.entry_slot(held, here);
+
+            if (struct_of(type).index != 0) {
+                copy_construct(copy, held, address, here);
+                add_cleanup(copy, held, true, here);
+            } else {
+                build.store(held, build.load(held, address, here), copy, here);
+            }
+
+            slots[candidate] = copy;
+            continue;
+        }
+
+        build.store(pointer, address, slot, here);
+        slots[candidate] = slot;
+    }
+}
+
+// the candidate a capture's name was declared as, by name in its case's scope
+u32 FunctionLowerer::capture_named(u32 scope, u32 name) {
+    SymbolTable* table = module->get_symbols();
+    std::string wanted = text_of(name);
+
+    if (scope == 0) {
+        return 0;
+    }
+
+    for (u32 symbol = table->get_scope(scope)->symbols; symbol != 0;
+         symbol = table->get_symbol(symbol)->sibling_or_next) {
+        if (std::string(module->get_strings()->get_text(
+                table->get_symbol(symbol)->name))
+            == wanted) {
+            return table->get_symbol(symbol)->candidates;
+        }
+    }
+
+    return 0;
+}
+
+void FunctionLowerer::lower_while(u32 node) {
+    IrInstId loop = build.begin_loop(IR_NO_BOUND, at(node));
+    u32 condition = child_of(node, 0);
+
+    while (kind_of(condition) == AST_PARENTHESIS) {
+        condition = child_of(condition, 0);
+    }
+
+    // 'while true' has no test: only a 'break' or a 'return' leaves it, so
+    // when it has none what follows it is reached by nothing -- 'unwrap'
+    // (record 0070) ends in one, and its function has no end to fall off
+    if (kind_of(condition) != AST_TRUE) {
+        open_scope(true);
+
+        IrValueId test = value_of(child_of(node, 0));
+
+        close_scope(at(node));
+
+        if (failed) {
+            return;
+        }
+
+        build.begin_if(build.unary(IR_NOT,
+                                   program->get_types()->scalar(IR_BOOL), test,
+                                   at(node)),
+                       at(node));
+        build.break_to(loop, at(node));
+        build.end();
+    }
 
     Loop around = {loop, loop, false, (u32) scopes.size()};
 
@@ -809,6 +1140,12 @@ void FunctionLowerer::lower_return(u32 node) {
         return;
     }
 
+    give_back(given, node);
+}
+
+// what 'return given' gives back, 'node' the statement or, for a closure of
+// one expression (record 0058), the expression itself
+void FunctionLowerer::give_back(u32 given, u32 node) {
     // a struct is built where the caller said, unless it is already there
     if (destination.index != 0) {
         u32 named = given;
@@ -899,7 +1236,17 @@ void FunctionLowerer::initialise(IrValueId place, u32 type, u32 given,
         return;
     }
 
-    IrValueId value = value_of(given);
+    // a number nothing asked to be anything -- the default an enum writes
+    // for a variant's payload, '(0, 0)', which no call typed -- is the type
+    // it is written into
+    AstNodeKind written = kind_of(given);
+    IrValueId value =
+        type_at(given) == INVALID_TYPE
+                && (written == AST_INTEGER_LITERAL
+                    || written == AST_FLOAT_LITERAL
+                    || written == AST_CHAR_LITERAL)
+            ? literal(given, types->value_of(type))
+            : value_of(given);
 
     if (!failed) {
         build.store(ir_type(type), value, place, here);
@@ -944,6 +1291,19 @@ IrValueId FunctionLowerer::value_of(u32 node) {
         return reference_to(node);
     }
 
+    // record 0043: a variant of an enum that is only its tag is the tag
+    u32 variant_module = 0;
+    u32 variant = 0;
+
+    if (variant_named(node, variant_module, variant)) {
+        IrTypeId tag = ir_type(type_at(node));
+
+        return failed ? IrValueId{0}
+                      : build.constant(tag,
+                                       tag_of_variant(variant_module, variant),
+                                       at(node));
+    }
+
     switch (kind) {
     case AST_INTEGER_LITERAL:
     case AST_FLOAT_LITERAL:
@@ -957,6 +1317,18 @@ IrValueId FunctionLowerer::value_of(u32 node) {
 
     case AST_STRING_LITERAL:
         return string_literal(node);
+
+    // record 0041: ':name', ':'name'' and ':"two words"' are one entry per
+    // name, the quotes how a name is written and not part of it
+    case AST_SYMBOL_LITERAL: {
+        std::string text = text_of(node).substr(1);
+
+        if (text.size() >= 2 && (text[0] == '\'' || text[0] == '"')) {
+            text = unescape(text.substr(1, text.size() - 2));
+        }
+
+        return build.address(owner->symbol(text), at(node));
+    }
 
     case AST_ARRAY:
         return brace_literal(node);
@@ -1104,8 +1476,8 @@ IrValueId FunctionLowerer::value_of(u32 node) {
 
 // A number is written in decimal, or after '0x', '0b' or '0o', with '_'
 // anywhere between its digits; a char between quotes with C's escapes
-IrValueId FunctionLowerer::literal(u32 node) {
-    u32 type = type_at(node);
+IrValueId FunctionLowerer::literal(u32 node, u32 wanted) {
+    u32 type = type_at(node) == INVALID_TYPE ? wanted : type_at(node);
     IrTypeId ir = ir_type(type);
     IrValueId none = {0};
     std::string text = text_of(node);
@@ -1282,6 +1654,21 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
         return place;
     }
 
+    // record 0058: a value of type 'A -> R' -- a local, a parameter, a field
+    // or anything giving one back -- is called through its pair
+    if (kind_of_type(type_at(callee)) == TYPE_FUNCTION
+        && (kind_of(name) != AST_IDENTIFIER
+            || (SymbolKind) compilation
+                       ->get_module(
+                           module->get_resolutions()->get(name)->module)
+                       ->get_symbols()
+                       ->get_candidate(
+                           module->get_resolutions()->get(name)->candidate)
+                       ->kind
+                   != SYMBOL_FUNCTION)) {
+        return call_value(node, into);
+    }
+
     if (kind_of(name) != AST_IDENTIFIER) {
         not_yet("a call through '" + text_of(callee) + "'");
         return none;
@@ -1349,12 +1736,397 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
     return given;
 }
 
-bool FunctionLowerer::arguments_for(u32 callee_module, u32 candidate,
-                                    u32 first, std::vector<IrValueId>& values,
-                                    u32 limit) {
-    std::vector<u32> written = signature_of(callee_module, candidate);
+// whether a node written where a value goes names a function -- 'f',
+// '::f', 'c.add', or a bare method inside its class -- as its candidate
+bool FunctionLowerer::names_function(u32 node, u32& in_module,
+                                     u32& candidate) {
+    u32 name = node;
+
+    while (kind_of(name) == AST_PARENTHESIS) {
+        name = child_of(name, 0);
+    }
+
+    if (kind_of(name) == AST_DOT || kind_of(name) == AST_ARROW) {
+        name = child_of(name, 1);
+    } else if (kind_of(name) == AST_SCOPE) {
+        u32 first = child_of(name, 0);
+        u32 second = first == 0 ? 0
+                                : module->get_ast()->get_node(first)->get_sibling();
+
+        name = second == 0 ? first : second;
+    }
+
+    if (kind_of(name) == AST_GENERIC_NAME) {
+        name = child_of(name, 0);
+    }
+
+    if (kind_of(name) != AST_IDENTIFIER) {
+        return false;
+    }
+
+    Resolution* found = module->get_resolutions()->get(name);
+
+    if (found->candidate == 0
+        || (SymbolKind) compilation->get_module(found->module)->get_symbols()
+                   ->get_candidate(found->candidate)->kind
+               != SYMBOL_FUNCTION) {
+        return false;
+    }
+
+    in_module = found->module;
+    candidate = found->candidate;
+
+    return true;
+}
+
+// Record 0058 section 8 and record 0071: a function as a value. A 'def'
+// has no environment; a method's is its object -- the left of 'c.add', or
+// 'this' for a bare name inside its class -- which the value refers to
+void FunctionLowerer::build_function_value(IrValueId place, IrTypeId type,
+                                           u32 node, u32 in_module,
+                                           u32 candidate) {
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+    IrPosition here = at(node);
+    IrValueId environment = {0};
+    IrTypeId from = {0};
+    u32 written = node;
+
+    while (kind_of(written) == AST_PARENTHESIS) {
+        written = child_of(written, 0);
+    }
+
+    if (owner->holder_of(in_module, candidate) != 0) {
+        if (kind_of(written) == AST_DOT || kind_of(written) == AST_ARROW) {
+            u32 left = child_of(written, 0);
+
+            if (kind_of(left) == AST_THIS || kind_of(left) == AST_SUPER) {
+                environment = build.load(pointer, self, here);
+                from = holder;
+            } else if (kind_of_type(type_at(left)) == TYPE_POINTER) {
+                environment = value_of(left);
+                from = element_of(type_at(left));
+            } else {
+                environment = reference_to(left);
+                from = struct_of(type_at(left));
+            }
+        } else if (self.index != 0) {
+            environment = build.load(pointer, self, here);
+            from = holder;
+        } else {
+            not_yet("a method as a value outside its class");
+            return;
+        }
+    } else {
+        environment = build.null(here);
+    }
+
+    if (failed) {
+        return;
+    }
+
+    IrObjectId adapter = owner->adapter_of(in_module, candidate, from,
+                                           module_index,
+                                           module->get_types()->value_of(
+                                               type_at(node)));
+
+    if (adapter.index == 0 || owner->get_error().size() > 0) {
+        failed = true;
+        return;
+    }
+
+    build.store(pointer, environment, build.field(type, place, 0, here), here);
+    build.store(pointer, build.address(adapter, here),
+                build.field(type, place, 1, here), here);
+}
+
+// The adapter's body: what it was given after the environment passed on as
+// it is -- where a result is built, then each parameter -- to the function,
+// or to the method called on the object the environment is
+bool FunctionLowerer::lower_adapter(const AdapterJob& job) {
+    Module* owning = compilation->get_module(job.module);
+    IrPosition here = {job.module, IR_NO_OFFSET};
+
+    begin(job.module, job.function);
+    here = at(owning->get_symbols()->get_candidate(job.candidate)->ast_node);
+
+    const IrSignature& taken =
+        program->get_signature(program->get_function(job.function).signature);
+    IrObjectId target = function_of(job.module, job.candidate);
+
+    if (failed) {
+        return false;
+    }
+
+    std::vector<IrValueId> values;
+
+    if (job.method) {
+        values.push_back(upcast_to(build.parameter(0), job.from,
+                                   owner->receiver_type(job.module,
+                                                        job.candidate),
+                                   here));
+    }
+
+    for (u32 p = 1; p < taken.parameters.size(); p++) {
+        values.push_back(build.parameter(p));
+    }
+
+    IrValueId given = job.method
+                          ? call_method(job.module, job.candidate, values, true,
+                                        here)
+                          : build.call(target, values, here);
+
+    if (failed) {
+        return false;
+    }
+
+    if (result.index != 0) {
+        build.ret(result, given, here);
+    } else {
+        build.ret(here);
+    }
+
+    return !failed;
+}
+
+// Record 0058: 'f(a)' with 'f' a value of type 'A -> R', called through
+// its function with its environment first -- where an aggregate result is
+// built next, as for any call (question 80)
+IrValueId FunctionLowerer::call_value(u32 node, IrValueId into) {
+    IrValueId none = {0};
+    u32 callee = child_of(node, 0);
+    u32 arguments = child_of(node, 1);
+    u32 first = arguments == 0 ? 0 : child_of(arguments, 0);
+    u32 type = module->get_types()->value_of(type_at(callee));
+    IrTypeId pair = struct_of(type);
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+    bool destination = false;
+    u32 signature = owner->signature_of_value(module_index, type, destination);
+    IrValueId held = reference_to(callee);
+
+    if (failed || owner->get_error().size() > 0) {
+        failed = true;
+        return none;
+    }
+
+    IrValueId environment =
+        build.load(pointer, build.field(pair, held, 0, at(node)), at(node));
+    IrValueId function =
+        build.load(pointer, build.field(pair, held, 1, at(node)), at(node));
+    std::vector<u32> written = module->get_types()->get_arguments(type);
+    std::vector<IrValueId> values = {environment};
+    IrValueId place = into;
+    IrTypeId built = {0};
+
+    if (destination) {
+        built = struct_of(written.back());
+
+        if (place.index == 0) {
+            place = build.entry_slot(built, at(node));
+        }
+
+        values.push_back(place);
+    }
+
     u32 at_parameter = 0;
 
+    if (!arguments_written(module_index, written, first, values, 0xffffffff,
+                           at_parameter)) {
+        return none;
+    }
+
+    IrValueId given = build.call_indirect(signature, function, values,
+                                          at(node));
+
+    if (destination) {
+        if (into.index == 0) {
+            add_cleanup(place, built, false, at(node));
+        }
+
+        return place;
+    }
+
+    return given;
+}
+
+// Record 0058: a closure's value, '{env, call}', where it is written. Its
+// environment is a slot of this function, filled here with the address of
+// each variable it captures, so what its body changes is the variable
+void FunctionLowerer::build_closure(IrValueId place, IrTypeId type, u32 node) {
+    IrObjectId function = owner->closure_of(module_index, node, holder);
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+    IrPosition here = at(node);
+
+    if (function.index == 0 || owner->get_error().size() > 0) {
+        failed = true;
+        return;
+    }
+
+    const ClosureJob job = owner->closure_job(module_index, node);
+    IrValueId environment = {0};
+
+    if (job.environment.index == 0) {
+        environment = build.null(here);
+    } else {
+        environment = build.entry_slot(job.environment, here);
+
+        for (u32 i = 0; i < job.captures.size() && !failed; i++) {
+            IrValueId address = address_of_local(job.captures[i], here);
+
+            build.store(pointer, address,
+                        build.field(job.environment, environment, i, here),
+                        here);
+        }
+
+        if (job.uses_self) {
+            if (self.index == 0) {
+                not_yet("a closure that reads 'this' outside a method");
+                return;
+            }
+
+            build.store(pointer, build.load(pointer, self, here),
+                        build.field(job.environment, environment,
+                                    (u32) job.captures.size(), here),
+                        here);
+        }
+    }
+
+    build.store(pointer, environment, build.field(type, place, 0, here), here);
+    build.store(pointer, build.address(function, here),
+                build.field(type, place, 1, here), here);
+}
+
+// where a local or a parameter is: its slot, or what the slot holds for a
+// reference and for what was given by address
+IrValueId FunctionLowerer::address_of_local(u32 candidate, IrPosition here) {
+    std::map<u32, IrValueId>::iterator slot = slots.find(candidate);
+
+    if (slot == slots.end()) {
+        not_yet("a closure capturing what has no slot");
+        return {0};
+    }
+
+    if (is_reference_type(module_index,
+                          module->get_symbols()->get_candidate(candidate)->type)
+        || indirect.count(candidate) > 0) {
+        return build.load(program->get_types()->pointer(IR_SPACE_GENERIC),
+                          slot->second, here);
+    }
+
+    return slot->second;
+}
+
+// A closure's body: its environment first, each capture a local reached
+// through the address the environment holds, 'self' too when it reads the
+// object; then its parameters, and its body -- one expression given back
+bool FunctionLowerer::lower_closure(const ClosureJob& job) {
+    AstQuery query;
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+
+    begin(job.module, job.function);
+    query.set_module(module);
+
+    u32 type = module->get_types()->value_of(type_at(job.node));
+    std::vector<u32> written = module->get_types()->get_arguments(type);
+    const IrSignature& taken =
+        program->get_signature(program->get_function(job.function).signature);
+    IrPosition here = at(job.node);
+    u32 first = 1;
+
+    returning = written.size() == 0 ? INVALID_TYPE : written.back();
+
+    if (job.environment.index != 0) {
+        IrValueId environment = build.parameter(0);
+
+        for (u32 i = 0; i < job.captures.size(); i++) {
+            IrValueId slot = build.entry_slot(pointer, here);
+
+            build.store(pointer,
+                        build.load(pointer,
+                                   build.field(job.environment, environment, i,
+                                               here),
+                                   here),
+                        slot, here);
+            slots[job.captures[i]] = slot;
+            indirect.insert(job.captures[i]);
+        }
+
+        if (job.uses_self) {
+            self = build.entry_slot(pointer, here);
+            holder = job.holder;
+            build.store(pointer,
+                        build.load(pointer,
+                                   build.field(job.environment, environment,
+                                               (u32) job.captures.size(), here),
+                                   here),
+                        self, here);
+        }
+    }
+
+    if (owner->shape_of(job.function) & SHAPE_DESTINATION) {
+        destination = build.parameter(first++);
+    }
+
+    std::vector<u32> parameters = query.get_closure_parameters(job.node);
+
+    for (u32 i = 0; i < parameters.size(); i++) {
+        u32 candidate = module->get_symbols()->candidate_of(parameters[i]);
+        IrTypeId one = taken.parameters[first + i];
+        IrValueId slot = build.entry_slot(one, at(parameters[i]));
+        u32 declared = module->get_symbols()->get_candidate(candidate)->type;
+
+        build.store(one, build.parameter(first + i), slot, at(parameters[i]));
+        slots[candidate] = slot;
+
+        if ((struct_of(declared).index != 0
+             || kind_of_type(declared) == TYPE_ARRAY)
+            && !is_reference_type(module_index, declared)) {
+            indirect.insert(candidate);
+        }
+    }
+
+    u32 block = query.get_block(job.node);
+    u32 back = query.get_given_back(job.node);
+    bool gives = returning != INVALID_TYPE
+              && !(module->get_types()->get_type(returning)->kind
+                       == TYPE_BUILTIN
+                   && module->get_types()->get_type(returning)->subject
+                          == BUILTIN_VOID);
+
+    if (back != 0 && gives) {
+        open_scope(false);
+
+        for (u32 before = child_of(block, 0); before != 0 && before != back
+             && !failed;
+             before = module->get_ast()->get_node(before)->get_sibling()) {
+            lower_statement(before);
+        }
+
+        if (!failed) {
+            open_scope(true);
+            give_back(back, back);
+            close_scope(here);
+        }
+
+        close_scope(here);
+    } else {
+        lower_block(block);
+    }
+
+    if (!failed && !build.ended() && result.index == 0) {
+        build.ret(here);
+    }
+
+    return !failed;
+}
+
+// each argument written into its parameter, by the parameter's type read in
+// 'callee_module': a 'T&' given a place, a struct by value a copy the caller
+// makes; 'at_parameter' says how many were given
+bool FunctionLowerer::arguments_written(u32 callee_module,
+                                        const std::vector<u32>& written,
+                                        u32 first,
+                                        std::vector<IrValueId>& values,
+                                        u32 limit, u32& at_parameter) {
     for (u32 one = first; one != 0 && at_parameter < limit;
          one = module->get_ast()->get_node(one)->get_sibling(), at_parameter++) {
         u32 wanted = at_parameter + 1 < written.size() ? written[at_parameter]
@@ -1381,6 +2153,20 @@ bool FunctionLowerer::arguments_for(u32 callee_module, u32 candidate,
         if (failed) {
             return false;
         }
+    }
+
+    return !failed;
+}
+
+bool FunctionLowerer::arguments_for(u32 callee_module, u32 candidate,
+                                    u32 first, std::vector<IrValueId>& values,
+                                    u32 limit) {
+    std::vector<u32> written = signature_of(callee_module, candidate);
+    u32 at_parameter = 0;
+
+    if (!arguments_written(callee_module, written, first, values, limit,
+                           at_parameter)) {
+        return false;
     }
 
     // record 0012: what is left out is the default the parameter declares
@@ -1456,8 +2242,11 @@ IrValueId FunctionLowerer::receiver_of(u32 callee, u32 callee_module,
     AstNodeKind declared = compilation->get_module(callee_module)->get_ast()
                                ->get_node(declaration)->get_kind();
 
-    if (declared != AST_STRUCT && declared != AST_CLASS) {
-        not_yet("a call of a method of a union or an enum");
+    // a union's and an enum's methods are a struct's: never virtual, the
+    // object given by its address (records 0064 and 0043)
+    if (declared != AST_STRUCT && declared != AST_CLASS
+        && declared != AST_UNION && declared != AST_ENUM) {
+        not_yet("a call of a method of '" + text_of(callee) + "'");
         return none;
     }
 
@@ -1826,6 +2615,31 @@ IrValueId FunctionLowerer::comparison(u32 node) {
     u32 type = type_at(kind_of(child_of(node, 0)) == AST_NULL_LITERAL
                            ? child_of(node, 1)
                            : child_of(node, 0));
+
+    // Records 0043 and 0067: two enums that carry something, or two tuples,
+    // are equal when they hold the same thing -- read where they are
+    if ((kind_of(node) == AST_EQUAL || kind_of(node) == AST_NOT_EQUAL)
+        && type != INVALID_TYPE && struct_of(type).index != 0) {
+        IrValueId left = reference_to(child_of(node, 0));
+        IrValueId right = reference_to(child_of(node, 1));
+
+        if (failed) {
+            return none;
+        }
+
+        IrValueId same =
+            equal_at(module->get_types()->value_of(type_at(child_of(node, 0))),
+                     module->get_types()->value_of(type_at(child_of(node, 1))),
+                     left, right, at(node));
+
+        if (failed || kind_of(node) == AST_EQUAL) {
+            return same;
+        }
+
+        return build.unary(IR_NOT, program->get_types()->scalar(IR_BOOL),
+                           same, at(node));
+    }
+
     IrValueId left = value_of(child_of(node, 0));
     IrValueId right = value_of(child_of(node, 1));
     AstNodeKind kind = kind_of(node);
@@ -1864,6 +2678,242 @@ IrValueId FunctionLowerer::comparison(u32 node) {
     }
 
     return build.binary(opcode, ir_type(type), left, right, at(node));
+}
+
+// Whether the values of Haard type 'type' at two addresses are equal: a
+// scalar by its own comparison, a tuple element by element, an enum by its
+// tag and then by what the variant of that tag carries -- only that one,
+// since the others' bytes are not alive. A class compares by the
+// 'operator==' it writes, which a tuple or an enum holding one waits for
+IrValueId FunctionLowerer::equal_at(u32 type, u32 other, IrValueId left,
+                                    IrValueId right, IrPosition here) {
+    IrValueId none = {0};
+    TypeTable* types = module->get_types();
+    IrTypeTable* ir_types = program->get_types();
+    IrTypeId boolean = ir_types->scalar(IR_BOOL);
+    IrTypeId pointer = ir_types->pointer(IR_SPACE_GENERIC);
+
+    // each side through what it refers to: a tuple of references compares
+    // with one of the values it names (record 0068)
+    if (is_reference_type(module_index, type)) {
+        return equal_at(types->value_of(type), other,
+                        build.load(pointer, left, here), right, here);
+    }
+
+    if (is_reference_type(module_index, other)) {
+        return equal_at(type, types->value_of(other), left,
+                        build.load(pointer, right, here), here);
+    }
+
+    IrTypeId built = struct_of(type);
+
+    if (built.index == 0) {
+        IrTypeId scalar = ir_type(type);
+
+        if (failed) {
+            return none;
+        }
+
+        return build.binary(is_float_type(type) ? IR_FEQ : IR_EQ, scalar,
+                            build.load(scalar, left, here),
+                            build.load(scalar, right, here), here);
+    }
+
+    Type* entry = types->get_type(type);
+
+    if (entry->kind == TYPE_TUPLE) {
+        std::vector<u32> elements = types->get_arguments(type);
+        std::vector<u32> others = types->get_arguments(other);
+        IrTypeId theirs = struct_of(other);
+        IrValueId all = build.constant(boolean, 1, here);
+
+        for (u32 i = 0; i < elements.size() && !failed; i++) {
+            IrValueId one = equal_at(elements[i], others[i],
+                                     build.field(built, left, i, here),
+                                     build.field(theirs, right, i, here), here);
+
+            if (!failed) {
+                all = build.binary(IR_AND, boolean, all, one, here);
+            }
+        }
+
+        return all;
+    }
+
+    Module* holder = compilation->get_module(entry->module);
+
+    // a class or a struct by the 'operator==' it writes (record 0034), the
+    // other side given as its parameter takes it
+    if ((SymbolKind) holder->get_symbols()->get_candidate(entry->subject)->kind
+        != SYMBOL_ENUM) {
+        u32 equals = owner->method_named(built, "operator==", 1, 0);
+
+        if (equals == 0) {
+            not_yet("comparing a struct that writes no 'operator=='");
+            return none;
+        }
+
+        u32 owning = ir_types->get_aggregate(built)->module;
+        std::vector<u32> signature = signature_of(owning, equals);
+        IrValueId other = right;
+
+        if (!is_reference_type(owning, signature[0])) {
+            other = build.entry_slot(built, here);
+            copy_construct(other, built, right, here);
+            add_cleanup(other, built, false, here);
+        }
+
+        IrValueId object =
+            upcast_to(left, built, owner->receiver_type(owning, equals), here);
+
+        return call_method(owning, equals, {object, other}, true, here);
+    }
+
+    IrAggregate* aggregate = ir_types->get_aggregate(built);
+    IrTypeId tag = aggregate->fields[0].type;
+    IrValueId mine = build.load(tag, build.field(built, left, 0, here), here);
+    IrValueId theirs =
+        build.load(tag, build.field(built, right, 0, here), here);
+    IrValueId answer = build.entry_slot(boolean, here);
+
+    build.store(boolean, build.binary(IR_EQ, tag, mine, theirs, here), answer,
+                here);
+
+    if (aggregate->fields.size() < 2) {
+        return build.load(boolean, answer, here);
+    }
+
+    IrTypeId payload = aggregate->fields[1].type;
+    std::vector<IrField> members = ir_types->get_aggregate(payload)->fields;
+
+    for (u32 m = 0; m < members.size() && !failed; m++) {
+        u32 candidate = members[m].candidate;
+        IrValueId is = build.binary(
+            IR_EQ, tag, mine,
+            build.constant(tag, tag_of_variant(entry->module, candidate), here),
+            here);
+
+        build.begin_if(build.binary(IR_AND, boolean,
+                                    build.load(boolean, answer, here), is,
+                                    here),
+                       here);
+
+        IrTypeId carried = members[m].type;
+        std::vector<u32> signature = holder->get_types()->get_arguments(
+            holder->get_symbols()->get_candidate(candidate)->type);
+        IrValueId mine_inside = build.field(
+            payload, build.field(built, left, 1, here), m, here);
+        IrValueId theirs_inside = build.field(
+            payload, build.field(built, right, 1, here), m, here);
+        IrValueId all = build.constant(boolean, 1, here);
+
+        for (u32 i = 0; i + 1 < signature.size() && !failed; i++) {
+            u32 element = owner->translate_type(module_index, entry->module,
+                                                signature[i]);
+            IrValueId one = equal_at(
+                element, element,
+                build.field(carried, mine_inside, i, here),
+                build.field(carried, theirs_inside, i, here), here);
+
+            if (!failed) {
+                all = build.binary(IR_AND, boolean, all, one, here);
+            }
+        }
+
+        build.store(boolean, all, answer, here);
+        build.end();
+    }
+
+    return build.load(boolean, answer, here);
+}
+
+// Record 0067: a tuple assigned element by element, in order. An element
+// that is a reference is written through, a struct by its own assignment
+// ('&&' by its move), a tuple by these same rules. A written right side is
+// built in the value shape first (record 0068), so 'swap = (q, p)' reads
+// both before it writes either; a right side that is itself a tuple of
+// references is read element by element, as the C++ path reads it
+void FunctionLowerer::assign_tuple(u32 to_type, IrValueId to, u32 from_type,
+                                   IrValueId from, bool moved,
+                                   IrPosition here) {
+    TypeTable* types = module->get_types();
+
+    IrTypeId mine = struct_of(to_type);
+    IrTypeId theirs = struct_of(from_type);
+    std::vector<u32> left = types->get_arguments(to_type);
+    std::vector<u32> right = types->get_arguments(from_type);
+    IrTypeId pointer = program->get_types()->pointer(IR_SPACE_GENERIC);
+
+    for (u32 i = 0; i < left.size() && !failed; i++) {
+        IrValueId into = build.field(mine, to, i, here);
+        IrValueId out = build.field(theirs, from, i, here);
+        u32 one = left[i];
+        u32 two = right[i];
+
+        if (is_reference_type(module_index, one)) {
+            into = build.load(pointer, into, here);
+            one = types->value_of(one);
+        }
+
+        if (is_reference_type(module_index, two)) {
+            out = build.load(pointer, out, here);
+            two = types->value_of(two);
+        }
+
+        IrTypeId built = struct_of(one);
+
+        if (kind_of_type(one) == TYPE_TUPLE) {
+            assign_tuple(one, into, two, out, moved, here);
+        } else if (built.index == 0) {
+            IrTypeId scalar = ir_type(one);
+
+            if (!failed) {
+                build.store(scalar, build.load(scalar, out, here), into, here);
+            }
+        } else if (moved && owner->move_init_of(built) != 0) {
+            build.call(owner->structor(STRUCTOR_MOVE_ASSIGN, built, 0),
+                       {into, out}, here);
+        } else if (owner->declares_copy(built)) {
+            build.call(owner->structor(STRUCTOR_ASSIGN, built, 0),
+                       {into, out}, here);
+        } else {
+            assign_value(built, into, out, here);
+        }
+    }
+}
+
+// Record 0067: a tuple moved into 'to', element by element -- a struct by
+// the move 'init' it writes, or copied when it writes none, as C++'s
+// implicit move of a struct does
+void FunctionLowerer::move_tuple(u32 type, IrValueId to, IrValueId from,
+                                 IrPosition here) {
+    TypeTable* types = module->get_types();
+    IrTypeId tuple = struct_of(type);
+    std::vector<u32> elements = types->get_arguments(type);
+
+    for (u32 i = 0; i < elements.size() && !failed; i++) {
+        IrValueId into = build.field(tuple, to, i, here);
+        IrValueId out = build.field(tuple, from, i, here);
+        u32 one = elements[i];
+        IrTypeId built = is_reference_type(module_index, one)
+                             ? IrTypeId{0}
+                             : struct_of(one);
+
+        if (kind_of_type(one) == TYPE_TUPLE
+            && !is_reference_type(module_index, one)) {
+            move_tuple(types->value_of(one), into, out, here);
+        } else if (built.index != 0 && owner->move_init_of(built) != 0) {
+            construct(into, built, owner->move_init_of(built), {out}, here);
+        } else if (built.index != 0) {
+            copy_construct(into, built, out, here);
+        } else {
+            IrTypeId scalar = slot_type(one);
+
+            if (!failed) {
+                build.store(scalar, build.load(scalar, out, here), into, here);
+            }
+        }
+    }
 }
 
 // 'a and b' runs b only when a is true, and 'a or b' only when it is false;
@@ -1906,6 +2956,25 @@ IrValueId FunctionLowerer::assignment(u32 node) {
     AstNodeKind kind = kind_of(node);
     u32 type = type_at(child_of(node, 0));
     IrTypeId built = struct_of(type);
+
+    // record 0067: a tuple is assigned element by element, through the
+    // elements that are references
+    if (built.index != 0 && kind == AST_ASSIGNMENT
+        && kind_of_type(type) == TYPE_TUPLE) {
+        u32 right = child_of(node, 1);
+        IrValueId to = place_of(child_of(node, 0));
+        IrValueId from = reference_to(right);
+
+        if (failed) {
+            return none;
+        }
+
+        assign_tuple(module->get_types()->value_of(type), to,
+                     module->get_types()->value_of(type_at(right)), from,
+                     kind_of(right) == AST_MOVE, at(node));
+
+        return none;
+    }
 
     // record 0031: a struct that says how to copy itself is assigned by
     // destroying and copying; '&&x' by destroying and moving (Hadley,
@@ -2279,6 +3348,23 @@ void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
         return;
     }
 
+    u32 variant_module = 0;
+    u32 variant = 0;
+
+    if (variant_named(node, variant_module, variant)) {
+        write_variant(place, type, node, variant_module, variant);
+        return;
+    }
+
+    u32 function_module = 0;
+    u32 function = 0;
+
+    if (owner->is_function_value(type)
+        && names_function(node, function_module, function)) {
+        build_function_value(place, type, node, function_module, function);
+        return;
+    }
+
     switch (kind_of(node)) {
     case AST_PARENTHESIS:
         build_into(place, type, child_of(node, 0));
@@ -2294,6 +3380,21 @@ void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
 
     case AST_MOVE: {
         u32 moved = owner->move_init_of(type);
+
+        // record 0067: a tuple moves element by element, each by its own
+        // move 'init' when it writes one
+        if (kind_of_type(type_at(child_of(node, 0))) == TYPE_TUPLE
+            && is_place(child_of(node, 0))) {
+            IrValueId from = place_of(child_of(node, 0));
+
+            if (!failed) {
+                move_tuple(module->get_types()->value_of(
+                               type_at(child_of(node, 0))),
+                           place, from, at(node));
+            }
+
+            return;
+        }
 
         if (moved != 0 && is_place(child_of(node, 0))) {
             IrValueId from = place_of(child_of(node, 0));
@@ -2312,6 +3413,30 @@ void FunctionLowerer::build_into(IrValueId place, IrTypeId type, u32 node) {
     case AST_LIST:
         build_from_literal(place, type, node);
         return;
+
+    case AST_CLOSURE:
+        build_closure(place, type, node);
+        return;
+
+    // Record 0067: each element built into its field, as a binding of the
+    // element's type would be -- a reference holds the address, a class is
+    // built by its 'init' (record 0068 holds a temporary for what is not a
+    // place)
+    case AST_TUPLE: {
+        std::vector<u32> elements =
+            module->get_types()->get_arguments(
+                module->get_types()->value_of(type_at(node)));
+        u32 which = 0;
+
+        for (u32 one = child_of(node, 0); one != 0 && !failed;
+             one = module->get_ast()->get_node(one)->get_sibling(), which++) {
+            IrValueId into = build.field(type, place, which, at(one));
+
+            initialise(into, elements[which], one, at(one));
+        }
+
+        return;
+    }
 
     // record 0037: a string literal a class takes is built by the 'init'
     // the typer chose, given the literal's text
@@ -2469,6 +3594,254 @@ void FunctionLowerer::build_from_literal(IrValueId place, IrTypeId type,
     construct(place, type, chosen->candidate, {held}, at(node));
 }
 
+// Record 0043: the variant a node names -- 'E.v', a bare 'v', or the callee
+// of 'E.V(...)' -- as its module and candidate; false when it names none
+bool FunctionLowerer::variant_named(u32 node, u32& in_module,
+                                    u32& candidate) {
+    u32 name = node;
+
+    while (kind_of(name) == AST_PARENTHESIS) {
+        name = child_of(name, 0);
+    }
+
+    if (kind_of(name) == AST_CALL) {
+        name = child_of(name, 0);
+    }
+
+    if (kind_of(name) == AST_DOT) {
+        name = child_of(name, 1);
+    } else if (kind_of(name) == AST_SCOPE) {
+        u32 first = child_of(name, 0);
+        u32 second = first == 0 ? 0
+                                : module->get_ast()->get_node(first)->get_sibling();
+
+        name = second == 0 ? first : second;
+    }
+
+    if (kind_of(name) == AST_GENERIC_NAME) {
+        name = child_of(name, 0);
+    }
+
+    Resolution* found = module->get_resolutions()->get(name);
+
+    if (found->candidate == 0
+        || (SymbolKind) compilation->get_module(found->module)->get_symbols()
+                   ->get_candidate(found->candidate)->kind
+               != SYMBOL_VARIANT) {
+        return false;
+    }
+
+    in_module = found->module;
+    candidate = found->candidate;
+
+    return true;
+}
+
+// the tag of a variant, as its enum's declaration counts it
+u32 FunctionLowerer::tag_of_variant(u32 in_module, u32 candidate) {
+    Module* owning = compilation->get_module(in_module);
+    AstQuery query;
+
+    query.set_module(owning);
+
+    return query.get_tag(owner->enum_of_variant(in_module, candidate),
+                         owning->get_symbols()->get_candidate(candidate)
+                             ->ast_node);
+}
+
+// A variant written into an enum that is a struct, '{tag; payload}': the tag,
+// then what it carries into the payload's member for it -- the arguments of
+// 'E.V(a, b)', or the default its declaration writes when they are left out
+void FunctionLowerer::write_variant(IrValueId place, IrTypeId type, u32 node,
+                                    u32 in_module, u32 candidate) {
+    IrTypeTable* types = program->get_types();
+    IrAggregate* aggregate = types->get_aggregate(type);
+    IrPosition here = at(node);
+    IrTypeId tag = aggregate->fields[0].type;
+
+    build.store(tag, build.constant(tag, tag_of_variant(in_module, candidate),
+                                    here),
+                build.field(type, place, 0, here), here);
+
+    Module* owning = compilation->get_module(in_module);
+    u32 variant = owning->get_symbols()->get_candidate(candidate)->ast_node;
+    AstQuery query;
+
+    query.set_module(owning);
+
+    if (query.get_written_type(variant) == 0 || aggregate->fields.size() < 2) {
+        return;
+    }
+
+    IrTypeId payload = aggregate->fields[1].type;
+    IrAggregate* members = types->get_aggregate(payload);
+    u32 member = 0;
+
+    while (member < members->fields.size()
+           && members->fields[member].candidate != candidate) {
+        member++;
+    }
+
+    if (member == members->fields.size()) {
+        not_yet("a variant its enum does not hold");
+        return;
+    }
+
+    IrTypeId carried = members->fields[member].type;
+    IrValueId inside = build.field(
+        payload, build.field(type, place, 1, here), member, here);
+
+    // the constructor's signature, the enum itself last (record 0016)
+    std::vector<u32> signature = owning->get_types()->get_arguments(
+        owning->get_symbols()->get_candidate(candidate)->type);
+    std::vector<u32> given;
+
+    if (kind_of(node) == AST_CALL && child_of(node, 1) != 0) {
+        for (u32 one = child_of(child_of(node, 1), 0); one != 0;
+             one = module->get_ast()->get_node(one)->get_sibling()) {
+            given.push_back(one);
+        }
+    }
+
+    for (u32 i = 0; i < given.size() && !failed; i++) {
+        initialise(build.field(carried, inside, i, here),
+                   owner->translate_type(module_index, in_module, signature[i]),
+                   given[i], here);
+    }
+
+    if (given.size() + 1 >= signature.size() || failed) {
+        return;
+    }
+
+    // the default, read in the module that wrote it (record 0016): a tuple
+    // for a payload of several, one value for a payload of one
+    u32 written = query.get_binding_expression(variant);
+
+    if (written == 0) {
+        not_yet("a variant built with less than it carries");
+        return;
+    }
+
+    std::vector<u32> defaults;
+
+    if (owning->get_ast()->get_node(written)->get_kind() == AST_TUPLE) {
+        for (u32 one = owning->get_ast()->get_node(written)->get_children();
+             one != 0; one = owning->get_ast()->get_node(one)->get_sibling()) {
+            defaults.push_back(one);
+        }
+    } else {
+        defaults.push_back(written);
+    }
+
+    u32 kept_index = module_index;
+    Module* kept = module;
+
+    module_index = in_module;
+    module = owning;
+
+    for (u32 i = (u32) given.size(); i + 1 < signature.size() && !failed;
+         i++) {
+        initialise(build.field(carried, inside, i, here), signature[i],
+                   defaults[i], here);
+    }
+
+    module_index = kept_index;
+    module = kept;
+}
+
+// Record 0043: the tag copied, then only the member it says is alive,
+// field by field by each field's own copy
+void FunctionLowerer::copy_alive(IrTypeId type, IrValueId object,
+                                 IrValueId other, IrPosition here) {
+    IrTypeTable* types = program->get_types();
+    IrAggregate* aggregate = types->get_aggregate(type);
+    IrTypeId tag = aggregate->fields[0].type;
+    IrTypeId payload = aggregate->fields[1].type;
+    IrValueId which = build.load(tag, build.field(type, other, 0, here), here);
+    std::vector<IrField> members = types->get_aggregate(payload)->fields;
+
+    build.store(tag, which, build.field(type, object, 0, here), here);
+
+    for (u32 m = 0; m < members.size() && !failed; m++) {
+        IrTypeId carried = members[m].type;
+        std::vector<IrField> fields = types->get_aggregate(carried)->fields;
+
+        build.begin_if(build.binary(IR_EQ, tag, which,
+                                    build.constant(tag,
+                                                   tag_of_variant(
+                                                       aggregate->module,
+                                                       members[m].candidate),
+                                                   here),
+                                    here),
+                       here);
+
+        IrValueId to = build.field(
+            payload, build.field(type, object, 1, here), m, here);
+        IrValueId from = build.field(
+            payload, build.field(type, other, 1, here), m, here);
+
+        for (u32 i = 0; i < fields.size() && !failed; i++) {
+            IrValueId into = build.field(carried, to, i, here);
+            IrValueId out = build.field(carried, from, i, here);
+            IrTypeId one = fields[i].type;
+
+            if (types->is_aggregate(one) || types->get_type(one)->kind == IR_ARRAY) {
+                copy_construct(into, one, out, here);
+            } else {
+                build.store(one, build.load(one, out, here), into, here);
+            }
+        }
+
+        build.end();
+    }
+}
+
+// and only the member alive ended, its fields last to first
+void FunctionLowerer::destroy_alive(IrTypeId type, IrValueId object,
+                                    IrPosition here) {
+    IrTypeTable* types = program->get_types();
+    IrAggregate* aggregate = types->get_aggregate(type);
+    IrTypeId tag = aggregate->fields[0].type;
+    IrTypeId payload = aggregate->fields[1].type;
+    IrValueId which = build.load(tag, build.field(type, object, 0, here), here);
+    std::vector<IrField> members = types->get_aggregate(payload)->fields;
+
+    for (u32 m = 0; m < members.size() && !failed; m++) {
+        IrTypeId carried = members[m].type;
+        std::vector<IrField> fields = types->get_aggregate(carried)->fields;
+        bool ends = false;
+
+        for (const IrField& field : fields) {
+            ends = ends || owner->has_destructor(field.type);
+        }
+
+        if (!ends) {
+            continue;
+        }
+
+        build.begin_if(build.binary(IR_EQ, tag, which,
+                                    build.constant(tag,
+                                                   tag_of_variant(
+                                                       aggregate->module,
+                                                       members[m].candidate),
+                                                   here),
+                                    here),
+                       here);
+
+        IrValueId inside = build.field(
+            payload, build.field(type, object, 1, here), m, here);
+
+        for (u32 i = fields.size(); i > 0 && !failed; i--) {
+            if (owner->has_destructor(fields[i - 1].type)) {
+                destroy(build.field(carried, inside, i - 1, here),
+                        fields[i - 1].type, here);
+            }
+        }
+
+        build.end();
+    }
+}
+
 IrValueId FunctionLowerer::materialise(u32 node) {
     IrTypeId type = struct_of(type_at(node));
     IrValueId made = build.entry_slot(type, at(node));
@@ -2523,7 +3896,9 @@ void FunctionLowerer::construct_by_default(IrValueId place, IrTypeId type,
     query.set_module(owning);
 
     // an 'init' answering to nothing because each parameter has a default
-    for (u32 member : query.get_members(aggregate->declaration)) {
+    for (u32 member : aggregate->declaration == 0
+                          ? std::vector<u32>()
+                          : query.get_members(aggregate->declaration)) {
         if (empty != 0
             || owning->get_ast()->get_node(member)->get_kind() != AST_FUNCTION
             || query.get_declaration_name(member) != "init"
@@ -2990,6 +4365,37 @@ IrValueId FunctionLowerer::place_of_index(u32 node) {
     u32 type = type_at(base);
     u8 kind = kind_of_type(type);
 
+    // record 0067: a tuple's '[n]' is its field n, n written as a number; an
+    // element that is a reference holds the address of what it names
+    if (kind == TYPE_TUPLE) {
+        TypeTable* types = module->get_types();
+        u32 position = 0;
+
+        for (char digit : text_of(which)) {
+            if (digit >= '0' && digit <= '9') {
+                position = position * 10 + (u32) (digit - '0');
+            }
+        }
+
+        IrTypeId tuple = struct_of(type);
+        IrValueId object = reference_to(base);
+
+        if (failed) {
+            return none;
+        }
+
+        IrValueId field = build.field(tuple, object, position, at(node));
+        u32 element =
+            types->get_arguments(types->value_of(type))[position];
+
+        if (is_reference_type(module_index, element)) {
+            return build.load(program->get_types()->pointer(IR_SPACE_GENERIC),
+                              field, at(node));
+        }
+
+        return field;
+    }
+
     if (kind != TYPE_POINTER && kind != TYPE_ARRAY) {
         not_yet("indexing a '" + text_of(base) + "' that is not a pointer or "
                 "a fixed array");
@@ -3019,6 +4425,18 @@ IrValueId FunctionLowerer::place_of_index(u32 node) {
 }
 
 bool FunctionLowerer::is_place(u32 node) {
+    u32 variant_module = 0;
+    u32 variant = 0;
+
+    if (variant_named(node, variant_module, variant)) {
+        return false;
+    }
+
+    if (kind_of_type(type_at(node)) == TYPE_FUNCTION
+        && names_function(node, variant_module, variant)) {
+        return false;
+    }
+
     switch (kind_of(node)) {
     case AST_PARENTHESIS:
     case AST_MOVE:
@@ -3172,7 +4590,10 @@ IrTypeId FunctionLowerer::slot_type(u32 type) {
     IrTypeId ir = owner->type_of(module_index, type);
 
     if (ir.index == 0 || !owner->lowerable(ir)) {
-        not_yet("a value of a union, an enum, a tuple or a function");
+        not_yet("a value of a union, an enum or a function ("
+                + (ir.index == 0 ? std::string("no type")
+                                 : program->get_types()->name_of(ir))
+                + ")");
         return none;
     }
 
@@ -3193,7 +4614,11 @@ IrTypeId FunctionLowerer::struct_of(u32 type, u32 owning) {
     TypeTable* types = compilation->get_module(owning)->get_types();
     u32 value = types->value_of(type);
 
-    if (types->get_type(value)->kind != TYPE_NAMED) {
+    // a class, a struct, a tuple -- the struct of its shape (record 0067)
+    // -- and a function value, '{env, call}' (record 0058)
+    if (types->get_type(value)->kind != TYPE_NAMED
+        && types->get_type(value)->kind != TYPE_TUPLE
+        && types->get_type(value)->kind != TYPE_FUNCTION) {
         return none;
     }
 
@@ -3202,7 +4627,8 @@ IrTypeId FunctionLowerer::struct_of(u32 type, u32 owning) {
     u8 kind = ir.index == 0 ? IR_TYPE_NONE
                             : program->get_types()->get_type(ir)->kind;
 
-    return (kind == IR_STRUCT || kind == IR_CLASS) && owner->lowerable(ir)
+    return (kind == IR_STRUCT || kind == IR_CLASS || kind == IR_UNION)
+                   && owner->lowerable(ir)
                ? ir
                : none;
 }

@@ -52,6 +52,8 @@ namespace haard {
 
             // what C++ writes for a struct without being asked
             bool lower_structor(const StructorJob& job);
+            bool lower_closure(const ClosureJob& job);
+            bool lower_adapter(const AdapterJob& job);
 
         private:
             void begin(u32 module, IrObjectId function);
@@ -64,6 +66,7 @@ namespace haard {
             void lower_binding(u32 node);
             void lower_declaring_assignment(u32 node);
             void lower_return(u32 node);
+            void give_back(u32 given, u32 node);
 
             // the cleanup stack: a block's scope, or a statement's, whose
             // temporaries end with it
@@ -90,7 +93,7 @@ namespace haard {
 
             // an expression's value, in the IR type of its Haard type
             IrValueId value_of(u32 node);
-            IrValueId literal(u32 node);
+            IrValueId literal(u32 node, u32 wanted = INVALID_TYPE);
             // 'destination' is where a struct given back is built, 0 for a
             // temporary
             IrValueId call(u32 node, IrValueId destination);
@@ -166,6 +169,16 @@ namespace haard {
             // the callee's parameters: a place for a 'T&', a copy the caller
             // made for a struct, the value for the rest
             // at most 'limit' of them, from 'first' on
+            bool arguments_written(u32 callee_module,
+                                   const std::vector<u32>& written, u32 first,
+                                   std::vector<IrValueId>& values, u32 limit,
+                                   u32& at_parameter);
+            IrValueId call_value(u32 node, IrValueId into);
+            bool names_function(u32 node, u32& in_module, u32& candidate);
+            void build_function_value(IrValueId place, IrTypeId type, u32 node,
+                                      u32 in_module, u32 candidate);
+            void build_closure(IrValueId place, IrTypeId type, u32 node);
+            IrValueId address_of_local(u32 candidate, IrPosition here);
             bool arguments_for(u32 module, u32 candidate, u32 first,
                                std::vector<IrValueId>& values,
                                u32 limit = 0xffffffff);
@@ -278,6 +291,28 @@ namespace haard {
             bool is_whole_type(u32 type);
             bool is_char_type(u32 type);
             bool converts(u32 node, IrTypeId built);
+            void lower_switch(u32 node);
+            IrValueId equal_at(u32 type, u32 other, IrValueId left,
+                               IrValueId right, IrPosition here);
+            void assign_tuple(u32 to_type, IrValueId to, u32 from_type,
+                              IrValueId from, bool moved, IrPosition here);
+            void move_tuple(u32 type, IrValueId to, IrValueId from,
+                            IrPosition here);
+            IrValueId case_label(u32 type, u32 pattern, IrTypeId tag_type);
+            u32 variant_of_pattern(u32 type, u32 pattern, u32& in_module);
+            void bind_captures(u32 type, const std::vector<u32>& group,
+                               IrTypeId tagged,
+                               IrValueId whole, IrValueId tag,
+                               IrTypeId tag_type);
+            u32 capture_named(u32 scope, u32 name);
+            bool variant_named(u32 node, u32& in_module, u32& candidate);
+            void copy_alive(IrTypeId type, IrValueId object, IrValueId other,
+                            IrPosition here);
+            void destroy_alive(IrTypeId type, IrValueId object,
+                               IrPosition here);
+            u32 tag_of_variant(u32 in_module, u32 candidate);
+            void write_variant(IrValueId place, IrTypeId type, u32 node,
+                               u32 in_module, u32 candidate);
             IrValueId move_char(u32 type, IrValueId character, IrValueId by,
                                 u32 by_type, bool minus, IrPosition here);
             IrObjectId function_of(u32 callee_module, u32 candidate);

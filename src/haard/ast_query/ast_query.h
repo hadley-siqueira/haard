@@ -174,6 +174,9 @@ namespace haard {
             // number is not counted; the emitter refuses it
             u32 get_largest_tag(u32 declaration);
 
+            // the tag of one variant by the same rule
+            u32 get_tag(u32 declaration, u32 variant);
+
         private:
             // A declaration is a child of the root and never deeper. Walking
             // the node vector instead would be both wrong and slower: a method

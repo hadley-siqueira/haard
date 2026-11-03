@@ -1,0 +1,91 @@
+union Bits { whole: b32, low: b8 }
+
+data @symbol.0 : b8[6] = readonly "ready\00"
+data @symbol.1 : b8[6] = readonly "other\00"
+
+func @main() -> b32 {
+  %1 = slot Bits
+  %2 = slot b32
+  %19 = slot ptr
+  %21 = slot bool
+  %22 = slot bool
+  call @Bits.Bits(%1)
+  %3 = const b32 0
+  store b32 %3, %2
+  %4 = call @Bits.first(%1)
+  %5 = const b8 5
+  %6 = eq b8 %4, %5
+  $9: if %6 {
+    %7 = load b32, %2
+    %8 = const b32 1
+    %9 = or b32 %7, %8
+    store b32 %9, %2
+  }
+  %10 = field %1, Bits.whole
+  %11 = const b32 258
+  store b32 %11, %10
+  %12 = field %1, Bits.low
+  %13 = load b8, %12
+  %14 = const b8 2
+  %15 = eq b8 %13, %14
+  $21: if %15 {
+    %16 = load b32, %2
+    %17 = const b32 2
+    %18 = or b32 %16, %17
+    store b32 %18, %2
+  }
+  %20 = addr @symbol.0
+  store ptr %20, %19
+  %23 = load ptr, %19
+  %24 = addr @symbol.0
+  %25 = eq ptr %23, %24
+  store bool %25, %22
+  $35: if %25 {
+    %26 = load ptr, %19
+    %27 = addr @symbol.1
+    %28 = ne ptr %26, %27
+    store bool %28, %22
+  }
+  %29 = load bool, %22
+  store bool %29, %21
+  $42: if %29 {
+    %30 = load ptr, %19
+    %31 = const b32 0
+    %32 = sext b32 %31 to b64
+    %33 = index %30, %32 : b8
+    %34 = load b8, %33
+    %35 = const b8 114
+    %36 = eq b8 %34, %35
+    store bool %36, %21
+  }
+  %37 = load bool, %21
+  $52: if %37 {
+    %38 = load b32, %2
+    %39 = const b32 4
+    %40 = or b32 %38, %39
+    store b32 %40, %2
+  }
+  %41 = load b32, %2
+  ret b32 %41
+}
+
+func @Bits.Bits(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Bits.low
+  %5 = const b8 5
+  store b8 %5, %4
+  ret
+}
+
+func @Bits.first(%1: ptr) -> b8 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Bits.low
+  %5 = load b8, %4
+  ret b8 %5
+}
+
+--- exit: 7

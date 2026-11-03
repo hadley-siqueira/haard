@@ -51,7 +51,7 @@ functions, locals, arithmetic, control flow, calls -- done; (2) pointers,
 references, fixed arrays, globals, literals, `new`/`delete` -- done; (3) structs,
 methods, `init`/`destroy`, the cleanup stack, temporaries -- done; (4) classes,
 vtables, `vcall`, `super` -- done; (5) enums and `switch`, tuples, unions, closures,
-symbols; (6) the standard library.
+symbols -- done; (6) the standard library.
 
 ## What step 1 found
 
@@ -91,6 +91,30 @@ fixed: a class value given to a `T&` of its base is copied into a temporary
 of the base, so a virtual call through the reference runs the base's method;
 `the_vptr_follows_construction` checks the dispatch through a `let` instead.
 
+## What step 5 found
+
+Two programs that reached the IR for the first time showed a bug elsewhere.
+The **switch sugar** (`SwitchLowerer::condition_of`) cut the sibling of the
+`==` it made instead of the pattern's, so the pattern still led to the case's
+block: the emitter reads two operands and never saw it, and an operator's
+arguments walked by sibling lowered the block. And **`while true`** was
+lowered with a test that never fails, which left a block after the loop that
+a `break` could reach and nothing filled -- `unwrap` did not verify.
+
+An enum carrying a class that owns memory gave the right answer while its
+copy was the payload's bytes and nothing was ended: the interpreter does not
+report a leak, and a copy of bytes that is never freed frees nothing twice.
+`an_enum_ends_and_copies_what_is_alive` counts what is made and ended. It
+also showed that `Box.Full(Held(7))` builds the `Held` in place here and
+copies a temporary on the C++ path, which only a copy `init` that counts
+can see (docs/PENDING.md).
+
+A tuple of references assigned from another one is read element by element
+on both paths: the statement checker binds the right side to a name of the
+same type first, so `a = b` with `b` referring to what `a` does is not a
+swap. A written right side is built in the value shape (record 0068), so
+`swap = (q, p)` is.
+
 ## Sabotage
 
 Each rule of step 1 was broken on purpose, one at a time, and the suite run.
@@ -128,6 +152,38 @@ And each of step 2's, the same way:
 | a `T&` parameter given a copy | five cases |
 | a reference local not read through | `a_reference_is_an_address`, `emitter/an_inclusive_range_reaches_the_top_of_its_type` |
 | `new T` not zeroed | `the_heap_is_two_natives`, and one more |
+
+And step 5's, and the reachability before it, with a small script that
+breaks one line, runs the suite and restores it:
+
+| Broken | Fails |
+|---|---|
+| every slot of a vtable filled | `only_what_is_reachable_is_lowered` |
+| every free function lowered | `only_what_is_reachable_is_lowered`, and the order of eight goldens |
+| a tuple's reference element read as a value | `a_tuple_is_a_struct_of_its_shape`, and five emitter programs |
+| two tuples compared by the left side's type | `a_tuple_is_a_struct_of_its_shape`, `emitter/a_tuple_is_compared_referred_and_moved` |
+| a tuple's assignment as a struct's | `emitter/a_tuple_is_compared_referred_and_moved` |
+| a case's tag off by one | `an_enum_is_a_tag_and_a_payload`, and five emitter programs |
+| every capture of a case its variant's first field | the same case, and four emitter programs |
+| the last group of an exhaustive switch tested | the same case, and three programs that no longer verify |
+| two enums compared by tag only | the same case, `emitter/an_enum_that_carries_something` |
+| an enum copied and ended as its bytes | `an_enum_ends_and_copies_what_is_alive` |
+| an enum's assignment not ending the member alive | the same |
+| a variant's default with no type | `emitter/an_enum_that_carries_something` |
+| a capture read as its slot | `a_closure_is_an_environment_and_a_function`, and two emitter programs |
+| a captured reference's slot put in the environment | `emitter/a_closure_captures_by_reference` |
+| a bound method's object from the wrong parameter | `a_closure_is_an_environment_and_a_function`, and one more |
+| a bound method called without dispatch | the same two |
+| a union never built | `a_union_and_a_symbol`, `emitter/a_union_is_cs_union` |
+| a symbol an entry per occurrence | `a_union_and_a_symbol`, `emitter/a_symbol_is_an_entry_in_a_table` |
+| the switch sugar's old sibling cut | `emitter/a_switch_that_cannot_be_one` |
+| `while true` tested | `control_flow_becomes_regions`, `emitter/unwrap_stops_the_program` |
+| a fixed array parameter given whole | `emitter/a_generic_enum_is_built_from_its_variants` |
+
+One did not fail: reading a tuple of references whole before assigning it.
+The statement checker already reads it element by element (above), so the
+branch was dead, and it would have disagreed with the C++ path; it was taken
+out.
 | `__free` leaving the allocation live | the two that free, and `tests/ir` |
 | the initialisers not run | `globals_are_given_their_values_before_main`, and `tests/ir` |
 | `\$` kept as written | that, and `emitter/a_dollar_sign_is_escaped` |

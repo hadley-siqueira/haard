@@ -37,6 +37,31 @@ namespace haard {
         STRUCTOR_MOVE_ASSIGN,
     } StructorKind;
 
+    // Record 0058: a closure is a function taking its environment first, and
+    // the environment a struct of one pointer per variable it captures -- and
+    // 'self' last, when its body reads the object of the method around it
+    struct ClosureJob {
+        u32 module;
+        u32 node;
+        IrObjectId function;
+        IrTypeId holder;
+        IrTypeId environment;
+        std::vector<u32> captures;
+        bool uses_self;
+    };
+
+    // Record 0058 section 8 and record 0071: a function named where a value
+    // goes is a pair whose function is an adapter -- for a 'def' it drops
+    // the environment, for a method the environment is the object, of class
+    // 'from', and the method is called on it as every method is
+    struct AdapterJob {
+        u32 module;
+        u32 candidate;
+        IrObjectId function;
+        IrTypeId from;
+        bool method;
+    };
+
     struct StructorJob {
         u8 kind;
         IrTypeId type;
@@ -96,6 +121,12 @@ namespace haard {
             // a string literal's bytes, as a read-only text: one object for
             // each text however often it is written
             IrObjectId text(const std::string& bytes);
+
+            // record 0041: a symbol is the address of its entry, one entry
+            // per name in the whole program, so comparing two is comparing
+            // addresses; the entry holds the name's text, which 'as char*'
+            // reads
+            IrObjectId symbol(const std::string& name);
 
             // '__alloc' (a size, as a usize, to a pointer) and '__free', the
             // heap's natives, declared the first time one is asked for
@@ -163,6 +194,42 @@ namespace haard {
                              u32 parameters, u8 kind);
             bool has_init(IrTypeId type);
 
+            // record 0067: a struct the compiler writes for a shape
+            bool is_tuple(IrTypeId type);
+
+            // a Haard type of module 'from' written in module 'into'
+            // (record 0016)
+            u32 translate_type(u32 into, u32 from, u32 type);
+
+            // the declaration of the enum a variant is in: the scope that
+            // holds its name, since a variant opens no scope of its own
+            u32 enum_of_variant(u32 module, u32 candidate);
+
+            // record 0058: a value of type 'A -> R' is '{env, call}'
+            bool is_function_value(IrTypeId type);
+
+            // the IR signature a value of type 'A -> R' is called with: the
+            // environment, where an aggregate result is built, then each
+            // parameter -- and whether it has that destination
+            u32 signature_of_value(u32 module, u32 type, bool& destination);
+
+            // the function a closure became, declared the first time it is
+            // asked for with the class of the method around it ('holder',
+            // what 'self' is), and its body lowered later
+            IrObjectId closure_of(u32 module, u32 node, IrTypeId holder);
+            const ClosureJob& closure_job(u32 module, u32 node);
+
+            // the adapter that calls a function's candidate through a value
+            // of type 'type' (of module 'at'): 'from' is the object's class
+            // for a method, 0 for a 'def'
+            IrObjectId adapter_of(u32 module, u32 candidate, IrTypeId from,
+                                  u32 at, u32 type);
+
+            // what a closure's body names from outside it, in source order:
+            // locals and parameters of its module, never a global
+            std::vector<u32> captures_of(u32 module, u32 closure,
+                                         bool& uses_self);
+
             // record 0046: the 'init' of one parameter a value of 'given'
             // (a type of module 'caller') builds this struct from, the same
             // question Coercion::builds_from asks; 0 when there is none
@@ -173,6 +240,8 @@ namespace haard {
             // whether one built with nothing runs anything, and the emitter's
             // two answers about assignment (record 0031)
             bool has_destructor(IrTypeId type);
+            bool is_tagged(IrTypeId type);
+            bool variants_ask(IrTypeId type, u8 asked);
             bool copies_by_init(IrTypeId type);
             bool constructs(IrTypeId type);
             bool declares_copy(IrTypeId type);
@@ -215,12 +284,20 @@ namespace haard {
             // (module, candidate) to the global's object
             std::map<std::pair<u32, u32>, u32> globals;
             std::map<std::string, u32> texts;
+            std::map<std::string, u32> symbols;
             std::map<u32, u8> shapes;
 
             // (kind, type, init) to the function, and every one made, in
             // order, its body lowered at the end
             std::map<std::vector<u32>, u32> made_structors;
             std::vector<StructorJob> structors;
+
+            std::map<std::vector<u32>, u32> made_adapters;
+            std::vector<AdapterJob> adapters;
+            u32 next_adapter;
+            std::map<std::pair<u32, u32>, u32> made_closures;
+            std::vector<ClosureJob> closures;
+            u32 next_closure;
             std::map<u32, u32> structor_index;
 
             std::map<u32, u32> vtables;

@@ -1,0 +1,72 @@
+# Record 0043 with record 0031 one level down: which member of an enum's
+# payload is alive is the tag's to say, so a copy copies the tag and then
+# only that member, an end ends only that member, and an assignment ends the
+# one alive before it copies. The C++ path writes '__copy' and '__clear' for
+# it; here the counts read back are the proof, since a copy of the bytes
+# and a missed end would both give back the right length.
+
+let made = 0
+let ended = 0
+
+class Held:
+    n : i32
+
+    def init : void
+        @n : i32
+
+        this.n = n
+        made += 1
+
+    def init : void
+        @other : Held&
+
+        n = other.n
+        made += 1
+
+    def destroy : void
+        ended += 1
+
+enum Box:
+    Empty
+    Full : Held
+    Pair : (i32, i32)
+
+def inside : i32
+    @b : Box&
+
+    switch b:
+        case Full(h):
+            return h.n
+
+        case Pair(x, y):
+            return x + y
+
+        default:
+            return 0
+
+def run : i32
+    let full = Box.Full(Held(7))
+    let copy = full
+    let other = Box.Pair(1, 2)
+
+    # ends the Pair, which ends nothing, and copies the Held in
+    other = copy
+
+    # ends the Held, and copies nothing in. Through a name: the C++ path
+    # refuses a temporary here (docs/PENDING.md)
+    let empty = Box.Empty
+
+    copy = empty
+
+    return inside(full) + inside(other) + inside(copy)
+
+def main : i32
+    let total = run()
+
+    # 7 + 7 + 0 = 14; each Held made is ended once. How many are made is not
+    # read: 'Box.Full(Held(7))' builds the Held in place here and copies a
+    # temporary on the C++ path, a difference docs/PENDING.md keeps
+    if made != ended:
+        return 100 + made - ended
+
+    return total

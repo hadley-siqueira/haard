@@ -1,0 +1,32 @@
+# Record 0067 in the IR: a tuple is a struct of its shape, 't[1]' its field,
+# an element that is a reference holds an address and is written through,
+# and two tuples compare element by element -- one of references with one of
+# values (record 0068). One bit per thing that held.
+
+def pair : (i32, i32)
+    @a : i32
+    @b : i32
+
+    return (b, a)
+
+def main : i32
+    let bits = 0
+    let t = pair(1, 2)
+
+    if t[0] == 2 and t[1] == 1:
+        bits = bits | 1
+
+    let x = 3
+    let y = 4
+    let refs : (i32&, i32&) = (x, y)
+
+    # a swap through references reads the right side whole first
+    refs = (y, x)
+
+    if x == 4 and y == 3:
+        bits = bits | 2
+
+    if refs == (4, 3) and t != (1, 2):
+        bits = bits | 4
+
+    return bits

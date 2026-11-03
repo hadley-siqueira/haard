@@ -1,120 +1,115 @@
 func @main() -> b32 {
   %1 = slot b32
   %3 = slot b32
-  %16 = slot b32
-  %47 = slot b32
-  %49 = slot bool
-  %60 = slot bool
+  %14 = slot b32
+  %45 = slot b32
+  %47 = slot bool
+  %58 = slot bool
   %2 = const b32 0
   store b32 %2, %1
   %4 = const b32 0
   store b32 %4, %3
   $7: loop {
-    %5 = const bool true
-    %6 = not bool %5
-    $10: if %6 {
+    %5 = load b32, %3
+    %6 = const b32 1
+    %7 = add b32 %5, %6
+    store b32 %7, %3
+    %8 = load b32, %3
+    %9 = const b32 9
+    %10 = sgt b32 %8, %9
+    $15: if %10 {
       break $7
     }
-    %7 = load b32, %3
-    %8 = const b32 1
-    %9 = add b32 %7, %8
-    store b32 %9, %3
-    %10 = load b32, %3
-    %11 = const b32 9
-    %12 = sgt b32 %10, %11
-    $19: if %12 {
-      break $7
-    }
-    %13 = load b32, %1
-    %14 = load b32, %3
-    %15 = add b32 %13, %14
-    store b32 %15, %1
+    %11 = load b32, %1
+    %12 = load b32, %3
+    %13 = add b32 %11, %12
+    store b32 %13, %1
   }
-  %17 = const b32 0
-  store b32 %17, %16
-  $28: loop {
-    %18 = load b32, %16
-    %19 = const b32 10
-    %20 = slt b32 %18, %19
-    %21 = not bool %20
-    $33: if %21 {
-      break $28
+  %15 = const b32 0
+  store b32 %15, %14
+  $24: loop {
+    %16 = load b32, %14
+    %17 = const b32 10
+    %18 = slt b32 %16, %17
+    %19 = not bool %18
+    $29: if %19 {
+      break $24
     }
-    $35: block {
-      %22 = load b32, %16
-      %23 = const b32 2
-      %24 = srem b32 %22, %23
-      %25 = const b32 0
-      %26 = eq b32 %24, %25
-      $41: if %26 {
-        break $35
+    $31: block {
+      %20 = load b32, %14
+      %21 = const b32 2
+      %22 = srem b32 %20, %21
+      %23 = const b32 0
+      %24 = eq b32 %22, %23
+      $37: if %24 {
+        break $31
       }
-      %27 = load b32, %1
-      %28 = load b32, %16
-      %29 = add b32 %27, %28
-      store b32 %29, %1
+      %25 = load b32, %1
+      %26 = load b32, %14
+      %27 = add b32 %25, %26
+      store b32 %27, %1
     }
-    %30 = load b32, %16
-    %31 = const b32 1
-    %32 = add b32 %30, %31
-    store b32 %32, %16
+    %28 = load b32, %14
+    %29 = const b32 1
+    %30 = add b32 %28, %29
+    store b32 %30, %14
   }
-  %33 = load b32, %1
-  %34 = const b32 5
-  %35 = neg b32 %34
-  %36 = call @classify(%35)
-  %37 = add b32 %33, %36
-  %38 = const b32 0
-  %39 = call @classify(%38)
-  %40 = add b32 %37, %39
-  %41 = const b32 4
-  %42 = call @classify(%41)
-  %43 = add b32 %40, %42
-  %44 = const b32 99
-  %45 = call @classify(%44)
-  %46 = add b32 %43, %45
-  store b32 %46, %1
-  %48 = const b32 0
-  store b32 %48, %47
-  %50 = load b32, %47
-  %51 = const b32 0
-  %52 = ne b32 %50, %51
-  store bool %52, %49
-  $74: if %52 {
-    %53 = const b32 10
-    %54 = load b32, %47
-    %55 = sdiv b32 %53, %54
-    %56 = const b32 1
-    %57 = sgt b32 %55, %56
-    store bool %57, %49
+  %31 = load b32, %1
+  %32 = const b32 5
+  %33 = neg b32 %32
+  %34 = call @classify(%33)
+  %35 = add b32 %31, %34
+  %36 = const b32 0
+  %37 = call @classify(%36)
+  %38 = add b32 %35, %37
+  %39 = const b32 4
+  %40 = call @classify(%39)
+  %41 = add b32 %38, %40
+  %42 = const b32 99
+  %43 = call @classify(%42)
+  %44 = add b32 %41, %43
+  store b32 %44, %1
+  %46 = const b32 0
+  store b32 %46, %45
+  %48 = load b32, %45
+  %49 = const b32 0
+  %50 = ne b32 %48, %49
+  store bool %50, %47
+  $70: if %50 {
+    %51 = const b32 10
+    %52 = load b32, %45
+    %53 = sdiv b32 %51, %52
+    %54 = const b32 1
+    %55 = sgt b32 %53, %54
+    store bool %55, %47
   }
-  %58 = load bool, %49
-  $82: if %58 {
-    %59 = const b32 1
-    ret b32 %59
+  %56 = load bool, %47
+  $78: if %56 {
+    %57 = const b32 1
+    ret b32 %57
   }
-  %61 = load b32, %47
-  %62 = const b32 0
-  %63 = eq b32 %61, %62
-  store bool %63, %60
-  %64 = not bool %63
-  $91: if %64 {
-    %65 = const b32 10
-    %66 = load b32, %47
-    %67 = sdiv b32 %65, %66
-    %68 = const b32 1
-    %69 = sgt b32 %67, %68
-    store bool %69, %60
+  %59 = load b32, %45
+  %60 = const b32 0
+  %61 = eq b32 %59, %60
+  store bool %61, %58
+  %62 = not bool %61
+  $87: if %62 {
+    %63 = const b32 10
+    %64 = load b32, %45
+    %65 = sdiv b32 %63, %64
+    %66 = const b32 1
+    %67 = sgt b32 %65, %66
+    store bool %67, %58
   }
-  %70 = load bool, %60
-  $99: if %70 {
-    %71 = load b32, %1
-    %72 = const b32 2
-    %73 = add b32 %71, %72
-    store b32 %73, %1
+  %68 = load bool, %58
+  $95: if %68 {
+    %69 = load b32, %1
+    %70 = const b32 2
+    %71 = add b32 %69, %70
+    store b32 %71, %1
   }
-  %74 = load b32, %1
-  ret b32 %74
+  %72 = load b32, %1
+  ret b32 %72
 }
 
 func @classify(%1: b32) -> b32 {

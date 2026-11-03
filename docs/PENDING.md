@@ -9,7 +9,7 @@ Take an item off when it is fixed, decided or dropped, and say where it went.
 Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
 date 2026-11-03, after Hadley's five answers (1a, 2a, 3a, 4a, 5a).
 
-Taken off on 2026-11-03: *`char - char`* (record 0079), *lower only what is
+Taken off on 2026-11-03: *stage 4 step 5* (built), *`char - char`* (record 0079), *lower only what is
 reachable* (built, question 89), *the named return value* (record 0080),
 *whether record 0018's list composes* (already answered by record 0046: a
 value reaches a `T&` of a class it builds, at a cost of two; only the open
@@ -64,6 +64,10 @@ case `a_derived_class_is_its_base_by_reference`).
     `char` is signed on x86-64, the IR's is not (`c as i32` is a `zext`),
     so `'z' + 10` as an `i32` is -124 in C++ and 132 in the IR. Whether a
     Haard `char` has a sign is not decided anywhere. Record 0079.
+13. **A temporary assigned to an enum that carries a class, on the C++
+    path**: `copy = Box.Empty` is emitted as `copy.m_assign(Box_Empty())`,
+    a temporary to a plain reference, which g++ refuses; through a name it
+    works. Found 2026-11-03.
 
 ## 2. Decided, not built
 
@@ -126,14 +130,15 @@ case `a_derived_class_is_its_base_by_reference`).
 
 ## 5. The IR (record 0077)
 
-1. **Stage 4, step 5**: enums and `switch`, tuples, unions, closures,
-   symbols. Most of the 31 programs in `tests/lowering/not_yet` wait here
-   (2026-11-03, now that only what is reachable is lowered: every one of
-   them really uses a tuple, an enum, a union, a closure or a symbol, but
-   one float operator and `main` taking a `List`).
-2. **Stage 4, step 6**: the standard library -- `main` taking its arguments
-   as a `List`, floats' `**` and `//` (the library's `pow` and `floor`), a
-   global of a class type, and the `String` programs.
+1. **Stage 4, step 6**: the standard library. The three programs left in
+   `tests/lowering/not_yet` (step 5 closed 2026-11-03): `main` taking its
+   arguments as a `List`, floats' `**` and `//` (the library's `pow` and
+   `floor`), and a global of a class type.
+2. **Building a variant's payload makes one copy fewer in the IR**:
+   `Box.Full(Held(7))` builds the `Held` in place, the C++ path gives a
+   temporary to the variant's maker and copies it in. Seen only through a
+   copy `init` that does something; record 0080's question one construct
+   over. Found 2026-11-03 (`an_enum_ends_and_copies_what_is_alive`).
 3. **Questions 25-77 are open** (`docs/design/notes/ir-questions.md`), all
    about the processor's back end and its targets: the ISA and its ABI
    (25-31), memories, scratchpads, placement, the heap and start-up (32-45),

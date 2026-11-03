@@ -1,0 +1,38 @@
+# Record 0043 in the IR: an enum that carries something is '{tag; payload}',
+# its payload a union of one struct per variant. A switch is a block with an
+# 'if' per group of cases, over the tag; what a case binds is a reference
+# into the payload of its variant; and the last group of a switch that names
+# every variant runs without a test. Two enums are equal by tag, then by
+# what that one variant carries.
+
+enum Shape:
+    Point
+    Circle : i32
+    Rect : (i32, i32)
+
+def area : i32
+    @s : Shape
+
+    switch s:
+        case Point:
+            return 0
+
+        case Circle(r):
+            return 3 * r * r
+
+        case Rect(w, h):
+            return w * h
+
+def main : i32
+    let bits = 0
+
+    if area(Shape.Circle(2)) == 12 and area(Shape.Rect(3, 4)) == 12:
+        bits = bits | 1
+
+    if area(Shape.Point) == 0:
+        bits = bits | 2
+
+    if Shape.Rect(1, 2) == Shape.Rect(1, 2) and Shape.Rect(1, 2) != Shape.Rect(2, 1):
+        bits = bits | 4
+
+    return bits

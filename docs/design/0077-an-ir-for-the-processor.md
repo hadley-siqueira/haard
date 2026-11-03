@@ -398,6 +398,49 @@ ends it through slot 0. A class is never copied or assigned by its bytes,
 since a class derived from it would bring its vptr: the copy writes its
 own, the assignment goes field by field. `T()` zeroes a struct or class with
 no `init` before building it (C++'s value-initialisation), as `new T` does.
+
+**Only what is reachable (2026-11-03)**, question 89's detail 2: a function
+is declared the first time something asks for it and its body lowered
+after, from `main` and the globals' values; a vtable holds the destructor
+and fills any other slot only once a `vcall` goes through it, since every
+class method is virtual (record 0020) and `Array.each` sat in every Array's
+vtable.
+
+**Step 5 built (2026-11-03)**: tuples, enums and `switch`, unions, symbols,
+closures. A **tuple** is the struct of its shape (no declaration); `t[n]` is
+field n, an element that is a reference holds an address and is read and
+written through; a literal builds each element as a binding of its type
+would; two compare element by element, each side by its own type (a tuple of
+references with one of values, record 0068); an assignment goes element by
+element, and `&&t` moves each element by its own move `init`. An **enum**
+that is only a tag is the tag; one that carries something is `{tag;
+payload}`, the payload a union of one struct per carrying variant. A variant
+writes its tag, then its arguments -- or the default its declaration writes,
+read in its own module -- into its member. Two enums are equal by tag and
+then by what that one variant carries. Copying one copies the tag and then
+only the member alive, ending one ends only that member, and assigning ends
+the one alive before it copies: the C++ path's `__copy` and `__clear`. A
+**`switch`** over an integer, a char or an enum (the sugar makes the others
+a chain of `if`s) is a `block` with an `if` per group of cases over the tag,
+each leaving the block when done; what a case binds is a reference into the
+payload of its variant, chosen by the tag when a group spans variants; and a
+switch over an enum with no `default` names every variant (record 0043), so
+its last group runs without a test -- which is what lets a function ending in
+one have no end. A **union** is C's: every field at offset 0, built when it
+writes an `init` or gives a field a value, its methods (and an enum's) called
+directly. A **symbol** is the address of one read-only entry per name in the
+program, holding the name's text. A **closure** is a function taking its
+environment first; the environment is a slot of the function that writes
+the closure, one pointer per captured local or parameter (the emitter's own
+walk decides which) and `self` last when the body reads the object; inside,
+each capture is a local reached through that pointer. Its value, and any
+`A -> R`, is `{env, call}`, called with `call_indirect`, the environment
+first and a destination after it. A named `def` as a value has a null
+environment and an adapter that drops it; a method as a value (record 0071)
+has its object for an environment and an adapter that calls the method
+through its slot. Also: a fixed array parameter is given as the address of
+its first element (the decay step 2 decided), and `while true` has no test,
+so nothing reaches what follows one with no `break`.
 Closing step 3's gaps, which the emitter's programs met: a fixed array of
 structs or classes is built first to last and ended last to first; `new
 T[n]` of a class, or of a struct that ends, keeps n before the elements, as

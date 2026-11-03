@@ -1,0 +1,171 @@
+class Counter { n: b32 }
+vtable Counter { 0: destroy, 1: add }
+struct function { env: ptr, call: ptr }
+struct closure.env { c0: ptr }
+struct closure#1.env { c0: ptr }
+
+data @Counter.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Counter.descriptor at 0, @Counter.~Counter at 8, @Counter.add at 16
+data @Counter.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.0 at 0
+data @text.0 : b8[8] = readonly "Counter\00"
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot function
+  %4 = slot closure.env
+  %10 = slot function
+  %11 = slot closure#1.env
+  %17 = slot function
+  %22 = slot Counter
+  %25 = slot function
+  %2 = const b32 0
+  store b32 %2, %1
+  %5 = field %4, closure.env.c0
+  store ptr %1, %5
+  %6 = field %3, function.env
+  store ptr %4, %6
+  %7 = field %3, function.call
+  %8 = addr @closure
+  store ptr %8, %7
+  %9 = const b32 5
+  call @apply(%3, %9)
+  %12 = field %11, closure#1.env.c0
+  store ptr %1, %12
+  %13 = field %10, function.env
+  store ptr %11, %13
+  %14 = field %10, function.call
+  %15 = addr @closure#1
+  store ptr %15, %14
+  %16 = const b32 2
+  call @apply(%10, %16)
+  %18 = null
+  %19 = field %17, function.env
+  store ptr %18, %19
+  %20 = field %17, function.call
+  %21 = addr @adapter
+  store ptr %21, %20
+  %23 = field %22, Counter.n
+  %24 = const b32 0
+  store b32 %24, %23
+  call @Counter.Counter(%22)
+  %26 = field %25, function.env
+  store ptr %22, %26
+  %27 = field %25, function.call
+  %28 = addr @adapter#1
+  store ptr %28, %27
+  %29 = const b32 10
+  call @apply(%25, %29)
+  %30 = load b32, %1
+  %31 = field %17, function.env
+  %32 = load ptr, %31
+  %33 = field %17, function.call
+  %34 = load ptr, %33
+  %35 = const b32 3
+  %36 = call_indirect %34(%32, %35) : (ptr, b32) -> b32
+  %37 = add b32 %30, %36
+  %38 = field %22, Counter.n
+  %39 = load b32, %38
+  %40 = add b32 %37, %39
+  ret b32 %40
+}
+
+func @apply(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %4 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, function.env
+  %7 = load ptr, %6
+  %8 = field %5, function.call
+  %9 = load ptr, %8
+  %10 = load b32, %4
+  call_indirect %9(%7, %10) : (ptr, b32)
+  ret
+}
+
+func @closure(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %6 = slot b32
+  %4 = field %1, closure.env.c0
+  %5 = load ptr, %4
+  store ptr %5, %3
+  store b32 %2, %6
+  %7 = load ptr, %3
+  %8 = load b32, %7
+  %9 = load b32, %6
+  %10 = add b32 %8, %9
+  store b32 %10, %7
+  ret
+}
+
+func @closure#1(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %6 = slot b32
+  %4 = field %1, closure#1.env.c0
+  %5 = load ptr, %4
+  store ptr %5, %3
+  store b32 %2, %6
+  %7 = load ptr, %3
+  %8 = load b32, %7
+  %9 = load b32, %6
+  %10 = add b32 %8, %9
+  store b32 %10, %7
+  ret
+}
+
+func @adapter(%1: ptr, %2: b32) -> b32 {
+  %3 = call @twice(%2)
+  ret b32 %3
+}
+
+func @Counter.Counter(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Counter.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @adapter#1(%1: ptr, %2: b32) {
+  vcall Counter.add(%1, %2)
+  ret
+}
+
+func @twice(%1: b32) -> b32 {
+  %2 = slot b32
+  store b32 %1, %2
+  %3 = const b32 2
+  %4 = load b32, %2
+  %5 = mul b32 %3, %4
+  ret b32 %5
+}
+
+func @Counter.add(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %4 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Counter.n
+  %7 = load b32, %6
+  %8 = load b32, %4
+  %9 = add b32 %7, %8
+  store b32 %9, %6
+  ret
+}
+
+func @Counter.~Counter(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Counter.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+--- exit: 23

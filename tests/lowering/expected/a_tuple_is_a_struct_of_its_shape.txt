@@ -1,0 +1,151 @@
+struct (b32, b32) { e0: b32, e1: b32 }
+struct (ptr, ptr) { e0: ptr, e1: ptr }
+
+func @main() -> b32 {
+  %1 = slot b32
+  %3 = slot (b32, b32)
+  %6 = slot bool
+  %19 = slot b32
+  %21 = slot b32
+  %23 = slot (ptr, ptr)
+  %26 = slot (b32, b32)
+  %39 = slot bool
+  %50 = slot bool
+  %51 = slot (b32, b32)
+  %71 = slot (b32, b32)
+  %2 = const b32 0
+  store b32 %2, %1
+  %4 = const b32 1
+  %5 = const b32 2
+  call @pair(%3, %4, %5)
+  %7 = field %3, (b32, b32).e0
+  %8 = load b32, %7
+  %9 = const b32 2
+  %10 = eq b32 %8, %9
+  store bool %10, %6
+  $14: if %10 {
+    %11 = field %3, (b32, b32).e1
+    %12 = load b32, %11
+    %13 = const b32 1
+    %14 = eq b32 %12, %13
+    store bool %14, %6
+  }
+  %15 = load bool, %6
+  $21: if %15 {
+    %16 = load b32, %1
+    %17 = const b32 1
+    %18 = or b32 %16, %17
+    store b32 %18, %1
+  }
+  %20 = const b32 3
+  store b32 %20, %19
+  %22 = const b32 4
+  store b32 %22, %21
+  %24 = field %23, (ptr, ptr).e0
+  store ptr %19, %24
+  %25 = field %23, (ptr, ptr).e1
+  store ptr %21, %25
+  %27 = field %26, (b32, b32).e0
+  %28 = load b32, %21
+  store b32 %28, %27
+  %29 = field %26, (b32, b32).e1
+  %30 = load b32, %19
+  store b32 %30, %29
+  %31 = field %23, (ptr, ptr).e0
+  %32 = load ptr, %31
+  %33 = field %26, (b32, b32).e0
+  %34 = load b32, %33
+  store b32 %34, %32
+  %35 = field %23, (ptr, ptr).e1
+  %36 = load ptr, %35
+  %37 = field %26, (b32, b32).e1
+  %38 = load b32, %37
+  store b32 %38, %36
+  %40 = load b32, %19
+  %41 = const b32 4
+  %42 = eq b32 %40, %41
+  store bool %42, %39
+  $59: if %42 {
+    %43 = load b32, %21
+    %44 = const b32 3
+    %45 = eq b32 %43, %44
+    store bool %45, %39
+  }
+  %46 = load bool, %39
+  $65: if %46 {
+    %47 = load b32, %1
+    %48 = const b32 2
+    %49 = or b32 %47, %48
+    store b32 %49, %1
+  }
+  %52 = field %51, (b32, b32).e0
+  %53 = const b32 4
+  store b32 %53, %52
+  %54 = field %51, (b32, b32).e1
+  %55 = const b32 3
+  store b32 %55, %54
+  %56 = const bool true
+  %57 = field %51, (b32, b32).e0
+  %58 = field %23, (ptr, ptr).e0
+  %59 = load ptr, %58
+  %60 = load b32, %57
+  %61 = load b32, %59
+  %62 = eq b32 %61, %60
+  %63 = and bool %56, %62
+  %64 = field %51, (b32, b32).e1
+  %65 = field %23, (ptr, ptr).e1
+  %66 = load ptr, %65
+  %67 = load b32, %64
+  %68 = load b32, %66
+  %69 = eq b32 %68, %67
+  %70 = and bool %63, %69
+  store bool %70, %50
+  $94: if %70 {
+    %72 = field %71, (b32, b32).e0
+    %73 = const b32 1
+    store b32 %73, %72
+    %74 = field %71, (b32, b32).e1
+    %75 = const b32 2
+    store b32 %75, %74
+    %76 = const bool true
+    %77 = field %71, (b32, b32).e0
+    %78 = field %3, (b32, b32).e0
+    %79 = load b32, %77
+    %80 = load b32, %78
+    %81 = eq b32 %80, %79
+    %82 = and bool %76, %81
+    %83 = field %71, (b32, b32).e1
+    %84 = field %3, (b32, b32).e1
+    %85 = load b32, %83
+    %86 = load b32, %84
+    %87 = eq b32 %86, %85
+    %88 = and bool %82, %87
+    %89 = not bool %88
+    store bool %89, %50
+  }
+  %90 = load bool, %50
+  $118: if %90 {
+    %91 = load b32, %1
+    %92 = const b32 4
+    %93 = or b32 %91, %92
+    store b32 %93, %1
+  }
+  %94 = load b32, %1
+  ret b32 %94
+}
+
+func @pair(%1: ptr, %2: b32, %3: b32) {
+  %4 = slot b32
+  %5 = slot b32
+  store b32 %2, %4
+  store b32 %3, %5
+  %6 = field %1, (b32, b32).e0
+  %7 = load b32, %5
+  store b32 %7, %6
+  %8 = field %1, (b32, b32).e1
+  %9 = load b32, %4
+  store b32 %9, %8
+  ret
+}
+
+--- exit: 7

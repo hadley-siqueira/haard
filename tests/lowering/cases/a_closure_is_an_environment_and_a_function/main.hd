@@ -1,0 +1,39 @@
+# Record 0058 in the IR: a closure is a function taking its environment
+# first, and the environment a slot of the function that writes it, one
+# pointer per variable captured -- so what the body changes is the variable.
+# Its value is '{env, call}', called with 'call_indirect'. A named function
+# as a value has a null environment and an adapter that drops it; a method
+# (record 0071) has its object, and the adapter calls the method on it.
+
+class Counter:
+    n : i32
+
+    def add : void
+        @by : i32
+
+        n += by
+
+def apply : void
+    @f : (i32) -> void
+    @x : i32
+
+    f(x)
+
+def twice : i32
+    @x : i32
+
+    return 2 * x
+
+def main : i32
+    let total = 0
+
+    apply(|v| { total += v }, 5)
+    apply(|v| { total += v }, 2)
+
+    let g = twice
+    let c = Counter()
+
+    apply(c.add, 10)
+
+    # 7 + 6 + 10 = 23
+    return total + g(3) + c.n

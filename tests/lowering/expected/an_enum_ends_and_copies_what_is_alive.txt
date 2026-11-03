@@ -1,0 +1,324 @@
+class Held { n: b32 }
+vtable Held { 0: destroy }
+struct Box { tag: b8, payload: Box.payload }
+union Box.payload { Full: Box.Full, Pair: Box.Pair }
+struct Box.Full { _0: Held }
+struct Box.Pair { _0: b32, _1: b32 }
+
+data @made : b32 = zero
+data @ended : b32 = zero
+data @Held.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Held.descriptor at 0, @Held.~Held at 8
+data @Held.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.0 at 0
+data @text.0 : b8[5] = readonly "Held\00"
+
+func @main() -> b32 {
+  %1 = slot b32
+  %2 = call @run()
+  store b32 %2, %1
+  %3 = addr @made
+  %4 = load b32, %3
+  %5 = addr @ended
+  %6 = load b32, %5
+  %7 = ne b32 %4, %6
+  $9: if %7 {
+    %8 = const b32 100
+    %9 = addr @made
+    %10 = load b32, %9
+    %11 = add b32 %8, %10
+    %12 = addr @ended
+    %13 = load b32, %12
+    %14 = sub b32 %11, %13
+    ret b32 %14
+  }
+  %15 = load b32, %1
+  ret b32 %15
+}
+
+func @globals() init {
+  %1 = addr @made
+  %2 = const b32 0
+  store b32 %2, %1
+  %3 = addr @ended
+  %4 = const b32 0
+  store b32 %4, %3
+  ret
+}
+
+func @run() -> b32 {
+  %1 = slot Box
+  %8 = slot Box
+  %9 = slot Box
+  %18 = slot Box
+  %2 = field %1, Box.tag
+  %3 = const b8 1
+  store b8 %3, %2
+  %4 = field %1, Box.payload
+  %5 = field %4, Box.payload.Full
+  %6 = field %5, Box.Full._0
+  %7 = const b32 7
+  call @Held.Held(%6, %7)
+  call @Box.Box(copy)(%8, %1)
+  %10 = field %9, Box.tag
+  %11 = const b8 2
+  store b8 %11, %10
+  %12 = field %9, Box.payload
+  %13 = field %12, Box.payload.Pair
+  %14 = field %13, Box.Pair._0
+  %15 = const b32 1
+  store b32 %15, %14
+  %16 = field %13, Box.Pair._1
+  %17 = const b32 2
+  store b32 %17, %16
+  call @Box.assign(%9, %8)
+  %19 = field %18, Box.tag
+  %20 = const b8 0
+  store b8 %20, %19
+  call @Box.assign(%8, %18)
+  %21 = call @inside(%1)
+  %22 = call @inside(%9)
+  %23 = add b32 %21, %22
+  %24 = call @inside(%8)
+  %25 = add b32 %23, %24
+  call @Box.~Box(%18)
+  call @Box.~Box(%9)
+  call @Box.~Box(%8)
+  call @Box.~Box(%1)
+  ret b32 %25
+}
+
+func @Held.init(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  %4 = slot b32
+  store ptr %1, %3
+  store b32 %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Held.n
+  %7 = load b32, %4
+  store b32 %7, %6
+  %8 = addr @made
+  %9 = load b32, %8
+  %10 = const b32 1
+  %11 = add b32 %9, %10
+  store b32 %11, %8
+  ret
+}
+
+func @Held.Held(%1: ptr, %2: b32) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @Held.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @Held.init(%4, %2)
+  ret
+}
+
+func @Box.Box(copy)(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = field %2, Box.tag
+  %6 = load b8, %5
+  %7 = field %4, Box.tag
+  store b8 %6, %7
+  %8 = const b8 1
+  %9 = eq b8 %6, %8
+  $10: if %9 {
+    %10 = field %4, Box.payload
+    %11 = field %10, Box.payload.Full
+    %12 = field %2, Box.payload
+    %13 = field %12, Box.payload.Full
+    %14 = field %11, Box.Full._0
+    %15 = field %13, Box.Full._0
+    call @Held.Held#1(%14, %15)
+  }
+  %16 = const b8 2
+  %17 = eq b8 %6, %16
+  $20: if %17 {
+    %18 = field %4, Box.payload
+    %19 = field %18, Box.payload.Pair
+    %20 = field %2, Box.payload
+    %21 = field %20, Box.payload.Pair
+    %22 = field %19, Box.Pair._0
+    %23 = field %21, Box.Pair._0
+    %24 = load b32, %23
+    store b32 %24, %22
+    %25 = field %19, Box.Pair._1
+    %26 = field %21, Box.Pair._1
+    %27 = load b32, %26
+    store b32 %27, %25
+  }
+  ret
+}
+
+func @Box.assign(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = eq ptr %4, %2
+  $5: if %5 {
+    ret
+  }
+  %6 = field %4, Box.tag
+  %7 = load b8, %6
+  %8 = const b8 1
+  %9 = eq b8 %7, %8
+  $11: if %9 {
+    %10 = field %4, Box.payload
+    %11 = field %10, Box.payload.Full
+    %12 = field %11, Box.Full._0
+    call @Held.~Held(%12)
+  }
+  %13 = field %2, Box.tag
+  %14 = load b8, %13
+  %15 = field %4, Box.tag
+  store b8 %14, %15
+  %16 = const b8 1
+  %17 = eq b8 %14, %16
+  $22: if %17 {
+    %18 = field %4, Box.payload
+    %19 = field %18, Box.payload.Full
+    %20 = field %2, Box.payload
+    %21 = field %20, Box.payload.Full
+    %22 = field %19, Box.Full._0
+    %23 = field %21, Box.Full._0
+    call @Held.Held#1(%22, %23)
+  }
+  %24 = const b8 2
+  %25 = eq b8 %14, %24
+  $32: if %25 {
+    %26 = field %4, Box.payload
+    %27 = field %26, Box.payload.Pair
+    %28 = field %2, Box.payload
+    %29 = field %28, Box.payload.Pair
+    %30 = field %27, Box.Pair._0
+    %31 = field %29, Box.Pair._0
+    %32 = load b32, %31
+    store b32 %32, %30
+    %33 = field %27, Box.Pair._1
+    %34 = field %29, Box.Pair._1
+    %35 = load b32, %34
+    store b32 %35, %33
+  }
+  ret
+}
+
+func @inside(%1: ptr) -> b32 {
+  %2 = slot ptr
+  %11 = slot ptr
+  %20 = slot ptr
+  %24 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Box.tag
+  %5 = load b8, %4
+  $6: block {
+    %6 = const b8 1
+    %7 = eq b8 %5, %6
+    $9: if %7 {
+      %8 = field %3, Box.payload
+      %9 = field %8, Box.payload.Full
+      %10 = field %9, Box.Full._0
+      store ptr %10, %11
+      %12 = load ptr, %11
+      %13 = field %12, Held.n
+      %14 = load b32, %13
+      ret b32 %14
+    }
+    %15 = const b8 2
+    %16 = eq b8 %5, %15
+    $21: if %16 {
+      %17 = field %3, Box.payload
+      %18 = field %17, Box.payload.Pair
+      %19 = field %18, Box.Pair._0
+      store ptr %19, %20
+      %21 = field %3, Box.payload
+      %22 = field %21, Box.payload.Pair
+      %23 = field %22, Box.Pair._1
+      store ptr %23, %24
+      %25 = load ptr, %20
+      %26 = load b32, %25
+      %27 = load ptr, %24
+      %28 = load b32, %27
+      %29 = add b32 %26, %28
+      ret b32 %29
+    }
+    %30 = const b32 0
+    ret b32 %30
+  }
+}
+
+func @Box.~Box(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, Box.tag
+  %5 = load b8, %4
+  %6 = const b8 1
+  %7 = eq b8 %5, %6
+  $8: if %7 {
+    %8 = field %3, Box.payload
+    %9 = field %8, Box.payload.Full
+    %10 = field %9, Box.Full._0
+    call @Held.~Held(%10)
+  }
+  ret
+}
+
+func @Held.~Held(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Held.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @Held.destroy(%3)
+  ret
+}
+
+func @Held.init#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Held.n
+  %7 = load ptr, %4
+  %8 = field %7, Held.n
+  %9 = load b32, %8
+  store b32 %9, %6
+  %10 = addr @made
+  %11 = load b32, %10
+  %12 = const b32 1
+  %13 = add b32 %11, %12
+  store b32 %13, %10
+  ret
+}
+
+func @Held.Held#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @Held.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @Held.init#1(%4, %2)
+  ret
+}
+
+func @Held.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @ended
+  %4 = load b32, %3
+  %5 = const b32 1
+  %6 = add b32 %4, %5
+  store b32 %6, %3
+  ret
+}
+
+--- exit: 14
