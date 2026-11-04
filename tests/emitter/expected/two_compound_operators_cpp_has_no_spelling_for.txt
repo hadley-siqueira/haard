@@ -7,6 +7,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 
 struct h0_1_Counter;
 
+#include <cstdlib>
+
 struct h0_1_Counter {
     int32_t h0_2_calls;
     virtual int32_t m_next();
@@ -17,9 +19,46 @@ int32_t h0_4_main();
 
 #include <cmath>
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 9: every index of a fixed array, and what a container's own
+// operator[] asks. A negative one is a very large one
+static int64_t __index(int64_t index, int64_t length) {
+    if ((uint64_t) index >= (uint64_t) length) {
+        char message[80];
+
+        snprintf(message, sizeof message, "index %lld out of range for length %lld",
+                 (long long) index, (long long) length);
+        __abort_with(message);
+    }
+
+    return index;
+}
+
+static uint64_t __div_u(uint64_t a, uint64_t b) {
+    if (b == 0) {
+        __abort_with("division by zero");
+    }
+
+    return a / b;
+}
+
 // record 0057: 'a // b' FLOORS, where C++'s '/' truncates toward zero.
 // The two differ exactly when the signs differ and the division is not exact
 static int64_t __floor_div_i(int64_t a, int64_t b) {
+    if (b == 0) {
+        __abort_with("division by zero");
+    }
+
+    if (b == -1) {
+        return (int64_t) (0 - (uint64_t) a);
+    }
+
     int64_t answer = a / b;
 
     if (a % b != 0 && ((a < 0) != (b < 0))) {
@@ -29,47 +68,61 @@ static int64_t __floor_div_i(int64_t a, int64_t b) {
     return answer;
 }
 
+static uint64_t __shr_u(uint64_t value, int64_t count) {
+    return count < 0 || count >= 64 ? 0 : value >> count;
+}
+
 // the same over a float, which is the floor of the quotient
 static double __floor_div_f(double a, double b) {
     return std::floor(a / b);
 }
 
-static double __floor_div_assign_double(double* place, double by) {
+static double __assign_floor_div_double(double* place, double by) {
     *place = (double)__floor_div_f(*place, by);
     return *place;
 }
 
-static int32_t __floor_div_assign_int32_t(int32_t* place, int32_t by) {
+static int32_t __assign_floor_div_int32_t(int32_t* place, int32_t by) {
     *place = (int32_t)__floor_div_i(*place, by);
     return *place;
 }
 
-static int32_t __shift_assign_int32_t(int32_t* place, int32_t by) {
-    *place = (int32_t)((uint32_t)*place >> by);
+static uint8_t __assign_floor_div_uint8_t(uint8_t* place, uint8_t by) {
+    *place = (uint8_t)__div_u(*place, by);
+    return *place;
+}
+
+static int32_t __assign_ushr_int32_t(int32_t* place, int32_t by) {
+    *place = (int32_t)__shr_u((uint32_t)*place, by);
+    return *place;
+}
+
+static uint32_t __assign_ushr_uint32_t(uint32_t* place, uint32_t by) {
+    *place = (uint32_t)__shr_u(*place, by);
     return *place;
 }
 
 
 int32_t h0_4_main() {
-    int32_t h0_5_a = 0 - 7;
-    __floor_div_assign_int32_t(&h0_5_a, 2);
-    int32_t h0_6_b = 0 - 8;
-    __shift_assign_int32_t(&h0_6_b, 28);
+    int32_t h0_5_a = (int32_t)((uint32_t)0 - (uint32_t)7);
+    __assign_floor_div_int32_t(&h0_5_a, 2);
+    int32_t h0_6_b = (int32_t)((uint32_t)0 - (uint32_t)8);
+    __assign_ushr_int32_t(&h0_6_b, 28);
     uint8_t h0_7_c = 200;
-    h0_7_c /= 3;
+    __assign_floor_div_uint8_t(&h0_7_c, 3);
     uint32_t h0_8_d = 16;
-    h0_8_d >>= 2;
+    __assign_ushr_uint32_t(&h0_8_d, 2);
     double h0_9_e = 7.5;
-    __floor_div_assign_double(&h0_9_e, 2.0);
+    __assign_floor_div_double(&h0_9_e, 2.0);
     int32_t h0_10_xs[3] = {10, 20, 30};
     h0_1_Counter h0_11_counter;
     h0_11_counter.h0_2_calls = 0;
-    __floor_div_assign_int32_t(&h0_10_xs[h0_11_counter.m_next()], 4);
-    __shift_assign_int32_t(&h0_10_xs[h0_11_counter.m_next()], 1);
+    __assign_floor_div_int32_t(&h0_10_xs[__index(h0_11_counter.m_next(), 3)], 4);
+    __assign_ushr_int32_t(&h0_10_xs[__index(h0_11_counter.m_next(), 3)], 1);
     if (h0_11_counter.h0_2_calls != 2) {
         return 1;
     }
-    if (h0_10_xs[0] != 10 || h0_10_xs[1] != 5 || h0_10_xs[2] != 15) {
+    if (h0_10_xs[__index(0, 3)] != 10 || h0_10_xs[__index(1, 3)] != 5 || h0_10_xs[__index(2, 3)] != 15) {
         return 2;
     }
     if (h0_9_e != 3.0) {
@@ -78,11 +131,11 @@ int32_t h0_4_main() {
     if (h0_7_c != 66 || h0_8_d != 4) {
         return 5;
     }
-    return h0_5_a + h0_6_b;
+    return (int32_t)((uint32_t)h0_5_a + (uint32_t)h0_6_b);
 }
 
 int32_t h0_1_Counter::m_next() {
-    this->h0_2_calls += 1;
+    (uint32_t&)this->h0_2_calls += (uint32_t)1;
     return this->h0_2_calls;
 }
 

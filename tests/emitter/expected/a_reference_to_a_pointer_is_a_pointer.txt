@@ -175,11 +175,11 @@ int32_t h0_10_main() {
         h2_108_ListCursor h0_19___c0 = h0_12_shapes.m_iterator();
         while (h0_19___c0.m_has_next()) {
             h0_1_Shape *&h0_14_s = h0_19___c0.m_next();
-            h0_13_total += h0_14_s->m_area();
+            (uint32_t&)h0_13_total += (uint32_t)h0_14_s->m_area();
         }
     }
     if (h0_13_total == 13) {
-        h0_11_result += 1;
+        (uint32_t&)h0_11_result += (uint32_t)1;
     }
     h1_95_Array h0_15_nodes = h1_95_Array();
     h0_15_nodes.m_add_pn0c8(new h0_8_Node());
@@ -191,13 +191,13 @@ int32_t h0_10_main() {
             h0_8_Node *&h0_17_n = h0_20___c1.m_next();
             if (h0_17_n != nullptr) {
                 h0_17_n->h0_9_value = 3;
-                h0_17_n->h0_9_value += 1;
-                h0_16_seen += h0_17_n->h0_9_value;
+                (uint32_t&)h0_17_n->h0_9_value += (uint32_t)1;
+                (uint32_t&)h0_16_seen += (uint32_t)h0_17_n->h0_9_value;
             }
         }
     }
     if (h0_16_seen == 4) {
-        h0_11_result += 2;
+        (uint32_t&)h0_11_result += (uint32_t)2;
     }
     {
         h2_108_ListCursor h0_21___c2 = h0_12_shapes.m_iterator();
@@ -222,7 +222,7 @@ void h0_3_Square::m_init_b6(int32_t h0_6_s) {
 }
 
 int32_t h0_3_Square::m_area() {
-    return this->h0_4_side * this->h0_4_side;
+    return (int32_t)((uint32_t)this->h0_4_side * (uint32_t)this->h0_4_side);
 }
 
 h0_3_Square::h0_3_Square(int32_t h0_6_s) {
@@ -254,7 +254,7 @@ void h1_48_Array::m_init_ppn0c1_b6(h0_1_Shape **h1_55_from, int32_t h1_56_count)
     int32_t h1_57_i = 0;
     while (h1_57_i < h1_56_count) {
         this->h1_50_data[h1_57_i] = h1_55_from[h1_57_i];
-        h1_57_i = h1_57_i + 1;
+        h1_57_i = (int32_t)((uint32_t)h1_57_i + (uint32_t)1);
     }
 }
 
@@ -265,7 +265,7 @@ void h1_48_Array::m_init_rn1c48(h1_48_Array &h1_59_other) {
     int32_t h1_60_i = 0;
     while (h1_60_i < this->h1_51_size) {
         this->h1_50_data[h1_60_i] = h1_59_other.h1_50_data[h1_60_i];
-        h1_60_i = h1_60_i + 1;
+        h1_60_i = (int32_t)((uint32_t)h1_60_i + (uint32_t)1);
     }
 }
 
@@ -293,7 +293,7 @@ void h1_48_Array::m_reserve_b6(int32_t h1_67_wanted) {
     int32_t h1_69_i = 0;
     while (h1_69_i < this->h1_51_size) {
         h1_68_bigger[h1_69_i] = this->h1_50_data[h1_69_i];
-        h1_69_i = h1_69_i + 1;
+        h1_69_i = (int32_t)((uint32_t)h1_69_i + (uint32_t)1);
     }
     delete[] this->h1_50_data;
     this->h1_50_data = h1_68_bigger;
@@ -311,20 +311,20 @@ void h1_48_Array::m_each_f2rpn0c1b13(h_fn_f2rpn0c1b13 h1_77_f) {
     int32_t h1_78_i = 0;
     while (h1_78_i < this->h1_51_size) {
         h_fn_f2rpn0c1b13_call(h1_77_f, this->h1_50_data[h1_78_i]);
-        h1_78_i = h1_78_i + 1;
+        h1_78_i = (int32_t)((uint32_t)h1_78_i + (uint32_t)1);
     }
 }
 
 void h1_48_Array::m_add_pn0c1(h0_1_Shape *h1_85_value) {
     if (this->h1_51_size == this->h1_52_capacity) {
-        this->m_reserve_b6(this->h1_52_capacity * 2);
+        this->m_reserve_b6((int32_t)((uint32_t)this->h1_52_capacity * (uint32_t)2));
     }
     this->h1_50_data[this->h1_51_size] = h1_85_value;
-    this->h1_51_size = this->h1_51_size + 1;
+    this->h1_51_size = (int32_t)((uint32_t)this->h1_51_size + (uint32_t)1);
 }
 
 h0_1_Shape * h1_48_Array::m_pop() {
-    this->h1_51_size = this->h1_51_size - 1;
+    this->h1_51_size = (int32_t)((uint32_t)this->h1_51_size - (uint32_t)1);
     return this->h1_50_data[this->h1_51_size];
 }
 
@@ -368,7 +368,7 @@ bool h1_87_ArrayCursor::m_has_next() {
 
 h0_1_Shape *& h1_87_ArrayCursor::m_next() {
     int32_t h1_94_at = this->h1_90_position;
-    this->h1_90_position = this->h1_90_position + 1;
+    this->h1_90_position = (int32_t)((uint32_t)this->h1_90_position + (uint32_t)1);
     return (*this->h1_89_held).m_operator_at_b6(h1_94_at);
 }
 
@@ -395,7 +395,7 @@ void h1_95_Array::m_init_ppn0c8_b6(h0_8_Node **h1_102_from, int32_t h1_103_count
     int32_t h1_104_i = 0;
     while (h1_104_i < h1_103_count) {
         this->h1_97_data[h1_104_i] = h1_102_from[h1_104_i];
-        h1_104_i = h1_104_i + 1;
+        h1_104_i = (int32_t)((uint32_t)h1_104_i + (uint32_t)1);
     }
 }
 
@@ -406,7 +406,7 @@ void h1_95_Array::m_init_rn1c95(h1_95_Array &h1_106_other) {
     int32_t h1_107_i = 0;
     while (h1_107_i < this->h1_98_size) {
         this->h1_97_data[h1_107_i] = h1_106_other.h1_97_data[h1_107_i];
-        h1_107_i = h1_107_i + 1;
+        h1_107_i = (int32_t)((uint32_t)h1_107_i + (uint32_t)1);
     }
 }
 
@@ -434,7 +434,7 @@ void h1_95_Array::m_reserve_b6(int32_t h1_114_wanted) {
     int32_t h1_116_i = 0;
     while (h1_116_i < this->h1_98_size) {
         h1_115_bigger[h1_116_i] = this->h1_97_data[h1_116_i];
-        h1_116_i = h1_116_i + 1;
+        h1_116_i = (int32_t)((uint32_t)h1_116_i + (uint32_t)1);
     }
     delete[] this->h1_97_data;
     this->h1_97_data = h1_115_bigger;
@@ -452,20 +452,20 @@ void h1_95_Array::m_each_f2rpn0c8b13(h_fn_f2rpn0c8b13 h1_124_f) {
     int32_t h1_125_i = 0;
     while (h1_125_i < this->h1_98_size) {
         h_fn_f2rpn0c8b13_call(h1_124_f, this->h1_97_data[h1_125_i]);
-        h1_125_i = h1_125_i + 1;
+        h1_125_i = (int32_t)((uint32_t)h1_125_i + (uint32_t)1);
     }
 }
 
 void h1_95_Array::m_add_pn0c8(h0_8_Node *h1_132_value) {
     if (this->h1_98_size == this->h1_99_capacity) {
-        this->m_reserve_b6(this->h1_99_capacity * 2);
+        this->m_reserve_b6((int32_t)((uint32_t)this->h1_99_capacity * (uint32_t)2));
     }
     this->h1_97_data[this->h1_98_size] = h1_132_value;
-    this->h1_98_size = this->h1_98_size + 1;
+    this->h1_98_size = (int32_t)((uint32_t)this->h1_98_size + (uint32_t)1);
 }
 
 h0_8_Node * h1_95_Array::m_pop() {
-    this->h1_98_size = this->h1_98_size - 1;
+    this->h1_98_size = (int32_t)((uint32_t)this->h1_98_size - (uint32_t)1);
     return this->h1_97_data[this->h1_98_size];
 }
 
@@ -509,7 +509,7 @@ bool h1_134_ArrayCursor::m_has_next() {
 
 h0_8_Node *& h1_134_ArrayCursor::m_next() {
     int32_t h1_141_at = this->h1_137_position;
-    this->h1_137_position = this->h1_137_position + 1;
+    this->h1_137_position = (int32_t)((uint32_t)this->h1_137_position + (uint32_t)1);
     return (*this->h1_136_held).m_operator_at_b6(h1_141_at);
 }
 
@@ -533,7 +533,7 @@ void h2_58_List::m_init_rn1c48(h1_48_Array &h2_65_from) {
     int32_t h2_66_i = 0;
     while (h2_66_i < h2_65_from.m_length()) {
         this->m_push_back_pn0c1(h2_65_from.m_operator_at_b6(h2_66_i));
-        h2_66_i = h2_66_i + 1;
+        h2_66_i = (int32_t)((uint32_t)h2_66_i + (uint32_t)1);
     }
 }
 
@@ -544,7 +544,7 @@ void h2_58_List::m_init_ppn0c1_b6(h0_1_Shape **h2_68_from, int32_t h2_69_count) 
     int32_t h2_70_i = 0;
     while (h2_70_i < h2_69_count) {
         this->m_push_back_pn0c1(h2_68_from[h2_70_i]);
-        h2_70_i = h2_70_i + 1;
+        h2_70_i = (int32_t)((uint32_t)h2_70_i + (uint32_t)1);
     }
 }
 
@@ -588,7 +588,7 @@ void h2_58_List::m_push_back_pn0c1(h0_1_Shape *h2_80_value) {
         this->h2_61_tail->h2_106_next = h2_81_made;
     }
     this->h2_61_tail = h2_81_made;
-    this->h2_62_size = this->h2_62_size + 1;
+    this->h2_62_size = (int32_t)((uint32_t)this->h2_62_size + (uint32_t)1);
 }
 
 void h2_58_List::m_push_front_pn0c1(h0_1_Shape *h2_83_value) {
@@ -603,7 +603,7 @@ void h2_58_List::m_push_front_pn0c1(h0_1_Shape *h2_83_value) {
         this->h2_60_head->h2_107_previous = h2_84_made;
     }
     this->h2_60_head = h2_84_made;
-    this->h2_62_size = this->h2_62_size + 1;
+    this->h2_62_size = (int32_t)((uint32_t)this->h2_62_size + (uint32_t)1);
 }
 
 h0_1_Shape *& h2_58_List::m_operator_at_b6(int32_t h2_86_i) {
@@ -611,7 +611,7 @@ h0_1_Shape *& h2_58_List::m_operator_at_b6(int32_t h2_86_i) {
     int32_t h2_88_at = 0;
     while (h2_88_at < h2_86_i) {
         h2_87_walk = h2_87_walk->h2_106_next;
-        h2_88_at = h2_88_at + 1;
+        h2_88_at = (int32_t)((uint32_t)h2_88_at + (uint32_t)1);
     }
     return h2_87_walk->h2_105_value;
 }

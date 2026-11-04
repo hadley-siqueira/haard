@@ -58,7 +58,7 @@ int32_t h0_14_main();
 
 int32_t h0_14_main() {
     h0_1_Maker h0_15_maker;
-    return h0_15_maker.m_make_n0c8(h0_8_Kind::h0_10_Large) + h0_15_maker.m_weigh_n0c11(h0_11_Shape_h0_12_Square(4));
+    return (int32_t)((uint32_t)h0_15_maker.m_make_n0c8(h0_8_Kind::h0_10_Large) + (uint32_t)h0_15_maker.m_weigh_n0c11(h0_11_Shape_h0_12_Square(4)));
 }
 
 int32_t h0_1_Maker::m_make_n0c8(h0_8_Kind h0_4_kind) {

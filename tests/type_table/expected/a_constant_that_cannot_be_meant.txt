@@ -1,0 +1,67 @@
+<unnamed>:
+    main  i32
+    a  i32
+    b  i8
+    c  i32
+    d  i32
+    e  i32
+    f  i32
+    g  i32
+    h  i32
+    i  i8
+    fine  f64
+    top  i32
+    narrow  i8
+    zero  i32
+  18 types interned
+diagnostics:
+error: this divides by zero
+ --> main.hd:7:17
+  |
+7 |     let c = a / 0
+  |                 ^
+error: this divides by zero
+ --> main.hd:8:18
+  |
+8 |     let d = a // 0
+  |                  ^
+error: this divides by zero
+ --> main.hd:9:17
+  |
+9 |     let e = a % 0
+  |                 ^
+error: a shift by 32 is past the 32 bits of i32
+  --> main.hd:10:18
+   |
+10 |     let f = a << 32
+   |                  ^^
+error: a shift by 32 is past the 32 bits of i32
+  --> main.hd:11:18
+   |
+11 |     let g = a >> 32
+   |                  ^^
+error: a shift by 99 is past the 32 bits of i32
+  --> main.hd:12:19
+   |
+12 |     let h = a >>> 99
+   |                   ^^
+error: a shift by 8 is past the 8 bits of i8
+  --> main.hd:13:18
+   |
+13 |     let i = b << 8
+   |                  ^
+error: this divides by zero
+  --> main.hd:15:10
+   |
+15 |     a /= 0
+   |          ^
+error: this divides by zero
+  --> main.hd:16:10
+   |
+16 |     a %= 0
+   |          ^
+error: a shift by 32 is past the 32 bits of i32
+  --> main.hd:17:11
+   |
+17 |     a <<= 32
+   |           ^^

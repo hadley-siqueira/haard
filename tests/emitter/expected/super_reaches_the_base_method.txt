@@ -49,7 +49,7 @@ static inline int32_t h_fn_f2b6b6_call(h_fn_f2b6b6 f, int32_t a0) {
 static int32_t h0_closure_100(void *h_env, int32_t h0_13_x) {
     h0_closure_100_captured *h_captured = (h0_closure_100_captured *) h_env;
     h0_7_C *h_self = h_captured->h_self;
-    return h0_13_x + h_self->h0_5_B::m_name();
+    return (int32_t)((uint32_t)h0_13_x + (uint32_t)h_self->h0_5_B::m_name());
 }
 
 
@@ -57,16 +57,16 @@ int32_t h0_14_main() {
     int32_t h0_15_result = 0;
     h0_7_C h0_16_c = h0_7_C();
     if (h0_16_c.m_name() == 110) {
-        h0_15_result += 1;
+        (uint32_t&)h0_15_result += (uint32_t)1;
     }
     if (h0_16_c.m_grand() == 220) {
-        h0_15_result += 2;
+        (uint32_t&)h0_15_result += (uint32_t)2;
     }
     if (h0_16_c.m_field() == 7) {
-        h0_15_result += 4;
+        (uint32_t&)h0_15_result += (uint32_t)4;
     }
     if (h0_16_c.m_in_closure() == 11) {
-        h0_15_result += 8;
+        (uint32_t&)h0_15_result += (uint32_t)8;
     }
     return h0_15_result;
 }
@@ -76,7 +76,7 @@ int32_t h0_1_A::m_name() {
 }
 
 int32_t h0_1_A::m_twice() {
-    return this->m_name() * 2;
+    return (int32_t)((uint32_t)this->m_name() * (uint32_t)2);
 }
 
 h0_1_A::~h0_1_A() {
@@ -90,7 +90,7 @@ h0_5_B::~h0_5_B() {
 }
 
 int32_t h0_7_C::m_name() {
-    return 100 + this->h0_5_B::m_name();
+    return (int32_t)((uint32_t)100 + (uint32_t)this->h0_5_B::m_name());
 }
 
 int32_t h0_7_C::m_grand() {

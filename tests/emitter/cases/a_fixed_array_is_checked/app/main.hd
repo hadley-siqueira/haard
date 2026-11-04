@@ -1,0 +1,24 @@
+# Record 0083, answer 9: every index of a fixed array is checked. The last one is
+# fine and the one after it is not.
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i += 1
+
+    __io_write(__io_stdout(), '\n')
+
+def main : i32
+    let values : i32[3] = {10, 20, 30}
+    let last : i32 = 2
+    let past : i32 = 3
+
+    if values[last] == 30:
+        say("last")
+
+    return values[past]

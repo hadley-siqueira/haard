@@ -79,7 +79,7 @@ void h1_1___unwrapped_none() {
     h2_14___io_flush(h2_16___io_stdout());
     while (h1_2_message[h1_4_i] != '\0') {
         h2_9___io_write(h1_3_err, h1_2_message[h1_4_i]);
-        h1_4_i += 1;
+        (uint32_t&)h1_4_i += (uint32_t)1;
     }
     h2_19___abort();
 }

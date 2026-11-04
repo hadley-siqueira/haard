@@ -1,0 +1,76 @@
+# Record 0083, answer 1: a whole number wraps, at its own width, on both paths.
+# One bit per line that has to come out right, so the exit status names the one
+# that did not. A C++ compiler may assume a signed overflow never happens, so
+# this case is also built with -O2 and the undefined behaviour sanitizer.
+
+def identity : i32
+    @x : i32
+    return x
+
+def main : i32
+    let big : i32 = 2147483647
+    let low : i32 = -2147483647 - 1
+    let huge : i64 = 9223372036854775807
+    let a : u8 = 255
+    let b : u8 = 1
+    let s : i8 = 127
+    let w : u16 = 65535
+    let bits = 0
+
+    if big + 1 == low and low - 1 == big and big * 2 == -2:
+        bits = bits | 1
+
+    if huge + 1 < 0:
+        bits = bits | 2
+
+    # a narrow type wraps at its own width, read back wider
+    if ((a + b) as i32) == 0 and ((s + 1) as i32) == -128:
+        bits = bits | 4
+
+    # two u16 multiply past what a C++ int holds
+    if ((w * w) as i32) == 1:
+        bits = bits | 8
+
+    # the lowest value is its own negative
+    if -low == low:
+        bits = bits | 16
+
+    # in place, and the place is written once
+    let c = big
+    c += 1
+    let d = low
+    d -= 1
+    let e = big
+    e *= 2
+
+    if c == low and d == big and e == -2:
+        bits = bits | 32
+
+    let f = big
+    f++
+    let g = low
+    g--
+    let h = big
+    let was = h++
+
+    if f == low and g == big and was == big and h == low:
+        bits = bits | 64
+
+    # through a reference, which is the thing it names
+    let named = big
+    let r : i32& = named
+    r += 1
+    let other : i32 = 7
+    let q : i32& = other
+    q //= 2
+
+    if named == low and other == 3:
+        bits = bits | 128
+
+    # '~' is cut to the width too
+    let z : u8 = 0
+
+    if ((~z) as i32) == 255 and identity(2 ** 31) == low:
+        bits = bits | 256
+
+    return bits - 511

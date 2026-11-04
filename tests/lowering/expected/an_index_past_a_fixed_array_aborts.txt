@@ -39,4 +39,6 @@ func @main() -> b32 {
   ret b32 %25
 }
 
+--- output:
+index 3 out of range for length 3
 --- exit: 134

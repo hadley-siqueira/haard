@@ -64,9 +64,9 @@ int32_t h0_5_main() {
     int32_t h0_10_lines = 0;
     char h0_11_c = h0_8_back->m_read();
     while (!h0_8_back->m_at_end()) {
-        h0_9_count = h0_9_count + 1;
+        h0_9_count = (int32_t)((uint32_t)h0_9_count + (uint32_t)1);
         if (h0_11_c == '\n') {
-            h0_10_lines = h0_10_lines + 1;
+            h0_10_lines = (int32_t)((uint32_t)h0_10_lines + (uint32_t)1);
         }
         h0_11_c = h0_8_back->m_read();
     }
@@ -120,7 +120,7 @@ void h1_1_File::m_write_pb14(char *h1_8_text) {
     int32_t h1_9_i = 0;
     while (h1_8_text[h1_9_i] != '\0') {
         h2_9___io_write(this->h1_2_handle, h1_8_text[h1_9_i]);
-        h1_9_i = h1_9_i + 1;
+        h1_9_i = (int32_t)((uint32_t)h1_9_i + (uint32_t)1);
     }
 }
 

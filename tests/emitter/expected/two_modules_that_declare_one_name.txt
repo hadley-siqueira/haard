@@ -14,7 +14,7 @@ int32_t h2_2_from_second();
 
 
 int32_t h0_1_main() {
-    return h1_2_from_first() * 10 + h2_2_from_second();
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)h1_2_from_first() * (uint32_t)10)) + (uint32_t)h2_2_from_second());
 }
 
 int32_t h1_1_helper() {

@@ -14,7 +14,7 @@ int32_t h0_1_main(int32_t h0_2_argc, char **h0_3_argv) {
     if (h0_4_first[0] == '\0') {
         return 1;
     }
-    return h0_2_argc + 41;
+    return (int32_t)((uint32_t)h0_2_argc + (uint32_t)41);
 }
 
 int main(int argc, char **argv) {

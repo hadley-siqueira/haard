@@ -23,7 +23,7 @@ int32_t h0_1_main() {
     h1_1_Box h0_2_b;
     int32_t h0_3_one = h0_2_b.m_take_7_b6(7);
     int64_t h0_4_two = h0_2_b.m_take_8_b7(30);
-    return h0_3_one + ((int32_t)(h0_4_two)) + h0_2_b.h1_2_n;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)h0_3_one + (uint32_t)((int32_t)(h0_4_two)))) + (uint32_t)h0_2_b.h1_2_n);
 }
 
 void h1_1_Box::m_init() {

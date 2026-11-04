@@ -29,7 +29,7 @@ int32_t h0_7_main() {
     h0_1_Cell h0_10_c;
     h0_10_c.m_slot() = 9;
     int32_t h0_11_bound = h0_9_through;
-    int32_t h0_12_sum = h0_9_through + 2;
+    int32_t h0_12_sum = (int32_t)((uint32_t)h0_9_through + (uint32_t)2);
     int32_t h0_13_passed = h0_5_takes(h0_9_through);
     bool h0_14_equal = h0_9_through == 40;
     int32_t h0_15_copied = 0;
@@ -37,7 +37,7 @@ int32_t h0_7_main() {
     h0_9_through = 5;
     int32_t *h0_16_pointed = &h0_9_through;
     int32_t *h0_17_into = &h0_10_c.m_slot();
-    *h0_17_into = *h0_17_into + 1;
+    *h0_17_into = (int32_t)((uint32_t)*h0_17_into + (uint32_t)1);
     if (!h0_14_equal) {
         return 1;
     }
@@ -47,7 +47,7 @@ int32_t h0_7_main() {
     if (*h0_16_pointed != 5) {
         return 3;
     }
-    return h0_11_bound + h0_12_sum + h0_13_passed + h0_8_held - 5 + h0_10_c.m_slot();
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_11_bound + (uint32_t)h0_12_sum)) + (uint32_t)h0_13_passed)) + (uint32_t)h0_8_held)) - (uint32_t)5)) + (uint32_t)h0_10_c.m_slot());
 }
 
 void h0_1_Cell::m_init() {

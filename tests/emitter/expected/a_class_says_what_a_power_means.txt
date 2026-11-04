@@ -27,7 +27,7 @@ int32_t h0_6_main() {
 
 h0_1_Money h0_1_Money::m_operator_times_times_n0c1(h0_1_Money h0_4_times) {
     h0_1_Money h0_5_out;
-    h0_5_out.h0_2_cents = this->h0_2_cents * h0_4_times.h0_2_cents;
+    h0_5_out.h0_2_cents = (int32_t)((uint32_t)this->h0_2_cents * (uint32_t)h0_4_times.h0_2_cents);
     return h0_5_out;
 }
 

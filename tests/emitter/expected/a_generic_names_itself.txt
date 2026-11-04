@@ -36,7 +36,7 @@ int32_t h0_11_main() {
     if (h0_14_r.h0_17_left != 12) {
         return 2;
     }
-    return h0_13_q.m_total() + h0_14_r.h0_17_left;
+    return (int32_t)((uint32_t)h0_13_q.m_total() + (uint32_t)h0_14_r.h0_17_left);
 }
 
 void h0_15_Pair::m_init() {
@@ -55,7 +55,7 @@ h0_15_Pair h0_15_Pair::m_swapped() {
 }
 
 int32_t h0_15_Pair::m_total() {
-    return this->h0_17_left + this->h0_18_right;
+    return (int32_t)((uint32_t)this->h0_17_left + (uint32_t)this->h0_18_right);
 }
 
 h0_15_Pair::h0_15_Pair() {

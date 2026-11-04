@@ -110,7 +110,7 @@ int32_t h0_17_size_of(h0_13_Message h0_18_m) {
             {
                 int32_t &h0_20_x = __sw0.h0_16_Move._0;
                 int32_t &h0_21_y = __sw0.h0_16_Move._1;
-                return h0_20_x + h0_21_y;
+                return (int32_t)((uint32_t)h0_20_x + (uint32_t)h0_21_y);
                 break;
             }
         }
@@ -124,7 +124,7 @@ int32_t h0_22_main() {
     h0_13_Message h0_26_copied = h0_23_said;
     h0_13_Message h0_27_held = h0_13_Message_h0_14_Quit();
     h0_27_held.m_assign(h0_23_said);
-    return (h0_17_size_of(h0_23_said) + h0_17_size_of(h0_24_moved) + h0_17_size_of(h0_25_quit) + h0_17_size_of(h0_26_copied) + h0_17_size_of(h0_27_held));
+    return ((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_17_size_of(h0_23_said) + (uint32_t)h0_17_size_of(h0_24_moved))) + (uint32_t)h0_17_size_of(h0_25_quit))) + (uint32_t)h0_17_size_of(h0_26_copied))) + (uint32_t)h0_17_size_of(h0_27_held)));
 }
 
 void h0_1_Text::m_init() {
@@ -135,23 +135,23 @@ void h0_1_Text::m_init() {
 void h0_1_Text::m_init_pb14(char *h0_6_from) {
     this->h0_3_size = 0;
     while (h0_6_from[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
-    this->h0_2_data = new char[this->h0_3_size + 1];
+    this->h0_2_data = new char[(int32_t)((uint32_t)this->h0_3_size + (uint32_t)1)];
     int32_t h0_7_i = 0;
     while (h0_7_i <= this->h0_3_size) {
         this->h0_2_data[h0_7_i] = h0_6_from[h0_7_i];
-        h0_7_i = h0_7_i + 1;
+        h0_7_i = (int32_t)((uint32_t)h0_7_i + (uint32_t)1);
     }
 }
 
 void h0_1_Text::m_init_rn0c1(h0_1_Text &h0_9_other) {
     this->h0_3_size = h0_9_other.h0_3_size;
-    this->h0_2_data = new char[this->h0_3_size + 1];
+    this->h0_2_data = new char[(int32_t)((uint32_t)this->h0_3_size + (uint32_t)1)];
     int32_t h0_10_i = 0;
     while (h0_10_i <= this->h0_3_size) {
         this->h0_2_data[h0_10_i] = h0_9_other.h0_2_data[h0_10_i];
-        h0_10_i = h0_10_i + 1;
+        h0_10_i = (int32_t)((uint32_t)h0_10_i + (uint32_t)1);
     }
 }
 

@@ -109,7 +109,7 @@ int32_t h0_33_main() {
     }
     int32_t h0_41_i = 30;
     int32_t h0_42_j = static_cast<int32_t &&>(h0_41_i);
-    return h0_42_j + h0_36_c.h0_3_how * 6;
+    return (int32_t)((uint32_t)h0_42_j + (uint32_t)((int32_t)((uint32_t)h0_36_c.h0_3_how * (uint32_t)6)));
 }
 
 void h0_1_Both::m_init() {
@@ -126,7 +126,7 @@ void h0_1_Both::m_init_rn0c1(h0_1_Both &h0_6_other) {
 
 void h0_1_Both::m_init_mn0c1(h0_1_Both &&h0_8_other) {
     this->h0_2_data = h0_8_other.h0_2_data;
-    this->h0_3_how = h0_8_other.h0_3_how + 1;
+    this->h0_3_how = (int32_t)((uint32_t)h0_8_other.h0_3_how + (uint32_t)1);
     h0_8_other.h0_2_data = nullptr;
 }
 
@@ -182,7 +182,7 @@ void h0_10_MoveOnly::m_init_b6(int32_t h0_14_v) {
 
 void h0_10_MoveOnly::m_init_mn0c10(h0_10_MoveOnly &&h0_16_other) {
     this->h0_11_data = h0_16_other.h0_11_data;
-    this->h0_12_how = h0_16_other.h0_12_how + 1;
+    this->h0_12_how = (int32_t)((uint32_t)h0_16_other.h0_12_how + (uint32_t)1);
     h0_16_other.h0_11_data = nullptr;
 }
 

@@ -131,7 +131,7 @@ static char h0_closure_64(void *h_env, char *&h0_11_w) {
 static void h0_closure_99(void *h_env, char *&h0_13_w) {
     h0_closure_99_captured *h_captured = (h0_closure_99_captured *) h_env;
     int32_t &h0_12_count = *h_captured->h0_12_count;
-    h0_12_count += 1;
+    (uint32_t&)h0_12_count += (uint32_t)1;
 }
 
 
@@ -141,18 +141,18 @@ int32_t h0_7_main() {
     h1_48_Array h0_9_words(__fx0, 3);
     h1_100_Array h0_10_firsts = h0_9_words.m_map_15_f2rpb14b14(h_fn_f2rpb14b14{nullptr, &h0_closure_64});
     if (h0_10_firsts.m_operator_at_b6(2) == 'c') {
-        h0_8_result += 1;
+        (uint32_t&)h0_8_result += (uint32_t)1;
     }
     int32_t h0_12_count = 0;
     h0_9_words.m_each_f2rpb14b13((h0_closure_99_env.h0_12_count = &h0_12_count, h_fn_f2rpb14b13{&h0_closure_99_env, &h0_closure_99}));
     if (h0_12_count == 3) {
-        h0_8_result += 2;
+        (uint32_t&)h0_8_result += (uint32_t)2;
     }
     h0_5_Box *h0_14_b = new h0_5_Box();
     h0_5_Box *h0_15_p = h0_14_b;
     h0_5_Box *h0_16_q = h0_14_b;
     if (h0_17_same(h0_15_p, h0_16_q)) {
-        h0_8_result += 4;
+        (uint32_t&)h0_8_result += (uint32_t)4;
     }
     delete h0_14_b;
     return h0_8_result;
@@ -181,7 +181,7 @@ void h1_48_Array::m_init_ppb14_b6(char **h1_55_from, int32_t h1_56_count) {
     int32_t h1_57_i = 0;
     while (h1_57_i < h1_56_count) {
         this->h1_50_data[h1_57_i] = h1_55_from[h1_57_i];
-        h1_57_i = h1_57_i + 1;
+        h1_57_i = (int32_t)((uint32_t)h1_57_i + (uint32_t)1);
     }
 }
 
@@ -192,7 +192,7 @@ void h1_48_Array::m_init_rn1c48(h1_48_Array &h1_59_other) {
     int32_t h1_60_i = 0;
     while (h1_60_i < this->h1_51_size) {
         this->h1_50_data[h1_60_i] = h1_59_other.h1_50_data[h1_60_i];
-        h1_60_i = h1_60_i + 1;
+        h1_60_i = (int32_t)((uint32_t)h1_60_i + (uint32_t)1);
     }
 }
 
@@ -220,7 +220,7 @@ void h1_48_Array::m_reserve_b6(int32_t h1_67_wanted) {
     int32_t h1_69_i = 0;
     while (h1_69_i < this->h1_51_size) {
         h1_68_bigger[h1_69_i] = this->h1_50_data[h1_69_i];
-        h1_69_i = h1_69_i + 1;
+        h1_69_i = (int32_t)((uint32_t)h1_69_i + (uint32_t)1);
     }
     delete[] this->h1_50_data;
     this->h1_50_data = h1_68_bigger;
@@ -238,20 +238,20 @@ void h1_48_Array::m_each_f2rpb14b13(h_fn_f2rpb14b13 h1_77_f) {
     int32_t h1_78_i = 0;
     while (h1_78_i < this->h1_51_size) {
         h_fn_f2rpb14b13_call(h1_77_f, this->h1_50_data[h1_78_i]);
-        h1_78_i = h1_78_i + 1;
+        h1_78_i = (int32_t)((uint32_t)h1_78_i + (uint32_t)1);
     }
 }
 
 void h1_48_Array::m_add_pb14(char *h1_85_value) {
     if (this->h1_51_size == this->h1_52_capacity) {
-        this->m_reserve_b6(this->h1_52_capacity * 2);
+        this->m_reserve_b6((int32_t)((uint32_t)this->h1_52_capacity * (uint32_t)2));
     }
     this->h1_50_data[this->h1_51_size] = h1_85_value;
-    this->h1_51_size = this->h1_51_size + 1;
+    this->h1_51_size = (int32_t)((uint32_t)this->h1_51_size + (uint32_t)1);
 }
 
 char * h1_48_Array::m_pop() {
-    this->h1_51_size = this->h1_51_size - 1;
+    this->h1_51_size = (int32_t)((uint32_t)this->h1_51_size - (uint32_t)1);
     return this->h1_50_data[this->h1_51_size];
 }
 
@@ -260,7 +260,7 @@ h1_100_Array h1_48_Array::m_map_15_f2rpb14b14(h_fn_f2rpb14b14 h1_97_f) {
     int32_t h1_99_i = 0;
     while (h1_99_i < this->h1_51_size) {
         h1_98_made.m_add_b14(h_fn_f2rpb14b14_call(h1_97_f, this->h1_50_data[h1_99_i]));
-        h1_99_i = h1_99_i + 1;
+        h1_99_i = (int32_t)((uint32_t)h1_99_i + (uint32_t)1);
     }
     return h1_98_made;
 }
@@ -305,7 +305,7 @@ bool h1_87_ArrayCursor::m_has_next() {
 
 char *& h1_87_ArrayCursor::m_next() {
     int32_t h1_94_at = this->h1_90_position;
-    this->h1_90_position = this->h1_90_position + 1;
+    this->h1_90_position = (int32_t)((uint32_t)this->h1_90_position + (uint32_t)1);
     return (*this->h1_89_held).m_operator_at_b6(h1_94_at);
 }
 
@@ -332,7 +332,7 @@ void h1_100_Array::m_init_pb14_b6(char *h1_107_from, int32_t h1_108_count) {
     int32_t h1_109_i = 0;
     while (h1_109_i < h1_108_count) {
         this->h1_102_data[h1_109_i] = h1_107_from[h1_109_i];
-        h1_109_i = h1_109_i + 1;
+        h1_109_i = (int32_t)((uint32_t)h1_109_i + (uint32_t)1);
     }
 }
 
@@ -343,7 +343,7 @@ void h1_100_Array::m_init_rn1c100(h1_100_Array &h1_111_other) {
     int32_t h1_112_i = 0;
     while (h1_112_i < this->h1_103_size) {
         this->h1_102_data[h1_112_i] = h1_111_other.h1_102_data[h1_112_i];
-        h1_112_i = h1_112_i + 1;
+        h1_112_i = (int32_t)((uint32_t)h1_112_i + (uint32_t)1);
     }
 }
 
@@ -371,7 +371,7 @@ void h1_100_Array::m_reserve_b6(int32_t h1_119_wanted) {
     int32_t h1_121_i = 0;
     while (h1_121_i < this->h1_103_size) {
         h1_120_bigger[h1_121_i] = this->h1_102_data[h1_121_i];
-        h1_121_i = h1_121_i + 1;
+        h1_121_i = (int32_t)((uint32_t)h1_121_i + (uint32_t)1);
     }
     delete[] this->h1_102_data;
     this->h1_102_data = h1_120_bigger;
@@ -389,20 +389,20 @@ void h1_100_Array::m_each_f2rb14b13(h_fn_f2rb14b13 h1_129_f) {
     int32_t h1_130_i = 0;
     while (h1_130_i < this->h1_103_size) {
         h_fn_f2rb14b13_call(h1_129_f, this->h1_102_data[h1_130_i]);
-        h1_130_i = h1_130_i + 1;
+        h1_130_i = (int32_t)((uint32_t)h1_130_i + (uint32_t)1);
     }
 }
 
 void h1_100_Array::m_add_b14(char h1_137_value) {
     if (this->h1_103_size == this->h1_104_capacity) {
-        this->m_reserve_b6(this->h1_104_capacity * 2);
+        this->m_reserve_b6((int32_t)((uint32_t)this->h1_104_capacity * (uint32_t)2));
     }
     this->h1_102_data[this->h1_103_size] = h1_137_value;
-    this->h1_103_size = this->h1_103_size + 1;
+    this->h1_103_size = (int32_t)((uint32_t)this->h1_103_size + (uint32_t)1);
 }
 
 char h1_100_Array::m_pop() {
-    this->h1_103_size = this->h1_103_size - 1;
+    this->h1_103_size = (int32_t)((uint32_t)this->h1_103_size - (uint32_t)1);
     return this->h1_102_data[this->h1_103_size];
 }
 
@@ -446,7 +446,7 @@ bool h1_139_ArrayCursor::m_has_next() {
 
 char & h1_139_ArrayCursor::m_next() {
     int32_t h1_146_at = this->h1_142_position;
-    this->h1_142_position = this->h1_142_position + 1;
+    this->h1_142_position = (int32_t)((uint32_t)this->h1_142_position + (uint32_t)1);
     return (*this->h1_141_held).m_operator_at_b6(h1_146_at);
 }
 

@@ -44,11 +44,11 @@ int32_t h0_12_main() {
     h0_6_Token h0_13_t;
     h0_1_TokenKind h0_14_held = h0_1_TokenKind::h0_4_plus;
     h0_13_t.h0_7_kind = h0_14_held;
-    int32_t h0_15_total = h0_10_value_of(h0_13_t.h0_7_kind) + h0_10_value_of(h0_1_TokenKind::h0_3_identifier);
+    int32_t h0_15_total = (int32_t)((uint32_t)h0_10_value_of(h0_13_t.h0_7_kind) + (uint32_t)h0_10_value_of(h0_1_TokenKind::h0_3_identifier));
     if (h0_13_t.h0_7_kind == h0_1_TokenKind::h0_2_unknown) {
         return 1;
     }
-    return h0_15_total + h0_10_value_of(h0_1_TokenKind::h0_5_minus);
+    return (int32_t)((uint32_t)h0_15_total + (uint32_t)h0_10_value_of(h0_1_TokenKind::h0_5_minus));
 }
 
 void h0_6_Token::m_init() {

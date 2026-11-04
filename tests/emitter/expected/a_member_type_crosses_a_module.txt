@@ -52,7 +52,7 @@ int32_t h0_7_main() {
     h0_5_Derived h0_9_d;
     h0_8_h.h1_5_one.h2_2_x = 20;
     h0_8_h.h1_5_one.h2_3_y = 10;
-    return h0_8_h.h1_5_one.m_sum() + h0_9_d.m_through_a_bare_name();
+    return (int32_t)((uint32_t)h0_8_h.h1_5_one.m_sum() + (uint32_t)h0_9_d.m_through_a_bare_name());
 }
 
 int32_t h0_5_Derived::m_through_a_bare_name() {
@@ -71,7 +71,7 @@ h1_4_Holder::~h1_4_Holder() {
 }
 
 int32_t h2_1_Point::m_sum() {
-    return this->h2_2_x + this->h2_3_y;
+    return (int32_t)((uint32_t)this->h2_2_x + (uint32_t)this->h2_3_y);
 }
 
 int main() {

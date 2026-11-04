@@ -56,7 +56,7 @@ int32_t h0_16_main() {
     int32_t h0_18_b = h0_12_kind_of(h0_1_Name("done"));
     int32_t h0_19_c = h0_12_kind_of(h0_1_Name("waiting"));
     int32_t h0_20_d = h0_12_kind_of(h0_1_Name("other"));
-    return h0_17_a + h0_18_b + h0_19_c + h0_20_d + h0_14_scale_of(1.5) + h0_14_scale_of(2.5);
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_17_a + (uint32_t)h0_18_b)) + (uint32_t)h0_19_c)) + (uint32_t)h0_20_d)) + (uint32_t)h0_14_scale_of(1.5))) + (uint32_t)h0_14_scale_of(2.5));
 }
 
 void h0_1_Name::m_init() {
@@ -68,7 +68,7 @@ void h0_1_Name::m_init_pb14(char *h0_6_from) {
     this->h0_2_text = h0_6_from;
     this->h0_3_size = 0;
     while (h0_6_from[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
 }
 
@@ -81,7 +81,7 @@ bool h0_1_Name::m_equals_rn0c1(h0_1_Name &h0_8_other) {
         if (this->h0_2_text[h0_9_i] != h0_8_other.h0_2_text[h0_9_i]) {
             return false;
         }
-        h0_9_i = h0_9_i + 1;
+        h0_9_i = (int32_t)((uint32_t)h0_9_i + (uint32_t)1);
     }
     return true;
 }

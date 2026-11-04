@@ -10,6 +10,8 @@
 # Record 0034's operators are how it is read and compared. They are ordinary
 # methods with names no source can write, so nothing outside this file can
 # call one by name and nothing inside the compiler has a case for them.
+import std.low_io
+
 class Array<T>:
     data : T*
     size : i32
@@ -87,6 +89,8 @@ class Array<T>:
     # 'xs[0] = 9' the same method -- reading one and writing through it
     def operator[] : T&
         @i : i32
+
+        __check_index(i, size)
         return data[i]
 
     def reserve : void

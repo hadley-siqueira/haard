@@ -55,7 +55,7 @@ int32_t h0_22_main() {
     if (h0_23_b.m_take_1_b0(2) != 2) {
         return 2;
     }
-    return h0_26_a + ((int32_t)(h0_27_c)) + h0_28_d + h0_30_e + h0_31_f + h0_23_b.h0_2_n;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_26_a + (uint32_t)((int32_t)(h0_27_c)))) + (uint32_t)h0_28_d)) + (uint32_t)h0_30_e)) + (uint32_t)h0_31_f)) + (uint32_t)h0_23_b.h0_2_n);
 }
 
 void h0_1_Box::m_init() {

@@ -1,0 +1,23 @@
+# Hadley 2026-10-20: a float going to a whole number it does not fit stops the
+# program. 127.9 fits in an i8, since its whole part does; 128.0 does not.
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i += 1
+
+    __io_write(__io_stdout(), '\n')
+
+def main : i32
+    let fits : f64 = 127.9
+    let too_large : f64 = 128.0
+
+    if ((fits as i8) as i32) == 127:
+        say("fits")
+
+    return (too_large as i8) as i32

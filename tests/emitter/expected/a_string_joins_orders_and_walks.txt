@@ -8,6 +8,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 struct h1_1_String;
 struct h1_99_StringCursor;
 
+#include <cstdlib>
+
 struct h1_1_String {
     char *h1_2_data;
     int32_t h1_3_size;
@@ -71,6 +73,22 @@ struct h1_99_StringCursor {
 int32_t h0_1_main();
 char h1_96_digits_of(int64_t h1_97_value);
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// Hadley 2026-10-20: a float fits when its whole part does, and a NaN does not
+static double __float_fits(double real, double low, double high) {
+    if (!(real > low - 1.0 && real < high)) {
+        __abort_with("a float that does not fit in the whole number");
+    }
+
+    return real;
+}
+
 
 int32_t h0_1_main() {
     int32_t h0_2_result = 0;
@@ -78,29 +96,29 @@ int32_t h0_1_main() {
     h1_1_String h0_4_b("abd");
     h1_1_String h0_5_c = h0_3_a.m_operator_plus_rn1c1(h0_4_b);
     if (h0_5_c.m_operator_eq_eq_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("abcabd")))) && h0_3_a.m_operator_eq_eq_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("abc")))) && h0_3_a.m_operator_plus_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("-")))).m_operator_plus_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("z")))).m_operator_eq_eq_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("abc-z"))))) {
-        h0_2_result += 1;
+        (uint32_t&)h0_2_result += (uint32_t)1;
     }
     if (h0_3_a.m_operator_lt_rn1c1(h0_4_b) && !(h0_4_b.m_operator_lt_eq_rn1c1(h0_3_a)) && h0_4_b.m_operator_gt_rn1c1(h0_3_a) && h0_3_a.m_operator_gt_eq_rn1c1(h0_3_a) && (h1_1_String("ab")).m_operator_lt_rn1c1(h0_3_a)) {
-        h0_2_result += 2;
+        (uint32_t&)h0_2_result += (uint32_t)2;
     }
     h1_1_String h0_6_high("\377");
     if (h0_3_a.m_operator_lt_rn1c1(h0_6_high)) {
-        h0_2_result += 4;
+        (uint32_t&)h0_2_result += (uint32_t)4;
     }
     if ((h0_5_c.m_contains_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("cab")))) && h0_5_c.m_contains_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("abd")))) && !h0_5_c.m_contains_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("x")))) && h0_5_c.m_contains_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("")))))) {
-        h0_2_result += 8;
+        (uint32_t&)h0_2_result += (uint32_t)8;
     }
     int32_t h0_7_count = 0;
     {
         h1_99_StringCursor h0_9___c0 = h0_3_a.m_iterator();
         while (h0_9___c0.m_has_next()) {
             char &h0_8_ch = h0_9___c0.m_next();
-            h0_8_ch = (char)(h0_8_ch - ('a' - 'A'));
-            h0_7_count += 1;
+            h0_8_ch = (char)((uint32_t)h0_8_ch - (uint32_t)((int32_t)((uint32_t)'a' - (uint32_t)'A')));
+            (uint32_t&)h0_7_count += (uint32_t)1;
         }
     }
     if (h0_7_count == 3 && h0_3_a.m_operator_eq_eq_rn1c1(const_cast<h1_1_String&>(static_cast<const h1_1_String&>(h1_1_String("ABC"))))) {
-        h0_2_result += 16;
+        (uint32_t&)h0_2_result += (uint32_t)16;
     }
     return h0_2_result;
 }
@@ -123,14 +141,14 @@ void h1_1_String::m_init() {
 void h1_1_String::m_init_pb14(char *h1_7_text) {
     this->h1_3_size = 0;
     while (h1_7_text[this->h1_3_size] != '\0') {
-        this->h1_3_size = this->h1_3_size + 1;
+        this->h1_3_size = (int32_t)((uint32_t)this->h1_3_size + (uint32_t)1);
     }
-    this->h1_4_capacity = this->h1_3_size + 1;
+    this->h1_4_capacity = (int32_t)((uint32_t)this->h1_3_size + (uint32_t)1);
     this->h1_2_data = new char[this->h1_4_capacity];
     int32_t h1_8_i = 0;
     while (h1_8_i < this->h1_3_size) {
         this->h1_2_data[h1_8_i] = h1_7_text[h1_8_i];
-        h1_8_i = h1_8_i + 1;
+        h1_8_i = (int32_t)((uint32_t)h1_8_i + (uint32_t)1);
     }
     this->h1_2_data[this->h1_3_size] = '\0';
 }
@@ -142,7 +160,7 @@ void h1_1_String::m_init_rn1c1(h1_1_String &h1_10_other) {
     int32_t h1_11_i = 0;
     while (h1_11_i <= this->h1_3_size) {
         this->h1_2_data[h1_11_i] = h1_10_other.h1_2_data[h1_11_i];
-        h1_11_i = h1_11_i + 1;
+        h1_11_i = (int32_t)((uint32_t)h1_11_i + (uint32_t)1);
     }
 }
 
@@ -168,7 +186,7 @@ bool h1_1_String::m_contains_b14(char h1_17_c) {
         if (this->h1_2_data[h1_18_i] == h1_17_c) {
             return true;
         }
-        h1_18_i = h1_18_i + 1;
+        h1_18_i = (int32_t)((uint32_t)h1_18_i + (uint32_t)1);
     }
     return false;
 }
@@ -181,18 +199,18 @@ char h1_1_String::m_at_b6(int32_t h1_20_i) {
 }
 
 void h1_1_String::m_reserve_b6(int32_t h1_22_wanted) {
-    if (h1_22_wanted + 1 <= this->h1_4_capacity) {
+    if ((int32_t)((uint32_t)h1_22_wanted + (uint32_t)1) <= this->h1_4_capacity) {
         return;
     }
     int32_t h1_23_grown = this->h1_4_capacity;
-    while (h1_23_grown < h1_22_wanted + 1) {
-        h1_23_grown = h1_23_grown * 2;
+    while (h1_23_grown < (int32_t)((uint32_t)h1_22_wanted + (uint32_t)1)) {
+        h1_23_grown = (int32_t)((uint32_t)h1_23_grown * (uint32_t)2);
     }
     char *h1_24_moved = new char[h1_23_grown];
     int32_t h1_25_i = 0;
     while (h1_25_i <= this->h1_3_size) {
         h1_24_moved[h1_25_i] = this->h1_2_data[h1_25_i];
-        h1_25_i = h1_25_i + 1;
+        h1_25_i = (int32_t)((uint32_t)h1_25_i + (uint32_t)1);
     }
     delete[] this->h1_2_data;
     this->h1_2_data = h1_24_moved;
@@ -200,35 +218,35 @@ void h1_1_String::m_reserve_b6(int32_t h1_22_wanted) {
 }
 
 void h1_1_String::m_append_b14(char h1_27_c) {
-    this->m_reserve_b6(this->h1_3_size + 1);
+    this->m_reserve_b6((int32_t)((uint32_t)this->h1_3_size + (uint32_t)1));
     this->h1_2_data[this->h1_3_size] = h1_27_c;
-    this->h1_3_size = this->h1_3_size + 1;
+    this->h1_3_size = (int32_t)((uint32_t)this->h1_3_size + (uint32_t)1);
     this->h1_2_data[this->h1_3_size] = '\0';
 }
 
 void h1_1_String::m_append_pb14(char *h1_29_text) {
     int32_t h1_30_n = 0;
     while (h1_29_text[h1_30_n] != '\0') {
-        h1_30_n = h1_30_n + 1;
+        h1_30_n = (int32_t)((uint32_t)h1_30_n + (uint32_t)1);
     }
-    this->m_reserve_b6(this->h1_3_size + h1_30_n);
+    this->m_reserve_b6((int32_t)((uint32_t)this->h1_3_size + (uint32_t)h1_30_n));
     int32_t h1_31_i = 0;
     while (h1_31_i < h1_30_n) {
-        this->h1_2_data[this->h1_3_size + h1_31_i] = h1_29_text[h1_31_i];
-        h1_31_i = h1_31_i + 1;
+        this->h1_2_data[(int32_t)((uint32_t)this->h1_3_size + (uint32_t)h1_31_i)] = h1_29_text[h1_31_i];
+        h1_31_i = (int32_t)((uint32_t)h1_31_i + (uint32_t)1);
     }
-    this->h1_3_size = this->h1_3_size + h1_30_n;
+    this->h1_3_size = (int32_t)((uint32_t)this->h1_3_size + (uint32_t)h1_30_n);
     this->h1_2_data[this->h1_3_size] = '\0';
 }
 
 void h1_1_String::m_append_rn1c1(h1_1_String &h1_33_other) {
-    this->m_reserve_b6(this->h1_3_size + h1_33_other.h1_3_size);
+    this->m_reserve_b6((int32_t)((uint32_t)this->h1_3_size + (uint32_t)h1_33_other.h1_3_size));
     int32_t h1_34_i = 0;
     while (h1_34_i < h1_33_other.h1_3_size) {
-        this->h1_2_data[this->h1_3_size + h1_34_i] = h1_33_other.h1_2_data[h1_34_i];
-        h1_34_i = h1_34_i + 1;
+        this->h1_2_data[(int32_t)((uint32_t)this->h1_3_size + (uint32_t)h1_34_i)] = h1_33_other.h1_2_data[h1_34_i];
+        h1_34_i = (int32_t)((uint32_t)h1_34_i + (uint32_t)1);
     }
-    this->h1_3_size = this->h1_3_size + h1_33_other.h1_3_size;
+    this->h1_3_size = (int32_t)((uint32_t)this->h1_3_size + (uint32_t)h1_33_other.h1_3_size);
     this->h1_2_data[this->h1_3_size] = '\0';
 }
 
@@ -249,7 +267,7 @@ bool h1_1_String::m_equals_rn1c1(h1_1_String &h1_40_other) {
         if (this->h1_2_data[h1_41_i] != h1_40_other.h1_2_data[h1_41_i]) {
             return false;
         }
-        h1_41_i = h1_41_i + 1;
+        h1_41_i = (int32_t)((uint32_t)h1_41_i + (uint32_t)1);
     }
     return true;
 }
@@ -264,11 +282,11 @@ int32_t h1_1_String::m_compare_rn1c1(h1_1_String &h1_46_other) {
     int32_t h1_47_i = 0;
     while (h1_47_i < this->h1_3_size && h1_47_i < h1_46_other.h1_3_size) {
         if (this->h1_2_data[h1_47_i] != h1_46_other.h1_2_data[h1_47_i]) {
-            return ((int32_t)(((uint8_t)(this->h1_2_data[h1_47_i])))) - ((int32_t)(((uint8_t)(h1_46_other.h1_2_data[h1_47_i]))));
+            return (int32_t)((uint32_t)((int32_t)(((uint8_t)(this->h1_2_data[h1_47_i])))) - (uint32_t)((int32_t)(((uint8_t)(h1_46_other.h1_2_data[h1_47_i])))));
         }
-        h1_47_i = h1_47_i + 1;
+        h1_47_i = (int32_t)((uint32_t)h1_47_i + (uint32_t)1);
     }
-    return this->h1_3_size - h1_46_other.h1_3_size;
+    return (int32_t)((uint32_t)this->h1_3_size - (uint32_t)h1_46_other.h1_3_size);
 }
 
 bool h1_1_String::m_operator_lt_rn1c1(h1_1_String &h1_49_other) {
@@ -289,15 +307,15 @@ bool h1_1_String::m_operator_gt_eq_rn1c1(h1_1_String &h1_55_other) {
 
 bool h1_1_String::m_contains_rn1c1(h1_1_String &h1_57_part) {
     int32_t h1_58_start = 0;
-    while (h1_58_start + h1_57_part.h1_3_size <= this->h1_3_size) {
+    while ((int32_t)((uint32_t)h1_58_start + (uint32_t)h1_57_part.h1_3_size) <= this->h1_3_size) {
         int32_t h1_59_matched = 0;
-        while (h1_59_matched < h1_57_part.h1_3_size && this->h1_2_data[h1_58_start + h1_59_matched] == h1_57_part.h1_2_data[h1_59_matched]) {
-            h1_59_matched = h1_59_matched + 1;
+        while (h1_59_matched < h1_57_part.h1_3_size && this->h1_2_data[(int32_t)((uint32_t)h1_58_start + (uint32_t)h1_59_matched)] == h1_57_part.h1_2_data[h1_59_matched]) {
+            h1_59_matched = (int32_t)((uint32_t)h1_59_matched + (uint32_t)1);
         }
         if (h1_59_matched == h1_57_part.h1_3_size) {
             return true;
         }
-        h1_58_start = h1_58_start + 1;
+        h1_58_start = (int32_t)((uint32_t)h1_58_start + (uint32_t)1);
     }
     return false;
 }
@@ -313,7 +331,7 @@ void h1_1_String::m_append_b7(int64_t h1_63_value) {
     char *h1_64_digits = "0123456789";
     if (h1_63_value < 0) {
         this->m_append_b14('-');
-        this->m_append_b7(0 - h1_63_value);
+        this->m_append_b7((int64_t)((uint64_t)0 - (uint64_t)h1_63_value));
         return;
     }
     if (h1_63_value >= 10) {
@@ -380,7 +398,7 @@ void h1_1_String::m_append_b10(float h1_89_value) {
 }
 
 void h1_1_String::m_append_b11(double h1_91_value) {
-    int64_t h1_92_whole = (int64_t)(h1_91_value);
+    int64_t h1_92_whole = (int64_t)__float_fits(h1_91_value, -9223372036854775808.0, 9223372036854775808.0);
     double h1_93_rest = h1_91_value - ((double)(h1_92_whole));
     if (h1_93_rest < 0.0) {
         h1_93_rest = 0.0 - h1_93_rest;
@@ -393,10 +411,10 @@ void h1_1_String::m_append_b11(double h1_91_value) {
     int32_t h1_94_places = 0;
     while (h1_94_places < 6) {
         h1_93_rest = h1_93_rest * 10.0;
-        int64_t h1_95_digit = (int64_t)(h1_93_rest);
+        int64_t h1_95_digit = (int64_t)__float_fits(h1_93_rest, -9223372036854775808.0, 9223372036854775808.0);
         this->m_append_b14(h1_96_digits_of(h1_95_digit));
         h1_93_rest = h1_93_rest - ((double)(h1_95_digit));
-        h1_94_places = h1_94_places + 1;
+        h1_94_places = (int32_t)((uint32_t)h1_94_places + (uint32_t)1);
     }
 }
 
@@ -440,7 +458,7 @@ bool h1_99_StringCursor::m_has_next() {
 
 char & h1_99_StringCursor::m_next() {
     int32_t h1_105_at = this->h1_101_position;
-    this->h1_101_position = this->h1_101_position + 1;
+    this->h1_101_position = (int32_t)((uint32_t)this->h1_101_position + (uint32_t)1);
     return this->h1_100_held->h1_2_data[h1_105_at];
 }
 

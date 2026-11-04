@@ -8,6 +8,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 struct h0_30_Range;
 struct h0_45_RangeCursor;
 
+#include <cstdlib>
+
 struct h0_30_Range {
     int32_t h0_32_start;
     int32_t h0_33_stop;
@@ -34,9 +36,25 @@ struct h0_45_RangeCursor {
 
 int32_t h0_24_main();
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 3: a zero divisor stops the program, and MIN / -1 is MIN
+static int64_t __div_i(int64_t a, int64_t b) {
+    if (b == 0) {
+        __abort_with("division by zero");
+    }
+
+    return b == -1 ? (int64_t) (0 - (uint64_t) a) : a / b;
+}
+
 
 int32_t h0_24_main() {
-    h0_30_Range h0_25_inclusive = h0_30_Range(0, (4) + 1, 1);
+    h0_30_Range h0_25_inclusive = h0_30_Range(0, ((uint32_t)(4)) + 1, 1);
     h0_30_Range h0_26_exclusive = h0_30_Range(0, 4, 1);
     if (h0_25_inclusive.m_length() != 5 || h0_26_exclusive.m_length() != 4) {
         return 1;
@@ -49,21 +67,21 @@ int32_t h0_24_main() {
         h0_45_RangeCursor h0_53___c0 = h0_25_inclusive.m_iterator();
         while (h0_53___c0.m_has_next()) {
             int32_t h0_28_v = h0_53___c0.m_next();
-            h0_27_total = h0_27_total + h0_28_v;
+            h0_27_total = (int32_t)((uint32_t)h0_27_total + (uint32_t)h0_28_v);
         }
     }
     {
         int32_t h0_54___e1 = 3;
         int32_t h0_29_i = 1;
         bool h0_55___m2 = h0_29_i <= h0_54___e1;
-        int32_t h0_56___d3 = h0_54___e1 - h0_54___e1;
+        int32_t h0_56___d3 = (int32_t)((uint32_t)h0_54___e1 - (uint32_t)h0_54___e1);
         for (; h0_55___m2; h0_55___m2 = h0_29_i < h0_54___e1) {
-            h0_29_i = h0_29_i + h0_56___d3;
+            h0_29_i = (int32_t)((uint32_t)h0_29_i + (uint32_t)h0_56___d3);
             h0_56___d3 = 1;
-            h0_27_total = h0_27_total + h0_29_i;
+            h0_27_total = (int32_t)((uint32_t)h0_27_total + (uint32_t)h0_29_i);
         }
     }
-    return h0_27_total + 26;
+    return (int32_t)((uint32_t)h0_27_total + (uint32_t)26);
 }
 
 void h0_30_Range::m_init() {
@@ -82,11 +100,11 @@ int32_t h0_30_Range::m_length() {
     if (this->h0_33_stop <= this->h0_32_start) {
         return 0;
     }
-    return (int32_t)(((this->h0_33_stop - this->h0_32_start) + (this->h0_34_step - 1)) / this->h0_34_step);
+    return (int32_t)((int32_t)__div_i(((int32_t)((uint32_t)((int32_t)((uint32_t)this->h0_33_stop - (uint32_t)this->h0_32_start)) + (uint32_t)((int32_t)((uint32_t)this->h0_34_step - (uint32_t)1)))), this->h0_34_step));
 }
 
 int32_t h0_30_Range::m_at_b6(int32_t h0_42_i) {
-    return this->h0_32_start + ((int32_t)(h0_42_i)) * this->h0_34_step;
+    return (int32_t)((uint32_t)this->h0_32_start + (uint32_t)((int32_t)((uint32_t)((int32_t)(h0_42_i)) * (uint32_t)this->h0_34_step)));
 }
 
 h0_45_RangeCursor h0_30_Range::m_iterator() {
@@ -118,7 +136,7 @@ bool h0_45_RangeCursor::m_has_next() {
 
 int32_t h0_45_RangeCursor::m_next() {
     int32_t h0_52_at = this->h0_48_position;
-    this->h0_48_position = this->h0_48_position + 1;
+    this->h0_48_position = (int32_t)((uint32_t)this->h0_48_position + (uint32_t)1);
     return this->h0_47_held->m_at_b6(h0_52_at);
 }
 

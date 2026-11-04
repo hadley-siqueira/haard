@@ -7,6 +7,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 
 struct h0_1_Bag;
 
+#include <cstdlib>
+
 struct h0_1_Bag {
     int32_t h0_2_n;
     virtual bool m_contains_b6(int32_t h0_4_value);
@@ -34,15 +36,30 @@ static int64_t __power_i(int64_t base, int64_t exponent) {
     int64_t answer = 1;
 
     for (int64_t i = 0; i < exponent; i++) {
-        answer *= base;
+        answer = (int64_t) ((uint64_t) answer * (uint64_t) base);
     }
 
     return answer;
 }
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
 // record 0057: 'a // b' FLOORS, where C++'s '/' truncates toward zero.
 // The two differ exactly when the signs differ and the division is not exact
 static int64_t __floor_div_i(int64_t a, int64_t b) {
+    if (b == 0) {
+        __abort_with("division by zero");
+    }
+
+    if (b == -1) {
+        return (int64_t) (0 - (uint64_t) a);
+    }
+
     int64_t answer = a / b;
 
     if (a % b != 0 && ((a < 0) != (b < 0))) {
@@ -56,8 +73,8 @@ static int64_t __floor_div_i(int64_t a, int64_t b) {
 int32_t h0_5_main() {
     int32_t h0_6_a = (int32_t)__power_i(2, 5);
     int32_t h0_7_b = (int32_t)__floor_div_i(7, 2);
-    int32_t h0_8_c = (int32_t)__floor_div_i((0 - 7), 2);
-    int32_t h0_9_d = (int32_t)((uint32_t)((0 - 8)) >> 28);
+    int32_t h0_8_c = (int32_t)__floor_div_i(((int32_t)((uint32_t)0 - (uint32_t)7)), 2);
+    int32_t h0_9_d = (int32_t)((uint32_t)((int32_t)((uint32_t)0 - (uint32_t)8)) >> 28);
     h0_1_Bag h0_10_bag;
     h0_10_bag.h0_2_n = 5;
     if (!h0_10_bag.m_contains_b6(5)) {
@@ -66,7 +83,7 @@ int32_t h0_5_main() {
     if (h0_10_bag.m_contains_b6(4)) {
         return 2;
     }
-    return h0_6_a + h0_7_b + h0_8_c + h0_9_d;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_6_a + (uint32_t)h0_7_b)) + (uint32_t)h0_8_c)) + (uint32_t)h0_9_d);
 }
 
 bool h0_1_Bag::m_contains_b6(int32_t h0_4_value) {

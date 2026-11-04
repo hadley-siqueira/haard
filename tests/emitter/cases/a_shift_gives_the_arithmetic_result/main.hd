@@ -1,0 +1,51 @@
+# Record 0083, answer 2: a count at or past the width gives the arithmetic result,
+# and a negative count counts as too large. One bit per line. A count nobody can
+# see at compile time, or a written one would be refused.
+
+def main : i32
+    let one : i32 = 1
+    let minus : i32 = -8
+    let wide : i32 = 32
+    let far : i32 = 100
+    let negative : i32 = -1
+    let byte : i8 = -1
+    let eight : i8 = 8
+    let small : u8 = 200
+    let two : u8 = 2
+    let bits = 0
+
+    if one << wide == 0 and one << far == 0 and one << negative == 0:
+        bits = bits | 1
+
+    # all ones, which is what masking the count would get wrong
+    if (one << wide) - 1 == -1 and one << 31 == -2147483647 - 1:
+        bits = bits | 2
+
+    # the sign fills; an unsigned empties
+    if minus >> wide == -1 and minus >> negative == -1 and one >> wide == 0:
+        bits = bits | 4
+
+    if minus >>> wide == 0 and minus >>> 28 == 15:
+        bits = bits | 8
+
+    # a narrow type shifts at its own width
+    if ((byte >> eight) as i32) == -1 and ((byte >>> eight) as i32) == 0:
+        bits = bits | 16
+
+    if ((small << two) as i32) == 32 and ((small >> two) as i32) == 50:
+        bits = bits | 32
+
+    # in place
+    let c = one
+    c <<= wide
+    let d = minus
+    d >>= far
+    let e = minus
+    e >>>= negative
+    let f = one
+    f <<= 4
+
+    if c == 0 and d == -1 and e == 0 and f == 16:
+        bits = bits | 64
+
+    return bits - 127

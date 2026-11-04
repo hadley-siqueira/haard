@@ -1,5 +1,7 @@
 #include <haard/ast_query/ast_query.h>
 #include <haard/emitter/emitter.h>
+#include <cmath>
+#include <cstdio>
 
 using namespace haard;
 
@@ -42,6 +44,29 @@ static const char* unsigned_twin(u32 which) {
     return nullptr;
 }
 
+// Record 0083. What 'a + b' is computed in so that it wraps: C++ leaves a signed
+// overflow undefined and an unsigned one defined. Anything narrower than an int
+// is promoted to a signed int first, where two u16 can overflow, so those go
+// through uint32_t too. None for the three already computed in a type that wraps
+static const char* wrapping_type(u32 which) {
+    switch (which) {
+    case BUILTIN_U8: case BUILTIN_U16: case BUILTIN_I8: case BUILTIN_I16:
+    case BUILTIN_I32: case BUILTIN_CHAR:
+        return "uint32_t";
+    case BUILTIN_I64: return "uint64_t";
+    case BUILTIN_ISIZE: return "uintptr_t";
+    default: break;
+    }
+
+    return nullptr;
+}
+
+// the three whose own storage has to be written as unsigned: a narrower one is
+// computed in an int and converted back on the way in, which is already defined
+static bool is_written_through_its_twin(u32 which) {
+    return which == BUILTIN_I32 || which == BUILTIN_I64 || which == BUILTIN_ISIZE;
+}
+
 static bool is_an_unsigned_whole_number(u32 which) {
     return which != BUILTIN_COUNT && is_a_whole_number((BuiltinType) which)
            && !is_signed((BuiltinType) which);
@@ -53,10 +78,11 @@ Emitter::Emitter() {
     needs_power_signed = false;
     needs_power_unsigned = false;
     needs_power_floating = false;
-    needs_floor_division = false;
     needs_floor_division_floating = false;
     needs_move_tag = false;
     needs_abort = false;
+    needs_index = false;
+    needs_float_fit = false;
     self = "this";
     method_holder = 0;
     returning = INVALID_TYPE;
@@ -122,8 +148,11 @@ bool Emitter::emit(std::ostream& stream) {
     tuples_written.clear();
     tuples_writing.clear();
     compound_helpers.clear();
+    reached_helpers.clear();
     needs_move_tag = false;
     needs_abort = false;
+    needs_index = false;
+    needs_float_fit = false;
     self = "this";
     method_holder = 0;
     returning = INVALID_TYPE;
@@ -193,10 +222,13 @@ bool Emitter::emit(std::ostream& stream) {
     // constants: what calls a function value and what a closure captures
     // needs only the types, and a closure's body may name a constant
     // the tag a move 'init' is told apart by, when the program wrote one
+    // first, since it decides whether <cstdlib> is needed
+    std::string arithmetic = emit_arithmetic_helpers();
+
     out << forward << (needs_abort ? "#include <cstdlib>\n\n" : "")
         << (needs_move_tag ? "struct __haard_move {};\n\n" : "")
         << functions.str() << head << callables.str()
-        << emit_symbol_table() << emit_arithmetic_helpers() << constants.str()
+        << emit_symbol_table() << arithmetic << constants.str()
         << closure_bodies.str() << body;
 
     if (error.size() > 0) {
@@ -2042,6 +2074,13 @@ std::string Emitter::native_body(u32 module_index, u32 node) {
 
     // the one way a program stops on its own, Hadley 2026-10-07: what was
     // printed goes out first, since abort() flushes nothing
+    // Record 0083, answer 9: what a container's own 'operator[]' asks
+    if (name == "__check_index") {
+        needs_index = true;
+        return "__index(" + name_at_param(module_index, params[0]) + ", "
+             + name_at_param(module_index, params[1]) + ");";
+    }
+
     if (name == "__abort") {
         needs_abort = true;
         return "fflush(stdout); fflush(stderr); abort();";
@@ -3229,7 +3268,21 @@ void Emitter::emit_expression(u32 module, u32 node) {
 
         emit_operand(module, child_of(module, node, 0), 2);
         out << "[";
-        emit_expression(module, child_of(module, node, 1));
+
+        // answer 9: a fixed array knows its length, and a raw pointer is the
+        // unchecked way out
+        if (is_a_fixed_array(module, child_of(module, node, 0))) {
+            needs_index = true;
+            out << "__index(";
+            emit_expression(module, child_of(module, node, 1));
+            out << ", " << compilation->get_module(module)->get_types()
+                               ->get_type(types_value(
+                                   module, child_of(module, node, 0)))
+                               ->subject
+                << ")";
+        } else {
+            emit_expression(module, child_of(module, node, 1));
+        }
         out << "]";
         return;
 
@@ -3242,28 +3295,28 @@ void Emitter::emit_expression(u32 module, u32 node) {
 
         emit_binary(module, node, "=");
         return;
-    case AST_PLUS_ASSIGNMENT: emit_binary(module, node, "+="); return;
-    case AST_MINUS_ASSIGNMENT: emit_binary(module, node, "-="); return;
-    case AST_TIMES_ASSIGNMENT: emit_binary(module, node, "*="); return;
-    case AST_DIVISION_ASSIGNMENT: emit_binary(module, node, "/="); return;
-    case AST_MODULO_ASSIGNMENT: emit_binary(module, node, "%="); return;
+    case AST_PLUS_ASSIGNMENT: emit_wrapping_compound(module, node, "+="); return;
+    case AST_MINUS_ASSIGNMENT: emit_wrapping_compound(module, node, "-="); return;
+    case AST_TIMES_ASSIGNMENT: emit_wrapping_compound(module, node, "*="); return;
+    case AST_DIVISION_ASSIGNMENT: emit_compound(module, node, "/"); return;
+    case AST_MODULO_ASSIGNMENT: emit_compound(module, node, "%"); return;
     case AST_BITWISE_AND_ASSIGNMENT: emit_binary(module, node, "&="); return;
     case AST_BITWISE_OR_ASSIGNMENT: emit_binary(module, node, "|="); return;
     case AST_BITWISE_XOR_ASSIGNMENT: emit_binary(module, node, "^="); return;
     case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT:
-        emit_binary(module, node, "<<="); return;
+        emit_compound(module, node, "<<"); return;
     case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
-        emit_binary(module, node, ">>="); return;
+        emit_compound(module, node, ">>"); return;
     case AST_INTEGER_DIVISION_ASSIGNMENT:
-        emit_compound(module, node, false); return;
+        emit_compound(module, node, "//"); return;
     case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
-        emit_compound(module, node, true); return;
+        emit_compound(module, node, ">>>"); return;
 
-    case AST_PLUS: emit_binary(module, node, "+"); return;
-    case AST_MINUS: emit_binary(module, node, "-"); return;
-    case AST_TIMES: emit_binary(module, node, "*"); return;
-    case AST_DIVISION: emit_binary(module, node, "/"); return;
-    case AST_MODULO: emit_binary(module, node, "%"); return;
+    case AST_PLUS: emit_wrapping(module, node, "+"); return;
+    case AST_MINUS: emit_wrapping(module, node, "-"); return;
+    case AST_TIMES: emit_wrapping(module, node, "*"); return;
+    case AST_DIVISION: emit_division(module, node, "/"); return;
+    case AST_MODULO: emit_division(module, node, "%"); return;
 
     // Record 0057's three: an operator Haard has and C++ has not. Each is a
     // call to a helper written above the program, or -- where C++'s own
@@ -3277,7 +3330,7 @@ void Emitter::emit_expression(u32 module, u32 node) {
     case AST_INTEGER_DIVISION: emit_floor_division(module, node); return;
 
     case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
-        emit_unsigned_shift(module, node);
+        emit_shift(module, node, ">>>");
         return;
 
     // both spellings of each, because the tree keeps them apart and C++ has
@@ -3313,12 +3366,12 @@ void Emitter::emit_expression(u32 module, u32 node) {
     case AST_BITWISE_AND: emit_binary(module, node, "&"); return;
     case AST_BITWISE_OR: emit_binary(module, node, "|"); return;
     case AST_BITWISE_XOR: emit_binary(module, node, "^"); return;
-    case AST_BITWISE_LEFT_SHIFT: emit_binary(module, node, "<<"); return;
-    case AST_BITWISE_RIGHT_SHIFT: emit_binary(module, node, ">>"); return;
+    case AST_BITWISE_LEFT_SHIFT: emit_shift(module, node, "<<"); return;
+    case AST_BITWISE_RIGHT_SHIFT: emit_shift(module, node, ">>"); return;
 
-    case AST_UNARY_MINUS: emit_unary(module, node, "-"); return;
+    case AST_UNARY_MINUS: emit_sign(module, node, "-"); return;
     case AST_UNARY_PLUS: emit_unary(module, node, "+"); return;
-    case AST_BITWISE_NOT: emit_unary(module, node, "~"); return;
+    case AST_BITWISE_NOT: emit_sign(module, node, "~"); return;
     case AST_ADDRESS_OF: emit_unary(module, node, "&"); return;
 
     // '&&x' is what C++'s 'std::move(x)' is, written as the cast that one is
@@ -3332,10 +3385,10 @@ void Emitter::emit_expression(u32 module, u32 node) {
         out << ")";
         return;
     case AST_DEREFERENCE: emit_unary(module, node, "*"); return;
-    case AST_PRE_INCREMENT: emit_unary(module, node, "++"); return;
-    case AST_PRE_DECREMENT: emit_unary(module, node, "--"); return;
-    case AST_POST_INCREMENT: emit_postfix(module, node, "++"); return;
-    case AST_POST_DECREMENT: emit_postfix(module, node, "--"); return;
+    case AST_PRE_INCREMENT: emit_step(module, node, "++", false); return;
+    case AST_PRE_DECREMENT: emit_step(module, node, "--", false); return;
+    case AST_POST_INCREMENT: emit_step(module, node, "++", true); return;
+    case AST_POST_DECREMENT: emit_step(module, node, "--", true); return;
 
     case AST_SIZEOF:
         out << "sizeof(" << type_name(module, type_at(module,
@@ -3343,6 +3396,10 @@ void Emitter::emit_expression(u32 module, u32 node) {
         return;
 
     case AST_CAST:
+        if (emit_float_to_whole(module, node, child_of(module, node, 0))) {
+            return;
+        }
+
         out << "(" << type_name(module, type_at(module, node)) << ")(";
         emit_expression(module, child_of(module, node, 0));
         out << ")";
@@ -3368,9 +3425,18 @@ void Emitter::emit_expression(u32 module, u32 node) {
         out << ", ";
 
         if (kind_of(module, node) == AST_INCLUSIVE_RANGE) {
+            const char* twin =
+                wrapping_type(builtin_of(module, child_of(module, node, 1)));
+
+            out << "(";
+
+            if (twin != nullptr) {
+                out << "(" << twin << ")";
+            }
+
             out << "(";
             emit_expression(module, child_of(module, node, 1));
-            out << ") + 1";
+            out << ")) + 1";
         } else {
             emit_expression(module, child_of(module, node, 1));
         }
@@ -3640,17 +3706,6 @@ void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
         return;
     }
 
-    // Record 0081: C++ computes a char's arithmetic in an int, so '(c - 1) as
-    // i32' with c at a zero byte read -1 where Haard's eight bits say 255. The
-    // cast is what wraps it. Only these five: an assignment's value is its
-    // left side already, and the rest give back a bool
-    bool wraps = oper.size() == 1 && oper.find_first_of("+-*/%") == 0
-                 && builtin_of(module, node) == BUILTIN_CHAR;
-
-    if (wraps) {
-        out << "(char)(";
-    }
-
     int level = precedence_of(module, node);
 
     // every binary operator C++ has is left associative except the
@@ -3663,10 +3718,247 @@ void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
     out << " " << oper << " ";
     emit_operand(module, child_of(module, node, 1),
                  to_the_right ? level : level - 1);
+}
 
-    if (wraps) {
-        out << ")";
+// Hadley 2026-10-20: a float going to a whole number it does not fit, or a NaN,
+// stops the program, where a C++ cast is undefined. Written as the interpreter
+// reads it: the two bounds of the type, as doubles
+bool Emitter::emit_float_to_whole(u32 module, u32 node, u32 operand) {
+    u32 from = builtin_of(module, operand);
+    u32 to = builtin_of(module, node);
+
+    if ((from != BUILTIN_F32 && from != BUILTIN_F64)
+        || (to != BUILTIN_CHAR
+            && (to == BUILTIN_COUNT || !is_a_whole_number((BuiltinType) to)))) {
+        return false;
     }
+
+    u32 width = bits_of((BuiltinType) to);
+    bool sign = to != BUILTIN_CHAR && is_signed((BuiltinType) to);
+    char low[64];
+    char high[64];
+
+    snprintf(low, sizeof low, "%.1f", sign ? -std::ldexp(1.0, width - 1) : 0.0);
+    snprintf(high, sizeof high, "%.1f", std::ldexp(1.0, sign ? width - 1 : width));
+
+    needs_float_fit = true;
+    out << "(" << type_name(module, type_at(module, node)) << ")__float_fits(";
+    emit_expression(module, operand);
+    out << ", " << low << ", " << high << ")";
+
+    return true;
+}
+
+// Record 0083, answer 1: '+', '-' and '*' on a whole number wrap, and a 'char'
+// wraps at its eight bits (record 0081)
+void Emitter::emit_wrapping(u32 module, u32 node, const std::string& oper) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    const char* twin = wrapping_type(builtin_of(module, node));
+
+    // 'q - p' is an i64 and two pointers, and C++ counts it in elements
+    if (twin == nullptr || is_pointer(module, child_of(module, node, 0))) {
+        emit_binary(module, node, oper);
+        return;
+    }
+
+    out << "(" << type_name(module, type_at(module, node)) << ")((" << twin
+        << ")";
+    emit_operand(module, child_of(module, node, 0), 3);
+    out << " " << oper << " (" << twin << ")";
+    emit_operand(module, child_of(module, node, 1), 3);
+    out << ")";
+}
+
+// 'a += b'. The place is written once and in place, so 'xs[next()] += 1' calls
+// 'next' once
+void Emitter::emit_wrapping_compound(u32 module, u32 node,
+                                     const std::string& oper) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    u32 which = builtin_of(module, child_of(module, node, 0));
+    const char* twin = wrapping_type(which);
+
+    if (twin == nullptr) {
+        emit_binary(module, node, oper);
+        return;
+    }
+
+    if (is_written_through_its_twin(which)) {
+        out << "(" << twin << "&)";
+    }
+
+    emit_operand(module, child_of(module, node, 0), 3);
+    out << " " << oper << " (" << twin << ")";
+    emit_operand(module, child_of(module, node, 1), 3);
+}
+
+// '++x' and 'x++', whose value is read as the type it was
+void Emitter::emit_step(u32 module, u32 node, const std::string& oper,
+                        bool postfix) {
+    u32 place = child_of(module, node, 0);
+    u32 which = builtin_of(module, place);
+
+    if (!is_written_through_its_twin(which)) {
+        if (postfix) {
+            emit_postfix(module, node, oper);
+        } else {
+            emit_unary(module, node, oper);
+        }
+
+        return;
+    }
+
+    out << "(" << type_name(module, types_value(module, place)) << ")";
+
+    if (postfix) {
+        out << "((" << wrapping_type(which) << "&)";
+        emit_operand(module, place, 3);
+        out << ")" << oper;
+    } else {
+        out << oper << "(" << wrapping_type(which) << "&)";
+        emit_operand(module, place, 3);
+    }
+}
+
+// '-x' wraps, so the lowest value is its own negative; a written '-5' is C++'s.
+// '~x' over a narrow type is computed in an int and cut back to its width
+void Emitter::emit_sign(u32 module, u32 node, const std::string& oper) {
+    u32 operand = child_of(module, node, 0);
+    u32 which = builtin_of(module, node);
+    const char* twin = wrapping_type(which);
+
+    if (oper == "-" && twin != nullptr
+        && kind_of(module, operand) != AST_INTEGER_LITERAL) {
+        out << "(" << type_name(module, type_at(module, node)) << ")(-(" << twin
+            << ")";
+        emit_operand(module, operand, 3);
+        out << ")";
+        return;
+    }
+
+    if (oper == "~" && twin != nullptr && bits_of((BuiltinType) which) < 32) {
+        out << "(" << type_name(module, type_at(module, node)) << ")(";
+        emit_unary(module, node, oper);
+        out << ")";
+        return;
+    }
+
+    emit_unary(module, node, oper);
+}
+
+// Record 0083, answer 3. A written divisor is not zero, the front end having
+// refused it, and not -1, which is a sign and a literal; so it is C++'s own
+// operator. Everything else asks a helper, which works in the widest of its
+// family and is cast back: MIN / -1 of an i32 is 2147483648 there, and MIN again
+void Emitter::emit_division(u32 module, u32 node, const std::string& oper) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    u32 which = builtin_of(module, node);
+    bool whole = which == BUILTIN_CHAR
+                 || (which != BUILTIN_COUNT
+                     && is_a_whole_number((BuiltinType) which));
+
+    if (!whole
+        || kind_of(module, child_of(module, node, 1)) == AST_INTEGER_LITERAL) {
+        emit_binary(module, node, oper);
+        return;
+    }
+
+    out << "(" << type_name(module, type_at(module, node)) << ")"
+        << arithmetic_helper(which, oper) << "(";
+    emit_expression(module, child_of(module, node, 0));
+    out << ", ";
+    emit_expression(module, child_of(module, node, 1));
+    out << ")";
+}
+
+// The helper of an operator over a whole number, marked as reached
+std::string Emitter::arithmetic_helper(u32 which, const std::string& oper) {
+    bool sign = which != BUILTIN_CHAR && is_signed((BuiltinType) which);
+    std::string helper;
+
+    if (oper == "/") {
+        helper = sign ? "__div_i" : "__div_u";
+    } else if (oper == "%") {
+        helper = sign ? "__rem_i" : "__rem_u";
+    } else if (oper == "//") {
+        helper = sign ? "__floor_div_i" : "__div_u";
+    } else if (oper == "<<") {
+        helper = "__shl";
+    } else if (oper == ">>") {
+        helper = sign ? "__shr_i" : "__shr_u";
+    } else {
+        helper = "__shr_u";
+    }
+
+    reached_helpers.insert(helper);
+    return helper;
+}
+
+// Record 0083, answer 2: a count at or past the width gives the arithmetic
+// result, and a negative one counts as too large. A written count fits, the
+// front end having refused the others, so it needs no test. '>>>' fills with
+// zeroes where '>>' keeps the sign, which is Java's pair, so over a signed number
+// it is a shift through the unsigned of the same width
+void Emitter::emit_shift(u32 module, u32 node, const std::string& oper) {
+    if (emit_operator(module, node)) {
+        return;
+    }
+
+    u32 which = builtin_of(module, node);
+
+    if (which == BUILTIN_COUNT || !is_a_whole_number((BuiltinType) which)) {
+        if (oper == ">>>") {
+            fail("'>>>' shifts a whole number, and this is not one");
+            return;
+        }
+
+        emit_binary(module, node, oper);
+        return;
+    }
+
+    std::string own = type_name(module, type_at(module, node));
+    u32 left = child_of(module, node, 0);
+    u32 right = child_of(module, node, 1);
+    bool sign = is_signed((BuiltinType) which);
+
+    if (kind_of(module, right) != AST_INTEGER_LITERAL) {
+        out << "(" << own << ")" << arithmetic_helper(which, oper) << "(";
+
+        if (oper == ">>>" && sign) {
+            out << "(" << unsigned_twin(which) << ")";
+            emit_operand(module, left, 3);
+        } else {
+            emit_expression(module, left);
+        }
+
+        out << ", ";
+        emit_expression(module, right);
+        out << ")";
+        return;
+    }
+
+    const char* through = oper == "<<" ? wrapping_type(which)
+                          : oper == ">>>" && sign ? unsigned_twin(which)
+                                                  : nullptr;
+
+    if (through == nullptr) {
+        emit_binary(module, node, oper == ">>>" ? ">>" : oper);
+        return;
+    }
+
+    out << "(" << own << ")((" << through << ")";
+    emit_operand(module, left, 3);
+    out << " " << (oper == ">>>" ? ">>" : oper) << " ";
+    emit_operand(module, right, 6);
+    out << ")";
 }
 
 void Emitter::emit_membership(u32 module_index, u32 node, bool negated) {
@@ -3708,14 +4000,27 @@ u32 Emitter::builtin_of(u32 module_index, u32 node) {
         return BUILTIN_COUNT;
     }
 
-    Type* entry = compilation->get_module(module_index)->get_types()
-                      ->get_type(type);
+    // a reference is the thing it names, so 'r += 1' asks about what 'r' names
+    TypeTable* types = compilation->get_module(module_index)->get_types();
+    Type* entry = types->get_type(types->value_of(type));
 
     if (entry->kind != TYPE_BUILTIN) {
         return BUILTIN_COUNT;
     }
 
     return entry->subject;
+}
+
+bool Emitter::is_a_fixed_array(u32 module_index, u32 node) {
+    return type_at(module_index, node) != INVALID_TYPE
+           && compilation->get_module(module_index)->get_types()
+                      ->get_type(types_value(module_index, node))->kind
+                  == TYPE_ARRAY;
+}
+
+u32 Emitter::types_value(u32 module_index, u32 node) {
+    return compilation->get_module(module_index)->get_types()->value_of(
+        type_at(module_index, node));
 }
 
 // 'a ** b'. C++ has no operator for it, so what comes out is a call, and the
@@ -3773,7 +4078,7 @@ void Emitter::emit_floor_division(u32 module, u32 node) {
     }
 
     if (is_an_unsigned_whole_number(which)) {
-        emit_binary(module, node, "/");
+        emit_division(module, node, "/");
         return;
     }
 
@@ -3784,7 +4089,7 @@ void Emitter::emit_floor_division(u32 module, u32 node) {
         needs_floor_division_floating = true;
     } else if (is_a_whole_number((BuiltinType) which)) {
         helper = "__floor_div_i";
-        needs_floor_division = true;
+        reached_helpers.insert(helper);
     } else {
         fail("'//' divides a number, and this is " + type_name(module,
                                                       type_at(module, node)));
@@ -3796,38 +4101,6 @@ void Emitter::emit_floor_division(u32 module, u32 node) {
     emit_expression(module, child_of(module, node, 0));
     out << ", ";
     emit_expression(module, child_of(module, node, 1));
-    out << ")";
-}
-
-// '>>>' fills with zeroes where '>>' keeps the sign, which is Java's pair.
-// C++ has only the one operator and what it does is the operand's own
-// business, so the zero filling one is a shift through an unsigned of the
-// same width -- and over a type that is already unsigned it IS '>>'
-void Emitter::emit_unsigned_shift(u32 module, u32 node) {
-    if (emit_operator(module, node)) {
-        return;
-    }
-
-    u32 which = builtin_of(module, node);
-
-    if (which == BUILTIN_COUNT
-        || !is_a_whole_number((BuiltinType) which)) {
-        fail("'>>>' shifts a whole number, and this is not one");
-        return;
-    }
-
-    if (!is_signed((BuiltinType) which)) {
-        emit_binary(module, node, ">>");
-        return;
-    }
-
-
-    std::string own = type_name(module, type_at(module, node));
-
-    out << "(" << own << ")((" << unsigned_twin(which) << ")(";
-    emit_expression(module, child_of(module, node, 0));
-    out << ") >> ";
-    emit_operand(module, child_of(module, node, 1), 6);
     out << ")";
 }
 
@@ -5314,7 +5587,7 @@ std::string Emitter::emit_arithmetic_helpers() {
                "    int64_t answer = 1;\n"
                "\n"
                "    for (int64_t i = 0; i < exponent; i++) {\n"
-               "        answer *= base;\n"
+               "        answer = (int64_t) ((uint64_t) answer * (uint64_t) base);\n"
                "    }\n"
                "\n"
                "    return answer;\n"
@@ -5342,21 +5615,7 @@ std::string Emitter::emit_arithmetic_helpers() {
                "}\n\n";
     }
 
-    if (needs_floor_division) {
-        out += "// record 0057: 'a // b' FLOORS, where C++'s '/' truncates "
-               "toward zero.\n"
-               "// The two differ exactly when the signs differ and the "
-               "division is not exact\n"
-               "static int64_t __floor_div_i(int64_t a, int64_t b) {\n"
-               "    int64_t answer = a / b;\n"
-               "\n"
-               "    if (a % b != 0 && ((a < 0) != (b < 0))) {\n"
-               "        answer--;\n"
-               "    }\n"
-               "\n"
-               "    return answer;\n"
-               "}\n\n";
-    }
+    out += emit_checked_helpers();
 
     if (needs_floor_division_floating) {
         out += "// the same over a float, which is the floor of the "
@@ -5375,76 +5634,213 @@ std::string Emitter::emit_arithmetic_helpers() {
     return out;
 }
 
-// 'x //= b' and 'x >>>= b'. The two operators behind them are calls, so the
-// compound form cannot be C++'s own -- and 'x = f(x, b)' would evaluate the
-// place twice, which 'xs[next()] //= 2' would notice. So the place is handed
-// over by its address, once, to a helper written per type that does the
-// operation and the store. Where the plain operator is C++'s own -- '//' over
-// an unsigned, '>>>' over an unsigned -- so is the compound form
-void Emitter::emit_compound(u32 module, u32 node, bool shift) {
+// Record 0083. The arithmetic C++ leaves undefined and Haard does not, written
+// only when a program reached it, and everything that stops the program goes
+// through one function, so what was printed has gone out first
+std::string Emitter::emit_checked_helpers() {
+    std::string out;
+    bool stops = needs_float_fit || needs_index;
+
+    for (const char* one : {"__div_i", "__div_u", "__rem_i", "__rem_u",
+                            "__floor_div_i"}) {
+        stops = stops || reached_helpers.count(one) > 0;
+    }
+
+    if (stops) {
+        needs_abort = true;
+        out += "[[noreturn]] static void __abort_with(const char* message) {\n"
+               "    fflush(stdout);\n"
+               "    fprintf(stderr, \"%s\\n\", message);\n"
+               "    fflush(stderr);\n"
+               "    abort();\n"
+               "}\n\n";
+    }
+
+    if (needs_index) {
+        out += "// answer 9: every index of a fixed array, and what a container's "
+               "own\n// operator[] asks. A negative one is a very large one\n"
+               "static int64_t __index(int64_t index, int64_t length) {\n"
+               "    if ((uint64_t) index >= (uint64_t) length) {\n"
+               "        char message[80];\n\n"
+               "        snprintf(message, sizeof message, \"index %lld out of "
+               "range for length %lld\",\n"
+               "                 (long long) index, (long long) length);\n"
+               "        __abort_with(message);\n"
+               "    }\n\n"
+               "    return index;\n"
+               "}\n\n";
+    }
+
+    if (needs_float_fit) {
+        out += "// Hadley 2026-10-20: a float fits when its whole part does, "
+               "and a NaN does not\n"
+               "static double __float_fits(double real, double low, double high) "
+               "{\n"
+               "    if (!(real > low - 1.0 && real < high)) {\n"
+               "        __abort_with(\"a float that does not fit in the whole "
+               "number\");\n"
+               "    }\n\n"
+               "    return real;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__div_i")) {
+        out += "// answer 3: a zero divisor stops the program, and MIN / -1 is "
+               "MIN\n"
+               "static int64_t __div_i(int64_t a, int64_t b) {\n"
+               "    if (b == 0) {\n"
+               "        __abort_with(\"division by zero\");\n"
+               "    }\n\n"
+               "    return b == -1 ? (int64_t) (0 - (uint64_t) a) : a / b;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__rem_i")) {
+        out += "static int64_t __rem_i(int64_t a, int64_t b) {\n"
+               "    if (b == 0) {\n"
+               "        __abort_with(\"division by zero\");\n"
+               "    }\n\n"
+               "    return b == -1 ? 0 : a % b;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__div_u")) {
+        out += "static uint64_t __div_u(uint64_t a, uint64_t b) {\n"
+               "    if (b == 0) {\n"
+               "        __abort_with(\"division by zero\");\n"
+               "    }\n\n"
+               "    return a / b;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__rem_u")) {
+        out += "static uint64_t __rem_u(uint64_t a, uint64_t b) {\n"
+               "    if (b == 0) {\n"
+               "        __abort_with(\"division by zero\");\n"
+               "    }\n\n"
+               "    return a % b;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__floor_div_i")) {
+        out += "// record 0057: 'a // b' FLOORS, where C++'s '/' truncates toward "
+               "zero.\n"
+               "// The two differ exactly when the signs differ and the division "
+               "is not exact\n"
+               "static int64_t __floor_div_i(int64_t a, int64_t b) {\n"
+               "    if (b == 0) {\n"
+               "        __abort_with(\"division by zero\");\n"
+               "    }\n\n"
+               "    if (b == -1) {\n"
+               "        return (int64_t) (0 - (uint64_t) a);\n"
+               "    }\n\n"
+               "    int64_t answer = a / b;\n"
+               "\n"
+               "    if (a % b != 0 && ((a < 0) != (b < 0))) {\n"
+               "        answer--;\n"
+               "    }\n"
+               "\n"
+               "    return answer;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__shl")) {
+        out += "// answer 2: a count at or past the width gives the arithmetic "
+               "result, and a\n// negative one counts as too large. Casting "
+               "back cuts what passed the width\n"
+               "static uint64_t __shl(uint64_t value, int64_t count) {\n"
+               "    return count < 0 || count >= 64 ? 0 : value << count;\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__shr_i")) {
+        out += "static int64_t __shr_i(int64_t value, int64_t count) {\n"
+               "    return value >> (count < 0 || count >= 64 ? 63 : count);\n"
+               "}\n\n";
+    }
+
+    if (reached_helpers.count("__shr_u")) {
+        out += "static uint64_t __shr_u(uint64_t value, int64_t count) {\n"
+               "    return count < 0 || count >= 64 ? 0 : value >> count;\n"
+               "}\n\n";
+    }
+
+    return out;
+}
+
+// 'x //= b', 'x /= b', 'x %= b' and the three shifts. The operators behind them
+// are calls, so the compound form cannot be C++'s own -- and 'x = f(x, b)' would
+// evaluate the place twice, which 'xs[next()] //= 2' would notice. So the place
+// is handed over by its address, once, to a helper written per type that does
+// the operation and the store
+void Emitter::emit_compound(u32 module, u32 node, const std::string& oper) {
     if (emit_operator(module, node)) {
         return;
     }
 
     // an assignment is typed by what it writes: the place on its left
     u32 place = child_of(module, node, 0);
+    u32 right = child_of(module, node, 1);
     u32 which = builtin_of(module, place);
-    std::string own;
-    std::string body;
+    bool shift = oper == "<<" || oper == ">>" || oper == ">>>";
+    bool floating = which == BUILTIN_F32 || which == BUILTIN_F64;
+    bool whole = which != BUILTIN_COUNT
+                 && is_a_whole_number((BuiltinType) which);
 
-    if (shift) {
-        if (which == BUILTIN_COUNT
-            || !is_a_whole_number((BuiltinType) which)) {
-            fail("'>>>=' shifts a whole number, and this is not one");
+    // what C++'s own form already means: a float's '/', '%' on whatever else
+    // reached here, and a written divisor, which is not zero and not -1
+    bool has_a_helper = whole || (which == BUILTIN_CHAR && !shift)
+                        || (floating && oper == "//");
+
+    if (!has_a_helper) {
+        // C++ has no such operator, and '//=' would open a comment
+        if (oper == "//" || oper == ">>>") {
+            fail("'" + oper + "=' is not defined on this type");
             return;
         }
 
-        if (!is_signed((BuiltinType) which)) {
-            emit_binary(module, node, ">>=");
-            return;
-        }
-
-        own = type_name(module, type_at(module, place));
-        body = "    *place = (" + own + ")((" + unsigned_twin(which)
-               + ")*place >> by);\n";
-    } else {
-        if (which == BUILTIN_COUNT) {
-            fail("a '//=' whose type was never worked out");
-            return;
-        }
-
-        if (is_an_unsigned_whole_number(which)) {
-            emit_binary(module, node, "/=");
-            return;
-        }
-
-        own = type_name(module, type_at(module, place));
-
-        if (which == BUILTIN_F32 || which == BUILTIN_F64) {
-            needs_floor_division_floating = true;
-            body = "    *place = (" + own + ")__floor_div_f(*place, by);\n";
-        } else if (is_a_whole_number((BuiltinType) which)) {
-            needs_floor_division = true;
-            body = "    *place = (" + own + ")__floor_div_i(*place, by);\n";
-        } else {
-            fail("'//=' divides a number, and this is " + own);
-            return;
-        }
+        emit_binary(module, node, oper + "=");
+        return;
     }
 
-    std::string helper = (shift ? "__shift_assign_" : "__floor_div_assign_")
-                         + own;
+    if ((oper == "/" || oper == "%")
+        && kind_of(module, right) == AST_INTEGER_LITERAL) {
+        emit_binary(module, node, oper + "=");
+        return;
+    }
+
+    std::string own = type_name(module, types_value(module, place));
+    std::string call;
+
+    if (floating) {
+        needs_floor_division_floating = true;
+        call = "__floor_div_f(*place, by)";
+    } else if (oper == ">>>" && is_signed((BuiltinType) which)) {
+        call = arithmetic_helper(which, oper) + "((" + unsigned_twin(which)
+               + ")*place, by)";
+    } else {
+        call = arithmetic_helper(which, oper) + "(*place, by)";
+    }
+
+    std::string name = oper == "//"   ? "floor_div"
+                       : oper == "/"  ? "div"
+                       : oper == "%"  ? "rem"
+                       : oper == "<<" ? "shl"
+                       : oper == ">>" ? "shr"
+                                      : "ushr";
+    std::string helper = "__assign_" + name + "_" + own;
 
     if (compound_helpers.count(helper) == 0) {
         compound_helpers[helper] =
             "static " + own + " " + helper + "(" + own + "* place, " + own
-            + " by) {\n" + body + "    return *place;\n}\n\n";
+            + " by) {\n    *place = (" + own + ")" + call
+            + ";\n    return *place;\n}\n\n";
     }
 
     out << helper << "(&";
     emit_operand(module, place, 3);
     out << ", ";
-    emit_expression(module, child_of(module, node, 1));
+    emit_expression(module, right);
     out << ")";
 }
 

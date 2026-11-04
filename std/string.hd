@@ -9,6 +9,8 @@
 # The bytes are kept with a '\0' after them, so 'text()' hands back something
 # the IO layer can walk. That terminator is not counted in 'size'.
 
+import std.low_io
+
 class String:
     data : char*
     size : i32
@@ -89,6 +91,14 @@ class String:
         return false
 
     # '\0' for an index nobody has, which is what the terminator already means
+    # Record 0083: 's[i]' stops the program out of range, as an Array's does. 'at'
+    # below is the one that gives '\0' instead
+    def operator[] : char&
+        @i : i32
+
+        __check_index(i, size)
+        return data[i]
+
     def at : char
         @i : i32
 

@@ -125,6 +125,12 @@ int main(int argc, char* argv[]) {
     IrRunResult ran = interpreter.run_main(main_function, {"main"});
     std::string printed = output.str();
 
+    // the C++ path writes why it stopped on stderr, and a golden holds both.
+    // '__abort' gives no reason
+    if (ran.kind == IR_RUN_ABORT && ran.message != "__abort") {
+        printed += ran.message;
+    }
+
     // as the shell's $(...) keeps it: without its trailing newlines
     while (printed.size() > 0 && printed.back() == '\n') {
         printed.pop_back();

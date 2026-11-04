@@ -8,6 +8,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 struct h0_1_Word;
 struct h0_8_Words;
 
+#include <cstdlib>
+
 struct h0_1_Word {
     char *h0_2_text;
     int32_t h0_3_size;
@@ -32,6 +34,27 @@ struct h0_8_Words {
 
 int32_t h0_17_main(h0_8_Words h0_18_args);
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 9: every index of a fixed array, and what a container's own
+// operator[] asks. A negative one is a very large one
+static int64_t __index(int64_t index, int64_t length) {
+    if ((uint64_t) index >= (uint64_t) length) {
+        char message[80];
+
+        snprintf(message, sizeof message, "index %lld out of range for length %lld",
+                 (long long) index, (long long) length);
+        __abort_with(message);
+    }
+
+    return index;
+}
+
 
 int32_t h0_17_main(h0_8_Words h0_18_args) {
     if (h0_18_args.m_length() != 1) {
@@ -40,7 +63,7 @@ int32_t h0_17_main(h0_8_Words h0_18_args) {
     if (h0_18_args.m_at_b6(0).m_length() == 0) {
         return 2;
     }
-    return h0_18_args.m_length() + 41;
+    return (int32_t)((uint32_t)h0_18_args.m_length() + (uint32_t)41);
 }
 
 void h0_1_Word::m_init() {
@@ -52,7 +75,7 @@ void h0_1_Word::m_init_pb14(char *h0_6_from) {
     this->h0_2_text = h0_6_from;
     this->h0_3_size = 0;
     while (h0_6_from[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
 }
 
@@ -76,8 +99,8 @@ void h0_8_Words::m_init() {
 }
 
 void h0_8_Words::m_add_n0c1(h0_1_Word h0_13_one) {
-    this->h0_9_held[this->h0_10_count] = h0_13_one;
-    this->h0_10_count = this->h0_10_count + 1;
+    this->h0_9_held[__index(this->h0_10_count, 8)] = h0_13_one;
+    this->h0_10_count = (int32_t)((uint32_t)this->h0_10_count + (uint32_t)1);
 }
 
 int32_t h0_8_Words::m_length() {
@@ -85,7 +108,7 @@ int32_t h0_8_Words::m_length() {
 }
 
 h0_1_Word & h0_8_Words::m_at_b6(int32_t h0_16_i) {
-    return this->h0_9_held[h0_16_i];
+    return this->h0_9_held[__index(h0_16_i, 8)];
 }
 
 h0_8_Words::h0_8_Words() {

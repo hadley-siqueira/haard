@@ -1,0 +1,19 @@
+# Record 0083, answer 9: a negative index is out of range, and not a step back.
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i += 1
+
+    __io_write(__io_stdout(), '\n')
+
+def main : i32
+    let values : i32[3] = {10, 20, 30}
+    let at : i32 = -1
+
+    return values[at]

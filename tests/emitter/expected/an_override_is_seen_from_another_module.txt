@@ -43,7 +43,7 @@ int32_t h0_5_main() {
     h0_6_c.h1_6_doors = 2;
     int32_t h0_7_mine = h0_6_c.m_describe();
     h1_5_Car *h0_8_back = h0_6_c.m_self();
-    return h0_7_mine + h0_8_back->h1_6_doors;
+    return (int32_t)((uint32_t)h0_7_mine + (uint32_t)h0_8_back->h1_6_doors);
 }
 
 h0_1_Dog::~h0_1_Dog() {
@@ -64,7 +64,7 @@ h1_1_Vehicle::~h1_1_Vehicle() {
 }
 
 int32_t h1_5_Car::m_describe() {
-    return this->h1_2_wheels * 10;
+    return (int32_t)((uint32_t)this->h1_2_wheels * (uint32_t)10);
 }
 
 h1_5_Car * h1_5_Car::m_self() {

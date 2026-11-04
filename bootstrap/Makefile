@@ -19,10 +19,11 @@
 #   make HDC=/path/to/hdc
 HDC ?= ../build/hdc
 
-# -funsigned-char: a Haard char has no sign, and the emitted file refuses a build
-# without it (record 0081)
+# the three flags are the language's rules, which a C++ compiler leaves open: a
+# char has no sign (record 0081), checked by the emitted file; no float operation
+# is contracted, and a local nobody wrote holds a fixed pattern (record 0083)
 CXX ?= g++
-CXXFLAGS ?= -std=c++17 -funsigned-char -O2 -w
+CXXFLAGS ?= -std=c++17 -funsigned-char -ffp-contract=off -ftrivial-auto-var-init=pattern -O2 -w
 
 # every Haard source of this package and the library it stands on, so editing
 # any of them rebuilds -- and hdc itself, since a new compiler is a new program

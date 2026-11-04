@@ -63,7 +63,7 @@ int32_t h0_19_main() {
     if (h0_23_plain.m_describe() != 10) {
         return 6;
     }
-    return h0_20_d.m_twice() + h0_21_deep.m_thrice() + h0_20_d.h0_26_tag + h0_23_plain.m_get();
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_20_d.m_twice() + (uint32_t)h0_21_deep.m_thrice())) + (uint32_t)h0_20_d.h0_26_tag)) + (uint32_t)h0_23_plain.m_get());
 }
 
 void h0_24_Derived::m_init() {
@@ -71,7 +71,7 @@ void h0_24_Derived::m_init() {
 }
 
 int32_t h0_24_Derived::m_twice() {
-    return this->h0_35_value + this->h0_35_value;
+    return (int32_t)((uint32_t)this->h0_35_value + (uint32_t)this->h0_35_value);
 }
 
 int32_t h0_24_Derived::m_describe() {
@@ -86,7 +86,7 @@ h0_24_Derived::~h0_24_Derived() {
 }
 
 int32_t h0_30_Deeper::m_thrice() {
-    return this->h0_35_value + this->h0_35_value + this->h0_35_value;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)this->h0_35_value + (uint32_t)this->h0_35_value)) + (uint32_t)this->h0_35_value);
 }
 
 h0_30_Deeper::~h0_30_Deeper() {

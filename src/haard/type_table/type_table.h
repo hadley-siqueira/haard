@@ -83,6 +83,17 @@ namespace haard {
                || which == BUILTIN_ISIZE;
     }
 
+    // how many bits a whole number or a char has. The two as wide as a pointer
+    // are 64 wherever Haard emits today, as 'limit_of' already takes them to be
+    inline u32 bits_of(BuiltinType which) {
+        switch (which) {
+        case BUILTIN_U8: case BUILTIN_I8: case BUILTIN_CHAR: return 8;
+        case BUILTIN_U16: case BUILTIN_I16: return 16;
+        case BUILTIN_U32: case BUILTIN_I32: return 32;
+        default: return 64;
+        }
+    }
+
     struct Type {
         u8 kind;
 

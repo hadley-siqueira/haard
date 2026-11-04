@@ -7,6 +7,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 
 struct h0_1_Bag;
 
+#include <cstdlib>
+
 struct h0_1_Bag {
     int32_t h0_2_slots[4];
     int32_t h0_3_count;
@@ -21,6 +23,27 @@ struct h0_1_Bag {
 };
 
 int32_t h0_20_main();
+
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 9: every index of a fixed array, and what a container's own
+// operator[] asks. A negative one is a very large one
+static int64_t __index(int64_t index, int64_t length) {
+    if ((uint64_t) index >= (uint64_t) length) {
+        char message[80];
+
+        snprintf(message, sizeof message, "index %lld out of range for length %lld",
+                 (long long) index, (long long) length);
+        __abort_with(message);
+    }
+
+    return index;
+}
 
 
 int32_t h0_20_main() {
@@ -42,24 +65,24 @@ int32_t h0_20_main() {
     if (!h0_27_itself) {
         return 2;
     }
-    return h0_23_first + h0_24_sum + h0_25_difference;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)h0_23_first + (uint32_t)h0_24_sum)) + (uint32_t)h0_25_difference);
 }
 
 void h0_1_Bag::m_init() {
     this->h0_3_count = 0;
-    this->h0_2_slots[0] = 0;
-    this->h0_2_slots[1] = 0;
-    this->h0_2_slots[2] = 0;
-    this->h0_2_slots[3] = 0;
+    this->h0_2_slots[__index(0, 4)] = 0;
+    this->h0_2_slots[__index(1, 4)] = 0;
+    this->h0_2_slots[__index(2, 4)] = 0;
+    this->h0_2_slots[__index(3, 4)] = 0;
 }
 
 void h0_1_Bag::m_add_b6(int32_t h0_6_value) {
-    this->h0_2_slots[this->h0_3_count] = h0_6_value;
-    this->h0_3_count = this->h0_3_count + 1;
+    this->h0_2_slots[__index(this->h0_3_count, 4)] = h0_6_value;
+    this->h0_3_count = (int32_t)((uint32_t)this->h0_3_count + (uint32_t)1);
 }
 
 int32_t & h0_1_Bag::m_operator_at_b6(int32_t h0_8_i) {
-    return this->h0_2_slots[h0_8_i];
+    return this->h0_2_slots[__index(h0_8_i, 4)];
 }
 
 bool h0_1_Bag::m_operator_eq_eq_rn0c1(h0_1_Bag &h0_10_other) {
@@ -68,10 +91,10 @@ bool h0_1_Bag::m_operator_eq_eq_rn0c1(h0_1_Bag &h0_10_other) {
     }
     int32_t h0_11_i = 0;
     while (h0_11_i < this->h0_3_count) {
-        if (this->h0_2_slots[h0_11_i] != h0_10_other.h0_2_slots[h0_11_i]) {
+        if (this->h0_2_slots[__index(h0_11_i, 4)] != h0_10_other.h0_2_slots[__index(h0_11_i, 4)]) {
             return false;
         }
-        h0_11_i = h0_11_i + 1;
+        h0_11_i = (int32_t)((uint32_t)h0_11_i + (uint32_t)1);
     }
     return true;
 }
@@ -80,8 +103,8 @@ int32_t h0_1_Bag::m_operator_plus_rn0c1(h0_1_Bag &h0_13_other) {
     int32_t h0_14_total = 0;
     int32_t h0_15_i = 0;
     while (h0_15_i < this->h0_3_count) {
-        h0_14_total = h0_14_total + this->h0_2_slots[h0_15_i] + h0_13_other.h0_2_slots[h0_15_i];
-        h0_15_i = h0_15_i + 1;
+        h0_14_total = (int32_t)((uint32_t)((int32_t)((uint32_t)h0_14_total + (uint32_t)this->h0_2_slots[__index(h0_15_i, 4)])) + (uint32_t)h0_13_other.h0_2_slots[__index(h0_15_i, 4)]);
+        h0_15_i = (int32_t)((uint32_t)h0_15_i + (uint32_t)1);
     }
     return h0_14_total;
 }
@@ -90,8 +113,8 @@ int32_t h0_1_Bag::m_operator_minus_rn0c1(h0_1_Bag &h0_17_other) {
     int32_t h0_18_total = 0;
     int32_t h0_19_i = 0;
     while (h0_19_i < this->h0_3_count) {
-        h0_18_total = h0_18_total + this->h0_2_slots[h0_19_i] - h0_17_other.h0_2_slots[h0_19_i];
-        h0_19_i = h0_19_i + 1;
+        h0_18_total = (int32_t)((uint32_t)((int32_t)((uint32_t)h0_18_total + (uint32_t)this->h0_2_slots[__index(h0_19_i, 4)])) - (uint32_t)h0_17_other.h0_2_slots[__index(h0_19_i, 4)]);
+        h0_19_i = (int32_t)((uint32_t)h0_19_i + (uint32_t)1);
     }
     return h0_18_total;
 }

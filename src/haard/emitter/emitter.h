@@ -240,6 +240,19 @@ namespace haard {
             void emit_operand(u32 module, u32 node, int limit);
 
             void emit_binary(u32 module, u32 node, const std::string& oper);
+            void emit_wrapping(u32 module, u32 node, const std::string& oper);
+            void emit_wrapping_compound(u32 module, u32 node,
+                                        const std::string& oper);
+            void emit_step(u32 module, u32 node, const std::string& oper,
+                           bool postfix);
+            void emit_sign(u32 module, u32 node, const std::string& oper);
+            void emit_division(u32 module, u32 node, const std::string& oper);
+            void emit_shift(u32 module, u32 node, const std::string& oper);
+            bool emit_float_to_whole(u32 module, u32 node, u32 operand);
+            std::string arithmetic_helper(u32 which, const std::string& oper);
+            std::string emit_checked_helpers();
+            bool is_a_fixed_array(u32 module_index, u32 node);
+            u32 types_value(u32 module_index, u32 node);
             void emit_unary(u32 module, u32 node, const std::string& oper);
             void emit_postfix(u32 module, u32 node, const std::string& oper);
             void emit_call(u32 module, u32 node);
@@ -330,11 +343,10 @@ namespace haard {
 
             void emit_power(u32 module, u32 node);
             void emit_floor_division(u32 module, u32 node);
-            void emit_unsigned_shift(u32 module, u32 node);
 
             // '//=' and '>>>=': a helper per type that takes the place by
             // its address, so the place is evaluated once
-            void emit_compound(u32 module, u32 node, bool shift);
+            void emit_compound(u32 module, u32 node, const std::string& oper);
 
             // the builtin a node's type is, and BUILTIN_COUNT when its type
             // is not a builtin at all
@@ -558,7 +570,9 @@ namespace haard {
             bool needs_power_signed;
             bool needs_power_unsigned;
             bool needs_power_floating;
-            bool needs_floor_division;
+            std::set<std::string> reached_helpers;
+            bool needs_index;
+            bool needs_float_fit;
             bool needs_floor_division_floating;
 
             // the helpers '//=' and '>>>=' reached, one per type, by name

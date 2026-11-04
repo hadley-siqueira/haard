@@ -8,6 +8,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 struct h0_1_Money;
 struct h0_11_Name;
 
+#include <cstdlib>
+
 struct h0_1_Money {
     int32_t h0_2_cents;
     virtual void m_init_b6(int32_t h0_4_c);
@@ -31,21 +33,37 @@ struct h0_11_Name {
 
 int32_t h0_19_main();
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// Hadley 2026-10-20: a float fits when its whole part does, and a NaN does not
+static double __float_fits(double real, double low, double high) {
+    if (!(real > low - 1.0 && real < high)) {
+        __abort_with("a float that does not fit in the whole number");
+    }
+
+    return real;
+}
+
 
 int32_t h0_19_main() {
     int32_t h0_20_result = 0;
     if ((h0_1_Money(1).m_operator_plus_b6(5)).h0_2_cents == 6) {
-        h0_20_result += 1;
+        (uint32_t&)h0_20_result += (uint32_t)1;
     }
     if ((h0_1_Money(10).m_operator_times_b11(1.5)).h0_2_cents == 15) {
-        h0_20_result += 2;
+        (uint32_t&)h0_20_result += (uint32_t)2;
     }
     if (h0_1_Money(0).m_operator_eq_eq_pb4(nullptr)) {
-        h0_20_result += 4;
+        (uint32_t&)h0_20_result += (uint32_t)4;
     }
     h0_11_Name h0_21_n = h0_11_Name("ann");
     if ((h0_11_Name("a")).m_operator_eq_eq_rn0c11(h0_21_n) && !((h0_11_Name("b")).m_operator_eq_eq_rn0c11(h0_21_n)) && (h0_11_Name("b")).m_operator_not_eq_rn0c11(h0_21_n)) {
-        h0_20_result += 8;
+        (uint32_t&)h0_20_result += (uint32_t)8;
     }
     return h0_20_result;
 }
@@ -55,11 +73,11 @@ void h0_1_Money::m_init_b6(int32_t h0_4_c) {
 }
 
 h0_1_Money h0_1_Money::m_operator_plus_b6(int32_t h0_6_extra) {
-    return h0_1_Money(this->h0_2_cents + h0_6_extra);
+    return h0_1_Money((int32_t)((uint32_t)this->h0_2_cents + (uint32_t)h0_6_extra));
 }
 
 h0_1_Money h0_1_Money::m_operator_times_b11(double h0_8_k) {
-    return h0_1_Money((int32_t)((((double)(this->h0_2_cents)) * h0_8_k)));
+    return h0_1_Money((int32_t)__float_fits((((double)(this->h0_2_cents)) * h0_8_k), -2147483648.0, 2147483648.0));
 }
 
 bool h0_1_Money::m_operator_eq_eq_pb4(int8_t *h0_10_p) {

@@ -50,7 +50,7 @@ int32_t h0_17_main() {
     int32_t h0_21_b = h0_10_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_1_String(h0_14_raw()))));
     int32_t h0_22_c = h0_10_by_reference(const_cast<h0_1_String&>(static_cast<const h0_1_String&>(h0_1_String(h0_18_plain))));
     int32_t h0_23_d = h0_15_gives().m_length();
-    return h0_19_bound.m_length() * 1000 + h0_20_a * 100 + h0_21_b * 10 + h0_22_c + h0_23_d;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_19_bound.m_length() * (uint32_t)1000)) + (uint32_t)((int32_t)((uint32_t)h0_20_a * (uint32_t)100)))) + (uint32_t)((int32_t)((uint32_t)h0_21_b * (uint32_t)10)))) + (uint32_t)h0_22_c)) + (uint32_t)h0_23_d);
 }
 
 void h0_1_String::m_init() {
@@ -62,7 +62,7 @@ void h0_1_String::m_init_pb14(char *h0_6_text) {
     this->h0_2_data = h0_6_text;
     this->h0_3_size = 0;
     while (h0_6_text[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
 }
 
@@ -74,7 +74,7 @@ void h0_1_String::m_operator_eq_pb14(char *h0_9_text) {
     this->h0_2_data = h0_9_text;
     this->h0_3_size = 0;
     while (h0_9_text[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
 }
 

@@ -1,0 +1,26 @@
+# Record 0083, answer 9: a List checks in its own operator[] too. Without it the
+# walk would follow a null link. Copies of the real std/.
+import std.list
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i += 1
+
+    __io_write(__io_stdout(), '\n')
+
+def main : i32
+    let values : List<i32>
+
+    values.push_back(10)
+    values.push_back(20)
+
+    if values[1] == 20:
+        say("last")
+
+    return values[2]

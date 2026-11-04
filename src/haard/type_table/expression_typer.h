@@ -28,6 +28,7 @@ namespace haard {
     // prelude declares one (record 0017 leaves what else it holds open).
     class ExpressionTyper {
         public:
+            void refuse_a_constant(AstNodeKind kind, u32 right, u32 type);
             ExpressionTyper();
 
         public:

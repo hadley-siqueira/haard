@@ -10,6 +10,8 @@ union h0_4_Word;
 union h0_8_Cell;
 union h0_14_Seeded;
 
+#include <cstdlib>
+
 enum class h0_1_Colour : uint8_t {
     h0_2_red,
     h0_3_green,
@@ -40,6 +42,27 @@ union h0_14_Seeded {
 h0_4_Word h0_19_swap(h0_4_Word h0_20_w);
 int32_t h0_22_main();
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 9: every index of a fixed array, and what a container's own
+// operator[] asks. A negative one is a very large one
+static int64_t __index(int64_t index, int64_t length) {
+    if ((uint64_t) index >= (uint64_t) length) {
+        char message[80];
+
+        snprintf(message, sizeof message, "index %lld out of range for length %lld",
+                 (long long) index, (long long) length);
+        __abort_with(message);
+    }
+
+    return index;
+}
+
 
 h0_4_Word h0_19_swap(h0_4_Word h0_20_w) {
     h0_4_Word h0_21_r;
@@ -59,7 +82,7 @@ int32_t h0_22_main() {
         return 2;
     }
     h0_23_c.h0_10_word = h0_25_v;
-    if (h0_23_c.h0_10_word.h0_6_bytes[1] != 1) {
+    if (h0_23_c.h0_10_word.h0_6_bytes[__index(1, 4)] != 1) {
         return 3;
     }
     h0_8_Cell *h0_26_p = new h0_8_Cell();
@@ -80,11 +103,11 @@ int32_t h0_22_main() {
 }
 
 uint8_t h0_4_Word::m_low() {
-    return this->h0_6_bytes[0];
+    return this->h0_6_bytes[__index(0, 4)];
 }
 
 int32_t h0_8_Cell::m_twice() {
-    return this->h0_12_n * 2;
+    return (int32_t)((uint32_t)this->h0_12_n * (uint32_t)2);
 }
 
 void h0_14_Seeded::m_init_b6(int32_t h0_18_v) {

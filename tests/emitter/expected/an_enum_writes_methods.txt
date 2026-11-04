@@ -99,7 +99,7 @@ int32_t h0_13_main() {
     switch (h0_15_after.m_next().tag) {
         case 1:
         {
-            return h0_17_square.m_area() + 17;
+            return (int32_t)((uint32_t)h0_17_square.m_area() + (uint32_t)17);
             break;
         }
         default:
@@ -143,13 +143,13 @@ int32_t h0_7_Shape::m_area() {
             case 0:
             {
                 int32_t &h0_11_r = __sw0.h0_8_Circle._0;
-                return 3 * h0_11_r * h0_11_r;
+                return (int32_t)((uint32_t)((int32_t)((uint32_t)3 * (uint32_t)h0_11_r)) * (uint32_t)h0_11_r);
                 break;
             }
             case 1:
             {
                 int32_t &h0_12_side = __sw0.h0_9_Square._0;
-                return h0_12_side * h0_12_side;
+                return (int32_t)((uint32_t)h0_12_side * (uint32_t)h0_12_side);
                 break;
             }
         }

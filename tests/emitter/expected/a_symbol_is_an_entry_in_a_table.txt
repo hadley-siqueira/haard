@@ -26,7 +26,7 @@ int32_t h0_4_length_of(const char* h0_5_s) {
     char *h0_6_text = (char *)(h0_5_s);
     int32_t h0_7_n = 0;
     while (h0_6_text[h0_7_n] != '\0') {
-        h0_7_n = h0_7_n + 1;
+        h0_7_n = (int32_t)((uint32_t)h0_7_n + (uint32_t)1);
     }
     return h0_7_n;
 }
@@ -46,7 +46,7 @@ int32_t h0_8_main() {
     if (h0_1_same(h0_9_a, h0_11_c)) {
         return 3;
     }
-    return h0_4_length_of(h0_9_a) + h0_4_length_of(h0_13_quoted);
+    return (int32_t)((uint32_t)h0_4_length_of(h0_9_a) + (uint32_t)h0_4_length_of(h0_13_quoted));
 }
 
 int main() {

@@ -86,7 +86,7 @@ bool h0_56_same(h0_34_Bag &h0_58_a, h0_34_Bag &h0_59_b) {
         if (!(h0_58_a.m_at_b6(h0_60_i) == h0_59_b.m_at_b6(h0_60_i))) {
             return false;
         }
-        h0_60_i = h0_60_i + 1;
+        h0_60_i = (int32_t)((uint32_t)h0_60_i + (uint32_t)1);
     }
     return true;
 }
@@ -104,7 +104,7 @@ bool h0_65_same(h0_45_Bag &h0_67_a, h0_45_Bag &h0_68_b) {
         if (!(h0_67_a.m_at_b6(h0_69_i).m_operator_eq_eq_rn0c1(const_cast<h0_1_Token&>(static_cast<const h0_1_Token&>(h0_68_b.m_at_b6(h0_69_i)))))) {
             return false;
         }
-        h0_69_i = h0_69_i + 1;
+        h0_69_i = (int32_t)((uint32_t)h0_69_i + (uint32_t)1);
     }
     return true;
 }
@@ -143,7 +143,7 @@ void h0_34_Bag::m_destroy() {
 
 void h0_34_Bag::m_add_b6(int32_t h0_41_one) {
     this->h0_36_held[this->h0_37_count] = h0_41_one;
-    this->h0_37_count = this->h0_37_count + 1;
+    this->h0_37_count = (int32_t)((uint32_t)this->h0_37_count + (uint32_t)1);
 }
 
 int32_t h0_34_Bag::m_length() {
@@ -173,7 +173,7 @@ void h0_45_Bag::m_destroy() {
 
 void h0_45_Bag::m_add_n0c1(h0_1_Token h0_52_one) {
     this->h0_47_held[this->h0_48_count] = h0_52_one;
-    this->h0_48_count = this->h0_48_count + 1;
+    this->h0_48_count = (int32_t)((uint32_t)this->h0_48_count + (uint32_t)1);
 }
 
 int32_t h0_45_Bag::m_length() {

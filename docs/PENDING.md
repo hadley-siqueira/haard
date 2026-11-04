@@ -7,11 +7,13 @@ remaining work and open questions. The records and the agenda
 
 Take an item off when it is fixed, decided or dropped, and say where it went.
 Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
-date 2026-11-04, after record 0082.
+date 2026-11-04, after record 0083.
 
 Taken off on 2026-11-04: *stage 4 step 6* (built, record 0077), and *a `char`
 past 127 reads differently on the two paths* (a `char` has no sign, record 0081),
-and *a `char` past 127 cannot be written as a literal* (record 0082).
+*a `char` past 127 cannot be written as a literal* (record 0082), and *the C++
+back end and undefined behaviour*, *bounds checks* and *what `String` does out of
+range* (`s[i]` stops, `at` gives `'\0'`; record 0083).
 
 Taken off on 2026-11-03: *stage 4 step 5* (built), *`char - char`* (record 0079), *lower only what is
 reachable* (built, question 89), *the named return value* (record 0080),
@@ -25,12 +27,11 @@ case `a_derived_class_is_its_base_by_reference`).
 ## Where we stopped (2026-11-04)
 
 IR stage 4 is closed (`d962f26`): nothing is left in `tests/lowering/not_yet`.
-A `char` has no sign and its bytes can be written (records 0081 and 0082, built,
-2026-11-04). Waiting on Hadley:
-**what comes next.** Proposed: the C++ path's undefined behaviour and the bounds
-checks (section 2, items 1 and 2); then the first real back end, x86-64 or ARM64
-(section 5, item 3, questions 71-77). The other choice is a round of the small
-bugs of section 1.
+A `char` has no sign and its bytes can be written (records 0081 and 0082), and the
+C++ path now follows the language on overflow, shifts, division and bounds (record
+0083), all built 2026-11-04. Waiting on Hadley: **what comes next.** Proposed: the
+first real back end, x86-64 or ARM64 (section 5, item 3, questions 71-77). The
+other choice is a round of the small bugs of section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -89,25 +90,7 @@ bugs of section 1.
 
 ## 2. Decided, not built
 
-1. **The C++ back end and undefined behaviour** (answers 1a, 2b, 3a, 7a, 10a
-   in `docs/design/notes/ir-questions.md`). The emitter writes `a + b`, `a / b`
-   and `x << n` straight into C++, where signed overflow and an over-wide
-   shift are undefined. Haard says overflow wraps, an over-wide or negative
-   shift gives the arithmetic result, a zero divisor aborts with a message,
-   `MIN / -1` is `MIN`. Also needed: `-ffp-contract=off` (7a) and
-   `-ftrivial-auto-var-init=pattern` (10a). And a float converted to a whole
-   number it does not fit, or a NaN, **aborts** (Hadley, 2026-10-20): the IR
-   interpreter does it, the C++ path does not (a C++ cast is undefined
-   there). The tests pass only because g++ runs without `-O`. The narrow types do
-   not wrap either: `(a + b) as i32` with two `u8` at 255 and 1 is 256 in C++,
-   measured; `char` alone was fixed (record 0081).
-2. **Bounds checks** (answer 9b): every index checked, aborting with a
-   message. The IR does it for fixed arrays (`check_index`, step 2). Not
-   built: the C++ path for fixed arrays, and `Array`/`List`/`String`, whose
-   `operator[]` in `std/` should check through an intrinsic that becomes
-   `check_index` (`std/array.hd` is `return data[i]` today; every test case
-   carries its own copy of the library). A raw pointer stays unchecked.
-3. **`volatile`** (answer 11b): library intrinsics
+1. **`volatile`** (answer 11b): library intrinsics
    `volatile_read<T>(p : T*) -> T`, `volatile_write<T>(p : T*, v : T)` and
    `fence()` in `std`, `T` a whole number of 8 to 64 bits, no keyword; the
    compiler recognises them (C++: a `volatile` access; IR: `volatile_load`,

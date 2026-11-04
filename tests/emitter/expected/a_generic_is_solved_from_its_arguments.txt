@@ -51,7 +51,7 @@ static int32_t h0_closure_276(void *h_env, int32_t h0_42_x);
 static bool h0_closure_293(void *h_env, int32_t h0_44_x);
 
 static int32_t h0_closure_276(void *h_env, int32_t h0_42_x) {
-    return h0_42_x * 10;
+    return (int32_t)((uint32_t)h0_42_x * (uint32_t)10);
 }
 
 static bool h0_closure_293(void *h_env, int32_t h0_44_x) {
@@ -75,7 +75,7 @@ int32_t h0_34_main() {
     if (!h0_43_flag) {
         return 0;
     }
-    return h0_36_n + h0_37_m + h0_38_v + h0_40_u + h0_41_r + (int32_t)(h0_45_t) + h0_47_a;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_36_n + (uint32_t)h0_37_m)) + (uint32_t)h0_38_v)) + (uint32_t)h0_40_u)) + (uint32_t)h0_41_r)) + (uint32_t)(int32_t)(h0_45_t))) + (uint32_t)h0_47_a);
 }
 
 int32_t h0_51_id(int32_t h0_53_x) {
@@ -110,7 +110,7 @@ int64_t h0_74_twice(int64_t h0_76_x) {
 }
 
 int64_t h0_80_pair_sum(int64_t h0_82_a, int64_t h0_83_b) {
-    return h0_82_a + h0_83_b;
+    return (int64_t)((uint64_t)h0_82_a + (uint64_t)h0_83_b);
 }
 
 int32_t h0_29_Wrapper::m_wrap_7_b6(int32_t h0_79_x) {

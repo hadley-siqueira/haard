@@ -1789,6 +1789,35 @@ IrValueId FunctionLowerer::call(u32 node, IrValueId into) {
         name = child_of(name, 0);
     }
 
+    // Record 0083, answer 9: what a container's own 'operator[]' asks is the
+    // instruction a fixed array's index already is, so an optimiser and the
+    // WCET see one thing. Only in the module the natives are, as with them
+    Resolution* asked = module->get_resolutions()->get(node);
+    Resolution* native = asked->candidate != 0
+                             ? asked
+                             : module->get_resolutions()->get(name);
+
+    if (native->candidate != 0
+        && compilation->get_module(native->module)->get_name() == "std.low_io") {
+        Module* natives = compilation->get_module(native->module);
+        AstQuery query;
+
+        query.set_module(natives);
+
+        if (query.get_declaration_name(
+                natives->get_symbols()->get_candidate(native->candidate)->ast_node)
+            == "__check_index") {
+            u32 second = module->get_ast()->get_node(first)->get_sibling();
+            IrValueId index = to_width(value_of(first), type_at(first), usize(),
+                                       at(node));
+            IrValueId length = to_width(value_of(second), type_at(second),
+                                        usize(), at(node));
+
+            build.check_index(usize(), index, length, at(node));
+            return none;
+        }
+    }
+
     // Record 0045: a call whose callee names a type is a construction, of
     // the 'init' the typer chose and wrote on the call
     if ((kind_of(name) == AST_IDENTIFIER || kind_of(name) == AST_SCOPE)

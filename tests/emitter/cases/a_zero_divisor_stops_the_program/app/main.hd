@@ -1,0 +1,21 @@
+# Record 0083, answer 3: a zero divisor stops the program with a message, after
+# what was printed has gone out.
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i += 1
+
+    __io_write(__io_stdout(), '\n')
+
+def main : i32
+    let zero : i32 = 0
+
+    say("before")
+
+    return 10 / zero

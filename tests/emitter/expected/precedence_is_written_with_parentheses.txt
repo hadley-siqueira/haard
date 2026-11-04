@@ -6,22 +6,40 @@
 static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-char");
 
 
+#include <cstdlib>
+
 int32_t h0_1_main();
+
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 3: a zero divisor stops the program, and MIN / -1 is MIN
+static int64_t __div_i(int64_t a, int64_t b) {
+    if (b == 0) {
+        __abort_with("division by zero");
+    }
+
+    return b == -1 ? (int64_t) (0 - (uint64_t) a) : a / b;
+}
 
 
 int32_t h0_1_main() {
-    int32_t h0_2_a = 4 + (3 & 1);
-    int32_t h0_3_b = (1 << 2) + 3;
-    int32_t h0_4_c = 2 * (3 | 4);
-    int32_t h0_5_d = 8 - (3 ^ 1);
-    int32_t h0_6_e = 1 + (6 >> 1);
-    int32_t h0_7_f = 12 / (3 & 6);
-    int32_t h0_8_g = -(-5);
+    int32_t h0_2_a = (int32_t)((uint32_t)4 + (uint32_t)(3 & 1));
+    int32_t h0_3_b = (int32_t)((uint32_t)((int32_t)((uint32_t)1 << 2)) + (uint32_t)3);
+    int32_t h0_4_c = (int32_t)((uint32_t)2 * (uint32_t)(3 | 4));
+    int32_t h0_5_d = (int32_t)((uint32_t)8 - (uint32_t)(3 ^ 1));
+    int32_t h0_6_e = (int32_t)((uint32_t)1 + (uint32_t)(6 >> 1));
+    int32_t h0_7_f = (int32_t)__div_i(12, 3 & 6);
+    int32_t h0_8_g = (int32_t)(-(uint32_t)-5);
     bool h0_9_held = !(h0_2_a < h0_3_b);
     if (h0_9_held) {
         return 0;
     }
-    return h0_2_a + h0_3_b + h0_4_c + h0_5_d + h0_6_e + h0_7_f + h0_8_g;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_2_a + (uint32_t)h0_3_b)) + (uint32_t)h0_4_c)) + (uint32_t)h0_5_d)) + (uint32_t)h0_6_e)) + (uint32_t)h0_7_f)) + (uint32_t)h0_8_g);
 }
 
 int main() {

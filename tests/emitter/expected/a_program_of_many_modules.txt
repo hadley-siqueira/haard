@@ -45,7 +45,7 @@ int32_t h0_1_main() {
     int32_t h0_5_through_base = h0_4_s->m_area();
     h3_1_Tracker *h0_6_t = new h3_1_Tracker(&h0_2_watched);
     delete h0_6_t;
-    return h0_5_through_base + h3_6_total(20, 20) + h0_2_watched;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)h0_5_through_base + (uint32_t)h3_6_total(20, 20))) + (uint32_t)h0_2_watched);
 }
 
 h1_1_Box * h1_5_make() {
@@ -53,7 +53,7 @@ h1_1_Box * h1_5_make() {
 }
 
 int32_t h1_1_Box::m_area() {
-    return this->h1_2_width * this->h1_3_height * h2_2_sides;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)this->h1_2_width * (uint32_t)this->h1_3_height)) * (uint32_t)h2_2_sides);
 }
 
 h1_1_Box::~h1_1_Box() {
@@ -75,7 +75,7 @@ h2_1_Shape::~h2_1_Shape() {
 }
 
 int32_t h3_6_total(int32_t h3_7_a, int32_t h3_8_b) {
-    return h3_7_a + h3_8_b;
+    return (int32_t)((uint32_t)h3_7_a + (uint32_t)h3_8_b);
 }
 
 void h3_1_Tracker::m_init_pb6(int32_t *h3_4_where) {

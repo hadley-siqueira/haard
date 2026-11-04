@@ -2199,7 +2199,57 @@ u32 ExpressionTyper::binary(u32 scope, u32 node, u32 expected,
         return INVALID_TYPE;
     }
 
+    if (!comparison) {
+        refuse_a_constant(kind_of(node), second_child(node), left);
+    }
+
     return comparison ? types->builtin(BUILTIN_BOOL) : left;
+}
+
+// Record 0083, answers 2 and 3: what cannot be meant, written as a number. Only
+// a written number: anything else is decided when it runs, by those same answers
+void ExpressionTyper::refuse_a_constant(AstNodeKind kind, u32 right, u32 type) {
+    TypeTable* types = module->get_types();
+    Type* entry = types->get_type(type);
+    u64 value = 0;
+
+    if (right == 0 || kind_of(right) != AST_INTEGER_LITERAL
+        || entry->kind != TYPE_BUILTIN
+        || !is_a_whole_number((BuiltinType) entry->subject)
+        || !integer_value(text_of(right), value)) {
+        return;
+    }
+
+    switch (kind) {
+    case AST_DIVISION:
+    case AST_INTEGER_DIVISION:
+    case AST_MODULO:
+    case AST_DIVISION_ASSIGNMENT:
+    case AST_INTEGER_DIVISION_ASSIGNMENT:
+    case AST_MODULO_ASSIGNMENT:
+        if (value == 0) {
+            report(right, "this divides by zero");
+        }
+
+        return;
+
+    case AST_BITWISE_LEFT_SHIFT:
+    case AST_BITWISE_RIGHT_SHIFT:
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT:
+    case AST_BITWISE_LEFT_SHIFT_ASSIGNMENT:
+    case AST_BITWISE_RIGHT_SHIFT_ASSIGNMENT:
+    case AST_BITWISE_UNSIGNED_RIGHT_SHIFT_ASSIGNMENT:
+        if (value >= bits_of((BuiltinType) entry->subject)) {
+            report(right, "a shift by " + text_of(right) + " is past the "
+                   + std::to_string(bits_of((BuiltinType) entry->subject))
+                   + " bits of " + name_of(type));
+        }
+
+        return;
+
+    default:
+        return;
+    }
 }
 
 bool ExpressionTyper::has_member(u32 type, const std::string& name) {

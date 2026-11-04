@@ -81,7 +81,7 @@ static int32_t h0_closure_172(void *h_env, int32_t h0_25_x);
 static bool h0_closure_188(void *h_env, int32_t h0_27_x);
 
 static int32_t h0_closure_172(void *h_env, int32_t h0_25_x) {
-    return h0_25_x * 3;
+    return (int32_t)((uint32_t)h0_25_x * (uint32_t)3);
 }
 
 static bool h0_closure_188(void *h_env, int32_t h0_27_x) {
@@ -90,7 +90,7 @@ static bool h0_closure_188(void *h_env, int32_t h0_27_x) {
 
 
 int32_t h0_14_total(h0_29_Pair &h0_15_p) {
-    return h0_15_p.h0_32_first + (int32_t)(h0_15_p.h0_33_second);
+    return (int32_t)((uint32_t)h0_15_p.h0_32_first + (uint32_t)(int32_t)(h0_15_p.h0_33_second));
 }
 
 int32_t h0_20_main() {
@@ -102,9 +102,9 @@ int32_t h0_20_main() {
     if (!h0_26_flag.h0_60_made) {
         return 0;
     }
-    int32_t h0_28_sum = h0_22_p.h0_40_first + h0_22_p.h0_41_second + h0_23_q->h0_48_first.h0_41_second + (int32_t)(h0_23_q->h0_49_second);
+    int32_t h0_28_sum = (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_22_p.h0_40_first + (uint32_t)h0_22_p.h0_41_second)) + (uint32_t)h0_23_q->h0_48_first.h0_41_second)) + (uint32_t)(int32_t)(h0_23_q->h0_49_second));
     delete h0_23_q;
-    return h0_28_sum + h0_24_h.h0_55_made + h0_14_total(const_cast<h0_29_Pair&>(static_cast<const h0_29_Pair&>(h0_29_Pair(3, h0_21_big + 2)))) + h0_63_boxed(7);
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_28_sum + (uint32_t)h0_24_h.h0_55_made)) + (uint32_t)h0_14_total(const_cast<h0_29_Pair&>(static_cast<const h0_29_Pair&>(h0_29_Pair(3, (int64_t)((uint64_t)h0_21_big + (uint64_t)2))))))) + (uint32_t)h0_63_boxed(7));
 }
 
 int32_t h0_63_boxed(int32_t h0_65_x) {

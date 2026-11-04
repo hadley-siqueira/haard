@@ -36,12 +36,12 @@ int32_t h0_13_main() {
     h0_16_Stack h0_15_plain;
     h0_14_c.h0_8_count = 0;
     h0_15_plain.m_push_b6(28);
-    return h0_11_total(&h0_14_c) + h0_14_c.h0_8_count + h0_15_plain.m_peek();
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)h0_11_total(&h0_14_c) + (uint32_t)h0_14_c.h0_8_count)) + (uint32_t)h0_15_plain.m_peek());
 }
 
 void h0_7_Counting::m_push_b6(int32_t h0_10_x) {
-    this->h0_18_top = h0_10_x * 2;
-    this->h0_8_count = this->h0_8_count + 1;
+    this->h0_18_top = (int32_t)((uint32_t)h0_10_x * (uint32_t)2);
+    this->h0_8_count = (int32_t)((uint32_t)this->h0_8_count + (uint32_t)1);
 }
 
 h0_7_Counting::~h0_7_Counting() {

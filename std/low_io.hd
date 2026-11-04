@@ -69,6 +69,15 @@ def __io_stdin : i8*
 def __io_stderr : i8*
     pass
 
+# Record 0083: stops the program with a message unless 0 <= index < length. What
+# a container's 'operator[]' asks; the compiler writes it, and the IR has it as
+# the instruction a fixed array's index already is
+def __check_index : void
+    @index : i32
+    @length : i32
+
+    pass
+
 # Stops the program, at once and with nothing cleaned up: C's abort(), after
 # what was printed has gone out. The one way a program stops on its own --
 # 'Option.unwrap' of a None is the first thing that does (Hadley 2026-10-07)

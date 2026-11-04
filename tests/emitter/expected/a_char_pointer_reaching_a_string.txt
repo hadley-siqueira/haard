@@ -72,8 +72,8 @@ int32_t h0_26_main() {
     int32_t h0_35_from_value = h0_23_by_value(h0_1_String(h0_27_plain));
     int32_t h0_36_noted_value = h0_19_noted(h0_10_Note(h0_27_plain));
     int32_t h0_37_by_hand = h0_23_by_value(h0_1_String(h0_27_plain));
-    int32_t h0_38_first = (int32_t)((h0_27_plain[0] - 'a'));
-    return (h0_38_first + h0_28_built.m_length() + h0_29_n + h0_30_m + h0_31_r + h0_32_note.m_length() + h0_33_copied.m_length() + h0_34_k + h0_35_from_value + h0_36_noted_value + h0_37_by_hand);
+    int32_t h0_38_first = (int32_t)(((int32_t)((uint32_t)h0_27_plain[0] - (uint32_t)'a')));
+    return ((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_38_first + (uint32_t)h0_28_built.m_length())) + (uint32_t)h0_29_n)) + (uint32_t)h0_30_m)) + (uint32_t)h0_31_r)) + (uint32_t)h0_32_note.m_length())) + (uint32_t)h0_33_copied.m_length())) + (uint32_t)h0_34_k)) + (uint32_t)h0_35_from_value)) + (uint32_t)h0_36_noted_value)) + (uint32_t)h0_37_by_hand));
 }
 
 void h0_1_String::m_init() {
@@ -85,7 +85,7 @@ void h0_1_String::m_init_pb14(char *h0_6_text) {
     this->h0_2_data = h0_6_text;
     this->h0_3_size = 0;
     while (h0_6_text[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
 }
 
@@ -97,7 +97,7 @@ void h0_1_String::m_operator_eq_pb14(char *h0_9_text) {
     this->h0_2_data = h0_9_text;
     this->h0_3_size = 0;
     while (h0_9_text[this->h0_3_size] != '\0') {
-        this->h0_3_size = this->h0_3_size + 1;
+        this->h0_3_size = (int32_t)((uint32_t)this->h0_3_size + (uint32_t)1);
     }
 }
 
@@ -121,7 +121,7 @@ void h0_10_Note::m_init_pb14(char *h0_15_from) {
     this->h0_11_text = h0_15_from;
     this->h0_12_size = 0;
     while (h0_15_from[this->h0_12_size] != '\0') {
-        this->h0_12_size = this->h0_12_size + 1;
+        this->h0_12_size = (int32_t)((uint32_t)this->h0_12_size + (uint32_t)1);
     }
 }
 

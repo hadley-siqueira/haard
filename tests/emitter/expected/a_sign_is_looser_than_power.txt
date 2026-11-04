@@ -27,7 +27,7 @@ static int64_t __power_i(int64_t base, int64_t exponent) {
     int64_t answer = 1;
 
     for (int64_t i = 0; i < exponent; i++) {
-        answer *= base;
+        answer = (int64_t) ((uint64_t) answer * (uint64_t) base);
     }
 
     return answer;
@@ -37,22 +37,22 @@ static int64_t __power_i(int64_t base, int64_t exponent) {
 int32_t h0_1_main() {
     int32_t h0_2_x = 3;
     int32_t h0_3_bits = 0;
-    if (-(int32_t)__power_i(2, 2) == -4) {
+    if ((int32_t)(-(uint32_t)(int32_t)__power_i(2, 2)) == -4) {
         h0_3_bits = h0_3_bits | 1;
     }
     if ((int32_t)__power_i((-2), 2) == 4) {
         h0_3_bits = h0_3_bits | 2;
     }
-    if (-(int32_t)__power_i(h0_2_x, 2) == -9 && -(-(int32_t)__power_i(h0_2_x, 2)) == 9) {
+    if ((int32_t)(-(uint32_t)(int32_t)__power_i(h0_2_x, 2)) == -9 && (int32_t)(-(uint32_t)(int32_t)(-(uint32_t)(int32_t)__power_i(h0_2_x, 2))) == 9) {
         h0_3_bits = h0_3_bits | 4;
     }
-    if (-(int32_t)__power_i(2, (int32_t)__power_i(1, 3)) == -2) {
+    if ((int32_t)(-(uint32_t)(int32_t)__power_i(2, (int32_t)__power_i(1, 3))) == -2) {
         h0_3_bits = h0_3_bits | 8;
     }
-    if ((int32_t)__power_i(2, -(int32_t)__power_i(1, 2)) == 0) {
+    if ((int32_t)__power_i(2, (int32_t)(-(uint32_t)(int32_t)__power_i(1, 2))) == 0) {
         h0_3_bits = h0_3_bits | 16;
     }
-    if ((-h0_2_x | 1) == -3) {
+    if (((int32_t)(-(uint32_t)h0_2_x) | 1) == -3) {
         h0_3_bits = h0_3_bits | 32;
     }
     return h0_3_bits;

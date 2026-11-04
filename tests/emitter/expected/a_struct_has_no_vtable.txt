@@ -91,11 +91,11 @@ int32_t h0_24_main() {
 }
 
 int32_t h0_1_Point::m_sum() {
-    return this->h0_2_x + this->h0_3_y;
+    return (int32_t)((uint32_t)this->h0_2_x + (uint32_t)this->h0_3_y);
 }
 
 int32_t h0_5_Point3::m_total() {
-    return this->m_sum() + this->h0_6_z;
+    return (int32_t)((uint32_t)this->m_sum() + (uint32_t)this->h0_6_z);
 }
 
 void h0_8_Pixel::m_init() {

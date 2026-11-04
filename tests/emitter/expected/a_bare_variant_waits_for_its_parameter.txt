@@ -129,21 +129,21 @@ int32_t h0_18_keep(h0_28_Option &h0_19_o) {
 int32_t h0_24_main() {
     int32_t h0_25_result = 0;
     if (h0_8_take(h0_28_Option_h0_31_None()) == -1 && h0_8_take(h0_28_Option_h0_31_None()) == -1 && h0_10_flag(h0_35_Option_h0_38_None())) {
-        h0_25_result += 1;
+        (uint32_t&)h0_25_result += (uint32_t)1;
     }
     h_fn_f2t2b0n0c28b6 h0_26_f = h_fn_f2t2b0n0c28b6{nullptr, &h0_12_pick_as_value};
     if (h0_12_pick(h_tup_t2b0n0c28{200, h0_28_Option_h0_31_None()}) == -2 && h_fn_f2t2b0n0c28b6_call(h0_26_f, h_tup_t2b0n0c28{1, h0_28_Option_h0_31_None()}) == -2) {
-        h0_25_result += 2;
+        (uint32_t&)h0_25_result += (uint32_t)2;
     }
     if (h0_42_or_else(h0_28_Option_h0_31_None(), 4) == 4) {
-        h0_25_result += 4;
+        (uint32_t&)h0_25_result += (uint32_t)4;
     }
     if (h0_18_keep(const_cast<h0_28_Option&>(static_cast<const h0_28_Option&>(h0_28_Option_h0_31_None()))) == 7) {
-        h0_25_result += 8;
+        (uint32_t&)h0_25_result += (uint32_t)8;
     }
     h0_20_Holder h0_27_holder = h0_20_Holder(h0_28_Option_h0_31_None());
     if (h0_27_holder.h0_21_held == 9) {
-        h0_25_result += 16;
+        (uint32_t&)h0_25_result += (uint32_t)16;
     }
     return h0_25_result;
 }

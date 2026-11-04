@@ -118,14 +118,14 @@ int32_t h0_20_main() {
                 && l.e1.e0 == r.e1.e0
                 && const_cast<h0_4_Equal&>(l.e1.e1).m_operator_eq_eq_rn0c4(const_cast<h0_4_Equal&>(r.e1.e1));
         }(h0_22_a, h0_23_b)) {
-        h0_21_result += 1;
+        (uint32_t&)h0_21_result += (uint32_t)1;
     }
     if (![&](const h_tup_t2b6t2n0c1n0c4& l, const h_tup_t2b6t2n0c1n0c4& r) {
             return l.e0 == r.e0
                 && l.e1.e0 == r.e1.e0
                 && const_cast<h0_4_Equal&>(l.e1.e1).m_operator_eq_eq_rn0c4(const_cast<h0_4_Equal&>(r.e1.e1));
         }(h0_22_a, h_tup_t2b6t2n0c1n0c4{1, h_tup_t2n0c1n0c4{h0_1_Colour::h0_3_green, h0_4_Equal(4)}})) {
-        h0_21_result += 2;
+        (uint32_t&)h0_21_result += (uint32_t)2;
     }
     int32_t h0_24_x = 1;
     int32_t h0_25_y = 2;
@@ -136,13 +136,13 @@ int32_t h0_20_main() {
         h0_26_refs.e1 = h0_36___tv0.e1;
     }
     if (h0_24_x == 10 && h0_25_y == 20) {
-        h0_21_result += 4;
+        (uint32_t&)h0_21_result += (uint32_t)4;
     }
     if ([&](const h_tup_t2rb6rb6& l, const h_tup_t2b6b6& r) {
             return l.e0 == r.e0
                 && l.e1 == r.e1;
         }(h0_26_refs, h_tup_t2b6b6{10, 20})) {
-        h0_21_result += 8;
+        (uint32_t&)h0_21_result += (uint32_t)8;
     }
     int32_t h0_27_p = 1;
     int32_t h0_28_q = 2;
@@ -153,7 +153,7 @@ int32_t h0_20_main() {
         h0_29_swap.e1 = h0_37___tv1.e1;
     }
     if (h0_27_p == 2 && h0_28_q == 1) {
-        h0_21_result += 16;
+        (uint32_t&)h0_21_result += (uint32_t)16;
     }
     int32_t h0_30_copies = 0;
     int32_t h0_31_moves = 0;
@@ -161,12 +161,12 @@ int32_t h0_20_main() {
     h_tup_t2n0c10b6 h0_33_taken = h_tup_t2n0c10b6::__move(h0_32_held);
     h_tup_t2n0c10b6 h0_34_again = h0_33_taken;
     if (h0_31_moves == 1 && h0_30_copies == 1 && h0_34_again.e1 == 7) {
-        h0_21_result += 32;
+        (uint32_t&)h0_21_result += (uint32_t)32;
     }
     h_tup_t2n0c10b6 h0_35_other = h_tup_t2n0c10b6{h0_10_Counted(&h0_30_copies, &h0_31_moves), 8};
     h0_35_other.m_move_assign(h0_33_taken);
     if (h0_31_moves == 2 && h0_35_other.e1 == 7) {
-        h0_21_result += 64;
+        (uint32_t&)h0_21_result += (uint32_t)64;
     }
     return h0_21_result;
 }
@@ -197,13 +197,13 @@ void h0_10_Counted::m_init_pb6_pb6(int32_t *h0_14_copies, int32_t *h0_15_moves) 
 void h0_10_Counted::m_init_rn0c10(h0_10_Counted &h0_17_other) {
     this->h0_11_copies = h0_17_other.h0_11_copies;
     this->h0_12_moves = h0_17_other.h0_12_moves;
-    *this->h0_11_copies += 1;
+    (uint32_t&)*this->h0_11_copies += (uint32_t)1;
 }
 
 void h0_10_Counted::m_init_mn0c10(h0_10_Counted &&h0_19_other) {
     this->h0_11_copies = h0_19_other.h0_11_copies;
     this->h0_12_moves = h0_19_other.h0_12_moves;
-    *this->h0_12_moves += 1;
+    (uint32_t&)*this->h0_12_moves += (uint32_t)1;
 }
 
 h0_10_Counted::h0_10_Counted(int32_t *h0_14_copies, int32_t *h0_15_moves) {

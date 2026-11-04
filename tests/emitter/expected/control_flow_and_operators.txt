@@ -18,9 +18,9 @@ int32_t h0_1_collatz(int32_t h0_2_n) {
             h0_2_n = h0_2_n / 2;
         }
         else {
-            h0_2_n = 3 * h0_2_n + 1;
+            h0_2_n = (int32_t)((uint32_t)((int32_t)((uint32_t)3 * (uint32_t)h0_2_n)) + (uint32_t)1);
         }
-        h0_3_steps = h0_3_steps + 1;
+        h0_3_steps = (int32_t)((uint32_t)h0_3_steps + (uint32_t)1);
     }
     return h0_3_steps;
 }
@@ -43,15 +43,15 @@ int32_t h0_4_classify(int32_t h0_5_n) {
 int32_t h0_6_main() {
     int32_t h0_7_total = 0;
     int32_t h0_8_i = 0;
-    for (h0_8_i = 1; h0_8_i < 6; h0_8_i++) {
-        h0_7_total = h0_7_total + h0_1_collatz(h0_8_i);
+    for (h0_8_i = 1; h0_8_i < 6; (int32_t)((uint32_t&)h0_8_i)++) {
+        h0_7_total = (int32_t)((uint32_t)h0_7_total + (uint32_t)h0_1_collatz(h0_8_i));
     }
-    h0_7_total = h0_7_total + h0_4_classify(-1) + h0_4_classify(0) + h0_4_classify(5) + h0_4_classify(50);
-    h0_7_total = h0_7_total + (7 & 3) + (7 | 8) + (1 << 4) + (255 >> 4);
-    h0_7_total = h0_7_total - -3;
-    h0_7_total = h0_7_total * 2;
+    h0_7_total = (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_7_total + (uint32_t)h0_4_classify(-1))) + (uint32_t)h0_4_classify(0))) + (uint32_t)h0_4_classify(5))) + (uint32_t)h0_4_classify(50));
+    h0_7_total = (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_7_total + (uint32_t)(7 & 3))) + (uint32_t)(7 | 8))) + (uint32_t)((int32_t)((uint32_t)1 << 4)))) + (uint32_t)(255 >> 4));
+    h0_7_total = (int32_t)((uint32_t)h0_7_total - (uint32_t)-3);
+    h0_7_total = (int32_t)((uint32_t)h0_7_total * (uint32_t)2);
     if (!(h0_7_total > 1000) && h0_7_total > 0) {
-        h0_7_total = h0_7_total + 1;
+        h0_7_total = (int32_t)((uint32_t)h0_7_total + (uint32_t)1);
     }
     return h0_7_total;
 }

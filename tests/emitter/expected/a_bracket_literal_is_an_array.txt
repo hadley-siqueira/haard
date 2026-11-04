@@ -7,6 +7,8 @@ static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-
 
 struct h0_24_Array;
 
+#include <cstdlib>
+
 struct h0_24_Array {
     int32_t h0_26_data[8];
     int32_t h0_27_size;
@@ -22,6 +24,27 @@ struct h0_24_Array {
 int32_t h0_14_total(h0_24_Array &h0_15_xs);
 int32_t h0_18_main();
 
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 9: every index of a fixed array, and what a container's own
+// operator[] asks. A negative one is a very large one
+static int64_t __index(int64_t index, int64_t length) {
+    if ((uint64_t) index >= (uint64_t) length) {
+        char message[80];
+
+        snprintf(message, sizeof message, "index %lld out of range for length %lld",
+                 (long long) index, (long long) length);
+        __abort_with(message);
+    }
+
+    return index;
+}
+
 static int32_t __fx0[3] = {2, 4, 6};
 static int32_t __fx1[3] = {1, 2, 3};
 static int32_t __fx3[3] = {10, 20, 30};
@@ -31,8 +54,8 @@ int32_t h0_14_total(h0_24_Array &h0_15_xs) {
     int32_t h0_16_sum = 0;
     int32_t h0_17_i = 0;
     while (h0_17_i < h0_15_xs.m_length()) {
-        h0_16_sum = h0_16_sum + h0_15_xs.m_operator_at_b6(h0_17_i);
-        h0_17_i = h0_17_i + 1;
+        h0_16_sum = (int32_t)((uint32_t)h0_16_sum + (uint32_t)h0_15_xs.m_operator_at_b6(h0_17_i));
+        h0_17_i = (int32_t)((uint32_t)h0_17_i + (uint32_t)1);
     }
     return h0_16_sum;
 }
@@ -40,12 +63,12 @@ int32_t h0_14_total(h0_24_Array &h0_15_xs) {
 int32_t h0_18_main() {
     int32_t h0_19_n = 7;
     h0_24_Array h0_20_constant(__fx1, 3);
-    int32_t __fx2[3] = {h0_19_n, h0_19_n + 1, h0_19_n * 2};
+    int32_t __fx2[3] = {h0_19_n, (int32_t)((uint32_t)h0_19_n + (uint32_t)1), (int32_t)((uint32_t)h0_19_n * (uint32_t)2)};
     h0_24_Array h0_21_computed(__fx2, 3);
     h0_24_Array h0_22___ar0(__fx3, 3);
     int32_t h0_23_argument = h0_14_total(h0_22___ar0);
     h0_20_constant.m_operator_at_b6(0) = 100;
-    return h0_14_total(h0_20_constant) + h0_14_total(h0_21_computed) + h0_23_argument + h0_14_total(h0_13_shared);
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_14_total(h0_20_constant) + (uint32_t)h0_14_total(h0_21_computed))) + (uint32_t)h0_23_argument)) + (uint32_t)h0_14_total(h0_13_shared));
 }
 
 void h0_24_Array::m_init() {
@@ -56,8 +79,8 @@ void h0_24_Array::m_init_pb6_b6(int32_t *h0_30_from, int32_t h0_31_count) {
     this->h0_27_size = h0_31_count;
     int32_t h0_32_i = 0;
     while (h0_32_i < h0_31_count) {
-        this->h0_26_data[h0_32_i] = h0_30_from[h0_32_i];
-        h0_32_i = h0_32_i + 1;
+        this->h0_26_data[__index(h0_32_i, 8)] = h0_30_from[h0_32_i];
+        h0_32_i = (int32_t)((uint32_t)h0_32_i + (uint32_t)1);
     }
 }
 
@@ -66,7 +89,7 @@ int32_t h0_24_Array::m_length() {
 }
 
 int32_t & h0_24_Array::m_operator_at_b6(int32_t h0_35_i) {
-    return this->h0_26_data[h0_35_i];
+    return this->h0_26_data[__index(h0_35_i, 8)];
 }
 
 h0_24_Array::h0_24_Array() {

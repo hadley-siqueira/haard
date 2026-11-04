@@ -6,16 +6,39 @@
 static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-char");
 
 
+#include <cstdlib>
+
 int32_t h0_1_sum(int32_t *h0_2_from, int32_t h0_3_count);
 int32_t h0_6_main();
+
+[[noreturn]] static void __abort_with(const char* message) {
+    fflush(stdout);
+    fprintf(stderr, "%s\n", message);
+    fflush(stderr);
+    abort();
+}
+
+// answer 9: every index of a fixed array, and what a container's own
+// operator[] asks. A negative one is a very large one
+static int64_t __index(int64_t index, int64_t length) {
+    if ((uint64_t) index >= (uint64_t) length) {
+        char message[80];
+
+        snprintf(message, sizeof message, "index %lld out of range for length %lld",
+                 (long long) index, (long long) length);
+        __abort_with(message);
+    }
+
+    return index;
+}
 
 
 int32_t h0_1_sum(int32_t *h0_2_from, int32_t h0_3_count) {
     int32_t h0_4_total = 0;
     int32_t h0_5_i = 0;
     while (h0_5_i < h0_3_count) {
-        h0_4_total = h0_4_total + h0_2_from[h0_5_i];
-        h0_5_i = h0_5_i + 1;
+        h0_4_total = (int32_t)((uint32_t)h0_4_total + (uint32_t)h0_2_from[h0_5_i]);
+        h0_5_i = (int32_t)((uint32_t)h0_5_i + (uint32_t)1);
     }
     return h0_4_total;
 }
@@ -23,10 +46,10 @@ int32_t h0_1_sum(int32_t *h0_2_from, int32_t h0_3_count) {
 int32_t h0_6_main() {
     int32_t h0_7_written[4] = {1, 2, 3, 4};
     int32_t h0_8_inferred[3] = {10, 20, 30};
-    h0_7_written[0] = 5;
+    h0_7_written[__index(0, 4)] = 5;
     int32_t h0_9_a = h0_1_sum(h0_7_written, 4);
     int32_t h0_10_b = h0_1_sum(h0_8_inferred, 3);
-    return h0_9_a + h0_10_b;
+    return (int32_t)((uint32_t)h0_9_a + (uint32_t)h0_10_b);
 }
 
 int main() {

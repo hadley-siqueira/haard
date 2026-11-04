@@ -10,6 +10,7 @@
 # passed explicitly -- and 'let b : List<i32> = [1, 2, 3]' is the compiler
 # choosing the first of those and writing the call.
 import std.array
+import std.low_io
 
 class Node<T>:
     value : T
@@ -123,6 +124,8 @@ class List<T>:
     # to know and not the language's to forbid
     def operator[] : T&
         @i : i32
+
+        __check_index(i, size)
 
         let walk = head
         let at = 0

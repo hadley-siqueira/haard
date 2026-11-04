@@ -58,8 +58,8 @@ is what makes that safe to ask.
   [0082](0082-a-byte-is-written-by-two-digits.md) gave it `'\xC3'`. A whole number
   is still not a `char`, so `c == 0xC3` stays refused.
 - **The other narrow types on the C++ path**: `(a + b) as i32` with two `u8` at
-  255 and 1 is 256 in C++. That is `docs/PENDING.md`, section 2, item 1, which
-  this record does not close.
+  255 and 1 was 256 in C++. Record [0083](0083-what-cpp-leaves-undefined.md) closed
+  it, and replaced the `(char)(a + b)` above with the general form.
 - `(data[i] as u8) as i32` in `std/string.hd` was written to get around the sign.
   It is still right, and `data[i] as i32` would now do.
 

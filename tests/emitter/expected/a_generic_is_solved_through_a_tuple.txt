@@ -70,7 +70,7 @@ static int32_t h0_closure_202(void *h_env, h_tup_t2b6b6 h0_20___p0);
 static int32_t h0_closure_202(void *h_env, h_tup_t2b6b6 h0_20___p0) {
     int32_t &h0_21_x = h0_20___p0.e0;
     int32_t &h0_22_y = h0_20___p0.e1;
-    return h0_21_x * 10 + h0_22_y;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)h0_21_x * (uint32_t)10)) + (uint32_t)h0_22_y);
 }
 
 
@@ -79,18 +79,18 @@ int32_t h0_15_main() {
     h_tup_t2b11b6 h0_17_t = h_tup_t2b11b6{2.5, 7};
     int32_t h0_18_r = 0;
     if (h0_30_first(h_tup_t2b6b6{h0_16_a, 1}) == 5 && h0_33_first(h0_17_t) == 2.5) {
-        h0_18_r += 1;
+        (uint32_t&)h0_18_r += (uint32_t)1;
     }
     h_tup_t2b12b6 h0_19_s = h0_23_swap(h_tup_t2b6b12{1, true});
     if (h0_19_s.e0 && h0_19_s.e1 == 1) {
-        h0_18_r += 2;
+        (uint32_t&)h0_18_r += (uint32_t)2;
     }
     h0_27_grow(h_tup_t2rb6b6{h0_16_a, 3});
     if (h0_16_a == 8) {
-        h0_18_r += 4;
+        (uint32_t&)h0_18_r += (uint32_t)4;
     }
     if (h0_36_fold(3, h_fn_f2t2b6b6b6{nullptr, &h0_closure_202}) == 33) {
-        h0_18_r += 8;
+        (uint32_t&)h0_18_r += (uint32_t)8;
     }
     return h0_18_r;
 }
@@ -100,7 +100,7 @@ h_tup_t2b12b6 h0_23_swap(h_tup_t2b6b12 h0_26_p) {
 }
 
 void h0_27_grow(h_tup_t2rb6b6 h0_29_p) {
-    h0_29_p.e0 += h0_29_p.e1;
+    (uint32_t&)h0_29_p.e0 += (uint32_t)h0_29_p.e1;
 }
 
 int32_t h0_30_first(h_tup_t2b6b6 h0_32_p) {

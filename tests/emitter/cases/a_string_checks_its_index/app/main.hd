@@ -1,0 +1,31 @@
+# Record 0083, answer 9: a String checks in its own operator[], as an Array does.
+# It reads and writes the place, and the '\0' it keeps at the end is not an element,
+# so 2 is out of range in a String of two. 'at' still gives '\0'. Copies of the real
+# std/.
+import std.string
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i += 1
+
+    __io_write(__io_stdout(), '\n')
+
+def main : i32
+    let s = String("hi")
+    let past : i32 = 2
+
+    s[0] = 'o'
+
+    if s[0] == 'o' and s[1] == 'i' and s.at(past) == '\0':
+        say("read and written")
+
+    if s[past] == '\0':
+        say("past the end")
+
+    return 0

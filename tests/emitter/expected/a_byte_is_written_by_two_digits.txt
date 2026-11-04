@@ -53,7 +53,7 @@ int32_t h0_3_main() {
     if (h0_6_zero[1] == '\0' && h0_6_zero[2] == 'b') {
         h0_7_bits = h0_7_bits | 32;
     }
-    return h0_7_bits - 63;
+    return (int32_t)((uint32_t)h0_7_bits - (uint32_t)63);
 }
 
 int main() {

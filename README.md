@@ -116,7 +116,7 @@ Build and run it:
 ```
 cd examples/hello
 ../../build/hdc --emit-cpp main.hd > hello.cpp
-g++ -std=c++17 -funsigned-char -w -o hello hello.cpp
+g++ -std=c++17 -funsigned-char -ffp-contract=off -ftrivial-auto-var-init=pattern -w -o hello hello.cpp
 ./hello
 ```
 
@@ -154,7 +154,9 @@ Names are mangled by the module they came from and by their parameters, which
 is what makes overloading and overriding work across modules. The `-w` above
 only silences g++'s warning about string literals being `char*`.
 `-funsigned-char` is required: a Haard `char` has no sign, and the emitted file
-refuses to compile without it.
+refuses to compile without it. `-ffp-contract=off` and
+`-ftrivial-auto-var-init=pattern` are the language's rules on floats and on locals
+nobody wrote; nothing checks that they were passed.
 
 ## A project with two libraries
 
@@ -289,7 +291,7 @@ def main : i32
 ```
 cd examples/shapes/app
 ../../../build/hdc --emit-cpp main.hd > shapes.cpp
-g++ -std=c++17 -funsigned-char -w -o shapes shapes.cpp
+g++ -std=c++17 -funsigned-char -ffp-contract=off -ftrivial-auto-var-init=pattern -w -o shapes shapes.cpp
 ./shapes
 ```
 

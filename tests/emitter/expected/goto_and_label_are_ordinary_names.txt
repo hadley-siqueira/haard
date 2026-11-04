@@ -11,12 +11,12 @@ int32_t h0_3_main();
 
 
 int32_t h0_1_goto(int32_t h0_2_n) {
-    return h0_2_n * 2;
+    return (int32_t)((uint32_t)h0_2_n * (uint32_t)2);
 }
 
 int32_t h0_3_main() {
     int32_t h0_4_label = 3;
-    return h0_4_label + h0_1_goto(2);
+    return (int32_t)((uint32_t)h0_4_label + (uint32_t)h0_1_goto(2));
 }
 
 int main() {

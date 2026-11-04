@@ -63,15 +63,15 @@ int32_t h0_8_digit_of(char h0_9_c) {
 
 int32_t h0_10_main() {
     int32_t h0_11_total = 0;
-    h0_11_total = h0_11_total + h0_6_value_of(h0_1_Movement::h0_2_Up);
-    h0_11_total = h0_11_total + h0_6_value_of(h0_1_Movement::h0_3_Down);
-    h0_11_total = h0_11_total + h0_6_value_of(h0_1_Movement::h0_4_Left);
-    h0_11_total = h0_11_total + h0_6_value_of(h0_1_Movement::h0_5_Right);
+    h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)h0_6_value_of(h0_1_Movement::h0_2_Up));
+    h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)h0_6_value_of(h0_1_Movement::h0_3_Down));
+    h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)h0_6_value_of(h0_1_Movement::h0_4_Left));
+    h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)h0_6_value_of(h0_1_Movement::h0_5_Right));
     switch (h0_1_Movement::h0_4_Left) {
         case h0_1_Movement::h0_2_Up:
         {
             int32_t h0_12_missed = 100;
-            h0_11_total = h0_11_total + h0_12_missed;
+            h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)h0_12_missed);
             break;
         }
         case h0_1_Movement::h0_3_Down:
@@ -79,32 +79,32 @@ int32_t h0_10_main() {
         case h0_1_Movement::h0_5_Right:
         {
             int32_t h0_13_taken = 10;
-            h0_11_total = h0_11_total + h0_13_taken;
+            h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)h0_13_taken);
             break;
         }
     }
     switch (h0_1_Movement::h0_5_Right) {
         case h0_1_Movement::h0_5_Right:
         {
-            h0_11_total = h0_11_total + 100;
+            h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)100);
             break;
         }
         default:
         {
-            h0_11_total = h0_11_total + 1;
+            h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)1);
             break;
         }
     }
-    h0_11_total = h0_11_total + h0_8_digit_of('a') + h0_8_digit_of('0') + h0_8_digit_of('z');
+    h0_11_total = (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_11_total + (uint32_t)h0_8_digit_of('a'))) + (uint32_t)h0_8_digit_of('0'))) + (uint32_t)h0_8_digit_of('z'));
     switch (h0_11_total) {
         case 120:
         {
-            h0_11_total = h0_11_total + 1;
+            h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)1);
             break;
         }
         default:
         {
-            h0_11_total = h0_11_total + 2;
+            h0_11_total = (int32_t)((uint32_t)h0_11_total + (uint32_t)2);
             break;
         }
     }

@@ -93,34 +93,34 @@ int32_t h0_20_main() {
     h_fn_f2b6b6 h0_23_f = h_fn_f2b6b6{(void *) &h0_22_c, &h0_1_Counter_m_add_b6_bound};
     h_fn_f2b6b6_call(h0_23_f, 5);
     if (h0_22_c.h0_2_total == 5) {
-        h0_21_result += 1;
+        (uint32_t&)h0_21_result += (uint32_t)1;
     }
     h0_1_Counter *h0_24_p = &h0_22_c;
     h_fn_f3b6b6b6 h0_25_g = h_fn_f3b6b6b6{(void *) h0_24_p, &h0_1_Counter_m_add_b6_b6_bound};
     if (h_fn_f3b6b6b6_call(h0_25_g, 2, 3) == 11) {
-        h0_21_result += 2;
+        (uint32_t&)h0_21_result += (uint32_t)2;
     }
     if (h0_22_c.m_twice() == 13) {
-        h0_21_result += 4;
+        (uint32_t&)h0_21_result += (uint32_t)4;
     }
     h0_13_Loud h0_26_l = h0_13_Loud();
     h0_26_l.h0_2_total = 0;
     h0_1_Counter *h0_27_base = &h0_26_l;
     h_fn_f2b6b6 h0_28_h = h_fn_f2b6b6{(void *) h0_27_base, &h0_1_Counter_m_add_b6_bound};
     if (h_fn_f2b6b6_call(h0_28_h, 1) == 100) {
-        h0_21_result += 8;
+        (uint32_t&)h0_21_result += (uint32_t)8;
     }
     h0_38_Box h0_29_b = h0_38_Box();
     h0_29_b.h0_40_held = 7;
     h_fn_f1b6 h0_30_k = h_fn_f1b6{(void *) &h0_29_b, &h0_38_Box_m_get_bound};
     if (h_fn_f1b6_call(h0_30_k) == 7) {
-        h0_21_result += 16;
+        (uint32_t&)h0_21_result += (uint32_t)16;
     }
     if (h0_35_apply(h_fn_f2b6b6{(void *) &h0_22_c, &h0_1_Counter_m_add_b6_bound}, 2) == 15) {
-        h0_21_result += 32;
+        (uint32_t&)h0_21_result += (uint32_t)32;
     }
     if (h0_33_describe(h_fn_f2b6b6{(void *) &h0_22_c, &h0_1_Counter_m_add_b6_bound}) == 16) {
-        h0_21_result += 64;
+        (uint32_t&)h0_21_result += (uint32_t)64;
     }
     return h0_21_result;
 }
@@ -138,12 +138,12 @@ int32_t h0_35_apply(h_fn_f2b6b6 h0_36_f, int32_t h0_37_x) {
 }
 
 int32_t h0_1_Counter::m_add_b6(int32_t h0_4_n) {
-    this->h0_2_total += h0_4_n;
+    (uint32_t&)this->h0_2_total += (uint32_t)h0_4_n;
     return this->h0_2_total;
 }
 
 int32_t h0_1_Counter::m_add_b6_b6(int32_t h0_6_n, int32_t h0_7_m) {
-    this->h0_2_total += h0_6_n * h0_7_m;
+    (uint32_t&)this->h0_2_total += (uint32_t)((int32_t)((uint32_t)h0_6_n * (uint32_t)h0_7_m));
     return this->h0_2_total;
 }
 
@@ -159,7 +159,7 @@ h0_1_Counter::~h0_1_Counter() {
 }
 
 int32_t h0_13_Loud::m_add_b6(int32_t h0_15_n) {
-    this->h0_2_total += h0_15_n * 100;
+    (uint32_t&)this->h0_2_total += (uint32_t)((int32_t)((uint32_t)h0_15_n * (uint32_t)100));
     return this->h0_2_total;
 }
 

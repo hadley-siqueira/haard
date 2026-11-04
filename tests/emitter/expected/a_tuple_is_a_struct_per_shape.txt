@@ -112,23 +112,23 @@ int32_t h0_24_main() {
     h_tup_t2b6t2b12b6 h0_28_n = h0_23_nested();
     h_tup_t2b6b6 h0_29_d = h0_35_twice(5);
     int32_t h0_30_total = 0;
-    h0_30_total += h0_25_t.e0 - h0_25_t.e1;
-    h0_30_total += h0_26_s.e0 - h0_26_s.e1;
+    (uint32_t&)h0_30_total += (uint32_t)((int32_t)((uint32_t)h0_25_t.e0 - (uint32_t)h0_25_t.e1));
+    (uint32_t&)h0_30_total += (uint32_t)((int32_t)((uint32_t)h0_26_s.e0 - (uint32_t)h0_26_s.e1));
     if (h0_28_n.e1.e0) {
-        h0_30_total += h0_28_n.e1.e1;
+        (uint32_t&)h0_30_total += (uint32_t)h0_28_n.e1.e1;
     }
-    h0_30_total += h0_27_h.h0_2_pair.e0 + ((int32_t)(h0_27_h.h0_2_pair.e1));
-    h0_30_total += h0_29_d.e0 * h0_29_d.e1;
+    (uint32_t&)h0_30_total += (uint32_t)((int32_t)((uint32_t)h0_27_h.h0_2_pair.e0 + (uint32_t)((int32_t)(h0_27_h.h0_2_pair.e1))));
+    (uint32_t&)h0_30_total += (uint32_t)((int32_t)((uint32_t)h0_29_d.e0 * (uint32_t)h0_29_d.e1));
     h0_25_t.e0 = 100;
-    h0_30_total += h0_25_t.e0;
+    (uint32_t&)h0_30_total += (uint32_t)h0_25_t.e0;
     h_tup_t2n0c6b6 h0_31_a = h_tup_t2n0c6b6{h0_6_Box(1), 1};
     h_tup_t2n0c6b6 h0_32_b = h_tup_t2n0c6b6{h0_6_Box(2), 2};
     h0_31_a.m_assign(h0_32_b);
     *h0_32_b.e0.h0_7_value = 50;
-    h0_30_total += *h0_31_a.e0.h0_7_value;
+    (uint32_t&)h0_30_total += (uint32_t)*h0_31_a.e0.h0_7_value;
     char *h0_33_text = "four";
     h_tup_t2n0c13b6 h0_34_named = h_tup_t2n0c13b6{h0_13_Name(h0_33_text), 1};
-    h0_30_total += h0_34_named.e0.h0_14_length;
+    (uint32_t&)h0_30_total += (uint32_t)h0_34_named.e0.h0_14_length;
     return h0_30_total;
 }
 
@@ -195,7 +195,7 @@ h0_6_Box::~h0_6_Box() {
 void h0_13_Name::m_init_pb14(char *h0_16_text) {
     this->h0_14_length = 0;
     while (h0_16_text[this->h0_14_length] != '\0') {
-        this->h0_14_length += 1;
+        (uint32_t&)this->h0_14_length += (uint32_t)1;
     }
 }
 

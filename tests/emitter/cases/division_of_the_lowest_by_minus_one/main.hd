@@ -1,0 +1,38 @@
+# Record 0083, answer 3: MIN / -1 is MIN and MIN % -1 is 0, as overflow wraps. One
+# bit per line. x86-64 traps on this one, so it is here for that.
+
+def main : i32
+    let low : i32 = -2147483647 - 1
+    let lowest : i64 = -9223372036854775807 - 1
+    let tiny : i8 = -127 - 1
+    let minus : i32 = -1
+    let minus_long : i64 = -1
+    let minus_tiny : i8 = -1
+    let seven : i32 = 7
+    let three : i32 = -3
+    let bits = 0
+
+    if low / minus == low and low % minus == 0 and low // minus == low:
+        bits = bits | 1
+
+    if lowest / minus_long == lowest and lowest % minus_long == 0:
+        bits = bits | 2
+
+    if ((tiny / minus_tiny) as i32) == -128:
+        bits = bits | 4
+
+    # what a division always did: toward zero, and '//' floors
+    if seven / three == -2 and seven % three == 1 and seven // three == -3:
+        bits = bits | 8
+
+    let c = low
+    c /= minus
+    let d = low
+    d %= minus
+    let e = seven
+    e //= three
+
+    if c == low and d == 0 and e == -3:
+        bits = bits | 16
+
+    return bits - 31

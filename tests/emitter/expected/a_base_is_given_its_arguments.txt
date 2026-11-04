@@ -48,7 +48,7 @@ int32_t h0_17_main() {
     if (h0_19_l.h0_2_sides != 2 || h0_19_l.h0_3_tag != 0) {
         return 2;
     }
-    return h0_18_s.m_describe() + h0_19_l.m_describe();
+    return (int32_t)((uint32_t)h0_18_s.m_describe() + (uint32_t)h0_19_l.m_describe());
 }
 
 void h0_1_Shape::m_init_b6(int32_t h0_5_count) {
@@ -62,7 +62,7 @@ void h0_1_Shape::m_init_b6_b6(int32_t h0_7_count, int32_t h0_8_which) {
 }
 
 int32_t h0_1_Shape::m_describe() {
-    return this->h0_2_sides * 10 + this->h0_3_tag;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)this->h0_2_sides * (uint32_t)10)) + (uint32_t)this->h0_3_tag);
 }
 
 h0_1_Shape::h0_1_Shape(int32_t h0_5_count) {
@@ -85,7 +85,7 @@ void h0_10_Square::m_init_b6(int32_t h0_13_length) {
 }
 
 int32_t h0_10_Square::m_describe() {
-    return this->h0_2_sides * 10 + this->h0_3_tag + this->h0_11_side;
+    return (int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)this->h0_2_sides * (uint32_t)10)) + (uint32_t)this->h0_3_tag)) + (uint32_t)this->h0_11_side);
 }
 
 h0_10_Square::h0_10_Square(int32_t h0_13_length) {

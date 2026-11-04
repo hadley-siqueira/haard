@@ -1,0 +1,25 @@
+# Record 0083, answers 2 and 3: a written divisor of zero and a written shift
+# count at or past the width are refused. Anything else is decided when it runs.
+def main : i32
+    let a : i32 = 1
+    let b : i8 = 1
+
+    let c = a / 0
+    let d = a // 0
+    let e = a % 0
+    let f = a << 32
+    let g = a >> 32
+    let h = a >>> 99
+    let i = b << 8
+
+    a /= 0
+    a %= 0
+    a <<= 32
+
+    # none of these: a float keeps IEEE, and the count is below the width
+    let fine = 1.0 / 2.0
+    let top = a << 31
+    let narrow = b << 7
+    let zero = a / a
+
+    return 0

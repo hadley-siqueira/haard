@@ -146,7 +146,7 @@ int32_t h0_9_sum_of(h0_1_Action h0_10_a) {
             {
                 int32_t &h0_11_x = __sw0.tag == 1 ? __sw0.h0_3_Click._0 : __sw0.h0_6_Move._0;
                 int32_t &h0_12_y = __sw0.tag == 1 ? __sw0.h0_3_Click._1 : __sw0.h0_6_Move._1;
-                return h0_11_x + h0_12_y;
+                return (int32_t)((uint32_t)h0_11_x + (uint32_t)h0_12_y);
                 break;
             }
             case 2:
@@ -177,7 +177,7 @@ int32_t h0_18_area_of(h0_14_Shape h0_19_s) {
             case 2:
             {
                 int32_t &h0_20_r = __sw1.tag == 1 ? __sw1.h0_16_Circle._0 : __sw1.h0_17_Square._0;
-                return h0_20_r * h0_20_r;
+                return (int32_t)((uint32_t)h0_20_r * (uint32_t)h0_20_r);
                 break;
             }
         }
@@ -199,12 +199,12 @@ int32_t h0_21_main() {
     h0_1_Action h0_33_stop = h0_1_Action_h0_5_Stop();
     h0_1_Action h0_34_held = h0_26_idle;
     h0_34_held = h0_27_click;
-    int32_t h0_35_taken = h0_9_sum_of(h0_27_click) + h0_9_sum_of(h0_32_step) + h0_9_sum_of(h0_26_idle);
-    int32_t h0_36_squares = (h0_18_area_of(h0_14_Shape_h0_16_Circle(3)) + h0_18_area_of(h0_14_Shape_h0_17_Square(4)) + h0_18_area_of(h0_14_Shape_h0_15_Point()));
+    int32_t h0_35_taken = (int32_t)((uint32_t)((int32_t)((uint32_t)h0_9_sum_of(h0_27_click) + (uint32_t)h0_9_sum_of(h0_32_step))) + (uint32_t)h0_9_sum_of(h0_26_idle));
+    int32_t h0_36_squares = ((int32_t)((uint32_t)((int32_t)((uint32_t)h0_18_area_of(h0_14_Shape_h0_16_Circle(3)) + (uint32_t)h0_18_area_of(h0_14_Shape_h0_17_Square(4)))) + (uint32_t)h0_18_area_of(h0_14_Shape_h0_15_Point())));
     if (!h0_25_compared) {
         return 1;
     }
-    return (h0_7_value_of(h0_26_idle) + h0_7_value_of(h0_27_click) + h0_7_value_of(h0_32_step) + h0_7_value_of(h0_33_stop) + h0_7_value_of(h0_34_held) + h0_35_taken + h0_36_squares + h0_9_sum_of(h0_28_bare) + h0_7_value_of(h0_29_quiet) + h0_9_sum_of(h0_30_still) + h0_9_sum_of(h0_31_moved));
+    return ((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)((int32_t)((uint32_t)h0_7_value_of(h0_26_idle) + (uint32_t)h0_7_value_of(h0_27_click))) + (uint32_t)h0_7_value_of(h0_32_step))) + (uint32_t)h0_7_value_of(h0_33_stop))) + (uint32_t)h0_7_value_of(h0_34_held))) + (uint32_t)h0_35_taken)) + (uint32_t)h0_36_squares)) + (uint32_t)h0_9_sum_of(h0_28_bare))) + (uint32_t)h0_7_value_of(h0_29_quiet))) + (uint32_t)h0_9_sum_of(h0_30_still))) + (uint32_t)h0_9_sum_of(h0_31_moved)));
 }
 
 int main() {

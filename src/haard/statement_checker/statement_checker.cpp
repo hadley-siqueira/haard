@@ -1289,6 +1289,11 @@ void StatementChecker::check_assignment(u32 node, u32 scope) {
 
     left = types->value_of(left);
 
+    typer.refuse_a_constant(
+        (AstNodeKind) compilation->get_module(index)->get_ast()->get_node(node)
+            ->get_kind(),
+        value, left);
+
     // Record 0073, Hadley 2026-10-07: a compound form on a class is the
     // assignment of the operator, as in Python -- 'a += b' is 'a = a + b' --
     // since a class cannot declare 'operator+='. It passed here and g++
