@@ -30,9 +30,9 @@ IR stage 4 is closed (`d962f26`): nothing is left in `tests/lowering/not_yet`.
 A `char` has no sign and its bytes can be written (records 0081 and 0082), and the
 C++ path now follows the language on overflow, shifts, division and bounds (record
 0083), all built 2026-11-04. Questions 71-77 are answered (section 2, items 2 and
-3). Waiting on Hadley: **what comes next.** Proposed: the record for the native back
-ends, then the assembler in Haard. The other choice is a round of the small bugs
-of section 1.
+3), and written up in record 0084, nothing built. Waiting on Hadley: **the rows record
+0084 proposes**, then the assembler in Haard. The other choice is a round of the
+small bugs of section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -97,18 +97,12 @@ of section 1.
    compiler recognises them (C++: a `volatile` access; IR: `volatile_load`,
    `volatile_store`, `fence`, which exist). Not built.
 
-2. **The native back ends, as answered in questions 71-77** (2026-11-04): `hdc`
-   writes text, and an assembler and a linker of our own, written in Haard and
-   bootstrapped through the C++ path, make a static ELF. Linux only at first, direct
-   system calls and no libc (so `_start`, an allocator and the natives of
-   `std.low_io` are ours), no interoperating with C unless extremely necessary, and
-   debug information from tools that work closely with the compiler. Labels keep
-   their readable names (`"std.io.print(i32)"`), which for parallel builds to `.o`
-   later also need the root or version (record 0010) and a rule for a generic
-   instantiated twice. A program cannot yet make a file executable, and the
-   assembler needs that. `as` may be an oracle in the test suite, and nothing else.
-   Nothing built; a probe was measured,
-   `docs/design/notes/ir-questions-explained.md`.
+2. **The native back ends** (record 0084, questions 71-77): an assembler and a linker
+   of our own in Haard, bootstrapped through the C++ path; `hdc` writes text; a static
+   ELF on Linux, direct system calls, no C. `as` may be an oracle in the test suite,
+   and nothing else. Nothing built. Its table of what is proposed and not decided
+   (first target, text dialect, branches, calling convention, debug format and more)
+   waits on Hadley.
 3. **PIE as the default on Linux, before a public version** (question 77). The first
    version loads at a fixed address, with the code already position independent.
 
@@ -156,7 +150,8 @@ of section 1.
    processor needs a body, Haard in `std` being the candidate. That one waits
    on a question for Hadley: the same result on every target, which WCET favours
    and which means the C++ path uses the same code, or libm's precision (ties
-   in with questions 55-70). Record 0077, step 6.
+   in with questions 55-70). Record 0077, step 6. With no libc there is no libm
+   (answer 75), so record 0084 proposes the first.
 2. **Building a variant's payload makes one copy fewer in the IR**:
    `Box.Full(Held(7))` builds the `Held` in place, the C++ path gives a
    temporary to the variant's maker and copies it in. Seen only through a
