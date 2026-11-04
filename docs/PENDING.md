@@ -30,9 +30,9 @@ IR stage 4 is closed (`d962f26`): nothing is left in `tests/lowering/not_yet`.
 A `char` has no sign and its bytes can be written (records 0081 and 0082), and the
 C++ path now follows the language on overflow, shifts, division and bounds (record
 0083), all built 2026-11-04. Questions 71-77 are answered (section 2, items 2 and
-3), and written up in record 0084, nothing built. Waiting on Hadley: **the rows record
-0084 proposes**, then the assembler in Haard. The other choice is a round of the
-small bugs of section 1.
+3), and record 0084 decides the rest, nothing built. Waiting on Hadley: **when to start**
+the assembler in Haard, which is the record's first step. The other choice is a round
+of the small bugs of section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -97,12 +97,11 @@ small bugs of section 1.
    compiler recognises them (C++: a `volatile` access; IR: `volatile_load`,
    `volatile_store`, `fence`, which exist). Not built.
 
-2. **The native back ends** (record 0084, questions 71-77): an assembler and a linker
-   of our own in Haard, bootstrapped through the C++ path; `hdc` writes text; a static
-   ELF on Linux, direct system calls, no C. `as` may be an oracle in the test suite,
-   and nothing else. Nothing built. Its table of what is proposed and not decided
-   (first target, text dialect, branches, calling convention, debug format and more)
-   waits on Hadley.
+2. **The native back ends** (record 0084, questions 71-77 and ten more): an assembler
+   and a linker of our own in Haard, bootstrapped through the C++ path; `hdc` writes
+   text; a static ELF on x86-64 Linux first, direct system calls, no C. `as` may be an
+   oracle in the test suite, and nothing else. The first goal is a correct result, not
+   speed. Nothing built. How a label names its root is still to be spelled.
 3. **PIE as the default on Linux, before a public version** (question 77). The first
    version loads at a fixed address, with the code already position independent.
 
@@ -140,18 +139,16 @@ small bugs of section 1.
 7. **The `.hdm` cache and incremental compilation** (agenda 3.1-3.6, 4.5):
    measured unnecessary for now, 500k lines compile from source in 37s.
 8. **Threading** (agenda 4.3).
+9. **A debug format and a debugger of our own**: interesting in the future, since
+   they could know everything about Haard, enums and generics included, where DWARF
+   describes them as C's concepts (Hadley, 2026-11-04). DWARF first. Record 0084.
 
 ## 5. The IR (record 0077)
 
-1. **The natives `__pow` and `__floor`** stay natives for now (Hadley,
-   2026-11-04): each back end gives them a body, and only the interpreter has
-   one so far, C's. Decide when the first back end starts. Proposed then:
-   `floor` as an IR instruction (`ffloor`), and `pow` still a native until the
-   processor needs a body, Haard in `std` being the candidate. That one waits
-   on a question for Hadley: the same result on every target, which WCET favours
-   and which means the C++ path uses the same code, or libm's precision (ties
-   in with questions 55-70). Record 0077, step 6. With no libc there is no libm
-   (answer 75), so record 0084 proposes the first.
+1. **`__pow` and `__floor` become `pow` in Haard and the `ffloor` instruction**
+   (Hadley, 2026-11-04, record 0084), replacing what stayed native for now. `pow`
+   needs a module most cases' trimmed copies of `std/` lack, and goldens may change
+   in the last digit. Not built.
 2. **Building a variant's payload makes one copy fewer in the IR**:
    `Box.Full(Held(7))` builds the `Held` in place, the C++ path gives a
    temporary to the variant's maker and copies it in. Seen only through a

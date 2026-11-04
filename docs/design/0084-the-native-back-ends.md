@@ -1,10 +1,10 @@
 # 0084 — The native back ends
 
-Status: **decided in part**, 2026-11-04. Hadley answered questions 71-77 of
-`notes/ir-questions.md`; the first table is his. The second is **proposed and not
-decided**, each row waiting on him. **Nothing here is built**: he asked for it to be
-written down first (*"não implemente nada ainda por enquanto"*). The reasoning behind
-each answer is in `notes/ir-questions-explained.md`.
+Status: **decided**, 2026-11-04, with the spelling of a label's root still open
+(below). Hadley answered questions 71-77 of `notes/ir-questions.md`, then ten more
+questions one at a time; the table is his. **Nothing here is built**: he asked for it
+to be written down first (*"não implemente nada ainda por enquanto"*). The reasoning
+behind the first seven is in `notes/ir-questions-explained.md`.
 
 | | |
 |---|---|
@@ -16,6 +16,18 @@ each answer is in `notes/ir-questions-explained.md`.
 | Direct system calls, no libc | **decided**, 75 |
 | Debug information is generated, and the tools may work closely with the compiler; no `as`/`ld` legacy to keep | **decided**, 76 |
 | A fixed address first, with the code already position independent; **PIE the default on Linux before a public version** | **decided**, 77, option (c) |
+| **x86-64 is the first target**: every step runs here at once, where ARM64 needs an emulator in the suite and the processor's ISA is still moving | **decided**, Hadley, 2026-11-04 |
+| **Two steps for now**: `hdc` writes text and a `Makefile` runs the tool, as with g++ today. When `hdc` is in Haard, the tool goes inside it, **if that still makes sense then**. A separate driver, as `go build`, can come later without touching either | **decided**, Hadley, 2026-11-04 |
+| **The text is Intel order, one instruction per line, a subset `as` reads** given `.intel_syntax noprefix`. What is only ours is a directive of ours, stripped for `as` in the tests. This is no promise of compatibility: it may diverge if the oracle stops being useful | **decided**, Hadley, 2026-11-04 |
+| **A branch on x86-64 always takes the long form**, four bytes of distance, with no relaxation: every size is known in one pass, which WCET wants. Measured on `hdc` built by g++ with no `-O`: 3.6% more code. `as` chooses the short form by itself, so the tests' filter adds `{disp32}`, which was tried and forces the long one. Choosing the short form can be added later | **decided**, Hadley, 2026-11-04 |
+| **A conditional branch on ARM64 follows a rule per function**: up to 1 MB, always `b.cond`; larger, always the inverted branch over a `b`. Every instruction is 4 bytes, so counting them gives the size in one pass, with no relaxation. To be reviewed if ARM64 shows otherwise. The largest of `hdc`'s 8,065 functions on x86-64 is 17,077 bytes | **decided**, Hadley, 2026-11-04 |
+| **The calling convention is our own**, free of the C ABI, in System V's register order: whole numbers and pointers in `rdi`, `rsi`, `rdx`, `rcx`, `r8`, `r9`, floats in `xmm0`-`xmm7`, the rest on the stack, the result in `rax` or `xmm0`. A struct or class by value always goes through a hidden pointer, the result too. No varargs and no red zone. Only `rsp` and `rbp` are preserved for now, and `rbp` is always the frame pointer. A program compiled whole may change this at any time | **decided**, Hadley, 2026-11-04 |
+| **No register allocation at first**: every value in its slot, as the IR's memory form has them (record 0077). **A global allocator, over SSA and linear scan, once `tests/emitter` passes natively**, and the plain path stays to compare against. Nothing per block in between | **decided**, Hadley, 2026-11-04 |
+| **Sizes and addresses are in the ELF symbol table now**, with each label's name, address and size, which gdb, `readelf` and `objdump` read. **A map only when WCET needs one**, and it may never be needed once the tool lives inside `hdc`. `hdc` does not compute sizes itself, which would duplicate the encoder | **decided**, Hadley, 2026-11-04 |
+| **Debug information is DWARF, written by our tools, in parts**: `.debug_line` early, since it helps debug the back end itself, reaching the tool through a directive of ours; `.debug_info` later. The symbol table comes first (above). **A format and a debugger of our own would be interesting in the future**, since they could know everything about Haard, enums and generics included | **decided**, Hadley, 2026-11-04 |
+| **`floor` is an IR instruction, `ffloor`** (`roundsd`, which needs SSE4.1, on x86-64, `frintm` on ARM64). Its result is exact, so no implementation can disagree | **decided**, Hadley, 2026-11-04 |
+| **`pow` is written in software, in Haard, in `std`, of good quality**: an algorithm such as fdlibm's, using the machine's ordinary float operations, the same on every target and on all three paths. A crude `exp(y * log(x))` measured a worst of 102 ulp against libm and 7.3 on average, and would change programs' results when improved. It may come last in the back end; until then the C++ path keeps libm's | **decided**, Hadley, 2026-11-04 |
+| **The first goal of the back end is a correct result, not speed.** If need be, the worst case can go entirely to software, with no help from the hardware | **decided**, Hadley, 2026-11-04: *"o objetivo inicial é garantir que o backend produza resultado correto e não velocidade de execução"* |
 | Labels keep their readable names, `"std.io.print(i32)"`, natively, with parallel builds to `.o` in mind | **asked**, Hadley; two points are open, under *Names* |
 
 ## The shape
@@ -57,21 +69,6 @@ forms, quoted labels and a static ELF.
   demand beyond a unique name.
 - One program of 138 bytes, the same instructions, read the same address on six runs
   at a fixed address and six different ones as PIE.
-
-## Proposed, not decided
-
-| Question | Proposed | Why |
-|---|---|---|
-| The first target | **x86-64** | it is the machine here; there is no `qemu-aarch64` or ARM `as` on it, so ARM64 needs them in the suite |
-| How `hdc` reaches the tool | **two steps, as today**: `hdc` writes text, a `Makefile` runs the tool | record 0010: the compiler is told and never searches |
-| The text's dialect | **Intel order, one instruction per line, a subset `as` reads** given `.intel_syntax noprefix` | the oracle needs both to read it; anything that is only ours is stripped for `as` |
-| A branch on x86-64 | **always the four-byte form** | wastes space and gives exact sizes with no relaxation, which WCET wants |
-| A conditional branch out of ARM64's ±1 MB | the inverted branch over a `b`, chosen by a fixed rule | same reason; to be settled at ARM64 |
-| The calling convention | **our own, free of the C ABI** (answer 74), starting from the System V register order | system calls are close to it and gdb reads it easily; aggregates through a hidden pointer, as the IR's memory form has them |
-| Register allocation | **none at first**, every value in its slot | IR memory form, record 0077; slow and simple, and correctness comes first |
-| How sizes reach the compiler | **a map the tool writes** (each label's address and size) | WCET and placement need them; later, in the same process, a call |
-| The debug format (76) | **DWARF**, written by our tools, built after the first back end runs | it is what gdb reads; a format of ours would need a debugger of ours. Positions per instruction are already kept (question 86) |
-| A floating point `floor` and `pow` | `ffloor` an instruction; `pow` in Haard, in `std` | **no libm any more**, which forces what `docs/PENDING.md` section 5 item 1 kept open: the same result on every target, where WCET points, or libm's precision |
 
 ## Names
 
