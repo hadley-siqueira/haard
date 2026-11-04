@@ -19,8 +19,10 @@
 #   make HDC=/path/to/hdc
 HDC ?= ../build/hdc
 
+# -funsigned-char: a Haard char has no sign, and the emitted file refuses a build
+# without it (record 0081)
 CXX ?= g++
-CXXFLAGS ?= -std=c++17 -O2 -w
+CXXFLAGS ?= -std=c++17 -funsigned-char -O2 -w
 
 # every Haard source of this package and the library it stands on, so editing
 # any of them rebuilds -- and hdc itself, since a new compiler is a new program

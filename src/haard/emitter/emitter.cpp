@@ -4,7 +4,9 @@
 using namespace haard;
 
 // the builtins as C++ writes them. 'char' is the language's own and not a
-// stand-in for i8, so it stays 'char'
+// stand-in for u8, so it stays 'char': 'unsigned char' is what uint8_t is, and
+// 'init(c : char)' beside 'init(b : u8)' would be one constructor. Record 0081
+// has it unsigned by the compiler's flag, which the emitted file checks
 static const char* BUILTIN_CPP[] = {
     "uint8_t", "uint16_t", "uint32_t", "uint64_t",
     "int8_t", "int16_t", "int32_t", "int64_t",
@@ -143,6 +145,12 @@ bool Emitter::emit(std::ostream& stream) {
     // record 00XX: a tagged union whose payload is a class constructs and
     // destroys the member the tag says is alive, by hand
     out << "#include <new>\n\n";
+
+    // record 0081: a char has no sign, and only the C++ compiler's flag can
+    // say so. A build without it stops here rather than running a program
+    // that reads every byte past 127 wrong
+    out << "static_assert((char) -1 > 0, \"a Haard char has no sign: compile "
+           "with -funsigned-char\");\n\n";
 
     emit_forward_declarations();
 
@@ -3020,6 +3028,20 @@ static std::string cpp_escapes(const std::string& body, char quote) {
 
     for (size_t i = 0; i < body.size(); i++) {
         if (body[i] == '\\' && i + 1 < body.size()) {
+            // Record 0082: two digits in Haard, as many as follow in C++, so
+            // "\xC3a" would be one byte too large for it. Three octal digits
+            // are where C++ stops on its own
+            if (body[i + 1] == 'x' && i + 3 < body.size()) {
+                int byte = std::stoi(body.substr(i + 2, 2), nullptr, 16);
+
+                result += '\\';
+                result += (char) ('0' + (byte >> 6));
+                result += (char) ('0' + ((byte >> 3) & 7));
+                result += (char) ('0' + (byte & 7));
+                i += 3;
+                continue;
+            }
+
             if (body[i + 1] != '$') {
                 result += body[i];
             }
@@ -3618,6 +3640,17 @@ void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
         return;
     }
 
+    // Record 0081: C++ computes a char's arithmetic in an int, so '(c - 1) as
+    // i32' with c at a zero byte read -1 where Haard's eight bits say 255. The
+    // cast is what wraps it. Only these five: an assignment's value is its
+    // left side already, and the rest give back a bool
+    bool wraps = oper.size() == 1 && oper.find_first_of("+-*/%") == 0
+                 && builtin_of(module, node) == BUILTIN_CHAR;
+
+    if (wraps) {
+        out << "(char)(";
+    }
+
     int level = precedence_of(module, node);
 
     // every binary operator C++ has is left associative except the
@@ -3630,6 +3663,10 @@ void Emitter::emit_binary(u32 module, u32 node, const std::string& oper) {
     out << " " << oper << " ";
     emit_operand(module, child_of(module, node, 1),
                  to_the_right ? level : level - 1);
+
+    if (wraps) {
+        out << ")";
+    }
 }
 
 void Emitter::emit_membership(u32 module_index, u32 node, bool negated) {
@@ -5433,26 +5470,7 @@ std::string Emitter::emit_symbol_table() {
         // the name as C++ reads it. A symbol written with ' may hold a bare "
         // and that one has to be escaped; an escape already in it meant
         // something where it was written and means the same here
-        for (size_t i = 0; i < name.size(); i++) {
-            if (name[i] == '\\' && i + 1 < name.size()) {
-                // '\$' is Haard's and not C++'s: the bare dollar sign
-                if (name[i + 1] != '$') {
-                    table += name[i];
-                }
-
-                table += name[i + 1];
-                i++;
-                continue;
-            }
-
-            if (name[i] == '"') {
-                table += "\\\"";
-                continue;
-            }
-
-            table += name[i];
-        }
-
+        table += cpp_escapes(name, '"');
         table += "\",\n";
     }
 

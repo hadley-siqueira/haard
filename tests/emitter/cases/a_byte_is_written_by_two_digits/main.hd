@@ -1,0 +1,48 @@
+# Record 0082, Hadley 2026-11-04: '\xHH' is one byte with exactly two digits, in
+# a char and in a string, on both paths. There is no octal, and '\0' is the byte
+# zero.
+#
+# One bit per line that has to come out right, so the exit status names the one
+# that did not.
+
+def kind : i32
+    @c : char
+
+    switch c:
+        case '\xC3':
+            return 1
+        case '\0':
+            return 2
+        default:
+            return 0
+
+def main : i32
+    let c : char = '\xC3'
+    let text : char* = "\xC3a\x41"
+    let zero : char* = "a\0b"
+    let bits = 0
+
+    # a char holds the byte, past 127 too
+    if (c as i32) == 195:
+        bits = bits | 1
+
+    # both cases of the digits, and the top of the range
+    if '\x41' == 'A' and '\xc3' == c and ('\xFF' as i32) == 255:
+        bits = bits | 2
+
+    # a case can name one
+    if kind(c) == 1 and kind('\x00') == 2:
+        bits = bits | 4
+
+    # two digits and no more: the 'a' after them is a letter of its own
+    if (text[0] as i32) == 195 and text[1] == 'a' and text[2] == 'A':
+        bits = bits | 8
+
+    if text[3] == '\0':
+        bits = bits | 16
+
+    # the byte zero is one byte, and what follows it is not swallowed
+    if zero[1] == '\0' and zero[2] == 'b':
+        bits = bits | 32
+
+    return bits - 63

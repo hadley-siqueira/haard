@@ -5,7 +5,7 @@ Every other suite takes the compiler apart. This one does not: each case is a
 it.
 
     hdc --roots roots.tbl myapp/main.hd --emit-cpp  >  main.cpp
-    g++ -std=c++17 -o app main.cpp
+    g++ -std=c++17 -funsigned-char -o app main.cpp
     ./app
 
 Three things make it different from `tests/emitter`, which also builds and runs

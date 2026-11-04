@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <new>
 
+static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-char");
+
 struct h0_1_Counter;
 struct h0_13_Loud;
 struct h0_38_Box;

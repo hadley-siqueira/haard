@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <new>
 
+static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-char");
+
 
 char h0_1_upper(char h0_2_ch);
 int32_t h0_3_main();
@@ -10,7 +12,7 @@ int32_t h0_3_main();
 
 char h0_1_upper(char h0_2_ch) {
     if (h0_2_ch >= 'a' && h0_2_ch <= 'z') {
-        return h0_2_ch - ('a' - 'A');
+        return (char)(h0_2_ch - ('a' - 'A'));
     }
     return h0_2_ch;
 }
@@ -29,10 +31,10 @@ int32_t h0_3_main() {
     if (h0_1_upper(h0_4_c) == 'H' && h0_1_upper('Q') == 'Q') {
         h0_6_bits = h0_6_bits | 4;
     }
-    if (h0_4_c + 1 == 'i' && h0_4_c - 1 == 'g') {
+    if ((char)(h0_4_c + 1) == 'i' && (char)(h0_4_c - 1) == 'g') {
         h0_6_bits = h0_6_bits | 8;
     }
-    if (h0_4_c + h0_5_n == 'j') {
+    if ((char)(h0_4_c + h0_5_n) == 'j') {
         h0_6_bits = h0_6_bits | 16;
     }
     char h0_8_k = h0_4_c;

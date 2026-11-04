@@ -208,10 +208,7 @@ class Scanner:
 
         while has_next() and not lookahead(delimiter):
             if lookahead('\\'):
-                advance()
-
-                if has_next():
-                    advance()
+                get_escape()
             else:
                 advance()
 
@@ -229,6 +226,15 @@ class Scanner:
 
         advance()
         end_token()
+
+        # record 0082: a char holds one byte, and which of these it would hold
+        # cannot be decided for the programmer
+        let bytes = idx - token_offset - 2
+
+        if (delimiter == '\'' and counter == 1 and bytes > 1
+            and char_at(token_offset + 1) != '\\'):
+            error(token_offset, idx - token_offset,
+                  "this character takes ${bytes} bytes and a char holds one")
 
         if delimiter == '\'' and counter <= 1:
             create_token(TokenKind.CharLiteral)
@@ -251,10 +257,7 @@ class Scanner:
             while (has_next() and not lookahead(delimiter)
                    and not is_interpolation()):
                 if lookahead('\\'):
-                    advance()
-
-                    if has_next():
-                        advance()
+                    get_escape()
                 else:
                     advance()
 
@@ -354,10 +357,7 @@ class Scanner:
 
             while has_next() and not lookahead(delimiter):
                 if lookahead('\\'):
-                    advance()
-
-                    if has_next():
-                        advance()
+                    get_escape()
                 else:
                     advance()
 
@@ -543,6 +543,33 @@ class Scanner:
     # template string, and an unterminated one
     def is_interpolation : bool
         return lookahead_at('$', 0) and lookahead_at('{', 1)
+
+    # One escape, the backslash under the cursor. Record 0082: '\\xHH' is one
+    # byte and takes exactly two digits, so nobody has to ask where it ends,
+    # which is also why there is no octal. '\\0' stays, the byte zero, alone
+    def get_escape : void
+        let start = idx
+
+        advance()
+
+        if lookahead('x'):
+            advance()
+
+            if is_hex_digit(0) and is_hex_digit(1):
+                advance()
+                advance()
+            else:
+                error(start, idx - start,
+                      "a \\x escape takes exactly two hexadecimal digits")
+
+            return
+
+        if is_digit(0) and (not lookahead('0') or is_digit(1)):
+            error(start, idx - start + 1,
+                  "there are no octal escapes: write \\xHH")
+
+        if has_next():
+            advance()
 
     def is_utf8_continuation : bool
         @offset : i32

@@ -4968,8 +4968,8 @@ std::string FunctionLowerer::text_of(u32 node) {
         module->get_ast()->get_node(node)->get_token()));
 }
 
-// C's escapes, the octal and hex ones aside, and Haard's '\$' (Hadley,
-// 2026-09-30)
+// C's one-letter escapes, '\\0', record 0082's '\\xHH', which the scanner has
+// already seen has its two digits, and Haard's '\$' (Hadley, 2026-09-30)
 std::string FunctionLowerer::unescape(const std::string& body) {
     std::string made;
 
@@ -4988,6 +4988,10 @@ std::string FunctionLowerer::unescape(const std::string& body) {
         case 'f': made += '\f'; break;
         case 'v': made += '\v'; break;
         case '0': made += '\0'; break;
+        case 'x':
+            made += (char) std::stoi(body.substr(i + 1, 2), nullptr, 16);
+            i += 2;
+            break;
         default: made += body[i]; break;
         }
     }

@@ -10,8 +10,10 @@ HDC ?= ../../../../build/hdc
 ROOTS ?= roots.tbl
 ENTRY ?= myapp/main.hd
 
+# -funsigned-char: a Haard char has no sign, and the emitted file refuses a build
+# without it (record 0081)
 CXX ?= g++
-CXXFLAGS ?= -std=c++17 -w
+CXXFLAGS ?= -std=c++17 -funsigned-char -w
 
 SOURCES := $(wildcard */*.hd)
 

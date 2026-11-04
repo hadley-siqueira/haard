@@ -7,9 +7,11 @@ remaining work and open questions. The records and the agenda
 
 Take an item off when it is fixed, decided or dropped, and say where it went.
 Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
-date 2026-11-04, after IR stage 4 step 6.
+date 2026-11-04, after record 0082.
 
-Taken off on 2026-11-04: *stage 4 step 6* (built, record 0077).
+Taken off on 2026-11-04: *stage 4 step 6* (built, record 0077), and *a `char`
+past 127 reads differently on the two paths* (a `char` has no sign, record 0081),
+and *a `char` past 127 cannot be written as a literal* (record 0082).
 
 Taken off on 2026-11-03: *stage 4 step 5* (built), *`char - char`* (record 0079), *lower only what is
 reachable* (built, question 89), *the named return value* (record 0080),
@@ -19,6 +21,16 @@ lines of records 0035, 0037 and 0038 had not been updated), *the unary minus
 against `**`* (record 0057 amended), and *a class value given to a `T&` of
 its base is copied on the C++ path* (fixed in `Emitter::emit_conversion`,
 case `a_derived_class_is_its_base_by_reference`).
+
+## Where we stopped (2026-11-04)
+
+IR stage 4 is closed (`d962f26`): nothing is left in `tests/lowering/not_yet`.
+A `char` has no sign and its bytes can be written (records 0081 and 0082, built,
+2026-11-04). Waiting on Hadley:
+**what comes next.** Proposed: the C++ path's undefined behaviour and the bounds
+checks (section 2, items 1 and 2); then the first real back end, x86-64 or ARM64
+(section 5, item 3, questions 71-77). The other choice is a round of the small
+bugs of section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -62,15 +74,11 @@ case `a_derived_class_is_its_base_by_reference`).
     takes these arguments*, while `by_value(n)` with `n : i32` works.
     Record 0046 says a literal and a value are one question. Found
     2026-11-03.
-12. **A `char` past 127 reads differently on the two paths**: the C++
-    `char` is signed on x86-64, the IR's is not (`c as i32` is a `zext`),
-    so `'z' + 10` as an `i32` is -124 in C++ and 132 in the IR. Whether a
-    Haard `char` has a sign is not decided anywhere. Record 0079.
-13. **A temporary assigned to an enum that carries a class, on the C++
+12. **A temporary assigned to an enum that carries a class, on the C++
     path**: `copy = Box.Empty` is emitted as `copy.m_assign(Box_Empty())`,
     a temporary to a plain reference, which g++ refuses; through a name it
     works. Found 2026-11-03.
-14. **Four things the front end says, found 2026-11-04**, none decided:
+13. **Four things the front end says, found 2026-11-04**, none decided:
     - a closure at module level (`let twice = |x : i32| -> i32 { return x * 2 }`)
       is *cannot find 'x' in this scope*, where one inside a function works;
     - a tuple converts element by element when assigned (`w = make()`, a
@@ -90,7 +98,9 @@ case `a_derived_class_is_its_base_by_reference`).
    `-ftrivial-auto-var-init=pattern` (10a). And a float converted to a whole
    number it does not fit, or a NaN, **aborts** (Hadley, 2026-10-20): the IR
    interpreter does it, the C++ path does not (a C++ cast is undefined
-   there). The tests pass only because g++ runs without `-O`.
+   there). The tests pass only because g++ runs without `-O`. The narrow types do
+   not wrap either: `(a + b) as i32` with two `u8` at 255 and 1 is 256 in C++,
+   measured; `char` alone was fixed (record 0081).
 2. **Bounds checks** (answer 9b): every index checked, aborting with a
    message. The IR does it for fixed arrays (`check_index`, step 2). Not
    built: the C++ path for fixed arrays, and `Array`/`List`/`String`, whose

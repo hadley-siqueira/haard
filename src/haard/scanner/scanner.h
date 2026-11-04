@@ -53,6 +53,7 @@ namespace haard {
             bool is_binary_digit(int offset = 0);
             bool is_octal_digit(int offset = 0);
             bool is_hex_digit(int offset = 0);
+            void get_escape();
             bool is_alphanum(int offset = 0);
             bool is_operator(int offset = 0);
             std::string get_lexeme_from_token();

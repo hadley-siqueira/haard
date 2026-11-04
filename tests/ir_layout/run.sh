@@ -165,7 +165,7 @@ for directory in "${cases[@]}"; do
         "$build/layout" "cases/$name" --probe > "$build/$name.cpp" 2>&1
         "$build/layout" "cases/$name" --facts > "$build/$name.facts" 2>&1
 
-        if ! err=$(g++ -std=c++17 -w -o "$build/$name.probe" \
+        if ! err=$(g++ -std=c++17 -funsigned-char -w -o "$build/$name.probe" \
                 "$build/$name.cpp" 2>&1); then
             printf '%s[%2d/%d]%s %sFAIL%s  %s (the probe did not build)\n' \
                 "$dim" "$done" "$total" "$reset" "$red" "$reset" "$name"

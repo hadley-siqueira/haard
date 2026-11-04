@@ -116,7 +116,7 @@ Build and run it:
 ```
 cd examples/hello
 ../../build/hdc --emit-cpp main.hd > hello.cpp
-g++ -std=c++17 -w -o hello hello.cpp
+g++ -std=c++17 -funsigned-char -w -o hello hello.cpp
 ./hello
 ```
 
@@ -153,6 +153,8 @@ int main() {
 Names are mangled by the module they came from and by their parameters, which
 is what makes overloading and overriding work across modules. The `-w` above
 only silences g++'s warning about string literals being `char*`.
+`-funsigned-char` is required: a Haard `char` has no sign, and the emitted file
+refuses to compile without it.
 
 ## A project with two libraries
 
@@ -287,7 +289,7 @@ def main : i32
 ```
 cd examples/shapes/app
 ../../../build/hdc --emit-cpp main.hd > shapes.cpp
-g++ -std=c++17 -w -o shapes shapes.cpp
+g++ -std=c++17 -funsigned-char -w -o shapes shapes.cpp
 ./shapes
 ```
 
@@ -614,7 +616,9 @@ def main : i32
 
 `${...}` inside a string is a template string, taken apart before the emitter
 into a `String` and a few `append` calls. `\$` is a dollar sign, so
-`"\${name}"` is that text and no interpolation; every other escape is C's.
+`"\${name}"` is that text and no interpolation. `\xHH` is one byte, with exactly
+two digits, and `\0` is the byte zero; there are no octal escapes, and the
+one-letter escapes are C's. A `char` holds one byte, so `'é'` is an error.
 `[1, 2, 3]` is a fixed array plus one
 constructor call, and which constructor is chosen by the type written on the
 left. Generics are monomorphised: `Hash<symbol, i32>` becomes a class of its

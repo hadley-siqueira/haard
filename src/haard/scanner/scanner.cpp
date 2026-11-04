@@ -1,5 +1,6 @@
 #include <haard/scanner/scanner.h>
 #include <cstdio>
+#include <string>
 #include <unordered_map>
 
 using namespace haard;
@@ -319,11 +320,7 @@ void Scanner::get_string() {
 
     while (has_next() && !lookahead(delimiter)) {
         if (lookahead('\\')) {
-            advance();
-
-            if (has_next()) {
-                advance();
-            }
+            get_escape();
         } else {
             advance();
 
@@ -346,10 +343,52 @@ void Scanner::get_string() {
     advance();
     end_token();
 
+    // record 0082: a char holds one byte, and which of these it would hold
+    // cannot be decided for the programmer
+    u32 bytes = idx - token_offset - 2;
+
+    if (delimiter == '\'' && counter == 1 && bytes > 1
+        && source_file->char_at(token_offset + 1) != '\\') {
+        logger->error(token_offset, idx - token_offset,
+                      "this character takes " + std::to_string(bytes)
+                          + " bytes and a char holds one");
+    }
+
     if (delimiter == '\'' && counter <= 1) {
         create_token(TK_CHAR_LITERAL);
     } else {
         create_token(TK_STRING_LITERAL);
+    }
+}
+
+// One escape, the backslash under the cursor. Record 0082: '\\xHH' is one byte
+// and takes exactly two digits, so nobody has to ask where it ends, which is
+// also why there is no octal. '\\0' stays, the byte zero, on its own
+void Scanner::get_escape() {
+    u32 start = idx;
+
+    advance();
+
+    if (lookahead('x')) {
+        advance();
+
+        if (is_hex_digit(0) && is_hex_digit(1)) {
+            advance(2);
+        } else {
+            logger->error(start, idx - start,
+                          "a \\x escape takes exactly two hexadecimal digits");
+        }
+
+        return;
+    }
+
+    if (is_digit() && (!lookahead('0') || is_digit(1))) {
+        logger->error(start, idx - start + 1,
+                      "there are no octal escapes: write \\xHH");
+    }
+
+    if (has_next()) {
+        advance();
     }
 }
 
@@ -374,11 +413,7 @@ void Scanner::get_template_string() {
 
         while (has_next() && !lookahead(delimiter) && !is_interpolation()) {
             if (lookahead('\\')) {
-                advance();
-
-                if (has_next()) {
-                    advance();
-                }
+                get_escape();
             } else {
                 advance();
             }
@@ -492,11 +527,7 @@ void Scanner::get_symbol() {
 
         while (has_next() && !lookahead(delimiter)) {
             if (lookahead('\\')) {
-                advance();
-
-                if (has_next()) {
-                    advance();
-                }
+                get_escape();
             } else {
                 advance();
 

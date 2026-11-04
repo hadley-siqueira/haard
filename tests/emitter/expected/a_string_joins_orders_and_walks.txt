@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <new>
 
+static_assert((char) -1 > 0, "a Haard char has no sign: compile with -funsigned-char");
+
 struct h1_1_String;
 struct h1_99_StringCursor;
 
@@ -81,7 +83,7 @@ int32_t h0_1_main() {
     if (h0_3_a.m_operator_lt_rn1c1(h0_4_b) && !(h0_4_b.m_operator_lt_eq_rn1c1(h0_3_a)) && h0_4_b.m_operator_gt_rn1c1(h0_3_a) && h0_3_a.m_operator_gt_eq_rn1c1(h0_3_a) && (h1_1_String("ab")).m_operator_lt_rn1c1(h0_3_a)) {
         h0_2_result += 2;
     }
-    h1_1_String h0_6_high("\xff");
+    h1_1_String h0_6_high("\377");
     if (h0_3_a.m_operator_lt_rn1c1(h0_6_high)) {
         h0_2_result += 4;
     }
@@ -93,7 +95,7 @@ int32_t h0_1_main() {
         h1_99_StringCursor h0_9___c0 = h0_3_a.m_iterator();
         while (h0_9___c0.m_has_next()) {
             char &h0_8_ch = h0_9___c0.m_next();
-            h0_8_ch = h0_8_ch - ('a' - 'A');
+            h0_8_ch = (char)(h0_8_ch - ('a' - 'A'));
             h0_7_count += 1;
         }
     }

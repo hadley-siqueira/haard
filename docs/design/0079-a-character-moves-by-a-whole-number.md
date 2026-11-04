@@ -47,16 +47,16 @@ char`.
   `zext` and subtracts in `b32`, the way `c as i32` widens one; `char ± n`
   cuts `n` to eight bits with `trunc` and adds in `b8` (`move_char`, which
   `+=` and `-=` use too).
-- The C++ path needed nothing: C++ computes both in `int` and the emitter
-  writes the binding with the type the front end gave.
+- The C++ path needed nothing at the time: C++ computes both in `int` and the
+  emitter writes the binding with the type the front end gave. That left
+  `(c - 1) as i32` unwrapped, which record 0081 fixed.
 
 ## Not covered
 
-A `char` past 127: the C++ path's `char` is signed on x86-64 and the IR's is
-not (`c as i32` is a `zext`), so `'z' + 10` read back as an `i32` is -124 on
-one path and 132 on the other. This is older than this record (any `as i32`
-of such a `char` differs) and is in `docs/PENDING.md`. The case stays below
-128.
+A `char` past 127: the C++ path's `char` was signed on x86-64 and the IR's was
+not, so `'z' + 10` read back as an `i32` was -124 on one path and 132 on the
+other. Record [0081](0081-a-char-has-no-sign.md) settled it: a `char` has no
+sign. The case stays below 128; `a_char_has_no_sign` is the one above it.
 
 Cases: `tests/emitter/cases/a_character_moves_by_a_whole_number` (63), run
 through the IR too by `tests/lowering`;

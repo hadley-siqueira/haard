@@ -27,8 +27,10 @@ ENTRY ?= myapp/main.hd
 
 # the C++ standard the emitted file needs. It uses nothing exotic -- cstdint
 # for the sized builtins and cstdio for record 0030's eight native functions
+# -funsigned-char: a Haard char has no sign, and the emitted file refuses a build
+# without it (record 0081)
 CXX ?= g++
-CXXFLAGS ?= -std=c++17 -w
+CXXFLAGS ?= -std=c++17 -funsigned-char -w
 
 # every Haard source of every root, so editing any of them rebuilds
 SOURCES := $(wildcard */*.hd)

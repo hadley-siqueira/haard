@@ -1,0 +1,45 @@
+# Record 0081, Hadley 2026-11-04: a char is eight bits with no sign, 0 to 255,
+# on every target and on both paths. Each check below reads a character past
+# 127, where a signed char would give another answer.
+#
+# One bit per line that has to come out right, so the exit status names the
+# one that did not. 'a_character_moves_by_a_whole_number' keeps below 128; this
+# one is everything above it.
+
+def main : i32
+    let c : char = 'z' + 10
+    let number = 195
+    let high = number as char
+    let zero : char = '\0'
+    let bits = 0
+
+    # read as a wider number it is what its eight bits say
+    if (c as i32) == 132:
+        bits = bits | 1
+
+    if (c as i64) > 0:
+        bits = bits | 2
+
+    # ordered above every ASCII character, and a distance keeps its sign
+    if c > 'a':
+        bits = bits | 4
+
+    if c - 'a' == 35:
+        bits = bits | 8
+
+    if 'a' - c == -35:
+        bits = bits | 16
+
+    # eight bits wrap, downwards too
+    if ((zero - 1) as i32) == 255:
+        bits = bits | 32
+
+    # a number becomes the same byte and comes back unchanged
+    if (high as i32) == 195 and high > c:
+        bits = bits | 64
+
+    # whoever wants the sign asks for it
+    if (c as i8) == -124 and ((c as i8) as i32) == -124:
+        bits = bits | 128
+
+    return bits - 255
