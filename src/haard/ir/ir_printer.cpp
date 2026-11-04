@@ -164,7 +164,8 @@ void IrPrinter::print_function(std::ostream& out, IrObjectId id) {
     }
 
     out << (function.real_time ? " realtime" : "")
-        << (program->is_initialiser(id) ? " init" : "") << " {\n";
+        << (program->is_initialiser(id) ? " init" : "")
+        << (program->is_finaliser(id) ? " fini" : "") << " {\n";
 
     if (function.form == IR_FORM_STRUCTURED) {
         print_block(out, function, function.body, 1);

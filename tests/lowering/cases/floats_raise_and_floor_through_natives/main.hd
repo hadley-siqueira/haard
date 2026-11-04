@@ -1,0 +1,53 @@
+# Record 0057: 'a ** b' and 'a // b' over a float are C's 'pow' and 'floor'
+# over an f64, whichever float the operands are, cut back afterwards. Its exit
+# status is the first check that failed, 0 for none; the C++ path ends 0 too.
+def main : i32
+    let a : f64 = 2.0 ** 10.0
+
+    if a != 1024.0:
+        return 1
+
+    # a fraction for an exponent, which a loop of products could not do
+    let root : f64 = 9.0 ** 0.5
+
+    if root != 3.0:
+        return 2
+
+    # it rounds down, where a truncating division gives -3.0
+    let d : f64 = (0.0 - 7.5) // 2.5
+
+    if d != 0.0 - 3.0:
+        return 3
+
+    let e : f64 = (0.0 - 7.5) // 2.0
+
+    if e != 0.0 - 4.0:
+        return 4
+
+    # the width of the quotient shows: 0.1 as an f32 is a little above a
+    # tenth, so as an f64 the quotient is below 10 and floors to 9, where an
+    # f32's own division rounds to exactly 10.0
+    let tenth : f32 = 0.1
+    let one : f32 = 1.0
+    let nine : f32 = one // tenth
+
+    if nine != 9.0:
+        return 5
+
+    # and the answer is cut back: as an f32, 1.1 squared
+    let small : f32 = 1.1
+    let squared : f32 = small ** 2.0
+    let wide : f64 = 1.1
+
+    if (squared as f64) == wide ** 2.0:
+        return 6
+
+    # '//=' is the same operator written back
+    let h : f64 = 7.5
+
+    h //= 2.0
+
+    if h != 3.0:
+        return 7
+
+    return 0

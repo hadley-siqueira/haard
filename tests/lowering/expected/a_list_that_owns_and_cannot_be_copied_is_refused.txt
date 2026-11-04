@@ -1,0 +1,1 @@
+--- not lowered: Words owns something and says nothing about being copied, so 'main' cannot take it by value

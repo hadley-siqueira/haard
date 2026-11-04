@@ -2208,9 +2208,12 @@ bool Emitter::emit_main_with_a_list(u32 candidate) {
     // class that owns something and has not said how it is copied cannot be
     // handed over by value, and handing it over anyway is a double free that
     // g++ writes without a word
+    u32 declaration = owner->get_symbols()->get_candidate(holder->subject)
+                          ->ast_node;
+
     if (types->get_type(written[0])->kind != TYPE_REFERENCE
-        && member_named(holder->module, holder->subject, "destroy") != 0
-        && copy_init_of(holder->module, holder->subject) == 0) {
+        && member_named(holder->module, declaration, "destroy") != 0
+        && copy_init_of(holder->module, declaration) == 0) {
         fail(type_name(0, written[0]) + " owns something and says nothing "
              "about being copied, so 'main' cannot take it by value");
         return true;

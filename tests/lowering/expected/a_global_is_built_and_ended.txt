@@ -1,0 +1,281 @@
+class app.main.Noisy { name: ptr }
+vtable app.main.Noisy { 0: destroy }
+class app.main.Plain { value: b32 }
+vtable app.main.Plain { 0: destroy }
+
+data @app.main.first : app.main.Noisy = zero
+data @app.main.second : app.main.Noisy = zero
+data @app.main.many : app.main.Noisy[2] = zero
+data @app.main.held : ptr = zero
+data @app.main.plain : app.main.Plain = zero
+data @app.main.seven : b32 = zero
+data @text.0 : b8[6] = readonly "first\00"
+data @temporary : app.main.Noisy = zero
+data @text.1 : b8[20] = readonly "held by a reference\00"
+data @text.2 : b8[5] = readonly "main\00"
+data @text.3 : b8[18] = readonly "the second of two\00"
+data @text.4 : b8[13] = readonly "with nothing\00"
+data @app.main.Noisy.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @app.main.Noisy.descriptor at 0, @app.main.Noisy.~Noisy at 8
+data @app.main.Noisy.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.5 at 0
+data @text.5 : b8[15] = readonly "app.main.Noisy\00"
+data @app.main.Plain.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @app.main.Plain.descriptor at 0, @app.main.Plain.~Plain at 8
+data @app.main.Plain.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.6 at 0
+data @text.6 : b8[15] = readonly "app.main.Plain\00"
+data @text.7 : b8[6] = readonly "ended\00"
+
+func @main() -> b32 {
+  %1 = addr @text.2
+  call @app.main.say(%1)
+  %2 = addr @app.main.held
+  %3 = load ptr, %2
+  %4 = field %3, app.main.Noisy.name
+  %5 = load ptr, %4
+  call @app.main.say(%5)
+  %6 = addr @app.main.many
+  %7 = const b32 1
+  %8 = sext b32 %7 to b64
+  %9 = const b64 2
+  check_index b64 %8, %9
+  %10 = index %6, %8 : app.main.Noisy
+  %11 = field %10, app.main.Noisy.name
+  %12 = addr @text.3
+  store ptr %12, %11
+  %13 = addr @app.main.plain
+  %14 = field %13, app.main.Plain.value
+  %15 = addr @app.main.seven
+  %16 = load b32, %15
+  store b32 %16, %14
+  %17 = addr @app.main.plain
+  %18 = field %17, app.main.Plain.value
+  %19 = load b32, %18
+  ret b32 %19
+}
+
+func @app.main.globals() init {
+  %6 = slot b64
+  %1 = addr @app.main.first
+  %2 = addr @text.0
+  call @app.main.Noisy.Noisy(%1, %2)
+  %3 = addr @app.main.second
+  call @app.main.Noisy.Noisy#1(%3)
+  %4 = addr @app.main.many
+  %5 = const b64 2
+  %7 = const b64 0
+  store b64 %7, %6
+  $11: loop bound 2 {
+    %8 = load b64, %6
+    %9 = uge b64 %8, %5
+    $14: if %9 {
+      break $11
+    }
+    %10 = index %4, %8 : app.main.Noisy
+    call @app.main.Noisy.Noisy#1(%10)
+    %11 = load b64, %6
+    %12 = const b64 1
+    %13 = add b64 %11, %12
+    store b64 %13, %6
+  }
+  %14 = addr @temporary
+  %15 = addr @text.1
+  call @app.main.Noisy.Noisy(%14, %15)
+  %16 = addr @app.main.held
+  %17 = addr @temporary
+  store ptr %17, %16
+  %18 = addr @app.main.plain
+  call @app.main.Plain.Plain(%18)
+  %19 = addr @app.main.seven
+  %20 = const b32 7
+  store b32 %20, %19
+  ret
+}
+
+func @app.main.Noisy.init(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, app.main.Noisy.name
+  %7 = load ptr, %4
+  store ptr %7, %6
+  %8 = load ptr, %3
+  %9 = field %8, app.main.Noisy.name
+  %10 = load ptr, %9
+  call @app.main.say(%10)
+  ret
+}
+
+func @app.main.Noisy.Noisy(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @app.main.Noisy.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @app.main.Noisy.init(%4, %2)
+  ret
+}
+
+func @app.main.Noisy.init#1(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, app.main.Noisy.name
+  %5 = addr @text.4
+  store ptr %5, %4
+  %6 = load ptr, %2
+  %7 = field %6, app.main.Noisy.name
+  %8 = load ptr, %7
+  call @app.main.say(%8)
+  ret
+}
+
+func @app.main.Noisy.Noisy#1(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Noisy.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @app.main.Noisy.init#1(%3)
+  ret
+}
+
+func @app.main.Plain.Plain(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Plain.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @app.main.globals.end() fini {
+  %4 = slot b64
+  %1 = addr @temporary
+  call @app.main.Noisy.~Noisy(%1)
+  %2 = addr @app.main.many
+  %3 = const b64 2
+  %5 = const b64 0
+  store b64 %5, %4
+  $8: loop bound 2 {
+    %6 = load b64, %4
+    %7 = uge b64 %6, %3
+    $11: if %7 {
+      break $8
+    }
+    %8 = const b64 1
+    %9 = sub b64 %3, %6
+    %10 = sub b64 %9, %8
+    %11 = index %2, %10 : app.main.Noisy
+    call @app.main.Noisy.~Noisy(%11)
+    %12 = load b64, %4
+    %13 = const b64 1
+    %14 = add b64 %12, %13
+    store b64 %14, %4
+  }
+  %15 = addr @app.main.second
+  call @app.main.Noisy.~Noisy(%15)
+  %16 = addr @app.main.first
+  call @app.main.Noisy.~Noisy(%16)
+  ret
+}
+
+func @app.main.Noisy.~Noisy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Noisy.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @app.main.Noisy.destroy(%3)
+  ret
+}
+
+func @app.main.say(%1: ptr) {
+  %2 = slot ptr
+  %3 = slot b32
+  store ptr %1, %2
+  %4 = const b32 0
+  store b32 %4, %3
+  $6: loop {
+    %5 = load ptr, %2
+    %6 = load b32, %3
+    %7 = sext b32 %6 to b64
+    %8 = index %5, %7 : b8
+    %9 = load b8, %8
+    %10 = const b8 0
+    %11 = ne b8 %9, %10
+    %12 = not bool %11
+    $15: if %12 {
+      break $6
+    }
+    %13 = call @__io_stdout()
+    %14 = load ptr, %2
+    %15 = load b32, %3
+    %16 = sext b32 %15 to b64
+    %17 = index %14, %16 : b8
+    %18 = load b8, %17
+    call @__io_write(%13, %18)
+    %19 = load b32, %3
+    %20 = const b32 1
+    %21 = add b32 %19, %20
+    store b32 %21, %3
+  }
+  %22 = call @__io_stdout()
+  %23 = const b8 10
+  call @__io_write(%22, %23)
+  ret
+}
+
+native @__io_write(%1: ptr, %2: b8)
+
+native @__io_stdout() -> ptr
+
+func @app.main.Plain.~Plain(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Plain.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  ret
+}
+
+func @app.main.Noisy.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @text.7
+  call @app.main.say(%3)
+  %4 = load ptr, %2
+  %5 = field %4, app.main.Noisy.name
+  %6 = load ptr, %5
+  call @app.main.say(%6)
+  ret
+}
+
+--- output:
+first
+with nothing
+with nothing
+with nothing
+held by a reference
+main
+held by a reference
+ended
+held by a reference
+ended
+the second of two
+ended
+with nothing
+ended
+with nothing
+ended
+first
+--- exit: 7

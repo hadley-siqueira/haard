@@ -92,6 +92,13 @@ namespace haard {
             const std::vector<IrObjectId>& get_initialisers();
             bool is_initialiser(IrObjectId function);
 
+            // the other end: what C++ runs after 'main' returns, a module's
+            // globals ended. The last added runs first, so what was built
+            // last ends first
+            void add_finaliser(IrObjectId function);
+            const std::vector<IrObjectId>& get_finalisers();
+            bool is_finaliser(IrObjectId function);
+
             IrObject& get_object(IrObjectId id);
             u32 get_object_count();
             IrFunction& get_function(IrObjectId id);
@@ -104,6 +111,7 @@ namespace haard {
             std::vector<IrFunction> functions;
             std::vector<IrSignature> signatures;
             std::vector<IrObjectId> initialisers;
+            std::vector<IrObjectId> finalisers;
             std::map<std::vector<u32>, u32> signature_index;
     };
 }

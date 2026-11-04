@@ -48,7 +48,17 @@ namespace haard {
 
             // the body of a module's initialiser: each global given its
             // value, in source order
-            bool lower_globals(u32 module, IrObjectId function);
+            // a module's globals given their values, and what runs something
+            // when it ends written on 'ending', in the order they are built;
+            // and the function that ends those
+            bool lower_globals(u32 module, IrObjectId function,
+                               std::vector<GlobalEnd>& ending);
+            bool lower_global_ends(u32 module, IrObjectId function,
+                                   const std::vector<GlobalEnd>& ending);
+
+            // record 0051: where the program starts when 'main' (this
+            // candidate of module 0) takes one list
+            bool lower_entry(u32 main, IrObjectId function);
 
             // what C++ writes for a struct without being asked
             bool lower_structor(const StructorJob& job);
@@ -249,6 +259,8 @@ namespace haard {
             bool returns_reference(u32 node);
 
             // the opcode of an arithmetic or a bitwise operator on this type
+            IrValueId float_helper(AstNodeKind kind, u32 type, IrValueId left,
+                                   IrValueId right, IrPosition here);
             IrOpcode opcode_of(AstNodeKind kind, u32 type);
             IrValueId apply(AstNodeKind kind, u32 type, IrValueId left,
                             IrValueId right, IrPosition at);

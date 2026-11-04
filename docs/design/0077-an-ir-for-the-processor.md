@@ -457,6 +457,39 @@ of its base is copied into a temporary of the base** (`which(Base(d))`), so
 a virtual call through the reference runs the base's method -- record 0035
 says a reference is the thing it names, and the IR binds it.
 
+**Step 6 built (2026-11-04)**: the standard library, and with it stage 4's
+list is empty. A **global of a class** is built as a local is, in the object
+that starts zeroed, by the module's initialiser; one with no value is built
+with nothing, a temporary a global reference is given (record 0068) has an
+object of its own, and each is ended after `main` returns, last built first,
+by a function the program lists as a **finaliser**, printed `fini`: what C++
+does with static storage. **`main` taking one list** (record 0051) is not where
+the program starts: it is `main.taking_a_list`, and the function named `main`
+takes `argc` and `argv`, builds the list with nothing, builds an element from
+each `char*` and gives it to the class's `add`, found by name, and gives `main`
+the list, a copy when it is by value, ended before the list is. A list that
+owns something and cannot be copied is refused in the words the C++ path uses.
+**`**` and `//` on a float** are the natives `__pow` and `__floor`, over an
+`f64` whichever float the operands are, the answer cut back: what the C++ path's
+helpers do, which shows in an `f32`'s `1.0 // 0.1` being 9. They are natives
+because `**` and `//` are operators, which no import may be needed for, and
+`fptosi` traps where a floor must not; the processor's back end will have to
+give them a body.
+
+The second oracle stage 4 planned now runs: all of `tests/programs`, the real
+`std/`, goes through the interpreter and must print and end as its C++ did. So
+the interpreter's console input became real (`set_input`, `fgetc`'s and
+`feof`'s behaviour), and `tests/lowering/lower.cpp` reads a program's table or
+manifest. Five cases of the suite's own, four checked against the C++ path
+(the fifth is a refusal, the same case in `tests/emitter`).
+
+Found on the way. In the IR: **a value of another type held in a name was
+assigned as if it were the class** (`s = p`, `p` a `char*`), reading out of
+its object; a literal was built, and now a name is too. On the C++ path: **the
+refusal of a list that cannot be copied never fired**, since it asked about a
+candidate where a declaration's node was wanted, so that program was the silent
+double free record 0051 says it no longer is.
+
 ## Stage 2: the instruction set and its text (Hadley, 2026-10-20)
 
 The first instruction set:

@@ -1,0 +1,57 @@
+# Record 0051. 'main' taking one class is not where the program starts: another
+# function builds the list with nothing, builds an element from each 'char*',
+# gives it to 'add' and ends it, then gives 'main' a copy of the list, ended
+# before the list is. The C++ path prints the same, and ends 7.
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i = i + 1
+
+    __io_write(__io_stdout(), '\n')
+
+class Word:
+    def init : void
+        say("a word with nothing")
+
+    def init : void
+        @text : char*
+
+        say("a word from its text")
+
+    def init : void
+        @other : Word&
+
+        say("a word copied")
+
+    def destroy : void
+        say("a word ended")
+
+class Words:
+    def init : void
+        say("the list with nothing")
+
+    def init : void
+        @other : Words&
+
+        say("the list copied")
+
+    def add : void
+        @one : Word
+
+        say("added")
+
+    def destroy : void
+        say("a list ended")
+
+def main : i32
+    @args : Words
+
+    say("main")
+
+    return 7

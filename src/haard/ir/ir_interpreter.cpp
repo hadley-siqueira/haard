@@ -75,6 +75,7 @@ IrInterpreter::IrInterpreter() {
     program = nullptr;
     target = nullptr;
     output = nullptr;
+    input = nullptr;
     garbage = true;
     pattern = 0;
     depth = 0;
@@ -96,6 +97,10 @@ void IrInterpreter::set_target(const Target* target) {
 
 void IrInterpreter::set_output(std::ostream* output) {
     this->output = output;
+}
+
+void IrInterpreter::set_input(std::istream* input) {
+    this->input = input;
 }
 
 void IrInterpreter::set_garbage(bool garbage) {
@@ -223,6 +228,12 @@ IrRunResult IrInterpreter::finish(IrObjectId function,
 
     if (!halted) {
         result.value = value;
+    }
+
+    const std::vector<IrObjectId>& ends = program->get_finalisers();
+
+    for (u32 i = (u32) ends.size(); i > 0 && !halted; i--) {
+        call(ends[i - 1], {});
     }
 
     return result;
@@ -706,13 +717,16 @@ u64 IrInterpreter::native(IrObjectId id, const std::vector<u64>& arguments) {
         return bytes[file.position++];
     }
 
-    // nothing is typed in: the console's input is at its end at once
+    // the console's input, with C's 'fgetc' and 'feof': the end is seen only
+    // by a read that met it. With nothing to read it is at its end at once
     if (name == "__io_read" && arguments.size() == 1) {
-        return 0xff;
+        int one = input == nullptr ? std::char_traits<char>::eof() : input->get();
+
+        return one == std::char_traits<char>::eof() ? 0xff : (u64) one;
     }
 
     if (name == "__io_at_end" && arguments.size() == 1) {
-        return 1;
+        return input == nullptr || input->eof() ? 1 : 0;
     }
 
     if (name == "__io_write" && arguments.size() == 2) {
@@ -735,6 +749,16 @@ u64 IrInterpreter::native(IrObjectId id, const std::vector<u64>& arguments) {
     if (name == "__abort") {
         abort("__abort");
         return 0;
+    }
+
+    // what a float's '**' and '//' come down to (record 0057), as the C++
+    // path's helpers call them
+    if (name == "__pow" && arguments.size() == 2) {
+        return from_f64(std::pow(as_f64(arguments[0]), as_f64(arguments[1])));
+    }
+
+    if (name == "__floor" && arguments.size() == 1) {
+        return from_f64(std::floor(as_f64(arguments[0])));
     }
 
     // what is not written is the garbage pattern, as a slot's is

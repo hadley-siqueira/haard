@@ -5,6 +5,7 @@
 #include <haard/ir/ir_program.h>
 
 #include <map>
+#include <istream>
 #include <ostream>
 
 namespace haard {
@@ -70,6 +71,10 @@ namespace haard {
             void set_program(IrProgram* program);
             void set_target(const Target* target);
             void set_output(std::ostream* output);
+
+            // what the console's input holds; with none it is at its end at
+            // once
+            void set_input(std::istream* input);
             void set_garbage(bool garbage);
 
             IrRunResult run(IrObjectId function,
@@ -140,6 +145,7 @@ namespace haard {
             IrProgram* program;
             const Target* target;
             std::ostream* output;
+            std::istream* input;
             bool garbage;
 
             LayoutTable layouts;

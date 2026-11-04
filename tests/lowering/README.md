@@ -51,7 +51,15 @@ functions, locals, arithmetic, control flow, calls -- done; (2) pointers,
 references, fixed arrays, globals, literals, `new`/`delete` -- done; (3) structs,
 methods, `init`/`destroy`, the cleanup stack, temporaries -- done; (4) classes,
 vtables, `vcall`, `super` -- done; (5) enums and `switch`, tuples, unions, closures,
-symbols -- done; (6) the standard library.
+symbols -- done; (6) the standard library -- done, and the list is empty.
+
+## Every program of tests/programs
+
+The same again over `tests/programs`, whose projects use the real `std/`: a
+program's table or manifest, and its `stdin` when it has one. Its golden also
+lists the files a program left behind, which is not compared: the interpreter
+keeps files in memory, so a program that reads back what it wrote says so in
+what it prints.
 
 ## What step 1 found
 
@@ -114,6 +122,24 @@ on both paths: the statement checker binds the right side to a name of the
 same type first, so `a = b` with `b` referring to what `a` does is not a
 swap. A written right side is built in the value shape (record 0068), so
 `swap = (q, p)` is.
+
+## What step 6 found
+
+`tests/programs/a_tuple_holds_what_owns_memory` stopped in a `String`'s copy
+`init`, reading past a two-field tuple. Its `w = from` assigns a `char*` element
+into a `String`, and so did a plain `s = p`: a literal was built into a
+temporary, but a name holding another type was taken for the class. No program
+of `tests/emitter` assigned one that way; `a_value_assigned_is_built_first`
+pins it.
+
+A global reference given a temporary first kept it in a slot of the
+initialiser, which the interpreter reported as soon as `main` read it. Only
+comparing with the C++ path showed that: no case had one.
+
+And the IR's refusal of a list that cannot be copied disagreed with the C++
+path, which compiled the program and died in a double free: its question went
+to a candidate where a declaration's node was wanted, so it never fired. The
+same case is in both suites now.
 
 ## Sabotage
 
@@ -239,3 +265,22 @@ And step 4's:
 `a class assigned by its bytes` first passed: the one class assigned in the
 case wrote a copy `init`, which is the other path. A class that says
 nothing about copying, assigned from one derived from it, was added.
+
+And step 6's. The script has to `touch` what it restores, or the next run
+links the sabotaged object and blames the next line broken:
+
+| Broken | Fails |
+|---|---|
+| the finalisers never run | `a_global_is_built_and_ended` |
+| a global with no value left unbuilt | the same |
+| globals ended first built first | the same |
+| a global reference's temporary never ended | the same |
+| the list given to `main` without a copy | `main_is_given_a_list_it_owns` |
+| an element of the list never ended | the same |
+| the list that cannot be copied not refused | `a_list_that_owns_and_cannot_be_copied_is_refused` |
+| the same, on the C++ path | that case in `tests/emitter` |
+| an `f32` not widened for `**` and `//` | `floats_raise_and_floor_through_natives` |
+| `__floor` giving its argument | the same, `emitter/two_compound_operators_cpp_has_no_spelling_for`, `programs/four_operators_that_had_no_back_end` |
+| `__pow` giving its first argument | the same case, `programs/four_operators_that_had_no_back_end` |
+| a name of another type assigned as the class | `a_value_assigned_is_built_first`, `programs/a_tuple_holds_what_owns_memory` |
+| the console's input at its end before a read meets it | `programs/a_line_is_read_from_the_keyboard` |

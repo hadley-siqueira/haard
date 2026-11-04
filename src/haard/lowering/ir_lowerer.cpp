@@ -12,6 +12,10 @@ IrLowerer::IrLowerer() {
     program = nullptr;
     alloc_native.index = 0;
     free_native.index = 0;
+    pow_native.index = 0;
+    floor_native.index = 0;
+    entry_of_list.index = 0;
+    entry_taking = 0;
     next_body = 0;
     next_structor = 0;
     next_closure = 0;
@@ -49,8 +53,8 @@ bool IrLowerer::lower() {
     // Question 89: only what is reachable goes in. The roots are 'main' and
     // every global's value; a function is declared when something asks for
     // it, and its body lowered after, which may ask for more
-    return declare_main() && declare_globals() && lower_globals() && drain()
-        && verify("lowering");
+    return declare_main() && declare_globals() && lower_globals()
+        && lower_entry() && drain() && verify("lowering");
 }
 
 bool IrLowerer::finish() {
@@ -91,6 +95,10 @@ IrObjectId IrLowerer::global_of(u32 module, u32 candidate) {
     IrObjectId id = {found == globals.end() ? 0 : found->second};
 
     return id;
+}
+
+IrObjectId IrLowerer::global_temporary(IrTypeId type) {
+    return program->add_zeroed(unique("temporary"), type);
 }
 
 IrObjectId IrLowerer::text(const std::string& bytes) {
@@ -145,6 +153,28 @@ IrObjectId IrLowerer::deallocator() {
     }
 
     return free_native;
+}
+
+IrObjectId IrLowerer::power_of_floats() {
+    if (pow_native.index == 0) {
+        IrTypeId real = program->get_types()->scalar(IR_F64);
+
+        pow_native =
+            program->add_native("__pow", program->signature({real, real}, real));
+    }
+
+    return pow_native;
+}
+
+IrObjectId IrLowerer::floor_of_float() {
+    if (floor_native.index == 0) {
+        IrTypeId real = program->get_types()->scalar(IR_F64);
+
+        floor_native =
+            program->add_native("__floor", program->signature({real}, real));
+    }
+
+    return floor_native;
 }
 
 IrObjectId IrLowerer::function_of(u32 module, u32 candidate) {
@@ -219,11 +249,44 @@ bool IrLowerer::declare_main() {
     for (u32 node : query.get_functions()) {
         if (query.get_declaration_name(node) == "main"
             && !is_generic(0, node)) {
-            return declare_function(0, node, 0);
+            if (!declare_function(0, node, 0)) {
+                return false;
+            }
+
+            // record 0051: the entry the program starts at is another
+            // function, which builds the list this one is given
+            if (query.get_params(node).size() == 1) {
+                IrTypeTable* types = program->get_types();
+                u32 own = module->get_symbols()->candidate_of(node);
+                IrObjectId taken = function_of(0, own);
+                IrTypeId result =
+                    program->get_signature(program->get_function(taken).signature)
+                        .result;
+
+                entry_of_list = program->add_function(
+                    unique("main"),
+                    program->signature({types->scalar(IR_B32),
+                                        types->pointer(IR_SPACE_GENERIC)},
+                                       result),
+                    IR_FORM_STRUCTURED);
+                entry_taking = own;
+            }
+
+            return true;
         }
     }
 
     return true;
+}
+
+bool IrLowerer::lower_entry() {
+    if (entry_of_list.index == 0) {
+        return true;
+    }
+
+    FunctionLowerer body(this, program);
+
+    return body.lower_entry(entry_taking, entry_of_list) && error.size() == 0;
 }
 
 // Question 80: an aggregate is never a value. One given by value is a copy
@@ -291,14 +354,11 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
 
     std::string name = query.get_declaration_name(node);
 
-    // record 0051's third entry point builds a List of Strings, the
-    // standard library's -- step 6
+    // record 0051: 'main' taking one list is not where the program starts,
+    // and the function that is keeps the name
     if (i == 0 && holder == 0 && name == "main" && written.size() == 2) {
-        fail("not lowered yet: a 'main' taking its arguments as a list");
-        return false;
-    }
-
-    if (holder != 0) {
+        name = "main.taking_a_list";
+    } else if (holder != 0) {
         name = types->get_aggregate(translator.translate_declaration(i, holder))
                    ->name
              + "." + name;
@@ -324,8 +384,8 @@ bool IrLowerer::declare_function(u32 i, u32 node, u32 holder) {
     return true;
 }
 
-// Record 0026's rule holds for a global too: a type that is not a scalar or
-// an array of them waits for step 3, with its 'init'
+// The same types a local may have; what a struct's global runs is in
+// FunctionLowerer::lower_globals
 bool IrLowerer::declare_globals() {
     for (u32 i = 0; i < compilation->get_module_count(); i++) {
         Module* module = compilation->get_module(i);
@@ -349,9 +409,12 @@ bool IrLowerer::declare_globals() {
                 IrTypeId type =
                     type_of(i, symbols->get_candidate(candidate)->type);
 
-                if (type.index == 0 || program->get_types()->is_aggregate(type)) {
-                    fail("not lowered yet: a global of a type that is not a "
-                         "scalar or an array");
+                if (type.index == 0 || !lowerable(type)) {
+                    fail("not lowered yet: a global of a union, an enum or a "
+                         "function ("
+                         + (type.index == 0 ? std::string("no type")
+                                            : program->get_types()->name_of(type))
+                         + ")");
                     return false;
                 }
 
@@ -504,8 +567,25 @@ bool IrLowerer::lower_globals() {
 
         program->add_initialiser(made);
 
-        if (!body.lower_globals(i, made)) {
+        std::vector<GlobalEnd> ending;
+
+        if (!body.lower_globals(i, made, ending)) {
             return false;
+        }
+
+        // C++ ends a global after 'main' returns, last built first
+        if (ending.size() > 0) {
+            IrObjectId finaliser = program->add_function(
+                unique(name + ".end"), program->signature({}, {0}),
+                IR_FORM_STRUCTURED);
+
+            program->add_finaliser(finaliser);
+
+            FunctionLowerer ends(this, program);
+
+            if (!ends.lower_global_ends(i, finaliser, ending)) {
+                return false;
+            }
         }
     }
 

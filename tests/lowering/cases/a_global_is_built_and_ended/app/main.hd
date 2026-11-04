@@ -1,0 +1,54 @@
+# A global of a class is built where a local would be, before 'main', from the
+# top of the file down; one with no value is built with nothing; a temporary a
+# reference is given lives as long as the reference (record 0068); and each
+# ends after 'main' returned, last built first, which is what C++ does with
+# static storage. Only printing can show an end that comes after the exit
+# status is decided, so this case prints. The C++ path prints the same, and
+# ends 7.
+import std.low_io
+
+def say : void
+    @text : char*
+
+    let i = 0
+
+    while text[i] != '\0':
+        __io_write(__io_stdout(), text[i])
+        i = i + 1
+
+    __io_write(__io_stdout(), '\n')
+
+class Noisy:
+    name : char*
+
+    def init : void
+        name = "with nothing"
+        say(name)
+
+    def init : void
+        @given : char*
+
+        name = given
+        say(name)
+
+    def destroy : void
+        say("ended")
+        say(name)
+
+class Plain:
+    value : i32
+
+let first = Noisy("first")
+let second : Noisy
+let many : Noisy[2]
+let held : Noisy& = Noisy("held by a reference")
+let plain : Plain
+let seven = 7
+
+def main : i32
+    say("main")
+    say(held.name)
+    many[1].name = "the second of two"
+    plain.value = seven
+
+    return plain.value

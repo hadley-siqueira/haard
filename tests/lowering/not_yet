@@ -1,6 +1,3 @@
 # The programs of tests/emitter the lowering cannot do yet, one name a line.
 # Each comes off when the step that lowers it lands (record 0077, stage 4);
 # run.sh fails one still listed that lowers now.
-a_bracket_literal_is_an_array
-main_takes_its_arguments_as_a_list
-two_compound_operators_cpp_has_no_spelling_for

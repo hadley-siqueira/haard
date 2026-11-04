@@ -1,0 +1,129 @@
+func @main() -> b32 {
+  %1 = slot f64
+  %9 = slot f64
+  %17 = slot f64
+  %30 = slot f64
+  %43 = slot f32
+  %45 = slot f32
+  %47 = slot f32
+  %59 = slot f32
+  %61 = slot f32
+  %68 = slot f64
+  %77 = slot f64
+  %2 = const f64 2
+  %3 = const f64 10
+  %4 = call @__pow(%2, %3)
+  store f64 %4, %1
+  %5 = load f64, %1
+  %6 = const f64 1024
+  %7 = fne f64 %5, %6
+  $9: if %7 {
+    %8 = const b32 1
+    ret b32 %8
+  }
+  %10 = const f64 9
+  %11 = const f64 0.5
+  %12 = call @__pow(%10, %11)
+  store f64 %12, %9
+  %13 = load f64, %9
+  %14 = const f64 3
+  %15 = fne f64 %13, %14
+  $20: if %15 {
+    %16 = const b32 2
+    ret b32 %16
+  }
+  %18 = const f64 0
+  %19 = const f64 7.5
+  %20 = fsub f64 %18, %19
+  %21 = const f64 2.5
+  %22 = fdiv f64 %20, %21
+  %23 = call @__floor(%22)
+  store f64 %23, %17
+  %24 = load f64, %17
+  %25 = const f64 0
+  %26 = const f64 3
+  %27 = fsub f64 %25, %26
+  %28 = fne f64 %24, %27
+  $36: if %28 {
+    %29 = const b32 3
+    ret b32 %29
+  }
+  %31 = const f64 0
+  %32 = const f64 7.5
+  %33 = fsub f64 %31, %32
+  %34 = const f64 2
+  %35 = fdiv f64 %33, %34
+  %36 = call @__floor(%35)
+  store f64 %36, %30
+  %37 = load f64, %30
+  %38 = const f64 0
+  %39 = const f64 4
+  %40 = fsub f64 %38, %39
+  %41 = fne f64 %37, %40
+  $52: if %41 {
+    %42 = const b32 4
+    ret b32 %42
+  }
+  %44 = const f32 0.100000001
+  store f32 %44, %43
+  %46 = const f32 1
+  store f32 %46, %45
+  %48 = load f32, %45
+  %49 = load f32, %43
+  %50 = fpext f32 %48 to f64
+  %51 = fpext f32 %49 to f64
+  %52 = fdiv f64 %50, %51
+  %53 = call @__floor(%52)
+  %54 = fptrunc f64 %53 to f32
+  store f32 %54, %47
+  %55 = load f32, %47
+  %56 = const f32 9
+  %57 = fne f32 %55, %56
+  $73: if %57 {
+    %58 = const b32 5
+    ret b32 %58
+  }
+  %60 = const f32 1.10000002
+  store f32 %60, %59
+  %62 = load f32, %59
+  %63 = const f32 2
+  %64 = fpext f32 %62 to f64
+  %65 = fpext f32 %63 to f64
+  %66 = call @__pow(%64, %65)
+  %67 = fptrunc f64 %66 to f32
+  store f32 %67, %61
+  %69 = const f64 1.1000000000000001
+  store f64 %69, %68
+  %70 = load f32, %61
+  %71 = fpext f32 %70 to f64
+  %72 = load f64, %68
+  %73 = const f64 2
+  %74 = call @__pow(%72, %73)
+  %75 = feq f64 %71, %74
+  $96: if %75 {
+    %76 = const b32 6
+    ret b32 %76
+  }
+  %78 = const f64 7.5
+  store f64 %78, %77
+  %79 = load f64, %77
+  %80 = const f64 2
+  %81 = fdiv f64 %79, %80
+  %82 = call @__floor(%81)
+  store f64 %82, %77
+  %83 = load f64, %77
+  %84 = const f64 3
+  %85 = fne f64 %83, %84
+  $110: if %85 {
+    %86 = const b32 7
+    ret b32 %86
+  }
+  %87 = const b32 0
+  ret b32 %87
+}
+
+native @__pow(%1: f64, %2: f64) -> f64
+
+native @__floor(%1: f64) -> f64
+
+--- exit: 0

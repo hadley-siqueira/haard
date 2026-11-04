@@ -1,0 +1,45 @@
+# Record 0046: a value of another type is assigned by building a temporary from
+# it, a name holding one the same as a literal, and the temporary ends with the
+# statement. Reading the 'char*' as if it were the class, the IR's first
+# attempt, is out of its object at once. The C++ path ends 15 too.
+let log = 0
+
+class Text:
+    size : i32
+
+    def init : void
+        @from : char*
+
+        size = 0
+
+        while from[size] != '\0':
+            size = size + 1
+
+    def init : void
+        @other : Text&
+
+        size = other.size
+
+    def destroy : void
+        log = log + 1
+
+def main : i32
+    let t = Text("four")
+    let held : char* = "a longer one"
+
+    # what 't' held ended, and the temporary too, by the next line
+    t = held
+
+    if log != 2 or t.size != 12:
+        return 1
+
+    # and through a tuple, element by element
+    let pair : (Text, i32) = ("ab", 1)
+    let other = (held, 3)
+
+    pair = other
+
+    if log != 4 or pair[0].size != 12 or pair[1] != 3:
+        return 2
+
+    return 15

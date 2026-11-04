@@ -1,0 +1,27 @@
+# Record 0031, asked of the one call no Haard source wrote: giving 'main' this
+# list by value would end what it owns twice, so it is refused, by the words
+# the C++ path uses for it (tests/lowering has the same case).
+class Word:
+    def init : void
+        @text : char*
+
+        pass
+
+class Words:
+    held : char*
+
+    def init : void
+        held = new char[3]
+
+    def add : void
+        @one : Word
+
+        pass
+
+    def destroy : void
+        delete held
+
+def main : i32
+    @args : Words
+
+    return 0

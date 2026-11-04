@@ -1,0 +1,9 @@
+# Trimmed from std/low_io.hd: the two natives this case prints with.
+def __io_stdout : i8*
+    pass
+
+def __io_write : void
+    @handle : i8*
+    @c : char
+
+    pass

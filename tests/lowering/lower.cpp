@@ -33,15 +33,32 @@ int main(int argc, char* argv[]) {
     std::filesystem::path table = directory / "table.tbl";
     Compilation compilation;
 
+    // tests/programs names its table this, and a Makefile there says where
+    // the program starts when it has no 'entry'
+    if (!std::filesystem::exists(table)) {
+        table = directory / "roots.tbl";
+    }
+
     if (std::filesystem::exists(table) && !compilation.set_roots(table)) {
         std::cout << "table error: " << compilation.get_error() << '\n';
         return 0;
     }
 
     std::ifstream entry_file(directory / "entry");
-    std::string entry;
+    std::string entry = "myapp/main.hd";
 
     std::getline(entry_file, entry);
+
+    // beside the entry file, where that suite's own manifests are (record
+    // 0044); hdc looks further up, and a case holds all of what it needs
+    std::filesystem::path package =
+        (directory / entry).parent_path() / "haard.pkg";
+
+    if (!std::filesystem::exists(table) && std::filesystem::exists(package)
+        && !compilation.set_package(package)) {
+        std::cout << "manifest error: " << compilation.get_error() << '\n';
+        return 0;
+    }
 
     if (!compilation.build(directory / entry)) {
         std::cout << "did not check:\n";
@@ -96,6 +113,13 @@ int main(int argc, char* argv[]) {
     interpreter.set_program(&program);
     interpreter.set_target(&target);
     interpreter.set_output(&output);
+
+    // a case that reads its input keeps it in 'stdin', as tests/programs says
+    std::ifstream typed(directory / "stdin");
+
+    if (typed) {
+        interpreter.set_input(&typed);
+    }
 
     // C++'s argv[0] is the path the binary was run by; any name does here
     IrRunResult ran = interpreter.run_main(main_function, {"main"});

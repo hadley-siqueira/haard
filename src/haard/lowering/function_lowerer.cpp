@@ -101,8 +101,16 @@ bool FunctionLowerer::lower(u32 module, u32 node, IrObjectId function) {
     return !failed;
 }
 
-bool FunctionLowerer::lower_globals(u32 module, IrObjectId function) {
+// A global is built as a local is, in the object that starts zeroed: what its
+// value leaves behind ends with it, and what runs when it ends goes on the
+// list, in the order they are built.
+//
+// Record 0068: a temporary a reference is given lives as long as the reference
+// does, which here is past this function, so it has an object of its own
+bool FunctionLowerer::lower_globals(u32 module, IrObjectId function,
+                                    std::vector<GlobalEnd>& ending) {
     AstQuery query;
+    TypeTable* types = compilation->get_module(module)->get_types();
 
     begin(module, function);
     query.set_module(this->module);
@@ -111,14 +119,38 @@ bool FunctionLowerer::lower_globals(u32 module, IrObjectId function) {
         for (u32 binding = child_of(statement, 0); binding != 0 && !failed;
              binding = this->module->get_ast()->get_node(binding)->get_sibling()) {
             u32 candidate = this->module->get_symbols()->candidate_of(binding);
+            u32 type = this->module->get_symbols()->get_candidate(candidate)->type;
             u32 given = query.get_binding_expression(binding);
+            IrObjectId global = owner->global_of(module, candidate);
+            IrPosition here = at(binding);
+            bool reference = is_reference_type(module, type);
+            u32 value = types->value_of(type);
+            IrTypeId held = owner->type_of(module, value);
 
-            if (given != 0) {
-                initialise(build.address(owner->global_of(module, candidate),
-                                         at(binding)),
-                           this->module->get_symbols()->get_candidate(candidate)
-                               ->type,
-                           given, at(binding));
+            if (reference && (!is_place(given) || converts(given, struct_of(value)))) {
+                IrObjectId temporary = owner->global_temporary(held);
+
+                open_scope(false);
+                initialise(build.address(temporary, here), value, given, here);
+                close_scope(here);
+                build.store(owner->type_of(module, type),
+                            build.address(temporary, here),
+                            build.address(global, here), here);
+                global = temporary;
+            } else if (given != 0) {
+                open_scope(false);
+                initialise(build.address(global, here), type, given, here);
+                close_scope(here);
+
+                if (reference) {
+                    continue;
+                }
+            } else {
+                construct_by_default(build.address(global, here), held, here);
+            }
+
+            if (owner->has_destructor(held)) {
+                ending.push_back({global, held});
             }
         }
     }
@@ -128,6 +160,151 @@ bool FunctionLowerer::lower_globals(u32 module, IrObjectId function) {
     }
 
     return !failed;
+}
+
+bool FunctionLowerer::lower_global_ends(u32 module, IrObjectId function,
+                                        const std::vector<GlobalEnd>& ending) {
+    begin(module, function);
+
+    for (u32 i = (u32) ending.size(); i > 0 && !failed; i--) {
+        destroy(build.address(ending[i - 1].global, at(0)), ending[i - 1].type,
+                at(0));
+    }
+
+    if (!failed) {
+        build.ret(at(0));
+    }
+
+    return !failed;
+}
+
+// Record 0051, what the C++ path's shim is: the list built with nothing, an
+// element built from each 'char*' and given to its 'add', and 'main' given the
+// list. The class is asked for 'add' by name, so nothing here knows 'Array' or
+// 'String'; and the shim being the one call no Haard source wrote, what such a
+// call would have been told is asked here
+bool FunctionLowerer::lower_entry(u32 main, IrObjectId function) {
+    begin(0, function);
+
+    IrTypeTable* types = program->get_types();
+    IrTypeId pointer = types->pointer(IR_SPACE_GENERIC);
+    IrTypeId count_type = types->scalar(IR_B32);
+    IrPosition here = at(module->get_symbols()->get_candidate(main)->ast_node);
+    std::vector<u32> written = signature_of(0, main);
+    IrTypeId list = struct_of(written[0]);
+
+    if (list.index == 0) {
+        owner->fail("the entry module declares no 'main' that takes nothing, "
+                    "an (i32, char**), or one list of arguments");
+        return false;
+    }
+
+    std::string list_name = types->get_aggregate(list)->name;
+    u32 adder = owner->method_named(list, "add", 1, 0);
+    u32 holder_module = types->get_aggregate(list)->module;
+
+    if (adder == 0) {
+        owner->fail(list_name + " declares no 'add', so 'main' cannot be given "
+                    "its arguments as one of them");
+        return false;
+    }
+
+    IrTypeId element = struct_of(signature_of(holder_module, adder)[0],
+                                 holder_module);
+
+    if (element.index == 0) {
+        owner->fail("'add' does not take a class, so 'main' has nothing to "
+                    "build an argument out of");
+        return false;
+    }
+
+    bool by_value = !is_reference_type(0, written[0]);
+
+    if (by_value && owner->destroy_of(list) != 0
+        && owner->copy_init_of(list) == 0) {
+        owner->fail(list_name + " owns something and says nothing about being "
+                    "copied, so 'main' cannot take it by value");
+        return false;
+    }
+
+    TypeTable* written_types = module->get_types();
+    u32 init = owner->init_from(
+        element, 0, written_types->pointer(written_types->builtin(BUILTIN_CHAR)));
+
+    if (init == 0) {
+        not_yet("a 'main' whose list holds a class with no 'init' of a 'char*'");
+        return false;
+    }
+
+    open_scope(false);
+
+    IrValueId args = build.entry_slot(list, here);
+
+    construct_by_default(args, list, here);
+    add_cleanup(args, list, true, here);
+
+    IrValueId turn = build.entry_slot(count_type, here);
+    IrValueId one = build.constant(count_type, 1, here);
+    IrValueId held = build.entry_slot(element, here);
+
+    build.store(count_type, build.constant(count_type, 0, here), turn, here);
+
+    IrInstId loop = build.begin_loop(IR_NO_BOUND, here);
+    IrValueId at_index = build.load(count_type, turn, here);
+
+    build.begin_if(build.binary(IR_SGE, count_type, at_index, build.parameter(0),
+                                here),
+                   here);
+    build.break_to(loop, here);
+    build.end();
+
+    IrValueId text = build.load(
+        pointer,
+        build.index(pointer, build.parameter(1),
+                    build.convert(IR_SEXT, usize(), at_index, here), here),
+        here);
+
+    construct(held, element, init, {text}, here);
+
+    if (owner->shape_of(function_of(holder_module, adder)) & SHAPE_DESTINATION) {
+        not_yet("a 'main' whose list's 'add' gives back a struct");
+        return false;
+    }
+
+    call_method(holder_module, adder, {args, held}, false, here);
+
+    if (owner->has_destructor(element)) {
+        destroy(held, element, here);
+    }
+
+    build.store(count_type, build.binary(IR_ADD, count_type, at_index, one, here),
+                turn, here);
+    build.end();
+
+    // by value it is a copy this call makes, ended before the list is
+    IrValueId given = args;
+
+    if (by_value) {
+        given = build.entry_slot(list, here);
+        copy_construct(given, list, args, here);
+        add_cleanup(given, list, false, here);
+    }
+
+    IrValueId answer = build.call(owner->function_of(0, main), {given}, here);
+
+    close_scope(here);
+
+    if (failed) {
+        return false;
+    }
+
+    if (result.index == 0) {
+        build.ret(here);
+    } else {
+        build.ret(result, answer, here);
+    }
+
+    return true;
 }
 
 // The bodies C++ writes for a struct (question 83), each taking the object
@@ -2497,6 +2674,11 @@ IrValueId FunctionLowerer::apply(AstNodeKind kind, u32 type, IrValueId left,
         return power(type, left, right, here);
     }
 
+    if ((kind == AST_POWER || kind == AST_INTEGER_DIVISION)
+        && is_float_type(type)) {
+        return float_helper(kind, type, left, right, here);
+    }
+
     IrOpcode opcode = opcode_of(kind, type);
 
     if (failed) {
@@ -2563,6 +2745,31 @@ IrValueId FunctionLowerer::power(u32 type, IrValueId base,
 
 
     return build.load(ir, answer, here);
+}
+
+// Record 0057's 'a ** b' and 'a // b' over a float, as the C++ path's helpers
+// compute them: both sides as an f64, whichever float they are, and the
+// answer cut back. '//' divides first, so an f32's quotient is an f64's
+IrValueId FunctionLowerer::float_helper(AstNodeKind kind, u32 type,
+                                        IrValueId left, IrValueId right,
+                                        IrPosition here) {
+    IrTypeTable* types = program->get_types();
+    IrTypeId wide = types->scalar(IR_F64);
+    IrTypeId own = ir_type(type);
+    bool narrow = own.index != wide.index;
+
+    if (narrow) {
+        left = build.convert(IR_FPEXT, wide, left, here);
+        right = build.convert(IR_FPEXT, wide, right, here);
+    }
+
+    IrValueId answer =
+        kind == AST_POWER
+            ? build.call(owner->power_of_floats(), {left, right}, here)
+            : build.call(owner->floor_of_float(),
+                         {build.binary(IR_FDIV, wide, left, right, here)}, here);
+
+    return narrow ? build.convert(IR_FPTRUNC, own, answer, here) : answer;
 }
 
 IrOpcode FunctionLowerer::opcode_of(AstNodeKind kind, u32 type) {
@@ -2985,8 +3192,18 @@ IrValueId FunctionLowerer::assignment(u32 node) {
         IrValueId to = place_of(child_of(node, 0));
         bool moved = kind_of(right) == AST_MOVE
                   && owner->move_init_of(built) != 0;
-        IrValueId from = reference_to(right);
+        IrValueId from = {0};
         IrTypeId given = struct_of(type_at(right));
+
+        // record 0046: a value of another type, a name holding one included,
+        // is built into a temporary by its 'init', and assigned from
+        if (converts(right, built)) {
+            from = build.entry_slot(built, at(node));
+            build_into(from, built, right);
+            add_cleanup(from, built, false, at(node));
+        } else {
+            from = reference_to(right);
+        }
 
         if (failed) {
             return none;

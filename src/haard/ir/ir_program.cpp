@@ -155,6 +155,24 @@ bool IrProgram::is_initialiser(IrObjectId function) {
     return false;
 }
 
+void IrProgram::add_finaliser(IrObjectId function) {
+    finalisers.push_back(function);
+}
+
+const std::vector<IrObjectId>& IrProgram::get_finalisers() {
+    return finalisers;
+}
+
+bool IrProgram::is_finaliser(IrObjectId function) {
+    for (IrObjectId one : finalisers) {
+        if (one.index == function.index) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 IrObject& IrProgram::get_object(IrObjectId id) {
     return objects[id.index];
 }

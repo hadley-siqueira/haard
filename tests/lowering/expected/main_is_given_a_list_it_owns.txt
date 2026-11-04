@@ -1,0 +1,223 @@
+class app.main.Word {}
+vtable app.main.Word { 0: destroy }
+class app.main.Words {}
+vtable app.main.Words { 0: destroy, 1: add }
+
+data @text.0 : b8[5] = readonly "main\00"
+data @text.1 : b8[22] = readonly "the list with nothing\00"
+data @text.2 : b8[21] = readonly "a word from its text\00"
+data @text.3 : b8[6] = readonly "added\00"
+data @text.4 : b8[16] = readonly "the list copied\00"
+data @app.main.Words.vtable : ptr[3] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @app.main.Words.descriptor at 0, @app.main.Words.~Words at 8
+data @app.main.Words.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\08\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.5 at 0
+data @text.5 : b8[15] = readonly "app.main.Words\00"
+data @app.main.Word.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @app.main.Word.descriptor at 0, @app.main.Word.~Word at 8
+data @app.main.Word.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\08\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.6 at 0
+data @text.6 : b8[14] = readonly "app.main.Word\00"
+data @text.7 : b8[13] = readonly "a word ended\00"
+data @text.8 : b8[13] = readonly "a list ended\00"
+
+func @main.taking_a_list(%1: ptr) -> b32 {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @text.0
+  call @app.main.say(%3)
+  %4 = const b32 7
+  ret b32 %4
+}
+
+func @main(%1: b32, %2: ptr) -> b32 {
+  %3 = slot app.main.Words
+  %4 = slot b32
+  %6 = slot app.main.Word
+  %14 = slot app.main.Words
+  call @app.main.Words.Words(%3)
+  %5 = const b32 1
+  %7 = const b32 0
+  store b32 %7, %4
+  $8: loop {
+    %8 = load b32, %4
+    %9 = sge b32 %8, %1
+    $11: if %9 {
+      break $8
+    }
+    %10 = sext b32 %8 to b64
+    %11 = index %2, %10 : ptr
+    %12 = load ptr, %11
+    call @app.main.Word.Word(%6, %12)
+    call @app.main.Words.add(%3, %6)
+    call @app.main.Word.~Word(%6)
+    %13 = add b32 %8, %5
+    store b32 %13, %4
+  }
+  call @app.main.Words.Words#1(%14, %3)
+  %15 = call @main.taking_a_list(%14)
+  call @app.main.Words.~Words(%14)
+  call @app.main.Words.~Words(%3)
+  ret b32 %15
+}
+
+func @app.main.Words.init(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @text.1
+  call @app.main.say(%3)
+  ret
+}
+
+func @app.main.Words.Words(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Words.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @app.main.Words.init(%3)
+  ret
+}
+
+func @app.main.Word.init(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = addr @text.2
+  call @app.main.say(%5)
+  ret
+}
+
+func @app.main.Word.Word(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @app.main.Word.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @app.main.Word.init(%4, %2)
+  ret
+}
+
+func @app.main.Words.add(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = addr @text.3
+  call @app.main.say(%5)
+  ret
+}
+
+func @app.main.Word.~Word(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Word.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @app.main.Word.destroy(%3)
+  ret
+}
+
+func @app.main.Words.init#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = addr @text.4
+  call @app.main.say(%5)
+  ret
+}
+
+func @app.main.Words.Words#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @app.main.Words.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @app.main.Words.init#1(%4, %2)
+  ret
+}
+
+func @app.main.Words.~Words(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @app.main.Words.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @app.main.Words.destroy(%3)
+  ret
+}
+
+func @app.main.say(%1: ptr) {
+  %2 = slot ptr
+  %3 = slot b32
+  store ptr %1, %2
+  %4 = const b32 0
+  store b32 %4, %3
+  $6: loop {
+    %5 = load ptr, %2
+    %6 = load b32, %3
+    %7 = sext b32 %6 to b64
+    %8 = index %5, %7 : b8
+    %9 = load b8, %8
+    %10 = const b8 0
+    %11 = ne b8 %9, %10
+    %12 = not bool %11
+    $15: if %12 {
+      break $6
+    }
+    %13 = call @__io_stdout()
+    %14 = load ptr, %2
+    %15 = load b32, %3
+    %16 = sext b32 %15 to b64
+    %17 = index %14, %16 : b8
+    %18 = load b8, %17
+    call @__io_write(%13, %18)
+    %19 = load b32, %3
+    %20 = const b32 1
+    %21 = add b32 %19, %20
+    store b32 %21, %3
+  }
+  %22 = call @__io_stdout()
+  %23 = const b8 10
+  call @__io_write(%22, %23)
+  ret
+}
+
+native @__io_write(%1: ptr, %2: b8)
+
+native @__io_stdout() -> ptr
+
+func @app.main.Word.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @text.7
+  call @app.main.say(%3)
+  ret
+}
+
+func @app.main.Words.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @text.8
+  call @app.main.say(%3)
+  ret
+}
+
+--- output:
+the list with nothing
+a word from its text
+added
+a word ended
+the list copied
+main
+a list ended
+a list ended
+--- exit: 7

@@ -7,7 +7,9 @@ remaining work and open questions. The records and the agenda
 
 Take an item off when it is fixed, decided or dropped, and say where it went.
 Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
-date 2026-11-03, after Hadley's five answers (1a, 2a, 3a, 4a, 5a).
+date 2026-11-04, after IR stage 4 step 6.
+
+Taken off on 2026-11-04: *stage 4 step 6* (built, record 0077).
 
 Taken off on 2026-11-03: *stage 4 step 5* (built), *`char - char`* (record 0079), *lower only what is
 reachable* (built, question 89), *the named return value* (record 0080),
@@ -68,6 +70,14 @@ case `a_derived_class_is_its_base_by_reference`).
     path**: `copy = Box.Empty` is emitted as `copy.m_assign(Box_Empty())`,
     a temporary to a plain reference, which g++ refuses; through a name it
     works. Found 2026-11-03.
+14. **Four things the front end says, found 2026-11-04**, none decided:
+    - a closure at module level (`let twice = |x : i32| -> i32 { return x * 2 }`)
+      is *cannot find 'x' in this scope*, where one inside a function works;
+    - a tuple converts element by element when assigned (`w = make()`, a
+      `(char*, i32)` into a `(String, i32)`) and not when bound
+      (`let k : (String, i32) = make()` is *expected (String, i32)*);
+    - `let r : i32&` with no value passes it, and g++ refuses what comes out;
+    - there is no `**=`, where `//=` and `>>>=` exist (record 0057).
 
 ## 2. Decided, not built
 
@@ -130,10 +140,9 @@ case `a_derived_class_is_its_base_by_reference`).
 
 ## 5. The IR (record 0077)
 
-1. **Stage 4, step 6**: the standard library. The three programs left in
-   `tests/lowering/not_yet` (step 5 closed 2026-11-03): `main` taking its
-   arguments as a `List`, floats' `**` and `//` (the library's `pow` and
-   `floor`), and a global of a class type.
+1. **The natives `__pow` and `__floor`** have a body only in the interpreter
+   (C's, as the C++ path uses). A back end for the processor has to give them
+   one; whether they stay natives or become Haard in `std` is for then.
 2. **Building a variant's payload makes one copy fewer in the IR**:
    `Box.Full(Held(7))` builds the `Held` in place, the C++ path gives a
    temporary to the variant's maker and copies it in. Seen only through a

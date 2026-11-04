@@ -62,6 +62,12 @@ namespace haard {
         bool method;
     };
 
+    // a global a module's finaliser ends
+    struct GlobalEnd {
+        IrObjectId global;
+        IrTypeId type;
+    };
+
     struct StructorJob {
         u8 kind;
         IrTypeId type;
@@ -118,6 +124,9 @@ namespace haard {
             // the global a binding at module level became, 0 when none
             IrObjectId global_of(u32 module, u32 candidate);
 
+            // an object for a temporary a global reference is given
+            IrObjectId global_temporary(IrTypeId type);
+
             // a string literal's bytes, as a read-only text: one object for
             // each text however often it is written
             IrObjectId text(const std::string& bytes);
@@ -132,6 +141,12 @@ namespace haard {
             // heap's natives, declared the first time one is asked for
             IrObjectId allocator();
             IrObjectId deallocator();
+
+            // '__pow' and '__floor', over f64, what a float's '**' and '//'
+            // come down to (record 0057): declared the first time one is
+            // asked for, as C's 'pow' and 'floor' on the C++ path
+            IrObjectId power_of_floats();
+            IrObjectId floor_of_float();
 
             // the object a function's candidate became, 0 when none. Only
             // what is reachable is lowered (question 89): a function is
@@ -261,6 +276,7 @@ namespace haard {
             IrTypeId introducer_of(IrTypeId type, u32 slot);
             bool declare_globals();
             bool lower_globals();
+            bool lower_entry();
 
             // a name no other object has: a clone or an overload of a
             // function, a global, shares one
@@ -315,6 +331,13 @@ namespace haard {
 
             IrObjectId alloc_native;
             IrObjectId free_native;
+            IrObjectId pow_native;
+            IrObjectId floor_native;
+
+            // record 0051: the function the program starts at when 'main'
+            // takes one list, 0 when it does not, and that 'main's candidate
+            IrObjectId entry_of_list;
+            u32 entry_taking;
 
             std::string error;
     };

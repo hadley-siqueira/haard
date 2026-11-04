@@ -75,7 +75,9 @@ class by name cannot be a compiler two libraries can share.
 nothing else was going to ask record 0031's question about it. The first draft
 of the case had a list that owned a `new Word[8]` and declared no copy, the
 shim handed it over **by value**, and what came out was a double free g++
-wrote without a word. The emitter asks now, and says so by name.
+wrote without a word. The emitter asks now, and says so by name. (From
+2026-11-04: until then the question was put to the wrong node and always
+answered no, found when the IR's own refusal disagreed with it.)
 
 ## What is not decided
 

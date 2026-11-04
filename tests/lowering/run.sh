@@ -9,9 +9,9 @@
 # structured IR the lowering wrote, then what running it printed and how it
 # ended. They show WHAT is generated.
 #
-# Then every project of tests/emitter is lowered and run in the interpreter,
-# and must end the way the C++ it was compiled to did: the same output and
-# the same exit status, read off the end of tests/emitter/expected/<case>.txt.
+# Then every project of tests/emitter and of tests/programs is lowered and run
+# in the interpreter, and must end the way the C++ it was compiled to did: the
+# same output and the same exit status, read off the end of its golden.
 # A case the lowering cannot do yet is written in not_yet, and is counted
 # apart; one on that list that lowers now is a failure until it is taken off,
 # so the list never says less than is true. A wrong answer is a failure
@@ -163,6 +163,53 @@ fi
 
 echo
 
+# whether a project ends through the IR the way '$3' says it ended on the C++
+# path; '$1' is how the line names it
+agrees() {
+    local label=$1
+    local directory=$2
+    local want=$3
+    local name got listed=0
+
+    name=$(basename "$directory")
+
+    if grep -qx "$name" not_yet; then
+        listed=1
+    fi
+
+    got=$(timeout 30 "$build/lower" "$directory" --run 2>&1)
+
+    if printf '%s' "$got" | head -1 | grep -q '^--- not lowered:'; then
+        if [ $listed -eq 1 ]; then
+            known=$((known + 1))
+            return
+        fi
+
+        printf '%sFAIL%s  %s %s\n' "$red" "$reset" "$label" "$got"
+        failed=$((failed + 1))
+        return
+    fi
+
+    if [ "$got" != "$want" ]; then
+        printf '%sFAIL%s  %s (the IR ends otherwise than the C++)\n' \
+            "$red" "$reset" "$label"
+        diff -u <(printf '%s\n' "$want") <(printf '%s\n' "$got") \
+            | sed -n '3,20p' | sed "s/^/           ${dim}/;s/\$/${reset}/"
+        failed=$((failed + 1))
+        return
+    fi
+
+    if [ $listed -eq 1 ]; then
+        printf '%sFAIL%s  %s (lowers now: take it off not_yet)\n' \
+            "$red" "$reset" "$label"
+        failed=$((failed + 1))
+        return
+    fi
+
+    printf '%sPASS%s  %s\n' "$green" "$reset" "$label"
+    passed=$((passed + 1))
+}
+
 for directory in ../emitter/cases/*/; do
     name=$(basename "$directory")
     golden=../emitter/expected/$name.txt
@@ -175,43 +222,30 @@ for directory in ../emitter/cases/*/; do
         continue
     fi
 
-    listed=0
+    agrees "emitter/$name" "$directory" "$want"
+done
 
-    if grep -qx "$name" not_yet; then
-        listed=1
+# ---- every program of tests/programs, the real std/, against the C++ path ----
+
+echo
+
+for directory in ../programs/cases/*/; do
+    name=$(basename "$directory")
+    golden=../programs/expected/$name.txt
+
+    # that golden is what it printed, the files it left, its exit status; the
+    # interpreter keeps files in memory, so a program that reads back what it
+    # wrote says it did, and only the other two are compared
+    printed=$(awk '/^--- files:$/ { exit } { print }' "$golden")
+    want="--- exit: $(tail -1 "$golden" | sed 's/^--- exit: //')"
+
+    if [ -n "$printed" ]; then
+        want="--- output:
+$printed
+$want"
     fi
 
-    got=$(timeout 10 "$build/lower" "../emitter/cases/$name" --run 2>&1)
-
-    if printf '%s' "$got" | head -1 | grep -q '^--- not lowered:'; then
-        if [ $listed -eq 1 ]; then
-            known=$((known + 1))
-            continue
-        fi
-
-        printf '%sFAIL%s  emitter/%s %s\n' "$red" "$reset" "$name" "$got"
-        failed=$((failed + 1))
-        continue
-    fi
-
-    if [ "$got" != "$want" ]; then
-        printf '%sFAIL%s  emitter/%s (the IR ends otherwise than the C++)\n' \
-            "$red" "$reset" "$name"
-        diff -u <(printf '%s\n' "$want") <(printf '%s\n' "$got") \
-            | sed -n '3,20p' | sed "s/^/           ${dim}/;s/\$/${reset}/"
-        failed=$((failed + 1))
-        continue
-    fi
-
-    if [ $listed -eq 1 ]; then
-        printf '%sFAIL%s  emitter/%s (lowers now: take it off not_yet)\n' \
-            "$red" "$reset" "$name"
-        failed=$((failed + 1))
-        continue
-    fi
-
-    printf '%sPASS%s  emitter/%s\n' "$green" "$reset" "$name"
-    passed=$((passed + 1))
+    agrees "programs/$name" "$directory" "$want"
 done
 
 echo

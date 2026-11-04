@@ -1,0 +1,226 @@
+class Text { size: b32 }
+vtable Text { 0: destroy }
+struct (Text, b32) { e0: Text, e1: b32 }
+struct (ptr, b32) { e0: ptr, e1: b32 }
+
+data @log : b32 = zero
+data @text.0 : b8[5] = readonly "four\00"
+data @text.1 : b8[13] = readonly "a longer one\00"
+data @text.2 : b8[3] = readonly "ab\00"
+data @Text.vtable : ptr[2] = readonly "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @Text.descriptor at 0, @Text.~Text at 8
+data @Text.descriptor : ptr[3] = readonly "\00\00\00\00\00\00\00\00\10\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00" with @text.3 at 0
+data @text.3 : b8[5] = readonly "Text\00"
+
+func @main() -> b32 {
+  %1 = slot Text
+  %3 = slot ptr
+  %5 = slot Text
+  %7 = slot bool
+  %19 = slot (Text, b32)
+  %24 = slot (ptr, b32)
+  %29 = slot (ptr, b32)
+  %31 = slot Text
+  %37 = slot bool
+  %38 = slot bool
+  %2 = addr @text.0
+  call @Text.Text(%1, %2)
+  %4 = addr @text.1
+  store ptr %4, %3
+  %6 = load ptr, %3
+  call @Text.Text(%5, %6)
+  call @Text.assign(%1, %5)
+  call @Text.~Text(%5)
+  %8 = addr @log
+  %9 = load b32, %8
+  %10 = const b32 2
+  %11 = ne b32 %9, %10
+  store bool %11, %7
+  %12 = not bool %11
+  $19: if %12 {
+    %13 = field %1, Text.size
+    %14 = load b32, %13
+    %15 = const b32 12
+    %16 = ne b32 %14, %15
+    store bool %16, %7
+  }
+  %17 = load bool, %7
+  $26: if %17 {
+    %18 = const b32 1
+    call @Text.~Text(%1)
+    ret b32 %18
+  }
+  %20 = field %19, (Text, b32).e0
+  %21 = addr @text.2
+  call @Text.Text(%20, %21)
+  %22 = field %19, (Text, b32).e1
+  %23 = const b32 1
+  store b32 %23, %22
+  %25 = field %24, (ptr, b32).e0
+  %26 = load ptr, %3
+  store ptr %26, %25
+  %27 = field %24, (ptr, b32).e1
+  %28 = const b32 3
+  store b32 %28, %27
+  copy (ptr, b32) %29, %24
+  %30 = field %19, (Text, b32).e0
+  %32 = field %29, (ptr, b32).e0
+  %33 = load ptr, %32
+  call @Text.Text(%31, %33)
+  call @Text.assign(%30, %31)
+  call @Text.~Text(%31)
+  %34 = field %19, (Text, b32).e1
+  %35 = field %29, (ptr, b32).e1
+  %36 = load b32, %35
+  store b32 %36, %34
+  %39 = addr @log
+  %40 = load b32, %39
+  %41 = const b32 4
+  %42 = ne b32 %40, %41
+  store bool %42, %38
+  %43 = not bool %42
+  $65: if %43 {
+    %44 = field %19, (Text, b32).e0
+    %45 = field %44, Text.size
+    %46 = load b32, %45
+    %47 = const b32 12
+    %48 = ne b32 %46, %47
+    store bool %48, %38
+  }
+  %49 = load bool, %38
+  store bool %49, %37
+  %50 = not bool %49
+  $75: if %50 {
+    %51 = field %19, (Text, b32).e1
+    %52 = load b32, %51
+    %53 = const b32 3
+    %54 = ne b32 %52, %53
+    store bool %54, %37
+  }
+  %55 = load bool, %37
+  $82: if %55 {
+    %56 = const b32 2
+    call @(Text, b32).~(Text, b32)(%19)
+    call @Text.~Text(%1)
+    ret b32 %56
+  }
+  %57 = const b32 15
+  call @(Text, b32).~(Text, b32)(%19)
+  call @Text.~Text(%1)
+  ret b32 %57
+}
+
+func @globals() init {
+  %1 = addr @log
+  %2 = const b32 0
+  store b32 %2, %1
+  ret
+}
+
+func @Text.init(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Text.size
+  %7 = const b32 0
+  store b32 %7, %6
+  $9: loop {
+    %8 = load ptr, %4
+    %9 = load ptr, %3
+    %10 = field %9, Text.size
+    %11 = load b32, %10
+    %12 = sext b32 %11 to b64
+    %13 = index %8, %12 : b8
+    %14 = load b8, %13
+    %15 = const b8 0
+    %16 = ne b8 %14, %15
+    %17 = not bool %16
+    $20: if %17 {
+      break $9
+    }
+    %18 = load ptr, %3
+    %19 = field %18, Text.size
+    %20 = load ptr, %3
+    %21 = field %20, Text.size
+    %22 = load b32, %21
+    %23 = const b32 1
+    %24 = add b32 %22, %23
+    store b32 %24, %19
+  }
+  ret
+}
+
+func @Text.Text(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = addr @Text.vtable
+  %6 = const b64 1
+  %7 = index %5, %6 : ptr
+  store ptr %7, %4
+  call @Text.init(%4, %2)
+  ret
+}
+
+func @Text.assign(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  store ptr %1, %3
+  %4 = load ptr, %3
+  %5 = eq ptr %4, %2
+  $5: if %5 {
+    ret
+  }
+  call @Text.destroy(%4)
+  call @Text.init#1(%4, %2)
+  ret
+}
+
+func @Text.~Text(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = addr @Text.vtable
+  %5 = const b64 1
+  %6 = index %4, %5 : ptr
+  store ptr %6, %3
+  call @Text.destroy(%3)
+  ret
+}
+
+func @(Text, b32).~(Text, b32)(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = load ptr, %2
+  %4 = field %3, (Text, b32).e0
+  call @Text.~Text(%4)
+  ret
+}
+
+func @Text.destroy(%1: ptr) {
+  %2 = slot ptr
+  store ptr %1, %2
+  %3 = addr @log
+  %4 = addr @log
+  %5 = load b32, %4
+  %6 = const b32 1
+  %7 = add b32 %5, %6
+  store b32 %7, %3
+  ret
+}
+
+func @Text.init#1(%1: ptr, %2: ptr) {
+  %3 = slot ptr
+  %4 = slot ptr
+  store ptr %1, %3
+  store ptr %2, %4
+  %5 = load ptr, %3
+  %6 = field %5, Text.size
+  %7 = load ptr, %4
+  %8 = field %7, Text.size
+  %9 = load b32, %8
+  store b32 %9, %6
+  ret
+}
+
+--- exit: 15
