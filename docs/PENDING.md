@@ -140,9 +140,14 @@ case `a_derived_class_is_its_base_by_reference`).
 
 ## 5. The IR (record 0077)
 
-1. **The natives `__pow` and `__floor`** have a body only in the interpreter
-   (C's, as the C++ path uses). A back end for the processor has to give them
-   one; whether they stay natives or become Haard in `std` is for then.
+1. **The natives `__pow` and `__floor`** stay natives for now (Hadley,
+   2026-11-04): each back end gives them a body, and only the interpreter has
+   one so far, C's. Decide when the first back end starts. Proposed then:
+   `floor` as an IR instruction (`ffloor`), and `pow` still a native until the
+   processor needs a body, Haard in `std` being the candidate. That one waits
+   on a question for Hadley: the same result on every target, which WCET favours
+   and which means the C++ path uses the same code, or libm's precision (ties
+   in with questions 55-70). Record 0077, step 6.
 2. **Building a variant's payload makes one copy fewer in the IR**:
    `Box.Full(Held(7))` builds the `Held` in place, the C++ path gives a
    temporary to the variant's maker and copies it in. Seen only through a

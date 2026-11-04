@@ -473,8 +473,12 @@ owns something and cannot be copied is refused in the words the C++ path uses.
 `f64` whichever float the operands are, the answer cut back: what the C++ path's
 helpers do, which shows in an `f32`'s `1.0 // 0.1` being 9. They are natives
 because `**` and `//` are operators, which no import may be needed for, and
-`fptosi` traps where a floor must not; the processor's back end will have to
-give them a body.
+because that keeps both paths on the same C functions, equal to the last bit.
+Hadley confirmed the choice on 2026-11-04, for now; each back end gives them a
+body, and the processor's has none yet. The two are not equally hard: a `floor`
+is a few instructions, or one where the hardware has it (`fptosi` traps out of
+range, so it needs a test first: at `|x| >= 2^52`, or on a NaN, `x` is already
+the answer), while a `pow` needs `exp`, `log` and IEEE's special cases.
 
 The second oracle stage 4 planned now runs: all of `tests/programs`, the real
 `std/`, goes through the interpreter and must print and end as its C++ did. So
