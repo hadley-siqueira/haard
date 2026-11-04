@@ -29,9 +29,10 @@ case `a_derived_class_is_its_base_by_reference`).
 IR stage 4 is closed (`d962f26`): nothing is left in `tests/lowering/not_yet`.
 A `char` has no sign and its bytes can be written (records 0081 and 0082), and the
 C++ path now follows the language on overflow, shifts, division and bounds (record
-0083), all built 2026-11-04. Waiting on Hadley: **what comes next.** Proposed: the
-first real back end, x86-64 or ARM64 (section 5, item 3, questions 71-77). The
-other choice is a round of the small bugs of section 1.
+0083), all built 2026-11-04. Questions 71-77 are answered (section 2, items 2 and
+3). Waiting on Hadley: **what comes next.** Proposed: the record for the native back
+ends, then the assembler in Haard. The other choice is a round of the small bugs
+of section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -96,6 +97,21 @@ other choice is a round of the small bugs of section 1.
    compiler recognises them (C++: a `volatile` access; IR: `volatile_load`,
    `volatile_store`, `fence`, which exist). Not built.
 
+2. **The native back ends, as answered in questions 71-77** (2026-11-04): `hdc`
+   writes text, and an assembler and a linker of our own, written in Haard and
+   bootstrapped through the C++ path, make a static ELF. Linux only at first, direct
+   system calls and no libc (so `_start`, an allocator and the natives of
+   `std.low_io` are ours), no interoperating with C unless extremely necessary, and
+   debug information from tools that work closely with the compiler. Labels keep
+   their readable names (`"std.io.print(i32)"`), which for parallel builds to `.o`
+   later also need the root or version (record 0010) and a rule for a generic
+   instantiated twice. A program cannot yet make a file executable, and the
+   assembler needs that. `as` may be an oracle in the test suite, and nothing else.
+   Nothing built; a probe was measured,
+   `docs/design/notes/ir-questions-explained.md`.
+3. **PIE as the default on Linux, before a public version** (question 77). The first
+   version loads at a fixed address, with the code already position independent.
+
 ## 3. Waiting on a decision
 
 1. **The rest of a character's arithmetic** (record 0079): `c + d`,
@@ -146,11 +162,10 @@ other choice is a round of the small bugs of section 1.
    temporary to the variant's maker and copies it in. Seen only through a
    copy `init` that does something; record 0080's question one construct
    over. Found 2026-11-03 (`an_enum_ends_and_copies_what_is_alive`).
-3. **Questions 25-77 are open** (`docs/design/notes/ir-questions.md`), all
-   about the processor's back end and its targets: the ISA and its ABI
-   (25-31), memories, scratchpads, placement, the heap and start-up (32-45),
-   SIMD and the CGRA (46-54), real time and WCET (55-70), x86-64, ARM, C,
-   DWARF and PIE (71-77).
+3. **Questions 25-70 are open** (`docs/design/notes/ir-questions.md`), all about
+   the processor's back end: the ISA and its ABI (25-31), memories, scratchpads,
+   placement, the heap and start-up (32-45), SIMD and the CGRA (46-54), real time
+   and WCET (55-70). Questions 71-77 were answered on 2026-11-04.
 4. **Cycle counting in the interpreter** waits on the timing table
    (question 62).
 

@@ -431,17 +431,43 @@ The ones that weigh most on the design: **1–5, 13, 16, 19, 23, 32, 35, 38,
 
 71. **x86-64 and ARM**: (a) assembly text and the system's `as`/`ld`; (b) our
     own assembler and linker. **Recommended (a) first**.
+
+    **Answer (Hadley, 2026-11-04): (b)**, against the recommendation: an assembler
+    and a linker of our own, written in Haard, bootstrapped through the C++ path.
+    `as` and `ld` are not kept as a supported route; `as` may be used as an oracle
+    in the test suite (Hadley, 2026-11-04).
 72. **The processor**: is there an assembler already, or does hdc produce the
     binary directly?
+
+    **Answer (Hadley, 2026-11-04):** there is none yet, and it will be written
+    **in Haard**, its first version transpiled to C++ as a bootstrap.
 73. **Operating systems on x86/ARM**: (a) Linux only; (b) plus macOS; (c)
     plus Windows; (d) plus Android. **Recommended (a) first**.
+
+    **Answer (Hadley, 2026-11-04): (a)**, Linux only in the first version.
 74. **Interoperating with C**, following each platform's ABI: yes or no?
     **Recommended yes**.
+
+    **Answer (Hadley, 2026-11-04): no**, against the recommendation: Haard does
+    not interoperate with C at first, and only will if it becomes extremely
+    necessary.
 75. **Run time on x86/ARM**: (a) libc; (b) direct system calls.
     **Recommended (a)**.
+
+    **Answer (Hadley, 2026-11-04): (b)**, against the recommendation: system
+    calls directly, with no C in between, since Haard is meant as an alternative
+    to C.
 76. **DWARF debug information**: later, with source positions per
     instruction kept from day one? **Recommended yes, later**.
+
+    **Answer (Hadley, 2026-11-04): yes**, generated, and designed knowing the
+    assembler and linker are our own, so they may work closely with the compiler.
+    No support for `as` and `ld` has to be kept.
 77. **Position-independent executables on Linux**: **Recommended yes**.
+
+    **Answer (Hadley, 2026-11-04):** fixed addresses in the first version, with the
+    code already position independent; PIE becomes the default on Linux later,
+    before a public version.
 
 ## G. The IR's own design (proposed; approve or overturn)
 

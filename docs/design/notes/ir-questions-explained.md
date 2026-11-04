@@ -2519,3 +2519,63 @@ into a vector: the Ast's lesson.
 
 **Answer: approved, (a)** with the nine details. Block G (78-91) is
 complete.
+
+## Questions 72 and 75: the assembler and the run time
+
+**Question 72.** The processor's ISA is still being designed and nothing
+assembles it. **Answer: none exists, and it will be written in Haard**, its first
+version going through the C++ path as a bootstrap.
+
+**Question 75.** libc brings `crt1.o`, `malloc`, `stdio` and C's idea of a program's
+start; direct system calls mean writing `_start`, an allocator and the natives of
+`std.low_io` ourselves, and Linux's system calls are a stable interface.
+**Answer: (b)**, direct, overturning the recommendation of (a).
+
+Measured for these on 2026-11-04, with a probe of 287 lines of Haard (a few x86-64
+forms, quoted labels, a static ELF), not kept in the repository. Through Haard, C++
+and g++ it built a program that ran with no `as`, `ld` or libc. On a generated
+file of a million lines its bytes were identical to `as`'s, in 0.64 s against 0.97 s,
+though it knows far fewer forms than `as` does. `ld` was also shown to take a label
+such as `"std.io.print(i32)"` with nothing mangled.
+
+## Questions 71, 73, 74 and 76: our own tools, Linux, no C
+
+**Question 71.** Answer: **(b)**, an assembler and a linker of our own, written in
+Haard, the first version going through the C++ path. Recommended was `as` and `ld`
+first. What decided it: `hdc` writes text, a separate tool encodes it, so the
+compiler stays simple and all three targets share one way out. `as` may be used as
+an oracle in the test suite (Hadley, 2026-11-04), and for nothing else.
+
+**Question 73.** Answer: **(a)**, Linux only in the first version.
+
+**Question 74.** Answer: **no**, Haard does not interoperate with C at first, and
+only will if it is extremely necessary. Recommended was yes. Two things follow, both
+to be confirmed where they are decided: nothing binds Haard's calling convention to
+each platform's C ABI, and the foreign interface of record 0030 has no C to be
+shaped around.
+
+**Question 76.** Answer: **yes**, debug information is generated, and it may rely on
+the assembler and linker being ours, so the compiler can hand them what they need
+directly. Not settled by this answer: when it is built, and whether the format is
+DWARF, which is what gdb reads.
+
+## Question 77: a fixed address or PIE
+
+A position-independent executable is loaded at a random address on each run. Code
+reaches what it needs relative to the instruction (`lea rsi, [rip + x]`, `adrp`), so
+it is the same either way. The difference is the pointers held in data, such as
+vtables, function values and the symbol table: at a fixed address the linker writes
+them, and under PIE `_start` adds the base to each. Measured with one program of 138
+bytes: at a fixed address it read the same address on six runs, and as PIE a different
+one each time, with the same instructions.
+
+**The options.** (a) Always fixed: the simplest, and no such protection on Linux. (b)
+PIE from the first day: protected at once, with more work and moving addresses while
+the first back end is being debugged. (c) Fixed first, the code already relative, PIE
+the default on Linux later.
+
+The fixed form has to exist anyway, for the processor's placement in scratchpads, and
+the linker already has to know where the pointers are in order to fill them in, which
+is the same table PIE needs. So waiting costs little.
+
+**Answer: (c)**, PIE as the default on Linux before a public version.
