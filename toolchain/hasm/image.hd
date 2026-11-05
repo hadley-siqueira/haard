@@ -55,6 +55,7 @@ class Hole:
     section : i32
     offset : u64
     label : String
+    file : i32
     line : i32
 
     # how many bytes of the instruction come after the four of the hole
@@ -69,6 +70,9 @@ def is_local_label : bool
 class Image:
     sections : Array<Section>
     current : i32
+
+    # the file being read, which a hole remembers: it is reported after all are read
+    file : i32
     labels : Array<Label>
     label_at : Hash<String, i32>
     holes : Array<Hole>
@@ -79,6 +83,7 @@ class Image:
         add_section(".data", true)
         add_section(".bss", false)
         current = 0
+        file = 0
 
     def add_section : void
         @name : char*
@@ -157,6 +162,7 @@ class Image:
         hole.section = current
         hole.offset = here()
         hole.label = label
+        hole.file = file
         hole.line = line
         hole.trailing = trailing
         holes.add(hole)

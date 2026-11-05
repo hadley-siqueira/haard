@@ -7,7 +7,7 @@ remaining work and open questions. The records and the agenda
 
 Take an item off when it is fixed, decided or dropped, and say where it went.
 Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
-date 2026-11-05, after step 1 of record 0084.
+date 2026-11-05, after step 2 of record 0084.
 
 Taken off on 2026-11-04: *stage 4 step 6* (built, record 0077), and *a `char`
 past 127 reads differently on the two paths* (a `char` has no sign, record 0081),
@@ -26,9 +26,9 @@ case `a_derived_class_is_its_base_by_reference`).
 
 ## Where we stopped (2026-11-05)
 
-The assembler of record 0084 is built, in `toolchain/hasm/`, x86-64 only (step 1 of the record's
-order), and in `make check`. Next in that order: **the natives and `_start`, with a small
-program running with no C** (step 2). The other choice is a round of the small bugs of
+The assembler and the runtime of record 0084 are built, in `toolchain/`, x86-64 only (steps 1
+and 2 of the record's order), and in `make check`. Next in that order: **the back end in `hdc`,
+running `tests/emitter` natively** (step 3). The other choice is a round of the small bugs of
 section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
@@ -96,10 +96,10 @@ section 1.
 
 2. **The native back ends** (record 0084, questions 71-77 and ten more): `hdc` writes
    text, `hasm` makes a static ELF, x86-64 Linux first, direct system calls, no C. The
-   first goal is a correct result, not speed. **Step 1 of 6 is built** (`toolchain/hasm/`,
-   2026-11-05). Left: the natives and `_start`, the back end in `hdc`, the bootstrap's
-   steps, ARM64 and the processor, debug information. How a label names its root is
-   still to be spelled.
+   first goal is a correct result, not speed. **Steps 1 and 2 of 6 are built** (`toolchain/`,
+   2026-11-05). Left: the back end in `hdc`, the bootstrap's steps, ARM64 and the
+   processor, debug information. How a label names its root is still to be spelled, and
+   whether the runtime's allocator and files move to Haard over a `__syscall` native.
 3. **PIE as the default on Linux, before a public version** (question 77). The first
    version loads at a fixed address, with the code already position independent.
 

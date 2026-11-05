@@ -1,24 +1,34 @@
 # hasm -- text in, a static ELF out. Record 0084, step 1.
 #
-#   hasm <input.s> -o <output>
+#   hasm <input.s>... -o <output>
 #
-# Writes nothing when anything was refused. The output is not marked executable,
-# since Haard has no way to yet: 'chmod +x' is the caller's, as the record says.
+# The files are one program: its runtime and what hdc wrote. They share their
+# labels, '.L' ones too. Writes nothing when anything was refused. The output is
+# not marked executable, since Haard has no way to yet: 'chmod +x' is the caller's,
+# as the record says.
 import hasm.assembler
 import hasm.elf
 
 def main : i32
     @args : String[]
 
-    if args.length() != 4 or args[2] != "-o":
-        errors()->writeln("usage: hasm <input.s> -o <output>")
+    let count = args.length()
+
+    if count < 4 or args[count - 2] != "-o":
+        errors()->writeln("usage: hasm <input.s>... -o <output>")
         return 2
 
     let assembler : Assembler
+    let i = 1
 
-    if not assembler.assemble(args[1].text()):
-        errors()->writeln("hasm: cannot read ${args[1]}")
-        return 2
+    while i < count - 2:
+        if not assembler.assemble(args[i].text()):
+            errors()->writeln("hasm: cannot read ${args[i]}")
+            return 2
+
+        i += 1
+
+    assembler.finish()
 
     if assembler.failed:
         return 1
@@ -26,6 +36,6 @@ def main : i32
     let writer : ElfWriter
 
     writer.image = &assembler.image
-    writer.write(args[3].text())
+    writer.write(args[count - 1].text())
 
     return 0

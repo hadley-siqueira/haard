@@ -11,6 +11,7 @@ class Assembler:
     image : Image
     target : X86_64
     path : String
+    paths : Array<String>
     line : i32
     failed : bool
     err : File*
@@ -25,9 +26,16 @@ class Assembler:
         @at : i32
         @message : String
 
+        complain_in(path, at, message)
+
+    def complain_in : void
+        @where : String&
+        @at : i32
+        @message : String
+
         failed = true
 
-        let text : String = path
+        let text : String = where
 
         text.append(':')
         text.append(at)
@@ -40,6 +48,11 @@ class Assembler:
         @given : char*
 
         path = given
+        image.file = paths.length()
+        paths.add(path)
+
+        # each file starts in .text, as it would on its own
+        image.current = 0
 
         let file = open_read(given)
 
@@ -64,7 +77,6 @@ class Assembler:
         statement(text)
         file->close()
         delete file
-        finish()
 
         return true
 
@@ -314,13 +326,15 @@ class Assembler:
 
         grow(round_up(size, to) - size)
 
-    # every label a hole names is known here or the diagnostic says where
+    # every file has been read. Every label a hole names is known here or the
+    # diagnostic says where
     def finish : void
         let i = 0
 
         while i < image.holes.length():
             if not image.label_at.has(image.holes[i].label):
-                complain(image.holes[i].line, "the label '${image.holes[i].label}' is not defined")
+                complain_in(paths[image.holes[i].file], image.holes[i].line,
+                            "the label '${image.holes[i].label}' is not defined")
 
             i += 1
 

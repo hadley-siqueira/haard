@@ -199,6 +199,37 @@ for source in "$tests"/cases/runs/*.s; do
     fi
 done
 
+# ---- several files are one program
+
+two="$tests/cases/two_files"
+
+if ! out=$("$hasm" "$two/first.s" "$two/second.s" -o "$scratch/two" 2>&1); then
+    fail "two_files: hasm refused it" "$out"
+else
+    chmod +x "$scratch/two"
+    "$scratch/two"
+    code=$?
+
+    if [ "$code" -ne 5 ]; then
+        fail "two_files: exit $code, expected 5"
+    else
+        passed=$((passed + 1))
+    fi
+fi
+
+# a diagnostic names the file it is about, and a label is one across all of them
+got=$(cd "$two" && "$hasm" first.s redefines.s -o "$scratch/two-bad" 2>&1)
+
+expected="redefines.s:2: error: the label '_start' is defined twice
+first.s:3: error: the label 'helper' is not defined
+first.s:4: error: the label 'value' is not defined"
+
+if [ "$got" != "$expected" ] || [ -e "$scratch/two-bad" ]; then
+    fail "two_files: the second file's error" "$got"
+else
+    passed=$((passed + 1))
+fi
+
 # ---- the symbol table, which nothing above looks at the sizes of
 
 for source in "$tests"/cases/symbols/*.s; do

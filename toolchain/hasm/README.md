@@ -6,7 +6,7 @@ with no `as`, `ld` or libc. x86-64 Linux only so far.
 ```
 make                       build build/hasm
 make test                  build it and run tests/run.sh
-hasm <input.s> -o <output> and then 'chmod +x', which Haard cannot do yet
+hasm <input.s>... -o <output>   and then 'chmod +x', which Haard cannot do yet
 ```
 
 | file | what it is |
@@ -22,6 +22,9 @@ There is one pass over the text and no relaxation: a branch is always the long f
 so every size is known as it is written, and the holes are filled once at the end.
 
 ## What it reads
+
+Several files are one program, its runtime and what `hdc` wrote: they share their
+labels, `.L` ones too, and each starts in `.text`.
 
 One statement per line, in a subset of what `as` reads under `.intel_syntax noprefix`.
 **Whatever is not listed here is refused, by line**, all of them at once, and then no

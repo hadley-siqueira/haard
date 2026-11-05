@@ -2,8 +2,8 @@
 
 Status: **decided**, 2026-11-04, with the spelling of a label's root still open
 (below). Hadley answered questions 71-77 of `notes/ir-questions.md`, then ten more
-questions one at a time; the table is his. **Step 1 of the order below is built, in
-`toolchain/hasm/`, 2026-11-05; nothing after it is.** The reasoning behind the first seven is in
+questions one at a time; the table is his. **Steps 1 and 2 of the order below are built, in
+`toolchain/`, 2026-11-05; nothing after them is.** The reasoning behind the first seven is in
 `notes/ir-questions-explained.md`.
 
 | | |
@@ -130,11 +130,33 @@ The choices the table above left open, each easy to change:
 - **Not yet there, added when the back end asks**: `rep movs`, and the memory form of the
   SSE bitwise operations.
 
+## What step 2 built
+
+`toolchain/runtime/x86_64_linux.s`, in assembly, which `hasm` takes with what `hdc` writes,
+since it now reads several files as one program. `toolchain/runtime/README.md` says what it
+gives and what a program has to define. What the back end has to know:
+
+- **`hdc` writes `__before_main` and `__after_main`**, which call the IR's initialisers and
+  finalisers, and `main` takes the count and the table of arguments, as the IR's does.
+- **`__abort_with(message)`** is how an instruction that stops says why. The message of a
+  failed `check_index` needs a number written, and comes with step 3.
+- **`__pow` is not there**, as the table above allows; `__floor` is, until `ffloor`.
+
+Output follows C's stdio, the C++ path being its oracle. The one difference is held on
+purpose and cannot be told from outside but in time: `stderr` is held to the end of a line,
+or until anything else would go out or wait. A byte at a time, as C's, made a system call a
+byte, and `hasm` took 4.5 s of system time to report 240,000 refusals that way.
+
+**Open, for when the back end works:** whether the allocator and the files stay in assembly.
+Written in Haard over one `__syscall` native, they would be shared by ARM64 and the
+processor, and leave only `_start` and that native per target. They could not be written
+that way now, with nothing to compile them natively.
+
 ## The order
 
 1. **Built.** The assembler in Haard for x86-64, refusing what it does not know, with `as`
    as the oracle in its tests.
-2. The natives and `_start`, with a small program running with no C.
+2. **Built.** The natives and `_start`, with a small program running with no C.
 3. The back end in `hdc`, running `tests/emitter` natively as a third path beside C++
    and the IR, which are its oracle.
 4. The bootstrap's steps 2 and 3.
