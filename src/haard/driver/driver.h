@@ -45,6 +45,7 @@ namespace haard {
             bool show_pretty_print;
             bool emit_cpp;
             bool emit_ir;
+            bool emit_asm;
     };
 }
 

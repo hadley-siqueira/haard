@@ -1,0 +1,36 @@
+# Six go in registers and the rest on the stack, in order, with none lost to another.
+def sum : i64
+    @a : i64
+    @b : i64
+    @c : i64
+    @d : i64
+    @e : i64
+    @f : i64
+    @g : i64
+    @h : i64
+
+    return a + b * 2 + c * 3 + d * 5 + e * 7 + f * 11 + g * 13 + h * 17
+
+def seven : i32
+    @a : i8
+    @b : u8
+    @c : i16
+    @d : u16
+    @e : i32
+    @f : u32
+    @g : i8
+
+    return (a as i32) + (b as i32) + (c as i32) + (d as i32) + e + (f as i32) + (g as i32)
+
+def main : i32
+    let x = sum(1, 2, 3, 4, 5, 6, 7, 8)
+    let a : i8 = 0 - 1
+    let b : u8 = 200
+    let c : i16 = 0 - 300
+    let d : u16 = 40000
+    let e : i32 = 7
+    let f : u32 = 9
+    let g : i8 = 0 - 2
+    let y = seven(a, b, c, d, e, f, g)
+
+    return ((x + (y as i64)) % 251) as i32

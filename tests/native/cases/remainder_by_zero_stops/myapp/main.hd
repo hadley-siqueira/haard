@@ -1,0 +1,5 @@
+def main : i32
+    let zero : u8 = 0
+    let one : u8 = 1
+
+    return (one % zero) as i32

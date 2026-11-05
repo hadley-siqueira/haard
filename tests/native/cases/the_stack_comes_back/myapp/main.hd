@@ -1,0 +1,23 @@
+# 600,000 calls with two arguments on the stack, 9.6 MB of them, which a caller has
+# to take back off, or this runs out of the 8 MB a stack has.
+def last : i64
+    @a : i64
+    @b : i64
+    @c : i64
+    @d : i64
+    @e : i64
+    @f : i64
+    @g : i64
+    @h : i64
+
+    return h - g
+
+def main : i32
+    let total : i64 = 0
+    let i = 0
+
+    while i < 600000:
+        total += last(0, 0, 0, 0, 0, 0, 1, 2)
+        i += 1
+
+    return (total % 251) as i32

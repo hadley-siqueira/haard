@@ -1,5 +1,6 @@
 #include <haard/driver/driver.h>
 #include <haard/ir/ir_printer.h>
+#include <haard/backend/x86_64_writer.h>
 #include <haard/lowering/ir_lowerer.h>
 #include <iostream>
 #include <stdexcept>
@@ -13,6 +14,7 @@ Driver::Driver() {
     show_pretty_print = false;
     emit_cpp = false;
     emit_ir = false;
+    emit_asm = false;
 }
 
 int Driver::run(int argc, char* argv[]) {
@@ -86,6 +88,8 @@ bool Driver::read_arguments(int argc, char* argv[]) {
             emit_cpp = true;
         } else if (argument == "--emit-ir") {
             emit_ir = true;
+        } else if (argument == "--emit-asm") {
+            emit_asm = true;
         } else if (argument == "--pretty-print") {
             show_pretty_print = true;
         } else if (argument == "--pkg") {
@@ -124,6 +128,7 @@ void Driver::print_usage(std::ostream& out) {
         << "      --tokens        dump the token stream\n"
         << "      --emit-cpp      write the program as C++, for a C++ compiler\n"
         << "      --emit-ir       write the program's IR, as text to read\n"
+        << "      --emit-asm      write the program as x86-64 text, for hasm\n"
         << "      --pretty-print  print the source back from the ast\n"
         << "      --pkg <file>    the manifest ('haard.pkg'), which says what\n"
         << "                      this library is and what it needs. hdc\n"
@@ -225,6 +230,32 @@ int Driver::compile() {
 
         printer.set_program(&ir);
         printer.print(std::cout);
+    }
+
+    // record 0084: what hasm takes, with the runtime, to make a static ELF
+    if (emit_asm) {
+        Target target;
+        IrProgram ir;
+        IrLowerer lowerer;
+        X8664Writer writer;
+
+        find_target("x86_64-linux", target);
+        lowerer.set_compilation(&compilation);
+        lowerer.set_target(&target);
+        lowerer.set_program(&ir);
+
+        if (!lowerer.lower() || !lowerer.finish()) {
+            std::cerr << program << ": " << lowerer.get_error() << '\n';
+            return 1;
+        }
+
+        writer.set_program(&ir);
+        writer.set_target(&target);
+
+        if (!writer.write(std::cout)) {
+            std::cerr << program << ": " << writer.get_error() << '\n';
+            return 1;
+        }
     }
 
     if (show_pretty_print) {

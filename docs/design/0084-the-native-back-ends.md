@@ -3,7 +3,7 @@
 Status: **decided**, 2026-11-04, with the spelling of a label's root still open
 (below). Hadley answered questions 71-77 of `notes/ir-questions.md`, then ten more
 questions one at a time; the table is his. **Steps 1 and 2 of the order below are built, in
-`toolchain/`, 2026-11-05; nothing after them is.** The reasoning behind the first seven is in
+`toolchain/`, 2026-11-05, and step 3 is under way.** The reasoning behind the first seven is in
 `notes/ir-questions-explained.md`.
 
 | | |
@@ -147,18 +147,41 @@ purpose and cannot be told from outside but in time: `stderr` is held to the end
 or until anything else would go out or wait. A byte at a time, as C's, made a system call a
 byte, and `hasm` took 4.5 s of system time to report 240,000 refusals that way.
 
-**Open, for when the back end works:** whether the allocator and the files stay in assembly.
-Written in Haard over one `__syscall` native, they would be shared by ARM64 and the
-processor, and leave only `_start` and that native per target. They could not be written
-that way now, with nothing to compile them natively.
+**The runtime moves to Haard after step 3** (Hadley, 2026-11-05: *"depois vamos fazer sim a
+reescrita para haard o que for possível e manter em assembly apenas o essencial, como o
+syscall"*). The allocator and the files become Haard over one `__syscall` native, leaving
+`_start`, that native and the system call numbers per target; ARM64 shares them, and the
+processor the allocator's logic, its start-up and any OS being open in questions 32-45. Not
+before: while the back end can still be wrong, a runtime independent of it says whose bug
+it is. The allocator cannot use `new`, and nothing there may depend on a global built before
+`main`.
+
+## How step 3 goes
+
+`src/haard/backend/x86_64_writer.cpp`, by `hdc --emit-asm`, judged by `tests/native`. The order,
+each with programs running:
+
+1. **Built.** Whole numbers, locals, `if`, loops, calls.
+2. Memory: slots, fields, indexes, structs by value, `copy`.
+3. Globals, text, `new` and `delete`: the first `println`. Finalisers run last built first,
+   which nothing can check before this.
+4. Classes, vtables, enums, tuples, closures, function values.
+5. Floats and conversions.
+6. All of `tests/emitter` and `tests/programs`.
+
+**Every value lives in eight bytes of the frame, zero extended from its width**, as the
+interpreter holds it, and an instruction works in 64 bits and cuts the result to its width.
+So the rules of each width are the interpreter's, and x86-64's partial registers never come
+up. An instruction no program can reach yet is refused by name, not written and left unproven:
+today `smulhi`, `umulhi`, `inttoptr`, `ptrtoint` and a block taking arguments.
 
 ## The order
 
 1. **Built.** The assembler in Haard for x86-64, refusing what it does not know, with `as`
    as the oracle in its tests.
 2. **Built.** The natives and `_start`, with a small program running with no C.
-3. The back end in `hdc`, running `tests/emitter` natively as a third path beside C++
-   and the IR, which are its oracle.
+3. **Under way, part 1 of 6.** The back end in `hdc`, running `tests/emitter` natively as a
+   third path beside C++ and the IR, which are its oracle.
 4. The bootstrap's steps 2 and 3.
 5. ARM64, then the processor, through the same tool.
 6. Debug information, then PIE as the default before a public version.

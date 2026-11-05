@@ -1,0 +1,25 @@
+# 'and' and 'or' leave the right side unrun when the left one settles it: a division
+# by zero there would stop the program.
+def main : i32
+    let zero = 0
+    let total = 0
+
+    if zero != 0 and 10 / zero > 1:
+        total += 100
+
+    if zero == 0 or 10 / zero > 1:
+        total += 1
+
+    if not (zero != 0):
+        total += 2
+
+    let a = zero == 0 and total > 0
+    let b = zero != 0 or total > 100
+
+    if a:
+        total += 4
+
+    if b:
+        total += 8
+
+    return total

@@ -1,0 +1,22 @@
+# The one division the machine faults on and the language defines, at the width where
+# it would: MIN / -1 is MIN and MIN % -1 is 0.
+def main : i32
+    let low : i64 = 0 - 9223372036854775807 - 1
+    let minus : i64 = 0 - 1
+    let low32 : i32 = 0 - 2147483647 - 1
+    let minus32 : i32 = 0 - 1
+    let total = 0
+
+    if low / minus == low:
+        total += 1
+
+    if low % minus == 0:
+        total += 2
+
+    if low32 / minus32 == low32:
+        total += 4
+
+    if low32 % minus32 == 0:
+        total += 8
+
+    return total

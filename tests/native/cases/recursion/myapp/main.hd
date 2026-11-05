@@ -1,0 +1,47 @@
+# Each call has its own frame, and what a call keeps is only what is on it.
+def fib : i32
+    @n : i32
+
+    if n < 2:
+        return n
+
+    return fib(n - 1) + fib(n - 2)
+
+def ackermann : i32
+    @m : i32
+    @n : i32
+
+    if m == 0:
+        return n + 1
+
+    if n == 0:
+        return ackermann(m - 1, 1)
+
+    return ackermann(m - 1, ackermann(m, n - 1))
+
+def is_even : bool
+    @n : i32
+
+    if n == 0:
+        return true
+
+    return is_odd(n - 1)
+
+def is_odd : bool
+    @n : i32
+
+    if n == 0:
+        return false
+
+    return is_even(n - 1)
+
+def main : i32
+    let total = fib(20) + ackermann(2, 3)
+
+    if is_even(1000):
+        total += 1
+
+    if is_odd(1000):
+        total += 100
+
+    return total % 251

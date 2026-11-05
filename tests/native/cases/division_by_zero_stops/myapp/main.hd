@@ -1,0 +1,9 @@
+# With its message, and a shell reads the signal as 134.
+def divide : i32
+    @a : i32
+    @b : i32
+
+    return a / b
+
+def main : i32
+    return divide(1, 0)

@@ -1,0 +1,36 @@
+# Loops inside loops, break and continue, and if with elif and else.
+def classify : i32
+    @n : i32
+
+    if n < 10:
+        return 1
+    elif n < 20:
+        return 2
+    elif n == 25:
+        return 3
+    else:
+        return 4
+
+def main : i32
+    let total = 0
+    let i = 0
+
+    while i < 30:
+        i += 1
+
+        if i % 3 == 0:
+            continue
+
+        if i == 28:
+            break
+
+        let j = 0
+
+        while true:
+            if j >= i:
+                break
+
+            j += 1
+            total += classify(j)
+
+    return total % 251

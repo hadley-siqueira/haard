@@ -1,0 +1,42 @@
+# A local of each width beside its neighbours: writing one leaves the next alone, and
+# reading it gives what was written, with the sign of its type.
+def main : i32
+    let a : i8 = 0 - 1
+    let b : u8 = 255
+    let c : i16 = 0 - 2
+    let d : u16 = 65534
+    let e : i32 = 0 - 3
+    let f : u32 = 4294967293
+    let g : i64 = 0 - 4
+    let h : u64 = 18446744073709551612
+    let t = true
+    let n = false
+    let total : i64 = 0
+
+    a = a - 1
+    c = c - 1
+    e = e - 1
+    b = b + 1
+    d = d + 1
+    f = f + 1
+
+    total = (a as i64) * 2 + (b as i64) * 3 + (c as i64) * 5 + (d as i64) * 7
+    total = total + (e as i64) * 11 + (f as i64) * 13 + g * 17 + ((h >> 60) as i64) * 19
+
+    # a negative literal is its width's bits, and compares as one
+    let m : i8 = -1
+    let o : i32 = -5
+
+    if m == -1:
+        total += 3
+
+    if o == -5:
+        total += 30
+
+    if t:
+        total += 1000
+
+    if n:
+        total += 2000
+
+    return ((total % 251 + 251) % 251) as i32
