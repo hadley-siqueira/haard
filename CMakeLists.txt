@@ -224,6 +224,7 @@ add_custom_target(check
     COMMAND ${CMAKE_SOURCE_DIR}/tests/pretty_printer/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/tests/programs/run.sh
     COMMAND ${CMAKE_SOURCE_DIR}/bootstrap/tests/run.sh
+    COMMAND ${CMAKE_SOURCE_DIR}/toolchain/hasm/tests/run.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running the tests"
     VERBATIM

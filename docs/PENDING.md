@@ -7,7 +7,7 @@ remaining work and open questions. The records and the agenda
 
 Take an item off when it is fixed, decided or dropped, and say where it went.
 Last gathered 2026-10-28, after IR stage 4 step 4 (`aed2338`); brought up to
-date 2026-11-04, after record 0083.
+date 2026-11-05, after step 1 of record 0084.
 
 Taken off on 2026-11-04: *stage 4 step 6* (built, record 0077), and *a `char`
 past 127 reads differently on the two paths* (a `char` has no sign, record 0081),
@@ -24,15 +24,12 @@ against `**`* (record 0057 amended), and *a class value given to a `T&` of
 its base is copied on the C++ path* (fixed in `Emitter::emit_conversion`,
 case `a_derived_class_is_its_base_by_reference`).
 
-## Where we stopped (2026-11-04)
+## Where we stopped (2026-11-05)
 
-IR stage 4 is closed (`d962f26`): nothing is left in `tests/lowering/not_yet`.
-A `char` has no sign and its bytes can be written (records 0081 and 0082), and the
-C++ path now follows the language on overflow, shifts, division and bounds (record
-0083), all built 2026-11-04. Questions 71-77 are answered (section 2, items 2 and
-3), and record 0084 decides the rest, nothing built. Waiting on Hadley: **when to start**
-the assembler in Haard, which is the record's first step. The other choice is a round
-of the small bugs of section 1.
+The assembler of record 0084 is built, in `toolchain/hasm/`, x86-64 only (step 1 of the record's
+order), and in `make check`. Next in that order: **the natives and `_start`, with a small
+program running with no C** (step 2). The other choice is a round of the small bugs of
+section 1.
 
 ## 1. Bugs and gaps: the front end and the C++ path
 
@@ -97,11 +94,12 @@ of the small bugs of section 1.
    compiler recognises them (C++: a `volatile` access; IR: `volatile_load`,
    `volatile_store`, `fence`, which exist). Not built.
 
-2. **The native back ends** (record 0084, questions 71-77 and ten more): an assembler
-   and a linker of our own in Haard, bootstrapped through the C++ path; `hdc` writes
-   text; a static ELF on x86-64 Linux first, direct system calls, no C. `as` may be an
-   oracle in the test suite, and nothing else. The first goal is a correct result, not
-   speed. Nothing built. How a label names its root is still to be spelled.
+2. **The native back ends** (record 0084, questions 71-77 and ten more): `hdc` writes
+   text, `hasm` makes a static ELF, x86-64 Linux first, direct system calls, no C. The
+   first goal is a correct result, not speed. **Step 1 of 6 is built** (`toolchain/hasm/`,
+   2026-11-05). Left: the natives and `_start`, the back end in `hdc`, the bootstrap's
+   steps, ARM64 and the processor, debug information. How a label names its root is
+   still to be spelled.
 3. **PIE as the default on Linux, before a public version** (question 77). The first
    version loads at a fixed address, with the code already position independent.
 

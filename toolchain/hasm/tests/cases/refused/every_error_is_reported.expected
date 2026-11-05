@@ -1,0 +1,3 @@
+every_error_is_reported.s:2: error: unknown instruction 'nosuch'
+every_error_is_reported.s:3: error: 'mov' does not take these operands
+every_error_is_reported.s:5: error: the operands have different sizes

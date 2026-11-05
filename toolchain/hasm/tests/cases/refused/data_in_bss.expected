@@ -1,0 +1,1 @@
+data_in_bss.s:3: error: .bss holds no data, only .zero

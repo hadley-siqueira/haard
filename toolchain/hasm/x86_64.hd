@@ -1,0 +1,1533 @@
+# hasm.x86_64 -- one line of x86-64 text into its bytes.
+#
+# Knows the forms the back end will write and refuses everything else, by name
+# (record 0084): a form it half knows is how a probe once made garbage in silence.
+# Where a form has two encodings it takes the one 'as' takes, since 'as' is what
+# tests/run.sh compares it with, byte for byte. Nothing here looks at a label's
+# address: a branch is always the long form, so every size is known at once.
+import hasm.word
+import hasm.image
+
+enum OperandKind:
+    Register
+    Xmm
+    Memory
+    Immediate
+    Target
+
+class Operand:
+    kind : OperandKind
+
+    # in bytes, of a Register, or a Memory that says it. 0 is a Memory that does
+    # not say, and takes its size from the other operand
+    size : i32
+
+    # a Register's or an Xmm's number
+    reg : i32
+
+    # a Memory: [base + index*scale + disp], or [rip + label]
+    base : i32
+    index : i32
+    scale : i32
+    disp : i64
+    rip : bool
+
+    # a Target, or the label of a [rip + label]
+    label : String
+
+    # an Immediate
+    magnitude : u64
+    negative : bool
+
+    def init : void
+        size = 0
+        reg = -1
+        base = -1
+        index = -1
+        scale = 1
+        disp = 0
+        rip = false
+        magnitude = 0
+        negative = false
+
+enum Form:
+    Fixed
+    Alu
+    Mov
+    Test
+    Lea
+    Extend
+    Movsxd
+    Unary
+    Imul
+    Shift
+    Push
+    Pop
+    JumpOrCall
+    Jcc
+    Setcc
+    Cmov
+    SseOperate
+    SseBitwise
+    SseMove
+    SseFromInt
+    SseToInt
+    SseWithGeneral
+    SseRound
+
+class Mnemonic:
+    form : Form
+
+    # what it depends on the form: the whole bytes, an opcode, or an opcode's /digit
+    code : i32
+
+    # a Jump's second digit, or an SSE form's mandatory prefix
+    extra : i32
+
+    # the size of an SSE form's memory operand; 0 when it has none
+    memory_size : i32
+
+class RegisterName:
+    number : i32
+    size : i32
+    xmm : bool
+
+# as a whole number of this many bytes, sign extended
+def truncated : i64
+    @value : i64
+    @size : i32
+
+    if size == 1:
+        return (value as i8) as i64
+
+    if size == 2:
+        return (value as i16) as i64
+
+    if size == 4:
+        return (value as i32) as i64
+
+    return value
+
+class X86_64:
+    image : Image*
+    line : i32
+    problem : String
+
+    mnemonic_at : Hash<String, i32>
+    mnemonics : Array<Mnemonic>
+    register_at : Hash<String, RegisterName>
+
+    # the operand words of the line being read
+    words : Array<Word>
+    at : i32
+
+    def init : void
+        line = 0
+        at = 0
+        add_registers()
+        add_mnemonics()
+
+    # ---- the tables
+
+    def add_register : void
+        @name : char*
+        @number : i32
+        @size : i32
+        @xmm : bool
+
+        let register : RegisterName
+        let key : String = name
+
+        register.number = number
+        register.size = size
+        register.xmm = xmm
+        register_at.add(key, register)
+
+    def add_registers : void
+        add_register("rax", 0, 8, false)
+        add_register("rcx", 1, 8, false)
+        add_register("rdx", 2, 8, false)
+        add_register("rbx", 3, 8, false)
+        add_register("rsp", 4, 8, false)
+        add_register("rbp", 5, 8, false)
+        add_register("rsi", 6, 8, false)
+        add_register("rdi", 7, 8, false)
+        add_register("eax", 0, 4, false)
+        add_register("ecx", 1, 4, false)
+        add_register("edx", 2, 4, false)
+        add_register("ebx", 3, 4, false)
+        add_register("esp", 4, 4, false)
+        add_register("ebp", 5, 4, false)
+        add_register("esi", 6, 4, false)
+        add_register("edi", 7, 4, false)
+        add_register("ax", 0, 2, false)
+        add_register("cx", 1, 2, false)
+        add_register("dx", 2, 2, false)
+        add_register("bx", 3, 2, false)
+        add_register("sp", 4, 2, false)
+        add_register("bp", 5, 2, false)
+        add_register("si", 6, 2, false)
+        add_register("di", 7, 2, false)
+
+        # ah, ch, dh and bh are not here: nothing writes them, and they cannot
+        # meet a REX prefix
+        add_register("al", 0, 1, false)
+        add_register("cl", 1, 1, false)
+        add_register("dl", 2, 1, false)
+        add_register("bl", 3, 1, false)
+        add_register("spl", 4, 1, false)
+        add_register("bpl", 5, 1, false)
+        add_register("sil", 6, 1, false)
+        add_register("dil", 7, 1, false)
+
+        let n = 8
+
+        while n < 16:
+            let r : String = "r"
+
+            r.append(n)
+
+            let d = r + "d"
+            let w = r + "w"
+            let b = r + "b"
+
+            add_register(r.text(), n, 8, false)
+            add_register(d.text(), n, 4, false)
+            add_register(w.text(), n, 2, false)
+            add_register(b.text(), n, 1, false)
+            n += 1
+
+        n = 0
+
+        while n < 16:
+            let x : String = "xmm"
+
+            x.append(n)
+            add_register(x.text(), n, 16, true)
+            n += 1
+
+    def add_mnemonic : void
+        @name : char*
+        @form : Form
+        @code : i32
+        @extra : i32
+        @memory_size : i32
+
+        let mnemonic : Mnemonic
+        let key : String = name
+
+        mnemonic.form = form
+        mnemonic.code = code
+        mnemonic.extra = extra
+        mnemonic.memory_size = memory_size
+        mnemonic_at.add(key, mnemonics.length())
+        mnemonics.add(mnemonic)
+
+    # the same condition by its name, in the three forms that take one
+    def add_condition : void
+        @name : char*
+        @code : i32
+
+        let jump : String = "j"
+        let set : String = "set"
+        let move : String = "cmov"
+
+        jump.append(name)
+        set.append(name)
+        move.append(name)
+        add_mnemonic(jump.text(), Form.Jcc, 0x0F80 + code, 0, 0)
+        add_mnemonic(set.text(), Form.Setcc, 0x0F90 + code, 0, 0)
+        add_mnemonic(move.text(), Form.Cmov, 0x0F40 + code, 0, 0)
+
+    def add_mnemonics : void
+        add_mnemonic("ret", Form.Fixed, 0xC3, 0, 0)
+        add_mnemonic("leave", Form.Fixed, 0xC9, 0, 0)
+        add_mnemonic("nop", Form.Fixed, 0x90, 0, 0)
+        add_mnemonic("cdq", Form.Fixed, 0x99, 0, 0)
+        add_mnemonic("cqo", Form.Fixed, 0x4899, 0, 0)
+        add_mnemonic("syscall", Form.Fixed, 0x0F05, 0, 0)
+        add_mnemonic("ud2", Form.Fixed, 0x0F0B, 0, 0)
+        add_mnemonic("mfence", Form.Fixed, 0x0FAEF0, 0, 0)
+
+        add_mnemonic("add", Form.Alu, 0, 0, 0)
+        add_mnemonic("or", Form.Alu, 1, 0, 0)
+        add_mnemonic("adc", Form.Alu, 2, 0, 0)
+        add_mnemonic("sbb", Form.Alu, 3, 0, 0)
+        add_mnemonic("and", Form.Alu, 4, 0, 0)
+        add_mnemonic("sub", Form.Alu, 5, 0, 0)
+        add_mnemonic("xor", Form.Alu, 6, 0, 0)
+        add_mnemonic("cmp", Form.Alu, 7, 0, 0)
+
+        add_mnemonic("mov", Form.Mov, 0, 0, 0)
+        add_mnemonic("test", Form.Test, 0, 0, 0)
+        add_mnemonic("lea", Form.Lea, 0, 0, 0)
+        add_mnemonic("movzx", Form.Extend, 0x0FB6, 0, 0)
+        add_mnemonic("movsx", Form.Extend, 0x0FBE, 0, 0)
+        add_mnemonic("movsxd", Form.Movsxd, 0, 0, 0)
+
+        add_mnemonic("not", Form.Unary, 2, 0, 0)
+        add_mnemonic("neg", Form.Unary, 3, 0, 0)
+        add_mnemonic("mul", Form.Unary, 4, 0, 0)
+        add_mnemonic("div", Form.Unary, 6, 0, 0)
+        add_mnemonic("idiv", Form.Unary, 7, 0, 0)
+        add_mnemonic("imul", Form.Imul, 5, 0, 0)
+
+        add_mnemonic("rol", Form.Shift, 0, 0, 0)
+        add_mnemonic("ror", Form.Shift, 1, 0, 0)
+        add_mnemonic("shl", Form.Shift, 4, 0, 0)
+        add_mnemonic("shr", Form.Shift, 5, 0, 0)
+        add_mnemonic("sar", Form.Shift, 7, 0, 0)
+
+        add_mnemonic("push", Form.Push, 0, 0, 0)
+        add_mnemonic("pop", Form.Pop, 0, 0, 0)
+        add_mnemonic("jmp", Form.JumpOrCall, 0xE9, 4, 0)
+        add_mnemonic("call", Form.JumpOrCall, 0xE8, 2, 0)
+
+        add_condition("o", 0)
+        add_condition("no", 1)
+        add_condition("b", 2)
+        add_condition("ae", 3)
+        add_condition("e", 4)
+        add_condition("ne", 5)
+        add_condition("be", 6)
+        add_condition("a", 7)
+        add_condition("s", 8)
+        add_condition("ns", 9)
+        add_condition("p", 10)
+        add_condition("np", 11)
+        add_condition("l", 12)
+        add_condition("ge", 13)
+        add_condition("le", 14)
+        add_condition("g", 15)
+
+        add_sse_pair("add", 0x0F58)
+        add_sse_pair("sub", 0x0F5C)
+        add_sse_pair("mul", 0x0F59)
+        add_sse_pair("div", 0x0F5E)
+        add_sse_pair("min", 0x0F5D)
+        add_sse_pair("max", 0x0F5F)
+        add_sse_pair("sqrt", 0x0F51)
+
+        add_mnemonic("ucomiss", Form.SseOperate, 0x0F2E, 0, 4)
+        add_mnemonic("ucomisd", Form.SseOperate, 0x0F2E, 0x66, 8)
+        add_mnemonic("comiss", Form.SseOperate, 0x0F2F, 0, 4)
+        add_mnemonic("comisd", Form.SseOperate, 0x0F2F, 0x66, 8)
+        add_mnemonic("cvtss2sd", Form.SseOperate, 0x0F5A, 0xF3, 4)
+        add_mnemonic("cvtsd2ss", Form.SseOperate, 0x0F5A, 0xF2, 8)
+
+        add_mnemonic("andps", Form.SseBitwise, 0x0F54, 0, 0)
+        add_mnemonic("andpd", Form.SseBitwise, 0x0F54, 0x66, 0)
+        add_mnemonic("orps", Form.SseBitwise, 0x0F56, 0, 0)
+        add_mnemonic("orpd", Form.SseBitwise, 0x0F56, 0x66, 0)
+        add_mnemonic("xorps", Form.SseBitwise, 0x0F57, 0, 0)
+        add_mnemonic("xorpd", Form.SseBitwise, 0x0F57, 0x66, 0)
+
+        add_mnemonic("movss", Form.SseMove, 0, 0xF3, 4)
+        add_mnemonic("movsd", Form.SseMove, 0, 0xF2, 8)
+
+        add_mnemonic("cvtsi2ss", Form.SseFromInt, 0x0F2A, 0xF3, 0)
+        add_mnemonic("cvtsi2sd", Form.SseFromInt, 0x0F2A, 0xF2, 0)
+        add_mnemonic("cvttss2si", Form.SseToInt, 0x0F2C, 0xF3, 4)
+        add_mnemonic("cvttsd2si", Form.SseToInt, 0x0F2C, 0xF2, 8)
+
+        add_mnemonic("movd", Form.SseWithGeneral, 0, 0x66, 4)
+        add_mnemonic("movq", Form.SseWithGeneral, 0, 0x66, 8)
+
+        add_mnemonic("roundss", Form.SseRound, 0x0F3A0A, 0x66, 4)
+        add_mnemonic("roundsd", Form.SseRound, 0x0F3A0B, 0x66, 8)
+
+    def add_sse_pair : void
+        @stem : char*
+        @code : i32
+
+        let single : String = stem
+        let double : String = stem
+
+        single.append("ss")
+        double.append("sd")
+        add_mnemonic(single.text(), Form.SseOperate, code, 0xF3, 4)
+        add_mnemonic(double.text(), Form.SseOperate, code, 0xF2, 8)
+
+    # ---- reading the operands
+
+    def refuse : bool
+        @why : String
+
+        problem = why
+
+        return false
+
+    def more : bool
+        return at < words.length()
+
+    def next_is_mark : bool
+        @mark : char
+
+        return more() and is_mark(words[at], mark)
+
+    def read_operands : bool
+        @operands : Array<Operand>&
+
+        while more():
+            let operand : Operand
+
+            if not read_operand(operand):
+                return false
+
+            operands.add(operand)
+
+            if more():
+                if not next_is_mark(','):
+                    return refuse("expected a comma between operands")
+
+                at += 1
+
+                if not more():
+                    return refuse("expected an operand after the comma")
+
+        return true
+
+    def read_operand : bool
+        @operand : Operand&
+
+        let word : Word& = words[at]
+
+        if word.kind == WordKind.Quoted:
+            operand.kind = OperandKind.Target
+            operand.label = word.text
+            at += 1
+
+            return true
+
+        if word.kind == WordKind.Number or next_is_mark('-'):
+            return read_immediate(operand)
+
+        if next_is_mark('['):
+            operand.kind = OperandKind.Memory
+
+            return read_memory(operand)
+
+        if word.kind != WordKind.Name:
+            return refuse("expected an operand, found '${word.text}'")
+
+        let size = size_keyword(word.text)
+
+        if size != 0:
+            at += 1
+
+            if not more() or words[at].kind != WordKind.Name or words[at].text != "ptr":
+                return refuse("expected 'ptr' after '${word.text}'")
+
+            at += 1
+
+            if not next_is_mark('['):
+                return refuse("expected '[' after 'ptr'")
+
+            operand.kind = OperandKind.Memory
+            operand.size = size
+
+            return read_memory(operand)
+
+        if register_at.has(word.text):
+            let register = register_at[word.text]
+
+            if register.xmm:
+                operand.kind = OperandKind.Xmm
+            else:
+                operand.kind = OperandKind.Register
+
+            operand.reg = register.number
+            operand.size = register.size
+            at += 1
+
+            return true
+
+        operand.kind = OperandKind.Target
+        operand.label = word.text
+        at += 1
+
+        return true
+
+    def size_keyword : i32
+        @text : String&
+
+        if text == "byte":
+            return 1
+
+        if text == "word":
+            return 2
+
+        if text == "dword":
+            return 4
+
+        if text == "qword":
+            return 8
+
+        return 0
+
+    def read_immediate : bool
+        @operand : Operand&
+
+        operand.kind = OperandKind.Immediate
+
+        if next_is_mark('-'):
+            operand.negative = true
+            at += 1
+
+        if not more() or words[at].kind != WordKind.Number:
+            return refuse("expected a number after '-'")
+
+        operand.magnitude = words[at].number
+        at += 1
+
+        return true
+
+    # 64-bit names only, the one register that a memory operand may be built from
+    def read_address_register : i32
+        if not more() or words[at].kind != WordKind.Name:
+            return -1
+
+        if not register_at.has(words[at].text):
+            return -1
+
+        let register = register_at[words[at].text]
+
+        if register.xmm or register.size != 8:
+            return -1
+
+        at += 1
+
+        return register.number
+
+    # [rip + label], or [base], [base + disp], [base + index], [base + index*scale],
+    # each index with a disp after it. Nothing else, in no other order: this is the
+    # one spelling the back end writes
+    def read_memory : bool
+        @operand : Operand&
+
+        at += 1
+
+        if more() and words[at].kind == WordKind.Name and words[at].text == "rip":
+            at += 1
+
+            if not next_is_mark('+'):
+                return refuse("expected '+' after rip")
+
+            at += 1
+
+            if not more() or (words[at].kind != WordKind.Name and words[at].kind != WordKind.Quoted):
+                return refuse("expected a label after 'rip +'")
+
+            operand.rip = true
+            operand.label = words[at].text
+            at += 1
+
+            return close_memory()
+
+        operand.base = read_address_register()
+
+        if operand.base < 0:
+            return refuse("a memory operand starts with a 64-bit register")
+
+        if next_is_mark('+') and at + 1 < words.length() and words[at + 1].kind == WordKind.Name:
+            at += 1
+            operand.index = read_address_register()
+
+            if operand.index < 0:
+                return refuse("the index of a memory operand is a 64-bit register")
+
+            if operand.index == 4:
+                return refuse("rsp cannot be an index")
+
+            if next_is_mark('*'):
+                at += 1
+
+                if not more() or words[at].kind != WordKind.Number:
+                    return refuse("expected a scale after '*'")
+
+                let scale = words[at].number
+
+                if scale != 1 and scale != 2 and scale != 4 and scale != 8:
+                    return refuse("a scale is 1, 2, 4 or 8")
+
+                operand.scale = scale as i32
+                at += 1
+
+        if next_is_mark('+') or next_is_mark('-'):
+            let negative = next_is_mark('-')
+
+            at += 1
+
+            if not more() or words[at].kind != WordKind.Number:
+                return refuse("expected a number in a memory operand")
+
+            let limit : u64 = 2147483647
+
+            if negative:
+                limit = 2147483648
+
+            if words[at].number > limit:
+                return refuse("a displacement is 32 bits")
+
+            operand.disp = words[at].number as i64
+
+            if negative:
+                operand.disp = 0 - operand.disp
+
+            at += 1
+
+        return close_memory()
+
+    def close_memory : bool
+        if not next_is_mark(']'):
+            return refuse("expected ']'")
+
+        at += 1
+
+        return true
+
+    # ---- what an operand is
+
+    def is_general : bool
+        @operand : Operand&
+
+        return operand.kind == OperandKind.Register
+
+    def is_memory : bool
+        @operand : Operand&
+
+        return operand.kind == OperandKind.Memory
+
+    def is_xmm : bool
+        @operand : Operand&
+
+        return operand.kind == OperandKind.Xmm
+
+    def is_immediate : bool
+        @operand : Operand&
+
+        return operand.kind == OperandKind.Immediate
+
+    def is_general_or_memory : bool
+        @operand : Operand&
+
+        return is_general(operand) or is_memory(operand)
+
+    def is_xmm_or_memory : bool
+        @operand : Operand&
+
+        return is_xmm(operand) or is_memory(operand)
+
+    # spl, bpl, sil and dil exist only with a REX prefix, an empty one if need be
+    def needs_rex : bool
+        @operand : Operand&
+
+        return is_general(operand) and operand.size == 1 and operand.reg >= 4 and operand.reg <= 7
+
+    def value_of : i64
+        @operand : Operand&
+
+        if operand.negative:
+            return 0 - (operand.magnitude as i64)
+
+        return operand.magnitude as i64
+
+    # the range a size can be written in, signed or unsigned, as 'as' reads it
+    def fits_size : bool
+        @operand : Operand&
+        @size : i32
+
+        if size == 8:
+            if operand.negative:
+                return operand.magnitude <= ((1 as u64) << 63)
+
+            return true
+
+        let bits = (size * 8) as u64
+
+        if operand.negative:
+            return operand.magnitude <= ((1 as u64) << (bits - 1))
+
+        return operand.magnitude <= (((1 as u64) << bits) - 1)
+
+    # the 32 bits a 64-bit operation sign extends. By its value in 64 bits, which is
+    # how 'as' reads it: 0xFFFFFFFFFFFFFFFF is -1 here
+    def fits_signed_32 : bool
+        @operand : Operand&
+
+        if not fits_size(operand, 8):
+            return false
+
+        let value = value_of(operand)
+
+        return value >= -2147483648 and value <= 2147483647
+
+    # whether this immediate can be written for an operation of this size
+    def fits_operation : bool
+        @operand : Operand&
+        @size : i32
+
+        if size == 8:
+            return fits_signed_32(operand)
+
+        return fits_size(operand, size)
+
+    def fits_byte : bool
+        @operand : Operand&
+        @size : i32
+
+        let value = truncated(value_of(operand), size)
+
+        return value >= -128 and value <= 127
+
+    # an immediate's width: a 64-bit operation takes 32
+    def immediate_bytes : i32
+        @size : i32
+
+        if size == 8:
+            return 4
+
+        return size
+
+    # the size two operands agree on, or 0 when they do not
+    def common_size : i32
+        @first : Operand&
+        @second : Operand&
+
+        if first.size == 0:
+            return second.size
+
+        if second.size == 0 or first.size == second.size:
+            return first.size
+
+        return 0
+
+    # ---- writing
+
+    def byte : void
+        @value : i32
+
+        image->emit((value & 255) as u8)
+
+    # as many bytes as it has, the highest first
+    def opcode : void
+        @code : i32
+
+        if code > 0xFFFF:
+            byte(code >> 16)
+
+        if code > 0xFF:
+            byte(code >> 8)
+
+        byte(code)
+
+    def little : void
+        @value : i64
+        @count : i32
+
+        image->emit_little(value as u64, count)
+
+    def rex_of : i32
+        @wide : bool
+        @reg : i32
+        @index : i32
+        @base : i32
+
+        let rex = 0
+
+        if wide:
+            rex = rex | 8
+
+        if reg >= 8:
+            rex = rex | 4
+
+        if index >= 8:
+            rex = rex | 2
+
+        if base >= 8:
+            rex = rex | 1
+
+        return rex
+
+    # the prefix, REX, the opcode, ModRM, SIB and the displacement: all there is to
+    # an instruction but its immediate, which comes after, and whose size a
+    # rip-relative hole has to be told
+    def encode : void
+        @prefix : i32
+        @wide : bool
+        @code : i32
+        @reg : i32
+        @rm : Operand&
+        @trailing : i32
+        @force_rex : bool
+
+        if prefix != 0:
+            byte(prefix)
+
+        let rex = 0
+
+        if is_memory(rm):
+            rex = rex_of(wide, reg, rm.index, rm.base)
+        else:
+            rex = rex_of(wide, reg, -1, rm.reg)
+
+        if rex != 0 or force_rex:
+            byte(0x40 | rex)
+
+        opcode(code)
+
+        let field = (reg & 7) << 3
+
+        if not is_memory(rm):
+            byte(0xC0 | field | (rm.reg & 7))
+            return
+
+        if rm.rip:
+            byte(field | 5)
+            image->add_hole(HoleKind.Relative32, rm.label, trailing, line)
+            return
+
+        let low = rm.base & 7
+        let mode = 2
+
+        # rbp and r13 in the low bits mean something else with no displacement
+        if rm.disp == 0 and low != 5:
+            mode = 0
+        elif rm.disp >= -128 and rm.disp <= 127:
+            mode = 1
+
+        if rm.index >= 0 or low == 4:
+            byte((mode << 6) | field | 4)
+
+            let index = 4
+
+            if rm.index >= 0:
+                index = rm.index & 7
+
+            byte((scale_bits(rm.scale) << 6) | (index << 3) | low)
+        else:
+            byte((mode << 6) | field | low)
+
+        if mode == 1:
+            little(rm.disp, 1)
+        elif mode == 2:
+            little(rm.disp, 4)
+
+    def scale_bits : i32
+        @scale : i32
+
+        if scale == 2:
+            return 1
+
+        if scale == 4:
+            return 2
+
+        if scale == 8:
+            return 3
+
+        return 0
+
+    # the operand size's own prefix, on the forms that take it
+    def prefix_of : i32
+        @size : i32
+
+        if size == 2:
+            return 0x66
+
+        return 0
+
+    # an opcode that holds its register in its low bits, with no ModRM
+    def encode_short : void
+        @prefix : i32
+        @wide : bool
+        @code : i32
+        @reg : i32
+        @force_rex : bool
+
+        if prefix != 0:
+            byte(prefix)
+
+        let rex = rex_of(wide, -1, -1, reg)
+
+        if rex != 0 or force_rex:
+            byte(0x40 | rex)
+
+        byte(code + (reg & 7))
+
+    # ---- the forms, each taking only what it knows
+
+    # the top of every line that is not a label or a directive. False with the
+    # reason in 'problem'; nothing has been written then
+    def assemble : bool
+        @given : Array<Word>&
+        @given_line : i32
+
+        line = given_line
+
+        let name : String = given[0].text
+
+        if not mnemonic_at.has(name):
+            return refuse("unknown instruction '${name}'")
+
+        let mnemonic = mnemonics[mnemonic_at[name]]
+        let list : Array<Word>
+        let i = 1
+
+        while i < given.length():
+            list.add(given[i])
+            i += 1
+
+        words = list
+        at = 0
+
+        let operands : Array<Operand>
+
+        if not read_operands(operands):
+            return false
+
+        if not assemble_form(mnemonic, operands):
+            if problem.is_empty():
+                problem = "'${name}' does not take these operands"
+
+            return false
+
+        return true
+
+    def assemble_form : bool
+        @m : Mnemonic&
+        @ops : Array<Operand>&
+
+        problem = ""
+
+        let count = ops.length()
+
+        if m.form == Form.Fixed:
+            if count != 0:
+                return false
+
+            opcode(m.code)
+
+            return true
+
+        if m.form == Form.Alu and count == 2:
+            return alu(m.code, ops[0], ops[1])
+
+        if m.form == Form.Mov and count == 2:
+            return mov(ops[0], ops[1])
+
+        if m.form == Form.Test and count == 2:
+            return test(ops[0], ops[1])
+
+        if m.form == Form.Lea and count == 2:
+            return lea(ops[0], ops[1])
+
+        if m.form == Form.Extend and count == 2:
+            return extend(m.code, ops[0], ops[1])
+
+        if m.form == Form.Movsxd and count == 2:
+            return movsxd(ops[0], ops[1])
+
+        if m.form == Form.Unary and count == 1:
+            return unary(m.code, ops[0])
+
+        if m.form == Form.Imul:
+            if count == 1:
+                return unary(m.code, ops[0])
+
+            if count == 2:
+                return imul(ops[0], ops[1])
+
+            if count == 3:
+                return imul_immediate(ops[0], ops[1], ops[2])
+
+            return false
+
+        if m.form == Form.Shift and count == 2:
+            return shift(m.code, ops[0], ops[1])
+
+        if m.form == Form.Push and count == 1:
+            return push_or_pop(0x50, ops[0])
+
+        if m.form == Form.Pop and count == 1:
+            return push_or_pop(0x58, ops[0])
+
+        if m.form == Form.JumpOrCall and count == 1:
+            return jump_or_call(m, ops[0])
+
+        if m.form == Form.Jcc and count == 1:
+            return jcc(m.code, ops[0])
+
+        if m.form == Form.Setcc and count == 1:
+            return setcc(m.code, ops[0])
+
+        if m.form == Form.Cmov and count == 2:
+            return cmov(m.code, ops[0], ops[1])
+
+        if m.form == Form.SseOperate and count == 2:
+            return sse_operate(m, ops[0], ops[1])
+
+        if m.form == Form.SseBitwise and count == 2:
+            return sse_bitwise(m, ops[0], ops[1])
+
+        if m.form == Form.SseMove and count == 2:
+            return sse_move(m, ops[0], ops[1])
+
+        if m.form == Form.SseFromInt and count == 2:
+            return sse_from_int(m, ops[0], ops[1])
+
+        if m.form == Form.SseToInt and count == 2:
+            return sse_to_int(m, ops[0], ops[1])
+
+        if m.form == Form.SseWithGeneral and count == 2:
+            return sse_with_general(m, ops[0], ops[1])
+
+        if m.form == Form.SseRound and count == 3:
+            return sse_round(m, ops[0], ops[1], ops[2])
+
+        return false
+
+    # the immediate form both 'alu' and the others share: a bad size has a reason
+    def check_immediate : bool
+        @operand : Operand&
+        @size : i32
+
+        if size == 0:
+            return refuse("the memory operand does not say its size")
+
+        if not fits_operation(operand, size):
+            return refuse("the number does not fit in this operation")
+
+        return true
+
+    def alu : bool
+        @code : i32
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general_or_memory(a):
+            return false
+
+        if is_immediate(b):
+            return alu_immediate(code, a, b)
+
+        if not is_general_or_memory(b) or (is_memory(a) and is_memory(b)):
+            return false
+
+        let size = common_size(a, b)
+
+        if size == 0:
+            return refuse("the operands have different sizes")
+
+        let force = needs_rex(a) or needs_rex(b)
+        let width = 1
+
+        if size == 1:
+            width = 0
+
+        if is_general(b):
+            encode(prefix_of(size), size == 8, code * 8 + width, b.reg, a, 0, force)
+        else:
+            encode(prefix_of(size), size == 8, code * 8 + width + 2, a.reg, b, 0, force)
+
+        return true
+
+    def alu_immediate : bool
+        @code : i32
+        @a : Operand&
+        @b : Operand&
+
+        let size = a.size
+
+        if not check_immediate(b, size):
+            return false
+
+        let value = value_of(b)
+        let force = needs_rex(a)
+
+        if size == 1:
+            if is_general(a) and a.reg == 0:
+                byte(code * 8 + 4)
+            else:
+                encode(0, false, 0x80, code, a, 1, force)
+
+            little(value, 1)
+
+            return true
+
+        let width = immediate_bytes(size)
+
+        if fits_byte(b, size):
+            encode(prefix_of(size), size == 8, 0x83, code, a, 1, false)
+            little(value, 1)
+        elif is_general(a) and a.reg == 0:
+            if size == 2:
+                byte(0x66)
+            elif size == 8:
+                byte(0x48)
+
+            byte(code * 8 + 5)
+            little(value, width)
+        else:
+            encode(prefix_of(size), size == 8, 0x81, code, a, width, false)
+            little(value, width)
+
+        return true
+
+    def mov : bool
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general_or_memory(a):
+            return false
+
+        if is_immediate(b):
+            return mov_immediate(a, b)
+
+        if not is_general_or_memory(b) or (is_memory(a) and is_memory(b)):
+            return false
+
+        let size = common_size(a, b)
+
+        if size == 0:
+            return refuse("the operands have different sizes")
+
+        let force = needs_rex(a) or needs_rex(b)
+        let width = 1
+
+        if size == 1:
+            width = 0
+
+        if is_general(b):
+            encode(prefix_of(size), size == 8, 0x88 + width, b.reg, a, 0, force)
+        else:
+            encode(prefix_of(size), size == 8, 0x8A + width, a.reg, b, 0, force)
+
+        return true
+
+    def mov_immediate : bool
+        @a : Operand&
+        @b : Operand&
+
+        let size = a.size
+        let value = value_of(b)
+
+        if size == 0:
+            return refuse("the memory operand does not say its size")
+
+        if is_general(a):
+            if size == 8:
+                if fits_signed_32(b):
+                    encode(0, true, 0xC7, 0, a, 4, false)
+                    little(value, 4)
+                elif fits_size(b, 8):
+                    encode_short(0, true, 0xB8, a.reg, false)
+                    little(value, 8)
+                else:
+                    return refuse("the number does not fit in this operation")
+
+                return true
+
+            if not fits_size(b, size):
+                return refuse("the number does not fit in this operation")
+
+            if size == 1:
+                encode_short(0, false, 0xB0, a.reg, needs_rex(a))
+            else:
+                encode_short(prefix_of(size), false, 0xB8, a.reg, false)
+
+            little(value, size)
+
+            return true
+
+        if not check_immediate(b, size):
+            return false
+
+        if size == 1:
+            encode(0, false, 0xC6, 0, a, 1, false)
+            little(value, 1)
+        else:
+            let width = immediate_bytes(size)
+
+            encode(prefix_of(size), size == 8, 0xC7, 0, a, width, false)
+            little(value, width)
+
+        return true
+
+    def test : bool
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general_or_memory(a):
+            return false
+
+        if is_immediate(b):
+            let size = a.size
+
+            if not check_immediate(b, size):
+                return false
+
+            let value = value_of(b)
+            let width = immediate_bytes(size)
+
+            if size == 1:
+                if is_general(a) and a.reg == 0:
+                    byte(0xA8)
+                else:
+                    encode(0, false, 0xF6, 0, a, 1, needs_rex(a))
+
+                little(value, 1)
+            elif is_general(a) and a.reg == 0:
+                if size == 2:
+                    byte(0x66)
+                elif size == 8:
+                    byte(0x48)
+
+                byte(0xA9)
+                little(value, width)
+            else:
+                encode(prefix_of(size), size == 8, 0xF7, 0, a, width, false)
+                little(value, width)
+
+            return true
+
+        if not is_general(b):
+            return false
+
+        let size = common_size(a, b)
+
+        if size == 0:
+            return refuse("the operands have different sizes")
+
+        let width = 1
+
+        if size == 1:
+            width = 0
+
+        encode(prefix_of(size), size == 8, 0x84 + width, b.reg, a, 0, needs_rex(a) or needs_rex(b))
+
+        return true
+
+    def lea : bool
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general(a) or not is_memory(b) or a.size < 4 or b.size != 0:
+            return false
+
+        encode(0, a.size == 8, 0x8D, a.reg, b, 0, false)
+
+        return true
+
+    def extend : bool
+        @code : i32
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general(a) or not is_general_or_memory(b):
+            return false
+
+        if b.size == 0:
+            return refuse("the memory operand does not say its size")
+
+        if b.size > 2 or a.size <= b.size:
+            return false
+
+        let width = 0
+
+        if b.size == 2:
+            width = 1
+
+        encode(prefix_of(a.size), a.size == 8, code + width, a.reg, b, 0, needs_rex(b))
+
+        return true
+
+    def movsxd : bool
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general(a) or a.size != 8 or not is_general_or_memory(b):
+            return false
+
+        if b.size != 0 and b.size != 4:
+            return false
+
+        encode(0, true, 0x63, a.reg, b, 0, false)
+
+        return true
+
+    def unary : bool
+        @digit : i32
+        @a : Operand&
+
+        if not is_general_or_memory(a):
+            return false
+
+        if a.size == 0:
+            return refuse("the memory operand does not say its size")
+
+        if a.size == 1:
+            encode(0, false, 0xF6, digit, a, 0, needs_rex(a))
+        else:
+            encode(prefix_of(a.size), a.size == 8, 0xF7, digit, a, 0, false)
+
+        return true
+
+    def imul : bool
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general(a) or a.size == 1 or not is_general_or_memory(b):
+            return false
+
+        if common_size(a, b) == 0:
+            return refuse("the operands have different sizes")
+
+        encode(prefix_of(a.size), a.size == 8, 0x0FAF, a.reg, b, 0, false)
+
+        return true
+
+    def imul_immediate : bool
+        @a : Operand&
+        @b : Operand&
+        @c : Operand&
+
+        if not is_general(a) or a.size == 1 or not is_general_or_memory(b) or not is_immediate(c):
+            return false
+
+        if common_size(a, b) == 0:
+            return refuse("the operands have different sizes")
+
+        if not check_immediate(c, a.size):
+            return false
+
+        if fits_byte(c, a.size):
+            encode(prefix_of(a.size), a.size == 8, 0x6B, a.reg, b, 1, false)
+            little(value_of(c), 1)
+        else:
+            let width = immediate_bytes(a.size)
+
+            encode(prefix_of(a.size), a.size == 8, 0x69, a.reg, b, width, false)
+            little(value_of(c), width)
+
+        return true
+
+    def shift : bool
+        @digit : i32
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general_or_memory(a):
+            return false
+
+        if a.size == 0:
+            return refuse("the memory operand does not say its size")
+
+        let width = 1
+
+        if a.size == 1:
+            width = 0
+
+        let force = needs_rex(a)
+
+        if is_general(b) and b.size == 1 and b.reg == 1:
+            encode(prefix_of(a.size), a.size == 8, 0xD2 + width, digit, a, 0, force)
+
+            return true
+
+        if not is_immediate(b):
+            return false
+
+        if b.negative or b.magnitude > 255:
+            return refuse("a shift is by 0 to 255")
+
+        if b.magnitude == 1:
+            encode(prefix_of(a.size), a.size == 8, 0xD0 + width, digit, a, 0, force)
+        else:
+            encode(prefix_of(a.size), a.size == 8, 0xC0 + width, digit, a, 1, force)
+            little(value_of(b), 1)
+
+        return true
+
+    def push_or_pop : bool
+        @code : i32
+        @a : Operand&
+
+        if not is_general(a) or a.size != 8:
+            return false
+
+        encode_short(0, false, code, a.reg, false)
+
+        return true
+
+    def jump_or_call : bool
+        @m : Mnemonic&
+        @a : Operand&
+
+        if a.kind == OperandKind.Target:
+            byte(m.code)
+            image->add_hole(HoleKind.Relative32, a.label, 0, line)
+
+            return true
+
+        if not is_general_or_memory(a) or (a.size != 0 and a.size != 8):
+            return false
+
+        encode(0, false, 0xFF, m.extra, a, 0, false)
+
+        return true
+
+    def jcc : bool
+        @code : i32
+        @a : Operand&
+
+        if a.kind != OperandKind.Target:
+            return false
+
+        opcode(code)
+        image->add_hole(HoleKind.Relative32, a.label, 0, line)
+
+        return true
+
+    def setcc : bool
+        @code : i32
+        @a : Operand&
+
+        if not is_general_or_memory(a) or (a.size != 0 and a.size != 1):
+            return false
+
+        encode(0, false, code, 0, a, 0, needs_rex(a))
+
+        return true
+
+    def cmov : bool
+        @code : i32
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general(a) or a.size == 1 or not is_general_or_memory(b):
+            return false
+
+        if common_size(a, b) == 0:
+            return refuse("the operands have different sizes")
+
+        encode(prefix_of(a.size), a.size == 8, code, a.reg, b, 0, false)
+
+        return true
+
+    # what a memory operand of an SSE form may say about itself
+    def memory_says : bool
+        @operand : Operand&
+        @size : i32
+
+        return not is_memory(operand) or operand.size == 0 or operand.size == size
+
+    def sse_operate : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+
+        if not is_xmm(a) or not is_xmm_or_memory(b) or not memory_says(b, m.memory_size):
+            return false
+
+        encode(m.extra, false, m.code, a.reg, b, 0, false)
+
+        return true
+
+    # only between registers: their memory form is a whole 16 bytes, aligned
+    def sse_bitwise : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+
+        if not is_xmm(a) or not is_xmm(b):
+            return false
+
+        encode(m.extra, false, m.code, a.reg, b, 0, false)
+
+        return true
+
+    def sse_move : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+
+        if is_xmm(a) and is_xmm_or_memory(b) and memory_says(b, m.memory_size):
+            encode(m.extra, false, 0x0F10, a.reg, b, 0, false)
+
+            return true
+
+        if is_memory(a) and is_xmm(b) and memory_says(a, m.memory_size):
+            encode(m.extra, false, 0x0F11, b.reg, a, 0, false)
+
+            return true
+
+        return false
+
+    def sse_from_int : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+
+        if not is_xmm(a) or not is_general_or_memory(b):
+            return false
+
+        if b.size == 0:
+            return refuse("the memory operand does not say its size")
+
+        if b.size != 4 and b.size != 8:
+            return false
+
+        encode(m.extra, b.size == 8, m.code, a.reg, b, 0, false)
+
+        return true
+
+    def sse_to_int : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+
+        if not is_general(a) or (a.size != 4 and a.size != 8):
+            return false
+
+        if not is_xmm_or_memory(b) or not memory_says(b, m.memory_size):
+            return false
+
+        encode(m.extra, a.size == 8, m.code, a.reg, b, 0, false)
+
+        return true
+
+    # movd is 32 bits and movq 64, between an xmm and a general register, and only
+    # that: their other forms are other instructions
+    def sse_with_general : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+
+        if is_xmm(a) and is_general(b) and b.size == m.memory_size:
+            encode(m.extra, b.size == 8, 0x0F6E, a.reg, b, 0, false)
+
+            return true
+
+        if is_general(a) and is_xmm(b) and a.size == m.memory_size:
+            encode(m.extra, a.size == 8, 0x0F7E, b.reg, a, 0, false)
+
+            return true
+
+        return false
+
+    def sse_round : bool
+        @m : Mnemonic&
+        @a : Operand&
+        @b : Operand&
+        @c : Operand&
+
+        if not is_xmm(a) or not is_xmm_or_memory(b) or not memory_says(b, m.memory_size):
+            return false
+
+        if not is_immediate(c) or c.negative or c.magnitude > 255:
+            return false
+
+        encode(m.extra, false, m.code, a.reg, b, 1, false)
+        little(value_of(c), 1)
+
+        return true

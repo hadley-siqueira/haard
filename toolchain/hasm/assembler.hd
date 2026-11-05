@@ -1,0 +1,337 @@
+# hasm.assembler -- a file of text into an Image: its labels and its directives.
+#
+# What is not a label or a directive is an instruction and goes to the target.
+# Every diagnostic names its line, all of them are reported, and when there is
+# one the file is not written: the caller looks at 'failed'.
+import hasm.word
+import hasm.image
+import hasm.x86_64
+
+class Assembler:
+    image : Image
+    target : X86_64
+    path : String
+    line : i32
+    failed : bool
+    err : File*
+
+    def init : void
+        target.image = &image
+        line = 0
+        failed = false
+        err = errors()
+
+    def complain : void
+        @at : i32
+        @message : String
+
+        failed = true
+
+        let text : String = path
+
+        text.append(':')
+        text.append(at)
+        text.append(": error: ")
+        text.append(message)
+        err->writeln(text)
+
+    # false when the file will not open
+    def assemble : bool
+        @given : char*
+
+        path = given
+
+        let file = open_read(given)
+
+        if file == null:
+            return false
+
+        let text : String
+        let c = file->read()
+
+        line = 1
+
+        while not file->at_end():
+            if c == '\n':
+                statement(text)
+                text = ""
+                line += 1
+            else:
+                text.append(c)
+
+            c = file->read()
+
+        statement(text)
+        file->close()
+        delete file
+        finish()
+
+        return true
+
+    def statement : void
+        @text : String&
+
+        let words : Array<Word>
+        let problem : String
+
+        if not cut_line(text, words, problem):
+            complain(line, problem)
+            return
+
+        if words.length() == 0:
+            return
+
+        let is_label = words[0].kind == WordKind.Name or words[0].kind == WordKind.Quoted
+
+        if is_label and words.length() >= 2 and is_mark(words[1], ':'):
+            if words.length() != 2:
+                complain(line, "a label is alone on its line")
+                return
+
+            if not image.define_label(words[0].text, line):
+                complain(line, "the label '${words[0].text}' is defined twice")
+
+            return
+
+        if words[0].kind != WordKind.Name:
+            complain(line, "a line starts with a label, a directive or an instruction")
+            return
+
+        if words[0].text.at(0) == '.':
+            directive(words)
+            return
+
+        if not image.sections[image.current].has_bytes or image.current != 0:
+            complain(line, "an instruction belongs in .text")
+            return
+
+        if not target.assemble(words, line):
+            complain(line, target.problem)
+
+    def directive : void
+        @words : Array<Word>&
+
+        let name : String = words[0].text
+        let count = words.length()
+
+        if name == ".text" or name == ".data" or name == ".bss":
+            if count != 1:
+                complain(line, "'${name}' takes nothing")
+                return
+
+            image.current = image.section_named(name)
+        elif name == ".section":
+            if count != 2 or words[1].kind != WordKind.Name or image.section_named(words[1].text) < 0:
+                complain(line, ".section takes .text, .rodata, .data or .bss")
+                return
+
+            image.current = image.section_named(words[1].text)
+        elif name == ".byte":
+            numbers(words, 1)
+        elif name == ".word":
+            numbers(words, 2)
+        elif name == ".long":
+            numbers(words, 4)
+        elif name == ".quad":
+            quads(words)
+        elif name == ".ascii":
+            string(words, false)
+        elif name == ".asciz":
+            string(words, true)
+        elif name == ".zero":
+            zero(words)
+        elif name == ".balign":
+            balign(words)
+        else:
+            complain(line, "unknown directive '${name}'")
+
+    def in_bytes : bool
+        if not image.sections[image.current].has_bytes:
+            complain(line, ".bss holds no data, only .zero")
+            return false
+
+        return true
+
+    # a comma list of numbers, each with its sign, in the range the size holds
+    def numbers : void
+        @words : Array<Word>&
+        @size : i32
+
+        if not in_bytes():
+            return
+
+        let at = 1
+
+        while true:
+            let negative = false
+
+            if at < words.length() and is_mark(words[at], '-'):
+                negative = true
+                at += 1
+
+            if at >= words.length() or words[at].kind != WordKind.Number:
+                complain(line, "expected a number")
+                return
+
+            let magnitude = words[at].number
+
+            if not number_fits(magnitude, negative, size):
+                complain(line, "the number does not fit")
+                return
+
+            let value = magnitude
+
+            if negative:
+                value = 0 - magnitude
+
+            image.emit_little(value, size)
+            at += 1
+
+            if at >= words.length():
+                return
+
+            if not is_mark(words[at], ','):
+                complain(line, "expected a comma between numbers")
+                return
+
+            at += 1
+
+    def number_fits : bool
+        @magnitude : u64
+        @negative : bool
+        @size : i32
+
+        if size == 8:
+            return not negative or magnitude <= ((1 as u64) << 63)
+
+        let bits = (size * 8) as u64
+
+        if negative:
+            return magnitude <= ((1 as u64) << (bits - 1))
+
+        return magnitude <= (((1 as u64) << bits) - 1)
+
+    # a number or a label, the one directive a label's address can be written with:
+    # it is what a vtable is made of
+    def quads : void
+        @words : Array<Word>&
+
+        if words.length() == 2 and (words[1].kind == WordKind.Quoted or words[1].kind == WordKind.Name):
+            if in_bytes():
+                image.add_hole(HoleKind.Absolute64, words[1].text, 0, line)
+
+            return
+
+        numbers(words, 8)
+
+    # the four escapes, each read the same way by 'as'. Any other byte is written
+    # with .byte: 'as' reads \x as many digits as follow, which record 0082 does not
+    def string : void
+        @words : Array<Word>&
+        @ends : bool
+
+        if not in_bytes():
+            return
+
+        if words.length() != 2 or words[1].kind != WordKind.Quoted:
+            complain(line, "expected one quoted string")
+            return
+
+        let text : String& = words[1].text
+        let i = 0
+
+        while i < text.length():
+            let c = text.at(i)
+
+            if c == '\\':
+                i += 1
+
+                let escape = text.at(i)
+
+                if escape == 'n':
+                    image.emit('\n' as u8)
+                elif escape == 't':
+                    image.emit('\t' as u8)
+                elif escape == '\\':
+                    image.emit('\\' as u8)
+                elif escape == '"':
+                    image.emit('"' as u8)
+                else:
+                    complain(line, "unknown escape '\\${escape}', use .byte")
+                    return
+            else:
+                image.emit(c as u8)
+
+            i += 1
+
+        if ends:
+            image.emit(0 as u8)
+
+    def zero : void
+        @words : Array<Word>&
+
+        if words.length() != 2 or words[1].kind != WordKind.Number:
+            complain(line, ".zero takes a size")
+            return
+
+        grow(words[1].number)
+
+    def grow : void
+        @count : u64
+
+        let section : Section& = image.sections[image.current]
+
+        if not section.has_bytes:
+            section.reserved = section.reserved + count
+            return
+
+        let i : u64 = 0
+
+        while i < count:
+            image.emit(0 as u8)
+            i = i + 1
+
+    # Not in .text: 'as' fills there with its own table of long nops, and nothing
+    # needs a function aligned while the first goal is a correct result (record 0084)
+    def balign : void
+        @words : Array<Word>&
+
+        if image.current == 0:
+            complain(line, ".balign does not work in .text")
+            return
+
+        if words.length() != 2 or words[1].kind != WordKind.Number:
+            complain(line, ".balign takes a size")
+            return
+
+        let to = words[1].number
+
+        if to == 0 or to > PAGE_SIZE or (to & (to - 1)) != 0:
+            complain(line, ".balign takes a power of two, up to a page")
+            return
+
+        let size = image.here()
+
+        grow(round_up(size, to) - size)
+
+    # every label a hole names is known here or the diagnostic says where
+    def finish : void
+        let i = 0
+
+        while i < image.holes.length():
+            if not image.label_at.has(image.holes[i].label):
+                complain(image.holes[i].line, "the label '${image.holes[i].label}' is not defined")
+
+            i += 1
+
+        let start : String = "_start"
+
+        if not image.label_at.has(start):
+            complain(line, "no label '_start', which is where a program begins")
+
+        if failed:
+            return
+
+        image.lay_out()
+        image.fill_holes()
+        image.size_labels()

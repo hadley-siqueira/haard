@@ -1,0 +1,1 @@
+balign_in_text.s:2: error: .balign does not work in .text

@@ -1,0 +1,2 @@
+label_and_instruction_on_a_line.s:1: error: a label is alone on its line
+label_and_instruction_on_a_line.s:2: error: no label '_start', which is where a program begins

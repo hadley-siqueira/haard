@@ -1,0 +1,2 @@
+label_not_defined.s:2: error: the label 'nowhere' is not defined
+label_not_defined.s:3: error: the label 'nor here' is not defined

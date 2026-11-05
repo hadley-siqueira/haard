@@ -1,0 +1,1 @@
+a_32_bit_base.s:2: error: a memory operand starts with a 64-bit register

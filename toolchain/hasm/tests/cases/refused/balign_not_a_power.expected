@@ -1,0 +1,1 @@
+balign_not_a_power.s:3: error: .balign takes a power of two, up to a page

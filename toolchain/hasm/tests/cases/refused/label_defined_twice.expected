@@ -1,0 +1,1 @@
+label_defined_twice.s:3: error: the label 'a' is defined twice

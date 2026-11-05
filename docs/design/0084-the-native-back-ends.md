@@ -2,9 +2,9 @@
 
 Status: **decided**, 2026-11-04, with the spelling of a label's root still open
 (below). Hadley answered questions 71-77 of `notes/ir-questions.md`, then ten more
-questions one at a time; the table is his. **Nothing here is built**: he asked for it
-to be written down first (*"não implemente nada ainda por enquanto"*). The reasoning
-behind the first seven is in `notes/ir-questions-explained.md`.
+questions one at a time; the table is his. **Step 1 of the order below is built, in
+`toolchain/hasm/`, 2026-11-05; nothing after it is.** The reasoning behind the first seven is in
+`notes/ir-questions-explained.md`.
 
 | | |
 |---|---|
@@ -107,10 +107,33 @@ only a static ELF.
   is an oracle. Whether to leave it, later, is its own question.
 - **Questions 25-70** concern the processor and do not block x86-64.
 
+## What step 1 built
+
+`toolchain/hasm/`, a project of its own: `hasm <input.s> -o <output>` makes a
+static ELF. `toolchain/hasm/README.md` lists what it reads. Its tests hold three things against
+`as` and `ld`: every form it knows, byte for byte; every instruction against every shape
+of operand, where whatever it does not refuse has to come out the same; and the
+addresses, sections, symbols and entry.
+
+The choices the table above left open, each easy to change:
+
+- **Every symbol is `STB_LOCAL`.** A program is compiled whole, so nothing is left for a
+  global to mean. `.globl` is refused, and the tests' filter adds it for `ld`.
+- **`.balign` is refused in `.text`**, where `as` fills with its own table of long nops.
+  Nothing needs a function aligned while the goal is a correct result.
+- **A memory operand has one spelling**, `[base + index*scale + disp]` or `[rip + label]`,
+  with no offset after a label. An absolute address is refused.
+- **`.ascii` knows `\n`, `\t`, `\\` and `\"`.** Other bytes are `.byte`, because `as` reads
+  `\x` with as many digits as follow, where record 0082 reads two.
+- **The output is not marked executable**: Haard has no way to yet (below), so the caller
+  runs `chmod +x`.
+- **Not yet there, added when the back end asks**: `rep movs`, and the memory form of the
+  SSE bitwise operations.
+
 ## The order
 
-1. The assembler in Haard for x86-64, refusing what it does not know, with `as` as the
-   oracle in its tests.
+1. **Built.** The assembler in Haard for x86-64, refusing what it does not know, with `as`
+   as the oracle in its tests.
 2. The natives and `_start`, with a small program running with no C.
 3. The back end in `hdc`, running `tests/emitter` natively as a third path beside C++
    and the IR, which are its oracle.

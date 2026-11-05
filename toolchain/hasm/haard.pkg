@@ -1,0 +1,11 @@
+# hasm -- the assembler and linker of record 0084, written in Haard.
+{
+    name: "hasm",
+    version: "0.1",
+
+    dependencies: [
+        {name: "std", path: "../../std"}
+    ],
+
+    prelude: ["std.array", "std.string", "std.hash", "std.io", "std.file"]
+}

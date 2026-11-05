@@ -1,0 +1,334 @@
+# hasm.elf -- an image written as a static ELF for x86-64 Linux.
+#
+# One load segment per section with something in it, and the symbol table, which
+# is how gdb, readelf and objdump know each label's name, address and size
+# (record 0084). Nothing here is read by the kernel but the two headers and the
+# bytes they point at.
+
+import hasm.image
+
+let ELF_HEADER_SIZE : u64 = 64
+let PROGRAM_HEADER_SIZE : u64 = 56
+let SECTION_HEADER_SIZE : u64 = 64
+let SYMBOL_SIZE : u64 = 24
+
+class ElfWriter:
+    out : Array<u8>
+    image : Image*
+
+    def little : void
+        @value : u64
+        @count : i32
+
+        let i = 0
+
+        while i < count:
+            out.add(((value >> ((i * 8) as u64)) & 255) as u8)
+            i += 1
+
+    def pad_to : void
+        @offset : u64
+
+        while (out.length() as u64) < offset:
+            out.add(0 as u8)
+
+    def text : void
+        @name : String&
+
+        let i = 0
+
+        while i < name.length():
+            out.add(name.at(i) as u8)
+            i += 1
+
+        out.add(0 as u8)
+
+    def program_header : void
+        @type : u64
+        @flags : u64
+        @offset : u64
+        @address : u64
+        @file_size : u64
+        @memory_size : u64
+        @align : u64
+
+        little(type, 4)
+        little(flags, 4)
+        little(offset, 8)
+        little(address, 8)
+        little(address, 8)
+        little(file_size, 8)
+        little(memory_size, 8)
+        little(align, 8)
+
+    def section_header : void
+        @name : u64
+        @type : u64
+        @flags : u64
+        @address : u64
+        @offset : u64
+        @size : u64
+        @link : u64
+        @info : u64
+        @align : u64
+        @entry_size : u64
+
+        little(name, 4)
+        little(type, 4)
+        little(flags, 8)
+        little(address, 8)
+        little(offset, 8)
+        little(size, 8)
+        little(link, 4)
+        little(info, 4)
+        little(align, 8)
+        little(entry_size, 8)
+
+    # the image is laid out and its holes are filled. '_start' is known, which
+    # the Assembler has looked at
+    def write : void
+        @path : char*
+
+        let sections : Array<Section>& = image->sections
+        let name_of_start : String = "_start"
+
+        # one for each section with something in it, and the stack's
+        let segments : u64 = 1
+        let i = 0
+
+        while i < sections.length():
+            if sections[i].size() > 0:
+                segments = segments + 1
+
+            i += 1
+
+        # ---- the ELF header
+        out.add(0x7F as u8)
+        text_no_end("ELF")
+        out.add(2 as u8)
+        out.add(1 as u8)
+        out.add(1 as u8)
+        out.add(0 as u8)
+        little(0, 8)
+        little(2, 2)
+        little(62, 2)
+        little(1, 4)
+        little(image->address_of(name_of_start), 8)
+        little(ELF_HEADER_SIZE, 8)
+
+        # where the section headers are, written when that is known
+        let section_header_offset_at = out.length()
+
+        little(0, 8)
+        little(0, 4)
+        little(ELF_HEADER_SIZE, 2)
+        little(PROGRAM_HEADER_SIZE, 2)
+        little(segments, 2)
+        little(SECTION_HEADER_SIZE, 2)
+        little((sections.length() as u64) + 4, 2)
+        little((sections.length() as u64) + 3, 2)
+
+        # ---- the program headers
+        i = 0
+
+        while i < sections.length():
+            let size = sections[i].size()
+
+            if size > 0:
+                let file_size = size
+
+                if not sections[i].has_bytes:
+                    file_size = 0
+
+                program_header(1, flags_of(i), sections[i].file_offset,
+                               sections[i].address, file_size, size, PAGE_SIZE)
+
+            i += 1
+
+        # PT_GNU_STACK, so the stack cannot be executed
+        program_header(0x6474E551, 6, 0, 0, 0, 0, 16)
+
+        # ---- the bytes
+        i = 0
+
+        while i < sections.length():
+            if sections[i].has_bytes and sections[i].size() > 0:
+                pad_to(sections[i].file_offset)
+
+                let j = 0
+
+                while j < sections[i].bytes.length():
+                    out.add(sections[i].bytes[j])
+                    j += 1
+
+            i += 1
+
+        # ---- the symbols and their names, in the order they were written
+        let names_offset : u64 = 0
+        let symbols_offset = out.length() as u64
+        let symbols : u64 = 1
+
+        little(0, 8)
+        little(0, 8)
+        little(0, 8)
+
+        let names : Array<u8>
+
+        names.add(0 as u8)
+
+        i = 0
+
+        while i < image->labels.length():
+            let label : Label& = image->labels[i]
+
+            if not is_local_label(label.name):
+                little(names.length() as u64, 4)
+
+                # STB_LOCAL, and STT_FUNC or STT_OBJECT: a program is compiled
+                # whole, so nothing is left for a global to mean
+                if label.section == 0:
+                    little(2, 1)
+                else:
+                    little(1, 1)
+
+                little(0, 1)
+                little((label.section as u64) + 1, 2)
+                little(sections[label.section].address + label.offset, 8)
+                little(label.size, 8)
+
+                let k = 0
+
+                while k < label.name.length():
+                    names.add(label.name.at(k) as u8)
+                    k += 1
+
+                names.add(0 as u8)
+                symbols = symbols + 1
+
+            i += 1
+
+        let strings_offset = out.length() as u64
+
+        i = 0
+
+        while i < names.length():
+            out.add(names[i])
+            i += 1
+
+        # ---- the names of the sections, then the section headers
+        let section_names_offset = out.length() as u64
+        let name_offsets : Array<u64>
+
+        out.add(0 as u8)
+
+        i = 0
+
+        while i < sections.length():
+            name_offsets.add((out.length() as u64) - section_names_offset)
+            text(sections[i].name)
+            i += 1
+
+        let symtab_name = (out.length() as u64) - section_names_offset
+        let symtab : String = ".symtab"
+
+        text(symtab)
+
+        let strtab_name = (out.length() as u64) - section_names_offset
+        let strtab : String = ".strtab"
+
+        text(strtab)
+
+        let shstrtab_name = (out.length() as u64) - section_names_offset
+        let shstrtab : String = ".shstrtab"
+
+        text(shstrtab)
+
+        let section_names_size = (out.length() as u64) - section_names_offset
+
+        pad_to(round_up(out.length() as u64, 8))
+
+        let section_headers_at = out.length() as u64
+
+        section_header(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+        i = 0
+
+        while i < sections.length():
+            let type : u64 = 1
+
+            if not sections[i].has_bytes:
+                type = 8
+
+            # an empty one is not in the file, and an offset past its end is
+            # something objcopy and objdump refuse
+            let offset = sections[i].file_offset
+
+            if sections[i].size() == 0:
+                offset = 0
+
+            section_header(name_offsets[i], type, section_flags_of(i),
+                           sections[i].address, offset,
+                           sections[i].size(), 0, 0, 16, 0)
+            i += 1
+
+        # sh_link is the section right after it, the names; sh_info is one past
+        # the last local symbol, and every symbol is local
+        let count = sections.length() as u64
+
+        section_header(symtab_name, 2, 0, 0, symbols_offset,
+                       symbols * SYMBOL_SIZE, count + 2, symbols, 8, SYMBOL_SIZE)
+        section_header(strtab_name, 3, 0, 0, strings_offset,
+                       names.length() as u64, 0, 0, 1, 0)
+        section_header(shstrtab_name, 3, 0, 0, section_names_offset,
+                       section_names_size, 0, 0, 1, 0)
+
+        # the one place where a value comes back to an earlier byte
+        let back = 0
+
+        while back < 8:
+            let byte = ((section_headers_at >> ((back * 8) as u64)) & 255) as u8
+
+            out[section_header_offset_at + back] = byte
+            back += 1
+
+        let file = open_write(path)
+        let w = 0
+
+        while w < out.length():
+            file->write(out[w] as char)
+            w += 1
+
+        file->close()
+        delete file
+
+    def text_no_end : void
+        @name : char*
+
+        let i = 0
+
+        while name[i] != '\0':
+            out.add(name[i] as u8)
+            i += 1
+
+# .text, .rodata, .data, .bss, in the Image's order
+def flags_of : u64
+    @section : i32
+
+    if section == 0:
+        return 5
+
+    if section == 1:
+        return 4
+
+    return 6
+
+def section_flags_of : u64
+    @section : i32
+
+    if section == 0:
+        return 6
+
+    if section == 1:
+        return 2
+
+    return 3

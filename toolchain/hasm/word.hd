@@ -1,0 +1,169 @@
+# hasm.word -- one line of text cut into words.
+#
+# The text is one statement per line (record 0084), so a line is all this ever
+# looks at, and nothing here knows a target. What a word means is the business
+# of whoever reads it.
+
+enum WordKind:
+    Name
+    Quoted
+    Number
+    Mark
+
+class Word:
+    kind : WordKind
+
+    # a Name's spelling, what is between a Quoted's quotes as it was written, or
+    # a Mark's one character
+    text : String
+
+    # a Number's value. Its sign, if it has one, is a Mark before it
+    number : u64
+
+def is_mark : bool
+    @word : Word&
+    @mark : char
+
+    return word.kind == WordKind.Mark and word.text.at(0) == mark
+
+def is_name_start : bool
+    @c : char
+
+    return (c >= 'a' and c <= 'z') or (c >= 'A' and c <= 'Z') or c == '_' or c == '.'
+
+def is_digit : bool
+    @c : char
+
+    return c >= '0' and c <= '9'
+
+def digit_value : i32
+    @c : char
+
+    if is_digit(c):
+        return (c as i32) - ('0' as i32)
+
+    if c >= 'a' and c <= 'f':
+        return (c as i32) - ('a' as i32) + 10
+
+    if c >= 'A' and c <= 'F':
+        return (c as i32) - ('A' as i32) + 10
+
+    return 99
+
+# Cuts one line. False when it cannot be cut, with the reason in 'problem'
+def cut_line : bool
+    @line : String&
+    @words : Array<Word>&
+    @problem : String&
+
+    let i = 0
+    let size = line.length()
+
+    while i < size:
+        let c = line.at(i)
+
+        if c == ' ' or c == '\t' or c == '\r':
+            i += 1
+        elif c == '#':
+            return true
+        elif c == '"':
+            let word : Word
+            let closed = false
+
+            word.kind = WordKind.Quoted
+            i += 1
+
+            while i < size and not closed:
+                let inside = line.at(i)
+
+                if inside == '"':
+                    closed = true
+                elif inside == '\\' and i + 1 < size:
+                    word.text.append(inside)
+                    word.text.append(line.at(i + 1))
+                    i += 1
+                else:
+                    word.text.append(inside)
+
+                i += 1
+
+            if not closed:
+                problem = "a quote is not closed"
+                return false
+
+            words.add(word)
+        elif is_name_start(c):
+            let word : Word
+
+            word.kind = WordKind.Name
+
+            while i < size and (is_name_start(line.at(i)) or is_digit(line.at(i))):
+                word.text.append(line.at(i))
+                i += 1
+
+            words.add(word)
+        elif is_digit(c):
+            let word : Word
+
+            word.kind = WordKind.Number
+            word.number = 0
+
+            if not cut_number(line, i, word, problem):
+                return false
+
+            words.add(word)
+        elif c == ',' or c == ':' or c == '[' or c == ']' or c == '+' or c == '-' or c == '*':
+            let word : Word
+
+            word.kind = WordKind.Mark
+            word.text.append(c)
+            words.add(word)
+            i += 1
+        else:
+            problem = "unexpected character '${c}'"
+            return false
+
+    return true
+
+# Decimal or 0x, up to what 64 bits hold. A leading zero is refused, because
+# 'as' reads 010 as eight; and a letter after the digits, because it reads 1b as
+# a label
+def cut_number : bool
+    @line : String&
+    @i : i32&
+    @word : Word&
+    @problem : String&
+
+    let size = line.length()
+    let base : u64 = 10
+    let digits = 0
+
+    if line.at(i) == '0' and i + 1 < size and line.at(i + 1) == 'x':
+        base = 16
+        i += 2
+    elif line.at(i) == '0' and i + 1 < size and is_digit(line.at(i + 1)):
+        problem = "a number cannot start with a zero"
+        return false
+
+    while i < size and (is_name_start(line.at(i)) or is_digit(line.at(i))):
+        let value = digit_value(line.at(i))
+
+        if (value as u64) >= base:
+            problem = "'${line.at(i)}' is not a digit of this number"
+            return false
+
+        let largest : u64 = 18446744073709551615
+
+        if word.number > (largest - (value as u64)) / base:
+            problem = "a number does not fit in 64 bits"
+            return false
+
+        word.number = word.number * base + (value as u64)
+        digits += 1
+        i += 1
+
+    if digits == 0:
+        problem = "0x has no digits"
+        return false
+
+    return true

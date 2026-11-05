@@ -19,6 +19,9 @@ CMakeUserPresets.json
 # ...and the bootstrap's, which is how the compiler written in Haard is built
 !bootstrap/Makefile
 
+# ...and the assembler's
+!toolchain/*/Makefile
+
 # Prerequisites
 *.d
 

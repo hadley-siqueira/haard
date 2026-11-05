@@ -1,0 +1,241 @@
+# hasm.image -- what is being assembled: the sections, the labels and the holes.
+#
+# A target writes bytes here and names a label where it does not know an address
+# yet. Every size is known as it is written (record 0084: no relaxation), so one
+# pass over the text fills the sections, and the holes are filled once at the end.
+
+# what a program is loaded as, record 0084: a fixed address first. Everything
+# below this file's headers starts a page in, as tests/layout.ld says too
+let IMAGE_BASE : u64 = 0x400000
+let PAGE_SIZE : u64 = 4096
+
+class Section:
+    name : String
+    bytes : Array<u8>
+
+    # .bss holds no bytes, only this. Every other section's is bytes.length()
+    reserved : u64
+    has_bytes : bool
+
+    # given out by Image::lay_out
+    address : u64
+    file_offset : u64
+
+    def init : void
+        reserved = 0
+        has_bytes = true
+        address = 0
+        file_offset = 0
+
+    def size : u64
+        if has_bytes:
+            return bytes.length() as u64
+
+        return reserved
+
+class Label:
+    name : String
+    section : i32
+    offset : u64
+    line : i32
+
+    # up to the next label of its section that is in the symbol table: hdc does
+    # not compute sizes, record 0084. Given out by Image::size_labels
+    size : u64
+
+enum HoleKind:
+    # four bytes, the distance from the end of the instruction
+    Relative32
+
+    # eight bytes, the address
+    Absolute64
+
+class Hole:
+    kind : HoleKind
+    section : i32
+    offset : u64
+    label : String
+    line : i32
+
+    # how many bytes of the instruction come after the four of the hole
+    trailing : i32
+
+# '.L' is what 'as' keeps out of the symbol table, written quoted or not
+def is_local_label : bool
+    @name : String&
+
+    return name.at(0) == '.' and name.at(1) == 'L'
+
+class Image:
+    sections : Array<Section>
+    current : i32
+    labels : Array<Label>
+    label_at : Hash<String, i32>
+    holes : Array<Hole>
+
+    def init : void
+        add_section(".text", true)
+        add_section(".rodata", true)
+        add_section(".data", true)
+        add_section(".bss", false)
+        current = 0
+
+    def add_section : void
+        @name : char*
+        @has_bytes : bool
+
+        let section : Section
+
+        section.name = name
+        section.has_bytes = has_bytes
+        sections.add(section)
+
+    # -1 when no section has this name
+    def section_named : i32
+        @name : String&
+
+        let i = 0
+
+        while i < sections.length():
+            if sections[i].name == name:
+                return i
+
+            i += 1
+
+        return -1
+
+    def here : u64
+        return sections[current].size()
+
+    def emit : void
+        @byte : u8
+
+        sections[current].bytes.add(byte)
+
+    # the low 'count' bytes of the value, little endian
+    def emit_little : void
+        @value : u64
+        @count : i32
+
+        let i = 0
+
+        while i < count:
+            emit(((value >> ((i * 8) as u64)) & 255) as u8)
+            i += 1
+
+    # false when the name is taken
+    def define_label : bool
+        @name : String&
+        @line : i32
+
+        if label_at.has(name):
+            return false
+
+        let label : Label
+
+        label.name = name
+        label.section = current
+        label.offset = here()
+        label.line = line
+        label.size = 0
+
+        label_at.add(name, labels.length())
+        labels.add(label)
+
+        return true
+
+    # the hole's bytes are written here as zeros and filled by 'fill_holes'
+    def add_hole : void
+        @kind : HoleKind
+        @label : String&
+        @trailing : i32
+        @line : i32
+
+        let hole : Hole
+
+        hole.kind = kind
+        hole.section = current
+        hole.offset = here()
+        hole.label = label
+        hole.line = line
+        hole.trailing = trailing
+        holes.add(hole)
+
+        if kind == HoleKind.Relative32:
+            emit_little(0, 4)
+        else:
+            emit_little(0, 8)
+
+    # Each section on a page of its own, in a fixed order, since each may have
+    # different permissions. An empty one takes no room
+    def lay_out : void
+        let offset = PAGE_SIZE
+        let i = 0
+
+        while i < sections.length():
+            sections[i].file_offset = offset
+            sections[i].address = IMAGE_BASE + offset
+            offset = offset + round_up(sections[i].size(), PAGE_SIZE)
+            i += 1
+
+    def address_of : u64
+        @label : String&
+
+        let found = labels[label_at[label]]
+
+        return sections[found.section].address + found.offset
+
+    # needs 'lay_out', and every label a hole names to be known
+    def fill_holes : void
+        let i = 0
+
+        while i < holes.length():
+            let at = sections[holes[i].section].address + holes[i].offset
+            let target = address_of(holes[i].label)
+
+            if holes[i].kind == HoleKind.Relative32:
+                let next = at + 4 + (holes[i].trailing as u64)
+
+                patch(holes[i].section, holes[i].offset, target - next, 4)
+            else:
+                patch(holes[i].section, holes[i].offset, target, 8)
+
+            i += 1
+
+    def patch : void
+        @section : i32
+        @offset : u64
+        @value : u64
+        @count : i32
+
+        let i = 0
+
+        while i < count:
+            let at = (offset as i32) + i
+
+            sections[section].bytes[at] = ((value >> ((i * 8) as u64)) & 255) as u8
+            i += 1
+
+    # backwards, so each label meets the next one of its section first
+    def size_labels : void
+        let end : Array<u64>
+        let i = 0
+
+        while i < sections.length():
+            end.add(sections[i].size())
+            i += 1
+
+        i = labels.length() - 1
+
+        while i >= 0:
+            if not is_local_label(labels[i].name):
+                labels[i].size = end[labels[i].section] - labels[i].offset
+                end[labels[i].section] = labels[i].offset
+
+            i -= 1
+
+def round_up : u64
+    @value : u64
+    @to : u64
+
+    return (value + to - 1) / to * to

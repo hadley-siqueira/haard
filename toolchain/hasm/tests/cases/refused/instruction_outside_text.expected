@@ -1,0 +1,1 @@
+instruction_outside_text.s:3: error: an instruction belongs in .text
